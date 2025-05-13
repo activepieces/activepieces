@@ -182,7 +182,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PublishedNeededTooltip allowPush={allowPush}>
-            <PushToGitDialog flows={[flow]}>
+            <PushToGitDialog type="flow" flows={[flow]}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToPushToGit || !allowPush}
                 onSelect={(e) => e.preventDefault()}

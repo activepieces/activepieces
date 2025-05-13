@@ -2,8 +2,8 @@ import { t } from 'i18next';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  Link2,
   LockKeyhole,
-  Settings,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -31,16 +31,18 @@ import {
   SidebarMenuAction,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from './help-and-feedback';
+import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
@@ -173,8 +175,14 @@ export function SidebarComponent({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const location = useLocation();
+  const { checkAccess } = useAuthorization();
+
   const showProjectUsage =
     location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
+  const showConnectionsLink =
+    location.pathname.startsWith('/project') &&
+    checkAccess(Permission.READ_APP_CONNECTION);
+
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
@@ -203,15 +211,15 @@ export function SidebarComponent({
                           <SidebarPlatformAdminButton />
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      {!location.pathname.startsWith('/platform') && (
+                      {showConnectionsLink && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
                             <CustomTooltipLink
                               to={authenticationSession.appendProjectRoutePrefix(
-                                '/settings/general',
+                                '/connections',
                               )}
-                              label={t('Project Settings')}
-                              Icon={Settings}
+                              label={t('Connections')}
+                              Icon={Link2}
                               isSubItem={false}
                             />
                           </SidebarMenuButton>
@@ -221,7 +229,10 @@ export function SidebarComponent({
                   </SidebarGroup>
                 </ScrollArea>
               </SidebarContent>
-              <SidebarFooter className="pb-4 gap-4">
+              <SidebarFooter className="pb-4">
+                <SidebarMenu>
+                  <SidebarInviteUserButton />
+                </SidebarMenu>
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>

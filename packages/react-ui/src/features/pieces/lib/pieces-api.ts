@@ -157,9 +157,26 @@ export const piecesApi = {
           step.type === ActionType.PIECE ? 'action' : 'trigger',
           piece,
         );
+        const selectedAction =
+          step.type === ActionType.PIECE
+            ? piece.actions[step.settings.actionName ?? '']
+            : null;
+
         return {
           ...metadata,
           ...spreadIfDefined('logoUrl', customLogoUrl),
+          errorHandlingOptions: {
+            continueOnFailure: {
+              hide:
+                selectedAction?.errorHandlingOptions?.continueOnFailure?.hide ??
+                false,
+            },
+            retryOnFailure: {
+              hide:
+                selectedAction?.errorHandlingOptions?.retryOnFailure?.hide ??
+                false,
+            },
+          },
         };
       }
     }

@@ -142,7 +142,11 @@ export const ActivateLicenseDialog = ({
           {showCelebration ? (
             <div className="flex justify-center w-full">
               <DialogClose asChild>
-                <Button size={'sm'} onClick={() => onOpenChange(false)}>
+                <Button
+                  size={'sm'}
+                  variant={'outline'}
+                  onClick={() => onOpenChange(false)}
+                >
                   {t('Close')}
                 </Button>
               </DialogClose>

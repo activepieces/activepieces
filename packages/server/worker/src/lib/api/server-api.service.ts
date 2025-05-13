@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -138,9 +138,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
         },
-        async removeStaleFlow(request: RemoveStableJobEngineRequest): Promise<void> {
-            await client.post('/v1/engine/remove-stale-job', request)
-        },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
@@ -162,11 +159,11 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 exceptionHandler.handle(e, log)
             }
         },
-        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest, flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
 
-            const cachedFlow = await readFlowFromCache(flowVersionIdToRun)
+            const cachedFlow = await readFlowFromCache(request.versionId)
             if (cachedFlow) {
                 log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
                 return cachedFlow

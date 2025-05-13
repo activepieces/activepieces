@@ -169,6 +169,9 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -188,6 +191,9 @@
         "packages/pieces/community/crypto/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
+      "@activepieces/piece-dappier": [
+        "packages/pieces/community/dappier/src/index.ts"
+      ],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
       ],
@@ -223,6 +229,9 @@
       ],
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
+      ],
+      "@activepieces/piece-dumpling-ai": [
+        "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
@@ -380,6 +389,9 @@
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/community/invoiceninja/src/index.ts"
       ],
+      "@activepieces/piece-jina-ai": [
+        "packages/pieces/community/jina-ai/src/index.ts"
+      ],
       "@activepieces/piece-jira-cloud": [
         "packages/pieces/community/jira-cloud/src/index.ts"
       ],
@@ -456,6 +468,9 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-medullar": [
+        "packages/pieces/community/medullar/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -474,6 +489,9 @@
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-todo": [
+        "packages/pieces/community/microsoft-todo/src/index.ts"
+      ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
@@ -491,6 +509,9 @@
       ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
+      ],
+      "@activepieces/piece-netsuite": [
+        "packages/pieces/community/netsuite/src/index.ts"
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"

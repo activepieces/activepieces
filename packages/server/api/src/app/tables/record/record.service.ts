@@ -10,8 +10,6 @@ import {
     Field,
     Filter,
     FilterOperator,
-    GetFlowVersionForWorkerRequestType,
-
     isNil,
     PopulatedRecord,
     SeekPage,
@@ -23,6 +21,7 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
+import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
@@ -299,7 +298,7 @@ export const recordService = {
             return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: false,
                 data: async (_projectId: string) => ({
                     method: 'POST',
