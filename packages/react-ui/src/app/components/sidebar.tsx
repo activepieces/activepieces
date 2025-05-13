@@ -4,7 +4,6 @@ import {
   ChevronUpIcon,
   Link2,
   LockKeyhole,
-  Settings,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -40,10 +39,10 @@ import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
-import { projectSettingsRoutes } from '../router/project-route-wrapper';
 
 import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from './help-and-feedback';
+import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
@@ -212,25 +211,6 @@ export function SidebarComponent({
                           <SidebarPlatformAdminButton />
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      {!location.pathname.startsWith('/platform') && (
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild>
-                            <CustomTooltipLink
-                              to={authenticationSession.appendProjectRoutePrefix(
-                                projectSettingsRoutes.general,
-                              )}
-                              label={t('Project Settings')}
-                              Icon={Settings}
-                              isSubItem={false}
-                              isActive={(pathname) =>
-                                Object.values(projectSettingsRoutes).some(
-                                  (route) => pathname.includes(route),
-                                )
-                              }
-                            />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )}
                       {showConnectionsLink && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
@@ -249,7 +229,10 @@ export function SidebarComponent({
                   </SidebarGroup>
                 </ScrollArea>
               </SidebarContent>
-              <SidebarFooter className="pb-4 gap-4">
+              <SidebarFooter className="pb-4">
+                <SidebarMenu>
+                  <SidebarInviteUserButton />
+                </SidebarMenu>
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
