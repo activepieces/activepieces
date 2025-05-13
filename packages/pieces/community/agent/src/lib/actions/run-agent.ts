@@ -178,7 +178,7 @@ export async function executeAgent(
   model: BaseChatModel,
   tools: StructuredToolInterface[],
   userPrompt: string,
-  maxIterations: number = 10
+  maxIterations = 10
 ): Promise<ChainValues> {
 
   const currentDate = new Date().toISOString().split('T')[0];

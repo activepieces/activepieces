@@ -466,9 +466,7 @@ const PieceSelector = ({
           handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
           break;
         }
-        if (
-          stepData.settings.pieceName === '@activepieces/piece-agent'
-        ) {
+        if (stepData.settings.pieceName === '@activepieces/piece-agent') {
           handleAddAgentAction(stepMetadata, actionOrTrigger);
           break;
         }
