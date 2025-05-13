@@ -166,9 +166,6 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
-      "@activepieces/piece-copy-ai": [
-        "packages/pieces/community/copy-ai/src/index.ts"
-      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -183,6 +180,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
@@ -821,6 +821,9 @@
       "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-zagomail": [
+        "packages/pieces/community/zagomail/src/index.ts"
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
