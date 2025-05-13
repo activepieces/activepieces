@@ -108,7 +108,7 @@ function normalizeAgentOutputResponse(agentResult: ChainValues | string): Record
 
   if (agentResult && typeof agentResult === 'object') {
 
-    if (agentResult.hasOwnProperty('output')) {
+    if (Object.prototype.hasOwnProperty.call(agentResult, 'output')) {
       const outputValue = agentResult['output'];
 
       if (typeof outputValue === 'string') {
@@ -120,9 +120,9 @@ function normalizeAgentOutputResponse(agentResult: ChainValues | string): Record
         if (
           firstItem &&
           typeof firstItem === 'object' &&
-          firstItem.hasOwnProperty('type') &&
+          Object.prototype.hasOwnProperty.call(firstItem, 'type') &&
           firstItem.type === 'text' &&
-          firstItem.hasOwnProperty('text') &&
+          Object.prototype.hasOwnProperty.call(firstItem, 'text') &&
           typeof firstItem.text === 'string'
         ) {
           return { output: firstItem.text };
@@ -147,20 +147,21 @@ async function getChatModelInstance(
   }
 
   const { provider, value: modelId } = selectedOption;
-  const commonHeaders = { Authorization: `Bearer ${serverToken}` };
+  
 
   switch (provider) {
-    case 'anthropic':
+    case 'anthropic': {
       return new ChatAnthropic({
         model: modelId,
         anthropicApiUrl: `${serverApiUrl}v1/ai-providers/proxy/anthropic`,
         anthropicApiKey: serverToken,
-        clientOptions: { defaultHeaders: commonHeaders },
+        clientOptions: { defaultHeaders: { Authorization: `Bearer ${serverToken}` } },
         invocationKwargs: {
           thinking: { type: "disabled" }
         }        
       });
-    case 'openai':
+    }
+    case 'openai': {
       return new ChatOpenAI({
         model: modelId,
         openAIApiKey: serverToken, 
@@ -168,9 +169,11 @@ async function getChatModelInstance(
           baseURL: `${serverApiUrl}v1/ai-providers/proxy/openai/v1`,
         }
       });
-    default:
+    }
+    default: {
       const exhaustiveCheck: never = provider;
       throw new Error(`Unsupported LLM provider: ${exhaustiveCheck}`);
+    }
   }
 }
 
