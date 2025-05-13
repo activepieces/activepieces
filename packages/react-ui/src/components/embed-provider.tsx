@@ -23,7 +23,7 @@ const defaultState: EmbeddingState = {
   hideSideNav: false,
   hideLogoInBuilder: false,
   prefix: '',
-  disableNavigationInBuilder: true,
+  disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
   useDarkBackground: window.opener !== null,
