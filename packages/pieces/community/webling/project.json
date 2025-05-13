@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/webling/package.json",
         "main": "packages/pieces/community/webling/src/index.ts",
         "assets": [
-          "packages/pieces/community/webling/*.md"
+          "packages/pieces/community/webling/*.md",
+          {
+            "input": "packages/pieces/community/webling/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
