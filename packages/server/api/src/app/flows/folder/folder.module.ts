@@ -114,7 +114,6 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 folderOrders: request.body.folderOrders,
             })
-            // TODO: Add event logging
             return reply.status(StatusCodes.OK).send()
         },
     )

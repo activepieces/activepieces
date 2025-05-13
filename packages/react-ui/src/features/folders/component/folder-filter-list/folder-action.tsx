@@ -16,7 +16,7 @@ import { foldersApi } from '../../lib/folders-api';
 import { RenameFolderDialog } from '../rename-folder-dialog';
 
 export type FolderActionProps = {
-  folder: FolderDto;
+  folder: Pick<FolderDto, 'id' | 'displayName'>;
   refetch: () => void;
   userHasPermissionToUpdateFolders: boolean;
 };
@@ -44,7 +44,7 @@ export const FolderAction = ({
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 !rounded-none" size="icon">
+          <Button variant="ghost" className="h-9 !rounded-none" size="icon">
             <EllipsisVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -88,7 +88,9 @@ export const FolderAction = ({
         <RenameFolderDialog
           folderId={folder.id}
           name={folder.displayName}
-          onRename={refetch}
+          onRename={() => {
+            refetch();
+          }}
           open={true}
           onOpenChange={(open) => {
             if (!open) handleDialogClose();

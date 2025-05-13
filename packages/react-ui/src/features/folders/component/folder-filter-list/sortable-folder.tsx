@@ -12,6 +12,7 @@ export type SortableFolderProps = {
   folder: FolderDto;
   isSelected: boolean;
   onClick: () => void;
+  onMouseDown: () => void;
   refetch: () => void;
   userHasPermissionToUpdateFolders: boolean;
 };
@@ -20,6 +21,7 @@ export const SortableFolder = ({
   folder,
   isSelected,
   onClick,
+  onMouseDown,
   refetch,
   userHasPermissionToUpdateFolders,
 }: SortableFolderProps) => {
@@ -40,7 +42,7 @@ export const SortableFolder = ({
     width: isDragging ? 'auto' : undefined,
     zIndex: isDragging ? 50 : undefined,
     opacity: isDragging ? 1 : undefined,
-    boxSizing: 'border-box' as const
+    boxSizing: 'border-box' as const,
   };
 
   const [emoji, ...nameParts] = folder.displayName.split(' ');
@@ -69,6 +71,7 @@ export const SortableFolder = ({
         variant={isSelected ? 'secondary' : 'ghost'}
         size="sm"
         onClick={onClick}
+        onMouseDown={onMouseDown}
         className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 z-10"
       >
         <span className="mr-2">{emoji}</span>
@@ -80,7 +83,9 @@ export const SortableFolder = ({
         </span>
         <FolderAction
           folder={folder}
-          refetch={refetch}
+          refetch={async () => {
+            await refetch();
+          }}
           userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
         />
       </Button>

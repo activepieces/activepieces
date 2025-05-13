@@ -1,10 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import {
-  QueryObserverResult,
-  RefetchOptions,
-  useMutation,
-} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -31,9 +27,7 @@ import { foldersApi } from '../lib/folders-api';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
-  refetchFolders: (
-    options?: RefetchOptions,
-  ) => Promise<QueryObserverResult<FolderDto[], Error>>;
+  refetchFolders: () => Promise<void>;
   children: React.ReactNode;
 };
 
@@ -141,15 +135,9 @@ export const CreateFolderDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <DialogFooter className="mt-4">
-              <Button
-                variant={'outline'}
-                onClick={() => setIsDialogOpen(false)}
-              >
-                {t('Cancel')}
-              </Button>
+            <DialogFooter>
               <Button type="submit" loading={isPending}>
-                {t('Confirm')}
+                {t('Create')}
               </Button>
             </DialogFooter>
           </form>

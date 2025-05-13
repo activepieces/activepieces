@@ -62,15 +62,14 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         }
         const folderId = apId()
 
-        // Get the minimum display order (smallest is at top)
-        const minDisplayOrder = await this.getMinDisplayOrder(projectId)
-        const displayOrder = minDisplayOrder !== null ? minDisplayOrder - 100 : 0
+        const maxDisplayOrder = await this.getMaxDisplayOrder(projectId)
+        const displayOrder = maxDisplayOrder !== null ? maxDisplayOrder + 1 : 0
 
         await folderRepo().upsert({
             id: folderId,
             projectId,
             displayName: request.displayName,
-            displayOrder, // Set new folders to appear at the top
+            displayOrder,
         }, ['projectId', 'displayName'])
         const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
@@ -78,14 +77,14 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             numberOfFlows: 0,
         }
     },
-    async getMinDisplayOrder(projectId: ProjectId): Promise<number | null> {
+    async getMaxDisplayOrder(projectId: ProjectId): Promise<number | null> {
         const result = await folderRepo()
             .createQueryBuilder('folder')
-            .select('MIN(folder.displayOrder)', 'minOrder')
+            .select('MAX(folder.displayOrder)', 'maxOrder')
             .where('folder.projectId = :projectId', { projectId })
             .getRawOne()
 
-        return result?.minOrder ?? null
+        return result?.maxOrder ?? null
     },
     async updateOrder(params: UpdateOrderParams): Promise<void> {
         const { projectId, folderOrders } = params
