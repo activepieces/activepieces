@@ -1,11 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { buildPackage, buildPiece, findPiece } from '../utils/piece-utils';
+import { findPiece } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
-import path, { join } from 'node:path';
+import { join } from 'node:path';
 import { exec } from '../utils/exec';
-
+import keys from '../../../../pieces/community/framework/translation-keys.json';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
  try { 
@@ -29,13 +29,43 @@ const installDependencies = async (pieceFolder: string) => {
     console.log(chalk.green(`Dependencies installed ${pieceFolder}`))
 }
 
-const generateTrasnlationFileFromPiecesFramework = async () => {
- await buildPackage('pieces-framework')
- const outputFolder = path.join(process.cwd(), 'dist', 'packages', 'pieces','community','framework')
- await installDependencies(outputFolder)
- const pkg = await import(outputFolder)
- return pkg.generateTranslationFile;
+
+function getPropertyValue(object: Record<string, unknown>, path: string): unknown {
+  const parsedKeys = path.split('.');
+  if (parsedKeys[0] === '*') {
+    return Object.values(object).map(item => getPropertyValue(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
+  }
+  const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
+  if (nextObject && parsedKeys.length > 1) {
+    return getPropertyValue(nextObject, parsedKeys.slice(1).join('.'));
+  }
+  return nextObject;
 }
+
+
+const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
+  try {
+    keys.forEach(key => {
+      const value = getPropertyValue(piece, key)
+      if (value) {
+        if (typeof value === 'string') {
+          translation[value] = value
+        }
+        else if (Array.isArray(value)) {
+          value.forEach(item => {
+            translation[item] = item
+          })
+        }
+      }
+    })
+  }
+  catch (err) {
+    console.error(`error generating translation file for piece ${piece.name}:`, err)
+  }
+
+  return translation
+}
+
 
 
 const generateTranslationFile = async (pieceName: string) => {
@@ -44,8 +74,7 @@ const generateTranslationFile = async (pieceName: string) => {
   try{
     await installDependencies(outputFolder)
     const pieceFromModule = await findPieceInModule(outputFolder);
-    const generateTranslationFile = await generateTrasnlationFileFromPiecesFramework();
-    const i18n = generateTranslationFile({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
+    const i18n = generateTranslationFileFromPiece({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
     const i18nFolder = join(pieceRoot, 'src', 'i18n')
     await makeFolderRecursive(i18nFolder);
     await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
@@ -53,7 +82,6 @@ const generateTranslationFile = async (pieceName: string) => {
   } catch (error) {
     console.error(chalk.red('❌'), `Error generating translation file for piece ${pieceName}, make sure you built the piece`,error);
   }
-  
 };
 
 

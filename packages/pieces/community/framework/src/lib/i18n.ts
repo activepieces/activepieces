@@ -1,19 +1,8 @@
-import { I18nForPiece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
+import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
 import { LocalesEnum } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
-
-function getPropertyValue(object: Record<string, unknown>, path: string): unknown {
-  const parsedKeys = path.split('.');
-  if (parsedKeys[0] === '*') {
-    return Object.values(object).map(item => getPropertyValue(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
-  }
-  const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
-  if (nextObject && parsedKeys.length > 1) {
-    return getPropertyValue(nextObject, parsedKeys.slice(1).join('.'));
-  }
-  return nextObject;
-}
+import keys from '../../translation-keys.json'
 
 function translateProperty(object: Record<string, unknown>, path: string, i18n: Record<string, string>) {
   const parsedKeys = path.split('.');
@@ -33,27 +22,7 @@ function translateProperty(object: Record<string, unknown>, path: string, i18n: 
   }
 }
 
-const keys: string[] = [
-  'displayName', 'description',
-  'auth.username.displayName',
-  'auth.username.description',
-  'auth.password.displayName',
-  'auth.password.description',
-  'auth.props.*.displayName',
-  'auth.props.*.description',
-  'auth.props.*.options.options.*.label',
-  'auth.description',
-  'actions.*.displayName',
-  'actions.*.description',
-  'actions.*.props.*.displayName',
-  'actions.*.props.*.description',
-  'actions.*.props.*.options.options.*.label',
-  'triggers.*.displayName',
-  'triggers.*.description',
-  'triggers.*.props.*.displayName',
-  'triggers.*.props.*.description',
-  'triggers.*.props.*.options.options.*.label'
-];
+
 
 async function fileExists(filePath: string) {
   try {
@@ -112,65 +81,46 @@ const extractPiecePath = async (pieceName: string, pieceSource: 'node_modules' |
   return undefined;
 }
 
-export const pieceTranslation = {
-  generateTranslationFile: (piece: PieceMetadata) => {
-    const translation: Record<string, string> = {}
-    try {
-      keys.forEach(key => {
-        const value = getPropertyValue(piece, key)
-        if (value) {
-          if (typeof value === 'string') {
-            translation[value] = value
-          }
-          else if (Array.isArray(value)) {
-            value.forEach(item => {
-              translation[item] = item
-            })
-          }
-        }
-      })
-    }
-    catch (err) {
-      console.error(`error generating translation file for piece ${piece.name}:`, err)
-    }
 
-    return translation
-  },
 
-  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
-    if (!locale) {
-      return piece
-    }
-    try {
-      const target = piece.i18n?.[locale]
-      if (!target) {
-        return piece
-      }
-      const translatedPiece: T = JSON.parse(JSON.stringify(piece))
-      keys.forEach(key => {
-        translateProperty(translatedPiece, key, target)
-      })
-      return translatedPiece
-    }
-    catch (err) {
-      console.error(`error translating piece ${piece.name}:`, err)
-      return piece
-    }
-  },
-
-  initializeI18n: async (pieceName: string, pieceSource: 'node_modules' | 'dist'): Promise<I18nForPiece | undefined> => {
-    const locales = Object.values(LocalesEnum);
-    const i18n: I18nForPiece = {};
-    const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
-    if (!pieceOutputPath) {
-      return undefined
-    }
-    for (const locale of locales) {
-      const translation = await readLocaleFile(locale, pieceOutputPath);
-      if (translation) {
-        i18n[locale] = translation;
-      }
-    }
-    return (Object.keys(i18n).length > 0) ? i18n : undefined;
+const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
+  if (!locale) {
+    return piece
   }
+  try {
+    const target = piece.i18n?.[locale]
+    if (!target) {
+      return piece
+    }
+    const translatedPiece: T = JSON.parse(JSON.stringify(piece))
+    keys.forEach(key => {
+      translateProperty(translatedPiece, key, target)
+    })
+    return translatedPiece
+  }
+  catch (err) {
+    console.error(`error translating piece ${piece.name}:`, err)
+    return piece
+  }
+}
+const initializeI18n =  async (pieceName: string, pieceSource: 'node_modules' | 'dist'): Promise<I18nForPiece | undefined> => {
+  const locales = Object.values(LocalesEnum);
+  const i18n: I18nForPiece = {};
+  const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
+  if (!pieceOutputPath) {
+    return undefined
+  }
+  for (const locale of locales) {
+    const translation = await readLocaleFile(locale, pieceOutputPath);
+    if (translation) {
+      i18n[locale] = translation;
+    }
+  }
+  return (Object.keys(i18n).length > 0) ? i18n : undefined;
+}
+
+
+export const pieceTranslation = {
+  translatePiece,
+  initializeI18n
 };
