@@ -1,5 +1,5 @@
 
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, translatePiece } from '@activepieces/pieces-framework'
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 
 import {
@@ -58,11 +58,7 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 }),
             )
             const result = toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
-        
-            if(params.locale) {
-                return result.map((piece) => translatePiece<PieceMetadataModelSummary>(piece, params.locale))
-            }
-            return result
+            return result.map((piece) => pieceTranslation.translatePiece<PieceMetadataModelSummary>(piece, params.locale))
         },
         async updateUsage() {
             throw new Error('Updating pieces is not supported in development mode')
@@ -117,11 +113,8 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 pieceMetadata,
                 projectId,
             })
-         
-            if(locale) {
-                return translatePiece<PieceMetadataModel>(result, locale)
-            }
-            return result
+
+            return pieceTranslation.translatePiece<PieceMetadataModel>(result, locale)
         },
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')

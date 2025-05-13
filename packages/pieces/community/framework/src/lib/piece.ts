@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
-import { initializeI18n } from './i18n';
+import { pieceTranslation } from './i18n';
 
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
@@ -35,7 +35,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
 
 
   async metadata(params: {packageName: string, pieceSource: 'node_modules' | 'dist'} | undefined): Promise<BackwardCompatiblePieceMetadata> {
-    const i18n = params? await initializeI18n(params.packageName, params.pieceSource): undefined
+    const i18n = params? await pieceTranslation.initializeI18n(params.packageName, params.pieceSource): undefined
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,
