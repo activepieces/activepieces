@@ -75,15 +75,12 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 suggestionType: req.query.suggestionType,
                 locale: req.query.locale,
             })
-            //because the Type.Array( PieceMetadataModelWithoutI18nSummary) is not working
-            const pieceMetadataSummaryWithoutI18n = pieceMetadataSummary.map((piece) => {
+            return pieceMetadataSummary.map((piece) => {
                 return {
                     ...piece,
                     i18n: undefined,
                 }
             })
-            
-            return pieceMetadataSummaryWithoutI18n
         },
     )
 

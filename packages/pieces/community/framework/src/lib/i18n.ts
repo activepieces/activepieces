@@ -2,29 +2,29 @@ import { I18nForPiece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSumm
 import { LocalesEnum } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
-function getProp(object: Record<string, unknown>, path: string): unknown {
+function getPropertyValue(object: Record<string, unknown>, path: string): unknown {
   const parsedKeys = path.split('.');
   if (parsedKeys[0] === '*') {
-    return Object.values(object).map(item => getProp(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
+    return Object.values(object).map(item => getPropertyValue(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
   }
   const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
   if (nextObject && parsedKeys.length > 1) {
-    return getProp(nextObject, parsedKeys.slice(1).join('.'));
+    return getPropertyValue(nextObject, parsedKeys.slice(1).join('.'));
   }
   return nextObject;
 }
 
-function setProp(object: Record<string, unknown>, path: string, i18n: Record<string, string>) {
+function translateProperty(object: Record<string, unknown>, path: string, i18n: Record<string, string>) {
   const parsedKeys = path.split('.');
   if (parsedKeys[0] === '*') {
-    return Object.values(object).forEach(item => setProp(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
+    return Object.values(object).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
   }
   const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
   if(!nextObject) {
     return;
   }
   if (parsedKeys.length > 1) {
-    return setProp(nextObject, parsedKeys.slice(1).join('.'), i18n);
+    return translateProperty(nextObject, parsedKeys.slice(1).join('.'), i18n);
   }
   const valueInI18n = i18n[object[parsedKeys[0]] as string]
   if(valueInI18n) {
@@ -58,7 +58,7 @@ export const generateTranslationFile = (piece: PieceMetadata) => {
   const translation: Record<string, string> = {}
   try{
     keys.forEach(key => {
-      const value = getProp(piece, key)
+      const value = getPropertyValue(piece, key)
       if (value) {
         if (typeof value === 'string') {
           translation[value] = value
@@ -86,7 +86,7 @@ export const translatePiece = <T extends PieceMetadataModelSummary | PieceMetada
     }
     const translatedPiece: T = JSON.parse(JSON.stringify(piece))
     keys.forEach(key => {
-      setProp(translatedPiece, key, target)
+      translateProperty(translatedPiece, key, target)
     })
     return translatedPiece
   }

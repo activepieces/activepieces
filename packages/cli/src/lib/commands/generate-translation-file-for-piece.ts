@@ -63,7 +63,3 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   .action(async (pieceName: string) => {
     await generateTranslationFile(pieceName);
   });
-
-
-
-  
