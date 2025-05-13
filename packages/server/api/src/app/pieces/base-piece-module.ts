@@ -181,7 +181,7 @@ const GetPieceParamsWithScopeRequest = {
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
-        querystring: GetPieceRequestQuery
+        querystring: GetPieceRequestQuery,
     },
 }
 

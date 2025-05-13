@@ -221,7 +221,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeMcpPieceForeignKey1746543346220,
         AddHandshakeConfigurationToFlowSqlite1746845932780,
         AddFolderDisplayOrder1747062679388,
-        AddI18nColumnToPieceMetadata1746714949131
+        AddI18nColumnToPieceMetadata1746714949131,
 
     ]
     const edition = system.getEdition()

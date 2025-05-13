@@ -5,10 +5,10 @@ import { findPiece } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 import { exec } from '../utils/exec';
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import keys from '../../../../pieces/community/framework/translation-keys.json';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
- try { 
     const module = await import(pieceOutputFile);
     const exports = Object.values(module);
     for (const e of exports) {
@@ -18,9 +18,6 @@ const findPieceInModule= async (pieceOutputFile: string) => {
       }
   
       throw new Error(`Piece not found in module, please check the piece output file ${pieceOutputFile}`);
- } catch (error) {
-    throw error;
- }
 }
 
 const installDependencies = async (pieceFolder: string) => {
