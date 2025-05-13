@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { FolderDto } from '@activepieces/shared';
 
 import { FolderAction } from './folder-action';
+import { SortableFolder } from './sortable-folder';
 
 interface FolderActionsMenuProps {
   moreFolders: FolderDto[];
@@ -63,23 +64,17 @@ export const FolderActionsMenu = ({
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
           <PopoverTrigger asChild>
             {selectedFolder ? (
-              <div className="relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 h-9"
-                >
-                  <span className="mr-2">
-                    {selectedFolder.displayName.split(' ')[0]}
-                  </span>
-                  <span className="mr-2 flex items-center">
-                    {selectedFolder.displayName.split(' ').slice(1).join(' ')}
-                    <span className="text-xs text-muted-foreground ml-1">
-                      ({selectedFolder.numberOfFlows})
-                    </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                </Button>
+              <div className="relative">
+                <SortableFolder
+                  folder={selectedFolder}
+                  isSelected={true}
+                  onClick={() => setShowMoreFolders(true)}
+                  onMouseDown={() => setShowMoreFolders(true)}
+                  refetch={refetchFolders}
+                  userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+                  showActions={false}
+                />
+                <ChevronDown className="h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             ) : (
               <Button
