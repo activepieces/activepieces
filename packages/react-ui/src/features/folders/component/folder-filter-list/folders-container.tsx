@@ -103,9 +103,9 @@ export const FoldersContainer = ({
     ? sortableFolders
     : sortableFolders.slice(0, 3);
 
-  const hiddenFoldersCount = sortableFolders.length - displayFolders.length;
   const moreFolders = sortableFolders.filter(
-    (folder) => !displayFolders.some((displayFolder) => displayFolder.id === folder.id)
+    (folder) =>
+      !displayFolders.some((displayFolder) => displayFolder.id === folder.id),
   );
 
   return (

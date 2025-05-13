@@ -48,7 +48,7 @@ export const FolderActionsMenu = ({
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const allFolders = [ ...moreFolders];
+  const allFolders = [...moreFolders];
 
   // Filter folders based on case-insensitive search
   const filteredFolders = searchQuery
@@ -69,7 +69,9 @@ export const FolderActionsMenu = ({
                   size="sm"
                   className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 h-9"
                 >
-                  <span className="mr-2">{selectedFolder.displayName.split(' ')[0]}</span>
+                  <span className="mr-2">
+                    {selectedFolder.displayName.split(' ')[0]}
+                  </span>
                   <span className="mr-2 flex items-center">
                     {selectedFolder.displayName.split(' ').slice(1).join(' ')}
                     <span className="text-xs text-muted-foreground ml-1">
