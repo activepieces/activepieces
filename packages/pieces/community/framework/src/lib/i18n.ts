@@ -55,15 +55,13 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   }
 }
 
-const extractPiecePath = async (pieceName: string, pieceSource: 'node_modules' | 'dist') => {
-  if (pieceSource === 'node_modules') {
+const extractPiecePath = async (pieceName: string) => {
+  if(await fileExists(path.resolve('node_modules', pieceName))) {
     return path.resolve('node_modules', pieceName);
   }
-
   const distPath = path.resolve('dist/packages/pieces');
   const fastGlob = (await import('fast-glob')).default;
   const packageJsonFiles = await fastGlob('**/**/package.json', { cwd: distPath });
-
   for (const relativeFile of packageJsonFiles) {
     const fullPath = path.join(distPath, relativeFile);
     try {
@@ -103,10 +101,10 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
     return piece
   }
 }
-const initializeI18n =  async (pieceName: string, pieceSource: 'node_modules' | 'dist'): Promise<I18nForPiece | undefined> => {
+const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefined> => {
   const locales = Object.values(LocalesEnum);
   const i18n: I18nForPiece = {};
-  const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
+  const pieceOutputPath = await extractPiecePath(pieceName)
   if (!pieceOutputPath) {
     return undefined
   }
@@ -119,8 +117,7 @@ const initializeI18n =  async (pieceName: string, pieceSource: 'node_modules' | 
   return (Object.keys(i18n).length > 0) ? i18n : undefined;
 }
 
-
 export const pieceTranslation = {
   translatePiece,
   initializeI18n
-};
+}

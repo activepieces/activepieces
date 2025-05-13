@@ -2,20 +2,20 @@
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
-import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
+import { Piece, PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
 import { execSync } from 'child_process'
 
-type Piece = {
+type SubPiece = {
     name: string;
     displayName: string;
     version: string;
     minimumSupportedRelease?: string;
     maximumSupportedRelease?: string;
-    metadata(params: {packageName: string, pieceSource: 'node_modules' | 'dist'} | undefined): Promise<Omit<PieceMetadata, 'name' | 'version'>>;
+    metadata(params: Parameters<Piece['metadata']>[0]): Promise<Omit<PieceMetadata, 'name' | 'version'>>;
 };
 
 export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
@@ -162,13 +162,13 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
+        const piece = extractPieceFromModule<SubPiece>({
             module,
             pieceName,
             pieceVersion
         });
         const metadata = {
-            ...(await piece.metadata({packageName: packageJson.name, pieceSource: 'dist'})),
+            ...(await piece.metadata({pieceName: packageJson.name})),
             name: packageJson.name,
             version: packageJson.version,
         };
