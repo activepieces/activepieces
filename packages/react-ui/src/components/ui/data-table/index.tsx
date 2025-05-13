@@ -85,6 +85,7 @@ interface DataTableProps<
   ) => void;
   isLoading: boolean;
   filters?: F[];
+  customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
@@ -119,6 +120,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  customFilters,
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns =
     actions.length > 0
@@ -254,6 +256,10 @@ export function DataTable<
                     title={filter.title}
                     options={filter.options}
                   />
+                ))}
+              {customFilters &&
+                customFilters.map((filter, idx) => (
+                  <React.Fragment key={idx}>{filter}</React.Fragment>
                 ))}
             </div>
             {bulkActions.length > 0 && (

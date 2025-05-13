@@ -1,4 +1,4 @@
-import { AdminAddConnectionsToFlowVersionsRequestBody, AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, PrincipalType } from '@activepieces/shared'
+import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
@@ -22,11 +22,6 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
-    app.post('/flows/versions/connections', AdminAddConnectionsToFlowVersionsRequest, async (req, res) => {
-        const { flowVersionIds } = req.body
-        await adminPlatformService(req.log).addConnectionsToFlowVersions(flowVersionIds)
-        return res.status(StatusCodes.OK).send()
-    })
 }
 
 const AdminAddPlatformRequest = {
@@ -48,11 +43,3 @@ const AdminRetryRunsRequest = {
     },
 }
 
-const AdminAddConnectionsToFlowVersionsRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-    schema: {
-        body: AdminAddConnectionsToFlowVersionsRequestBody,
-    },
-}
