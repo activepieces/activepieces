@@ -94,7 +94,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
                 await transactionalEntityManager.update(
                     FolderEntity,
                     { id: folderOrder.folderId, projectId },
-                    { displayOrder: folderOrder.order }
+                    { displayOrder: folderOrder.order },
                 )
             }
         })

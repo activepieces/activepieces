@@ -338,7 +338,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdForTablesAndFields1746356907629,
         ChangeMcpPieceForeignKey1746543299109,
         AddHandshakeConfigurationToFlow1746848208563,
-        AddOrderToFolder1747095861746
+        AddOrderToFolder1747095861746,
     ]
 
     const edition = system.getEdition()

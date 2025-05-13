@@ -20,7 +20,7 @@ export const FolderEntity = new EntitySchema<FolderSchema>({
         projectId: ApIdSchema,
         displayOrder: {
             type: Number,
-            default: 0
+            default: 0,
         },
     },
     indices: [

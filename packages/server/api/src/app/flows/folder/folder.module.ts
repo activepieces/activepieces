@@ -204,7 +204,7 @@ const UpdateFolderOrderParams = {
                 Type.Object({
                     folderId: Type.String(),
                     order: Type.Number(),
-                })
+                }),
             ),
         }),
     },
