@@ -35,6 +35,11 @@ export const newTranscriptionComplete = createTrigger({
     const hmacSignature = payload.headers['x-hub-signature'];
 
     if (webhookSecretKey) {
+        if (!hmacSignature) {
+            console.log('[FIREFILES_AI] Webhook signature verification failed.');
+            return [];
+        }
+
         const body = JSON.stringify(payload.body);
         const hmac = crypto.createHmac('sha256', webhookSecretKey);
         const digest = 'sha256=' + hmac.update(body).digest('hex');
