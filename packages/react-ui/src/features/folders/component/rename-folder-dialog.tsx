@@ -97,7 +97,7 @@ export const RenameFolderDialog = ({
       handleClose();
       onRename();
       toast({
-        title: t('Renamed flow successfully'),
+        title: t('Renamed folder successfully'),
       });
     },
     onError: (err) => {
@@ -154,6 +154,8 @@ export const RenameFolderDialog = ({
                       id="folder"
                       placeholder={t('Folder Name')}
                       className="rounded-sm"
+                      autoComplete="off"
+                      spellCheck="false"
                     />
                   </div>
                   <FormMessage />

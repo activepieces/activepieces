@@ -15,6 +15,7 @@ export type SortableFolderProps = {
   onMouseDown: () => void;
   refetch: () => void;
   userHasPermissionToUpdateFolders: boolean;
+  showActions: boolean;
 };
 
 export const SortableFolder = ({
@@ -24,6 +25,7 @@ export const SortableFolder = ({
   onMouseDown,
   refetch,
   userHasPermissionToUpdateFolders,
+  showActions,
 }: SortableFolderProps) => {
   const {
     attributes,
@@ -75,19 +77,21 @@ export const SortableFolder = ({
         className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 z-10"
       >
         <span className="mr-2">{emoji}</span>
-        <span className="mr-2 flex items-center">
+        <span className="flex items-center">
           {name}
           <span className="text-xs text-muted-foreground ml-1">
             ({folder.numberOfFlows})
           </span>
         </span>
-        <FolderAction
-          folder={folder}
-          refetch={async () => {
-            await refetch();
-          }}
-          userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
-        />
+        {showActions && (
+          <FolderAction
+            folder={folder}
+            refetch={async () => {
+              await refetch();
+            }}
+            userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+          />
+        )}
       </Button>
     </div>
   );

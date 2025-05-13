@@ -22,6 +22,7 @@ import { FolderAction } from './folder-action';
 
 interface FolderActionsMenuProps {
   moreFolders: FolderDto[];
+  visibleFolders: FolderDto[];
   showMoreFolders: boolean;
   setShowMoreFolders: (show: boolean) => void;
   selectedFolderId: string | null;
@@ -32,6 +33,7 @@ interface FolderActionsMenuProps {
 
 export const FolderActionsMenu = ({
   moreFolders,
+  visibleFolders,
   showMoreFolders,
   setShowMoreFolders,
   selectedFolderId,
@@ -39,19 +41,21 @@ export const FolderActionsMenu = ({
   refetchFolders,
   userHasPermissionToUpdateFolders,
 }: FolderActionsMenuProps) => {
-  // Find the selected folder from moreFolders if it exists
+  // Find the selected folder from moreFolders if it exists and is not visible
   const selectedFolder = selectedFolderId
     ? moreFolders.find((folder) => folder.id === selectedFolderId)
     : null;
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const allFolders = [ ...moreFolders];
+
   // Filter folders based on case-insensitive search
   const filteredFolders = searchQuery
-    ? moreFolders.filter((folder) =>
+    ? allFolders.filter((folder) =>
         folder.displayName.toLowerCase().includes(searchQuery.toLowerCase()),
       )
-    : moreFolders;
+    : allFolders;
 
   return (
     <>
@@ -59,16 +63,22 @@ export const FolderActionsMenu = ({
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
           <PopoverTrigger asChild>
             {selectedFolder ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <span className="text-sm font-medium">
-                  {selectedFolder.displayName}
-                </span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
+              <div className="relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 h-9"
+                >
+                  <span className="mr-2">{selectedFolder.displayName.split(' ')[0]}</span>
+                  <span className="mr-2 flex items-center">
+                    {selectedFolder.displayName.split(' ').slice(1).join(' ')}
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({selectedFolder.numberOfFlows})
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                </Button>
+              </div>
             ) : (
               <Button
                 variant="ghost"

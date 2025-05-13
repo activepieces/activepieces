@@ -104,7 +104,9 @@ export const FoldersContainer = ({
     : sortableFolders.slice(0, 3);
 
   const hiddenFoldersCount = sortableFolders.length - displayFolders.length;
-  const moreFolders = sortableFolders.slice(3);
+  const moreFolders = sortableFolders.filter(
+    (folder) => !displayFolders.some((displayFolder) => displayFolder.id === folder.id)
+  );
 
   return (
     <ScrollArea className="w-full">
@@ -139,12 +141,14 @@ export const FoldersContainer = ({
                     userHasPermissionToUpdateFolders={
                       userHasPermissionToUpdateFolders
                     }
+                    showActions={true}
                   />
                 ))}
 
-                {!isDragging && hiddenFoldersCount > 0 && (
+                {!isDragging && (
                   <FolderActionsMenu
                     moreFolders={moreFolders}
+                    visibleFolders={displayFolders}
                     showMoreFolders={showMoreFolders}
                     setShowMoreFolders={setShowMoreFolders}
                     selectedFolderId={selectedFolderId}
