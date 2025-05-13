@@ -26,7 +26,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 displayName: flow.version.displayName,
                 projectId,
             },
-            externalId: flow.externalId || flow.id,
+            externalId: flow.externalId,
         })
         return this.updateFlowInProject(createdFlow, flow, projectId)
     },
@@ -38,7 +38,8 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
             const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
-            if (oldStep?.settings?.input?.auth) {
+            const isNotEmptyTrigger = !isNil(step.settings?.input)
+            if (oldStep?.settings?.input?.auth && isNotEmptyTrigger) {
                 step.settings.input.auth = oldStep.settings.input.auth
             }
             return step
