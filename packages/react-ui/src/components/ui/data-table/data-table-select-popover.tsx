@@ -23,7 +23,7 @@ type DataTableSelectPopoverProps = {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: React.ComponentType<{ className?: string }> | string;
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
@@ -113,8 +113,16 @@ const DataTableSelectPopover = ({
                       >
                         <CheckIcon className={cn('h-4 w-4')} />
                       </div>
-                      {option.icon && (
-                        <option.icon className="mr-2 size-4 text-muted-foreground" />
+                      {typeof option.icon === 'string' ? (
+                        <img
+                          src={option.icon}
+                          alt={option.label}
+                          className="mr-2 size-4 object-contain"
+                        />
+                      ) : (
+                        option.icon && (
+                          <option.icon className="mr-2 size-4 text-muted-foreground" />
+                        )
                       )}
                       <div>
                         <span>{option.label}</span>

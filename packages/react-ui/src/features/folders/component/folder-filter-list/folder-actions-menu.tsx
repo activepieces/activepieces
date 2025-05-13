@@ -71,7 +71,9 @@ export const FolderActionsMenu = ({
                   onClick={() => setShowMoreFolders(true)}
                   onMouseDown={() => setShowMoreFolders(true)}
                   refetch={refetchFolders}
-                  userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+                  userHasPermissionToUpdateFolders={
+                    userHasPermissionToUpdateFolders
+                  }
                   showActions={false}
                 />
                 <ChevronDown className="h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
