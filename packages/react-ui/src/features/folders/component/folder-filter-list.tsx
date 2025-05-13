@@ -84,7 +84,6 @@ const FolderItem = ({
           className="flex-grow"
           icon={<FolderIcon isFolderOpen={selectedFolderId === folder.id} />}
           text={
-
             <div
               className={cn(
                 'flex-grow whitespace-break-spaces break-all text-start truncate',

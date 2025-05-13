@@ -44,7 +44,6 @@ export const FlowsTable = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { pieces } = piecesHooks.usePieces({});
 
-
   const columns = useMemo(() => {
     return flowsTableColumns({
       refetch,
