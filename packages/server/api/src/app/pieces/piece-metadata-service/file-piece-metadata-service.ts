@@ -60,7 +60,7 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
             const result = toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
         
             if(params.locale) {
-                return result.map((piece) => translatePiece<PieceMetadataModelSummary>(piece, params.locale!))
+                return result.map((piece) => translatePiece<PieceMetadataModelSummary>(piece, params.locale))
             }
             return result
         },

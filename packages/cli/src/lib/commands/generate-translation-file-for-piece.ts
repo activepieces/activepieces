@@ -40,18 +40,20 @@ const generateTrasnlationFileFromPiecesFramework = async () => {
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
-  console.log(chalk.blue(`building piece ${pieceRoot}`))
-  await buildPiece(pieceRoot);
-  console.log(chalk.green(`finished building piece ${pieceRoot}`))
   const outputFolder = pieceRoot.replace('packages/', 'dist/packages/')
-  await installDependencies(outputFolder)
-  const pieceFromModule = await findPieceInModule(outputFolder);
-  const generateTranslationFile = await generateTrasnlationFileFromPiecesFramework();
-  const i18n = generateTranslationFile({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
-  const i18nFolder = join(pieceRoot, 'src', 'i18n')
-  await makeFolderRecursive(i18nFolder);
-  await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
-  console.log(chalk.yellow('✨'), `Translation file for piece created in ${i18nFolder}`);
+  try{
+    await installDependencies(outputFolder)
+    const pieceFromModule = await findPieceInModule(outputFolder);
+    const generateTranslationFile = await generateTrasnlationFileFromPiecesFramework();
+    const i18n = generateTranslationFile({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
+    const i18nFolder = join(pieceRoot, 'src', 'i18n')
+    await makeFolderRecursive(i18nFolder);
+    await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
+    console.log(chalk.yellow('✨'), `Translation file for piece created in ${i18nFolder}`);
+  } catch (error) {
+    console.error(chalk.red('❌'), `Error generating translation file for piece ${pieceName}, make sure you built the piece`,error);
+  }
+  
 };
 
 

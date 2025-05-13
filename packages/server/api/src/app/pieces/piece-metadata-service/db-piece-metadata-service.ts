@@ -43,7 +43,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
-            const translatedPieces = filteredPieces.map((piece) => translatePiece<PieceMetadataModel>(piece, params.locale!))
+            const translatedPieces = filteredPieces.map((piece) => translatePiece<PieceMetadataModel>(piece, params.locale))
             const result = toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)
            
             return result
@@ -75,10 +75,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                     },
                 })
             }
-            if(locale) {
-                return translatePiece<PieceMetadataModel>(piece, locale)
-            }
-            return piece
+            return translatePiece<PieceMetadataModel>(piece, locale)
         },
         async getVersions({ name, projectId, release, platformId }): Promise<ListVersionsResponse> {
             const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
