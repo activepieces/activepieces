@@ -12,7 +12,7 @@ import {
   TableProperties,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -40,7 +40,6 @@ import { foldersUtils } from '../lib/folders-utils';
 
 import { CreateFolderDialog } from './create-folder-dialog';
 import { RenameFolderDialog } from './rename-folder-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
   return isFolderOpen ? (
@@ -233,7 +232,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const isInAllFlows = isNil(selectedFolderId);
 
   return (
-    <div className="py-2">
+    <div className="mt-4">
       <div className="flex flex-row items-center mb-2">
         <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>

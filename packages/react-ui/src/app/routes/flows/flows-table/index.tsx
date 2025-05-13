@@ -51,6 +51,7 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+
   const columns = useMemo(() => {
     return flowsTableColumns({
       refetch,
@@ -73,7 +74,9 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
 
   return (
     <div className="flex flex-row gap-4">
-      <FolderFilterList key="folder-filter" refresh={refresh} />
+      {!embedState.hideFolders && (
+        <FolderFilterList key="folder-filter" refresh={refresh} />
+      )}
       <div className="w-full">
         <DataTable
           emptyStateTextTitle={t('No flows found')}
