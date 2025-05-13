@@ -24,7 +24,6 @@ const supportedAgentModels: ModelOption[] = [
   { label: 'o1', value: 'o1', provider: 'openai' },
   { label: 'GPT-4o', value: 'gpt-4o', provider: 'openai' },
   { label: 'GPT-4o Mini', value: 'gpt-4o-mini', provider: 'openai' },
-  { label: 'GPT-4 Turbo', value: 'gpt-4-turbo', provider: 'openai' },
   { label: 'GPT-4', value: 'gpt-4', provider: 'openai' },
   { label: 'GPT-4.1', value: 'gpt-4.1', provider: 'openai' },
   { label: 'GPT-4.1 Mini', value: 'gpt-4.1-mini', provider: 'openai' },
@@ -35,14 +34,14 @@ const supportedAgentModels: ModelOption[] = [
 export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
-  description: 'Let an AI assistant help you with tasks using tools.',
+  description: 'Run the AI assistant to complete your task.',
   auth: PieceAuth.None(),
   props: {
     model: Property.StaticDropdown<string>({
       displayName: 'Model',
-      description: 'Select the model to use for the agent.',
+      description: 'Choose which AI model powers the assistant.',
       required: true,
-      defaultValue: 'claude-3-5-sonnet-latest',
+      defaultValue: 'claude-3-7-sonnet-latest',
       options: {
         disabled: false,
         options: supportedAgentModels.map(opt => ({ label: opt.label, value: opt.value })),
@@ -50,19 +49,19 @@ export const runAgent = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
-      description: "The user's request for the agent",
+      description: 'Describe what you want the assistant to do.',
       required: true,
     }),
     maxIterations: Property.Number({
-      displayName: 'Max Iterations',
-      description: 'Maximum agent steps before stopping',
-      required: false,
+      displayName: 'Max Steps',
+      description: 'How many steps the assistant can take before stopping.',
+      required: true,
       defaultValue: 10,
     }),
     mcpUrls: Property.Array({
       displayName: 'MCP Server URLs',
-      description: 'URLs of MCP servers providing tools',
-      required: true,
+      description: 'Add MCP server URLs so the AI agent can use its tools.',
+      required: false,
       defaultValue: [],
     }),
   },
@@ -70,13 +69,20 @@ export const runAgent = createAction({
     const serverToken = context.server.token;
     const modelValue = context.propsValue.model;
     const userPrompt = context.propsValue.prompt;
-    const maxIterations = context.propsValue.maxIterations ?? 10;
+    const maxIterations = context.propsValue.maxIterations;
     const mcpUrls = (context.propsValue.mcpUrls || []) as string[];
 
     const validMcpUrls = validateMcpUrls(mcpUrls);
-    const multiClient = setupMcpClient(validMcpUrls);
-    const tools = await multiClient.getTools();
-    console.log(`Successfully loaded ${tools.length} tools from ${validMcpUrls.length} servers`);
+    let tools: StructuredToolInterface[] = [];
+    let multiClient: MultiServerMCPClient | null = null;
+
+    if (validMcpUrls.length > 0) {
+      multiClient = setupMcpClient(validMcpUrls);
+      tools = await multiClient.getTools();
+      console.log(`Successfully loaded ${tools.length} tools from ${validMcpUrls.length} MCP servers`);
+    } else {
+      console.log('No MCP server URLs provided, proceeding without MCP tools.');
+    }
 
     const modelInstance = await getChatModelInstance(
       modelValue!,
@@ -86,47 +92,45 @@ export const runAgent = createAction({
     );
 
     const agentExecutionResult = await executeAgent(modelInstance, tools, userPrompt, maxIterations);
-    const processedResult = normalizeAgentOutputResponse(agentExecutionResult);
-
-    await multiClient.close();
-
-    if (typeof processedResult === 'string') {
-      return { output: processedResult };
-    } else {
-      // processedResult is ChainValues here
-      if (processedResult && processedResult.hasOwnProperty('error') && processedResult['error'] != null) {
-        return { error: String(processedResult['error']) };
-      }
-      // If no error, and not normalized to a string, return the original agent result.
-      return processedResult; 
+    
+    if (multiClient) {
+      await multiClient.close();
     }
+
+    return normalizeAgentOutputResponse(agentExecutionResult);
   },
 });
 
-function normalizeAgentOutputResponse(agentResult: ChainValues): string | ChainValues {
-  if (agentResult && agentResult.hasOwnProperty('output')) {
-    const outputValue = agentResult['output'];
+function normalizeAgentOutputResponse(agentResult: ChainValues | string): Record<string, any> {
+  if (typeof agentResult === 'string') {
+    return { output: agentResult };
+  }
 
-    if (typeof outputValue === 'string') {
-      return outputValue; // Return the string directly
-    }
+  if (agentResult && typeof agentResult === 'object') {
 
-    if (Array.isArray(outputValue) && outputValue.length > 0) {
-      const firstItem = outputValue[0];
-      if (
-        firstItem &&
-        typeof firstItem === 'object' &&
-        firstItem.hasOwnProperty('type') &&
-        firstItem.type === 'text' &&
-        firstItem.hasOwnProperty('text') &&
-        typeof firstItem.text === 'string'
-      ) {
-        return firstItem.text; // Return extracted string directly
+    if (agentResult.hasOwnProperty('output')) {
+      const outputValue = agentResult['output'];
+
+      if (typeof outputValue === 'string') {
+        return { output: outputValue };
+      }
+
+      if (Array.isArray(outputValue) && outputValue.length > 0) {
+        const firstItem = outputValue[0];
+        if (
+          firstItem &&
+          typeof firstItem === 'object' &&
+          firstItem.hasOwnProperty('type') &&
+          firstItem.type === 'text' &&
+          firstItem.hasOwnProperty('text') &&
+          typeof firstItem.text === 'string'
+        ) {
+          return { output: firstItem.text };
+        }
       }
     }
   }
-  // In all other cases (output not string, not Anthropic array, output missing, or error exists), 
-  // return the original agentResult.
+
   return agentResult;
 }
 
