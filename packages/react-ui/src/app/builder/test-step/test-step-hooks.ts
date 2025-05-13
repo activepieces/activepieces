@@ -52,8 +52,8 @@ const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    return useMutation<TriggerEventWithPayload[], Error, void>({
-      mutationFn: async () => {
+    return useMutation<TriggerEventWithPayload[], Error, AbortSignal>({
+      mutationFn: async (abortSignal: AbortSignal) => {
         setErrorMessage?.(undefined);
         const ids = (
           await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
@@ -62,6 +62,9 @@ const testStepHooks = {
         // TODO REFACTOR: replace this with a websocket
         let attempt = 0;
         while (attempt < 1000) {
+          if (abortSignal.aborted) {
+            return [];
+          }
           const newData = await triggerEventsApi.list({
             flowId,
             cursor: undefined,
@@ -78,7 +81,7 @@ const testStepHooks = {
             }
             return newData.data;
           }
-          await waitFor1Second();
+          await waitFor2Seconds();
           attempt++;
         }
         return [];
@@ -328,7 +331,7 @@ async function updateTriggerSampleData({
   setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
 }
 
-const waitFor1Second = () =>
-  new Promise((resolve) => setTimeout(resolve, 10000));
+const waitFor2Seconds = () =>
+  new Promise((resolve) => setTimeout(resolve, 2000));
 
 export default testStepHooks;

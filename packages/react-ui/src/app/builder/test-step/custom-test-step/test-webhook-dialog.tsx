@@ -1,6 +1,7 @@
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -88,6 +89,7 @@ const TestTriggerWebhookDialog = ({
   testingMode,
   onTestFinished,
 }: TestTriggerWebhookDialogProps) => {
+  const abortControllerRef = useRef<AbortController>(new AbortController());
   const { mutate: simulateTrigger, isPending: isSimulating } =
     testStepHooks.useSimulateTrigger({
       setErrorMessage: undefined,
@@ -96,7 +98,10 @@ const TestTriggerWebhookDialog = ({
         onOpenChange(false);
       },
     });
-
+  const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.WEBHOOK_URL_PREFIX,
+  );
+  const flowId = useBuilderStateContext((state) => state.flow.id);
   const { mutate: onSubmit, isPending } = useMutation<
     unknown,
     Error,
@@ -104,7 +109,8 @@ const TestTriggerWebhookDialog = ({
   >({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
       await triggerEventsApi.startWebhookSimulation(flowId);
-      simulateTrigger();
+      simulateTrigger(abortControllerRef.current.signal);
+      const url = `${webhookPrefixUrl}/${flowId}/test`;
       await api.any(url, {
         method: data.method,
         data: data.body,
@@ -113,13 +119,18 @@ const TestTriggerWebhookDialog = ({
       });
     },
   });
-  const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.WEBHOOK_URL_PREFIX,
-  );
-  const flowId = useBuilderStateContext((state) => state.flow.id);
-  const url = `${webhookPrefixUrl}/${flowId}`;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = new AbortController();
+        }
+        onOpenChange(open);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
