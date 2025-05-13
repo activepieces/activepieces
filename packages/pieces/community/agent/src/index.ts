@@ -1,13 +1,16 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { OpenAIAgent } from "./lib/actions/openai-agent";
+import { runAgent } from "./lib/actions/run-agent";
+import { PieceCategory } from "@activepieces/shared";
 
 export const agent = createPiece({
   displayName: "Agent",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/agent.png",
-  authors: [],
-  actions: [OpenAIAgent],
+  minimumSupportedRelease: '0.50.2',
+  logoUrl: "https://cdn.activepieces.com/quicknew/agents/robots/robot_1.png",
+  authors: ['Gamal72'],
+  description: "Let an AI assistant help you with tasks using tools.",
+  actions: [runAgent],
   triggers: [],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
 });
     
