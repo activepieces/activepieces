@@ -402,7 +402,7 @@ const PieceSelector = ({
 
     // Generate random number for the robot icon
     const randomNumber = Math.floor(Math.random() * 10000) + 1;
-    const customLogoUrl = `https://cdn.activepieces.com/quicknew/agents/robots/robot_${randomNumber}.png`;
+    const customLogoUrl = `https://cdn.activepieces.com/pieces/ai/robots/robot_${randomNumber}.png`;
 
     // Set custom logo URL for the agent step
     if (stepData.settings.inputUiInfo?.customizedInputs) {

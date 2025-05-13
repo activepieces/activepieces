@@ -92,7 +92,7 @@ export const runAgent = createAction({
     );
 
     const agentExecutionResult = await executeAgent(modelInstance, tools, userPrompt, maxIterations);
-    
+
     if (multiClient) {
       await multiClient.close();
     }
@@ -147,7 +147,7 @@ async function getChatModelInstance(
   }
 
   const { provider, value: modelId } = selectedOption;
-  
+
 
   switch (provider) {
     case 'anthropic': {
@@ -158,13 +158,13 @@ async function getChatModelInstance(
         clientOptions: { defaultHeaders: { Authorization: `Bearer ${serverToken}` } },
         invocationKwargs: {
           thinking: { type: "disabled" }
-        }        
+        }
       });
     }
     case 'openai': {
       return new ChatOpenAI({
         model: modelId,
-        openAIApiKey: serverToken, 
+        openAIApiKey: serverToken,
         configuration: {
           baseURL: `${serverApiUrl}v1/ai-providers/proxy/openai/v1`,
         }
@@ -212,7 +212,7 @@ export async function executeAgent(
   
   Do not guess or fabricate data.
   `;
-  
+
 
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", systemPrompt],
@@ -231,56 +231,55 @@ export async function executeAgent(
     tools,
     maxIterations,
     returnIntermediateSteps: true,
-    // verbose: true,
     handleParsingErrors: (error: unknown): string => {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("Agent Error during tool execution/validation:", message);
-        if (message.includes("did not match expected schema")) {
-             return `Tool Argument Error: The arguments provided were invalid according to the tool's schema. Please check the schema description and try again. Error: ${message}`;
-        }
-        return `Execution Error: An error occurred trying to process the tool call or format the response: ${message}. Please reassess the situation.`;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Agent Error during tool execution/validation:", message);
+      if (message.includes("did not match expected schema")) {
+        return `Tool Argument Error: The arguments provided were invalid according to the tool's schema. Please check the schema description and try again. Error: ${message}`;
+      }
+      return `Execution Error: An error occurred trying to process the tool call or format the response: ${message}. Please reassess the situation.`;
     },
   });
 
   console.log(`Running Tool Calling Agent with input: "${userPrompt}"`);
   try {
-      const result = await executor.invoke({
-        input: userPrompt,
-      });
+    const result = await executor.invoke({
+      input: userPrompt,
+    });
 
-      console.log(`Agent finished with result:`, JSON.stringify(result, null, 2));
-      return result;
+    console.log(`Agent finished with result:`, JSON.stringify(result, null, 2));
+    return result;
   } catch (error) {
-      console.error("Agent execution failed with exception:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return { error: `Agent execution failed unexpectedly: ${errorMessage}` };
+    console.error("Agent execution failed with exception:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { error: `Agent execution failed unexpectedly: ${errorMessage}` };
   }
 }
 
 function validateMcpUrls(mcpUrls: string[]): string[] {
-    const validMcpUrls = mcpUrls
-      .filter((url): url is string => typeof url === 'string' && url.trim() !== '')
-      .map(url => {
-        try {
-          return new URL(url).toString();
-        } catch (e) {
-          console.error(`Invalid MCP URL: ${url}`);
-          return null;
-        }
-      })
-      .filter((url): url is string => url !== null);
-  return validMcpUrls;
+  return mcpUrls
+    .filter((url): url is string => typeof url === 'string' && url.trim() !== '')
+    .filter(isValidMcpUrl)
 }
 
+function isValidMcpUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 function setupMcpClient(validMcpUrls: string[]): MultiServerMCPClient {
-    const serverConfig: Record<string, { transport: "sse", url: string }> = {};
-    validMcpUrls.forEach((url, index) => {
+  const serverConfig = Object.fromEntries(
+    validMcpUrls.map((url, index) => {
       const serverName = `server${index + 1}`;
-      serverConfig[serverName] = {
-        transport: "sse",
+      return [serverName, {
+        transport: "sse" as const,
         url
-      };
-    });
-    console.log(`Connecting to ${validMcpUrls.length} MCP servers`);
+      }];
+    })
+  );
+  console.trace(`Connecting to ${validMcpUrls.length} MCP servers`);
   return new MultiServerMCPClient(serverConfig);
 }
