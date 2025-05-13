@@ -73,8 +73,8 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
 
   return (
     <div className="flex flex-row gap-4">
+      <FolderFilterList key="folder-filter" refresh={refresh} />
       <div className="w-full">
-        <FolderFilterList key="folder-filter" refresh={refresh} />
         <DataTable
           emptyStateTextTitle={t('No flows found')}
           emptyStateTextDescription={t('Create a workflow to start automating')}
