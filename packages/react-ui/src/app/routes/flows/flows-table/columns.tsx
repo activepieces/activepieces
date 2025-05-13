@@ -208,4 +208,8 @@ export const flowsTableColumns = ({
       );
     },
   },
+  {
+    accessorKey: 'connectionExternalId',
+    enableHiding: true,
+  },
 ];

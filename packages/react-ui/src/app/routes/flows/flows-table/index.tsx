@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { CheckIcon, Workflow } from 'lucide-react';
+import { CheckIcon, Link2, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,42 +7,34 @@ import { useEmbedding } from '@/components/embed-provider';
 import { DataTable } from '@/components/ui/data-table';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow, SeekPage } from '@activepieces/shared';
+import {
+  AppConnectionWithoutSensitiveData,
+  FlowStatus,
+  PopulatedFlow,
+  SeekPage,
+} from '@activepieces/shared';
 
 import { flowsTableColumns } from './columns';
-
-const filters = [
-  {
-    type: 'input',
-    title: t('Flow name'),
-    accessorKey: 'name',
-    options: [],
-    icon: CheckIcon,
-  } as const,
-  {
-    type: 'select',
-    title: t('Status'),
-    accessorKey: 'status',
-    options: Object.values(FlowStatus).map((status) => {
-      return {
-        label: formatUtils.convertEnumToHumanReadable(status),
-        value: status,
-      };
-    }),
-    icon: CheckIcon,
-  } as const,
-];
 
 type FlowsTableProps = {
   data: SeekPage<PopulatedFlow> | undefined;
   isLoading: boolean;
+  connections: AppConnectionWithoutSensitiveData[];
+  isLoadingConnections: boolean;
   refetch: () => void;
 };
 
-export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
+export const FlowsTable = ({
+  data,
+  isLoading,
+  refetch,
+  connections,
+  isLoadingConnections,
+}: FlowsTableProps) => {
   const { embedState } = useEmbedding();
   const openNewWindow = useNewWindow();
 
@@ -50,6 +42,7 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { pieces } = piecesHooks.usePieces({});
 
   const columns = useMemo(() => {
     return flowsTableColumns({
@@ -60,6 +53,41 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
       setSelectedRows,
     });
   }, [refresh, setRefresh, selectedRows, setSelectedRows]);
+
+  const filters = [
+    {
+      type: 'input',
+      title: t('Flow name'),
+      accessorKey: 'name',
+      options: [],
+      icon: CheckIcon,
+    } as const,
+    {
+      type: 'select',
+      title: t('Status'),
+      accessorKey: 'status',
+      options: Object.values(FlowStatus).map((status) => {
+        return {
+          label: formatUtils.convertEnumToHumanReadable(status),
+          value: status,
+        };
+      }),
+      icon: CheckIcon,
+    } as const,
+    {
+      type: 'select',
+      title: t('Connection'),
+      accessorKey: 'connectionExternalId',
+      options: connections.map((connection) => {
+        return {
+          label: connection.displayName,
+          value: connection.externalId,
+          icon: pieces?.find((p) => p.name === connection.pieceName)?.logoUrl,
+        };
+      }),
+      icon: Link2,
+    } as const,
+  ];
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
@@ -84,7 +112,7 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
               !embedState.hideFolders || column.accessorKey !== 'folderId',
           )}
           page={data}
-          isLoading={isLoading}
+          isLoading={isLoading || isLoadingConnections}
           filters={filters}
           bulkActions={bulkActions}
           onRowClick={(row, newWindow) => {
