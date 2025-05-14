@@ -22,10 +22,20 @@ export const getGraphQuestion = createAction({
       displayName: 'The name of the graph (without the extension)',
       required: false,
     }),
+    waitTime: Property.Number({
+      displayName: 'Wait Time (seconds)',
+      description:
+        'How long to wait for the graph to render completely in seconds',
+      required: true,
+      defaultValue: 5,
+    }),
   },
   async run({ auth, propsValue, files }) {
     if ('embeddingKey' in auth && !auth.embeddingKey)
       return 'An embedding key is needed.';
+
+    if (propsValue.waitTime <= 0)
+      return 'The wait time needs to be superior to 0';
 
     const questionId = propsValue.questionId.split('-')[0];
     const numericQuestionId = parseInt(questionId);
@@ -72,6 +82,9 @@ export const getGraphQuestion = createAction({
           `Page load failed with status: ${response ? response.status() : 400}`
         );
       }
+
+      // we wait so the graph can load
+      await page.waitForTimeout(propsValue.waitTime * 1000);
 
       const screenshotBuffer = await page.screenshot({
         path: graphName,

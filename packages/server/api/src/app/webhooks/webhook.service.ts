@@ -50,7 +50,7 @@ export const webhookService = {
         await assertExceedsLimit(flow, pinoLogger)
 
         const response = await handshakeHandler.handleHandshakeRequest({
-            payload: payload as TriggerPayload,
+            payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
             handshakeConfiguration: flow.handshakeConfiguration ?? null,
             log: pinoLogger,
             flowId: flow.id,
