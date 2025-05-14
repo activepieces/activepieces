@@ -58,7 +58,6 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
 
 const extractPiecePath = async (pieceName: string) => {
   try{
-    console.log(`checking if ${path.resolve('node_modules', pieceName)} exists`)
     if(await fileExists(path.resolve('node_modules', pieceName))) {
       return path.resolve('node_modules', pieceName);
     }
@@ -75,12 +74,12 @@ const extractPiecePath = async (pieceName: string) => {
           return piecePath;
         }
       } catch (err) {
-        console.log(`Error reading package.json at ${fullPath}:`, err);
+        console.error(`Error reading package.json at ${fullPath}:`, err);
       }
     }
   }
   catch (err) {
-    console.log(`Error extracting piece path for ${pieceName}:`, err)
+    console.error(`Error extracting piece path for ${pieceName}:`, err)
   }
   return undefined;
 }
