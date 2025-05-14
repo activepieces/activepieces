@@ -109,6 +109,20 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             },
         }), _log)
     },
+
+    async delete({ mcpId, projectId }: { mcpId: ApId, projectId: ApId }): Promise<void> {
+        const deleteResult = await repo().delete({ 
+            id: mcpId,
+            projectId,
+        });
+
+        if (deleteResult.affected === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
+            });
+        }
+    },
 })
 
 type ListParams = {
