@@ -37,7 +37,6 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
 
   if (!(await fileExists(filePath))) {
-    console.log(`No i18n file found for ${locale} in piece ${pieceOutputPath}`);
     return null;
   }
 
@@ -107,11 +106,9 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
   }
 }
 const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefined> => {
-  console.log(`pieceName to initialize i18n ${pieceName}`)
   const locales = Object.values(LocalesEnum);
   const i18n: I18nForPiece = {};
   const pieceOutputPath = await extractPiecePath(pieceName)
-  console.log(`pieceOutputPath to get i18n for ${pieceName} : ${pieceOutputPath}`)
   if (!pieceOutputPath) {
     return undefined
   }
@@ -124,8 +121,7 @@ const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefi
   return (Object.keys(i18n).length > 0) ? i18n : undefined;
 }
 
-
 export const pieceTranslation = {
   translatePiece,
-  initializeI18n,
+  initializeI18n
 }
