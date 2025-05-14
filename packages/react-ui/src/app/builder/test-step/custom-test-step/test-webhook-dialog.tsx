@@ -1,7 +1,7 @@
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useRef } from 'react';
+import { useState } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
+import { wait } from '@/lib/utils';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
 
@@ -77,7 +78,6 @@ type TestTriggerWebhookDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   testingMode: 'trigger';
-  onTestFinished: () => void;
 };
 type TestWebhookDialogProps =
   | TestWaitForNextWebhookDialogProps
@@ -86,32 +86,34 @@ type TestWebhookDialogProps =
 const TestTriggerWebhookDialog = ({
   open,
   onOpenChange,
-  testingMode,
-  onTestFinished,
 }: TestTriggerWebhookDialogProps) => {
-  const abortControllerRef = useRef<AbortController>(new AbortController());
-  const { mutate: simulateTrigger, isPending: isSimulating } =
-    testStepHooks.useSimulateTrigger({
-      setErrorMessage: undefined,
-      onSuccess: () => {
-        onTestFinished();
-        onOpenChange(false);
-      },
-    });
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
   const flowId = useBuilderStateContext((state) => state.flow.id);
-  const { mutate: onSubmit, isPending } = useMutation<
+  const [isLoading, setIsLoading] = useState(false);
+  const { mutate: sendRequest } = useMutation<
     unknown,
     Error,
     z.infer<typeof WebhookRequest>
   >({
     mutationFn: async (data: z.infer<typeof WebhookRequest>) => {
-      await triggerEventsApi.startWebhookSimulation(flowId);
-      simulateTrigger(abortControllerRef.current.signal);
-      const url = `${webhookPrefixUrl}/${flowId}/test`;
-      await api.any(url, {
+      setIsLoading(true);
+      let counter = 0;
+      while (counter < 10) {
+        const webhookSimulation = await triggerEventsApi.getWebhookSimulation(
+          flowId,
+        );
+        if (webhookSimulation) {
+          break;
+        }
+        counter++;
+        await wait(1000);
+      }
+      if (counter >= 10) {
+        console.error('Webhook simulation not found');
+      }
+      await api.any(`${webhookPrefixUrl}/${flowId}/test`, {
         method: data.method,
         data: data.body,
         headers: data.headers,
@@ -124,10 +126,6 @@ const TestTriggerWebhookDialog = ({
     <Dialog
       open={open}
       onOpenChange={(open) => {
-        if (!open) {
-          abortControllerRef.current.abort();
-          abortControllerRef.current = new AbortController();
-        }
         onOpenChange(open);
       }}
     >
@@ -136,9 +134,9 @@ const TestTriggerWebhookDialog = ({
           <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
         </DialogHeader>
         <TestWebhookFunctionalityForm
-          testingMode={testingMode}
-          onSubmit={onSubmit}
-          isLoading={isPending || isSimulating}
+          showMethodDropdown={true}
+          onSubmit={sendRequest}
+          isLoading={isLoading}
         />
       </DialogContent>
     </Dialog>
@@ -148,7 +146,6 @@ const TestTriggerWebhookDialog = ({
 const TestWaitForNextWebhookDialog = ({
   currentStep,
   onOpenChange,
-  testingMode,
   open,
 }: TestWaitForNextWebhookDialogProps) => {
   const { mutate: onSubmit, isPending: isLoading } =
@@ -167,7 +164,7 @@ const TestWaitForNextWebhookDialog = ({
           <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
         </DialogHeader>
         <TestWebhookFunctionalityForm
-          testingMode={testingMode}
+          showMethodDropdown={false}
           onSubmit={(data) => {
             onSubmit({
               id: apId(),
@@ -192,13 +189,13 @@ const TestWaitForNextWebhookDialog = ({
 type TestingWebhookFunctionalityFormProps = {
   onSubmit: (data: z.infer<typeof WebhookRequest>) => void;
   isLoading: boolean;
-  testingMode: 'returnResponseAndWaitForNextWebhook' | 'trigger';
+  showMethodDropdown: boolean;
 };
 
 const TestWebhookFunctionalityForm = (
   req: TestingWebhookFunctionalityFormProps,
 ) => {
-  const { testingMode, onSubmit, isLoading } = req;
+  const { showMethodDropdown, onSubmit, isLoading } = req;
   const form = useForm<z.infer<typeof WebhookRequest>>({
     defaultValues: {
       bodyType: BodyType.JSON,
@@ -212,7 +209,7 @@ const TestWebhookFunctionalityForm = (
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-        {testingMode === 'trigger' && (
+        {showMethodDropdown && (
           <FormField
             control={form.control}
             name="method"
@@ -382,7 +379,6 @@ const TestWebhookDialog = (props: TestWebhookDialogProps) => {
         open={open}
         onOpenChange={onOpenChange}
         testingMode={testingMode}
-        onTestFinished={props.onTestFinished}
       />
     );
   }
