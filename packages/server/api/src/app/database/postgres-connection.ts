@@ -341,7 +341,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddHandshakeConfigurationToFlow1746848208563,
         AddOrderToFolder1747095861746,
         AddI18nColumnToPieceMetadata1746714836833,
-
     ]
 
     const edition = system.getEdition()

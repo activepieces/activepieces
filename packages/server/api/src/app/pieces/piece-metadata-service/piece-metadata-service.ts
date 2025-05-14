@@ -4,7 +4,6 @@ import { PieceMetadata,
 import {
     ApEdition,
     ListVersionsResponse,
-    LocalesEnum,
     PackageType,
     PieceCategory,
     PieceOrderBy,
@@ -29,7 +28,6 @@ type ListParams = {
     orderBy?: PieceOrderBy
     searchQuery?: string
     suggestionType?: SuggestionType
-    locale?: LocalesEnum
 }
 
 type GetOrThrowParams = {
@@ -38,7 +36,6 @@ type GetOrThrowParams = {
     entityManager?: EntityManager
     projectId: string | undefined
     platformId: string | undefined
-    locale?: LocalesEnum
 }
 
 type ListVersionsParams = {

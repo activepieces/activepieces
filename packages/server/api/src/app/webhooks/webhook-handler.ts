@@ -1,10 +1,9 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
-import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { system } from '../helper/system/system'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
@@ -75,8 +74,14 @@ export const webhookHandler = {
             }
         }
         if (saveSampleData) {
-            // TODO this is bug, we should save the payload that is extracted from the webhook
-            await saveSamplePayload({ flowId: flow.id, payload, projectId, log: logger })
+            rejectedPromiseHandler(savePayload({
+                flow,
+                logger,
+                webhookRequestId,
+                payload,
+                flowVersionIdToRun,
+                runEnvironment,
+            }), logger)
         }
 
         const disabledFlow = flow.status !== FlowStatus.ENABLED
@@ -107,23 +112,23 @@ export const webhookHandler = {
         })
     },
 }
-async function saveSamplePayload(params: SaveSampleDataParams): Promise<void> {
-    const { flowId, payload, projectId, log } = params
-    rejectedPromiseHandler(triggerEventService(log).saveEvent({
-        flowId,
+
+async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment } = params
+    await webhookHandler.handleAsync({
+        flow,
+        logger,
+        webhookRequestId,
         payload,
-        projectId,
-    }), log)
-    await webhookSimulationService(log).delete({ flowId, projectId })
+        flowVersionIdToRun,
+        saveSampleData: true,
+        runEnvironment,
+        execute: false,
+        webhookHeader: '',
+    })
+    await webhookSimulationService(logger).delete({ flowId: flow.id, projectId: flow.projectId })
 }
 
-
-type SaveSampleDataParams = {
-    flowId: FlowId
-    payload: unknown
-    projectId: ProjectId
-    log: FastifyBaseLogger
-}
 
 type AsyncWebhookParams = {
     flow: Flow
