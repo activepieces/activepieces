@@ -35,7 +35,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     try {
         assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${constants.runEnvironment === RunEnvironment.TESTING ? 'testing' : 'production'}/index.js`)
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${constants.runEnvironment.toString()}/index.js`)
         const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
 

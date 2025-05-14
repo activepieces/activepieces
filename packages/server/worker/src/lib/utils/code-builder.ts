@@ -55,7 +55,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
         const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
-        const codePath = path.join(flowVersionPath, name, runEnvironment === RunEnvironment.TESTING ? 'testing' : 'production')
+        const codePath = path.join(flowVersionPath, name, runEnvironment.toString())
         log.debug({
             message: 'CodeBuilder#processCodeStep',
             sourceCode,
