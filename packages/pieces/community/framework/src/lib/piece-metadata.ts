@@ -3,8 +3,10 @@ import { WebhookRenewConfiguration, TriggerStrategy } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
-import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
 
+const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
+export type I18nForPiece = Static<typeof I18nForPiece>
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
   name: Type.String(),
@@ -20,6 +22,7 @@ export const PieceBase = Type.Object({
   categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
   minimumSupportedRelease: Type.Optional(Type.String()),
   maximumSupportedRelease: Type.Optional(Type.String()),
+  i18n:I18nForPiece,
 })
 
 export type PieceBase = {
@@ -37,6 +40,7 @@ export type PieceBase = {
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
+  i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
 }
 
 export const ActionBase = Type.Object({

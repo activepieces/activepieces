@@ -201,6 +201,7 @@ import { MakeExternalIdNotNullable1746531094548 } from './migration/postgres/174
 import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746543299109-ChangeMcpPieceForeignKey'
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
+import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -339,6 +340,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeMcpPieceForeignKey1746543299109,
         AddHandshakeConfigurationToFlow1746848208563,
         AddOrderToFolder1747095861746,
+        AddI18nColumnToPieceMetadata1746714836833,
     ]
 
     const edition = system.getEdition()

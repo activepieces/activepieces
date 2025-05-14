@@ -102,6 +102,7 @@ import { MakeExternalIdNotNullableSqlite1746529105649 } from './migration/sqlite
 import { ChangeMcpPieceForeignKey1746543346220 } from './migration/sqlite/1746543346220-ChangeMcpPieceForeignKey'
 import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/sqlite/1746845932780-AddHandshakeConfigurationToFlowSqlite'
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
+import { AddI18nColumnToPieceMetadata1746714949131 } from './migration/sqlite/1746714949131-AddI18nColumnToPieceMetadata'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -220,6 +221,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeMcpPieceForeignKey1746543346220,
         AddHandshakeConfigurationToFlowSqlite1746845932780,
         AddFolderDisplayOrder1747062679388,
+        AddI18nColumnToPieceMetadata1746714949131,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
