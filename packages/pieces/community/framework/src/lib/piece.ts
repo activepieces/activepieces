@@ -34,8 +34,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 
 
-  async metadata(params: {pieceName: string} | undefined): Promise<BackwardCompatiblePieceMetadata> {
-    const i18n = params? await pieceTranslation.initializeI18n(params.pieceName): undefined
+  async metadata(params: {pieceName?: string} | undefined): Promise<BackwardCompatiblePieceMetadata> {
+    const i18n = params?.pieceName ? await pieceTranslation.initializeI18n(params.pieceName): undefined
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,

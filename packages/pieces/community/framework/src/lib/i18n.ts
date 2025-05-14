@@ -56,26 +56,30 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
 }
 
 const extractPiecePath = async (pieceName: string) => {
-  if(await fileExists(path.resolve('node_modules', pieceName))) {
-    return path.resolve('node_modules', pieceName);
-  }
-  const distPath = path.resolve('dist/packages/pieces');
-  const fastGlob = (await import('fast-glob')).default;
-  const packageJsonFiles = await fastGlob('**/**/package.json', { cwd: distPath });
-  for (const relativeFile of packageJsonFiles) {
-    const fullPath = path.join(distPath, relativeFile);
-    try {
-      const packageJson = JSON.parse(await fs.readFile(fullPath, 'utf-8'));
-      if (packageJson.name === pieceName) {
-        const piecePath = path.dirname(fullPath);
-        console.log(`Found piece path: ${piecePath}`);
-        return piecePath;
+  try{
+    if(await fileExists(path.resolve('node_modules', pieceName))) {
+      return path.resolve('node_modules', pieceName);
+    }
+    const distPath = path.resolve('dist/packages/pieces');
+    const fastGlob = (await import('fast-glob')).default;
+    const packageJsonFiles = await fastGlob('**/**/package.json', { cwd: distPath });
+    for (const relativeFile of packageJsonFiles) {
+      const fullPath = path.join(distPath, relativeFile);
+      try {
+        const packageJson = JSON.parse(await fs.readFile(fullPath, 'utf-8'));
+        if (packageJson.name === pieceName) {
+          const piecePath = path.dirname(fullPath);
+          console.log(`Found piece path: ${piecePath}`);
+          return piecePath;
+        }
+      } catch (err) {
+        console.error(`Error reading package.json at ${fullPath}:`, err);
       }
-    } catch (err) {
-      console.error(`Error reading package.json at ${fullPath}:`, err);
     }
   }
-
+  catch (err) {
+    console.error(`Error extracting piece path for ${pieceName}:`, err)
+  }
   return undefined;
 }
 
