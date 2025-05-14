@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ApMultipartFile, LocalesEnum } from '../../common'
+import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
 import { PackageType, PieceCategory, PieceType } from '../piece'
 
@@ -54,7 +54,6 @@ export const ListPiecesRequestQuery = Type.Object({
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
     suggestionType: Type.Optional(Type.Enum(SuggestionType)),
-    locale: Type.Optional(Type.Enum(LocalesEnum)),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -70,7 +69,6 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
     projectId: Type.Optional(Type.String()),
-    locale: Type.Optional(Type.Enum(LocalesEnum)),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))

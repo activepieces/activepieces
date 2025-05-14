@@ -1,5 +1,5 @@
 
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 
 import {
@@ -25,7 +25,6 @@ import { toPieceMetadataModelSummary } from '.'
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')
     const pieces = await filePiecesUtils(packages, system.globalLogger()).findAllPieces()
-
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )
@@ -57,8 +56,8 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                     projectId,
                 }),
             )
-            const result = toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
-            return result.map((piece) => pieceTranslation.translatePiece<PieceMetadataModelSummary>(piece, params.locale))
+            return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
+
         },
         async updateUsage() {
             throw new Error('Updating pieces is not supported in development mode')
@@ -89,7 +88,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
             version,
             projectId,
             platformId,
-            locale,
         }): Promise<PieceMetadataModel> {
             const pieceMetadata = await this.get({
                 name,
@@ -109,12 +107,10 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 })
             }
 
-            const result = toPieceMetadataModel({
+            return toPieceMetadataModel({
                 pieceMetadata,
                 projectId,
             })
-
-            return pieceTranslation.translatePiece<PieceMetadataModel>(result, locale)
         },
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
@@ -161,7 +157,6 @@ const toPieceMetadataModel = ({
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
-        i18n: pieceMetadata.i18n,
     }
 }
 
