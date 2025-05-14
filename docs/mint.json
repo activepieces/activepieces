@@ -399,12 +399,11 @@
         "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
-        "developers/piece-reference/custom-api-calls",
-        "developers/piece-reference/i18n"
+        "developers/piece-reference/custom-api-calls"
       ]
     },
     {
-      "group": "Universal AI",
+      "group": "Unified AI",
       "pages": [
         "developers/unified-ai/overview",
         "developers/unified-ai/chat",

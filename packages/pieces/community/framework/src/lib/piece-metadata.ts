@@ -3,12 +3,10 @@ import { WebhookRenewConfiguration, TriggerStrategy } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
-import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration, LocalesEnum } from "@activepieces/shared";
-
+import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
 
 const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
 export type I18nForPiece = Static<typeof I18nForPiece>
-
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
   name: Type.String(),
@@ -42,9 +40,8 @@ export type PieceBase = {
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
-  i18n?: Partial<Record<LocalesEnum, Record<string, string>>>;
+  i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
 }
-
 
 export const ActionBase = Type.Object({
   name: Type.String(),
@@ -123,18 +120,12 @@ type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 
 export const PieceMetadataModel = Type.Composite([
   PieceMetadata,
-  PiecePackageMetadata
+  PiecePackageMetadata,
 ])
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
 export const PieceMetadataModelSummary = Type.Composite([
   PieceMetadataSummary,
-  PiecePackageMetadata
+  PiecePackageMetadata,
 ])
-export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
-
-export const PieceMetadataModelWithoutI18n = Type.Omit(PieceMetadataModel, ["i18n"])
-export type PieceMetadataModelWithoutI18n = Omit<PieceMetadataModel, "i18n">
-
-export const PieceMetadataModelWithoutI18nSummary = Type.Omit(PieceMetadataModelSummary, ["i18n"])
-export type PieceMetadataModelWithoutI18nSummary = Omit<PieceMetadataModelSummary, "i18n">
+export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata

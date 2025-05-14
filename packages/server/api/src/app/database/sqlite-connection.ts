@@ -222,7 +222,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddHandshakeConfigurationToFlowSqlite1746845932780,
         AddFolderDisplayOrder1747062679388,
         AddI18nColumnToPieceMetadata1746714949131,
-
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

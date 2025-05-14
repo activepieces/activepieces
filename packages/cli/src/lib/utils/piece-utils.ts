@@ -50,7 +50,7 @@ export async function findPiece(pieceName: string): Promise<string | null> {
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
     const projectJson = await readProjectJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
+    await exec(`npx nx build ${projectJson.name} --skip-cache`);
      
     const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
 
@@ -60,13 +60,6 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
         outputFolder: compiledPath,
         outputFile: path.join(compiledPath, tarFileName)
     };
-}
-
-export async function buildPackage(projectName:string) {
-    await exec(`npx nx build ${projectName} --skip-cache`);
-    return {
-        outputFolder: `dist/packages/${projectName}`,
-    }
 }
 
 export async function publishPieceFromFolder(
@@ -79,7 +72,7 @@ export async function publishPieceFromFolder(
     const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
+    await exec(`npx nx build ${projectJson.name} --skip-cache`);
 
     const { outputFile } = await buildPiece(pieceFolder);
     const formData = new FormData();

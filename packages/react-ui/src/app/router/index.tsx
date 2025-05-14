@@ -78,7 +78,6 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import {
   ProjectRouterWrapper,
-  projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 
@@ -314,7 +313,7 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.alerts,
+    path: '/settings/alerts',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_ALERT}>
@@ -328,7 +327,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.appearance,
+    path: '/settings/appearance',
     element: (
       <DashboardContainer>
         <PageTitle title="Appearance">
@@ -340,7 +339,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
+    path: '/settings/general',
     element: (
       <DashboardContainer>
         <PageTitle title="General">
@@ -352,7 +351,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.pieces,
+    path: '/settings/pieces',
     element: (
       <DashboardContainer>
         <PageTitle title="Pieces">
@@ -364,7 +363,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.team,
+    path: '/settings/team',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
@@ -379,10 +378,11 @@ const routes = [
   }),
   {
     path: '/team',
-    element: <Navigate to={projectSettingsRoutes.team} replace></Navigate>,
+    element: <Navigate to="/settings/team" replace></Navigate>,
   },
+
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.environments,
+    path: '/settings/environments',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>

@@ -1,5 +1,5 @@
 
-import { PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -43,8 +43,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
-            const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
-            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)    
+            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
@@ -63,7 +62,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
             })
             return piece
         },
-        async getOrThrow({ projectId, version, name, platformId, locale }): Promise<PieceMetadataModel> {
+        async getOrThrow({ projectId, version, name, platformId }): Promise<PieceMetadataModel> {
             const piece = await this.get({ projectId, version, name, platformId })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
@@ -73,7 +72,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                     },
                 })
             }
-            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
+            return piece
         },
         async getVersions({ name, projectId, release, platformId }): Promise<ListVersionsResponse> {
             const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
