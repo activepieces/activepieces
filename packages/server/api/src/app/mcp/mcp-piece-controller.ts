@@ -10,9 +10,9 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     
 
-    app.get('/', GetMcpPiecesRequest, async (req) => {
-        const projectId = req.principal.projectId
-        const mcp = await mcpService(req.log).getOrCreate({ projectId })
+    app.get('/:id', GetMcpPiecesRequest, async (req) => {
+        const { id } = req.params
+        const mcp = await mcpService(req.log).getOrThrow({ mcpId: id })
         return { pieces: mcp.pieces || [] }
     })
     
@@ -50,8 +50,14 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.delete('/:id', DeletePieceRequest, async (req) => {
         const { id } = req.params
+
+        const mcpId = await mcpPieceService(req.log).getMcpId(id)
+
         await mcpPieceService(req.log).delete(id)
-        return mcpService(req.log).getByProjectId({ projectId: req.principal.projectId })    
+
+        return mcpService(req.log).getOrThrow({ 
+            mcpId,
+        }) 
     })
 
 }
@@ -65,6 +71,9 @@ const GetMcpPiecesRequest = {
         tags: ['mcp-piece'],
         description: 'Get current project MCP pieces',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+        }),
         response: {
             [StatusCodes.OK]: Type.Object({
                 pieces: Type.Array(McpPieceWithConnection),
@@ -80,7 +89,7 @@ const AddMcpPieceRequest = {
     },
     schema: {
         tags: ['mcp-piece'],
-        description: 'Add a new project MCP tool',
+        description: 'Add a new MCP piece',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: AddMcpPieceRequestBody,
         response: {
@@ -96,7 +105,7 @@ const UpdateMcpPieceRequest = {
     },
     schema: {
         tags: ['mcp-piece'],
-        description: 'Update MCP tool status',
+        description: 'Update MCP piece status',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
