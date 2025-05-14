@@ -75,7 +75,7 @@ const ExposeMcpNote = () => {
     <div>
       <b>{t('Note')}: </b>
       {t(
-        'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your Activepieces instance.',
+        'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your AutomationX instance.',
       )}
     </div>
   );
@@ -222,7 +222,7 @@ const ConfigDisplay = ({
                 e?.stopPropagation();
                 const config = {
                   mcpServers: {
-                    Activepieces:
+                    AutomationX:
                       type === 'npx'
                         ? {
                             command: 'npx',
@@ -249,7 +249,7 @@ const ConfigDisplay = ({
             hideCopyButton={true}
             data={{
               mcpServers: {
-                Activepieces:
+                AutomationX:
                   type === 'npx'
                     ? {
                         command: 'npx',
