@@ -54,6 +54,7 @@ export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+    runEnvironment: RunEnvironment
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
