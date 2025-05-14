@@ -52,6 +52,14 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
+        log.info(
+            chalk.blueBright.bold(
+                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
+            ),
+        )
+        const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
+        await runCommandWithLiveOutput(postBuildCommand)
+        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
         
@@ -64,7 +72,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.setCache('@activepieces/shared', CacheState.PENDING)
         await cache.setCache(piecePackageName, CacheState.PENDING)
-
+        
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {

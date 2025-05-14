@@ -5,8 +5,10 @@ import {
   ParseEventResponse,
   PieceCategory,
 } from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
+import { pieceTranslation } from './i18n';
+
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
@@ -31,7 +33,9 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
 
-  metadata(): BackwardCompatiblePieceMetadata {
+
+  async metadata(params: {pieceName?: string} | undefined): Promise<BackwardCompatiblePieceMetadata> {
+    const i18n = params?.pieceName ? await pieceTranslation.initializeI18n(params.pieceName): undefined
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,
@@ -43,6 +47,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      i18n
     };
   }
 
@@ -106,6 +111,8 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
   authors?: PieceMetadata['authors']
+  i18n?: PieceMetadata['i18n']
 }
+
