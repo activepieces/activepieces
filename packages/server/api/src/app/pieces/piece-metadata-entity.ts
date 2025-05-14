@@ -105,9 +105,9 @@ export const PieceMetadataEntity =
               nullable: true,
           },
           i18n: {
-            type: JSON_COLUMN_TYPE,
-            nullable: true,
-        },
+              type: JSON_COLUMN_TYPE,
+              nullable: true,
+          },
       },
       indices: [
           {
