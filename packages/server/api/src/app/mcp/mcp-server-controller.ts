@@ -3,7 +3,6 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -197,7 +196,7 @@ const DeleteMcpRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Null(), // Or Type.Object({}) for an empty object
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }
