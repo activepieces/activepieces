@@ -119,6 +119,7 @@ export const ExecuteActionJobData = Type.Object({
     stepName: Type.String(),
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
+    runEnvironment: Type.Enum(RunEnvironment),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 
