@@ -47,7 +47,7 @@
     "@dnd-kit/core": "6.1.0",
     "@dnd-kit/modifiers": "7.0.0",
     "@dnd-kit/sortable": "8.0.0",
-    "@dust-tt/client": "1.0.41",
+    "@dust-tt/client": "1.0.49",
     "@fastify/basic-auth": "5.0.0",
     "@fastify/cors": "8.3.0",
     "@fastify/formbody": "7.4.0",
