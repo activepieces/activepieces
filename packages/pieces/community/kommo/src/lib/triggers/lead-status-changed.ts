@@ -27,7 +27,10 @@ export const leadStatusChangedTrigger = createTrigger({
     // Required for polling triggers — no cleanup needed at this time
   },
   async run(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const leads = await makeRequest(
       { subdomain, apiToken },

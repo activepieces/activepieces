@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { leadStatusChangedTrigger, newContactAddedTrigger, newLeadCreatedTrigger, taskCompletedTrigger } from "./lib/triggers";
 import { findLeadAction, updateContactAction,  createLeadAction, createContactAction, findContactAction, findCompanyAction } from "./lib/actions";
@@ -13,7 +13,8 @@ export const kommoAuth = PieceAuth.CustomAuth({
   props: {
     subdomain: PieceAuth.SecretText({
       displayName: 'Subdomain',
-      description: 'Your Kommo account subdomain (e.g., "mycompany" if your URL is mycompany.kommo.com)',
+      description:
+        'Your Kommo account subdomain (e.g., "mycompany" if your URL is mycompany.kommo.com)',
       required: true,
     }),
     apiToken: PieceAuth.SecretText({
@@ -25,12 +26,12 @@ export const kommoAuth = PieceAuth.CustomAuth({
 });
 
 export const kommo = createPiece({
-  displayName: "Kommo",
+  displayName: 'Kommo',
   description: 'Kommo CRM integration',
   auth: kommoAuth,
-  logoUrl: "https://cdn.activepieces.com/pieces/kommo.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/kommo.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["krushnarout"],
+  authors: ['krushnarout'],
   actions: [findLeadAction , updateContactAction,  createLeadAction, createContactAction, findContactAction, findCompanyAction],
   triggers: [leadStatusChangedTrigger, newContactAddedTrigger, newLeadCreatedTrigger, taskCompletedTrigger],
 });

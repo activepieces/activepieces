@@ -24,25 +24,28 @@ export const updateContactAction = createAction({
     phone: Property.ShortText({
       displayName: 'New Phone',
       required: false,
-    })
+    }),
   },
   async run(context) {
     const { contactId, name, email, phone } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const customFields = [];
 
     if (email) {
       customFields.push({
         field_code: 'EMAIL',
-        values: [{ value: email }]
+        values: [{ value: email }],
       });
     }
-    
+
     if (phone) {
       customFields.push({
         field_code: 'PHONE',
-        values: [{ value: phone }]
+        values: [{ value: phone }],
       });
     }
 

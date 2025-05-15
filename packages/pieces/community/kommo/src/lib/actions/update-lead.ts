@@ -1,8 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { makeRequest } from "../common";
-import { kommoAuth } from "../../index";
-
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from '../common';
+import { kommoAuth } from '../../index';
 
 export const updateLeadAction = createAction({
   auth: kommoAuth,
@@ -25,11 +24,14 @@ export const updateLeadAction = createAction({
     price: Property.Number({
       displayName: 'New Price',
       required: false,
-    })
+    }),
   },
   async run(context) {
     const { leadId, name, status_id, price } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const updateData = { name, status_id, price };
 

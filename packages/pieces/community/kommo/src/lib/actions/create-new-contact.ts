@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { makeRequest } from "../common";
-import { kommoAuth } from "../../index";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from '../common';
+import { kommoAuth } from '../../index';
 
 export const createContactAction = createAction({
   auth: kommoAuth,
@@ -20,11 +20,14 @@ export const createContactAction = createAction({
     phone: Property.ShortText({
       displayName: 'Phone',
       required: false,
-    })
+    }),
   },
   async run(context) {
     const { name, email, phone } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const customFields = [];
 
@@ -46,10 +49,12 @@ export const createContactAction = createAction({
       { apiToken, subdomain },
       HttpMethod.POST,
       `/contacts`,
-      [{
-        name,
-        custom_fields_values: customFields,
-      }]
+      [
+        {
+          name,
+          custom_fields_values: customFields,
+        },
+      ]
     );
 
     return result;

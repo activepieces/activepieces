@@ -12,11 +12,14 @@ export const findContactAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
-    })
+    }),
   },
   async run(context) {
     const { email } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const result = await makeRequest(
       { apiToken, subdomain },

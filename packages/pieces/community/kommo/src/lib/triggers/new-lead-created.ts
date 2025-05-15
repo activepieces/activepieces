@@ -31,7 +31,10 @@ export const newLeadCreatedTrigger = createTrigger({
   },
 
   async run(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth as {
+      subdomain: string;
+      apiToken: string;
+    };
 
     const leads = await makeRequest(
       { subdomain, apiToken },
