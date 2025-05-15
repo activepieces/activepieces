@@ -33,10 +33,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
                     trigger,
                 )
                 if (updated) {
-                    await queryRunner.query(
-                        'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                        [JSON.stringify(trigger), flowVersion[0].id],
-                    )
+                    await queryRunner.connection.getRepository("flow_version").update(flowVersion[0].id, { trigger: updated })
                 }
             }
             updatedFlows++
@@ -75,10 +72,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
                     trigger,
                 )
                 if (updated) {
-                    await queryRunner.query(
-                        'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                        [JSON.stringify(trigger), flowVersion[0].id],
-                    )
+                    await queryRunner.connection.getRepository("flow_version").update(flowVersion[0].id, { trigger: updated })
                 }
             }
             updatedFlows++
