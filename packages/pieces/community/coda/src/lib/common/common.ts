@@ -38,6 +38,37 @@ export interface CodaSort {
     direction: 'ascending' | 'descending';
 }
 
+// Interface for the format of a column
+export interface CodaColumnFormat {
+    type: string; // e.g., "text", "number", "date", "person", "lookup", "checkbox", "currency", "percent", "slider", "scale", "selectList", "multiSelectList", "button"
+    // Other format-specific properties can be added here if needed for dynamic prop generation
+    // For example, for selectList:
+    // options?: { name: string, id?: string }[];
+    // For lookup:
+    // table?: CodaTableReference;
+}
+
+// Interface for a single column in the getTableDetails response
+export interface CodaTableColumn {
+    id: string; // Column ID, e.g., "c-123abcDEF"
+    type: "column";
+    href: string;
+    name: string; // User-visible name of the column
+    format: CodaColumnFormat;
+    display?: boolean; // As per docs, optional
+    calculated?: boolean; // Whether this is a calculated column
+    formula?: string; // The formula if it's a calculated column
+    defaultValue?: string; // As per docs, it's a formula string
+    // Add other relevant column properties if necessary
+}
+
+export interface CodaListColumnsResponse {
+    items: CodaTableColumn[];
+    href?: string;
+    nextPageToken?: string;
+    nextPageLink?: string;
+}
+
 export interface CodaGetTableDetailsResponse {
     id: string;
     type: "table"; // This specific endpoint returns "table"
@@ -46,7 +77,7 @@ export interface CodaGetTableDetailsResponse {
     name: string;
     parent: CodaPageReference;
     browserLink: string;
-    displayColumn: CodaColumnReference;
+    displayColumn: CodaColumnReference; // This is a reference, not the full column object
     rowCount: number;
     sorts: CodaSort[];
     layout: string; // Enum of layout types, string for simplicity
@@ -173,6 +204,7 @@ export interface CodaListDocsResponse {
 export interface CodaAPIClient {
     listTables: (docId: string, params?: { limit?: number; sortBy?: string; tableTypes?: string, pageToken?: string }) => Promise<CodaListTablesResponse>;
     getTableDetails: (docId: string, tableIdOrName: string, params?: { useUpdatedTableLayouts?: boolean }) => Promise<CodaGetTableDetailsResponse>;
+    listColumns: (docId: string, tableIdOrName: string, params?: { limit?: number; pageToken?: string; visibleOnly?: boolean; }) => Promise<CodaListColumnsResponse>;
     getRow: (docId: string, tableIdOrName: string, rowIdOrName: string, params?: { useColumnNames?: boolean; valueFormat?: string }) => Promise<CodaGetRowResponse>;
     listRows: (docId: string, tableIdOrName: string, params?: {
         query?: string;
@@ -234,6 +266,18 @@ export const codaClient = (apiKey: string): CodaAPIClient => {
                 method: HttpMethod.GET,
                 url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}`,
                 queryParams: Object.fromEntries(Object.entries(queryParams).map(([k, v]) => [k, String(v)])),
+            });
+        },
+        listColumns: async (docId, tableIdOrName, params) => {
+            const queryParams: Record<string, string | number | boolean> = {};
+            if (params?.limit) queryParams['limit'] = params.limit;
+            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
+            if (params?.visibleOnly !== undefined) queryParams['visibleOnly'] = params.visibleOnly;
+
+            return makeRequest<CodaListColumnsResponse>({
+                method: HttpMethod.GET,
+                url: `${CODA_BASE_URL}/docs/${docId}/tables/${encodeURIComponent(tableIdOrName)}/columns`,
+                queryParams: Object.fromEntries(Object.entries(queryParams).map(([k,v])=>[k,String(v)])),
             });
         },
         getRow: async (docId, tableIdOrName, rowIdOrName, params) => {
