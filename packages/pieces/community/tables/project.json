@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/tables/package.json",
         "main": "packages/pieces/community/tables/src/index.ts",
         "assets": [
-          "packages/pieces/community/tables/*.md"
+          "packages/pieces/community/tables/*.md",
+          {
+            "input": "packages/pieces/community/tables/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/amazon-sns/package.json",
         "main": "packages/pieces/community/amazon-sns/src/index.ts",
         "assets": [
-          "packages/pieces/community/amazon-sns/*.md"
+          "packages/pieces/community/amazon-sns/*.md",
+          {
+            "input": "packages/pieces/community/amazon-sns/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
