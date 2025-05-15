@@ -136,7 +136,6 @@ export const findRecords = createAction({
       filters: parsedFilters,
     };
 
-    console.log(qs.stringify(request));
 
     const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
       method: HttpMethod.GET,
