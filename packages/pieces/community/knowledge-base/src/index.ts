@@ -1,16 +1,38 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { searchKnowledgeBase, getMasterData } from './lib/actions/search-knowledge-base';
 
-export const knowledgeBaseAuth = PieceAuth.BasicAuth({
+export const Production = "PromptX";
+export const Test = "Staging";
+
+export const knowledgeBaseAuth = PieceAuth.CustomAuth({
   required: true,
-  username: Property.ShortText({
-    displayName: 'Username',
-    required: true,
-  }),
-  password: PieceAuth.SecretText({
-    displayName: 'Password',
-    required: true,
-  }),
+  props: {
+    server: Property.StaticDropdown({
+      displayName: 'Server',
+      options: {
+        options: [
+          {
+            label: Production,
+            value: Production,
+          },
+          {
+            label: Test,
+            value: Test,
+          },
+        ],
+      },
+      required: true,
+      defaultValue: Production
+    }),
+    username: Property.ShortText({
+      displayName: 'Username',
+      required: true,
+    }),
+    password: PieceAuth.SecretText({
+      displayName: 'Password',
+      required: true,
+    }),
+  },
   validate: async ({ auth }) => {
     const { username, password } = auth;
     if (!username || !password) {
@@ -20,7 +42,7 @@ export const knowledgeBaseAuth = PieceAuth.BasicAuth({
       };
     }
     try {
-      const masterData = await getMasterData();
+      const masterData = await getMasterData(auth);
       const response = await fetch(masterData.CENTER_AUTH_LOGIN_URL, {
         method: 'POST',
         body: JSON.stringify({
@@ -52,8 +74,8 @@ export const knowledgeBaseAuth = PieceAuth.BasicAuth({
 });
 
 export const knowledgeBase = createPiece({
-  displayName: "Avalant Knowledge Base",
-  description: "Search for content in Avalant's knowledge base",
+  displayName: "PromptX Knowledge Base",
+  description: "Search for content in PromptX's knowledge base",
   auth: knowledgeBaseAuth,
   minimumSupportedRelease: "0.36.1",
   logoUrl: "https://i.ibb.co/6QYsWLD/Knowledge.png",

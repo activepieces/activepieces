@@ -1,21 +1,22 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import axios, { AxiosError } from 'axios';
-import { knowledgeBaseAuth } from '../..';
+import { knowledgeBaseAuth, Test } from '../..';
 
-export const getMasterData = async () => {
+export const getMasterData = async (auth: any) => {
   try {
-    const isProduction = process.env["IS_PRODUCTION"] === "true";
+    const server = auth.server;
+    const isTest = server === Test;
     const masterData: any = {};
-    if (isProduction) {
-      masterData.CENTER_AUTH_LOGIN_URL = process.env["CENTER_AUTH_LOGIN_URL"];
-      masterData.CENTER_API_USERS_ME_URL = process.env["CENTER_API_USERS_ME_URL"];
-      masterData.KNOWLEDGE_BASE_RUN_URL = process.env["KNOWLEDGE_BASE_RUN_URL"];
-      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = process.env["KNOWLEDGE_BASE_COLLECTIONS_URL"];
-    } else {
+    if (isTest) {
       masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
       masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
       masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
       masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
+    } else {
+      masterData.CENTER_AUTH_LOGIN_URL = "https://centerapp.io/center/auth/login";
+      masterData.CENTER_API_USERS_ME_URL = "https://centerapp.io/center/api/v1/users/me";
+      masterData.KNOWLEDGE_BASE_RUN_URL = "https://centerapp.io/knowledge/retrieval";
+      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://promptxai.com/KnowledgeBaseFileService/collections";
     }
     return masterData;
   } catch (error) {
@@ -81,7 +82,7 @@ export const searchKnowledgeBase = createAction({
           };
         }
         try {
-          const masterData = await getMasterData();
+          const masterData = await getMasterData(auth);
           const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
           const userId = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
 
@@ -131,7 +132,7 @@ export const searchKnowledgeBase = createAction({
 
     try {
       const auth = context.auth;
-      const masterData = await getMasterData();
+      const masterData = await getMasterData(auth);
       const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
       const userId = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
 
