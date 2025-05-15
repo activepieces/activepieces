@@ -11,6 +11,10 @@ export const McpEntity = new EntitySchema<McpSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
+        name: {
+            type: String,
+            default: 'MCP Server',
+        },
         projectId: ApIdSchema,
         token: ApIdSchema,
     },

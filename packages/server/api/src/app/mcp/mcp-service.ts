@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,8 @@ import { telemetry } from '../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpPieceService } from './mcp-piece-service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
+import { system } from '../helper/system/system'
+import { ILike } from 'typeorm'
 
 
 
@@ -15,10 +17,12 @@ const repo = repoFactory(McpEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
 
-    async upsert({ projectId }: { projectId: ApId }): Promise<McpWithPieces> {
+    async create({ projectId, name }: CreateParams): Promise<McpWithPieces> {
+        await this.validateCount({ projectId })
         const mcp = await repo().save({
             id: apId(),
             projectId,
+            name,
             token: apId(),
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
@@ -26,20 +30,23 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async list({ projectId, cursorRequest, limit }: ListParams): Promise<SeekPage<McpWithPieces>> {
+    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithPieces>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
             entity: McpEntity,
             query: {
                 limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
 
         const queryWhere: Record<string, unknown> = { projectId }
+        if (!isNil(name)) {
+            queryWhere.name = ILike(`%${name}%`)
+        }
 
         const queryBuilder = repo().createQueryBuilder('mcp').where(queryWhere)
 
@@ -84,9 +91,10 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async update({ mcpId, token }: UpdateParams): Promise<McpWithPieces> {
+    async update({ mcpId, token, name }: UpdateParams): Promise<McpWithPieces> {
         await repo().update(mcpId, {
             ...spreadIfDefined('token', token),
+            ...spreadIfDefined('name', name),
             updated: dayjs().toISOString(),
         })
 
@@ -123,16 +131,44 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             });
         }
     },
+
+    async count({ projectId }: CountParams): Promise<number> {
+        return repo().count({
+            where: { projectId },
+        })
+    },
+    async validateCount(params: CountParams): Promise<void> {
+        const countRes = await this.count(params)
+        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Max mcps per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)}`,
+                },
+            })
+        }
+    },
 })
+
+
+type CreateParams = {
+    projectId: ApId
+    name: string
+}
+
 
 type ListParams = {
     projectId: ApId
     cursorRequest: Cursor | null
     limit: number
+    name: string | undefined
 }
 
 type UpdateParams = {
     mcpId: ApId
     token?: string
+    name?: string
 }
 
+type CountParams = {
+    projectId: ApId
+}

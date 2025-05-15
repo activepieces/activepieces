@@ -52,6 +52,7 @@ export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
 
 export const Mcp = Type.Object({
     ...BaseModelSchema,
+    name: Type.String(),
     projectId: ApId,
     token: ApId,
 })

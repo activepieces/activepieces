@@ -1,4 +1,4 @@
-import { ApId, apId, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ApId, apId, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, CreateMcpRequestBody, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -25,8 +25,9 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
         if (!projectId) {
             return null
         }
-        return mcpService(req.log).upsert({
+        return mcpService(req.log).create({
             projectId,
+            name: req.body.name,
         })
     })
     
@@ -43,6 +44,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
             projectId,
             cursorRequest: req.query.cursor ?? null,
             limit: req.query.limit ?? DEFAULT_PAGE_SIZE,
+            name: req.query.name ?? undefined,
         })
         
         return result
@@ -57,11 +59,12 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
-        const { token } = req.body
+        const { token, name } = req.body
 
         return mcpService(req.log).update({
             mcpId,
             token,
+            name,
         })
     })
 
@@ -101,6 +104,7 @@ const CreateMcpRequest = {
         querystring: Type.Object({
             projectId: Type.Optional(Type.String({})),
         }),
+        body: CreateMcpRequestBody,
         response: {
             [StatusCodes.OK]: Type.Union([McpWithPieces, Type.Null()]),
         },
@@ -135,9 +139,7 @@ export const UpdateMcpRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        body: Type.Object({
-            token: Type.Optional(Type.String()),
-        }),
+        body: UpdateMcpRequestBody,
         response: {
             [StatusCodes.OK]: McpWithPieces,
         },
