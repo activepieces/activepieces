@@ -1,0 +1,31 @@
+---
+title: 'Internationalization'
+description: 'Learn about translating pieces to multiple locales'
+icon: 'globe'
+---
+
+
+<Steps>
+  <Step title="Generate The Translation File">
+     After adding the piece to the [AP_DEV_PIECES](/developers/development-setup/local) and running 
+     ```bash
+     npm start
+     ```
+     Wait until you see this in your terminal: `Translation file for piece created in <piece_folder>/src/i18n/translation.json` that's where the translation file will be located
+  </Step>
+  <Step title="Translate to a Certain Locale">
+    Once a change to a translation file is merged you can join our Crowdin project https://crowdin.com/project/activepieces and translate the piece there
+  </Step>
+  
+   <Step title="Testing Locally">
+    In your dashboard go to Project Settings -> Appearance -> Languages
+    ![Languages](/resources/i18n-pieces.png)
+   
+    You can create or edit the locale file (it's a copy of the translation file with its values translated) i.e fr.json under the piece directory and see the change in the UI after refreshing.
+  
+
+     Then check the piece in the builder:
+    ![French Webhooks](/resources/french-webhooks.png)
+  </Step>
+
+</Steps>
