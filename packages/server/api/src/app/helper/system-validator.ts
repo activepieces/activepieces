@@ -157,6 +157,9 @@ const systemPropValidators: {
     [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
     [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
+
+    // MCP
+    [AppSystemProp.MAX_MCPS_PER_PROJECT]: numberValidator,
 }
 
 
