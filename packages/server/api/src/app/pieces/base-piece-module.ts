@@ -120,7 +120,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
-                locale: req.query.locale,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
         },
     )
