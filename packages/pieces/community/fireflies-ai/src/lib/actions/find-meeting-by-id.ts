@@ -1,63 +1,37 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firefliesAiAuth } from '../../index';
+import { getTranscript } from '../common/queries';
+import { BASE_URL } from '../common';
 
 export const findMeetingByIdAction = createAction({
 	auth: firefliesAiAuth,
-	name: 'find_meeting_by_id',
+	name: 'find-meeting-by-id',
 	displayName: 'Find Meeting by ID',
-	description: 'Fetch a specific meeting\'s transcript and metadata by its ID',
+	description: 'Finds a specific meeting by ID.',
 	props: {
 		meetingId: Property.ShortText({
 			displayName: 'Meeting ID',
-			description: 'The ID of the meeting to retrieve',
+			description: 'The ID of the meeting to retrieve.',
 			required: true,
 		}),
 	},
-	async run({ propsValue, auth }) {
-		const query = `
-			query Transcript($id: String!) {
-				transcript(id: $id) {
-					id
-					title
-					date
-					duration
-					summary {
-						keywords
-						action_items
-						topics_discussed
-					}
-					speakers {
-						id
-						name
-					}
-					sentences {
-						speaker_name
-						speaker_id
-						text
-						start_time
-						end_time
-					}
-					participants
-					meeting_attendees {
-						name
-						email
-						displayName
-					}
-				}
-			}
-		`;
-
-		const response = await makeRequest(
-			auth as string,
-			HttpMethod.POST,
-			query,
-			{
-				id: propsValue.meetingId,
+	async run(context) {
+		const response = await httpClient.sendRequest<{ data: { transcript: Record<string, any> } }>({
+			url: BASE_URL,
+			method: HttpMethod.POST,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth,
 			},
-		);
+			body: {
+				query: getTranscript,
+				variables: {
+					transcriptId: context.propsValue.meetingId,
+				},
+			},
+		});
 
-		return response.data.transcript;
+		return response.body.data.transcript;
 	},
 });

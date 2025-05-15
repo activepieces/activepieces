@@ -1,65 +1,76 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firefliesAiAuth } from '../../index';
+import { getTranscript, getUser } from '../common/queries';
+import { isNil } from '@activepieces/shared';
+import { BASE_URL } from '../common';
 
 export const findRecentMeetingAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'find_recent_meeting',
 	displayName: 'Find Recent Meeting',
-	description: 'Retrieve the latest meeting for a user',
-	props: {
-		limit: Property.Number({
-			displayName: 'Number of Meetings',
-			description: 'The number of recent meetings to retrieve (default: 1)',
-			required: false,
-			defaultValue: 1,
-		}),
-	},
-	async run({ propsValue, auth }) {
-		const query = `
-			query getRecentTranscripts($limit: Int!) {
-				transcripts(limit: $limit, skip: 0) {
-					id
-					title
-					date
-					duration
-					transcript_url
-					audio_url
-					speakers {
-						id
+	description: 'Retrieves the latest meeting for a user.',
+	props: {},
+	async run(context) {
+		const userResponse = await httpClient.sendRequest<{
+			data: { user: { recent_meeting?: string } };
+		}>({
+			url: BASE_URL,
+			method: HttpMethod.POST,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth,
+			},
+			body: {
+				query: `
+				query User
+				{
+					user
+					{
+						user_id
+						recent_transcript
+						recent_meeting
+						num_transcripts
 						name
-					}
-					sentences {
-						speaker_name
-						text
-					}
-					participants
-					meeting_attendees {
-						displayName
+						minutes_consumed
+						is_admin
+						integrations
 						email
 					}
-					summary {
-						action_items
-						overview
-					}
-				}
-			}
-		`;
-
-		const response = await makeRequest(
-			auth as string,
-			HttpMethod.POST,
-			query,
-			{
-				limit: propsValue.limit || 1,
+				}`,
+				variables: {},
 			},
-		);
+		});
 
-		if (propsValue.limit === 1) {
-			return response.data.transcripts[0];
+		console.log(JSON.stringify(userResponse, null, 2));
+
+		if (isNil(userResponse.body.data.user.recent_meeting)) {
+			return {
+				found: false,
+				meeting: {},
+			};
 		}
 
-		return response.data.transcripts;
+		const meetingResponse = await httpClient.sendRequest<{
+			data: { transcript: Record<string, any> };
+		}>({
+			url: BASE_URL,
+			method: HttpMethod.POST,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth,
+			},
+			body: {
+				query: getTranscript,
+				variables: {
+					transcriptId: userResponse.body.data.user.recent_meeting,
+				},
+			},
+		});
+
+		return {
+			found: true,
+			meeting: meetingResponse.body.data.transcript,
+		};
 	},
 });
