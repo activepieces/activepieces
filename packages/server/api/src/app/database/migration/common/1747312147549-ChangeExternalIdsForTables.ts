@@ -12,7 +12,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
         `)
 
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%tables-find-record%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
             'ChangeExternalIdsForTables1747312147549: found ' +
@@ -51,7 +51,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%tables-find-record%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
             'ChangeExternalIdsForTables1747312147549 down: found ' +
