@@ -1733,6 +1733,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Daniel-Klippa",
+      "name": "Daniel-Klippa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/207180643?v=4",
+      "profile": "https://github.com/Daniel-Klippa",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
