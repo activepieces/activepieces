@@ -36,7 +36,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         )
 
         let scheduleOptions: ScheduleOptions | undefined
-        let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = null
+        let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
         switch (newStatus) {
             case FlowStatus.ENABLED: {
                 const response = await triggerHooks.enable({
@@ -71,7 +71,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 type: ScheduleType.CRON_EXPRESSION,
                 failureCount: flowToUpdate.schedule?.failureCount ?? 0,
             },
-            webhookHandshakeConfiguration: flowToUpdate.handshakeConfiguration ?? webhookHandshakeConfiguration,
+            webhookHandshakeConfiguration,
         }
     },
 

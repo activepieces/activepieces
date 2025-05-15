@@ -1,6 +1,6 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -34,7 +34,8 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     try {
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
+        assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${constants.runEnvironment.toString()}/index.js`)
         const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
 
