@@ -183,6 +183,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             cursor: undefined,
             limit: 1000,
             name: undefined,
+            externalIds: undefined,
         })
         const allPopulatedTables = await Promise.all(tables.data.map(async (table) => {
             const fields = await fieldService.getAll({
