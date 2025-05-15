@@ -2,6 +2,9 @@
 import { OAuth2PropertyValue, Property, createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { listTicketsAction } from './lib/actions/list-tickets';
+import { createTicketAction } from './lib/actions/create-ticket';
+import { zohoDeskCommon } from './lib/common';
 
 export const zohoDeskAuth = PieceAuth.OAuth2({
   props: {
@@ -54,13 +57,11 @@ export const piecesZohoDesk = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/pieces-zoho-desk.png",
   authors: ['volubile'],
-  actions: [createCustomApiCallAction({
-      baseUrl: (auth) =>
-        {
-          const data = (auth as OAuth2PropertyValue).data;
-          return data && data['api_domain']? `${data['api_domain']}/api/v1` : ''
-        },    
-      
+  actions: [
+    listTicketsAction,
+    createTicketAction,
+    createCustomApiCallAction({
+      baseUrl: zohoDeskCommon.baseUrl,
       auth: zohoDeskAuth,
       authMapping: async (auth) => ({
         Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
@@ -68,4 +69,3 @@ export const piecesZohoDesk = createPiece({
   })],
   triggers: [],
 });
-    
