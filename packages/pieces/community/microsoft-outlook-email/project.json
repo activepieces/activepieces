@@ -1,0 +1,45 @@
+{
+  "name": "pieces-microsoft-outlook-email",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/microsoft-outlook-email/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/microsoft-outlook-email",
+        "tsConfig": "packages/pieces/community/microsoft-outlook-email/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/microsoft-outlook-email/package.json",
+        "main": "packages/pieces/community/microsoft-outlook-email/src/index.ts",
+        "assets": [
+          "packages/pieces/community/microsoft-outlook-email/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}
