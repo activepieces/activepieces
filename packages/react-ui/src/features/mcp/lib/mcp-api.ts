@@ -5,12 +5,8 @@ import {
   McpPieceWithConnection,
   McpWithPieces,
   SeekPage,
+  UpdateMcpRequestBody,
 } from '@activepieces/shared';
-
-interface UpdateMCPParams {
-  id: string;
-  token?: string;
-}
 
 interface AddPieceParams {
   mcpId: string;
@@ -29,21 +25,21 @@ export const mcpApi = {
   async list(
     request: ListMcpsRequestQuery
   ): Promise<SeekPage<McpWithPieces>> {
-    return await api
-      .get<SeekPage<McpWithPieces>>('/v1/mcp-servers', {
-        ...request,
-      });
+    return await api.get<SeekPage<McpWithPieces>>('/v1/mcp-servers', request);
   },
   async get(id: string): Promise<McpWithPieces> {
     return await api.get<McpWithPieces>(`/v1/mcp-servers/${id}`);
   },
-  async create(): Promise<McpWithPieces | null> {
-    return await api.post<McpWithPieces | null>('/v1/mcp-servers', {});
-  },
-  async update({ id, token }: UpdateMCPParams) {
-    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}`, {
-      token,
+  async create(name: string): Promise<McpWithPieces> {
+    return await api.post<McpWithPieces>('/v1/mcp-servers', {
+      name,
     });
+  },
+  async update(id: string, request: UpdateMcpRequestBody) {
+    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}`, request);
+  },
+  async delete(id: string) {
+    return await api.delete(`/v1/mcp-servers/${id}`);
   },
   async rotateToken(id: string) {
     return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}/rotate`);
