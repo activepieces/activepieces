@@ -242,6 +242,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
           <Button
             disabled={!doesUserHavePermissionToWriteFlow}
             variant="default"
+            size="sm"
             loading={isCreateFlowPending}
           >
             <span>{t('Create flow')}</span>

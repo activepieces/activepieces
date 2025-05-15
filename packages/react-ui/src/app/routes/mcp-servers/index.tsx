@@ -1,7 +1,7 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Eye, Server, Plus } from 'lucide-react';
+import { Server, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -24,18 +24,19 @@ import { useToast } from '@/components/ui/use-toast';
 
 const DEFAULT_PAGE_SIZE = 10;
 
-function McpServersPage() {
+export const McpServersPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { checkAccess } = useAuthorization();
-  const projectId = authenticationSession.getProjectId()!;
   const { toast } = useToast();
 
   const canWriteMcp = checkAccess(Permission.WRITE_MCP);
+  const searchParams = new URLSearchParams(location.search);
+
 
   const { data: mcpServersPageData, isLoading: isLoadingMcps, refetch: refetchMcps } = mcpHooks.useMcpsList({
-    limit: Number(new URLSearchParams(location.search).get(LIMIT_QUERY_PARAM)) || DEFAULT_PAGE_SIZE,
-    cursor: new URLSearchParams(location.search).get(CURSOR_QUERY_PARAM) ?? undefined,
+    limit: Number(searchParams.get(LIMIT_QUERY_PARAM)) || DEFAULT_PAGE_SIZE,
+    cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
   });
 
   const createMcpMutation = useMutation({
@@ -100,30 +101,12 @@ function McpServersPage() {
         </div>
       ),
     },
-    {
-      id: 'actions',
-      header: () => <div className="text-right">{t('Actions')}</div>,
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/mcp/${row.original.id}`)}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              {t('View Details')}
-            </Button>
-          </div>
-        );
-      },
-    },
   ];
 
   return (
     <div className="flex-col w-full">
       <div className="flex items-center justify-between mb-4">
-        <TableTitle description={t('Manage your MCP (Multi-Client Platform) Servers.')}>
+        <TableTitle description={t('Create and manage your MCP servers.')}>
           {t('MCP Servers')}
         </TableTitle>
         <PermissionNeededTooltip hasPermission={canWriteMcp}>
@@ -131,6 +114,7 @@ function McpServersPage() {
             onClick={() => createMcpMutation.mutate()}
             disabled={!canWriteMcp || createMcpMutation.isPending}
             loading={createMcpMutation.isPending}
+            size="sm"
           >
             <Plus className="mr-2 h-4 w-4" />
             {t('New MCP Server')}
@@ -144,10 +128,10 @@ function McpServersPage() {
         emptyStateTextTitle={t('No MCP Servers Found')}
         emptyStateTextDescription={t('Create an MCP server to connect your AI assistants.')}
         emptyStateIcon={<Server className="size-14" />}
+        onRowClick={(row) => navigate(`/mcp/${row.id}`)}
       />
     </div>
   );
-}
-McpServersPage.displayName = 'McpServersPage';
+};
 
-export default McpServersPage; 
+export default McpServersPage;
