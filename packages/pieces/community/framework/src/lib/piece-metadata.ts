@@ -130,9 +130,3 @@ export const PieceMetadataModelSummary = Type.Composite([
   PiecePackageMetadata
 ])
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
-
-export const PieceMetadataModelWithoutI18n = Type.Omit(PieceMetadataModel, ["i18n"])
-export type PieceMetadataModelWithoutI18n = Omit<PieceMetadataModel, "i18n">
-
-export const PieceMetadataModelWithoutI18nSummary = Type.Omit(PieceMetadataModelSummary, ["i18n"])
-export type PieceMetadataModelWithoutI18nSummary = Omit<PieceMetadataModelSummary, "i18n">
