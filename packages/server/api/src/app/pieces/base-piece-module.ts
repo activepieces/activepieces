@@ -1,4 +1,4 @@
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel  } from '@activepieces/pieces-framework'
 import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
@@ -54,7 +54,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         ListPiecesRequest,
-        async (req): Promise<PieceMetadataModelSummary[]> => {
+        async (req) => {
             const latestRelease = await apVersionUtil.getCurrentRelease()
             const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
@@ -73,15 +73,21 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
                 suggestionType: req.query.suggestionType,
+                locale: req.query.locale,
             })
-            return pieceMetadataSummary
+            return pieceMetadataSummary.map((piece) => {
+                return {
+                    ...piece,
+                    i18n: undefined,
+                }
+            })
         },
     )
 
     app.get(
         '/:scope/:name',
         GetPieceParamsWithScopeRequest,
-        async (req): Promise<PieceMetadata> => {
+        async (req) => {
             const { name, scope } = req.params
             const { version } = req.query
 
@@ -94,6 +100,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
+                locale: req.query.locale,
             })
         },
     )
@@ -104,7 +111,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         async (req): Promise<PieceMetadataModel> => {
             const { name } = req.params
             const { version } = req.query
-
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
@@ -113,6 +119,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
+                locale: req.query.locale,
             })
         },
     )
@@ -152,8 +159,9 @@ const ListPiecesRequest = {
     },
     schema: {
         querystring: ListPiecesRequestQuery,
-
+     
     },
+ 
 }
 const GetPieceParamsRequest = {
     config: {
@@ -162,7 +170,9 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
+    
     },
+   
 }
 
 const GetPieceParamsWithScopeRequest = {
