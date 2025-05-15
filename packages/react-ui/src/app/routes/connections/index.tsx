@@ -1,13 +1,24 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe, AppWindow, Tag, User } from 'lucide-react';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  AppWindow,
+  Tag,
+  User,
+  Replace,
+  InfoIcon,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
@@ -29,6 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
+import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
@@ -46,7 +58,9 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+
 function AppConnectionsPage() {
+  const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<
@@ -337,22 +351,55 @@ function AppConnectionsPage() {
       },
     },
     {
+      accessorKey: 'flowCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Flows')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div
+            className="text-left underline cursor-pointer"
+            onClick={() => {
+              navigate(
+                `/flows?connectionExternalId=${row.original.externalId}`,
+              );
+            }}
+          >
+            {row.original.flowIds?.length}
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
       cell: ({ row }) => {
-        const isPlatformConnection = row.original.scope === 'PLATFORM';
+        const isPlatformConnection =
+          row.original.scope === AppConnectionScope.PLATFORM;
         const userHasPermissionToRename = isPlatformConnection
           ? userPlatformRole === PlatformRole.ADMIN
           : userHasPermissionToWriteAppConnection;
         return (
           <div className="flex items-center gap-2 justify-end">
-            <RenameConnectionDialog
-              connectionId={row.original.id}
-              currentName={row.original.displayName}
-              onRename={() => {
-                refetch();
-              }}
-              userHasPermissionToRename={userHasPermissionToRename}
-            />
+            {row.original.scope === AppConnectionScope.PROJECT ? (
+              <RenameConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                onRename={() => {
+                  refetch();
+                }}
+                userHasPermissionToRename={userHasPermissionToRename}
+              />
+            ) : (
+              <EditGlobalConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                projectIds={row.original.projectIds}
+                userHasPermissionToEdit={userHasPermissionToRename}
+                onEdit={() => {
+                  refetch();
+                }}
+              />
+            )}
             <ReconnectButtonDialog
               hasPermission={userHasPermissionToRename}
               connection={row.original}
@@ -377,9 +424,34 @@ function AppConnectionsPage() {
               >
                 <ConfirmationDeleteDialog
                   title={t('Confirm Deletion')}
-                  message={t(
-                    'Are you sure you want to delete the selected connections? This action cannot be undone, any connected flow or mcp tool will fail after this.',
-                  )}
+                  message={
+                    <span>
+                      {t(
+                        'Are you sure you want to delete the selected connections? This action cannot be undone.',
+                      )}
+                      <span className="text-black font-bold ml-1">
+                        {t(
+                          `${
+                            Array.from(
+                              new Set(
+                                selectedRows.flatMap(
+                                  (row) => row.flowIds || [],
+                                ),
+                              ),
+                            ).length
+                          } flows will be affected`,
+                        )}
+                      </span>
+                      <Alert className="mt-4 flex flex-col gap-2">
+                        <InfoIcon className="h-5 w-5" />
+                        <span className="font-bold">
+                          {t(
+                            'Deleting connections may cause your Flows or MCP tools to break.',
+                          )}
+                        </span>
+                      </Alert>
+                    </span>
+                  }
                   entityName="connections"
                   mutationFn={async () => {
                     try {
@@ -413,25 +485,47 @@ function AppConnectionsPage() {
       {
         render: () => {
           return (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteAppConnection}
-            >
-              <NewConnectionDialog
-                isGlobalConnection={false}
-                onConnectionCreated={() => {
-                  setRefresh(refresh + 1);
-                  refetch();
-                }}
+            <div className="flex items-center gap-2">
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
               >
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={!userHasPermissionToWriteAppConnection}
+                <ReplaceConnectionsDialog
+                  projectId={projectId}
+                  onConnectionMerged={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
                 >
-                  {t('New Connection')}
-                </Button>
-              </NewConnectionDialog>
-            </PermissionNeededTooltip>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    <Replace className="h-4 w-4" />
+                    <span className="ml-2">{t('Replace')}</span>
+                  </Button>
+                </ReplaceConnectionsDialog>
+              </PermissionNeededTooltip>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
+              >
+                <NewConnectionDialog
+                  isGlobalConnection={false}
+                  onConnectionCreated={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
+                >
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    {t('New Connection')}
+                  </Button>
+                </NewConnectionDialog>
+              </PermissionNeededTooltip>
+            </div>
           );
         },
       },

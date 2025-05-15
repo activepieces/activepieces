@@ -34,7 +34,6 @@ const AdminAddPlatformRequest = {
 }
 
 
-
 const AdminRetryRunsRequest = {
     schema: {
         body: AdminRetryRunsRequestBody,
@@ -43,3 +42,4 @@ const AdminRetryRunsRequest = {
         allowedPrincipals: [PrincipalType.SUPER_USER],
     },
 }
+

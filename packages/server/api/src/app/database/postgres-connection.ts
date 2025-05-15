@@ -195,6 +195,13 @@ import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/174
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
 import { RenameTodoPostiveVariantName1745272231418 } from './migration/postgres/1745272231418-RenameTodoPostiveVariantName'
+import { AddConnectionIdsToFlowVersion1745530653784 } from './migration/postgres/1745530653784-AddConnectionIdsToFlowVersion'
+import { AddExternalIdForTablesAndFields1746356907629 } from './migration/postgres/1746356907629-AddExternalIdForTablesAndFields'
+import { MakeExternalIdNotNullable1746531094548 } from './migration/postgres/1746531094548-MakeExternalIdNotNullable'
+import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746543299109-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
+import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
+import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -327,6 +334,13 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLastChangelogDismissed1744053592923,
         AddMcpPiece1744822233873,
         RenameTodoPostiveVariantName1745272231418,
+        AddConnectionIdsToFlowVersion1745530653784,
+        MakeExternalIdNotNullable1746531094548,
+        AddExternalIdForTablesAndFields1746356907629,
+        ChangeMcpPieceForeignKey1746543299109,
+        AddHandshakeConfigurationToFlow1746848208563,
+        AddOrderToFolder1747095861746,
+        AddI18nColumnToPieceMetadata1746714836833,
     ]
 
     const edition = system.getEdition()

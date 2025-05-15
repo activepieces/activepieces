@@ -26,6 +26,7 @@ export enum AppConnectionType {
     SECRET_TEXT = 'SECRET_TEXT',
     BASIC_AUTH = 'BASIC_AUTH',
     CUSTOM_AUTH = 'CUSTOM_AUTH',
+    NO_AUTH = 'NO_AUTH',
 }
 
 export type SecretTextConnectionValue = {
@@ -73,6 +74,10 @@ export type OAuth2ConnectionValueWithApp = {
     redirect_url: string
 } & BaseOAuth2ConnectionValue
 
+export type NoAuthConnectionValue = {
+    type: AppConnectionType.NO_AUTH
+}
+
 export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
         T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
@@ -80,7 +85,8 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
                 T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
                     T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
                         T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
-                            never
+                            T extends AppConnectionType.NO_AUTH ? NoAuthConnectionValue :
+                                never
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     externalId: string
@@ -103,6 +109,7 @@ export type CloudAuth2Connection = AppConnection<AppConnectionType.CLOUD_OAUTH2>
 export type PlatformOAuth2Connection = AppConnection<AppConnectionType.PLATFORM_OAUTH2>
 export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
+export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
 
 export const AppConnectionWithoutSensitiveData = Type.Object({
     ...BaseModelSchema,
@@ -117,6 +124,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     ownerId: Nullable(Type.String()),
     owner: Nullable(UserWithMetaInformation),
     metadata: Nullable(Metadata),
+    flowIds: Nullable(Type.Array(ApId)),
 }, {
     description: 'App connection is a connection to an external app.',
 })

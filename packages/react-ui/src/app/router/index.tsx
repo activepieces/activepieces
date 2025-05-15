@@ -18,7 +18,6 @@ import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
-import { FlowRunsPage } from '@/app/routes/runs';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -47,7 +46,7 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import MCPPage from '../routes/mcp';
+import McpPage from '../routes/mcp';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -157,6 +156,30 @@ const routes = [
       </RoutePermissionGuard>
     ),
   }),
+  ...ProjectRouterWrapper({
+    path: '/runs',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Runs">
+            <FlowsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/issues',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Issues">
+            <FlowsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
   {
     path: '/templates/:templateId',
     element: (
@@ -172,18 +195,6 @@ const routes = [
         <PageTitle title="Releases">
           <ViewRelease />
         </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/runs',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Runs">
-            <FlowRunsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -391,7 +402,7 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
           <PageTitle title="MCP">
-            <MCPPage />
+            <McpPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
