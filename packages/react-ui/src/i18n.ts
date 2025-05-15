@@ -18,5 +18,6 @@ i18n
     supportedLngs: Object.values(LocalesEnum),
     keySeparator: false,
     nsSeparator: false,
+    returnEmptyString: false,
   });
 export default i18n;
