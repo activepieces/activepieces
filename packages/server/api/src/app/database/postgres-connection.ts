@@ -203,6 +203,7 @@ import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { ChangeMcpProjectIdIdx1747253720779 } from './migration/postgres/1747253720779-ChangeMcpProjectIdIdx'
+import { AddMcpName1747335239942 } from './migration/postgres/1747335239942-AddMcpName'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -343,6 +344,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddOrderToFolder1747095861746,
         AddI18nColumnToPieceMetadata1746714836833,
         ChangeMcpProjectIdIdx1747253720779,
+        AddMcpName1747335239942,
     ]
 
     const edition = system.getEdition()
