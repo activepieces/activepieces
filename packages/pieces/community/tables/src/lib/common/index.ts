@@ -270,11 +270,17 @@ export const tablesCommon = {
   },
 
   async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string } }) {
-    const tables = await fetchAllTables(context);
-    const table = tables.find((table: Table) => table.externalId === tableId);
+    const res = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables?limit=1&externalIds=${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+    const table = (res.body as SeekPage<Table>).data[0];
     assertNotNullOrUndefined(table, `Table with externalId ${tableId} not found`);
-    console.log('CONVERTING TABLE EXTERNAL ID TO ID', table);
-    return table?.id;
+    return table.id;
   }
 }
 

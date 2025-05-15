@@ -5,7 +5,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            UPDATE table SET "externalId" = "id"
+            UPDATE "table" SET "externalId" = "id"
         `)
     }
 
