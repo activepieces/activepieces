@@ -3,8 +3,8 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class ChangeExternalIdsForTables1747312147549 implements MigrationInterface {
-    name = 'ChangeExternalIdsForTables1747312147549'
+export class ChangeExternalIdsForTables1747346473000 implements MigrationInterface {
+    name = 'ChangeExternalIdsForTables1747346473000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -12,10 +12,10 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
         `)
 
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%tables-find-record%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
-            'ChangeExternalIdsForTables1747312147549: found ' +
+            'ChangeExternalIdsForTables1747346473000: found ' +
         flowVersionIds.length +
         ' versions',
         )
@@ -39,22 +39,22 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
             updatedFlows++
             if (updatedFlows % 100 === 0) {
                 log.info(
-                    'ChangeExternalIdsForTables1747312147549: ' +
+                    'ChangeExternalIdsForTables1747346473000: ' +
             updatedFlows +
             ' flows updated',
                 )
             }
         }
 
-        log.info('ChangeExternalIdsForTables1747312147549: up')
+        log.info('ChangeExternalIdsForTables1747346473000: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%tables-find-record%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
-            'ChangeExternalIdsForTables1747312147549 down: found ' +
+            'ChangeExternalIdsForTables1747346473000 down: found ' +
         flowVersionIds.length +
         ' versions',
         )
@@ -78,27 +78,27 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
             updatedFlows++
             if (updatedFlows % 100 === 0) {
                 log.info(
-                    'ChangeExternalIdsForTables1747312147549 down: ' +
+                    'ChangeExternalIdsForTables1747346473000 down: ' +
             updatedFlows +
             ' flows updated',
                 )
             }
         }
 
-        log.info('ChangeExternalIdsForTables1747312147549: down')
+        log.info('ChangeExternalIdsForTables1747346473000: down')
     }
 
 }
 
 const traverseAndUpdateSubFlow = (
-    updater: (s: Step) => void,
+    updater: (s: Step) => Step,
     root: Step | undefined,
 ): Step | undefined => {
     if (!root) {
         return undefined
     }
 
-    const clonedRoot = JSON.parse(JSON.stringify(root))
+    const clonedRoot = updater(root)
 
     switch (clonedRoot.type) {
         case 'ROUTER': {
@@ -134,18 +134,20 @@ const traverseAndUpdateSubFlow = (
 
 const updateVersionOfTablesStep = (
     step: Step,
-): void => {
+): Step => {
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.1.0'
     }
+    return step
 }
 
 const downgradeVersionOfTablesStep = (
     step: Step,
-): void => {
+): Step => {
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.0.6'
     }
+    return step
 }
 
 type StepType =
@@ -163,7 +165,7 @@ type BaseStep<T extends StepType> = {
 
 
 type RouterStep = BaseStep<'ROUTER'> & {
-    children: Step[]
+    children: (Step | null)[]
     settings: {
         branches: {
             conditions?: unknown[]
