@@ -1697,6 +1697,42 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "amaan-ai20",
+      "name": "Amaan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188329978?v=4",
+      "profile": "https://github.com/amaan-ai20",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mllopart",
+      "name": "Marc Llopart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1257083?v=4",
+      "profile": "https://www.marcllopartriera.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "onyedikachi-david",
+      "name": "David Anyatonwu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51977119?v=4",
+      "profile": "https://github.com/onyedikachi-david",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "neo773",
+      "name": "neo773",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62795688?v=4",
+      "profile": "https://huzef.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

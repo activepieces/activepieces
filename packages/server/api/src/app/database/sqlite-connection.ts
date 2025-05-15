@@ -97,7 +97,12 @@ import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './
 import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
 import { RenameTodoVariantName1745269828603 } from './migration/sqlite/1745269828603-RenameTodoVariantName'
 import { AddConnectionIdsToFlowVersion1745531870426 } from './migration/sqlite/1745531870426-AddConnectionIdsToFlowVersion'
-
+import { AddExternalIdForTablesAndFieldsSQLITE1746367601605 } from './migration/sqlite/1746367601605-AddExternalIdForTablesAndFieldsSQLITE'
+import { MakeExternalIdNotNullableSqlite1746529105649 } from './migration/sqlite/1746529105649-MakeExternalIdNotNullableSqlite'
+import { ChangeMcpPieceForeignKey1746543346220 } from './migration/sqlite/1746543346220-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714949131 } from './migration/sqlite/1746714949131-AddI18nColumnToPieceMetadata'
+import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/sqlite/1746845932780-AddHandshakeConfigurationToFlowSqlite'
+import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -211,6 +216,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpPieceSqlite1744822233873,
         RenameTodoVariantName1745269828603,
         AddConnectionIdsToFlowVersion1745531870426,
+        MakeExternalIdNotNullableSqlite1746529105649,
+        AddExternalIdForTablesAndFieldsSQLITE1746367601605,
+        ChangeMcpPieceForeignKey1746543346220,
+        AddHandshakeConfigurationToFlowSqlite1746845932780,
+        AddFolderDisplayOrder1747062679388,
+        AddI18nColumnToPieceMetadata1746714949131,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

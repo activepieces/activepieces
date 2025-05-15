@@ -314,3 +314,7 @@ export const downloadFile = async ({
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const wait = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};

@@ -56,13 +56,8 @@ export const response = createAction({
   async run(context) {
     const response = context.propsValue.response['response'];
     const callbackUrl = await context.store.get<string>(callableFlowKey(context.run.id), StoreScope.FLOW);
-    if (isNil(callbackUrl)) {
-      throw new Error(JSON.stringify({
-        message: "Please ensure the first action in the flow is Callable Flow"
-      }));
-    }
     const isNotTestFlow = callbackUrl !== MOCK_CALLBACK_IN_TEST_FLOW_URL;
-    if (isNotTestFlow) {
+    if (isNotTestFlow && !isNil(callbackUrl)) {
       await httpClient.sendRequest<CallableFlowResponse>({
         method: HttpMethod.POST,
         url: callbackUrl,

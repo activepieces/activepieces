@@ -15,6 +15,13 @@ import { getRagById } from './lib/actions/rag-get-by-id';
 import { updateRag } from './lib/actions/rag-update';
 import { deleteRag } from './lib/actions/rag-delete';
 import { ragPromptCompletion } from './lib/actions/rag-prompt-completion';
+import { agentCreate } from './lib/actions/agent-create';
+import { agentAddRag } from './lib/actions/agent-add-rag';
+import { agentList } from './lib/actions/agent-list';
+import { agentDelete } from './lib/actions/agent-delete';
+import { agentUpdate } from './lib/actions/agent-update';
+import { agentGet } from './lib/actions/agent-get';
+import { agentPromptCompletion } from './lib/actions/agent-prompt-completion';
 import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
@@ -70,6 +77,13 @@ export const straico = createPiece({
     updateRag,
     deleteRag,
     ragPromptCompletion,
+    agentCreate,
+    agentAddRag,
+    agentList,
+    agentDelete,
+    agentUpdate,
+    agentGet,
+    agentPromptCompletion,
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrlv1,
