@@ -254,6 +254,9 @@
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
       ],
+      "@activepieces/piece-fireflies-ai": [
+        "packages/pieces/community/fireflies-ai/src/index.ts"
+      ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
       ],
