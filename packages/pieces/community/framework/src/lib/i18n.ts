@@ -107,6 +107,7 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
     return piece
   }
 }
+/**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
 const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefined> => {
   const locales = Object.values(LocalesEnum);
   const i18n: I18nForPiece = {};

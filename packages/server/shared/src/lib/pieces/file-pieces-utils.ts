@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
@@ -123,13 +123,15 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceName,
                 pieceVersion,
             })
-            const originalMetadata = await piece.metadata({ pieceName })
+            const originalMetadata = piece.metadata()
+            const i18n = await pieceTranslation.initializeI18n(pieceName)
             const metadata: PieceMetadata = {
                 ...originalMetadata,
                 name: pieceName,
                 version: pieceVersion,
                 authors: piece.authors,
                 directoryPath: folderPath,
+                i18n
             }
 
             pieceCache[folderPath] = metadata

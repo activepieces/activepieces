@@ -7,7 +7,6 @@ import {
 } from '@activepieces/shared';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
-import { pieceTranslation } from './i18n';
 
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
@@ -34,8 +33,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 
 
-  async metadata(params: {pieceName?: string} | undefined): Promise<BackwardCompatiblePieceMetadata> {
-    const i18n = params?.pieceName ? await pieceTranslation.initializeI18n(params.pieceName): undefined
+  metadata(): BackwardCompatiblePieceMetadata {
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,
@@ -46,8 +44,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
-      maximumSupportedRelease: this.maximumSupportedRelease,
-      i18n
+      maximumSupportedRelease: this.maximumSupportedRelease
     };
   }
 
