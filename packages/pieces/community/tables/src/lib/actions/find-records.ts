@@ -85,7 +85,8 @@ export const findRecords = createAction({
     }),
   },
   async run(context) {
-    const { table_id: tableId, limit, filters } = context.propsValue;
+    const { table_id: tableExternalId, limit, filters } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
     const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
 
     for (const filter of filtersArray) {
