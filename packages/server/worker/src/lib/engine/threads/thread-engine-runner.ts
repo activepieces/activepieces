@@ -1,6 +1,6 @@
 import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
@@ -20,7 +20,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -128,6 +128,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                     globalCachePath: sandboxPath,
                     globalCodesPath: codesPath,
                     customPiecesPath: sandboxPath,
+                    runEnvironment: operation.runEnvironment,
                 })
                 break
             }
@@ -150,6 +151,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
+            runEnvironment: operation.runEnvironment,
         }
 
         return execute(log, input, EngineOperationType.EXECUTE_STEP)
@@ -201,7 +203,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion): Promise<void> {
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment): Promise<void> {
     const pieces = await pieceEngineUtil(log).extractFlowPieces({
         flowVersion,
         engineToken,
@@ -213,6 +215,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
         globalCachePath: sandboxPath,
         globalCodesPath: codesPath,
         customPiecesPath: sandboxPath,
+        runEnvironment,
     })
 }
 

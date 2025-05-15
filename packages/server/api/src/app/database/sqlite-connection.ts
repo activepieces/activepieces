@@ -18,13 +18,14 @@ import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddM
 import { AddMetadataFields1743780156664 } from './migration/sqlite/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissedSQLITE1744053922591 } from './migration/sqlite/1744053922591-AddLastChangelogDismissedSQLITE'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
-import { AddMetadataFlowTemplate1744898945629 } from './migration/sqlite/1744898945629-add-metadata-flow-template'
 import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
+import { AddMetadataFlowTemplate1744898945629 } from './migration/sqlite/1744898945629-add-metadata-flow-template'
 import { RenameTodoVariantName1745269828603 } from './migration/sqlite/1745269828603-RenameTodoVariantName'
 import { AddConnectionIdsToFlowVersion1745531870426 } from './migration/sqlite/1745531870426-AddConnectionIdsToFlowVersion'
 import { AddExternalIdForTablesAndFieldsSQLITE1746367601605 } from './migration/sqlite/1746367601605-AddExternalIdForTablesAndFieldsSQLITE'
 import { MakeExternalIdNotNullableSqlite1746529105649 } from './migration/sqlite/1746529105649-MakeExternalIdNotNullableSqlite'
 import { ChangeMcpPieceForeignKey1746543346220 } from './migration/sqlite/1746543346220-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714949131 } from './migration/sqlite/1746714949131-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/sqlite/1746845932780-AddHandshakeConfigurationToFlowSqlite'
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 const getSqliteDatabaseFilePath = (): string => {
@@ -48,6 +49,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddI18nColumnToPieceMetadata1746714949131,
         AddFolderDisplayOrder1747062679388,
         AddHandshakeConfigurationToFlowSqlite1746845932780,
         ChangeMcpPieceForeignKey1746543346220,

@@ -1,7 +1,7 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
 import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
-import { ExecutionMode, FlowVersionState } from '@activepieces/shared'
+import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
@@ -51,10 +51,11 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     async processCodeStep({
         artifact,
         codesFolderPath,
+        runEnvironment,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
         const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
-        const codePath = path.join(flowVersionPath, name)
+        const codePath = path.join(flowVersionPath, name, runEnvironment.toString())
         log.debug({
             message: 'CodeBuilder#processCodeStep',
             sourceCode,
@@ -62,7 +63,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
+        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}-${runEnvironment}`)
         try {
             const cache = cacheHandler(codePath)
             const fState = await cache.cacheCheckState(codePath)
@@ -172,6 +173,7 @@ type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
     log: FastifyBaseLogger
+    runEnvironment: RunEnvironment
 }
 
 type InstallDependenciesParams = {

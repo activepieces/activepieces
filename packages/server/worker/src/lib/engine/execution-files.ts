@@ -1,5 +1,5 @@
 import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
-import { PiecePackage, PieceType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from '../utils/code-builder'
@@ -14,6 +14,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         codeSteps,
         globalCodesPath,
         customPiecesPath,
+        runEnvironment,
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
@@ -22,9 +23,11 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
 
         const startTimeCode = performance.now()
         const buildJobs = codeSteps.map(async (artifact) => {
+            assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
             return codeBuilder(log).processCodeStep({
                 artifact,
                 codesFolderPath: globalCodesPath,
+                runEnvironment,
                 log,
             })
         })
@@ -87,4 +90,5 @@ type ProvisionParams = {
     globalCachePath: string
     globalCodesPath: string
     customPiecesPath: string
+    runEnvironment?: RunEnvironment
 }
