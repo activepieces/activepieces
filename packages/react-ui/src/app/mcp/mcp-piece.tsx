@@ -23,10 +23,10 @@ import {
 
 import { Card, CardContent } from '../../components/ui/card';
 import { mcpApi } from '../../features/mcp/lib/mcp-api';
-import { mcpHooks } from '../../features/mcp/lib/mcp-hooks';
 import { PieceIcon } from '../../features/pieces/components/piece-icon';
 
 import { McpPieceDialog } from './mcp-piece-dialog';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 type McpPieceProps = {
   piece: McpPieceWithConnection;
@@ -37,6 +37,7 @@ type McpPieceProps = {
   onDelete: (piece: McpPieceWithConnection) => void;
   isLoading?: boolean;
   hasPermissionToEdit: boolean;
+  mcpId: string;
 };
 
 export const McpPiece = ({
@@ -45,12 +46,13 @@ export const McpPiece = ({
   onDelete,
   isLoading = false,
   hasPermissionToEdit,
+  mcpId,
 }: McpPieceProps) => {
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: piece.pieceName,
   });
 
-  const { refetch: refetchMcp } = mcpHooks.useMcp();
+  const { refetch: refetchMcp } = mcpHooks.useMcp(mcpId);
   const { mutate: updatePieceStatus, isPending: isStatusUpdatePending } =
     useMutation({
       mutationFn: async (status: McpPieceStatus) => {
@@ -171,7 +173,10 @@ export const McpPiece = ({
           {pieceModel?.auth && (
             <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
               <Tooltip>
-                <McpPieceDialog mcpPieceToUpdate={piece}>
+                <McpPieceDialog 
+                  mcpPieceToUpdate={piece} 
+                  mcpId={mcpId} 
+                >
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"

@@ -27,3 +27,13 @@ export const UpdateMcpPieceRequestBody = Type.Object({
 export type UpdateMcpPieceRequestBody = Static<typeof UpdateMcpPieceRequestBody>
 
 
+export const ListMcpsRequestQuery = Type.Object({
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+    projectId: Type.String(),
+})
+
+export type ListMcpsRequestQuery = Static<typeof ListMcpsRequestQuery>
+
+
+

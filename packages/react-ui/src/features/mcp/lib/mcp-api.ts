@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import {
+  ListMcpsRequestQuery,
   McpPieceStatus,
   McpPieceWithConnection,
   McpWithPieces,
@@ -25,10 +26,19 @@ interface UpdatePieceParams {
 }
 
 export const mcpApi = {
-  async get() {
+  async list(
+    request: ListMcpsRequestQuery
+  ): Promise<SeekPage<McpWithPieces>> {
     return await api
-      .get<SeekPage<McpWithPieces>>(`/v1/mcp-servers`)
-      .then((res) => res.data[0]);
+      .get<SeekPage<McpWithPieces>>('/v1/mcp-servers', {
+        ...request,
+      });
+  },
+  async get(id: string): Promise<McpWithPieces> {
+    return await api.get<McpWithPieces>(`/v1/mcp-servers/${id}`);
+  },
+  async create(): Promise<McpWithPieces | null> {
+    return await api.post<McpWithPieces | null>('/v1/mcp-servers', {});
   },
   async update({ id, token }: UpdateMCPParams) {
     return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}`, {
@@ -38,9 +48,9 @@ export const mcpApi = {
   async rotateToken(id: string) {
     return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}/rotate`);
   },
-  async getPieces() {
+  async getPieces(id: string) {
     return await api.get<{ pieces: McpPieceWithConnection[] }>(
-      `/v1/mcp-pieces`,
+      `/v1/mcp-pieces/${id}`,
     );
   },
   async addPiece({
@@ -68,5 +78,9 @@ export const mcpApi = {
   },
   async deletePiece(pieceId: string): Promise<McpWithPieces> {
     return await api.delete(`/v1/mcp-pieces/${pieceId}`);
+  },
+  async bulkDelete(ids: string[]): Promise<void> {
+    console.warn('Bulk delete MCP API call not implemented. IDs:', ids);
+    return Promise.resolve();
   },
 };

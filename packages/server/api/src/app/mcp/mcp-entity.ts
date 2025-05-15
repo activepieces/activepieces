@@ -18,7 +18,6 @@ export const McpEntity = new EntitySchema<McpSchema>({
         {
             name: 'mcp_project_id',
             columns: ['projectId'],
-            unique: true,
         },
     ],
     relations: {

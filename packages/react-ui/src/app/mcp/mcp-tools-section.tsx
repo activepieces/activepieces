@@ -28,6 +28,7 @@ interface McpToolsProps {
   canAddTool: boolean;
   addButtonLabel: string;
   isPending?: boolean;
+  mcpId: string;
 }
 
 export const McpToolsSection = ({
@@ -43,6 +44,7 @@ export const McpToolsSection = ({
   canAddTool,
   addButtonLabel,
   isPending,
+  mcpId,
 }: McpToolsProps) => {
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -58,7 +60,7 @@ export const McpToolsSection = ({
     if (type === 'pieces') {
       return (
         <PermissionNeededTooltip hasPermission={canAddTool}>
-          <McpPieceDialog>
+          <McpPieceDialog mcpId={mcpId}>
             <Button
               variant="default"
               size="sm"
@@ -94,13 +96,14 @@ export const McpToolsSection = ({
       return Array(3)
         .fill(0)
         .map((_, index) => (
-          <McpPiece
+          <McpPiece 
             key={`skeleton-${index}`}
             piece={{} as McpPieceWithConnection}
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
             hasPermissionToEdit={canAddTool}
+            mcpId={mcpId}
           />
         ));
     } else {
@@ -129,7 +132,7 @@ export const McpToolsSection = ({
     if (type === 'pieces') {
       return (
         <PermissionNeededTooltip hasPermission={canAddTool}>
-          <McpPieceDialog>
+          <McpPieceDialog mcpId={mcpId}>
             <Button
               className="w-64 p-0 h-auto hover:bg-transparent"
               variant="ghost"
@@ -212,6 +215,7 @@ export const McpToolsSection = ({
                     pieceInfo={pieceInfo}
                     onDelete={() => onToolDelete && onToolDelete(piece)}
                     hasPermissionToEdit={canAddTool}
+                    mcpId={mcpId}
                   />
                 );
               } else {

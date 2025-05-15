@@ -27,18 +27,19 @@ import {
 } from '@activepieces/shared';
 
 import { mcpApi } from '../../features/mcp/lib/mcp-api';
-import { mcpHooks } from '../../features/mcp/lib/mcp-hooks';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
   mcpPieceToUpdate?: McpPieceWithConnection;
+  mcpId: string;
 };
 
 export const McpPieceDialog = React.memo(
-  ({ children, mcpPieceToUpdate }: McpPieceDialogProps) => {
+  ({ children, mcpPieceToUpdate, mcpId }: McpPieceDialogProps) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
-    const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp();
+    const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp(mcpId);
     const addOrUpdateMcpPieceMutation = useMutation({
       mutationFn: async ({
         mcpId,

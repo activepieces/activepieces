@@ -4,33 +4,55 @@ import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
 
+const DEFAULT_PAGE_SIZE = 10
+
+const getProjectIdFromRequest = (req: any): ProjectId | null => {
+    if (req.principal.type === PrincipalType.SERVICE) {
+        if (!req.query.projectId) {
+            return null
+        }
+        return req.query.projectId
+    }
+    return req.principal.projectId
+}
+
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+
+    app.post('/', CreateMcpRequest, async (req) => {
+        const projectId = getProjectIdFromRequest(req)
+        if (!projectId) {
+            return null
+        }
+        return mcpService(req.log).upsert({
+            projectId,
+        })
+    })
     
     app.get('/', GetMcpsRequest, async (req) => {
-        let projectId: ProjectId
-        
-        if (req.principal.type === PrincipalType.SERVICE) {
-            if (!req.query.projectId) {
-                return {
-                    data: [],
-                    cursor: null,
-                }
+        const projectId = getProjectIdFromRequest(req)
+        if (!projectId) {
+            return {
+                data: [],
+                cursor: null,
             }
-            projectId = req.query.projectId
-        }
-        else {
-            projectId = req.principal.projectId
         }
         
         const result = await mcpService(req.log).list({
             projectId,
             cursorRequest: req.query.cursor ?? null,
-            limit: req.query.limit ?? 10,
+            limit: req.query.limit ?? DEFAULT_PAGE_SIZE,
         })
         
         return result
+    })
+
+    app.get('/:id', GetMcpRequest, async (req) => {
+        const mcpId = req.params.id
+        return mcpService(req.log).getOrThrow({
+            mcpId,
+        })
     })
 
     app.post('/:id', UpdateMcpRequest, async (req) => {
@@ -50,6 +72,39 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
             token: apId(),
         })
     })
+
+    app.delete('/:id', DeleteMcpRequest, async (req, reply) => {
+        const mcpId = req.params.id
+        const projectId = getProjectIdFromRequest(req)
+
+        if (!projectId) {
+            return reply.status(StatusCodes.BAD_REQUEST).send()
+        }
+
+        await mcpService(req.log).delete({
+            mcpId,
+            projectId,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+}
+
+const CreateMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Create a new MCP server',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: Type.Object({
+            projectId: Type.Optional(Type.String({})),
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Union([McpWithPieces, Type.Null()]),
+        },
+    },
 }
 
 const GetMcpsRequest = {
@@ -103,6 +158,45 @@ const RotateTokenRequest = {
         }),
         response: {
             [StatusCodes.OK]: McpWithPieces,
+        },
+    },
+}
+
+const GetMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.READ_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Get an MCP server by ID',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: McpWithPieces,
+        },
+    },
+}
+
+const DeleteMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Delete an MCP server by ID',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: Type.Object({
+            projectId: Type.Optional(Type.String({})),
+        }),
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }
