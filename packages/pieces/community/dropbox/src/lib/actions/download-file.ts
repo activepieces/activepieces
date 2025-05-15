@@ -22,17 +22,21 @@ export const dropboxDownloadFile = createAction({
     // Capture file name, if unsuccesfull default to output.pdf
     const fileName = (context.propsValue.path.match(/[^/]+$/) ?? ['output.pdf'])[0]
 
+     // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
+    const dropboxApiArg = JSON.stringify({path:context.propsValue.path}).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
+
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://content.dropboxapi.com/2/files/download`,
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': `{"path":"${context.propsValue.path}"}`
+        'Dropbox-API-Arg': dropboxApiArg
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
+      responseType:'arraybuffer'
     });
 
     return {
