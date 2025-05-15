@@ -35,7 +35,7 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
                 if (updated) {
                     await queryRunner.query(
                         'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                        [trigger, flowVersion[0].id],
+                        [JSON.stringify(trigger), flowVersion[0].id],
                     )
                 }
             }
@@ -52,8 +52,46 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
         log.info('ChangeExternalIdsForTables1747312147549: up')
     }
 
-    public async down(_queryRunner: QueryRunner): Promise<void> {
-        // No need to do anything
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        const flowVersionIds = await queryRunner.query(
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%tables-find-record%\'',
+        )
+        log.info(
+            'ChangeExternalIdsForTables1747312147549 down: found ' +
+        flowVersionIds.length +
+        ' versions',
+        )
+        let updatedFlows = 0
+        for (const { id } of flowVersionIds) {
+            // Fetch FlowVersion record by ID
+            const flowVersion = await queryRunner.query(
+                'SELECT * FROM flow_version WHERE id = $1',
+                [id],
+            )
+            if (flowVersion.length > 0) {
+                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
+                const updated = traverseAndUpdateSubFlow(
+                    downgradeVersionOfTablesStep,
+                    trigger,
+                )
+                if (updated) {
+                    await queryRunner.query(
+                        'UPDATE flow_version SET trigger = $1 WHERE id = $2',
+                        [JSON.stringify(trigger), flowVersion[0].id],
+                    )
+                }
+            }
+            updatedFlows++
+            if (updatedFlows % 100 === 0) {
+                log.info(
+                    'ChangeExternalIdsForTables1747312147549 down: ' +
+            updatedFlows +
+            ' flows updated',
+                )
+            }
+        }
+
+        log.info('ChangeExternalIdsForTables1747312147549: down')
     }
 
 }
@@ -105,6 +143,14 @@ const updateVersionOfTablesStep = (
 ): void => {
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.1.0'
+    }
+}
+
+const downgradeVersionOfTablesStep = (
+    step: Step,
+): void => {
+    if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
+        (step as PieceStep).settings.pieceVersion = '0.0.6'
     }
 }
 
