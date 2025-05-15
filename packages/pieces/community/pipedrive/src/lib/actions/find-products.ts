@@ -46,7 +46,7 @@ export const findProductsAction = createAction({
 			const qs = {
 				term: context.propsValue.fieldValue,
 				fields: context.propsValue.field,
-				limit: 100,
+				limit: 500,
 				start: 0,
 				exact_match: 'true',
 			};

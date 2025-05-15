@@ -8,7 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { GetField, PaginatedResponse, RequestParams } from './types';
-import { isNil, pickBy } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 export const pipedriveCommon = {
 	subscribeWebhook: async (
@@ -123,7 +123,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 	const qs = query ? query : {};
 
 	qs.start = 0;
-	qs.limit = 100;
+	qs.limit = 500;
 
 	const resultData: T[] = [];
 	let hasMoreItems = true;
