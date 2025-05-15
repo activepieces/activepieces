@@ -55,12 +55,15 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   }
 }
 
+
+
 const extractPiecePath = async (pieceName: string) => {
   try{
-    if(await fileExists(`/node_modules/${pieceName}`)) {
-      console.log(`Found piece path: /node_modules/${pieceName}`);
-      return `/node_modules/${pieceName}`;
-    }
+   if(await fileExists(`/node_modules/${pieceName}`)) {
+    return `/node_modules/${pieceName}`;
+   }
+   console.log(`/node_modules/${pieceName} does not exist`)
+    
     const distPath = path.resolve('dist/packages/pieces');
     const fastGlob = (await import('fast-glob')).default;
     const packageJsonFiles = await fastGlob('**/**/package.json', { cwd: distPath });
@@ -79,7 +82,7 @@ const extractPiecePath = async (pieceName: string) => {
     }
   }
   catch (err) {
-    console.error(`Error extracting piece path for ${pieceName}:`, err)
+    console.log(`Error extracting piece path for ${pieceName}:`, err)
   }
   console.log(`Piece path not found for ${pieceName}`);
   return undefined;
@@ -109,19 +112,26 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
 }
 /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
 const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefined> => {
-  const locales = Object.values(LocalesEnum);
-  const i18n: I18nForPiece = {};
-  const pieceOutputPath = await extractPiecePath(pieceName)
-  if (!pieceOutputPath) {
+  try{
+    const locales = Object.values(LocalesEnum);
+    const i18n: I18nForPiece = {};
+    const pieceOutputPath = await extractPiecePath(pieceName)
+    console.log(`pieceOutputPath: ${pieceOutputPath}`)
+    if (!pieceOutputPath) {
+      return undefined
+    }
+    for (const locale of locales) {
+      const translation = await readLocaleFile(locale, pieceOutputPath);
+      if (translation) {
+        i18n[locale] = translation;
+      }
+    }
+    return (Object.keys(i18n).length > 0) ? i18n : undefined;
+  }
+  catch (err) {
+    console.log(`Error initializing i18n for ${pieceName}:`, err)
     return undefined
   }
-  for (const locale of locales) {
-    const translation = await readLocaleFile(locale, pieceOutputPath);
-    if (translation) {
-      i18n[locale] = translation;
-    }
-  }
-  return (Object.keys(i18n).length > 0) ? i18n : undefined;
 }
 
 export const pieceTranslation = {
