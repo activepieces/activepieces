@@ -80,7 +80,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     })
 
-    fastify.post('/list', ListRequest, async (request) => {
+    fastify.get('/', ListRequest, async (request) => {
         return recordService.list({
             tableId: request.body.tableId,
             projectId: request.principal.projectId,

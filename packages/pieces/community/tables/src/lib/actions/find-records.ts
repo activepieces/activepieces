@@ -3,7 +3,7 @@ import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
 import { z } from 'zod';
-
+import qs from 'qs';
 type FieldInfo = {
   id: string;
   type: FieldType;
@@ -136,9 +136,8 @@ export const findRecords = createAction({
     };
 
     const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/records/list`,
-      body: request,
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/records?${qs.stringify(request)}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
