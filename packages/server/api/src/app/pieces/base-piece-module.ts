@@ -10,6 +10,7 @@ import {
     ListPiecesRequestQuery,
     ListVersionRequestQuery,
     ListVersionsResponse,
+    LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
@@ -73,7 +74,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
                 suggestionType: req.query.suggestionType,
-                locale: req.query.locale,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
             return pieceMetadataSummary.map((piece) => {
                 return {
@@ -100,7 +101,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
-                locale: req.query.locale,
+                locale: req.query.locale as LocalesEnum | undefined,
             })
         },
     )
