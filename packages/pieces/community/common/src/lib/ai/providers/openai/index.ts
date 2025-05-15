@@ -220,6 +220,7 @@ export const openaiModels = [
 	}),
 	model({ label: 'dall-e-3', value: 'dall-e-3', supported: ['image'] }).mapper(openaiImageMapper),
 	model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] }).mapper(openaiImageMapper),
+	model({label:'gpt-image-1',value:'gpt-image-1',supported:['image']}).mapper(openaiImageMapper),
 	model({
 		label: 'omni-moderation-latest',
 		value: 'omni-moderation-latest',
