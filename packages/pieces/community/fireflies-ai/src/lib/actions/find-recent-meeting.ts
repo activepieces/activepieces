@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firefliesAiAuth } from '../../index';
-import { getTranscript, getUser } from '../common/queries';
+import { getTranscript } from '../common/queries';
 import { isNil } from '@activepieces/shared';
 import { BASE_URL } from '../common';
 
