@@ -202,7 +202,7 @@ import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746
 import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
-import { ChangeExternalIdsForTables1747312147549 } from './migration/postgres/1747312147549-ChangeExternalIdsForTables'
+import { ChangeExternalIdsForTables1747312147549 } from './migration/common/1747312147549-ChangeExternalIdsForTables'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

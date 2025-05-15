@@ -43,7 +43,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const buildTarget = await checkBuildTarget(nxProjectFilePath)
         log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
-        
+
         if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
@@ -57,14 +57,15 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
                 '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
             ),
         )
-        const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
-        await runCommandWithLiveOutput(postBuildCommand)
+        // TODO disable until we have a way to build with shared version bumped
+        // const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
+        //  await runCommandWithLiveOutput(postBuildCommand)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
-        
+
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
-        
+
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheHandler(globalCachePath)
@@ -72,7 +73,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.setCache('@activepieces/shared', CacheState.PENDING)
         await cache.setCache(piecePackageName, CacheState.PENDING)
-        
+
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {

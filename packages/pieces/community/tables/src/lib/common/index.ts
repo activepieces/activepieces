@@ -1,7 +1,8 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
 import { z } from 'zod';
+import qs from 'qs';
 
 type FormattedRecord = {
   id: string;
@@ -63,11 +64,12 @@ export const tablesCommon = {
   }),
 
   async getTableFields({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }) {
+    const convertedTableId = await this.convertTableExternalIdToId(tableId, context);
     const fieldsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/fields`,
       queryParams: {
-        tableId,
+        tableId: convertedTableId,
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -236,12 +238,8 @@ export const tablesCommon = {
     }
 
     const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/records/list`,
-      body: {
-        tableId,
-        limit
-      },
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/records?tableId=${tableId}&limit=${limit}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
@@ -270,9 +268,12 @@ export const tablesCommon = {
   },
 
   async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string } }) {
+    const list: ListTablesRequest = {
+      externalIds: [tableId],
+    }
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables?limit=1&externalIds=${tableId}`,
+      url: `${context.server.apiUrl}v1/tables?${qs.stringify(list)}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,

@@ -39,11 +39,12 @@ export const findRecords = createAction({
           };
         }
 
+        const convertedTableId = await tablesCommon.convertTableExternalIdToId(table_id, context);
         const fields = await tablesCommon.getTableFields({
-          tableId: table_id,
+          tableId: convertedTableId,
           context,
         });
-
+ 
         return {
           filters: Property.Array({
             displayName: 'Filters',
@@ -134,6 +135,8 @@ export const findRecords = createAction({
       cursor: undefined,
       filters: parsedFilters,
     };
+
+    console.log(qs.stringify(request));
 
     const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
       method: HttpMethod.GET,

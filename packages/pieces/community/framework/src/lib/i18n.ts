@@ -73,7 +73,6 @@ const extractPiecePath = async (pieceName: string) => {
         const packageJson = JSON.parse(await fs.readFile(fullPath, 'utf-8'));
         if (packageJson.name === pieceName) {
           const piecePath = path.dirname(fullPath);
-          console.log(`Found piece path: ${piecePath}`);
           return piecePath;
         }
       } catch (err) {
@@ -116,7 +115,6 @@ const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefi
     const locales = Object.values(LocalesEnum);
     const i18n: I18nForPiece = {};
     const pieceOutputPath = await extractPiecePath(pieceName)
-    console.log(`pieceOutputPath: ${pieceOutputPath}`)
     if (!pieceOutputPath) {
       return undefined
     }

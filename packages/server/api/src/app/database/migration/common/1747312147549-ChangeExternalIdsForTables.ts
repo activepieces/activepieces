@@ -27,14 +27,15 @@ export class ChangeExternalIdsForTables1747312147549 implements MigrationInterfa
                 [id],
             )
             if (flowVersion.length > 0) {
+                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
                 const updated = traverseAndUpdateSubFlow(
                     updateVersionOfTablesStep,
-                    flowVersion[0].trigger,
+                    trigger,
                 )
                 if (updated) {
                     await queryRunner.query(
                         'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                        [flowVersion[0].trigger, flowVersion[0].id],
+                        [trigger, flowVersion[0].id],
                     )
                 }
             }
@@ -82,13 +83,6 @@ const traverseAndUpdateSubFlow = (
             clonedRoot.children = updatedChildren
             break
         }
-        case 'BRANCH':
-            clonedRoot.onSuccessAction = clonedRoot.onSuccessAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.onSuccessAction) : undefined
-            clonedRoot.onFailureAction = clonedRoot.onFailureAction ?
-                traverseAndUpdateSubFlow(updater, clonedRoot.onFailureAction) : undefined
-            updater(clonedRoot)
-            break
         case 'LOOP_ON_ITEMS':
             clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
                 traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
@@ -109,20 +103,17 @@ const traverseAndUpdateSubFlow = (
 const updateVersionOfTablesStep = (
     step: Step,
 ): void => {
-    if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') {
+    if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.1.0'
     }
 }
 
 type StepType =
-    | 'BRANCH'
     | 'CODE'
     | 'EMPTY'
     | 'LOOP_ON_ITEMS'
-    | 'MISSING'
     | 'PIECE'
     | 'PIECE_TRIGGER'
-    | 'WEBHOOK'
     | 'ROUTER'
 
 type BaseStep<T extends StepType> = {
@@ -130,13 +121,6 @@ type BaseStep<T extends StepType> = {
     nextAction?: Step
 }
 
-type BranchStep = BaseStep<'BRANCH'> & {
-    onFailureAction?: Step
-    onSuccessAction?: Step
-    settings: {
-        conditions: unknown[]
-    }
-}
 
 type RouterStep = BaseStep<'ROUTER'> & {
     children: Step[]
@@ -165,6 +149,6 @@ type PieceStep = BaseStep<'PIECE' | 'PIECE_TRIGGER'> & {
     settings: Record<string, unknown>
 }
 
-type GenericStep = BaseStep<'CODE' | 'EMPTY' | 'MISSING' | 'WEBHOOK'>
+type GenericStep = BaseStep<'CODE' | 'EMPTY'>
 
-type Step = BranchStep | LoopOnItemsStep | GenericStep | PieceStep | RouterStep
+type Step = LoopOnItemsStep | GenericStep | PieceStep | RouterStep
