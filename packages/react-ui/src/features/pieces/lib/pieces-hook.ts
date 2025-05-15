@@ -170,6 +170,7 @@ export const piecesHooks = {
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
+    const { i18n } = useTranslation();
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
@@ -177,6 +178,7 @@ export const piecesHooks = {
           searchQuery,
           suggestionType:
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+          locale: i18n.language as LocalesEnum,
         });
         const piecesMetadata = pieces
           .filter(
