@@ -131,7 +131,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 version: pieceVersion,
                 authors: piece.authors,
                 directoryPath: folderPath,
-                i18n
+                i18n,
             }
 
             pieceCache[folderPath] = metadata
