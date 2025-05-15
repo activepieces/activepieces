@@ -14,35 +14,45 @@ export const leadStatusChangedTrigger = createTrigger({
   name: 'lead_status_changed',
   displayName: 'Lead Status Changed',
   description: 'Triggered when a lead changes its pipeline stage/status.',
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
     id: 123456,
     status_id: 321,
   },
-  async onEnable() {
-    // Required for polling triggers — no cleanup needed at this time
-  },
-  async onDisable() {
-    // Required for polling triggers — no cleanup needed at this time
-  },
-  async run(context) {
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+  async onEnable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
 
-    const leads = await makeRequest(
+    const webhook = await makeRequest(
       { subdomain, apiToken },
-      HttpMethod.GET,
-      `/leads?limit=50&order=updated_at_desc`
+      HttpMethod.POST,
+      `/webhooks`,
+      {
+        destination: context.webhookUrl,
+        settings: { events: ['lead_status_changed'] }
+      }
     );
 
-    const updatedLeads = leads._embedded.leads as KommoLead[];
+    await context.store.put('webhookId', webhook.id);
+  },
 
-    return updatedLeads.map((lead) => ({
-      id: lead.id.toString(),
-      data: lead,
-    }));
+  async onDisable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const webhookId = await context.store.get('webhookId');
+
+    if (webhookId) {
+      await makeRequest(
+        { subdomain, apiToken },
+        HttpMethod.DELETE,
+        `/webhooks/${webhookId}`
+      );
+    }
+  },
+
+  async run(context) {
+    return [{
+      id: Date.now().toString(),
+      data: context.payload.body,
+    }];
   },
 });

@@ -3,48 +3,51 @@ import { kommoAuth } from '../../index';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-type KommoTask = {
-  id: number;
-  text?: string;
-  is_completed: boolean;
-  [key: string]: unknown;
-};
-
 export const taskCompletedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'task_completed',
   displayName: 'Task Completed',
   description: 'Triggered when a task is marked as completed.',
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
     id: 555555,
     text: 'Follow-up Call',
     is_completed: true,
   },
-  async onEnable() {
-    // Required for polling triggers — no setup needed at this time
-  },
-  async onDisable() {
-    // Required for polling triggers — no cleanup needed at this time
-  },
-  async run(context) {
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+  async onEnable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
 
-    const tasks = await makeRequest(
+    const webhook = await makeRequest(
       { subdomain, apiToken },
-      HttpMethod.GET,
-      `/tasks?filter[is_completed]=1&order=updated_at_desc`
+      HttpMethod.POST,
+      `/webhooks`,
+      {
+        destination: context.webhookUrl,
+        settings: { events: ['task_completed'] }
+      }
     );
 
-    const completedTasks = tasks._embedded.tasks as KommoTask[];
+    await context.store.put('webhookId', webhook.id);
+  },
 
-    return completedTasks.map((task) => ({
-      id: task.id.toString(),
-      data: task,
-    }));
+  async onDisable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const webhookId = await context.store.get('webhookId');
+
+    if (webhookId) {
+      await makeRequest(
+        { subdomain, apiToken },
+        HttpMethod.DELETE,
+        `/webhooks/${webhookId}`
+      );
+    }
+  },
+
+  async run(context) {
+    return [{
+      id: Date.now().toString(),
+      data: context.payload.body,
+    }];
   },
 });

@@ -3,46 +3,50 @@ import { kommoAuth } from '../../index';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-type KommoContact = {
-  id: number;
-  name?: string;
-  [key: string]: unknown;
-};
-
 export const newContactAddedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'new_contact_added',
   displayName: 'New Contact Added',
   description: 'Triggered when a contact is added to Kommo.',
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
     id: 999999,
     name: 'John Doe',
   },
-  async onEnable() {
-    // Required for polling triggers — no setup needed at this time
-  },
-  async onDisable() {
-    // Required for polling triggers — no cleanup needed at this time
-  },
-  async run(context) {
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+  async onEnable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
 
-    const contacts = await makeRequest(
+    const webhook = await makeRequest(
       { subdomain, apiToken },
-      HttpMethod.GET,
-      `/contacts?limit=50&order=created_at_desc`
+      HttpMethod.POST,
+      `/webhooks`,
+      {
+        destination: context.webhookUrl,
+        settings: { events: ['contact_added'] }
+      }
     );
 
-    const newContacts = contacts._embedded.contacts as KommoContact[];
+    await context.store.put('webhookId', webhook.id);
+  },
 
-    return newContacts.map((contact) => ({
-      id: contact.id.toString(),
-      data: contact,
-    }));
+  async onDisable(context) {
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const webhookId = await context.store.get('webhookId');
+
+    if (webhookId) {
+      await makeRequest(
+        { subdomain, apiToken },
+        HttpMethod.DELETE,
+        `/webhooks/${webhookId}`
+      );
+    }
+  },
+
+  async run(context) {
+    return [{
+      id: Date.now().toString(),
+      data: context.payload.body,
+    }];
   },
 });
