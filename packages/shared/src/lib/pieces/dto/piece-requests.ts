@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ApMultipartFile, LocalesEnum } from '../../common'
+import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
 import { PackageType, PieceCategory, PieceType } from '../piece'
 
