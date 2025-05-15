@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger, StaticPropsValue } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger, StaticPropsValue, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { codaAuth } from '../..';
 import { CodaRow, codaClient } from '../common/common';
@@ -7,15 +7,88 @@ import dayjs from 'dayjs';
 const SYNC_TOKEN_STORE_KEY = 'last_sync_token';
 
 const props = {
-    docId: Property.ShortText({
-        displayName: 'Document ID',
-        description: 'The ID of the Coda document.',
+    docId: Property.Dropdown({
+        displayName: 'Document',
+        description: 'The Coda document.',
         required: true,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Connect your Coda account first',
+                    options: []
+                };
+            }
+            const client = codaClient(auth as string);
+            let docs: { label: string, value: string }[] = [];
+            let nextPageToken: string | undefined = undefined;
+            try {
+                do {
+                    const response = await client.listDocs({ limit: 100, pageToken: nextPageToken });
+                    if (response.items) {
+                        docs = docs.concat(response.items.map(doc => ({
+                            label: doc.name,
+                            value: doc.id
+                        })));
+                    }
+                    nextPageToken = response.nextPageToken;
+                } while (nextPageToken);
+
+                return {
+                    disabled: false,
+                    options: docs
+                };
+            } catch (error) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Error listing docs, please check connection or API key permissions."
+                }
+            }
+        }
     }),
-    tableIdOrName: Property.ShortText({
-        displayName: 'Table ID or Name',
-        description: 'The ID or name of the table to watch for updated rows. If using a name, ensure it is URI encoded.',
+    tableIdOrName: Property.Dropdown({
+        displayName: 'Table',
+        description: 'The table to watch for updated rows.',
         required: true,
+        refreshers: ['docId'],
+        options: async ({ auth, docId }) => {
+            if (!auth || !docId) {
+                return {
+                    disabled: true,
+                    placeholder: !auth ? 'Connect your Coda account first' : 'Select a document first',
+                    options: []
+                };
+            }
+            const client = codaClient(auth as string);
+            let tables: { label: string, value: string }[] = [];
+            let nextPageToken: string | undefined = undefined;
+
+            try {
+                do {
+                    const response = await client.listTables(docId as string, { limit: 100, pageToken: nextPageToken });
+                    if (response.items) {
+                        tables = tables.concat(response.items.map(table => ({
+                            label: table.name,
+                            value: table.id
+                        })));
+                    }
+                    nextPageToken = response.nextPageToken;
+                } while (nextPageToken);
+
+                return {
+                    disabled: false,
+                    options: tables
+                };
+            } catch (error) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Error listing tables. Check document ID or permissions."
+                }
+            }
+        }
     }),
     // Optional query to focus on specific rows, though syncToken might make this complex
     query: Property.ShortText({
@@ -47,7 +120,7 @@ type PollingProps = StaticPropsValue<typeof props>;
 const polling: Polling<PiecePropValueSchema<typeof codaAuth>, PollingProps> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, store, lastFetchEpochMS }) => {
-        const client = codaClient(auth);
+        const client = codaClient(auth as string);
         const storedSyncToken = await store.get<string | null>(SYNC_TOKEN_STORE_KEY); // Explicitly allow null from store
         const syncTokenForCall = storedSyncToken || undefined; // Convert null to undefined
 
@@ -56,10 +129,10 @@ const polling: Polling<PiecePropValueSchema<typeof codaAuth>, PollingProps> = {
         let currentBatchNextSyncToken: string | undefined;
 
         do {
-            const response = await client.listRows(propsValue.docId, propsValue.tableIdOrName, {
+            const response = await client.listRows(propsValue.docId as string, propsValue.tableIdOrName as string, {
                 sortBy: 'updatedAt', // Coda sorts ascending by default
                 query: propsValue.query,
-                valueFormat: propsValue.valueFormat,
+                valueFormat: propsValue.valueFormat as string | undefined,
                 useColumnNames: propsValue.useColumnNames,
                 limit: 100, // Sensible limit for polling fetches
                 pageToken: nextPageToken,
@@ -122,8 +195,8 @@ export const rowUpdated = createTrigger({
             // Fetch a current sync token to start with to avoid processing all historical data as "updated"
             // This initial fetch is just to get a baseline sync token.
             try {
-                const client = codaClient(context.auth);
-                const response = await client.listRows(context.propsValue.docId, context.propsValue.tableIdOrName, { limit: 1 });
+                const client = codaClient(context.auth as string);
+                const response = await client.listRows(context.propsValue.docId as string, context.propsValue.tableIdOrName as string, { limit: 1 });
                 if (response.nextSyncToken) {
                     await context.store.put(SYNC_TOKEN_STORE_KEY, response.nextSyncToken);
                 }
@@ -156,11 +229,11 @@ export const rowUpdated = createTrigger({
         });
     },
     test: async (context) => {
-        const client = codaClient(context.auth);
-        const response = await client.listRows(context.propsValue.docId, context.propsValue.tableIdOrName, {
+        const client = codaClient(context.auth as string);
+        const response = await client.listRows(context.propsValue.docId as string, context.propsValue.tableIdOrName as string, {
             sortBy: 'updatedAt',
             limit: 5,
-            valueFormat: context.propsValue.valueFormat,
+            valueFormat: context.propsValue.valueFormat as string | undefined,
             useColumnNames: context.propsValue.useColumnNames,
             query: context.propsValue.query
         });

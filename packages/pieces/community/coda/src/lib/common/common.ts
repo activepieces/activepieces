@@ -112,6 +112,62 @@ export interface CodaUpdateRowResponse {
     id: string; // ID of the updated row
 }
 
+// --- Document Related Interfaces ---
+export interface CodaDocIcon {
+    name: string;
+    type: string;
+    browserLink: string;
+}
+
+export interface CodaDocSize {
+    totalRowCount: number;
+    tableAndViewCount: number;
+    pageCount: number;
+    overApiSizeLimit: boolean;
+}
+
+export interface CodaDocSourceDocReference {
+    id: string;
+    type: "doc";
+    browserLink: string;
+    href: string;
+}
+
+export interface CodaDocPublished {
+    browserLink: string;
+    discoverable: boolean;
+    earnCredit: boolean;
+    mode: "view" | "play" | "edit";
+    categories: { name: string }[]; // Simplified, assuming only name is needed for now
+    description?: string;
+    imageLink?: string;
+}
+export interface CodaDoc {
+    id: string;
+    type: "doc";
+    href: string;
+    browserLink: string;
+    name: string;
+    owner: string; // email
+    ownerName: string;
+    createdAt: string; // date-time
+    updatedAt: string; // date-time
+    workspaceId: string; // Deprecated but present
+    folderId: string; // Deprecated but present
+    workspace: CodaObjectReference; // WorkspaceReference
+    folder: CodaObjectReference; // FolderReference
+    icon?: CodaDocIcon;
+    docSize?: CodaDocSize;
+    sourceDoc?: CodaDocSourceDocReference;
+    published?: CodaDocPublished;
+}
+
+export interface CodaListDocsResponse {
+    items: CodaDoc[];
+    href?: string;
+    nextPageToken?: string;
+    nextPageLink?: string;
+}
 
 // --- API Client ---
 export interface CodaAPIClient {
@@ -130,6 +186,18 @@ export interface CodaAPIClient {
     }) => Promise<CodaListRowsResponse>;
     mutateRows: (docId: string, tableIdOrName: string, payload: CodaMutateRowsPayload, params?: { disableParsing?: boolean }) => Promise<CodaMutateRowsResponse>;
     updateRow: (docId: string, tableIdOrName: string, rowIdOrName: string, payload: CodaUpdateRowPayload, params?: { disableParsing?: boolean }) => Promise<CodaUpdateRowResponse>;
+    listDocs: (params?: {
+        isOwner?: boolean;
+        isPublished?: boolean;
+        query?: string;
+        sourceDoc?: string;
+        isStarred?: boolean;
+        inGallery?: boolean;
+        workspaceId?: string;
+        folderId?: string;
+        limit?: number;
+        pageToken?: string;
+    }) => Promise<CodaListDocsResponse>;
 }
 
 export const codaClient = (apiKey: string): CodaAPIClient => {
@@ -224,6 +292,27 @@ export const codaClient = (apiKey: string): CodaAPIClient => {
                 headers: {
                     'Content-Type': 'application/json'
                 }
+            });
+        },
+        listDocs: async (params) => {
+            const queryParams: Record<string, string | number | boolean> = {};
+            if (params?.isOwner !== undefined) queryParams['isOwner'] = params.isOwner;
+            if (params?.isPublished !== undefined) queryParams['isPublished'] = params.isPublished;
+            if (params?.query) queryParams['query'] = params.query;
+            if (params?.sourceDoc) queryParams['sourceDoc'] = params.sourceDoc;
+            if (params?.isStarred !== undefined) queryParams['isStarred'] = params.isStarred;
+            if (params?.inGallery !== undefined) queryParams['inGallery'] = params.inGallery;
+            if (params?.workspaceId) queryParams['workspaceId'] = params.workspaceId;
+            if (params?.folderId) queryParams['folderId'] = params.folderId;
+            if (params?.limit) queryParams['limit'] = params.limit;
+            if (params?.pageToken) queryParams['pageToken'] = params.pageToken;
+
+            return makeRequest<CodaListDocsResponse>({
+                method: HttpMethod.GET,
+                url: `${CODA_BASE_URL}/docs`,
+                queryParams: Object.fromEntries(
+                    Object.entries(queryParams).map(([key, value]) => [key, String(value)])
+                ),
             });
         }
     };

@@ -1,4 +1,4 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { Property, createAction, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { codaAuth } from "../..";
 import { CodaTableReference, codaClient, CodaGetTableDetailsResponse } from "../common/common";
 
@@ -8,10 +8,46 @@ export const findTable = createAction({
     displayName: 'Find Table(s)',
     description: 'List tables in a selected document. Automatically handles pagination to retrieve all tables.',
     props: {
-        docId: Property.ShortText({
-            displayName: 'Document ID',
-            description: 'The ID of the Coda document.',
+        docId: Property.Dropdown({
+            displayName: 'Document',
+            description: 'The Coda document.',
             required: true,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'Connect your Coda account first',
+                        options: []
+                    };
+                }
+                const client = codaClient(auth as string);
+                let docs: { label: string, value: string }[] = [];
+                let nextPageToken: string | undefined = undefined;
+                try {
+                    do {
+                        const response = await client.listDocs({ limit: 100, pageToken: nextPageToken });
+                        if (response.items) {
+                            docs = docs.concat(response.items.map(doc => ({
+                                label: doc.name,
+                                value: doc.id
+                            })));
+                        }
+                        nextPageToken = response.nextPageToken;
+                    } while (nextPageToken);
+
+                    return {
+                        disabled: false,
+                        options: docs
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: "Error listing docs, please check connection or API key permissions."
+                    }
+                }
+            }
         }),
         limit: Property.Number({
             displayName: 'Page Size (Limit per API call)',
@@ -42,15 +78,15 @@ export const findTable = createAction({
     },
     async run(context) {
         const { docId, limit, sortBy, tableTypes } = context.propsValue;
-        const client = codaClient(context.auth);
+        const client = codaClient(context.auth as string);
 
-        const tableTypesString = tableTypes && tableTypes.length > 0 ? tableTypes.join(',') : undefined;
+        const tableTypesString = tableTypes && (tableTypes as string[]).length > 0 ? (tableTypes as string[]).join(',') : undefined;
 
         let allTables: CodaTableReference[] = [];
         let nextPageToken: string | undefined = undefined;
 
         do {
-            const response = await client.listTables(docId, {
+            const response = await client.listTables(docId as string, {
                 limit: limit, // User-defined limit here acts as page size
                 sortBy: sortBy as string | undefined,
                 tableTypes: tableTypesString,
@@ -76,15 +112,88 @@ export const getTableDetails = createAction({
     displayName: 'Get Table Details',
     description: 'Get structure and details of a specific table (e.g., columns, schema).',
     props: {
-        docId: Property.ShortText({
-            displayName: 'Document ID',
-            description: 'The ID of the Coda document.',
+        docId: Property.Dropdown({
+            displayName: 'Document',
+            description: 'The Coda document.',
             required: true,
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        placeholder: 'Connect your Coda account first',
+                        options: []
+                    };
+                }
+                const client = codaClient(auth as string);
+                let docs: { label: string, value: string }[] = [];
+                let nextPageToken: string | undefined = undefined;
+                try {
+                    do {
+                        const response = await client.listDocs({ limit: 100, pageToken: nextPageToken });
+                        if (response.items) {
+                            docs = docs.concat(response.items.map(doc => ({
+                                label: doc.name,
+                                value: doc.id
+                            })));
+                        }
+                        nextPageToken = response.nextPageToken;
+                    } while (nextPageToken);
+
+                    return {
+                        disabled: false,
+                        options: docs
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: "Error listing docs, please check connection or API key permissions."
+                    }
+                }
+            }
         }),
-        tableIdOrName: Property.ShortText({
-            displayName: 'Table ID or Name',
-            description: 'The ID or name of the table. If using a name, ensure it is URI encoded.',
+        tableIdOrName: Property.Dropdown({
+            displayName: 'Table',
+            description: 'The table to get details for.',
             required: true,
+            refreshers: ['docId'],
+            options: async ({ auth, docId }) => {
+                if (!auth || !docId) {
+                    return {
+                        disabled: true,
+                        placeholder: !auth ? 'Connect your Coda account first' : 'Select a document first',
+                        options: []
+                    };
+                }
+                const client = codaClient(auth as string);
+                let tables: { label: string, value: string }[] = [];
+                let nextPageToken: string | undefined = undefined;
+
+                try {
+                    do {
+                        const response = await client.listTables(docId as string, { limit: 100, pageToken: nextPageToken });
+                        if (response.items) {
+                            tables = tables.concat(response.items.map(table => ({
+                                label: table.name,
+                                value: table.id
+                            })));
+                        }
+                        nextPageToken = response.nextPageToken;
+                    } while (nextPageToken);
+
+                    return {
+                        disabled: false,
+                        options: tables
+                    };
+                } catch (error) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: "Error listing tables. Check document ID or permissions."
+                    }
+                }
+            }
         }),
         useUpdatedTableLayouts: Property.Checkbox({
             displayName: 'Use Updated Table Layouts',
@@ -94,9 +203,9 @@ export const getTableDetails = createAction({
     },
     async run(context): Promise<CodaGetTableDetailsResponse> {
         const { docId, tableIdOrName, useUpdatedTableLayouts } = context.propsValue;
-        const client = codaClient(context.auth);
+        const client = codaClient(context.auth as string);
 
-        return await client.getTableDetails(docId, tableIdOrName, {
+        return await client.getTableDetails(docId as string, tableIdOrName as string, {
             useUpdatedTableLayouts: useUpdatedTableLayouts
         });
     }

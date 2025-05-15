@@ -1,19 +1,92 @@
-import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger, StaticPropsValue } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger, StaticPropsValue, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { codaAuth } from '../..';
 import { CodaRow, codaClient } from '../common/common';
 import dayjs from 'dayjs';
 
 const props = {
-    docId: Property.ShortText({
-        displayName: 'Document ID',
-        description: 'The ID of the Coda document.',
+    docId: Property.Dropdown({
+        displayName: 'Document',
+        description: 'The Coda document.',
         required: true,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Connect your Coda account first',
+                    options: []
+                };
+            }
+            const client = codaClient(auth as string);
+            let docs: { label: string, value: string }[] = [];
+            let nextPageToken: string | undefined = undefined;
+            try {
+                do {
+                    const response = await client.listDocs({ limit: 100, pageToken: nextPageToken });
+                    if (response.items) {
+                        docs = docs.concat(response.items.map(doc => ({
+                            label: doc.name,
+                            value: doc.id
+                        })));
+                    }
+                    nextPageToken = response.nextPageToken;
+                } while (nextPageToken);
+
+                return {
+                    disabled: false,
+                    options: docs
+                };
+            } catch (error) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Error listing docs, please check connection or API key permissions."
+                }
+            }
+        }
     }),
-    tableIdOrName: Property.ShortText({
-        displayName: 'Table ID or Name',
-        description: 'The ID or name of the table to watch for new rows. If using a name, ensure it is URI encoded.',
+    tableIdOrName: Property.Dropdown({
+        displayName: 'Table',
+        description: 'The table to watch for new rows.',
         required: true,
+        refreshers: ['docId'],
+        options: async ({ auth, docId }) => {
+            if (!auth || !docId) {
+                return {
+                    disabled: true,
+                    placeholder: !auth ? 'Connect your Coda account first' : 'Select a document first',
+                    options: []
+                };
+            }
+            const client = codaClient(auth as string);
+            let tables: { label: string, value: string }[] = [];
+            let nextPageToken: string | undefined = undefined;
+
+            try {
+                do {
+                    const response = await client.listTables(docId as string, { limit: 100, pageToken: nextPageToken });
+                    if (response.items) {
+                        tables = tables.concat(response.items.map(table => ({
+                            label: table.name,
+                            value: table.id
+                        })));
+                    }
+                    nextPageToken = response.nextPageToken;
+                } while (nextPageToken);
+
+                return {
+                    disabled: false,
+                    options: tables
+                };
+            } catch (error) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Error listing tables. Check document ID or permissions."
+                }
+            }
+        }
     }),
     valueFormat: Property.StaticDropdown({
         displayName: 'Value Format',
@@ -41,7 +114,7 @@ type PollingProps = StaticPropsValue<typeof props>;
 const polling: Polling<PiecePropValueSchema<typeof codaAuth>, PollingProps> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-        const client = codaClient(auth); // auth is the API key string
+        const client = codaClient(auth as string); // auth is the API key string
 
         // Coda API sorts by createdAt ascending by default.
         // We need to fetch all and then filter, or see if Coda supports a query like `createdAt > timestamp`.
@@ -53,9 +126,9 @@ const polling: Polling<PiecePropValueSchema<typeof codaAuth>, PollingProps> = {
 
         // We will sort by createdAt to process in order. The API default is ascending.
         do {
-            const response = await client.listRows(propsValue.docId, propsValue.tableIdOrName, {
+            const response = await client.listRows(propsValue.docId as string, propsValue.tableIdOrName as string, {
                 sortBy: 'createdAt', // Default is ascending
-                valueFormat: propsValue.valueFormat, // This should be the string value
+                valueFormat: propsValue.valueFormat as string | undefined, // This should be the string value
                 useColumnNames: propsValue.useColumnNames,
                 limit: 100, // Sensible limit for polling fetches
                 pageToken: nextPageToken,
@@ -129,11 +202,11 @@ export const newRowCreated = createTrigger({
     },
     test: async (context) => {
         // For testing, fetch the latest few rows without relying on lastFetchEpochMS
-        const client = codaClient(context.auth);
-        const response = await client.listRows(context.propsValue.docId, context.propsValue.tableIdOrName, {
+        const client = codaClient(context.auth as string);
+        const response = await client.listRows(context.propsValue.docId as string, context.propsValue.tableIdOrName as string, {
             sortBy: 'createdAt', // Get newest first for test
             limit: 5, // Fetch a few sample items
-            valueFormat: context.propsValue.valueFormat,
+            valueFormat: context.propsValue.valueFormat as string | undefined,
             useColumnNames: context.propsValue.useColumnNames,
         });
         // The API sorts ascending, so to get latest for sample, we'd need to reverse or fetch last page.
