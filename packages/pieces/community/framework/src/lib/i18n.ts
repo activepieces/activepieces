@@ -57,8 +57,9 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
 
 const extractPiecePath = async (pieceName: string) => {
   try{
-    if(await fileExists(path.resolve('node_modules', pieceName))) {
-      return path.resolve('node_modules', pieceName);
+    if(await fileExists(`/node_modules/${pieceName}`)) {
+      console.log(`Found piece path: /node_modules/${pieceName}`);
+      return `/node_modules/${pieceName}`;
     }
     const distPath = path.resolve('dist/packages/pieces');
     const fastGlob = (await import('fast-glob')).default;
@@ -73,13 +74,14 @@ const extractPiecePath = async (pieceName: string) => {
           return piecePath;
         }
       } catch (err) {
-        console.error(`Error reading package.json at ${fullPath}:`, err);
+        console.log(`Error reading package.json at ${fullPath}:`, err);
       }
     }
   }
   catch (err) {
     console.error(`Error extracting piece path for ${pieceName}:`, err)
   }
+  console.log(`Piece path not found for ${pieceName}`);
   return undefined;
 }
 
