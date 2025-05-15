@@ -36,6 +36,9 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-agent": [
+        "packages/pieces/community/agent/src/index.ts"
+      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -250,6 +253,9 @@
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
+      ],
+      "@activepieces/piece-fireflies-ai": [
+        "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"

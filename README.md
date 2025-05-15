@@ -401,6 +401,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://huzef.com"><img src="https://avatars.githubusercontent.com/u/62795688?v=4?s=100" width="100px;" alt="neo773"/><br /><sub><b>neo773</b></sub></a><br /><a href="#plugin-neo773" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Daniel-Klippa"><img src="https://avatars.githubusercontent.com/u/207180643?v=4?s=100" width="100px;" alt="Daniel-Klippa"/><br /><sub><b>Daniel-Klippa</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Daniel-Klippa" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

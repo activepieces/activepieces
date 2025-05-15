@@ -54,7 +54,7 @@ function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOpera
 }
 
 function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionState): boolean {
-    return stateOne.displayName !== stateTwo.displayName || stateOne.pieceName !== stateTwo.pieceName
+    return stateOne.pieceName !== stateTwo.pieceName
 }
 
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
@@ -127,7 +127,7 @@ function getTables(currentState: ProjectState, newState: ProjectState): TableOpe
 }
 
 function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
-    return flows.find((flow) =>  flow.externalId === externalId)
+    return flows.find((flow) => flow.externalId === externalId)
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
