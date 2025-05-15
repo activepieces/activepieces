@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/twin-labs/package.json",
         "main": "packages/pieces/community/twin-labs/src/index.ts",
         "assets": [
-          "packages/pieces/community/twin-labs/*.md"
+          "packages/pieces/community/twin-labs/*.md",
+          {
+            "input": "packages/pieces/community/twin-labs/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
