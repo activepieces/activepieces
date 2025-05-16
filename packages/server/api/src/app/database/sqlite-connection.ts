@@ -6,6 +6,7 @@ import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
+import { ChangeExternalIdsForTables1747346473000 } from './migration/common/1747346473000-ChangeExternalIdsForTables'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
@@ -49,6 +50,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        ChangeExternalIdsForTables1747346473000,
         AddI18nColumnToPieceMetadata1746714949131,
         AddFolderDisplayOrder1747062679388,
         AddHandshakeConfigurationToFlowSqlite1746845932780,

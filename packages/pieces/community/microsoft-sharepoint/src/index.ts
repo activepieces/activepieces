@@ -10,6 +10,7 @@ import { createListItemAction } from './lib/actions/create-list-item';
 import { updateListItemAction } from './lib/actions/update-list-item';
 import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
+import { uploadFile } from './lib/actions/upload-file';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const microsoftSharePointAuth = PieceAuth.OAuth2({
@@ -41,6 +42,7 @@ export const microsoftSharePoint = createPiece({
     updateListItemAction,
     deleteListItemAction,
     findListItemAction,
+    uploadFile,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: () => 'https://graph.microsoft.com/v1.0/sites',

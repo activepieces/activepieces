@@ -16,6 +16,7 @@ import {
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  LocalesEnum,
   PackageType,
   PieceOptionRequest,
   spreadIfDefined,
@@ -64,6 +65,8 @@ export const piecesApi = {
   ): Promise<PieceMetadataModel> {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
+      locale: request.locale ?? undefined,
+      projectId: request.projectId ?? undefined,
     });
   },
   options<
@@ -134,7 +137,10 @@ export const piecesApi = {
       suggestedTriggers: piece.suggestedTriggers,
     };
   },
-  async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
+  async getMetadata(
+    step: Action | Trigger,
+    locale: LocalesEnum,
+  ): Promise<StepMetadata> {
     const customLogoUrl =
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
@@ -152,6 +158,7 @@ export const piecesApi = {
         const piece = await piecesApi.get({
           name: pieceName,
           version: pieceVersion,
+          locale: locale,
         });
         const metadata = await piecesApi.mapToMetadata(
           step.type === ActionType.PIECE ? 'action' : 'trigger',

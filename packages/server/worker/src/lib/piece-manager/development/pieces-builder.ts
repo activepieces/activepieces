@@ -43,7 +43,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const buildTarget = await checkBuildTarget(nxProjectFilePath)
         log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
-        
+
         if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
@@ -52,11 +52,20 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
+        log.info(
+            chalk.blueBright.bold(
+                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
+            ),
+        )
+        // TODO disable until we have a way to build with shared version bumped
+        // const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
+        //  await runCommandWithLiveOutput(postBuildCommand)
+        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
-        
+
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
-        
+
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheHandler(globalCachePath)

@@ -194,7 +194,6 @@ async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: 
     })
 
 }
-
 function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
     return flowStructureUtil.transferFlow(flowVersion, (step) => {
         if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
@@ -204,13 +203,20 @@ function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection:
                     ...step.settings,
                     input: {
                         ...step.settings?.input,
-                        auth: step.settings.input.auth.replaceAll(appConnection.externalId, newAppConnection.externalId),
+                        auth: replaceConnectionIdInAuth(step.settings.input.auth, appConnection.externalId, newAppConnection.externalId),
                     },
                 },
             }
         }
         return step
     })
+}
+
+function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
+    return auth.replace(
+        new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
+        `connections['${newConnectionId}']`
+    );
 }
 
 type UpdateFlowsWithAppConnectionParams = {
