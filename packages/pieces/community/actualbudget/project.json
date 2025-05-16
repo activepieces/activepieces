@@ -32,7 +32,8 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true},
+        "updateBuildableProjectDepsInPackageJson": true
+      },
         "dependsOn": ["prebuild", "^build"]
       },
       "prebuild": {
