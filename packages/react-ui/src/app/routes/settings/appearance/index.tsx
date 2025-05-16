@@ -87,9 +87,8 @@ export default function AppearancePage() {
             </RadioGroup>
           </div>
         </div>
-        {/* hide language switcher  */}
-        {/* <Separator />
-        <LanguageSwitcher></LanguageSwitcher> */}
+        <Separator />
+        <LanguageSwitcher></LanguageSwitcher>
       </div>
     </div>
   );

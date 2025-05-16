@@ -55,6 +55,7 @@ const SettingsDropdownMenu = () => {
         '/settings/appearance',
       ),
       icon: <SunMoon className="h-4 w-4" />,
+      hasPermission: false,
     },
     {
       title: t('Team'),
@@ -106,7 +107,7 @@ const SettingsDropdownMenu = () => {
         </Tooltip>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[180px] space-y-[2px]">
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
         {filteredLinkItems.map((item) => (
           <DropdownMenuItem key={item.title} className="p-0">
             <Link
