@@ -3,62 +3,79 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
 import { mcpSessionManager } from './mcp-session-manager'
+import { randomUUID } from 'crypto'
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
-const HEARTBEAT_INTERVAL = 30 * 1000 // 30 seconds
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
+    app.post('/:id/sse', SSERequest, async (req, reply) => {
+        const sessionId = req.headers['mcp-session-id'] as string | undefined
+        let transport: StreamableHTTPServerTransport
 
-    app.get('/:id/sse', SSERequest, async (req, reply) => {
-        const token = req.params.id
-        const mcp = await mcpService(req.log).getByToken({
-            token,
-        })
+        const hasTransport = sessionId ? await mcpSessionManager(req.log).hasTransport(sessionId) : false
 
-        const { server, transport } = await createMcpServer({
-            mcpId: mcp.id,
-            reply,
-            logger: req.log,
-        })
+        if (sessionId && hasTransport) {
+            transport = await mcpSessionManager(req.log).get(sessionId)
+        }
+        else if (!sessionId && isInitializeRequest(req.body)) {
+            transport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: () => randomUUID(),
+                onsessioninitialized: async (sessionId) => {
+                    await mcpSessionManager(req.log).add(sessionId, transport)
+                }
+            })
 
-        await mcpSessionManager(req.log).add(transport.sessionId, server, transport)
+            transport.onclose = async () => {
+                if (transport.sessionId) {
+                    req.log.info(`Connection closed for session ${transport.sessionId}`)
+                    await mcpSessionManager(req.log).publish(transport.sessionId)
+                }
+            }
 
-        await server.connect(transport)
+            const token = req.params.id
+            const mcp = await mcpService(req.log).getByToken({ token })
+            const { server } = await createMcpServer({
+                mcpId: mcp.id,
+                logger: req.log,
+            })
 
-        const heartbeatInterval = setInterval(() => {
-            reply.raw.write(': heartbeat\n\n')
-            req.log.info(`Heartbeat sent for session ${transport.sessionId}`)
-        }, HEARTBEAT_INTERVAL)
-
-        reply.raw.on('close', async () => {
-            clearInterval(heartbeatInterval)
-            req.log.info(`Connection closed for session ${transport.sessionId}`)
-            await mcpSessionManager(req.log).publish(transport.sessionId, {}, 'remove')
-        })
+            await server.connect(transport)
+        }
+        else {
+            reply.status(400).send({
+                jsonrpc: '2.0',
+                error: {
+                    code: -32000,
+                    message: 'Bad Request: No valid session ID provided',
+                },
+                id: null,
+            })
+            return
+        }
+        await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
-    app.post('/messages', MessagesRequest, async (req, reply) => {
-        const sessionId = req.query?.sessionId as string
-
+    const handleSessionRequest = async (req: FastifyRequest, reply: FastifyReply) => {
+        const sessionId = req.headers['mcp-session-id'] as string | undefined
         if (!sessionId) {
-            await reply.code(400).send({ message: 'Missing session ID' })
+            reply.status(400).send('Missing session ID')
             return
         }
 
-        await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')
-        await reply.code(202).send()
-    })
-}
+        if (!await mcpSessionManager(req.log).hasTransport(sessionId)) {
+            reply.status(400).send('Invalid session ID')
+            return
+        }
+        const transport = await mcpSessionManager(req.log).get(sessionId)
+        await transport.handleRequest(req.raw, reply.raw, req.body)
+    }
+      
+    app.get('/:id/sse', handleSessionRequest)
+    app.delete('/:id/sse', handleSessionRequest)
+} 
 
-const MessagesRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        querystring: Type.Object({
-            sessionId: Type.Optional(Type.String()),
-        }),
-    },
-}
 
 const SSERequest = {
     config: {
