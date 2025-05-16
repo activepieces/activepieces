@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { zagomailAuth } from '../../index';
+import { buildListsDropdown } from '../common/props';
 
 export const createSubscriberAction = createAction({
   auth: zagomailAuth,
@@ -9,10 +10,12 @@ export const createSubscriberAction = createAction({
   displayName: 'Create Subscriber',
   description: 'Create a new subscriber in a list',
   props: {
-    listId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to add the subscriber to',
+    listId: Property.Dropdown({
+      displayName: 'List',
+      description: 'Select the list to add the subscriber to',
       required: true,
+      refreshers: ['auth'],
+      options: async ({ auth }) => await buildListsDropdown(auth as string),
     }),
     email: Property.ShortText({
       displayName: 'Email',

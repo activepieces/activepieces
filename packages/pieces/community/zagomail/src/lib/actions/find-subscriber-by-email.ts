@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { zagomailAuth } from '../../index';
+import { buildListsDropdown } from '../common/props';
 
 export const findSubscriberByEmailAction = createAction({
   auth: zagomailAuth,
@@ -9,10 +10,12 @@ export const findSubscriberByEmailAction = createAction({
   displayName: 'Find Subscriber by Email',
   description: 'Find a subscriber by their email address',
   props: {
-    listId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to search in',
+    listId: Property.Dropdown({
+      displayName: 'List',
+      description: 'Select the list to search in',
       required: true,
+      refreshers: ['auth'],
+      options: async ({ auth }) => await buildListsDropdown(auth as string),
     }),
     email: Property.ShortText({
       displayName: 'Email',

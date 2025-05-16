@@ -26,3 +26,63 @@ export async function makeRequest(auth: string, method: HttpMethod, path: string
   });
   return response.body;
 }
+
+export async function getLists(auth: string) {
+  const response = await makeRequest(
+    auth,
+    HttpMethod.GET,
+    '/lists/all-lists',
+    undefined
+  ) as ListsResponse;
+
+  return response;
+}
+
+export async function getCampaigns(auth: string) {
+  const response = await makeRequest(
+    auth,
+    HttpMethod.GET,
+    '/campaigns/get-campaigns',
+    undefined
+  ) as CampaignsResponse;
+
+  return response;
+}
+
+export interface ListsResponse {
+  status: string;
+  data: {
+    count: string;
+    total_pages: number;
+    current_page: number;
+    next_page: number | null;
+    prev_page: number | null;
+    records: {
+      general: {
+        list_uid: string;
+        name: string;
+        display_name: string;
+        description: string;
+      };
+      [key: string]: any;
+    }[];
+  };
+}
+
+export interface CampaignsResponse {
+  status: string;
+  data: {
+    count: string;
+    total_pages: number;
+    current_page: number;
+    next_page: number | null;
+    prev_page: number | null;
+    records: {
+      campaign_uid: string;
+      name: string;
+      status: string;
+      group: any[];
+      [key: string]: any;
+    }[];
+  };
+}

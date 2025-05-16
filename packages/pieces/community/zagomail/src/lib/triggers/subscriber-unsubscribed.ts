@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { isNil } from '@activepieces/shared';
 import { zagomailAuth } from '../../index';
+import { buildListsDropdown } from '../common/props';
 
 export const subscriberUnsubscribedTrigger = createTrigger({
   auth: zagomailAuth,
@@ -10,10 +11,12 @@ export const subscriberUnsubscribedTrigger = createTrigger({
   displayName: 'Subscriber Unsubscribed',
   description: 'Triggered when a subscriber unsubscribes from a list',
   props: {
-    listId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to monitor',
+    listId: Property.Dropdown({
+      displayName: 'List',
+      description: 'Select the list to monitor',
       required: true,
+      refreshers: ['auth'],
+      options: async ({ auth }) => await buildListsDropdown(auth as string),
     }),
   },
   type: TriggerStrategy.WEBHOOK,
