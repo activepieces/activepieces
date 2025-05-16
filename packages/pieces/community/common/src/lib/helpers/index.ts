@@ -34,7 +34,7 @@ const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: strin
   const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`
  }
- 
+
 
 const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unknown) => {
   const exampleBaseUrl = `https://api.example.com`
@@ -81,7 +81,7 @@ export function createCustomApiCallAction({
   };
   extraProps?: InputPropertyMap;
 }) {
- 
+
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -99,7 +99,7 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL 
+              description: `You can either use the full URL or the relative path to the base URL
 i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
               required: true,
               defaultValue: baseUrl(auth),
