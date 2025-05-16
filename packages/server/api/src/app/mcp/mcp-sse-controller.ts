@@ -1,8 +1,8 @@
 import { ALL_PRINCIPAL_TYPES, ApId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id/sse', SSERequest, async (req, reply) => {
@@ -17,18 +17,17 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
                 sessionIdGenerator: undefined,
             })
 
-            reply.raw.on('close', () => {
-                console.log('Request closed')
-                transport.close()
-                server.close()
+            reply.raw.on('close', async () => {
+                await transport.close()
+                await server.close()
             })
 
             await server.connect(transport)
             await transport.handleRequest(req.raw, reply.raw, req.body)
-        } catch (error) {
-            console.error('Error handling MCP request:', error)
+        } 
+        catch (error) {
             if (!reply.raw.headersSent) {
-                reply.status(500).send({
+                await reply.status(500).send({
                     jsonrpc: '2.0',
                     error: {
                         code: -32603,
@@ -41,7 +40,6 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id/sse', async (req, reply) => {
-        console.log('Received GET MCP request')
         reply.raw.writeHead(405).end(JSON.stringify({
             jsonrpc: '2.0',
             error: {
@@ -53,7 +51,6 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id/sse', async (req, reply) => {
-        console.log('Received DELETE MCP request')
         reply.raw.writeHead(405).end(JSON.stringify({
             jsonrpc: '2.0',
             error: {
