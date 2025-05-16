@@ -215,8 +215,8 @@ function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection:
 function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
     return auth.replace(
         new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
-        `connections['${newConnectionId}']`
-    );
+        `connections['${newConnectionId}']`,
+    )
 }
 
 type UpdateFlowsWithAppConnectionParams = {
