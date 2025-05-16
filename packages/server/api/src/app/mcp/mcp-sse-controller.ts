@@ -2,80 +2,68 @@ import { ALL_PRINCIPAL_TYPES, ApId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
-import { mcpSessionManager } from './mcp-session-manager'
-import { randomUUID } from 'crypto'
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import { FastifyReply, FastifyRequest } from 'fastify'
-
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id/sse', SSERequest, async (req, reply) => {
-        const sessionId = req.headers['mcp-session-id'] as string | undefined
-        let transport: StreamableHTTPServerTransport
-
-        const hasTransport = sessionId ? await mcpSessionManager(req.log).hasTransport(sessionId) : false
-
-        if (sessionId && hasTransport) {
-            transport = await mcpSessionManager(req.log).get(sessionId)
-        }
-        else if (!sessionId && isInitializeRequest(req.body)) {
-            transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: () => randomUUID(),
-                onsessioninitialized: async (sessionId) => {
-                    await mcpSessionManager(req.log).add(sessionId, transport)
-                }
-            })
-
-            transport.onclose = async () => {
-                if (transport.sessionId) {
-                    req.log.info(`Connection closed for session ${transport.sessionId}`)
-                    await mcpSessionManager(req.log).publish(transport.sessionId)
-                }
-            }
-
+        try {
             const token = req.params.id
             const mcp = await mcpService(req.log).getByToken({ token })
             const { server } = await createMcpServer({
                 mcpId: mcp.id,
                 logger: req.log,
             })
+            const transport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: undefined,
+            })
+
+            reply.raw.on('close', () => {
+                console.log('Request closed')
+                transport.close()
+                server.close()
+            })
 
             await server.connect(transport)
+            await transport.handleRequest(req.raw, reply.raw, req.body)
+        } catch (error) {
+            console.error('Error handling MCP request:', error)
+            if (!reply.raw.headersSent) {
+                reply.status(500).send({
+                    jsonrpc: '2.0',
+                    error: {
+                        code: -32603,
+                        message: 'Internal server error',
+                    },
+                    id: null,
+                })
+            }
         }
-        else {
-            reply.status(400).send({
-                jsonrpc: '2.0',
-                error: {
-                    code: -32000,
-                    message: 'Bad Request: No valid session ID provided',
-                },
-                id: null,
-            })
-            return
-        }
-        await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
-    const handleSessionRequest = async (req: FastifyRequest, reply: FastifyReply) => {
-        const sessionId = req.headers['mcp-session-id'] as string | undefined
-        if (!sessionId) {
-            reply.status(400).send('Missing session ID')
-            return
-        }
+    app.get('/:id/sse', async (req, reply) => {
+        console.log('Received GET MCP request')
+        reply.raw.writeHead(405).end(JSON.stringify({
+            jsonrpc: '2.0',
+            error: {
+                code: -32000,
+                message: 'Method not allowed.',
+            },
+            id: null,
+        }))
+    })
 
-        if (!await mcpSessionManager(req.log).hasTransport(sessionId)) {
-            reply.status(400).send('Invalid session ID')
-            return
-        }
-        const transport = await mcpSessionManager(req.log).get(sessionId)
-        await transport.handleRequest(req.raw, reply.raw, req.body)
-    }
-      
-    app.get('/:id/sse', handleSessionRequest)
-    app.delete('/:id/sse', handleSessionRequest)
-} 
-
+    app.delete('/:id/sse', async (req, reply) => {
+        console.log('Received DELETE MCP request')
+        reply.raw.writeHead(405).end(JSON.stringify({
+            jsonrpc: '2.0',
+            error: {
+                code: -32000,
+                message: 'Method not allowed.',
+            },
+            id: null,
+        }))
+    })
+}
 
 const SSERequest = {
     config: {
@@ -86,4 +74,4 @@ const SSERequest = {
             id: ApId,
         }),
     },
-} 
+}
