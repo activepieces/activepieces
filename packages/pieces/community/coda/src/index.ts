@@ -1,24 +1,34 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { findTable, getTableDetails } from './lib/actions/table';
-import { getTableRow } from './lib/actions/row';
-import { findRow } from './lib/actions/find-row';
-import { createRow } from './lib/actions/create-row';
-import { upsertRow } from './lib/actions/upsert-row';
-import { updateRow } from './lib/actions/update-row';
-import { newRowCreated } from './lib/triggers/new-row-created';
-import { rowUpdated } from './lib/triggers/row-updated';
+import { findRowAction } from './lib/actions/find-row';
+import { createRowAction } from './lib/actions/create-row';
+import { upsertRowAction } from './lib/actions/upsert-row';
+import { updateRowAction } from './lib/actions/update-row';
+import { newRowCreatedTrigger } from './lib/triggers/new-row-created';
+import { PieceCategory } from '@activepieces/shared';
+import { getRowAction } from './lib/actions/get-row';
+import { listTablesAction } from './lib/actions/list-tables';
+import { getTableAction } from './lib/actions/get-table';
 
 export const codaAuth = PieceAuth.SecretText({
-  displayName: 'Coda API Key',
-  description: 'Your Coda API Key. Visit https://coda.io/account to get one.',
-  required: true,
+	displayName: 'Coda API Key',
+	description: `Create an API key in the [Coda Account dashboard](https://coda.io/account).`,
+	required: true,
 });
 
 export const coda = createPiece({
-  displayName: 'Coda',
-  logoUrl: 'https://cdn.activepieces.com/pieces/coda.png',
-  auth: codaAuth,
-  authors: [],
-  actions: [findTable, getTableDetails, getTableRow, findRow, createRow, upsertRow, updateRow],
-  triggers: [newRowCreated, rowUpdated],
+	displayName: 'Coda',
+	logoUrl: 'https://cdn.activepieces.com/pieces/coda.png',
+	categories: [PieceCategory.PRODUCTIVITY],
+	auth: codaAuth,
+	authors: ['onyedikachi-david', 'kishanprmr'],
+	actions: [
+		createRowAction,
+		updateRowAction,
+		upsertRowAction,
+		findRowAction,
+		getRowAction,
+		listTablesAction,
+		getTableAction,
+	],
+	triggers: [newRowCreatedTrigger],
 });

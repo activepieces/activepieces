@@ -46,6 +46,7 @@ export interface CodaColumnFormat {
     // options?: { name: string, id?: string }[];
     // For lookup:
     // table?: CodaTableReference;
+    isArray?:boolean
 }
 
 // Interface for a single column in the getTableDetails response
