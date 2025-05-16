@@ -17,7 +17,8 @@ export const updateRecord = createAction({
       required: true,
       refreshers: ['table_id', 'record_id'],
       props: async ({ table_id, record_id }, context) => {
-        const tableId = table_id as unknown as string;
+        const tableExternalId = table_id as unknown as string;
+        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
         const recordId = record_id as unknown as string;
         if ((tableId ?? '').toString().length === 0 || (recordId ?? '').toString().length === 0) {
           return {};
@@ -28,7 +29,8 @@ export const updateRecord = createAction({
     }),
   },
   async run(context) {
-    const { table_id: tableId, record_id, values } = context.propsValue;
+    const { table_id: tableExternalId, record_id, values } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
     const fieldValidations = tablesCommon.createFieldValidations(tableFields);

@@ -1,6 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -9,6 +9,7 @@ import { EngineHelperResponse } from 'server-worker'
 import { flowService } from '../flows/flow/flow.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
+import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../webhooks/webhook.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -98,6 +99,11 @@ async function addPiecesToServer(
                         pieceType: piece.pieceType,
                         input: parsedInputs,
                         projectId,
+                    })
+
+                    await mcpService(logger).trackToolCall({
+                        mcpId,
+                        toolName: action.name,
                     })
 
                     if (result.status === EngineResponseStatus.OK) {
@@ -196,13 +202,19 @@ async function addFlowsToServer(
                     logger,
                     flowId: flow.id,
                     async: !returnsResponse,
-                    flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                    flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                     saveSampleData: await webhookSimulationService(logger).exists(
                         flow.id,
                     ),
                     payload: originalParams,
                     execute: true,
                 })
+
+                await mcpService(logger).trackToolCall({
+                    mcpId,
+                    toolName,
+                })
+
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{

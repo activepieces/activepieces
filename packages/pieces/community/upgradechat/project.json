@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/upgradechat/package.json",
         "main": "packages/pieces/community/upgradechat/src/index.ts",
         "assets": [
-          "packages/pieces/community/upgradechat/*.md"
+          "packages/pieces/community/upgradechat/*.md",
+          {
+            "input": "packages/pieces/community/upgradechat/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
