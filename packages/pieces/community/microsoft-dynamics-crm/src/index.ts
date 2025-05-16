@@ -9,7 +9,7 @@ import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { getRecordAction } from './lib/actions/get-record';
 import { updateRecordAction } from './lib/actions/update-record';
-import { PieceCategory } from '@activepieces/shared';
+import { OAuth2GrantType, PieceCategory } from '@activepieces/shared';
 
 export const dynamicsCRMAuth = PieceAuth.OAuth2({
   props: {
@@ -31,11 +31,23 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
         'Keep empty if not needed. Optional proxy URL used for establishing connections when proxying requests is needed. For example: **https://proxy.com:8080**.',
       required: false,
     }),
+    grantType: Property.StaticDropdown({
+      displayName: 'Grant Type',
+      description: 'Choose whether to use the client credentials or authorization code flow',
+      required: true,
+      options: {
+        options: [
+          { value: OAuth2GrantType.CLIENT_CREDENTIALS.toString(), label: 'Client credentials' },
+          { value: OAuth2GrantType.AUTHORIZATION_CODE.toString(), label: 'Authorization code' },
+        ],
+      },
+    })
   },
   required: true,
   scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
   authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
+  grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
 });
 
 export function getBaseUrl(host: string, proxyUrl?: string): string {
