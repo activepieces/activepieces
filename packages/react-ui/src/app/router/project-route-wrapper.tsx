@@ -3,11 +3,16 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import {
+  DEFAULT_REDIRECT_PATH,
+  FROM_QUERY_PARAM,
+} from '@/lib/navigation-utils';
 import { determineDefaultRoute } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { LoadingScreen } from '../../components/ui/loading-screen';
 import { authenticationSession } from '../../lib/authentication-session';
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -51,8 +56,14 @@ const RedirectToCurrentProjectRoute: React.FC<
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
+  const from = searchParams.get(FROM_QUERY_PARAM) ?? DEFAULT_REDIRECT_PATH;
   if (isNil(currentProjectId)) {
-    return <Navigate to="/sign-in" replace />;
+    return (
+      <Navigate
+        to={`/sign-in?${new URLSearchParams({ from }).toString()}`}
+        replace
+      />
+    );
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(
@@ -84,14 +95,29 @@ export const ProjectRouterWrapper = ({
 }: ProjectRouterWrapperProps) => [
   {
     path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <TokenCheckerWrapper>{element}</TokenCheckerWrapper>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
   },
   {
     path,
     element: (
-      <RedirectToCurrentProjectRoute path={path}>
-        {element}
-      </RedirectToCurrentProjectRoute>
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RedirectToCurrentProjectRoute path={path}>
+          {element}
+        </RedirectToCurrentProjectRoute>
+      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
 ];
+
+export const projectSettingsRoutes = {
+  general: '/settings/general',
+  appearance: '/settings/appearance',
+  team: '/settings/team',
+  pieces: '/settings/pieces',
+  environments: '/settings/environments',
+  alerts: '/settings/alerts',
+} as const;

@@ -3,6 +3,8 @@ import { AppConnectionWithoutSensitiveData } from '../app-connection/app-connect
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
 
+export type McpId = ApId
+
 export enum McpPropertyType {
     TEXT = 'Text',
     BOOLEAN = 'Boolean',
@@ -78,3 +80,7 @@ export const McpTrigger = Type.Object({
 })
 
 export type McpTrigger = Static<typeof McpTrigger>
+
+export const fixSchemaNaming = (schemaName: string) => {
+    return schemaName.replace(/\s+/g, '-')
+}

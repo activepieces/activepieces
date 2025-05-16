@@ -22,28 +22,11 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, LocalesEnum } from '@activepieces/shared';
 
-import { useNewWindow } from '../../../../components/embed-provider';
 import { flagsHooks } from '../../../../hooks/flags-hooks';
-
-export enum LocalesEnum {
-  DUTCH = 'nl',
-  ENGLISH = 'en',
-  GERMAN = 'de',
-  ITALIAN = 'it',
-  FRENCH = 'fr',
-  BULGARIAN = 'bg',
-  UKRAINIAN = 'uk',
-  HUNGARIAN = 'hu',
-  SPANISH = 'es',
-  JAPANESE = 'ja',
-  INDONESIAN = 'id',
-  VIETNAMESE = 'vi',
-  CHINESE_SIMPLIFIED = 'zh',
-  PORTUGUESE = 'pt',
-}
 
 export const localesMap = {
   [LocalesEnum.BULGARIAN]: 'Български',

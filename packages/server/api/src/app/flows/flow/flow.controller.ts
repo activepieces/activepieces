@@ -90,6 +90,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             status: request.query.status,
             name: request.query.name,
             versionState: request.query.versionState,
+            connectionExternalIds: request.query.connectionExternalIds,
         })
     })
 
@@ -128,8 +129,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         //         flowVersion: flow.version,
         //     },
         // })
-        // await gitRepoService(request.log).onFlowDeleted({
-        //     flowId: request.params.id,
+        // await gitRepoService(request.log).onDeleted({
+        //     type: GitPushOperationType.DELETE_FLOW,
+        //     id: request.params.id,
         //     userId: request.principal.id,
         //     projectId: request.principal.projectId,
         //     log: request.log,

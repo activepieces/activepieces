@@ -35,11 +35,11 @@ import {
 
 import { McpToolsSection } from '../../mcp/mcp-tools-section';
 
-import { McpClientTabs } from './mcp-client-tabs';
+import { McpClientTabs, replaceIpWithLocalhost } from './mcp-client-tabs';
 
-export default function MCPPage() {
+const McpPage = () => {
   const { theme } = useTheme();
-  const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
@@ -78,7 +78,11 @@ export default function MCPPage() {
     },
   });
 
-  const serverUrl = publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
+  const serverUrl =
+    replaceIpWithLocalhost(publicUrl ?? '') +
+    'api/v1/mcp/' +
+    (mcp?.token || '') +
+    '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
 
@@ -343,4 +347,7 @@ export default function MCPPage() {
       </div>
     </div>
   );
-}
+};
+McpPage.displayName = 'McpPage';
+
+export default McpPage;

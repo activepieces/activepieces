@@ -113,7 +113,7 @@ export const useFlowsBulkActions = ({
                     hasPermission={userHasPermissionToWroteProjectRelease}
                   >
                     <PublishedNeededTooltip allowPush={allowPush}>
-                      <PushToGitDialog flows={selectedRows}>
+                      <PushToGitDialog type="flow" flows={selectedRows}>
                         <DropdownMenuItem
                           disabled={
                             !userHasPermissionToWroteProjectRelease ||

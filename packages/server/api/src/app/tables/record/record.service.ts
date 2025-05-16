@@ -10,8 +10,6 @@ import {
     Field,
     Filter,
     FilterOperator,
-    GetFlowVersionForWorkerRequestType,
-
     isNil,
     PopulatedRecord,
     SeekPage,
@@ -23,6 +21,7 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
+import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
@@ -108,6 +107,7 @@ export const recordService = {
         tableId,
         projectId,
         filters,
+        limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
        
         const fields = await fieldService.getAll({
@@ -141,7 +141,7 @@ export const recordService = {
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
     
         return {
-            data: populatedRecords,
+            data: populatedRecords.slice(0, limit),
             next: null,
             previous: null,
         }
@@ -299,7 +299,7 @@ export const recordService = {
             return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: false,
                 data: async (_projectId: string) => ({
                     method: 'POST',
@@ -309,6 +309,7 @@ export const recordService = {
                     body: data,
                     queryParams: {},
                 }),
+                execute: true,
                 logger,
             })
         }))

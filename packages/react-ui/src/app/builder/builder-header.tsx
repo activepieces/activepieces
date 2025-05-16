@@ -13,7 +13,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import {
@@ -26,6 +26,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
@@ -132,24 +133,26 @@ export const BuilderHeader = () => {
               />
             )}
           </div>
-          <FlowActionMenu
-            insideBuilder={true}
-            flow={flow}
-            flowVersion={flowVersion}
-            readonly={!isLatestVersion}
-            onDelete={() => {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/flows'),
-              );
-            }}
-            onRename={() => {
-              setIsEditingFlowName(true);
-            }}
-            onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-            onDuplicate={() => {}}
-          >
-            <ChevronDown className="h-8 w-8" />
-          </FlowActionMenu>
+          {!embedState.hideFlowNameInBuilder && (
+            <FlowActionMenu
+              insideBuilder={true}
+              flow={flow}
+              flowVersion={flowVersion}
+              readonly={!isLatestVersion}
+              onDelete={() => {
+                navigate(
+                  authenticationSession.appendProjectRoutePrefix('/flows'),
+                );
+              }}
+              onRename={() => {
+                setIsEditingFlowName(true);
+              }}
+              onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+              onDuplicate={() => {}}
+            >
+              <ChevronDown className="h-8 w-8" />
+            </FlowActionMenu>
+          )}
         </div>
 
         <div className="grow"></div>

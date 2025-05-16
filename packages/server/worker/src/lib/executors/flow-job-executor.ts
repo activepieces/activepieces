@@ -1,5 +1,5 @@
 import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
@@ -18,6 +18,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
+                formatPayload: !isNil(jobData.synchronousHandlerId),
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
@@ -61,6 +62,21 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
+        versionId: jobData.flowVersionId,
+    })
+    assertNotNullOrUndefined(flow, 'Flow version not found')
+    const payloadBuffer = JSON.stringify({
+        executionState: {
+            steps: {
+                [flow.version.trigger.name]: {
+                    output: jobData.payload,
+                    status: FlowRunStatus.SUCCEEDED,
+                    type: 'PIECE_TRIGGER',
+                },
+            },
+        },
+    })
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
             duration: 0,
@@ -68,7 +84,8 @@ async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: st
             tasks: 0,
             tags: [],
         },
-        executionStateContentLength: null,
+        executionStateBuffer: payloadBuffer,
+        executionStateContentLength: payloadBuffer.length,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -113,7 +130,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
             const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
                 versionId: jobData.flowVersionId,
-                type: GetFlowVersionForWorkerRequestType.EXACT,
             })
             if (isNil(flow)) {
                 return

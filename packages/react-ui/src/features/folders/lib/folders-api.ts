@@ -4,9 +4,10 @@ import {
   CreateFolderRequest,
   Folder,
   FolderDto,
+  FolderOrderItem,
   ListFolderRequest,
-  SeekPage,
   UpdateFolderRequest,
+  UpdateFoldersOrderRequest,
 } from '@activepieces/shared';
 
 export const foldersApi = {
@@ -16,10 +17,9 @@ export const foldersApi = {
       limit: 1000000,
       projectId: authenticationSession.getProjectId()!,
     };
-    const response = await api.get<SeekPage<FolderDto>>('/v1/folders', request);
-    return response.data.sort((a, b) =>
-      a.displayName.localeCompare(b.displayName),
-    );
+
+    const response = await api.get<any>('/v1/folders', request);
+    return response.data || [];
   },
   get(folderId: string) {
     return api.get<Folder>(`/v1/folders/${folderId}`);
@@ -32,5 +32,12 @@ export const foldersApi = {
   },
   renameFolder(folderId: string, req: UpdateFolderRequest) {
     return api.post<Folder>(`/v1/folders/${folderId}`, req);
+  },
+  updateOrder(folderOrders: FolderOrderItem[]) {
+    const request: UpdateFoldersOrderRequest = {
+      folderOrders,
+    };
+
+    return api.patch<void>('/v1/folders/order', request);
   },
 };

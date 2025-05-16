@@ -1,5 +1,5 @@
 import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, NotifyFrontendRequest, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,12 +9,9 @@ import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerHooks } from '../flows/trigger'
 import { system } from '../helper/system/system'
-import { projectService } from '../project/project-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
-import { jobQueue } from './queue'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -173,28 +170,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
-    app.post('/remove-stale-job', RemoveFlowRequest, async (request) => {
-        const { flowVersionId, flowId } = request.body
-        const flow = isNil(flowId) ? null : await flowService(request.log).getOnePopulated({
-            projectId: request.principal.projectId,
-            versionId: flowVersionId,
-            id: flowId,
-        })
-        if (isNil(flow)) {
-            await jobQueue(request.log).removeRepeatingJob({
-                flowVersionId,
-            })
-            return
-        }
-        await triggerHooks.disable({
-            projectId: flow.projectId,
-            flowVersion: flow.version,
-            simulate: false,
-            ignoreError: true,
-        }, request.log)
-        return {}
-    })
-
     app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
         const { fileId } = request.params
         const { data } = await fileService(request.log).getDataOrThrow({
@@ -252,6 +227,16 @@ async function getFlowResponse(
     }
 }
 
+async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
+    // TODO this can be optimized by getting the flow version directly
+    const flowVersion = await flowVersionService(log).getOneOrThrow(request.versionId)
+    return flowService(log).getOnePopulatedOrThrow({
+        id: flowVersion.flowId,
+        projectId,
+        versionId: request.versionId,
+    })
+}
+
 async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown, log: FastifyBaseLogger): Promise<void> {
     switch (status) {
         case FlowRunStatus.FAILED:
@@ -267,55 +252,6 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
             break
         case FlowRunStatus.INTERNAL_ERROR:
             await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.FAILED, token: enginePrincipal.queueToken!, message: `Internal error reported by engine: ${JSON.stringify(error)}` })
-    }
-}
-
-async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
-    const { type } = request
-    const projectExists = await projectService.exists(projectId)
-    if (!projectExists) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: projectId, entityType: 'project' },
-        })
-    }
-    switch (type) {
-        case GetFlowVersionForWorkerRequestType.LATEST: {
-            return flowService(log).getOnePopulatedOrThrow({
-                id: request.flowId,
-                projectId,
-            })
-        }
-        case GetFlowVersionForWorkerRequestType.EXACT: {
-            // TODO this can be optimized
-            const flowVersion = await flowVersionService(log).getOneOrThrow(request.versionId)
-            return flowService(log).getOnePopulatedOrThrow({
-                id: flowVersion.flowId,
-                projectId,
-                versionId: request.versionId,
-            })
-        }
-        case GetFlowVersionForWorkerRequestType.LOCKED: {
-            const rawFlow = await flowService(log).getOneOrThrow({
-                id: request.flowId,
-                projectId,
-            })
-            if (isNil(rawFlow.publishedVersionId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: rawFlow.id,
-                        message: 'Flow has no published version',
-                    },
-                })
-            }
-            return flowService(log).getOnePopulatedOrThrow({
-                id: rawFlow.id,
-                projectId,
-                versionId: rawFlow.publishedVersionId,
-            })
-
-        }
     }
 }
 
@@ -389,15 +325,6 @@ const GetLockedVersionRequest = {
         response: {
             [StatusCodes.OK]: PopulatedFlow,
         },
-    },
-}
-
-const RemoveFlowRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: RemoveStableJobEngineRequest,
     },
 }
 

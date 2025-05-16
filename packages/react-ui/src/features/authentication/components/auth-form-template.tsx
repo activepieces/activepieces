@@ -9,6 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import {
   ApFlagId,
   isNil,
@@ -21,14 +23,13 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 // import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { authenticationSession } from '@/lib/authentication-session';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.toString();
 
   return isSignup ? (
-    <div className="my-4 text-center text-sm">
+    <div className="mb-4 text-center text-sm">
       {t('Already have an account?')}
       <Link
         to={`/sign-in?${searchQuery}`}
@@ -38,7 +39,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
       </Link>
     </div>
   ) : (
-    <div className="my-4 text-center text-sm">
+    <div className="mb-4 text-center text-sm">
       {t("Don't have an account?")}
       <Link
         to={`/sign-up?${searchQuery}`}
@@ -75,6 +76,7 @@ const AuthFormTemplate = React.memo(
     const from = searchParams.get('from');
     const tokenFromUrl = searchParams.get('token');
     const token = tokenFromUrl ?? authenticationSession.getToken();
+    const redirectAfterLogin = useRedirectAfterLogin();
 
     // To redirect to PromptX login page
     const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
@@ -99,8 +101,8 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-    if (token && from) {
-      return <Navigate to={from} />;
+    if (token) {
+      redirectAfterLogin();
     }
 
     if (tokenFromUrl) {

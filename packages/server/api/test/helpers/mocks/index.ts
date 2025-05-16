@@ -457,6 +457,7 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         folderId: flow?.folderId ?? null,
         schedule: flow?.schedule ?? null,
         publishedVersionId: flow?.publishedVersionId ?? null,
+        externalId: flow?.externalId ?? apId(),
     }
 }
 
@@ -478,6 +479,7 @@ export const createMockFlowVersion = (
         displayName: flowVersion?.displayName ?? faker.word.words(),
         flowId: flowVersion?.flowId ?? apId(),
         trigger: flowVersion?.trigger ?? emptyTrigger,
+        connectionIds: flowVersion?.connectionIds ?? [],
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),

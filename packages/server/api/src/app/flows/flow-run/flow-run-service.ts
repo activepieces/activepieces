@@ -4,6 +4,7 @@ import {
     apId,
     assertNotNullOrUndefined,
     Cursor,
+    EngineHttpResponse,
     ErrorCode,
     ExecutionType,
     ExecutioOutputFile,
@@ -25,6 +26,7 @@ import {
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { In, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
@@ -43,7 +45,7 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
-
+export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
@@ -101,7 +103,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
-        const oldFlowRun = await flowRunService(log).getOneOrThrow({
+        const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
@@ -115,22 +117,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const newFlowRun = {
-                    ...oldFlowRun,
-                    id: apId(),
-                    status: FlowRunStatus.RUNNING,
-                    startTime: new Date().toISOString(),
-                    created: new Date().toISOString(),
-                }
-                await flowRunRepo().save(newFlowRun)
-
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
-                return flowRunService(log).addToQueue({
+                const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
+                    oldFlowRun.flowId,
+                )
+                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                return flowRunService(log).start({
                     payload,
-                    flowRunId: newFlowRun.id,
-                    executionType: ExecutionType.BEGIN,
+                    projectId: oldFlowRun.projectId,
+                    flowVersionId: latestFlowVersion.id,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
                     progressUpdateType: ProgressUpdateType.NONE,
-                    checkRequestId: false,
+                    executionType: ExecutionType.BEGIN,
+                    environment: RunEnvironment.PRODUCTION,
                 })
             }
         }
@@ -356,6 +355,45 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
     },
+    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
+        const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
+            id: runId,
+            projectId: undefined,
+        })
+        const synchronousHandlerId = engineResponseWatcher(log).getServerId()
+        const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
+        if (!matchRequestId) {
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {},
+            }
+        }
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return {
+                status: StatusCodes.CONFLICT,
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': flowRun.status },
+                headers: {},
+            }
+        }
+        await flowRunService(log).start({
+            payload,
+            flowRunId: flowRun.id,
+            projectId: flowRun.projectId,
+            flowVersionId: flowRun.flowVersionId,
+            synchronousHandlerId,
+            httpRequestId: requestId,
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            executionType: ExecutionType.RESUME,
+            environment: RunEnvironment.PRODUCTION,
+        })
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
+            status: StatusCodes.NO_CONTENT,
+            body: {},
+            headers: {},
+        })
+    },
 })
 
 async function filterFlowRunsAndApplyFilters(
@@ -441,22 +479,7 @@ const getFlowRunOrCreate = async (
     }
 }
 
-async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
-    flowRunId: FlowRunId,
-    log: FastifyBaseLogger,
-): Promise<unknown> {
-    const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-        id: flowRunId,
-        projectId: undefined,
-    })
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
-        flowRun.flowId,
-    )
-    await flowRunRepo().update(flowRunId, {
-        flowVersionId: flowVersion.id,
-    })
-    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
-}
+
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()

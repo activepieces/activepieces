@@ -2,7 +2,6 @@
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
-    GetFlowVersionForWorkerRequestType,
     isMultipartFile,
     WebhookUrlParams,
 } from '@activepieces/shared'
@@ -10,6 +9,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
+import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
 
@@ -25,10 +25,11 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 logger: request.log,
                 flowId: request.params.flowId,
                 async: false,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: await webhookSimulationService(request.log).exists(
                     request.params.flowId,
                 ),
+                execute: true,
             })
             await reply
                 .status(response.status)
@@ -49,7 +50,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 saveSampleData: await webhookSimulationService(request.log).exists(
                     request.params.flowId,
                 ),
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                execute: true,
             })
             await reply
                 .status(response.status)
@@ -65,7 +67,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: false,
             saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
         })
         await reply
             .status(response.status)
@@ -80,7 +83,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
         })
         await reply
             .status(response.status)
@@ -95,7 +99,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             saveSampleData: true,
-            flowVersionToRun: undefined,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: false,
         })
         await reply
             .status(response.status)

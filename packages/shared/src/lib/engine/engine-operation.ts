@@ -54,6 +54,7 @@ export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+    runEnvironment: RunEnvironment
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
@@ -93,6 +94,7 @@ export enum ProgressUpdateType {
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
+    formatPayload: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
@@ -113,6 +115,13 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookSecret?: string | Record<string, string>
 }
 
+
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
 
 export type TriggerPayload<T = unknown> = {
     body: T

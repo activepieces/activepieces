@@ -26,5 +26,10 @@ files: [
     # e.g. "/resources/packages/ui/core/src/locale%two_letters_code%/%original_file_name%"
     #
     "translation": "packages/react-ui/public/locales/%two_letters_code%/translation.json"
+  },
+  {
+    "type": "json",
+    "source": "packages/pieces/**/**/src/i18n/translation.json",
+    "translation": "packages/pieces/**/**/src/i18n/%two_letters_code%.json"
   }
 ]

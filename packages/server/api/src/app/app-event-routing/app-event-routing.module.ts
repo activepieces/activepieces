@@ -14,12 +14,14 @@ import {
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
-    GetFlowVersionForWorkerRequestType,
     isNil,
+    RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../flows/flow/flow.service'
+import { WebhookFlowVersionToRun, webhookHandler } from '../webhooks/webhook-handler'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
@@ -116,6 +118,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
+                const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
+                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
+
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
@@ -123,11 +128,12 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         projectId: listener.projectId,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         requestId,
-                        synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
+                        runEnvironment: RunEnvironment.PRODUCTION,
                         saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
-                        flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                        flowVersionIdToRun,
+                        execute: true,
                     },
                     priority: DEFAULT_PRIORITY,
                 })

@@ -1,4 +1,3 @@
-import { WebhookResponse } from '@activepieces/pieces-framework'
 import {
     networkUtils,
     rejectedPromiseHandler,
@@ -7,7 +6,6 @@ import {
     EventPayload,
     FlowId,
     FlowVersion,
-    PopulatedFlow,
     TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -76,33 +74,8 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
         )
     },
 
-    async handshake({
-        populatedFlow,
-        payload,
-        engineToken,
-    }: HandshakeParams): Promise<WebhookResponse | null> {
-        log.info(`[WebhookService#handshake] flowId=${populatedFlow.id}`)
-        const { projectId } = populatedFlow
-        const response = await triggerConsumer.tryHandshake(engineToken, {
-            engineToken,
-            projectId,
-            flowVersion: populatedFlow.version,
-            payload,
-        }, log)
-        if (response !== null) {
-            log.info(`[WebhookService#handshake] condition met, handshake executed, response:
-            ${JSON.stringify(response, null, 2)}`)
-        }
-        return response
-    },
 })
 
-
-type HandshakeParams = {
-    populatedFlow: PopulatedFlow
-    payload: EventPayload
-    engineToken: string
-}
 
 type WebhookUrlSuffix = '' | '/test'
 
