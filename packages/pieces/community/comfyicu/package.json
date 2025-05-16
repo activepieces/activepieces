@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-comfyicu",
+  "version": "0.1.0",
+  "dependencies": {
+    "@activepieces/pieces-framework": "^0.3.0",
+    "@activepieces/pieces-common": "^0.3.0"
+  }
+}
