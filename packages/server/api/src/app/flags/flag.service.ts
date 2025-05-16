@@ -232,6 +232,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.ZERO_SERVICE_URL,
+                value: system.get(AppSystemProp.ZERO_SERVICE_URL),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.BOTX_URL,
+                value: system.get(AppSystemProp.BOTX_URL),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.MAX_RECORDS_PER_TABLE,
                 value: system.getNumber(AppSystemProp.MAX_RECORDS_PER_TABLE),
                 created,

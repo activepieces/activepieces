@@ -90,4 +90,5 @@ export * from './lib/license-keys'
 export * from './lib/flow-run/execution/flow-execution'
 export * from './lib/oauth-apps'
 export * from './lib/mcp'
+export * from './lib/botx'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false

@@ -9,7 +9,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -252,7 +251,6 @@ export function SidebarComponent({
             </SidebarContent>
           </Sidebar>
         )}
-
         <div
           className={cn('flex-1 px-10 py-6', {
             'py-3': hideHeader,
@@ -267,9 +265,6 @@ export function SidebarComponent({
         show={platform?.showPoweredBy && isHomeDashboard}
         position="absolute"
       />
-      <div className="absolute bottom-0 right-0 w-full">
-        <FloatingChatButton />
-      </div>
     </div>
   );
 }

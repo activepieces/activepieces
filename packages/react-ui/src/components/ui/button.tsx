@@ -13,7 +13,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
+          'bg-[#254C7E] stroke-background text-primary-foreground enabled:hover:bg-[#254C7E]/90',
         basic: 'text-primary underline-offset-4 enabled:hover:bg-accent',
         destructive:
           'bg-destructive text-background enabled:hover:bg-destructive/90',
@@ -26,7 +26,7 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 enabled:hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
         'outline-primary':
-          'text-primary font-medium enabled:hover:bg-primary/10 enabled:hover:border-primary enabled:hover:font-semibold',
+          'text-primary font-medium enabled:hover:bg-[#254C7E]/10 enabled:hover:border-primary enabled:hover:font-semibold',
       },
       size: {
         default: 'h-10 px-4 py-2',

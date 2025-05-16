@@ -6,6 +6,7 @@ import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 import { authenticationApi } from './authentication-api';
 
 const tokenKey = 'token';
+const botxTokenKey = 'botx_token';
 export const authenticationSession = {
   saveToken(token: string) {
     localStorage.setItem(tokenKey, token);
@@ -90,6 +91,12 @@ export const authenticationSession = {
   logOut() {
     this.clearSession();
     window.location.href = '/sign-in';
+  },
+  saveBotxToken(token: string) {
+    localStorage.setItem(botxTokenKey, token);
+  },
+  getBotxToken(): string | null {
+    return localStorage.getItem(botxTokenKey) ?? null;
   },
 };
 

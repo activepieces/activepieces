@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -8,11 +8,16 @@ import {
   FROM_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 import { determineDefaultRoute } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { LoadingScreen } from '../../components/ui/loading-screen';
 import { authenticationSession } from '../../lib/authentication-session';
+import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
+import { botxApi } from '../../components/lib/botx-api';
+import { useQuery } from '@tanstack/react-query';
+import { userHooks } from '../../hooks/user-hooks';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -26,6 +31,31 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
   const { checkAccess } = useAuthorization();
+  const { data: user } = userHooks.useCurrentUser();
+  const { data: ZERO_API_URL } = flagsHooks.useFlag<string>(
+    ApFlagId.ZERO_SERVICE_URL,
+  );
+  const { data: botxToken, isSuccess } = useQuery({
+    queryKey: ['user-botx-jwt', user?.email],
+    queryFn: () =>
+      botxApi({ ZERO_API_URL }).getSignBotxJwt({
+        email: user?.email || '',
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+      }),
+    enabled: !!user, // Run only when user data is available
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  useEffect(() => {
+    // fetch botx Jwt to get the token that will be used requesting botxApi
+    if (isSuccess && botxToken?.token) {
+      authenticationSession.saveBotxToken(botxToken?.token);
+    }
+  }, [isSuccess, botxToken]);
+
   if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
@@ -97,7 +127,10 @@ export const ProjectRouterWrapper = ({
     path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <TokenCheckerWrapper>{element}</TokenCheckerWrapper>
+        <TokenCheckerWrapper>
+          {element}
+          <FloatingChatButton />
+        </TokenCheckerWrapper>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
@@ -107,6 +140,7 @@ export const ProjectRouterWrapper = ({
       <AllowOnlyLoggedInUserOnlyGuard>
         <RedirectToCurrentProjectRoute path={path}>
           {element}
+          <FloatingChatButton />
         </RedirectToCurrentProjectRoute>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),

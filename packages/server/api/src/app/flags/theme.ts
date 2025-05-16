@@ -64,7 +64,7 @@ export function generateTheme({
 }
 
 export const defaultTheme = generateTheme({
-    primaryColor: '#254C7E',
+    primaryColor: '#1677ff',
     websiteName: 'AutomationX',
     fullLogoUrl: './img/automationx-full-logo.png',
     logoIconUrl: './img/promptx_icon.png',

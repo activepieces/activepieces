@@ -125,6 +125,8 @@ export enum AppSystemProp {
 
     // Custom
     LOGIN_URL = 'LOGIN_URL',
+    ZERO_SERVICE_URL = 'ZERO_SERVICE_URL',
+    BOTX_URL = 'BOTX_URL',
 
     // Tables
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',

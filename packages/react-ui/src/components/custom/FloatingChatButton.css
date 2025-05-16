@@ -6,16 +6,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 100;
 }
 
 .floating-chat-container {
-  width: 27.313rem;
+  width: 35.313rem;
   height: 40.313rem;
   padding: 20px 24px;
   position: fixed;
   bottom: 5rem;
   right: 1.25rem;
   background-color: #fff;
+  z-index: 100;
 }
 
 /* Styling สำหรับ ReactQuill และ toolbar */
@@ -42,7 +44,8 @@
 .send-chat-button {
   position: absolute;
   right: 28px;
-  top: 88%;
+  /* top: 88%; */
+  bottom: 3px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -82,7 +85,7 @@
 /* Media Queries สำหรับ responsive */
 @media (max-width: 1024px) {
   .floating-chat-container {
-    width: 22rem;
+    width: 35rem;
     height: 35rem;
   }
 }
