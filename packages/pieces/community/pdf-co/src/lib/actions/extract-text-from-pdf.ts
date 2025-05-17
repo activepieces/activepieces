@@ -1,6 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
 import { pdfCoAuth } from "../../index";
+import { BASE_URL, commonProps } from "../common/props";
 
 interface PdfCoExtractTextSuccessResponse {
     body: string; // The extracted text content
@@ -29,12 +30,14 @@ interface PdfConvertToTextSimpleRequestBody {
     name?: string;
     pages?: string;
     password?: string;
+    httpusername?: string;
+	httppassword?: string;
 }
 
 export const extractTextFromPdf = createAction({
     name: 'extract_text_from_pdf',
     displayName: 'Extract Plain Text from PDF',
-    description: 'Extracts plain text content from a PDF document (best for non-scanned PDFs).',
+    description: 'Extracts plain text content from a PDF document.',
     auth: pdfCoAuth,
     props: {
         url: Property.ShortText({
@@ -47,16 +50,10 @@ export const extractTextFromPdf = createAction({
             description: 'Comma-separated page numbers or ranges (e.g., "0,2,5-10"). Leave empty for all pages.',
             required: false,
         }),
-        password: Property.ShortText({
-            displayName: 'PDF Password',
-            description: 'Password for password-protected PDF files.',
-            required: false,
-        }),
-        outputName: Property.ShortText({
-            displayName: 'Output Name Prefix',
-            description: 'Optional prefix for the output name in the response (e.g., "extracted_text"). Actual name will be like prefix.txt.',
-            required: false,
-        }),
+        password: commonProps.pdfPassword,
+        outputName: commonProps.fileName,
+        httpUsername:commonProps.httpUsername,
+        httpPassword:commonProps.httpPassword
     },
     async run(context) {
         const { auth, propsValue } = context;
@@ -64,12 +61,16 @@ export const extractTextFromPdf = createAction({
             url,
             pages,
             password,
-            outputName
+            outputName,
+            httpPassword,
+            httpUsername
         } = propsValue;
 
         const requestBody: PdfConvertToTextSimpleRequestBody = {
             url: url,
             async: false,
+            httpusername:httpUsername,
+            httppassword:httpPassword,
             inline: true, // Get text directly in response.body.body
         };
 
@@ -80,7 +81,7 @@ export const extractTextFromPdf = createAction({
         try {
             const response = await httpClient.sendRequest<PdfCoExtractTextSuccessResponse | PdfCoErrorResponse>({
                 method: HttpMethod.POST,
-                url: 'https://api.pdf.co/v1/pdf/convert/to/text-simple',
+                url: `${BASE_URL}/pdf/convert/to/text-simple`,
                 headers: {
                     'x-api-key': auth as string,
                     'Content-Type': 'application/json',

@@ -1,7 +1,8 @@
-import { Property, DropdownOption, createAction } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common";
+import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
 import { pdfCoAuth } from "../../index";
+import { BASE_URL } from "../common/props";
 interface PdfConvertFromHtmlRequestBody {
     html: string;
     async: boolean;
@@ -15,6 +16,7 @@ interface PdfConvertFromHtmlRequestBody {
     footer?: string; // HTML content
     expiration?: number;
     profiles?: Record<string, unknown>;
+    DoNotWaitFullLoad?:boolean
 }
 
 export const convertHtmlToPdf = createAction({
@@ -38,13 +40,11 @@ export const convertHtmlToPdf = createAction({
             description: 'CSS style margins (e.g., "10px", "5mm 5mm 5mm 5mm" for top, right, bottom, left).',
             required: false,
         }),
-        paperSize: Property.Dropdown<string>({
+        paperSize: Property.StaticDropdown({
             displayName: 'Paper Size',
             description: 'Select a paper size. For custom sizes, input the value directly (e.g., \'200mm 300mm\') if your desired size isn\'t listed. Refer to PDF.co docs.',
             required: false,
-            refreshers: [],
-            options: async () => {
-                return {
+            options: {
                     disabled: false,
                     placeholder: 'Select paper size or input custom',
                     options: [
@@ -59,47 +59,40 @@ export const convertHtmlToPdf = createAction({
                         { label: "A3", value: "A3" },
                         { label: "A5", value: "A5" },
                         { label: "A6", value: "A6" },
-                    ] as DropdownOption<string>[],
-                };
-            }
+                    ] 
+                }
         }),
-        orientation: Property.Dropdown<'Portrait' | 'Landscape'> ({
+        orientation: Property.StaticDropdown ({
             displayName: 'Orientation',
             description: 'Set page orientation.',
             required: false,
-            refreshers: [],
-            options: async () => {
-                return {
+            options:  {
                     disabled: false,
                     placeholder: 'Portrait (Default)',
                     options: [
                         { label: "Portrait (Default)", value: "Portrait" },
                         { label: "Landscape", value: "Landscape" },
-                    ] as DropdownOption<'Portrait' | 'Landscape'>[],
-                };
-            }
+                    ] ,
+                }
         }),
         printBackground: Property.Checkbox({
-            displayName: 'Print Background',
+            displayName: 'Print Background ?',
             description: 'Set to true to print background graphics and colors (default is true).',
             required: false,
             defaultValue: true,
         }),
-        mediaType: Property.Dropdown<'print' | 'screen' | 'none'> ({
+        mediaType: Property.StaticDropdown({
             displayName: 'Media Type',
             description: 'CSS media type to emulate.',
             required: false,
-            refreshers: [],
-            options: async () => {
-                return {
+            options:  {
                     disabled: false,
                     placeholder: 'print (Default)',
                     options: [
                         { label: "print (Default)", value: "print" },
                         { label: "screen", value: "screen" },
                         { label: "none", value: "none" },
-                    ] as DropdownOption<'print' | 'screen' | 'none'>[],
-                };
+                    ],
             }
         }),
         header: Property.LongText({
@@ -111,6 +104,10 @@ export const convertHtmlToPdf = createAction({
             displayName: 'Footer HTML',
             description: 'HTML content for the page footer.',
             required: false,
+        }),
+        doNotWaitFullLoad:Property.Checkbox({
+            displayName:'Do not wait till full page load ?',
+            required:false
         }),
         expiration: Property.Number({
             displayName: 'Output Link Expiration (minutes)',
@@ -129,14 +126,15 @@ export const convertHtmlToPdf = createAction({
         const requestBody: PdfConvertFromHtmlRequestBody = {
             html: propsValue.html,
             async: false,
+            DoNotWaitFullLoad:propsValue.doNotWaitFullLoad
         };
 
         if (propsValue.name !== undefined && propsValue.name !== '') requestBody.name = propsValue.name;
         if (propsValue.margins !== undefined && propsValue.margins !== '') requestBody.margins = propsValue.margins;
         if (propsValue.paperSize !== undefined) requestBody.paperSize = propsValue.paperSize;
-        if (propsValue.orientation !== undefined) requestBody.orientation = propsValue.orientation;
+        if (propsValue.orientation !== undefined) requestBody.orientation = propsValue.orientation as 'Portrait' | 'Landscape';
         if (propsValue.printBackground !== undefined) requestBody.printBackground = propsValue.printBackground;
-        if (propsValue.mediaType !== undefined) requestBody.mediaType = propsValue.mediaType;
+        if (propsValue.mediaType !== undefined) requestBody.mediaType = propsValue.mediaType as  'print' | 'screen' | 'none';
         if (propsValue.header !== undefined && propsValue.header !== '') requestBody.header = propsValue.header;
         if (propsValue.footer !== undefined && propsValue.footer !== '') requestBody.footer = propsValue.footer;
         if (propsValue.expiration !== undefined) requestBody.expiration = propsValue.expiration;
@@ -147,7 +145,7 @@ export const convertHtmlToPdf = createAction({
         try {
             const response = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
                 method: HttpMethod.POST,
-                url: 'https://api.pdf.co/v1/pdf/convert/from/html',
+                url: `${BASE_URL}/pdf/convert/from/html`,
                 headers: {
                     'x-api-key': auth as string,
                     'Content-Type': 'application/json',

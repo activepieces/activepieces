@@ -1,7 +1,8 @@
 import { Property, DropdownOption, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common";
+import { PdfCoSuccessResponse, PdfCoErrorResponse } from "../common/types";
 import { pdfCoAuth } from "../../index";
+import { BASE_URL, commonProps } from "../common/props";
 // Interface for the request body (common params for CSV/JSON/XML conversion)
 interface PdfConvertToStructuredFormatRequestBody {
     url: string;
@@ -13,6 +14,8 @@ interface PdfConvertToStructuredFormatRequestBody {
     lang?: string;
     expiration?: number;
     profiles?: Record<string, unknown>;
+    httpusername?: string;
+	httppassword?: string;
 }
 
 export const convertPdfToStructuredFormat = createAction({
@@ -26,19 +29,18 @@ export const convertPdfToStructuredFormat = createAction({
             description: 'URL of the PDF file to convert.',
             required: true,
         }),
-        outputFormat: Property.Dropdown<'json' | 'csv' | 'xml'> ({
+        outputFormat: Property.StaticDropdown ({
             displayName: 'Output Format',
             description: 'Select the desired structured output format.',
             required: true,
-            refreshers: [],
-            options: async () => {
-                return {
+            options:  {
+                disabled:false,
                     options: [
                         { label: "JSON", value: "json" },
                         { label: "CSV", value: "csv" },
                         { label: "XML", value: "xml" },
                     ] as DropdownOption<'json' | 'csv' | 'xml'>[],
-                };
+                
             }
         }),
         pages: Property.ShortText({
@@ -51,26 +53,12 @@ export const convertPdfToStructuredFormat = createAction({
             description: 'Language for OCR if processing scanned documents (e.g., "eng", "deu", "eng+deu"). See PDF.co docs for list.',
             required: false,
         }),
-        password: Property.ShortText({
-            displayName: 'PDF Password',
-            description: 'Password for password-protected PDF files.',
-            required: false,
-        }),
-        name: Property.ShortText({
-            displayName: 'Output File Name',
-            description: 'Desired name for the output file (e.g., "result.json"). Extension is usually added by API.',
-            required: false,
-        }),
-        expiration: Property.Number({
-            displayName: 'Output Link Expiration (minutes)',
-            description: 'Set the expiration time for the output link in minutes (default is 60).',
-            required: false,
-        }),
         profiles: Property.Json({
             displayName: 'Profiles',
             description: 'JSON object for additional configurations.',
             required: false,
-        })
+        }),
+        ...commonProps
     },
     async run(context) {
         const { auth, propsValue } = context;
@@ -79,8 +67,10 @@ export const convertPdfToStructuredFormat = createAction({
             outputFormat,
             pages,
             lang,
-            password,
-            name,
+            pdfPassword,
+            fileName,
+            httpPassword,
+            httpUsername,
             expiration,
             profiles
         } = propsValue;
@@ -88,13 +78,13 @@ export const convertPdfToStructuredFormat = createAction({
         let endpoint = '';
         switch (outputFormat) {
             case 'json':
-                endpoint = 'https://api.pdf.co/v1/pdf/convert/to/json2';
+                endpoint = `${BASE_URL}/pdf/convert/to/json2`;
                 break;
             case 'csv':
-                endpoint = 'https://api.pdf.co/v1/pdf/convert/to/csv';
+                endpoint = `${BASE_URL}/pdf/convert/to/csv`;
                 break;
             case 'xml':
-                endpoint = 'https://api.pdf.co/v1/pdf/convert/to/xml';
+                endpoint = `${BASE_URL}/pdf/convert/to/xml`;
                 break;
             default:
                 throw new Error(`Unsupported output format: ${outputFormat}`);
@@ -103,13 +93,15 @@ export const convertPdfToStructuredFormat = createAction({
         const requestBody: PdfConvertToStructuredFormatRequestBody = {
             url: url,
             async: false,
+            httppassword:httpPassword,
+            httpusername:httpUsername,
             inline: false, // Ensure we get the URL to the output file
         };
 
         if (pages !== undefined && pages !== '') requestBody.pages = pages;
         if (lang !== undefined && lang !== '') requestBody.lang = lang;
-        if (password !== undefined && password !== '') requestBody.password = password;
-        if (name !== undefined && name !== '') requestBody.name = name;
+        if (pdfPassword !== undefined && pdfPassword !== '') requestBody.password = pdfPassword;
+        if (fileName !== undefined && fileName !== '') requestBody.name = fileName;
         if (expiration !== undefined) requestBody.expiration = expiration;
         if (profiles !== undefined && typeof profiles === 'object' && profiles !== null) {
             requestBody.profiles = profiles as Record<string, unknown>;
@@ -138,8 +130,7 @@ export const convertPdfToStructuredFormat = createAction({
                 throw new Error(errorMessage);
             }
 
-            const successBody = response.body as PdfCoSuccessResponse;
-            return successBody;
+            return response.body;
 
         } catch (error) {
             if (error instanceof HttpError) {
