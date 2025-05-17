@@ -15,13 +15,22 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/subflows",
         "tsConfig": "packages/pieces/community/subflows/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/subflows/package.json",
         "main": "packages/pieces/community/subflows/src/index.ts",
-        "assets": ["packages/pieces/community/subflows/*.md"],
+        "assets": [
+          "packages/pieces/community/subflows/*.md",
+          {
+            "input": "packages/pieces/community/subflows/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -33,7 +42,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   }
 }

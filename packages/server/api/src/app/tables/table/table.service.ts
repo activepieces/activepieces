@@ -13,7 +13,7 @@ import {
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
-import { ILike } from 'typeorm'
+import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -43,7 +43,7 @@ export const tableService = {
         })
         return table
     },
-    async list({ projectId, cursor, limit, name }: ListParams): Promise<SeekPage<Table>> {
+    async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -58,6 +58,9 @@ export const tableService = {
         const queryWhere: Record<string, unknown> = { projectId }
         if (!isNil(name)) {
             queryWhere.name = ILike(`%${name}%`)
+        }
+        if (!isNil(externalIds)) {
+            queryWhere.externalId = In(externalIds)
         }
         const paginationResult = await paginator.paginate(
             tableRepo().createQueryBuilder('table').where(queryWhere),
@@ -204,6 +207,7 @@ type ListParams = {
     cursor: string | undefined
     limit: number
     name: string | undefined
+    externalIds: string[] | undefined
 }
 
 type GetByIdParams = {

@@ -103,7 +103,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
-        const oldFlowRun = await flowRunService(log).getOneOrThrow({
+        const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
@@ -117,22 +117,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const newFlowRun = {
-                    ...oldFlowRun,
-                    id: apId(),
-                    status: FlowRunStatus.RUNNING,
-                    startTime: new Date().toISOString(),
-                    created: new Date().toISOString(),
-                }
-                await flowRunRepo().save(newFlowRun)
-
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
-                return flowRunService(log).addToQueue({
+                const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
+                    oldFlowRun.flowId,
+                )
+                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                return flowRunService(log).start({
                     payload,
-                    flowRunId: newFlowRun.id,
-                    executionType: ExecutionType.BEGIN,
+                    projectId: oldFlowRun.projectId,
+                    flowVersionId: latestFlowVersion.id,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
                     progressUpdateType: ProgressUpdateType.NONE,
-                    checkRequestId: false,
+                    executionType: ExecutionType.BEGIN,
+                    environment: RunEnvironment.PRODUCTION,
                 })
             }
         }
@@ -482,22 +479,7 @@ const getFlowRunOrCreate = async (
     }
 }
 
-async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
-    flowRunId: FlowRunId,
-    log: FastifyBaseLogger,
-): Promise<unknown> {
-    const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-        id: flowRunId,
-        projectId: undefined,
-    })
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
-        flowRun.flowId,
-    )
-    await flowRunRepo().update(flowRunId, {
-        flowVersionId: flowVersion.id,
-    })
-    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
-}
+
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()

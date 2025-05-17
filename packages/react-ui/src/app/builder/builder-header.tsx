@@ -136,24 +136,26 @@ export const BuilderHeader = () => {
               />
             )}
           </div>
-          <FlowActionMenu
-            insideBuilder={true}
-            flow={flow}
-            flowVersion={flowVersion}
-            readonly={!isLatestVersion}
-            onDelete={() => {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/flows'),
-              );
-            }}
-            onRename={() => {
-              setIsEditingFlowName(true);
-            }}
-            onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-            onDuplicate={() => {}}
-          >
-            <ChevronDown className="h-8 w-8" />
-          </FlowActionMenu>
+          {!embedState.hideFlowNameInBuilder && (
+            <FlowActionMenu
+              insideBuilder={true}
+              flow={flow}
+              flowVersion={flowVersion}
+              readonly={!isLatestVersion}
+              onDelete={() => {
+                navigate(
+                  authenticationSession.appendProjectRoutePrefix('/flows'),
+                );
+              }}
+              onRename={() => {
+                setIsEditingFlowName(true);
+              }}
+              onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+              onDuplicate={() => {}}
+            >
+              <ChevronDown className="h-8 w-8" />
+            </FlowActionMenu>
+          )}
         </div>
 
         <div className="grow"></div>

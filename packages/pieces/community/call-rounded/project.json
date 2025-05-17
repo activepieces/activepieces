@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/call-rounded/package.json",
         "main": "packages/pieces/community/call-rounded/src/index.ts",
         "assets": [
-          "packages/pieces/community/call-rounded/*.md"
+          "packages/pieces/community/call-rounded/*.md",
+          {
+            "input": "packages/pieces/community/call-rounded/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
