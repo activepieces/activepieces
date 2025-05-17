@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-smartsuite",
+  "version": "0.1.0",
+  "description": "SmartSuite integration for Activepieces",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "0.0.0",
+    "@activepieces/pieces-common": "0.0.0",
+    "@activepieces/shared": "0.0.0"
+  }
+} 
