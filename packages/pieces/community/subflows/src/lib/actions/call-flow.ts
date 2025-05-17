@@ -152,9 +152,9 @@ export const callFlow = createAction({
       },
       body: {
         data: payload,
-        callbackUrl: context.generateResumeUrl({
+        callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
           queryParams: {}
-        }),
+        }) : undefined,
       },
     });
     if (context.propsValue.waitForResponse) {

@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/microsoft-todo/package.json",
         "main": "packages/pieces/community/microsoft-todo/src/index.ts",
         "assets": [
-          "packages/pieces/community/microsoft-todo/*.md"
+          "packages/pieces/community/microsoft-todo/*.md",
+          {
+            "input": "packages/pieces/community/microsoft-todo/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

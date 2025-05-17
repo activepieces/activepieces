@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -42,13 +42,14 @@ type TestTriggerSectionProps = {
 };
 
 const ManualWebhookPieceTriggerTestButton = ({
-  refetch,
+  isWebhookTestingDialogOpen,
+  setIsWebhookTestingDialogOpen,
 }: {
-  refetch: () => void;
+  isWebhookTestingDialogOpen: boolean;
+  setIsWebhookTestingDialogOpen: (open: boolean) => void;
 }) => {
   const [id, setId] = useState<number>(0);
-  const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
-    useState(false);
+
   const formValues = useFormContext<Trigger>().getValues();
 
   return (
@@ -77,9 +78,6 @@ const ManualWebhookPieceTriggerTestButton = ({
         }}
         testingMode="trigger"
         currentStep={formValues}
-        onTestFinished={() => {
-          refetch();
-        }}
       />
     </>
   );
@@ -101,7 +99,7 @@ const TestTriggerSection = React.memo(
     const form = useFormContext<Trigger>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
-
+    const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
     const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
@@ -136,17 +134,19 @@ const TestTriggerSection = React.memo(
         },
       });
 
+    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
+      useState(false);
     const {
       mutate: simulateTrigger,
       isPending: isSimulating,
       reset: resetSimulation,
     } = testStepHooks.useSimulateTrigger({
       setErrorMessage,
-      onSuccess: () => {
-        refetch();
+      onSuccess: async () => {
+        await refetch();
+        setIsWebhookTestingDialogOpen(false);
       },
     });
-
     const { mutate: pollTrigger, isPending: isPollingTesting } =
       testStepHooks.usePollTrigger({
         setErrorMessage,
@@ -210,7 +210,9 @@ const TestTriggerSection = React.memo(
           <TestSampleDataViewer
             onRetest={
               isSimulation
-                ? simulateTrigger
+                ? () => {
+                    simulateTrigger(abortControllerRef.current.signal);
+                  }
                 : isMcpTool
                 ? handleMcpToolTesting
                 : pollTrigger
@@ -280,6 +282,8 @@ const TestTriggerSection = React.memo(
                 size="sm"
                 onClick={() => {
                   resetSimulation();
+                  abortControllerRef.current.abort();
+                  abortControllerRef.current = new AbortController();
                 }}
               >
                 {t('Cancel')}
@@ -310,7 +314,10 @@ const TestTriggerSection = React.memo(
               </div>
             </Alert>
             {isWebhookPieceTrigger && (
-              <ManualWebhookPieceTriggerTestButton refetch={refetch} />
+              <ManualWebhookPieceTriggerTestButton
+                isWebhookTestingDialogOpen={isWebhookTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={setIsWebhookTestingDialogOpen}
+              />
             )}
           </div>
         )}
@@ -320,9 +327,13 @@ const TestTriggerSection = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => simulateTrigger()}
+                onClick={() =>
+                  simulateTrigger(abortControllerRef.current.signal)
+                }
                 keyboardShortcut="G"
-                onKeyboardShortcut={simulateTrigger}
+                onKeyboardShortcut={() =>
+                  simulateTrigger(abortControllerRef.current.signal)
+                }
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>

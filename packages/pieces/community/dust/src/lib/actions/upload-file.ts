@@ -22,15 +22,19 @@ export const uploadFile = createAction({
     const contentType = (mimeTypes.lookup(file.filename) ||
       'text/plain') as FileUploadUrlRequestType['contentType'];
 
-    const fileObject = new File([file.data], file.filename, {
-      type: contentType,
-    });
+    const blob = new Blob([file.data], { type: contentType });
+    const formData = new FormData();
+    formData.append('file', blob, file.filename);
+    const fileObject = formData.get('file');
+    if (!fileObject || typeof fileObject === 'string') {
+      throw new Error('File object is missing');
+    }
 
     const response = await client.uploadFile({
       contentType,
       fileObject,
       fileName: file.filename,
-      fileSize: fileObject.size,
+      fileSize: blob.size,
       useCase: 'conversation',
     });
 

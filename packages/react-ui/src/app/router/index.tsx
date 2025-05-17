@@ -61,7 +61,6 @@ import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
-import { FlowsRunsPageReroute } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
@@ -79,6 +78,7 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import {
   ProjectRouterWrapper,
+  projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 
@@ -162,8 +162,20 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Flows">
-            <FlowsRunsPageReroute />
+          <PageTitle title="Runs">
+            <FlowsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/issues',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Issues">
+            <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -302,7 +314,7 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
-    path: '/settings/alerts',
+    path: projectSettingsRoutes.alerts,
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_ALERT}>
@@ -316,7 +328,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/settings/appearance',
+    path: projectSettingsRoutes.appearance,
     element: (
       <DashboardContainer>
         <PageTitle title="Appearance">
@@ -328,7 +340,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/settings/general',
+    path: projectSettingsRoutes.general,
     element: (
       <DashboardContainer>
         <PageTitle title="General">
@@ -340,7 +352,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/settings/pieces',
+    path: projectSettingsRoutes.pieces,
     element: (
       <DashboardContainer>
         <PageTitle title="Pieces">
@@ -352,7 +364,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/settings/team',
+    path: projectSettingsRoutes.team,
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
@@ -367,11 +379,10 @@ const routes = [
   }),
   {
     path: '/team',
-    element: <Navigate to="/settings/team" replace></Navigate>,
+    element: <Navigate to={projectSettingsRoutes.team} replace></Navigate>,
   },
-
   ...ProjectRouterWrapper({
-    path: '/settings/environments',
+    path: projectSettingsRoutes.environments,
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
