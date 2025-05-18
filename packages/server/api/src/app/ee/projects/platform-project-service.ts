@@ -75,7 +75,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
                         ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiTokens', request.plan.aiTokens),
+                        ...spreadIfDefined('aiCredit', request.plan.aiCredit),
                     },
                     projectId,
                 )

@@ -67,9 +67,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+          {formatUtils.formatNumber(row.original.usage.aiCredit)} /{' '}
+          {row.original.plan.aiCredit
+            ? formatUtils.formatNumber(row.original.plan.aiCredit)
             : '-'}
         </div>
       );

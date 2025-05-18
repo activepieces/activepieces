@@ -39,7 +39,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiCredit)
 
         const user = await getOrCreateUser(externalPrincipal, log)
 
@@ -86,7 +86,7 @@ const updateProjectLimits = async (
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
     tasks: number | undefined,
-    aiTokens: number | undefined,
+    aiCredit: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -98,7 +98,7 @@ const updateProjectLimits = async (
     await projectLimitsService.upsert({
         nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
         tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
-        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
+        aiCredit: aiCredit ?? projectPlan?.aiCredit ?? DEFAULT_PLATFORM_LIMIT.aiCredit,
         pieces,
         piecesFilterType,
     }, projectId)

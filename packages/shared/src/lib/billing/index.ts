@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 
 export enum UsageMetric {
     TASKS = 'tasks',
-    AI_TOKENS = 'aiTokens',
+    AI_CREDIT = 'aiCredit',
     TABLES = 'tables',
     MCP_SERVERS = 'mcpServers',
     ACTIVE_FLOWS = 'activeFlows',

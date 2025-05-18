@@ -161,7 +161,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    aiTokens?: number
+    aiCredit?: number
     tasks?: number
 }
 

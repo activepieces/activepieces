@@ -13,7 +13,7 @@ export const platformUsageService = {
         const startBillingPeriod = getCurrentBillingPeriodStart()
 
         const tasks = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.TASKS)
-        const aiCredits = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.AI_TOKENS)
+        const aiCredits = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.AI_CREDIT)
         const tables = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.TABLES)
         const mcpServers = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.MCP_SERVERS)
         const activeFlows = await getUsage(platformId, UsageEntityType.PLATFORM, startBillingPeriod, UsageMetric.ACTIVE_FLOWS)

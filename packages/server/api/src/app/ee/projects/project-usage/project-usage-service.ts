@@ -20,7 +20,7 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
         const startBillingPeriod = getCurrentBillingPeriodStart()
 
         const tasks = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TASKS)
-        const aiTokens = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.AI_TOKENS)
+        const aiCredit = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.AI_CREDIT)
         const tables = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TABLES)
         const mcpServers = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.MCP_SERVERS)
         const activeFlows = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.ACTIVE_FLOWS)
@@ -31,7 +31,7 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
 
         return {
             tasks,
-            aiCredit: aiTokens,
+            aiCredit,
             teamMembers,
             tables,
             mcpServers,
@@ -72,7 +72,8 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
             const consumedPlatformUsage = await platformUsageService.increasePlatformUsage(platformId, incrementBy, usageMetric)
             const consumedProjectUsage = await projectUsageService(log).increaseProjectUsage(projectId, incrementBy, usageMetric)
 
-            const planLimit = usageMetric === UsageMetric.TASKS ? projectPlan.tasks : projectPlan.aiTokens
+            const planLimit = usageMetric === UsageMetric.TASKS ? projectPlan.tasks : projectPlan.aiCredit
+
             const shouldLimitFromProjectPlan = !isNil(planLimit) && consumedProjectUsage >= planLimit
 
             if (edition === ApEdition.ENTERPRISE) {

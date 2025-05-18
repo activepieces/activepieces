@@ -52,7 +52,7 @@ export const ProjectPlan = Type.Object({
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
     tasks: Nullable(Type.Number()),
-    aiTokens: Nullable(Type.Number()),
+    aiCredit: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>

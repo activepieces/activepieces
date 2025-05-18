@@ -2395,7 +2395,7 @@
               "teamMembers": {
                 "type": "number"
               },
-              "aiTokens": {
+              "aiCredit": {
                 "type": "number"
               },
               "nextLimitResetDate": {
@@ -2405,7 +2405,7 @@
             "required": [
               "tasks",
               "teamMembers",
-              "aiTokens",
+              "aiCredit",
               "nextLimitResetDate"
             ]
           },
@@ -2453,7 +2453,7 @@
                 "type": "number",
                 "nullable": true
               },
-              "aiTokens": {
+              "aiCredit": {
                 "type": "number",
                 "nullable": true
               }
@@ -17176,7 +17176,7 @@
                         "teamMembers": {
                           "type": "number"
                         },
-                        "aiTokens": {
+                        "aiCredit": {
                           "type": "number"
                         },
                         "nextLimitResetDate": {
@@ -17186,7 +17186,7 @@
                       "required": [
                         "tasks",
                         "teamMembers",
-                        "aiTokens",
+                        "aiCredit",
                         "nextLimitResetDate"
                       ]
                     },
@@ -17234,7 +17234,7 @@
                           "type": "number",
                           "nullable": true
                         },
-                        "aiTokens": {
+                        "aiCredit": {
                           "type": "number",
                           "nullable": true
                         }
@@ -17401,7 +17401,7 @@
                               "teamMembers": {
                                 "type": "number"
                               },
-                              "aiTokens": {
+                              "aiCredit": {
                                 "type": "number"
                               },
                               "nextLimitResetDate": {
@@ -17411,7 +17411,7 @@
                             "required": [
                               "tasks",
                               "teamMembers",
-                              "aiTokens",
+                              "aiCredit",
                               "nextLimitResetDate"
                             ]
                           },
@@ -17459,7 +17459,7 @@
                                 "type": "number",
                                 "nullable": true
                               },
-                              "aiTokens": {
+                              "aiCredit": {
                                 "type": "number",
                                 "nullable": true
                               }
@@ -17609,7 +17609,7 @@
                           }
                         ]
                       },
-                      "aiTokens": {
+                      "aiCredit": {
                         "type": "number"
                       }
                     }
@@ -17703,7 +17703,7 @@
                         "teamMembers": {
                           "type": "number"
                         },
-                        "aiTokens": {
+                        "aiCredit": {
                           "type": "number"
                         },
                         "nextLimitResetDate": {
@@ -17713,7 +17713,7 @@
                       "required": [
                         "tasks",
                         "teamMembers",
-                        "aiTokens",
+                        "aiCredit",
                         "nextLimitResetDate"
                       ]
                     },
@@ -17761,7 +17761,7 @@
                           "type": "number",
                           "nullable": true
                         },
-                        "aiTokens": {
+                        "aiCredit": {
                           "type": "number",
                           "nullable": true
                         }

@@ -26,7 +26,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
             provider,
         })
 
-        const exceededLimit = await projectUsageService(request.log).checkMetricUsageLimit(projectId, 0, UsageMetric.AI_TOKENS, request.log)
+        const exceededLimit = await projectUsageService(request.log).checkMetricUsageLimit(projectId, 0, UsageMetric.AI_CREDIT, request.log)
         if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(
@@ -53,8 +53,8 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await platformUsageService.increasePlatformUsage(platformId, 1, UsageMetric.AI_TOKENS)
-            await projectUsageService(request.log).increaseProjectUsage(projectId, 1, UsageMetric.AI_TOKENS)
+            await platformUsageService.increasePlatformUsage(platformId, 1, UsageMetric.AI_CREDIT)
+            await projectUsageService(request.log).increaseProjectUsage(projectId, 1, UsageMetric.AI_CREDIT)
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,

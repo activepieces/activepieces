@@ -24,7 +24,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
             subscription: await platformBillingService(request.log).getOrCreateForPlatform(platform.id),
             nextBillingDate: getCurrentBillingPeriodEnd(),
             flowRunCount: tasks,
-            aiTokens: aiCredits,
+            aiCredit: aiCredits,
         }
     })
 

@@ -20,7 +20,7 @@ export const projectLimitsService = {
                 name: planLimits.nickname,
                 pieces: planLimits.pieces,
                 piecesFilterType: planLimits.piecesFilterType,
-                aiTokens: planLimits.aiTokens,
+                aiCredit: planLimits.aiCredit,
             })
         }
         else {
@@ -66,7 +66,7 @@ async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimit
         pieces: flowPlanLimit.pieces,
         piecesFilterType: flowPlanLimit.piecesFilterType,
         tasks: flowPlanLimit.tasks,
-        aiTokens: flowPlanLimit.aiTokens,
+        aiCredit: flowPlanLimit.aiCredit,
         name: flowPlanLimit.nickname,
     }, ['projectId'])
 

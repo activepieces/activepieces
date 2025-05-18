@@ -76,9 +76,9 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         id: apId(),
         platformId,
         tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
-        aiCreditsLimit: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
+        aiCreditsLimit: DEFAULT_FREE_PLAN_LIMIT.aiCredit,
         includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-        includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
+        includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiCredit,
         stripeCustomerId,
     })
 }

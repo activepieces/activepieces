@@ -46,9 +46,9 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
-            const { tasks, aiCredits: aiTokens } = await platformUsageService.getPlatformUsageForBillingPeriod(platformId)
+            const { tasks, aiCredits: aiCredit } = await platformUsageService.getPlatformUsageForBillingPeriod(platformId)
 
-            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
+            log.info({ platformId, tasks, aiCredit, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
 
             await stripe.subscriptionItems.createUsageRecord(item.id, {
                 quantity: Math.max(tasks - (platformBilling.includedTasks || 0), 0),

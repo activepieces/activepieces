@@ -138,7 +138,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         updated: plan?.updated ?? faker.date.recent().toISOString(),
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
-        aiTokens: plan?.aiTokens ?? 0,
+        aiCredit: plan?.aiCredit ?? 0,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         tasks: plan?.tasks ?? 0,
@@ -490,7 +490,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
-    })  
+    })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,
