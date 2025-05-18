@@ -1,7 +1,14 @@
+import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Trash, CopyPlus, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from '@/components/ui/sortable';
 import {
   RouterAction,
   BranchExecutionType,
@@ -28,6 +35,13 @@ type BranchListProps = {
   errors: unknown[];
   readonly: boolean;
   branchNameChanged: (index: number, name: string) => void;
+  moveBranch: ({
+    sourceIndex,
+    targetIndex,
+  }: {
+    sourceIndex: number;
+    targetIndex: number;
+  }) => void;
 };
 export const BranchesList = ({
   step,
@@ -37,46 +51,64 @@ export const BranchesList = ({
   deleteBranch,
   readonly,
   branchNameChanged,
+  moveBranch,
 }: BranchListProps) => {
   const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<
     number | null
   >(null);
-  return step.settings.branches.map((branch, index) =>
-    branch.branchType === BranchExecutionType.FALLBACK ? (
-      <React.Fragment key={index}></React.Fragment>
-    ) : (
-      <React.Fragment key={index}>
-        <BranchListItem
-          branch={branch}
-          branchIndex={index}
-          readonly={readonly}
-          onClick={() => {
-            setSelectedBranchIndex(index);
-          }}
-          errors={errors}
-          duplicateBranch={() => {
-            duplicateBranch(index);
-          }}
-          deleteBranch={() => {
-            deleteBranch(index);
-          }}
-          isEditingBranchName={branchNameEditingIndex === index}
-          setIsEditingBranchName={(isEditing) =>
-            isEditing
-              ? setBranchNameEditingIndex(index)
-              : setBranchNameEditingIndex(null)
-          }
-          branchNameChanged={(name) => {
-            branchNameChanged(index, name);
-          }}
-          showDeleteButton={step.settings.branches.length > 2}
-        ></BranchListItem>
+  const form = useFormContext<RouterAction>();
+  return (
+    <Sortable
+      value={step.settings.branches.map((branch, idx) => ({
+        id: idx + 1,
+        branch,
+      }))}
+      onMove={({ activeIndex, overIndex }) => {
+        moveBranch({ sourceIndex: activeIndex, targetIndex: overIndex });
+      }}
+    >
+      {step.settings.branches.map((branch, index) =>
+        branch.branchType === BranchExecutionType.FALLBACK ? (
+          <React.Fragment key={index}></React.Fragment>
+        ) : (
+          <SortableItem key={index} value={index + 1} asChild>
+            <div>
+              <BranchListItem
+                branch={branch}
+                branchIndex={index}
+                readonly={readonly}
+                onClick={() => {
+                  setSelectedBranchIndex(index);
+                }}
+                errors={errors}
+                duplicateBranch={() => {
+                  duplicateBranch(index);
+                  form.trigger();
+                }}
+                deleteBranch={() => {
+                  deleteBranch(index);
+                  form.trigger();
+                }}
+                isEditingBranchName={branchNameEditingIndex === index}
+                setIsEditingBranchName={(isEditing) =>
+                  isEditing
+                    ? setBranchNameEditingIndex(index)
+                    : setBranchNameEditingIndex(null)
+                }
+                branchNameChanged={(name) => {
+                  branchNameChanged(index, name);
+                }}
+                showDeleteButton={step.settings.branches.length > 2}
+              ></BranchListItem>
 
-        {index === step.settings.branches.length - 2 ? null : (
-          <Separator></Separator>
-        )}
-      </React.Fragment>
-    ),
+              {index === step.settings.branches.length - 2 ? null : (
+                <Separator></Separator>
+              )}
+            </div>
+          </SortableItem>
+        ),
+      )}
+    </Sortable>
   );
 };
 
@@ -110,7 +142,7 @@ export const BranchListItem = ({
   return (
     <div
       className={
-        'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 dark:hover:bg-accent px-2 cursor-pointer'
+        'flex items-center gap-2 hover:transition-colors   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 dark:hover:bg-accent px-2 cursor-pointer'
       }
       onClick={() => {
         onClick();
@@ -141,7 +173,7 @@ export const BranchListItem = ({
               ></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t('Incomplete branch settings')}
+              {t('Incomplete settings')}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -167,7 +199,7 @@ export const BranchListItem = ({
                 <Trash className="w-4 h-4 stroke-destructive"></Trash>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Delete Branch')}</TooltipContent>
+            <TooltipContent side="bottom">{t('Delete')}</TooltipContent>
           </Tooltip>
         )}
         <Tooltip>
@@ -183,7 +215,7 @@ export const BranchListItem = ({
               <Pencil className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Rename Branch')}</TooltipContent>
+          <TooltipContent side="bottom">{t('Rename')}</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -199,7 +231,20 @@ export const BranchListItem = ({
               <CopyPlus className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Duplicate Branch')}</TooltipContent>
+          <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SortableDragHandle
+              variant="ghost"
+              size="icon"
+              disabled={readonly}
+              className={'shrink-0 size-7'}
+            >
+              <DragHandleDots2Icon className="size-4" aria-hidden="true" />
+            </SortableDragHandle>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t('Move')}</TooltipContent>
         </Tooltip>
       </div>
     </div>

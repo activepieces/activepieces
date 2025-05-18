@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/pylon/package.json",
         "main": "packages/pieces/community/pylon/src/index.ts",
         "assets": [
-          "packages/pieces/community/pylon/*.md"
+          "packages/pieces/community/pylon/*.md",
+          {
+            "input": "packages/pieces/community/pylon/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -1,14 +1,13 @@
 import {
     ExecutionType,
     FlowVersion,
-    GetFlowVersionForWorkerRequestType,
-    Nullable,
     PackageType,
     PiecePackage,
     PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerHookType,
+    TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
@@ -81,15 +80,11 @@ export const WebhookJobData = Type.Object({
     projectId: Type.String(),
     schemaVersion: Type.Number(),
     requestId: Type.String(),
-    synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
     payload: Type.Any(),
+    runEnvironment: Type.Enum(RunEnvironment),
     flowId: Type.String(),
     saveSampleData: Type.Boolean(),
-    flowVersionToRun: Type.Optional(Type.Union([
-        Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
-        Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
-    ])),
-    flowVersionIdToRun: Nullable(Type.String()),
+    flowVersionIdToRun: Type.String(),
     execute: Type.Boolean(),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
@@ -123,6 +118,7 @@ export const ExecuteActionJobData = Type.Object({
     stepName: Type.String(),
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
+    runEnvironment: Type.Enum(RunEnvironment),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 
@@ -148,6 +144,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     test: Type.Boolean(),
     webserverId: Type.String(),
     hookType: Type.Enum(TriggerHookType),
+    triggerPayload: Type.Optional(TriggerPayload),
 })
 export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
 

@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/actualbudget/package.json",
         "main": "packages/pieces/community/actualbudget/src/index.ts",
         "assets": [
-          "packages/pieces/community/actualbudget/*.md"
+          "packages/pieces/community/actualbudget/*.md",
+          {
+            "input": "packages/pieces/community/actualbudget/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -1,7 +1,6 @@
 import {
   Property,
   TriggerStrategy,
-  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../..';
@@ -11,7 +10,7 @@ import {
   MondayWebhookEventType,
 } from '../common/constants';
 import { WebhookInformation } from '../common/models';
-
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_specific_column_updated',

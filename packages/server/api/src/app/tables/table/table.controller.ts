@@ -33,6 +33,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             cursor: request.query.cursor,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             name: request.query.name,
+            externalIds: request.query.externalIds,
         })
     },
     )
