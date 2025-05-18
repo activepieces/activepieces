@@ -70,7 +70,7 @@ export const OneTimeJobData = Type.Object({
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
-    payload: Type.Optional(Type.Any()),
+    payload: Type.Any(),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })

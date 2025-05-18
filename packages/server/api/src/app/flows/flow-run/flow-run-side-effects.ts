@@ -62,10 +62,10 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async start({
         flowRun,
         executionType,
+        payload,
         synchronousHandlerId,
         httpRequestId,
         priority,
-        payload,
         progressUpdateType,
     }: StartParams): Promise<void> {
         log.info(
@@ -82,8 +82,8 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 environment: flowRun.environment,
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
-                httpRequestId,
                 payload,
+                httpRequestId,
                 executionType,
                 progressUpdateType,
             },
