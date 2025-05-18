@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, BillingEntityType, ErrorCode, getCurrentBillingPeriodEnd, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, getCurrentBillingPeriodEnd, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
@@ -8,7 +8,7 @@ import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformBillingService } from './platform-billing.service'
 import { stripeHelper } from './stripe-helper'
-import { usageService } from './usage/usage-service'
+import { platformUsageService } from './usage/usage-service'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -19,12 +19,12 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         },
     }, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const { tasks, aiTokens } = await usageService(request.log).getUsageForBillingPeriod(platform.id, BillingEntityType.PLATFORM)
+        const { tasks, aiCredits } = await platformUsageService.getPlatformUsageForBillingPeriod(platform.id)
         return {
             subscription: await platformBillingService(request.log).getOrCreateForPlatform(platform.id),
             nextBillingDate: getCurrentBillingPeriodEnd(),
             flowRunCount: tasks,
-            aiTokens,
+            aiTokens: aiCredits,
         }
     })
 

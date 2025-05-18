@@ -26,7 +26,7 @@ export enum CopilotProviderType {
     OPENAI = 'openai',
     AZURE_OPENAI = 'azureOpenai',
 }
-  
+
 export const OpenAiProvider = Type.Object({
     baseUrl: Type.String(),
     apiKey: Type.String(),
@@ -59,12 +59,15 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
-export const PlatformUsage = Type.Object({
+export const PlatformUsageMetrics = Type.Object({
     tasks: Type.Number(),
     aiCredits: Type.Number(),
+    tables: Type.Number(),
+    mcpServers: Type.Number(),
+    activeFlows: Type.Number(),
 })
 
-export type PlatformUsage = Static<typeof PlatformUsage>
+export type PlatformUsageMetrics = Static<typeof PlatformUsageMetrics>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,

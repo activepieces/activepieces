@@ -1,11 +1,12 @@
 import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { BillingMetric, EnginePrincipal, PrincipalType, TelemetryEventName } from '@activepieces/shared'
+import { EnginePrincipal, PrincipalType, TelemetryEventName, UsageMetric } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
+import { platformUsageService } from '../ee/platform-billing/usage/usage-service'
+import { projectUsageService } from '../ee/projects/project-usage/project-usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { aiProviderService } from './ai-provider.service'
@@ -24,7 +25,8 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
             platformId,
             provider,
         })
-        const exceededLimit = await usageService(request.log).aiTokensExceededLimit(projectId, 0)
+
+        const exceededLimit = await projectUsageService(request.log).checkMetricUsageLimit(projectId, 0, UsageMetric.AI_TOKENS, request.log)
         if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(
@@ -51,7 +53,8 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await usageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingMetric.AI_TOKENS })
+            await platformUsageService.increasePlatformUsage(platformId, 1, UsageMetric.AI_TOKENS)
+            await projectUsageService(request.log).increaseProjectUsage(projectId, 1, UsageMetric.AI_TOKENS)
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,

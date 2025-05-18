@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, BillingEntityType, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import Stripe from 'stripe'
@@ -11,7 +11,7 @@ import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { usageService } from './usage/usage-service'
+import { platformUsageService } from './usage/usage-service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
@@ -46,7 +46,7 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
-            const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, BillingEntityType.PLATFORM)
+            const { tasks, aiCredits: aiTokens } = await platformUsageService.getPlatformUsageForBillingPeriod(platformId)
 
             log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
 

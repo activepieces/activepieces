@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-export enum BillingMetric {
+export enum UsageMetric {
     TASKS = 'tasks',
     AI_TOKENS = 'aiTokens',
     TABLES = 'tables',
@@ -8,7 +8,7 @@ export enum BillingMetric {
     ACTIVE_FLOWS = 'activeFlows',
 }
 
-export enum BillingEntityType {
+export enum UsageEntityType {
     PROJECT = 'project',
     PLATFORM = 'platform',
 }

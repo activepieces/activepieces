@@ -1,13 +1,15 @@
-import { ApEdition, BillingMetric, FlowRun, getCurrentBillingPeriodEnd, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, FlowRun, getCurrentBillingPeriodEnd, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment, UsageMetric } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { usageService } from '../platform-billing/usage/usage-service'
+import { platformUsageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
+import { projectUsageService } from '../projects/project-usage/project-usage-service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
@@ -29,7 +31,11 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const { consumedProjectUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingMetric.TASKS })
+        const consumedProjectUsage = await projectUsageService(log).increaseProjectUsage(flowRun.projectId, flowRun.tasks, UsageMetric.TASKS)
+
+        const platformId = await projectService.getPlatformId(flowRun.projectId)
+        await platformUsageService.increasePlatformUsage(platformId, flowRun.tasks, UsageMetric.TASKS)
+
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
             consumedTasks: consumedProjectUsage,

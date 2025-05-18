@@ -27,8 +27,11 @@ export enum NotificationStatus {
 
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
+    aiCredit: Type.Number(),
+    tables: Type.Optional(Type.Number()),
+    mcpServers: Type.Optional(Type.Number()),
+    activeFlows: Type.Optional(Type.Number()),
     teamMembers: Type.Number(),
-    aiTokens: Type.Number(),
     nextLimitResetDate: Type.String(),
 })
 

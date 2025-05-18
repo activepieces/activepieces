@@ -1,8 +1,8 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment, TriggerPayload, UsageMetric } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
+import { projectUsageService } from '../ee/projects/project-usage/project-usage-service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
@@ -122,7 +122,7 @@ export const webhookService = {
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
+    const exceededLimit = await projectUsageService(log).checkMetricUsageLimit(flow.projectId, 0, UsageMetric.TASKS, log)
     if (!exceededLimit) {
         return
     }
