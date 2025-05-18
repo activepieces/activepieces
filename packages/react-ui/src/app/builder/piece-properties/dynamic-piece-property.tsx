@@ -155,9 +155,7 @@ const DynamicPropertiesImplementation = React.memo(
     return (
       <>
         {isPending && (
-          <div className="space-y-3">
             <SkeletonList numberOfItems={3} className="h-7"></SkeletonList>
-          </div>
         )}
         {!isPending && propertyMap && (
           <AutoPropertiesFormComponent
