@@ -168,7 +168,8 @@ const CreateOrEditConnectionDialogContent = React.memo(
         } else if (api.isError(err)) {
           const apError = err.response?.data as ApErrorParams;
           switch (apError.code) {
-            case ErrorCode.INVALID_CLOUD_CLAIM: {
+            case ErrorCode.INVALID_CLOUD_CLAIM:
+            case ErrorCode.INVALID_CLAIM: {
               setErrorMessage(
                 t(
                   'Could not claim the authorization code, make sure you have correct settings and try again.',
@@ -191,6 +192,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
               );
               break;
             }
+            
             default: {
               setErrorMessage('Unexpected error, please contact support');
               toast(INTERNAL_ERROR_TOAST);
@@ -203,7 +205,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
     return (
       <>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className='px-5'>
             {reconnectConnection
               ? t('Reconnect {displayName} Connection', {
                   displayName: reconnectConnection.displayName,
@@ -214,8 +216,8 @@ const CreateOrEditConnectionDialogContent = React.memo(
           </DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-full">
-          <ApMarkdown markdown={auth?.description}></ApMarkdown>
+        <ScrollArea className="h-full" >
+          <div className='px-5'>  <ApMarkdown markdown={auth?.description}></ApMarkdown>
           {auth?.description && <Separator className="my-4" />}
           <Form {...form}>
             <form
@@ -292,12 +294,15 @@ const CreateOrEditConnectionDialogContent = React.memo(
               </DialogFooter>
             </form>
           </Form>
+
+          </div>
+        
         </ScrollArea>
 
         {errorMessage && (
           <FormError
             formMessageId="create-connection-server-error-message"
-            className="text-left mt-4"
+            className="text-left mt-4  px-5 "
           >
             {errorMessage}
           </FormError>
@@ -327,7 +332,7 @@ const CreateOrEditConnectionDialog = React.memo(
       >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
+          className="max-h-[70vh] px-0  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
           <CreateOrEditConnectionDialogContent
             piece={piece}

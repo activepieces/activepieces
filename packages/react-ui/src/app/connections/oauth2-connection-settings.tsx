@@ -354,7 +354,7 @@ const OAuth2ConnectionSettingsForm = ({
           />
         )}
 
-        {authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
+        {currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
           <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
             <div className="rounded-full border border-solid p-1 flex items-center justify-center">
               <img src={piece.logoUrl} className="w-5 h-5"></img>
@@ -398,7 +398,8 @@ const OAuth2ConnectionSettingsForm = ({
           </div>
         )}
 
-        {isNewConnection &&
+      <div className='flex flex-col '>
+      {isNewConnection &&
           currentOAuth2Type !== AppConnectionType.OAUTH2 &&
           currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
             <div>
@@ -461,6 +462,8 @@ const OAuth2ConnectionSettingsForm = ({
             )}
           </>
         )}
+      </div>
+       
       </form>
     </Form>
   );
