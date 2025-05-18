@@ -6,7 +6,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 
 export const mcpHooks = {
-  useMcpsList: (request: Omit<ListMcpsRequestQuery, 'projectId'>) => {
+  useMcps: (request: Omit<ListMcpsRequestQuery, 'projectId'>) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     if (projectId === '') {
       console.error(
@@ -14,11 +14,12 @@ export const mcpHooks = {
       );
     }
     return useQuery<SeekPage<McpWithPieces>, Error>({
-      queryKey: ['mcp-list', projectId, request], 
+      queryKey: ['mcp-servers', request, projectId], 
       queryFn: () => mcpApi.list({
         ...request, 
         projectId, 
       }),
+      staleTime: 0,
     });
   },
   useMcp: (id: string) => {

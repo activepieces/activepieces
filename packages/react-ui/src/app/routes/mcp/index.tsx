@@ -36,6 +36,7 @@ import {
 import { McpToolsSection } from '../../mcp/mcp-tools-section';
 
 import { McpClientTabs, replaceIpWithLocalhost } from './mcp-client-tabs';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const McpPage = () => {
   const { theme } = useTheme();
@@ -280,7 +281,7 @@ const McpPage = () => {
   );
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64">{t('Loading MCP data...')}</div>;
+    return <LoadingScreen mode="container" />;
   }
 
   if (mcpError) {

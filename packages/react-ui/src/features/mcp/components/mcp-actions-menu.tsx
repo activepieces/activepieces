@@ -25,7 +25,7 @@ const McpActionsMenu = ({
   deleteMutation,
 }: {
   mcp: McpWithPieces;
-  refetch: (() => void) | null;
+  refetch: () => void;
   deleteMutation: UseMutationResult<void, Error, string[], unknown>;
 }) => {
   const userHasPermissionToUpdateMcp = useAuthorization().checkAccess(
@@ -45,7 +45,7 @@ const McpActionsMenu = ({
             mcpName={mcp.name}
             mcpId={mcp.id}
             onRename={() => {
-              refetch?.();
+              refetch();
             }}
           >
             <DropdownMenuItem
@@ -77,7 +77,7 @@ const McpActionsMenu = ({
               entityName={mcp.name}
               mutationFn={async () => {
                 await deleteMutation.mutateAsync([mcp.id]);
-                refetch?.();
+                refetch();
               }}
             >
               <div className="flex items-center gap-2 text-destructive">
