@@ -9,7 +9,7 @@ import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { platformUsageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
-import { projectUsageService } from '../projects/project-usage/project-usage-service'
+import { projectUsageService } from '../projects/project-usage-service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {

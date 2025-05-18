@@ -39,7 +39,7 @@ import { platformBillingService } from '../platform-billing/platform-billing.ser
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
-import { projectUsageService } from './project-usage/project-usage-service'
+import { projectUsageService } from './project-usage-service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 

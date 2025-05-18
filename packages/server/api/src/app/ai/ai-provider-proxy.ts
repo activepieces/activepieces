@@ -6,7 +6,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformUsageService } from '../ee/platform-billing/usage/usage-service'
-import { projectUsageService } from '../ee/projects/project-usage/project-usage-service'
+import { projectUsageService } from '../ee/projects/project-usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { aiProviderService } from './ai-provider.service'

@@ -1,8 +1,8 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, getCurrentBillingPeriodStart, PlatformUsageMetrics, UsageEntityType, UsageMetric  } from '@activepieces/shared'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { system } from '../../../helper/system/system'
-import { getUsage, redisKeyGenerator } from '../../../helper/usage'
+import { getRedisConnection } from '../../database/redis-connection'
+import { system } from '../../helper/system/system'
+import { getUsage, redisKeyGenerator } from '../../helper/usage'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 const edition = system.getEdition()
