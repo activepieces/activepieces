@@ -1,39 +1,49 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
+import { manychatAuth } from '../../index';
 
-export const removeTagFromUser = createAction({
+export const removeTagFromUserAction = createAction({
   name: 'removeTagFromUser',
   displayName: 'Remove Tag from User',
-  description: 'Remove a tag from a user in ManyChat.',
+  description: 'Remove a tag from a user.',
+  auth:manychatAuth,
   props: {
-    subscriber_id: Property.Number({
-      displayName: 'Subscriber ID',
-      description: 'The ID of the subscriber to remove the tag from',
-      required: true,
-    }),
-    tag_name: Property.ShortText({
-      displayName: 'Tag Name',
-      description: 'The name of the tag to remove',
-      required: true,
-    }),
+    subscriberId: subscriberId,
+    tagId: tagIdDropdown,
   },
   async run({ auth, propsValue }) {
-    const { subscriber_id, tag_name } = propsValue;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.manychat.com/fb/subscriber/removeTagByName',
-      headers: {
-        accept: 'application/json',
-        Authorization: `Bearer ${auth}`,
-        'Content-Type': 'application/json',
-      },
-      body: {
-        subscriber_id: subscriber_id,
-        tag_name: tag_name,
-      },
-    });
-
-    return response.body;
+    const { subscriberId, tagId } = propsValue;
+    
+        const removeTagResponse = await httpClient.sendRequest<{ status: string }>({
+          url: `${BASE_URL}/subscriber/removeTag`,
+          method: HttpMethod.POST,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: auth,
+          },
+          body: {
+            subscriber_id: subscriberId,
+            tag_id: tagId,
+          },
+        });
+    
+        if (removeTagResponse.body.status !== 'success') {
+          throw Error(`Unexpected Error occured : ${JSON.stringify(removeTagResponse.body)}`);
+        }
+    
+        const userResponse = await httpClient.sendRequest<{ data: Record<string, any> }>({
+          method: HttpMethod.GET,
+          url: `${BASE_URL}/subscriber/getInfo`,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: auth,
+          },
+          queryParams: {
+            subscriber_id: subscriberId.toString(),
+          },
+        });
+    
+        return userResponse.body.data;
   },
 });
