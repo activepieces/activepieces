@@ -7,7 +7,7 @@
 files:
   - type: i18next_json
     source: packages/react-ui/public/locales/en/translation.json
-    translation: packages/react-ui/public/locales/%two_letters_code%/translation.json
+    translation: /packages/react-ui/public/locales/%two_letters_code%/translation.json
   - type: json
     source: packages/pieces/**/**/src/i18n/translation.json
-    translation: packages/pieces/**/**/src/i18n/%two_letters_code%.json
+    translation: /packages/pieces/**/**/src/i18n/%two_letters_code%.json
