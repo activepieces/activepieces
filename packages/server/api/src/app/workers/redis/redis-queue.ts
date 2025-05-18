@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
@@ -108,6 +109,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
         {
             connection: createRedisClient(),
             defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
+            telemetry: new BullMQOtel(queueName, '1.0.0'),
         },
     )
     await bullMqGroups[queueName].waitUntilReady()

@@ -1,8 +1,10 @@
+import './instrumentation'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
+import { FastifyOtelInstrumentation } from '@fastify/otel'
 import fastify, { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -12,7 +14,6 @@ import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
 import { setupWorker } from './worker'
-
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     const app = await setupBaseApp()
@@ -47,7 +48,15 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 formats: {},
             },
         },
-    }) 
+    })
+
+    // Add OpenTelemetry instrumentation
+    const fastifyOtelInstrumentation = new FastifyOtelInstrumentation({
+        servername: 'activepieces-server',
+    })
+
+    await app.register(fastifyOtelInstrumentation.plugin())
+
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',

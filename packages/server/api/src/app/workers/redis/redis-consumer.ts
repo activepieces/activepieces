@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, JobStatus, memoryLock, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
@@ -79,6 +80,7 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
         maxStalledCount: 5,
         drainDelay: 5,
         stalledInterval: 30000,
+        telemetry: new BullMQOtel(queueName, '1.0.0'),
     })
 
     await consumer[queueName].waitUntilReady()

@@ -62,3 +62,6 @@ scratch.md
 
 # environment variables
 .env
+
+# opentelemetry
+collector-config.yml
