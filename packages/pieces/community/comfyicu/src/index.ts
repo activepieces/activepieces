@@ -1,5 +1,9 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { submitWorkflowRun } from "./lib/actions/submit-workflow-run";
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
+import { submitWorkflowRun } from './lib/actions/submit-workflow-run';
 import { getRunStatus } from './lib/actions/get-run-status';
 import { listWorkflows } from "./lib/actions/list-workflows";
 import { getRunOutputs } from "./lib/actions/get-run-outputs";
@@ -12,15 +16,10 @@ import { runFailed } from "./lib/triggers/run-failed";
 import { newWorkflowCreated } from "./lib/triggers/new-workflow-created";
 import { modelUpdated } from "./lib/triggers/model-updated";
 
-export const comfyicuAuth = PieceAuth.CustomAuth({
+export const comfyicuAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: `To get your comfyicu API key please [click here to create your account](https://comfy.icu/account).`,
   required: true,
-  props: {
-    apiKey: Property.ShortText({
-      displayName: "API Key",
-      description: "Your ComfyICU API key",
-      required: true,
-    }),
-  },
 });
 
 export const comfyicu = createPiece({

@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const COMFYICU_API_URL = 'https://api.comfyicu.com';
+const COMFYICU_API_URL = 'https://comfy.icu/api/v1';
 
 export const listWorkflows = createAction({
   name: "list_workflows",
