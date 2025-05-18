@@ -1,10 +1,15 @@
 'use client';
 
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
+
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { flagsHooks } from '../../../hooks/flags-hooks';
+import { projectHooks } from '../../../hooks/project-hooks';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -22,11 +27,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import { ScrollArea } from '../../../components/ui/scroll-area';
-import { flagsHooks } from '../../../hooks/flags-hooks';
-import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
   const location = useLocation();
@@ -72,7 +72,7 @@ function ProjectSwitcher() {
           className="gap-2 w-full justify-start px-2 enabled:hover:bg-gray-200"
         >
           <div className="flex grow flex-col justify-start items-start">
-            <span className="flex-grow truncate overflow-hidden text-sm">
+            <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
               {currentProject?.displayName}
             </span>
           </div>

@@ -1,5 +1,8 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
+
+import SettingsDropdownMenu from './settings-dropdown-menu';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -13,9 +16,6 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import SettingsDropdownMenu from './settings-dropdown-menu';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
@@ -37,7 +37,7 @@ const ApDashboardSidebarHeader = ({
           alt={t('home')}
           width={28}
           height={28}
-          className="max-h-[28px] max-w-[28px] object-contain"
+          className="max-h-[22px] max-w-[22px] object-contain"
         />
       );
     }
