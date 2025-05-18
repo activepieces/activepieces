@@ -2,14 +2,14 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { ILike } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpPieceService } from './mcp-piece-service'
-import { buildPaginator } from '../helper/pagination/build-paginator'
-import { system } from '../helper/system/system'
-import { ILike } from 'typeorm'
 
 
 
@@ -123,13 +123,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         const deleteResult = await repo().delete({ 
             id: mcpId,
             projectId,
-        });
+        })
 
         if (deleteResult.affected === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityId: mcpId, entityType: 'MCP' },
-            });
+            })
         }
     },
 

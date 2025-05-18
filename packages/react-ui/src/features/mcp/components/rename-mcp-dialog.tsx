@@ -60,10 +60,13 @@ const RenameMcpDialog = ({
       onRename();
       toast({
         title: t('MCP Server Renamed'),
-        description: t('MCP server "{{oldName}}" was successfully renamed to "{{newName}}".', {
-          oldName: mcpName,
-          newName: form.getValues('name'),
-        }),
+        description: t(
+          'MCP server "{{oldName}}" was successfully renamed to "{{newName}}".',
+          {
+            oldName: mcpName,
+            newName: form.getValues('name'),
+          },
+        ),
       });
     },
     onError: (error: Error) => {
@@ -81,7 +84,9 @@ const RenameMcpDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => renameMcpServer(data.name))}>
+          <form
+            onSubmit={form.handleSubmit((data) => renameMcpServer(data.name))}
+          >
             <DialogHeader>
               <DialogTitle>
                 {t('Rename')} {mcpName}
@@ -94,7 +99,10 @@ const RenameMcpDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder={t('New MCP Server Name')} />
+                      <Input
+                        {...field}
+                        placeholder={t('New MCP Server Name')}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -119,4 +127,4 @@ const RenameMcpDialog = ({
 };
 
 RenameMcpDialog.displayName = 'RenameMcpServerDialog';
-export default RenameMcpDialog; 
+export default RenameMcpDialog;

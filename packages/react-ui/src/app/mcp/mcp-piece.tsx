@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   isNil,
@@ -26,7 +27,6 @@ import { mcpApi } from '../../features/mcp/lib/mcp-api';
 import { PieceIcon } from '../../features/pieces/components/piece-icon';
 
 import { McpPieceDialog } from './mcp-piece-dialog';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 type McpPieceProps = {
   piece: McpPieceWithConnection;
@@ -173,10 +173,7 @@ export const McpPiece = ({
           {pieceModel?.auth && (
             <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
               <Tooltip>
-                <McpPieceDialog 
-                  mcpPieceToUpdate={piece} 
-                  mcpId={mcpId} 
-                >
+                <McpPieceDialog mcpPieceToUpdate={piece} mcpId={mcpId}>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"

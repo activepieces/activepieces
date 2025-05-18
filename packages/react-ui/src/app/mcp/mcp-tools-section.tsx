@@ -96,7 +96,7 @@ export const McpToolsSection = ({
       return Array(3)
         .fill(0)
         .map((_, index) => (
-          <McpPiece 
+          <McpPiece
             key={`skeleton-${index}`}
             piece={{} as McpPieceWithConnection}
             pieceInfo={{ displayName: '', logoUrl: '' }}

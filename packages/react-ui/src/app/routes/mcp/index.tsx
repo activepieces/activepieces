@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
@@ -36,7 +37,6 @@ import {
 import { McpToolsSection } from '../../mcp/mcp-tools-section';
 
 import { McpClientTabs, replaceIpWithLocalhost } from './mcp-client-tabs';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const McpPage = () => {
   const { theme } = useTheme();
@@ -54,7 +54,12 @@ const McpPage = () => {
     type: 'trigger',
   });
 
-  const { data: mcp, isLoading, refetch: refetchMcp, error: mcpError } = mcpHooks.useMcp(mcpId!);
+  const {
+    data: mcp,
+    isLoading,
+    refetch: refetchMcp,
+    error: mcpError,
+  } = mcpHooks.useMcp(mcpId!);
 
   const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
     queryKey: ['mcp-flows'],
@@ -285,11 +290,19 @@ const McpPage = () => {
   }
 
   if (mcpError) {
-    return <div className="text-red-500 flex items-center justify-center h-64">{t('Error loading MCP data: ') + mcpError.message}</div>;
+    return (
+      <div className="text-red-500 flex items-center justify-center h-64">
+        {t('Error loading MCP data: ') + mcpError.message}
+      </div>
+    );
   }
 
   if (!mcp) {
-    return <div className="flex items-center justify-center h-64">{t('MCP server not found.')}</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        {t('MCP server not found.')}
+      </div>
+    );
   }
 
   return (
@@ -309,7 +322,10 @@ const McpPage = () => {
         {!isFlowsLoading && (
           <McpClientTabs
             mcpServerUrl={serverUrl}
-            hasTools={ (mcp.pieces?.length || 0) > 0 || (flowsData?.data?.length || 0) > 0}
+            hasTools={
+              (mcp.pieces?.length || 0) > 0 ||
+              (flowsData?.data?.length || 0) > 0
+            }
             onRotateToken={handleRotateToken}
             isRotating={rotateMutation.isPending}
             hasValidMcp={!!mcp.id}
@@ -329,7 +345,9 @@ const McpPage = () => {
             emptyMessage={null}
             isLoading={isLoading}
             type="pieces"
-            onAddClick={() => { /* TODO: Implement Add Piece for specific MCP */ }}
+            onAddClick={() => {
+              /* TODO: Implement Add Piece for specific MCP */
+            }}
             onToolDelete={removePiece}
             pieceInfoMap={pieceInfoMap}
             canAddTool={doesUserHavePermissionToWriteMcp}

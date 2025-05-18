@@ -22,9 +22,7 @@ interface UpdatePieceParams {
 }
 
 export const mcpApi = {
-  async list(
-    request: ListMcpsRequestQuery
-  ): Promise<SeekPage<McpWithPieces>> {
+  async list(request: ListMcpsRequestQuery): Promise<SeekPage<McpWithPieces>> {
     return await api.get<SeekPage<McpWithPieces>>('/v1/mcp-servers', request);
   },
   async get(id: string): Promise<McpWithPieces> {

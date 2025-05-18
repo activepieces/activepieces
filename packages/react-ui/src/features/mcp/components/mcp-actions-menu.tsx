@@ -1,10 +1,6 @@
 import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  EllipsisVertical,
-  PencilIcon,
-  TrashIcon,
-} from 'lucide-react';
+import { EllipsisVertical, PencilIcon, TrashIcon } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
@@ -93,4 +89,4 @@ const McpActionsMenu = ({
 };
 
 McpActionsMenu.displayName = 'McpActionsMenu';
-export { McpActionsMenu }; 
+export { McpActionsMenu };

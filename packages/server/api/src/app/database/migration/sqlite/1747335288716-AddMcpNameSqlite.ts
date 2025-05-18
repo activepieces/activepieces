@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
     name = 'AddMcpNameSqlite1747335288716'
@@ -6,7 +6,7 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "mcp_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_mcp" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -16,7 +16,7 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
                 "projectId" varchar(21) NOT NULL,
                 "token" varchar(21) NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_mcp"("id", "created", "updated", "projectId", "token")
             SELECT "id",
@@ -25,27 +25,27 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
                 "projectId",
                 "token"
             FROM "mcp"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_mcp"
                 RENAME TO "mcp"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "mcp_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "mcp"
                 RENAME TO "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -54,7 +54,7 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
                 "projectId" varchar(21) NOT NULL,
                 "token" varchar(21) NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "mcp"("id", "created", "updated", "projectId", "token")
             SELECT "id",
@@ -63,13 +63,13 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
                 "projectId",
                 "token"
             FROM "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
-        `);
+        `)
     }
 
 }

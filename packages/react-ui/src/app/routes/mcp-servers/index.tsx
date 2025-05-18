@@ -14,55 +14,53 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { mcpApi } from '@/features/mcp/lib/mcp-api';
-import { ApFlagId, McpWithPieces, Permission } from '@activepieces/shared';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpActionsMenu } from '@/features/mcp/components/mcp-actions-menu';
-import { projectHooks } from '@/hooks/project-hooks';
-import { formatUtils } from '@/lib/utils';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { TableTitle } from '@/components/ui/table-title';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { api } from '@/lib/api';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { TableTitle } from '@/components/ui/table-title';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { McpActionsMenu } from '@/features/mcp/components/mcp-actions-menu';
+import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
+import { api } from '@/lib/api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { formatUtils } from '@/lib/utils';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { ApFlagId, McpWithPieces, Permission } from '@activepieces/shared';
 
 const McpServersPage = () => {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<McpWithPieces[]>([]);
-  const { data: maxMcps } = flagsHooks.useFlag(
-    ApFlagId.MAX_MCPS_PER_PROJECT,
-  );
+  const { data: maxMcps } = flagsHooks.useFlag(ApFlagId.MAX_MCPS_PER_PROJECT);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const userHasMcpWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_MCP,
   );
-  const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } = piecesHooks.usePieces({});
+  const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } =
+    piecesHooks.usePieces({});
 
   const pieceMetadataMap = allPiecesMetadata
-    ? new Map(allPiecesMetadata.map(p => [p.name, p]))
+    ? new Map(allPiecesMetadata.map((p) => [p.name, p]))
     : new Map<string, PieceMetadataModelSummary>();
 
-
-  const {
-    data,
-    isLoading,
-    refetch,
-  } = mcpHooks.useMcps({
+  const { data, isLoading, refetch } = mcpHooks.useMcps({
     cursor: searchParams.get('cursor') ?? undefined,
     limit: searchParams.get('limit')
-    ? parseInt(searchParams.get('limit')!)
-    : undefined,
+      ? parseInt(searchParams.get('limit')!)
+      : undefined,
     name: searchParams.get('name') ?? undefined,
   });
 
-  const {mutate: createMcp, isPending: isCreatingMcp} = useMutation({
+  const { mutate: createMcp, isPending: isCreatingMcp } = useMutation({
     mutationFn: async (data: { name: string }) => {
       return mcpApi.create(data.name);
     },
@@ -89,157 +87,160 @@ const McpServersPage = () => {
   });
 
   const columns: ColumnDef<RowDataWithActions<McpWithPieces>, unknown>[] = [
-      { 
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              table.getIsSomePageRowsSelected()
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+            if (isChecked) {
+              const allRows = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+              setSelectedRows(allRows);
+            } else {
+              setSelectedRows([]);
             }
+          }}
+        />
+      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) => selectedRow.id === row.original.id,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
+              let newSelectedRows = [...selectedRows];
               if (isChecked) {
-                const allRows = table
-                  .getRowModel()
-                  .rows.map((row) => row.original);
-                setSelectedRows(allRows);
+                newSelectedRows.push(row.original);
               } else {
-                setSelectedRows([]);
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
               }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
             }}
           />
-        ),
-        cell: ({ row }) => {
-          const isChecked = selectedRows.some(
-            (selectedRow) => selectedRow.id === row.original.id,
-          );
-          return (
-            <Checkbox
-              checked={isChecked}
-              onCheckedChange={(value) => {
-                const isChecked = !!value;
-                let newSelectedRows = [...selectedRows];
-                if (isChecked) {
-                  newSelectedRows.push(row.original);
-                } else {
-                  newSelectedRows = newSelectedRows.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  );
-                }
-                setSelectedRows(newSelectedRows);
-                row.toggleSelected(!!value);
-              }}
-            />
-          );
-        },
+        );
       },
-      {
-        accessorKey: 'name',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Name')} />
-        ),
-        cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
-      },
-      {
-        id: 'usedTools',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Tools')} />
-        ),
-        cell: ({ row }) => {
-          const mcpPieces = row.original.pieces || [];
-          if (isLoadingPiecesMetadata) {
-            return <div className="text-left">{t('Loading...')}</div>;
-          }
-          const MAX_ICONS_TO_SHOW = 3;
-          const visiblePieces = mcpPieces.slice(0, MAX_ICONS_TO_SHOW);
-          const extraPiecesCount = mcpPieces.length - visiblePieces.length;
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Name')} />
+      ),
+      cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
+    },
+    {
+      id: 'usedTools',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Tools')} />
+      ),
+      cell: ({ row }) => {
+        const mcpPieces = row.original.pieces || [];
+        if (isLoadingPiecesMetadata) {
+          return <div className="text-left">{t('Loading...')}</div>;
+        }
+        const MAX_ICONS_TO_SHOW = 3;
+        const visiblePieces = mcpPieces.slice(0, MAX_ICONS_TO_SHOW);
+        const extraPiecesCount = mcpPieces.length - visiblePieces.length;
 
-          const allDisplayNames = mcpPieces
-            .map(p => pieceMetadataMap.get(p.pieceName)?.displayName || p.pieceName);
-          
-          let pieceDisplayNamesTooltip = '';
-          if (allDisplayNames.length === 1) {
-            pieceDisplayNamesTooltip = allDisplayNames[0];
-          }
-          else if (allDisplayNames.length > 1) {
-            pieceDisplayNamesTooltip = allDisplayNames.slice(0, -1).join(', ') + 
-                                     ` ${t('and')} ${
-                                       allDisplayNames[allDisplayNames.length - 1]
-                                     }`;
-          }
+        const allDisplayNames = mcpPieces.map(
+          (p) => pieceMetadataMap.get(p.pieceName)?.displayName || p.pieceName,
+        );
 
-          return (
-            <div className="text-left flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2">
-                    {visiblePieces.map((mcpPiece) => {
-                      const metadata = pieceMetadataMap.get(mcpPiece.pieceName);
-                      return (
-                        <PieceIcon
-                          key={mcpPiece.id}
-                          logoUrl={metadata?.logoUrl}
-                          displayName={metadata?.displayName || mcpPiece.pieceName}
-                          size="md"
-                          circle={true}
-                          border={true}
-                          showTooltip={false}
-                        />
-                      );
-                    })}
-                    {extraPiecesCount > 0 && (
-                      <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none size-[36px] text-sm">
-                        +{extraPiecesCount}
-                      </div>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                {mcpPieces.length > 0 && (
-                    <TooltipContent side="bottom">{pieceDisplayNamesTooltip}</TooltipContent>
-                )}
-              </Tooltip>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updated',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Last Modified')} />
-        ),
-        cell: ({ row }) => (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
+        let pieceDisplayNamesTooltip = '';
+        if (allDisplayNames.length === 1) {
+          pieceDisplayNamesTooltip = allDisplayNames[0];
+        } else if (allDisplayNames.length > 1) {
+          pieceDisplayNamesTooltip =
+            allDisplayNames.slice(0, -1).join(', ') +
+            ` ${t('and')} ${allDisplayNames[allDisplayNames.length - 1]}`;
+        }
+
+        return (
+          <div className="text-left flex items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  {visiblePieces.map((mcpPiece) => {
+                    const metadata = pieceMetadataMap.get(mcpPiece.pieceName);
+                    return (
+                      <PieceIcon
+                        key={mcpPiece.id}
+                        logoUrl={metadata?.logoUrl}
+                        displayName={
+                          metadata?.displayName || mcpPiece.pieceName
+                        }
+                        size="md"
+                        circle={true}
+                        border={true}
+                        showTooltip={false}
+                      />
+                    );
+                  })}
+                  {extraPiecesCount > 0 && (
+                    <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none size-[36px] text-sm">
+                      +{extraPiecesCount}
+                    </div>
+                  )}
+                </div>
+              </TooltipTrigger>
+              {mcpPieces.length > 0 && (
+                <TooltipContent side="bottom">
+                  {pieceDisplayNamesTooltip}
+                </TooltipContent>
+              )}
+            </Tooltip>
           </div>
-        ),
+        );
       },
-      {
-        id: 'actions',
-        cell: ({ row }) => {
-          return (
-            <div
-              onAuxClick={(e) => {
-                e.stopPropagation();
-              }}
-              onContextMenu={(e) => {
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-              className="flex justify-center"
-            >
-              <McpActionsMenu
-                mcp={row.original}
-                refetch={refetch}
-                deleteMutation={bulkDeleteMutation}
-              />
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'updated',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Last Modified')} />
+      ),
+      cell: ({ row }) => (
+        <div className="text-left">
+          {formatUtils.formatDate(new Date(row.original.updated))}
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div
+            onAuxClick={(e) => {
+              e.stopPropagation();
+            }}
+            onContextMenu={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            className="flex justify-center"
+          >
+            <McpActionsMenu
+              mcp={row.original}
+              refetch={refetch}
+              deleteMutation={bulkDeleteMutation}
+            />
+          </div>
+        );
+      },
     },
   ];
 
@@ -277,19 +278,19 @@ const McpServersPage = () => {
               }
             }}
           >
-              {selectedRows.length > 0 && (
-                <Button className="w-full mr-2" size="sm" variant="destructive">
-                  <Trash2 className="mr-2 w-4" />
-                  {`${t('Delete')} (${selectedRows.length})`}
-                </Button>
-              )}
+            {selectedRows.length > 0 && (
+              <Button className="w-full mr-2" size="sm" variant="destructive">
+                <Trash2 className="mr-2 w-4" />
+                {`${t('Delete')} (${selectedRows.length})`}
+              </Button>
+            )}
           </ConfirmationDeleteDialog>
         ),
       },
     ],
     [selectedRows, bulkDeleteMutation],
   );
-  
+
   if (isCreatingMcp) {
     return <LoadingScreen mode="container" />;
   }
@@ -297,11 +298,9 @@ const McpServersPage = () => {
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between">
-      <TableTitle
+        <TableTitle
           beta={true}
-          description={t(
-            'Create and manage your MCP servers',
-          )}
+          description={t('Create and manage your MCP servers')}
         >
           {t('MCP Servers')}
         </TableTitle>
@@ -330,9 +329,7 @@ const McpServersPage = () => {
         ]}
         emptyStateIcon={<Table2 className="size-14" />}
         emptyStateTextTitle={t('No MCP servers have been created yet')}
-        emptyStateTextDescription={t(
-          'Create a MCP server to get started',
-        )}
+        emptyStateTextDescription={t('Create a MCP server to get started')}
         columns={columns}
         page={data}
         isLoading={isLoading}

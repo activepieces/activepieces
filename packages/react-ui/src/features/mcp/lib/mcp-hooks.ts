@@ -1,9 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { mcpApi } from './mcp-api';
-import { McpWithPieces, ListMcpsRequestQuery, SeekPage } from '@activepieces/shared';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  McpWithPieces,
+  ListMcpsRequestQuery,
+  SeekPage,
+} from '@activepieces/shared';
 
+import { mcpApi } from './mcp-api';
 
 export const mcpHooks = {
   useMcps: (request: Omit<ListMcpsRequestQuery, 'projectId'>) => {
@@ -14,11 +18,12 @@ export const mcpHooks = {
       );
     }
     return useQuery<SeekPage<McpWithPieces>, Error>({
-      queryKey: ['mcp-servers', request, projectId], 
-      queryFn: () => mcpApi.list({
-        ...request, 
-        projectId, 
-      }),
+      queryKey: ['mcp-servers', request, projectId],
+      queryFn: () =>
+        mcpApi.list({
+          ...request,
+          projectId,
+        }),
       staleTime: 0,
     });
   },

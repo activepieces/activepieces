@@ -19,6 +19,7 @@ import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   isNil,
@@ -27,7 +28,6 @@ import {
 } from '@activepieces/shared';
 
 import { mcpApi } from '../../features/mcp/lib/mcp-api';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
