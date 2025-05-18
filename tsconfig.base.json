@@ -455,6 +455,9 @@
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
       ],
+      "@activepieces/piece-manychat": [
+        "packages/pieces/community/manychat/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
