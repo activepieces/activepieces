@@ -1,17 +1,18 @@
 import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-const getProjectIdFromRequest = (req: any): ProjectId | null => {
+const getProjectIdFromRequest = (req: FastifyRequest): ProjectId | null => {
     if (req.principal.type === PrincipalType.SERVICE) {
-        if (!req.query.projectId) {
+        if (!(req.query as { projectId?: ProjectId }).projectId) {
             return null
         }
-        return req.query.projectId
+        return (req.query as { projectId: ProjectId }).projectId
     }
     return req.principal.projectId
 }
