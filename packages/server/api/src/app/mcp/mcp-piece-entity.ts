@@ -1,9 +1,10 @@
-import { AppConnectionWithoutSensitiveData, McpPiece, McpPieceStatus } from '@activepieces/shared'
+import { AppConnectionWithoutSensitiveData, Mcp, McpPiece, McpPieceStatus } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type McpPieceSchema = McpPiece & {
     connection: AppConnectionWithoutSensitiveData | null
+    mcp: Mcp
 }
 
 export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
@@ -55,6 +56,17 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             },
             onDelete: 'SET NULL',
             nullable: true,
+        },
+        mcp: {
+            type: 'many-to-one',
+            target: 'mcp',
+            joinColumn: {
+                name: 'mcpId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_mcp_piece_mcp_id',
+            },
+            onDelete: 'CASCADE',
+            nullable: false,
         },
     },
 })
