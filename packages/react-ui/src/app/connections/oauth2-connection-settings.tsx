@@ -12,10 +12,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { oauth2Utils } from '@/lib/oauth2-utils';
 import {
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -34,11 +36,12 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { oauth2AppsHooks, PieceToClientIdMap } from '../../features/connections/lib/oauth2-apps-hooks';
+import {
+  oauth2AppsHooks,
+  PieceToClientIdMap,
+} from '../../features/connections/lib/oauth2-apps-hooks';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 import { formUtils } from '../builder/piece-properties/form-utils';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 
 type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
@@ -63,34 +66,47 @@ const replaceVariables = (
     authUrl: newAuthUrl,
     scope: newScope,
   };
-}
-const getOAuth2Type = (pieceToClientIdMap: PieceToClientIdMap, reconnectConnection: AppConnectionWithoutSensitiveData | null, pieceName: string) => {
-  if(reconnectConnection?.type === AppConnectionType.CLOUD_OAUTH2 || reconnectConnection?.type === AppConnectionType.OAUTH2 || reconnectConnection?.type === AppConnectionType.PLATFORM_OAUTH2){
-    return reconnectConnection?.type
+};
+const getOAuth2Type = (
+  pieceToClientIdMap: PieceToClientIdMap,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
+  pieceName: string,
+) => {
+  if (
+    reconnectConnection?.type === AppConnectionType.CLOUD_OAUTH2 ||
+    reconnectConnection?.type === AppConnectionType.OAUTH2 ||
+    reconnectConnection?.type === AppConnectionType.PLATFORM_OAUTH2
+  ) {
+    return reconnectConnection?.type;
   }
-  return pieceToClientIdMap[`${pieceName}-${AppConnectionType.CLOUD_OAUTH2}`]?.type ?? AppConnectionType.OAUTH2
-}
-
+  return (
+    pieceToClientIdMap[`${pieceName}-${AppConnectionType.CLOUD_OAUTH2}`]
+      ?.type ?? AppConnectionType.OAUTH2
+  );
+};
 
 const OAuth2ConnectionSettings = (props: OAuth2ConnectionSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: pieceToClientIdMap,isPending: loadingPieceToClientIdMap } = oauth2AppsHooks.usePieceToClientIdMap(
-    platform.cloudAuthEnabled,
-    edition!,
-  );
+  const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
+    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
 
-  if(loadingPieceToClientIdMap || isNil(pieceToClientIdMap)){
-    return <SkeletonList numberOfItems={2} className="h-7"></SkeletonList>
+  if (loadingPieceToClientIdMap || isNil(pieceToClientIdMap)) {
+    return <SkeletonList numberOfItems={2} className="h-7"></SkeletonList>;
   }
 
-  return <OAuth2ConnectionSettingsImplementation pieceToClientIdMap={pieceToClientIdMap} {...props} />
-}
+  return (
+    <OAuth2ConnectionSettingsImplementation
+      pieceToClientIdMap={pieceToClientIdMap}
+      {...props}
+    />
+  );
+};
 
-
-
-type OAuth2Type = AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
-
+type OAuth2Type =
+  | AppConnectionType.CLOUD_OAUTH2
+  | AppConnectionType.OAUTH2
+  | AppConnectionType.PLATFORM_OAUTH2;
 
 const OAuth2ConnectionSettingsImplementation = ({
   authProperty,
@@ -98,32 +114,48 @@ const OAuth2ConnectionSettingsImplementation = ({
   reconnectConnection,
   pieceToClientIdMap,
 }: OAuth2ConnectionSettingsProps & {
-  pieceToClientIdMap: PieceToClientIdMap
+  pieceToClientIdMap: PieceToClientIdMap;
 }) => {
-  const [currentOAuth2Type, setOAuth2Type] = useState<
-    OAuth2Type
-  >(
-    getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name)
+  const [currentOAuth2Type, setOAuth2Type] = useState<OAuth2Type>(
+    getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name),
   );
-  const [grantType, setGrantType] = useState<OAuth2GrantType>(authProperty.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE);
-  return <OAuth2ConnectionSettingsForm
-    key={`${currentOAuth2Type}-${grantType}`}
-    predefinedApp={currentOAuth2Type!== AppConnectionType.OAUTH2 ? pieceToClientIdMap?.[`${piece.name}-${currentOAuth2Type}`] ?? null : null}
-    authProperty={authProperty}
-    currentOAuth2Type={currentOAuth2Type}
-    currentGrantType={grantType}
-    isNewConnection={isNil(reconnectConnection)}
-    piece={piece}
-    setOAuth2Type={setOAuth2Type}
-    setGrantType={setGrantType}
-    resetOAuth2Type={() => setOAuth2Type(getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name))}
-  />
+  const [grantType, setGrantType] = useState<OAuth2GrantType>(
+    authProperty.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
+      ? OAuth2GrantType.AUTHORIZATION_CODE
+      : authProperty.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE,
+  );
+  return (
+    <OAuth2ConnectionSettingsForm
+      key={`${currentOAuth2Type}-${grantType}`}
+      predefinedApp={
+        currentOAuth2Type !== AppConnectionType.OAUTH2
+          ? pieceToClientIdMap?.[`${piece.name}-${currentOAuth2Type}`] ?? null
+          : null
+      }
+      authProperty={authProperty}
+      currentOAuth2Type={currentOAuth2Type}
+      currentGrantType={grantType}
+      isNewConnection={isNil(reconnectConnection)}
+      piece={piece}
+      setOAuth2Type={setOAuth2Type}
+      setGrantType={setGrantType}
+      resetOAuth2Type={() =>
+        setOAuth2Type(
+          getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name),
+        )
+      }
+    />
+  );
 };
 
-const doesPieceAllowSwitchingGrantType = (piece: PieceMetadataModelSummary | PieceMetadataModel) => {
-    return piece.auth?.type === PropertyType.OAUTH2 && piece.auth.allowsSwitchingGrantType;
- }
-
+const doesPieceAllowSwitchingGrantType = (
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+) => {
+  return (
+    piece.auth?.type === PropertyType.OAUTH2 &&
+    piece.auth.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
+  );
+};
 
 type OAuth2ConnectionSettingsFormParams = {
   predefinedApp: {
@@ -140,20 +172,17 @@ type OAuth2ConnectionSettingsFormParams = {
   resetOAuth2Type: () => void;
 };
 
-const OAuth2ConnectionSettingsForm = (
-  {
-    predefinedApp,
-    authProperty,
-    currentOAuth2Type,
-    currentGrantType,
-    isNewConnection,
-    piece,
-    setOAuth2Type,
-    setGrantType,
-    resetOAuth2Type,
-  }: 
-  OAuth2ConnectionSettingsFormParams
-   ) =>{ 
+const OAuth2ConnectionSettingsForm = ({
+  predefinedApp,
+  authProperty,
+  currentOAuth2Type,
+  currentGrantType,
+  isNewConnection,
+  piece,
+  setOAuth2Type,
+  setGrantType,
+  resetOAuth2Type,
+}: OAuth2ConnectionSettingsFormParams) => {
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -162,7 +191,7 @@ const OAuth2ConnectionSettingsForm = (
     currentOAuth2Type === AppConnectionType.CLOUD_OAUTH2
       ? 'https://secrets.activepieces.com/redirect'
       : thirdPartyUrl;
- 
+
   const form = useFormContext<{
     request:
       | UpsertCloudOAuth2Request
@@ -172,10 +201,13 @@ const OAuth2ConnectionSettingsForm = (
 
   const hasCode = form.getValues().request.value.code;
   useEffect(() => {
-    console.log('redirectUrl', redirectUrl)
-      form.setValue('request.value.redirect_url', redirectUrl ?? 'no_redirect_url_found', {
+    form.setValue(
+      'request.value.redirect_url',
+      redirectUrl ?? 'no_redirect_url_found',
+      {
         shouldValidate: true,
-      });
+      },
+    );
     form.setValue(
       'request.value.props',
       formUtils.getDefaultValueForStep(authProperty.props ?? {}, {}),
@@ -198,9 +230,11 @@ const OAuth2ConnectionSettingsForm = (
     });
     form.setValue(
       'request.value.code',
-      currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS ? 'FAKE_CODE' : '',
-    { shouldValidate: true },
-   );
+      currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS
+        ? 'FAKE_CODE'
+        : '',
+      { shouldValidate: true },
+    );
     form.setValue('request.value.code_challenge', '', { shouldValidate: true });
     form.setValue('request.value.type', currentOAuth2Type, {
       shouldValidate: true,
@@ -208,11 +242,11 @@ const OAuth2ConnectionSettingsForm = (
     form.setValue('request.type', currentOAuth2Type, { shouldValidate: true });
   }, []);
 
-  form.watch((values)=>{
+  form.watch((values) => {
     const baseCriteria =
-    !isNil(redirectUrl) && !isNil(values.request?.value?.client_id);
-    const clientSecret = (values.request as UpsertOAuth2Request)
-      ?.value?.client_secret;
+      !isNil(redirectUrl) && !isNil(values.request?.value?.client_id);
+    const clientSecret = (values.request as UpsertOAuth2Request)?.value
+      ?.client_secret;
     const hasClientSecret = !isNil(clientSecret);
     const propsValues = values.request?.value?.props ?? {};
     const arePropsValid = authProperty.props
@@ -231,7 +265,7 @@ const OAuth2ConnectionSettingsForm = (
     );
   });
   const [refresh, setRefresh] = useState(0);
- const openPopup = async (
+  const openPopup = async (
     redirectUrl: string,
     clientId: string,
     props: Record<string, unknown> | undefined,
@@ -254,7 +288,7 @@ const OAuth2ConnectionSettingsForm = (
       shouldValidate: true,
     });
     setRefresh(refresh + 1);
-  }
+  };
 
   return (
     <Form {...form}>
@@ -393,46 +427,44 @@ const OAuth2ConnectionSettingsForm = (
               </Button>
             </div>
           )}
-          {
-            doesPieceAllowSwitchingGrantType(piece) && <>
-            {
-              currentGrantType == OAuth2GrantType.AUTHORIZATION_CODE && <>
-              <div>
-              <Button
-                size="sm"
-                variant={'link'}
-                className="text-xs"
-                onClick={() => {
-                  setGrantType(OAuth2GrantType.CLIENT_CREDENTIALS);
-                  setOAuth2Type(AppConnectionType.OAUTH2)
-                }}
-              >
-                {t('I would like to use Client Credentials')}
-              </Button>
-            </div>
-            </>
-            }
-            {
-              currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS && <>
+        {doesPieceAllowSwitchingGrantType(piece) && isNewConnection && (
+          <>
+            {currentGrantType == OAuth2GrantType.AUTHORIZATION_CODE && (
               <div>
                 <Button
                   size="sm"
                   variant={'link'}
                   className="text-xs"
-                  onClick={() => {setGrantType(OAuth2GrantType.AUTHORIZATION_CODE);
-                    resetOAuth2Type()}}
+                  onClick={() => {
+                    setGrantType(OAuth2GrantType.CLIENT_CREDENTIALS);
+                    setOAuth2Type(AppConnectionType.OAUTH2);
+                  }}
+                >
+                  {t('I would like to use Client Credentials')}
+                </Button>
+              </div>
+            )}
+            {currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS && (
+              <div>
+                <Button
+                  size="sm"
+                  variant={'link'}
+                  className="text-xs"
+                  onClick={() => {
+                    setGrantType(OAuth2GrantType.AUTHORIZATION_CODE);
+                    resetOAuth2Type();
+                  }}
                 >
                   {t('I would like to use Authorization Code')}
                 </Button>
               </div>
-            </>
-            }
-            </>
-          }
+            )}
+          </>
+        )}
       </form>
     </Form>
   );
-}
+};
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };

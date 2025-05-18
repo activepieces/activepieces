@@ -9,6 +9,7 @@ import { PropertyType } from '../input/property-type';
 import { StaticDropdownProperty } from '../input/dropdown/static-dropdown';
 import { StaticPropsValue } from '..';
 
+export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code' as const
 export enum OAuth2AuthorizationMethod {
   HEADER = 'HEADER',
   BODY = 'BODY',
@@ -42,9 +43,8 @@ const OAuth2ExtraProps = Type.Object({
   scope: Type.Array(Type.String()),
   pkce: Type.Optional(Type.Boolean()),
   authorizationMethod: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-  grantType: Type.Optional(Type.Enum(OAuth2GrantType)),
+  grantType: Type.Optional(Type.Union([Type.Enum(OAuth2GrantType), Type.Literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
   extra: Type.Optional(Type.Record(Type.String(), Type.String())),
-  allowsSwitchingGrantType: Type.Optional(Type.Boolean())
 })
 
 type OAuth2ExtraProps = {
@@ -54,7 +54,7 @@ type OAuth2ExtraProps = {
   scope: string[]
   pkce?: boolean
   authorizationMethod?: OAuth2AuthorizationMethod
-  grantType?: OAuth2GrantType
+  grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   extra?: Record<string, string>,
   allowsSwitchingGrantType?: boolean
 }
