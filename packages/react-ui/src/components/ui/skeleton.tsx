@@ -20,13 +20,17 @@ function SkeletonList({
   numberOfItems?: number;
 }) {
   const array = Array(numberOfItems).fill(null);
-  return <div className='space-y-3'>
-    {
-      array.map((_, index) => (
-        <Skeleton key={index} className={cn('h-4 w-full', className)} {...props} />
-      ))
-    }
-  </div> 
+  return (
+    <div className="space-y-3">
+      {array.map((_, index) => (
+        <Skeleton
+          key={index}
+          className={cn('h-4 w-full', className)}
+          {...props}
+        />
+      ))}
+    </div>
+  );
 }
 SkeletonList.displayName = 'SkeletonList';
 Skeleton.displayName = 'Skeleton';
