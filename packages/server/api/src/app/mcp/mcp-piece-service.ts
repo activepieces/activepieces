@@ -21,6 +21,10 @@ import { McpPieceEntity } from './mcp-piece-entity'
 const mcpRepo = repoFactory(McpEntity)
 const mcpPieceRepo = repoFactory(McpPieceEntity)
 
+async function _updateMcpTimestamp(mcpId: ApId): Promise<void> {
+    await mcpRepo().update({ id: mcpId }, { updated: dayjs().toISOString() })
+}
+
 export const mcpPieceService = (_log: FastifyBaseLogger) => ({
     async list(mcpId: ApId): Promise<McpPieceWithConnection[]> {
         await this.validateMcp(mcpId)
@@ -59,6 +63,8 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         })
+
+        await _updateMcpTimestamp(mcpId)
         
         return enrichPieceWithConnection(piece, _log)
     },
@@ -103,7 +109,9 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
     },
 
     async delete(pieceId: string): Promise<void> {
+        const piece = await this.getOneOrThrow(pieceId)
         await mcpPieceRepo().delete({ id: pieceId })
+        await _updateMcpTimestamp(piece.mcpId)
     },
     
     async update({ pieceId, status, connectionId }: UpdateParams): Promise<McpPieceWithConnection> {
@@ -129,6 +137,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
             )
         }   
         
+        await _updateMcpTimestamp(piece.mcpId)
         return this.getOneOrThrow(pieceId)
     },
 

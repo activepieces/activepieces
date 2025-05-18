@@ -38,6 +38,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             query: {
                 limit,
                 order: 'DESC',
+                orderBy: 'updated',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
