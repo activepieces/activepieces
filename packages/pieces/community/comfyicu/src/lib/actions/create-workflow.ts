@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const COMFYICU_API_URL = 'https://comfy.icu/api/v1/';
+const COMFYICU_API_URL = 'https://api.comfyicu.com';
 
 export const createWorkflow = createAction({
   name: "create_workflow",
@@ -28,7 +28,7 @@ export const createWorkflow = createAction({
     const { name, description, nodes } = context.propsValue;
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${COMFYICU_API_URL}/workflows/`,
+      url: `${COMFYICU_API_URL}/workflows`,
       headers: {
         Authorization: `Bearer ${context.auth}`,
         'Content-Type': 'application/json',
