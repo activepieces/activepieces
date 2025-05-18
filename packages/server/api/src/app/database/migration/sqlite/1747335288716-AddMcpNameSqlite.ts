@@ -14,7 +14,7 @@ export class AddMcpNameSqlite1747335288716 implements MigrationInterface {
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "projectId" varchar(21) NOT NULL,
-                "token" varchar(21) NOT NULL,
+                "token" varchar(21) NOT NULL
             )
         `);
         await queryRunner.query(`

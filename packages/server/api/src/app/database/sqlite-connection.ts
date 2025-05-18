@@ -105,6 +105,7 @@ import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 import { ChangeMcpProjectIdIdxSqlite1747253927254 } from './migration/sqlite/1747253927254-ChangeMcpProjectIdIdxSqlite'
 import { AddMcpNameSqlite1747335288716 } from './migration/sqlite/1747335288716-AddMcpNameSqlite'
+import { AddMcpPieceToMcpFKSqlite1747573993369 } from './migration/sqlite/1747573993369-AddMcpPieceToMcpFKSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -227,6 +228,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddI18nColumnToPieceMetadata1746714949131,
         ChangeMcpProjectIdIdxSqlite1747253927254,
         AddMcpNameSqlite1747335288716,
+        AddMcpPieceToMcpFKSqlite1747573993369,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
