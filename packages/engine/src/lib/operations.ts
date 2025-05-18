@@ -156,7 +156,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowE
         }
     }
 
-    for (const [step, output] of Object.entries(input.steps)) {
+    for (const [step, output] of Object.entries(input.executionState.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             flowContext = flowContext.upsertStep(step, output)
         }

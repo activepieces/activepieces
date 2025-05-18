@@ -12,6 +12,7 @@ export const memoryConsumer: ConsumerManager = {
         return {
             id: job.id,
             data: job.data,
+            attempsStarted: 1,
         }
     },
     async update(_params): Promise<void> {

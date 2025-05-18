@@ -82,10 +82,11 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     executionType: T
     tasks: number
     runEnvironment: RunEnvironment
+    executionState: ExecutionState
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
-} & ExecutionState
+}
 
 export enum ProgressUpdateType {
     WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
@@ -100,7 +101,7 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     resumePayload: ResumePayload
-} & ExecutionState
+}
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 

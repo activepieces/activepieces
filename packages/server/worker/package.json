@@ -18,6 +18,7 @@
     "nanoid": "3.3.8",
     "tslib": "2.6.2",
     "write-file-atomic": "5.0.1",
-    "p-limit": "2.3.0"
+    "p-limit": "2.3.0",
+    "bullmq": "5.28.1"
   }
 }

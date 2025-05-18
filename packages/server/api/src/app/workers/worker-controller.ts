@@ -177,7 +177,7 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
     }, log)
 }
 
-async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
+async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData, attempsStarted: number }) {
     const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, job.data)
     const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
@@ -189,6 +189,7 @@ async function enrichEngineToken(token: string, queueName: QueueName, job: { id:
         data: job.data,
         id: job.id,
         engineToken,
+        attempsStarted: job.attempsStarted,
     }
 }
 
