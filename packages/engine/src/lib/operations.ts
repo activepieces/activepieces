@@ -122,11 +122,40 @@ function cleanSampleData(stepOutput: StepOutput) {
     return stepOutput.output
 }
 
+async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
+    if (!input.formatPayload) {	
+        return input.triggerPayload as TriggerPayload	
+    }	
+    const newPayload = await triggerHelper.executeTrigger({	
+        params: {	
+            ...input,	
+            hookType: TriggerHookType.RUN,	
+            test: false,	
+            webhookUrl: '',	
+            triggerPayload: input.triggerPayload as TriggerPayload,	
+        },	
+        constants: EngineConstants.fromExecuteFlowInput(input),	
+    }) as ExecuteTriggerResponse<TriggerHookType.RUN>	
+    return newPayload.output[0] as TriggerPayload	
+}
+
 async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowExecutorContext> {
     let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
-    if (input.steps[input.flowVersion.trigger.name].output) {
-        flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, input.steps[input.flowVersion.trigger.name].output as StepOutput)
+    switch (input.executionType) {
+        case ExecutionType.BEGIN: {
+            const newPayload = await runOrReturnPayload(input)
+            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+                type: input.flowVersion.trigger.type,
+                status: StepOutputStatus.SUCCEEDED,
+                input: {},
+            }).setOutput(newPayload))
+            break
+        }
+        case ExecutionType.RESUME: {
+            break
+        }
     }
+
     for (const [step, output] of Object.entries(input.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             flowContext = flowContext.upsertStep(step, output)
