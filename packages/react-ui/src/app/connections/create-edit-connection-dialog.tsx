@@ -192,7 +192,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
               );
               break;
             }
-            
+
             default: {
               setErrorMessage('Unexpected error, please contact support');
               toast(INTERNAL_ERROR_TOAST);
@@ -205,7 +205,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
     return (
       <>
         <DialogHeader>
-          <DialogTitle className='px-5'>
+          <DialogTitle className="px-5">
             {reconnectConnection
               ? t('Reconnect {displayName} Connection', {
                   displayName: reconnectConnection.displayName,
@@ -216,87 +216,87 @@ const CreateOrEditConnectionDialogContent = React.memo(
           </DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-full" >
-          <div className='px-5'>  <ApMarkdown markdown={auth?.description}></ApMarkdown>
-          {auth?.description && <Separator className="my-4" />}
-          <Form {...form}>
-            <form
-              onSubmit={() => console.log('submitted')}
-              className="flex flex-col gap-4"
-            >
-              {(isNil(externalIdComingFromSdk) ||
-                externalIdComingFromSdk === '') && (
-                <FormField
-                  name="request.displayName"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <FormLabel htmlFor="displayName">
-                        {t('Connection Name')}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          required
-                          id="displayName"
-                          type="text"
-                          placeholder={t('Connection name')}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
-              )}
+        <ScrollArea className="h-full">
+          <div className="px-5">
+            {' '}
+            <ApMarkdown markdown={auth?.description}></ApMarkdown>
+            {auth?.description && <Separator className="my-4" />}
+            <Form {...form}>
+              <form
+                onSubmit={() => console.log('submitted')}
+                className="flex flex-col gap-4"
+              >
+                {(isNil(externalIdComingFromSdk) ||
+                  externalIdComingFromSdk === '') && (
+                  <FormField
+                    name="request.displayName"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-2">
+                        <FormLabel htmlFor="displayName">
+                          {t('Connection Name')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            required
+                            id="displayName"
+                            type="text"
+                            placeholder={t('Connection name')}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  ></FormField>
+                )}
 
-              {isGlobalConnection && (
-                <AssignConnectionToProjectsControl
-                  control={form.control}
-                  name="request.projectIds"
-                />
-              )}
-              {auth?.type === PropertyType.SECRET_TEXT && (
-                <SecretTextConnectionSettings
-                  authProperty={piece.auth as SecretTextProperty<boolean>}
-                />
-              )}
-              {auth?.type === PropertyType.BASIC_AUTH && (
-                <BasicAuthConnectionSettings
-                  authProperty={piece.auth as BasicAuthProperty}
-                />
-              )}
-              {auth?.type === PropertyType.CUSTOM_AUTH && (
-                <CustomAuthConnectionSettings
-                  authProperty={piece.auth as CustomAuthProperty<any>}
-                />
-              )}
-
-              {auth?.type === PropertyType.OAUTH2 && (
-                <div className="mt-3.5">
-                  <OAuth2ConnectionSettings
-                    authProperty={piece.auth as OAuth2Property<OAuth2Props>}
-                    piece={piece}
-                    reconnectConnection={reconnectConnection}
+                {isGlobalConnection && (
+                  <AssignConnectionToProjectsControl
+                    control={form.control}
+                    name="request.projectIds"
                   />
-                </div>
-              )}
+                )}
+                {auth?.type === PropertyType.SECRET_TEXT && (
+                  <SecretTextConnectionSettings
+                    authProperty={piece.auth as SecretTextProperty<boolean>}
+                  />
+                )}
+                {auth?.type === PropertyType.BASIC_AUTH && (
+                  <BasicAuthConnectionSettings
+                    authProperty={piece.auth as BasicAuthProperty}
+                  />
+                )}
+                {auth?.type === PropertyType.CUSTOM_AUTH && (
+                  <CustomAuthConnectionSettings
+                    authProperty={piece.auth as CustomAuthProperty<any>}
+                  />
+                )}
 
-              <DialogFooter>
-                <Button
-                  onClick={(e) => form.handleSubmit(() => mutate())(e)}
-                  className="w-full"
-                  loading={isPending}
-                  type="submit"
-                  disabled={!form.formState.isValid}
-                >
-                  {t('Save')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+                {auth?.type === PropertyType.OAUTH2 && (
+                  <div className="mt-3.5">
+                    <OAuth2ConnectionSettings
+                      authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+                      piece={piece}
+                      reconnectConnection={reconnectConnection}
+                    />
+                  </div>
+                )}
 
+                <DialogFooter>
+                  <Button
+                    onClick={(e) => form.handleSubmit(() => mutate())(e)}
+                    className="w-full"
+                    loading={isPending}
+                    type="submit"
+                    disabled={!form.formState.isValid}
+                  >
+                    {t('Save')}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </div>
-        
         </ScrollArea>
 
         {errorMessage && (

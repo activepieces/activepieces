@@ -398,72 +398,71 @@ const OAuth2ConnectionSettingsForm = ({
           </div>
         )}
 
-      <div className='flex flex-col '>
-      {isNewConnection &&
-          currentOAuth2Type !== AppConnectionType.OAUTH2 &&
-          currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-            <div>
-              <Button
-                size="sm"
-                variant={'link'}
-                className="text-xs"
-                onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
-              >
-                {t('I would like to use my own App Credentials')}
-              </Button>
-            </div>
-          )}
-        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
-          isNewConnection &&
-          predefinedApp &&
-          currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-            <div>
-              <Button
-                size="sm"
-                variant={'link'}
-                className="text-xs"
-                onClick={() => setOAuth2Type(predefinedApp.type)}
-              >
-                {t('I would like to use predefined App Credentials')}
-              </Button>
-            </div>
-          )}
-        {doesPieceAllowSwitchingGrantType(piece) && isNewConnection && (
-          <>
-            {currentGrantType == OAuth2GrantType.AUTHORIZATION_CODE && (
+        <div className="flex flex-col ">
+          {isNewConnection &&
+            currentOAuth2Type !== AppConnectionType.OAUTH2 &&
+            currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
               <div>
                 <Button
                   size="sm"
                   variant={'link'}
                   className="text-xs"
-                  onClick={() => {
-                    setGrantType(OAuth2GrantType.CLIENT_CREDENTIALS);
-                    setOAuth2Type(AppConnectionType.OAUTH2);
-                  }}
+                  onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
                 >
-                  {t('I would like to use Client Credentials')}
+                  {t('I would like to use my own App Credentials')}
                 </Button>
               </div>
             )}
-            {currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS && (
+          {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+            isNewConnection &&
+            predefinedApp &&
+            currentGrantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
               <div>
                 <Button
                   size="sm"
                   variant={'link'}
                   className="text-xs"
-                  onClick={() => {
-                    setGrantType(OAuth2GrantType.AUTHORIZATION_CODE);
-                    resetOAuth2Type();
-                  }}
+                  onClick={() => setOAuth2Type(predefinedApp.type)}
                 >
-                  {t('I would like to use Authorization Code')}
+                  {t('I would like to use predefined App Credentials')}
                 </Button>
               </div>
             )}
-          </>
-        )}
-      </div>
-       
+          {doesPieceAllowSwitchingGrantType(piece) && isNewConnection && (
+            <>
+              {currentGrantType == OAuth2GrantType.AUTHORIZATION_CODE && (
+                <div>
+                  <Button
+                    size="sm"
+                    variant={'link'}
+                    className="text-xs"
+                    onClick={() => {
+                      setGrantType(OAuth2GrantType.CLIENT_CREDENTIALS);
+                      setOAuth2Type(AppConnectionType.OAUTH2);
+                    }}
+                  >
+                    {t('I would like to use Client Credentials')}
+                  </Button>
+                </div>
+              )}
+              {currentGrantType === OAuth2GrantType.CLIENT_CREDENTIALS && (
+                <div>
+                  <Button
+                    size="sm"
+                    variant={'link'}
+                    className="text-xs"
+                    onClick={() => {
+                      setGrantType(OAuth2GrantType.AUTHORIZATION_CODE);
+                      resetOAuth2Type();
+                    }}
+                  >
+                    {t('I would like to use Authorization Code')}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </form>
     </Form>
   );

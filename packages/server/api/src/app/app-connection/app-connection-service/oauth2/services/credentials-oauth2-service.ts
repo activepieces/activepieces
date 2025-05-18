@@ -33,21 +33,20 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     break
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
+                    if (request.scope) {
+                        body.scope = request.scope
+                    }
+                    if (request.props) {
+                        Object.entries(request.props).forEach(([key, value]) => {
+                            body[key] = value
+                        })
+                    }
                     break
             }
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-            if (grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
-                if (request.scope) {
-                    body.scope = request.scope
-                }
-                if (request.props) {
-                    Object.entries(request.props).forEach(([key, value]) => {
-                        body[key] = value
-                    })
-                }
-            }
+           
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
