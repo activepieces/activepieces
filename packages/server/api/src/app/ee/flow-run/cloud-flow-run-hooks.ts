@@ -1,4 +1,4 @@
-import { ApEdition, FlowRun, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, BillingMetric, FlowRun, getCurrentBillingPeriodEnd, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
@@ -6,7 +6,7 @@ import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
+import { usageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
@@ -29,7 +29,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const { consumedProjectUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
+        const { consumedProjectUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingMetric.TASKS })
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
             consumedTasks: consumedProjectUsage,
@@ -51,7 +51,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
     if (!tasksPerMonth) {
         return
     }
-    const resetDate = usageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
+    const resetDate = getCurrentBillingPeriodEnd().replace(' UTC', '')
     const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 

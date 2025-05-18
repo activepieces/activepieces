@@ -1,12 +1,11 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, getCurrentBillingPeriodStart, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../helper/system/system'
 import { platformBillingService } from './platform-billing.service'
-import { usageService } from './usage/usage-service'
 
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
@@ -46,7 +45,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const startBillingPeriod = usageService(log).getCurrentBillingPeriodStart()
+        const startBillingPeriod = getCurrentBillingPeriodStart()
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

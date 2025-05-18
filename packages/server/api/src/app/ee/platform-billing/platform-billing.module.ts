@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BillingEntityType, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import Stripe from 'stripe'
@@ -11,7 +11,7 @@ import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { BillingEntityType, usageService } from './usage/usage-service'
+import { usageService } from './usage/usage-service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
@@ -26,7 +26,7 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
             .where(`"project"."id" IN (
-            SELECT DISTINCT "flowRun"."projectId" 
+            SELECT DISTINCT "flowRun"."projectId"
             FROM "flow_run" "flowRun"
             WHERE "flowRun"."created" >= :startDate
             AND "flowRun"."created" <= :endDate

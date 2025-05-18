@@ -55,6 +55,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
             subscriptionId: subscription.id,
             subscriptionStatus: subscription.status,
         }, 'Updating subscription id for platform billing')
+
         await platformBillingRepo().update(platformBilling.id, {
             stripeSubscriptionId: subscription.id,
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
@@ -82,7 +83,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     })
 }
 
-async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined) {
+async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined): Promise<void> {
     const platform = await platformService.getOneOrThrow(platformId)
     if (platform.manageProjectsEnabled) {
         return

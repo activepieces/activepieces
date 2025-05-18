@@ -10,6 +10,7 @@ import {
     ApEdition,
     ApEnvironment,
     assertNotNullOrUndefined,
+    BillingEntityType,
     Cursor,
     ErrorCode,
     FlowStatus,
@@ -36,7 +37,7 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
-import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
+import { usageService } from '../platform-billing/usage/usage-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
