@@ -1,7 +1,7 @@
-import { useMutation, useQuery, QueryKey } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash2, EllipsisVertical, PencilIcon, CheckIcon, Table2 } from 'lucide-react';
+import { Plus, Trash2, CheckIcon, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -14,35 +14,25 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { ApFlagId, McpWithPieces, Permission } from '@activepieces/shared';
-import RenameMcpDialog from '@/features/mcp/components/rename-mcp-dialog';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { McpActionsMenu } from '@/features/mcp/components/mcp-actions-menu';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TableTitle } from '@/components/ui/table-title';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-
-interface McpListResponse {
-  data: McpWithPieces[];
-  next: string | null;
-  previous: string | null;
-}
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const McpServersPage = () => {
-  const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<McpWithPieces[]>([]);
   const { data: maxMcps } = flagsHooks.useFlag(
@@ -53,22 +43,23 @@ const McpServersPage = () => {
   const userHasMcpWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_MCP,
   );
+  const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } = piecesHooks.usePieces({});
+
+  const pieceMetadataMap = allPiecesMetadata
+    ? new Map(allPiecesMetadata.map(p => [p.name, p]))
+    : new Map<string, PieceMetadataModelSummary>();
+
 
   const {
     data,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ['mcp-servers', searchParams.toString()],
-    queryFn: () => 
-      mcpApi.list({
-        projectId: project.id,
-        cursor: searchParams.get('cursor') ?? undefined,
-        limit: searchParams.get('limit')
-          ? parseInt(searchParams.get('limit')!)
-          : undefined,
-        name: searchParams.get('name') ?? undefined,
-      }),
+  } = mcpHooks.useMcps({
+    cursor: searchParams.get('cursor') ?? undefined,
+    limit: searchParams.get('limit')
+    ? parseInt(searchParams.get('limit')!)
+    : undefined,
+    name: searchParams.get('name') ?? undefined,
   });
 
   const {mutate: createMcp, isPending: isCreatingMcp} = useMutation({
@@ -96,7 +87,6 @@ const McpServersPage = () => {
       }
     },
   });
-
 
   const columns: ColumnDef<RowDataWithActions<McpWithPieces>, unknown>[] = [
       { 
@@ -153,13 +143,75 @@ const McpServersPage = () => {
         cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
       },
       {
+        id: 'usedTools',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Tools')} />
+        ),
+        cell: ({ row }) => {
+          const mcpPieces = row.original.pieces || [];
+          if (isLoadingPiecesMetadata) {
+            return <div className="text-left">{t('Loading...')}</div>;
+          }
+          const MAX_ICONS_TO_SHOW = 3;
+          const visiblePieces = mcpPieces.slice(0, MAX_ICONS_TO_SHOW);
+          const extraPiecesCount = mcpPieces.length - visiblePieces.length;
+
+          const allDisplayNames = mcpPieces
+            .map(p => pieceMetadataMap.get(p.pieceName)?.displayName || p.pieceName);
+          
+          let pieceDisplayNamesTooltip = '';
+          if (allDisplayNames.length === 1) {
+            pieceDisplayNamesTooltip = allDisplayNames[0];
+          }
+          else if (allDisplayNames.length > 1) {
+            pieceDisplayNamesTooltip = allDisplayNames.slice(0, -1).join(', ') + 
+                                     ` ${t('and')} ${
+                                       allDisplayNames[allDisplayNames.length - 1]
+                                     }`;
+          }
+
+          return (
+            <div className="text-left flex items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2">
+                    {visiblePieces.map((mcpPiece) => {
+                      const metadata = pieceMetadataMap.get(mcpPiece.pieceName);
+                      return (
+                        <PieceIcon
+                          key={mcpPiece.id}
+                          logoUrl={metadata?.logoUrl}
+                          displayName={metadata?.displayName || mcpPiece.pieceName}
+                          size="md"
+                          circle={true}
+                          border={true}
+                          showTooltip={false}
+                        />
+                      );
+                    })}
+                    {extraPiecesCount > 0 && (
+                      <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none size-[36px] text-sm">
+                        +{extraPiecesCount}
+                      </div>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                {mcpPieces.length > 0 && (
+                    <TooltipContent side="bottom">{pieceDisplayNamesTooltip}</TooltipContent>
+                )}
+              </Tooltip>
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'updated',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={t('Last Modified')} />
         ),
         cell: ({ row }) => (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            {formatUtils.formatDate(new Date(row.original.updated))}
           </div>
         ),
       },
@@ -284,13 +336,9 @@ const McpServersPage = () => {
         columns={columns}
         page={data}
         isLoading={isLoading}
-        onRowClick={(row, newWindow) => {
+        onRowClick={(row) => {
           const path = `/projects/${project.id}/mcp/${row.id}`;
-          if (newWindow) {
-            openNewWindow(path);
-          } else {
-            navigate(path);
-          }
+          navigate(path);
         }}
         bulkActions={bulkActions}
       />
