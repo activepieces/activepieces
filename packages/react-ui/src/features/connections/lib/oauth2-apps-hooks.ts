@@ -4,7 +4,7 @@ import { ApEdition, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './oauth2-apps-api';
 
-type PieceToClientIdMap = {
+export type PieceToClientIdMap = {
   [pieceName: string]: {
     type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
     clientId: string;

@@ -38,10 +38,15 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-            if (request.props && grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
-                Object.entries(request.props).forEach(([key, value]) => {
-                    body[key] = value
-                })
+            if (grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+                if (request.scope) {
+                    body.scope = request.scope
+                }
+                if (request.props) {
+                    Object.entries(request.props).forEach(([key, value]) => {
+                        body[key] = value
+                    })
+                }
             }
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
@@ -121,6 +126,16 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
                 body.grant_type = grantType
+                if (appConnection.scope) {
+                    body.scope = appConnection.scope
+                }
+                if (appConnection.props) {
+                    Object.entries(appConnection.props).forEach(([key, value]) => {
+                        if (typeof value === 'string') {
+                            body[key] = value
+                        }
+                    })
+                }
                 break
             }
             default:

@@ -43,7 +43,8 @@ const OAuth2ExtraProps = Type.Object({
   pkce: Type.Optional(Type.Boolean()),
   authorizationMethod: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
   grantType: Type.Optional(Type.Enum(OAuth2GrantType)),
-  extra: Type.Optional(Type.Record(Type.String(), Type.String()))
+  extra: Type.Optional(Type.Record(Type.String(), Type.String())),
+  allowsSwitchingGrantType: Type.Optional(Type.Boolean())
 })
 
 type OAuth2ExtraProps = {
@@ -54,7 +55,8 @@ type OAuth2ExtraProps = {
   pkce?: boolean
   authorizationMethod?: OAuth2AuthorizationMethod
   grantType?: OAuth2GrantType
-  extra?: Record<string, string>
+  extra?: Record<string, string>,
+  allowsSwitchingGrantType?: boolean
 }
 
 export const OAuth2PropertyValue = Type.Object({
