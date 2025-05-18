@@ -68,7 +68,7 @@ const getOAuth2Type = (pieceToClientIdMap: PieceToClientIdMap, reconnectConnecti
   if(reconnectConnection?.type === AppConnectionType.CLOUD_OAUTH2 || reconnectConnection?.type === AppConnectionType.OAUTH2 || reconnectConnection?.type === AppConnectionType.PLATFORM_OAUTH2){
     return reconnectConnection?.type
   }
-  return pieceToClientIdMap[pieceName]?.type ?? AppConnectionType.OAUTH2
+  return pieceToClientIdMap[`${pieceName}-${AppConnectionType.CLOUD_OAUTH2}`]?.type ?? AppConnectionType.OAUTH2
 }
 
 
@@ -108,7 +108,7 @@ const OAuth2ConnectionSettingsImplementation = ({
   const [grantType, setGrantType] = useState<OAuth2GrantType>(authProperty.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE);
   return <OAuth2ConnectionSettingsForm
     key={`${currentOAuth2Type}-${grantType}`}
-    predefinedApp={pieceToClientIdMap?.[piece.name] ?? null}
+    predefinedApp={currentOAuth2Type!== AppConnectionType.OAUTH2 ? pieceToClientIdMap?.[`${piece.name}-${currentOAuth2Type}`] ?? null : null}
     authProperty={authProperty}
     currentOAuth2Type={currentOAuth2Type}
     currentGrantType={grantType}
