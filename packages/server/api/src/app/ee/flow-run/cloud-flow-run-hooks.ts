@@ -7,7 +7,7 @@ import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { platformUsageService } from '../platform-billing/usage/usage-service'
+import { platformUsageService } from '../platform-billing/platform-usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { projectUsageService } from '../projects/project-usage-service'
 

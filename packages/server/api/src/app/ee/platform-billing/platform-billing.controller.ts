@@ -7,8 +7,8 @@ import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformBillingService } from './platform-billing.service'
+import { platformUsageService } from './platform-usage-service'
 import { stripeHelper } from './stripe-helper'
-import { platformUsageService } from './usage/usage-service'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)

@@ -9,9 +9,9 @@ import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { projectRepo } from '../../project/project-service'
 import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
+import { platformUsageService } from './platform-usage-service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { platformUsageService } from './usage/usage-service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
