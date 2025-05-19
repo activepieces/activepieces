@@ -3,78 +3,54 @@ import {
   ListMcpsRequestQuery,
   McpPieceStatus,
   McpPieceWithConnection,
-  McpWithPieces,
+  McpWithActions,
   SeekPage,
   UpdateMcpRequestBody,
+  UpdateMcpActionsRequestBody,
+  McpActionWithConnection,
 } from '@activepieces/shared';
 
-interface AddPieceParams {
-  mcpId: string;
-  pieceName: string;
-  connectionId?: string;
-  status: McpPieceStatus;
-}
-
-interface UpdatePieceParams {
-  pieceId: string;
-  connectionId?: string;
-  status?: McpPieceStatus;
-}
-
 export const mcpApi = {
-  async list(request: ListMcpsRequestQuery): Promise<SeekPage<McpWithPieces>> {
-    return await api.get<SeekPage<McpWithPieces>>('/v1/mcp-servers', request);
+  async list(request: ListMcpsRequestQuery): Promise<SeekPage<McpWithActions>> {
+    return await api.get<SeekPage<McpWithActions>>('/v1/mcp-servers', request);
   },
-  async get(id: string): Promise<McpWithPieces> {
-    return await api.get<McpWithPieces>(`/v1/mcp-servers/${id}`);
+
+  async get(id: string): Promise<McpWithActions> {
+    return await api.get<McpWithActions>(`/v1/mcp-servers/${id}`);
   },
-  async create(name: string): Promise<McpWithPieces> {
-    return await api.post<McpWithPieces>('/v1/mcp-servers', {
-      name,
-    });
+
+  async create(name: string): Promise<McpWithActions> {
+    return await api.post<McpWithActions>('/v1/mcp-servers', { name });
   },
-  async update(id: string, request: UpdateMcpRequestBody) {
-    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}`, request);
+
+  async update(id: string, request: UpdateMcpRequestBody): Promise<McpWithActions> {
+    return await api.post<McpWithActions>(`/v1/mcp-servers/${id}`, request);
   },
-  async delete(id: string) {
+
+  async delete(id: string): Promise<void> {
     return await api.delete(`/v1/mcp-servers/${id}`);
   },
-  async rotateToken(id: string) {
-    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}/rotate`);
+
+  async rotateToken(id: string): Promise<McpWithActions> {
+    return await api.post<McpWithActions>(`/v1/mcp-servers/${id}/rotate`);
   },
-  async getPieces(id: string) {
+
+  async getPieces(mcpId: string): Promise<{ pieces: McpPieceWithConnection[] }> {
     return await api.get<{ pieces: McpPieceWithConnection[] }>(
-      `/v1/mcp-pieces/${id}`,
+      `/v1/mcp-tools/${mcpId}/pieces`
     );
   },
-  async addPiece({
-    mcpId,
-    pieceName,
-    connectionId,
-    status,
-  }: AddPieceParams): Promise<McpWithPieces> {
-    return await api.post(`/v1/mcp-pieces`, {
-      mcpId,
-      pieceName,
-      connectionId,
-      status,
-    });
+
+  async getActions(mcpId: string): Promise<{ actions: McpActionWithConnection[] }> {
+    return await api.get<{ actions: McpActionWithConnection[] }>(
+      `/v1/mcp-tools/${mcpId}/actions`
+    );
   },
-  async updatePiece({
-    pieceId,
-    connectionId,
-    status,
-  }: UpdatePieceParams): Promise<McpWithPieces> {
-    return await api.post(`/v1/mcp-pieces/${pieceId}`, {
-      connectionId,
-      status,
-    });
-  },
-  async deletePiece(pieceId: string): Promise<McpWithPieces> {
-    return await api.delete(`/v1/mcp-pieces/${pieceId}`);
-  },
-  async bulkDelete(ids: string[]): Promise<void> {
-    console.warn('Bulk delete MCP API call not implemented. IDs:', ids);
-    return Promise.resolve();
+
+  async updateActions(
+    mcpId: string,
+    request: UpdateMcpActionsRequestBody
+  ): Promise<McpWithActions> {
+    return await api.post(`/v1/mcp-tools/${mcpId}/actions`, request);
   },
 };
