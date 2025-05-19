@@ -12,9 +12,8 @@ import {
   InfoIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { FlowsDialog } from '@/app/connections/flows-connection-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
@@ -61,6 +60,7 @@ import {
 } from '@activepieces/shared';
 
 function AppConnectionsPage() {
+  const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<
@@ -356,7 +356,18 @@ function AppConnectionsPage() {
         <DataTableColumnHeader column={column} title={t('Flows')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowIds?.length}</div>;
+        return (
+          <div
+            className="text-left underline cursor-pointer"
+            onClick={() => {
+              navigate(
+                `/flows?connectionExternalId=${row.original.externalId}`,
+              );
+            }}
+          >
+            {row.original.flowIds?.length}
+          </div>
+        );
       },
     },
     {
@@ -396,7 +407,6 @@ function AppConnectionsPage() {
                 refetch();
               }}
             />
-            <FlowsDialog connection={row.original} />
           </div>
         );
       },

@@ -39,6 +39,7 @@ import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
+import { ChangeExternalIdsForTables1747346473000 } from './migration/common/1747346473000-ChangeExternalIdsForTables'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -199,7 +200,9 @@ import { AddConnectionIdsToFlowVersion1745530653784 } from './migration/postgres
 import { AddExternalIdForTablesAndFields1746356907629 } from './migration/postgres/1746356907629-AddExternalIdForTablesAndFields'
 import { MakeExternalIdNotNullable1746531094548 } from './migration/postgres/1746531094548-MakeExternalIdNotNullable'
 import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746543299109-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
+import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -337,6 +340,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdForTablesAndFields1746356907629,
         ChangeMcpPieceForeignKey1746543299109,
         AddHandshakeConfigurationToFlow1746848208563,
+        AddOrderToFolder1747095861746,
+        AddI18nColumnToPieceMetadata1746714836833,
+        ChangeExternalIdsForTables1747346473000,
     ]
 
     const edition = system.getEdition()

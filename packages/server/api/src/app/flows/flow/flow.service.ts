@@ -136,7 +136,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             .where(queryWhere)
 
         if (name !== undefined) {
-            queryBuilder.andWhere('latest_version."displayName" LIKE :name', { name: `%${name}%` })
+            queryBuilder.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:name)', { name: `%${name}%` })
         }
 
         if (connectionExternalIds !== undefined) {

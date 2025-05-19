@@ -36,6 +36,9 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-agent": [
+        "packages/pieces/community/agent/src/index.ts"
+      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -163,6 +166,9 @@
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
       ],
+      "@activepieces/piece-coda": [
+        "packages/pieces/community/coda/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -251,6 +257,9 @@
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
+      ],
+      "@activepieces/piece-fireflies-ai": [
+        "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
@@ -447,6 +456,9 @@
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
       ],
+      "@activepieces/piece-manychat": [
+        "packages/pieces/community/manychat/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
@@ -542,6 +554,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf-co": [
+        "packages/pieces/community/pdf-co/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
