@@ -65,3 +65,28 @@ export async function getAppointmentDetails(appointmentId: string, auth: AcuityA
     const response = await httpClient.sendRequest(request);
     return response.body;
 }
+
+export async function fetchAppointmentTypes(auth: AcuityAuthProps, includeDeleted = false) {
+    const queryParams: Record<string, string> = {};
+    if (includeDeleted) {
+        queryParams['includeDeleted'] = 'true';
+    }
+
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API_URL}/appointment-types`,
+        queryParams,
+        headers: {
+            Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+        },
+    };
+    const response = await httpClient.sendRequest<Array<{ id: number; name: string; active: boolean | string }>>(request);
+
+    if (Array.isArray(response.body)) {
+        // Filter for active types unless includeDeleted is true, and map to dropdown options
+        return response.body
+            .filter(type => includeDeleted || type.active === true || type.active === 'true')
+            .map(type => ({ label: type.name, value: type.id }));
+    }
+    return [];
+}

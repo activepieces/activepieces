@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL } from '../common';
+import { API_URL, fetchAppointmentTypes, AcuityAuthProps } from '../common';
 
 interface FindAppointmentsProps {
   firstName?: string;
@@ -64,10 +64,24 @@ export const findAppointments = createAction({
       description: 'Show only appointments on the calendar with this ID.',
       required: false,
     }),
-    appointmentTypeID: Property.Number({
-      displayName: 'Appointment Type ID',
+    appointmentTypeID: Property.Dropdown({
+      displayName: 'Appointment Type',
       description: 'Show only appointments of this type.',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchAppointmentTypes(auth as AcuityAuthProps, true),
+        };
+      },
     }),
     status: Property.StaticDropdown({
       displayName: 'Appointment Status',

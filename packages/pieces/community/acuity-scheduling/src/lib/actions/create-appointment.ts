@@ -1,9 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAvailableDates, fetchAvailableTimes } from '../common';
+import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps } from '../common';
 
-// Define the type for the props for THIS action
 interface CreateAppointmentProps {
   appointmentTypeID: number;
   desiredMonth: string;
@@ -30,11 +29,24 @@ export const createAppointment = createAction({
   displayName: 'Create Appointment',
   description: 'Create a new appointment.',
   props: {
-    // Required fields for availability checking
-    appointmentTypeID: Property.Number({
-      displayName: 'Appointment Type ID',
-      description: 'Numeric ID of the appointment type.',
+    appointmentTypeID: Property.Dropdown({
+      displayName: 'Appointment Type',
+      description: 'Select the type of appointment.',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchAppointmentTypes(auth as AcuityAuthProps),
+        };
+      },
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
@@ -56,10 +68,10 @@ export const createAppointment = createAction({
       options: async ({ auth, propsValue }) => {
         const props = propsValue as Pick<CreateAppointmentProps, 'appointmentTypeID' | 'desiredMonth' | 'timezone' | 'calendarID'>;
 
-        if (!props.appointmentTypeID || !props.desiredMonth) {
+        if (!props.appointmentTypeID || !props.desiredMonth || !props.timezone) {
           return {
             disabled: true,
-            placeholder: 'Please fill in the appointment type and desired month first',
+            placeholder: 'Please select Appointment Type, Timezone, and Desired Month first',
             options: [],
           };
         }

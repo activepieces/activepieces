@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAvailableDates, fetchAvailableTimes } from '../common';
+import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps } from '../common';
 
 interface RescheduleAppointmentProps {
   id: number;
@@ -25,10 +25,24 @@ export const rescheduleAppointment = createAction({
       description: 'The ID of the appointment to reschedule.',
       required: true,
     }),
-    appointmentTypeID: Property.Number({
-      displayName: 'Appointment Type ID',
-      description: 'The original Appointment Type ID (required to check for new available slots).',
+    appointmentTypeID: Property.Dropdown({
+      displayName: 'Appointment Type',
+      description: 'Select the type of appointment (used for finding new available slots).',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchAppointmentTypes(auth as AcuityAuthProps),
+        };
+      },
     }),
     timezone: Property.ShortText({
       displayName: 'Timezone',
@@ -53,7 +67,7 @@ export const rescheduleAppointment = createAction({
         if (!props.id || !props.appointmentTypeID || !props.desiredMonth || !props.timezone) {
           return {
             disabled: true,
-            placeholder: 'Please provide Appointment ID, Type ID, Timezone, and Desired Month first',
+            placeholder: 'Please provide Appt. ID, Type, Timezone, and New Month first',
             options: [],
           };
         }
