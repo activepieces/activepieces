@@ -232,7 +232,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             environment,
             flowDisplayName: flowVersion.displayName,
-        })
+        }, log)
 
         flowRun.status = FlowRunStatus.RUNNING
 
@@ -261,7 +261,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             fileType: FileType.SAMPLE_DATA,
         })
         return this.start({
-            flowRunId: apId(),
             projectId,
             flowVersionId,
             payload: sampleData,
@@ -458,17 +457,16 @@ const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, c
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
+    log: FastifyBaseLogger,
 ): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
         params
 
-    const flowRun = await flowRunRepo().findOneBy({
-        id,
-        projectId,
-    })
-
-    if (id && !isNil(flowRun)) {
-        return flowRun
+    if (id) {
+        return flowRunService(log).getOneOrThrow({
+            id,
+            projectId,
+        })
     }
 
     return {
@@ -543,7 +541,7 @@ type GetOneParams = {
 type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    flowRunId: FlowRunId
+    flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId: string | undefined
