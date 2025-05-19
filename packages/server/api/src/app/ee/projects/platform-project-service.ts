@@ -1,6 +1,5 @@
 import {
     ApSubscriptionStatus,
-    DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
@@ -35,11 +34,11 @@ import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformBillingService } from '../platform-billing/platform-billing.service'
-import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
-import { ProjectMemberEntity } from '../project-members/project-member.entity'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
+import { BillingEntityType, usageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
+import { ProjectMemberEntity } from './project-members/project-member.entity'
+import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -70,7 +69,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             const isCustomerProject = isCustomerPlatform(project.platformId)
             if (isSubscribed || isCustomerProject) {
                 const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
-                await projectLimitsService.upsert(
+                await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
@@ -224,9 +223,8 @@ async function enrichProject(
 
     return {
         ...project,
-        plan: await projectLimitsService.getOrCreateDefaultPlan(
+        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
-            DEFAULT_FREE_PLAN_LIMIT,
         ),
         usage: await usageService(log).getUsageForBillingPeriod(
             project.id,

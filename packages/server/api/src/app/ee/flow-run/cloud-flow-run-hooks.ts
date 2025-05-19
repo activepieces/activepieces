@@ -4,10 +4,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
+import { BillingUsageType, usageService } from '../platform/platform-usage-service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
@@ -41,13 +42,18 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
 })
 
 async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsumedTasks, log }: SendQuotaAlertIfNeededParams): Promise<void> {
+    const edition = system.getEdition()
+    if (edition !== ApEdition.CLOUD) {
+        return
+    }
     const quotaAlerts: { limit: number, templateName: 'quota-50' | 'quota-90' | 'quota-100' }[] = [
         { limit: 1.0, templateName: 'quota-100' },
         { limit: 0.9, templateName: 'quota-90' },
         { limit: 0.5, templateName: 'quota-50' },
     ]
-    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-    const tasksPerMonth = projectPlan?.tasks
+    const platformId = await projectService.getPlatformId(projectId)
+    const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+    const tasksPerMonth = platformBilling?.tasksLimit
     if (!tasksPerMonth) {
         return
     }
