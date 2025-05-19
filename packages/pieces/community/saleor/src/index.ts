@@ -1,5 +1,7 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { saleorRawGraphqlQuery } from "./lib/actions/raw-graphql-query";
+import { getOrder } from "./lib/actions/get-order";
+import { addOrderNote } from "./lib/actions/add-note-to-order";
 
 export const saleorAuth = PieceAuth.CustomAuth({
   description: 'Saleor',
@@ -24,6 +26,10 @@ export const saleor = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/saleor.png",
   authors: ["Kevinyu-alan"],
-  actions: [saleorRawGraphqlQuery],
+  actions: [
+    saleorRawGraphqlQuery,
+    getOrder,
+    addOrderNote
+  ],
   triggers: [],
 });

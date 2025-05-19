@@ -9,8 +9,8 @@ export const saleorRawGraphqlQuery = createAction({
     description: 'Perform a raw GraphQL query',
     auth: saleorAuth,
     props: {
-    query: Property.LongText({ displayName: 'Query', required: true }),
-        variables: Property.Object({ displayName: 'Parameters', required: false }),
+        query: Property.LongText({ displayName: 'Query', required: true }),
+            variables: Property.Object({ displayName: 'Parameters', required: false }),
     },
     async run({auth, propsValue}) {
         const { query, variables } = propsValue;
