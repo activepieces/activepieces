@@ -207,7 +207,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
   const [refresh, setRefresh] = useState(0);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const { embedState } = useEmbedding();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -269,21 +269,23 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
             </DropdownMenuItem>
           </SelectFlowTemplateDialog>
 
-          <ImportFlowDialog
-            insideBuilder={false}
-            onRefresh={() => {
-              setRefresh(refresh + 1);
-              refetch();
-            }}
-          >
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              disabled={!doesUserHavePermissionToWriteFlow}
+          {!embedState.hideExportAndImportFlow && (
+            <ImportFlowDialog
+              insideBuilder={false}
+              onRefresh={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
             >
-              <Upload className="h-4 w-4 me-2" />
-              {t('From local file')}
-            </DropdownMenuItem>
-          </ImportFlowDialog>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                disabled={!doesUserHavePermissionToWriteFlow}
+              >
+                <Upload className="h-4 w-4 me-2" />
+                {t('From local file')}
+              </DropdownMenuItem>
+            </ImportFlowDialog>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </PermissionNeededTooltip>
