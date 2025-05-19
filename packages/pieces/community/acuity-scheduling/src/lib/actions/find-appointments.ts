@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAppointmentTypes, AcuityAuthProps } from '../common';
+import { API_URL, fetchAppointmentTypes, AcuityAuthProps, fetchCalendars, fetchFormFields } from '../common';
 
 interface FindAppointmentsProps {
   firstName?: string;
@@ -59,10 +59,24 @@ export const findAppointments = createAction({
       required: false,
     }),
     // Other Filters
-    calendarID: Property.Number({
+    calendarID: Property.Dropdown({
       displayName: 'Calendar ID',
       description: 'Show only appointments on the calendar with this ID.',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchCalendars(auth as AcuityAuthProps),
+        };
+      },
     }),
     appointmentTypeID: Property.Dropdown({
       displayName: 'Appointment Type',
@@ -97,10 +111,24 @@ export const findAppointments = createAction({
       }
     }),
     // Custom Field Filter
-    customFieldID: Property.Number({
+    customFieldID: Property.Dropdown({
         displayName: 'Custom Form Field ID',
         description: 'ID of the custom intake form field to filter by.',
         required: false,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please authenticate first',
+                    options: [],
+                };
+            }
+            return {
+                disabled: false,
+                options: await fetchFormFields(auth as AcuityAuthProps),
+            };
+        },
     }),
     customFieldValue: Property.ShortText({
         displayName: 'Custom Form Field Value',

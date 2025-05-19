@@ -90,3 +90,105 @@ export async function fetchAppointmentTypes(auth: AcuityAuthProps, includeDelete
     }
     return [];
 }
+
+export async function fetchCalendars(auth: AcuityAuthProps) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API_URL}/calendars`,
+        headers: {
+            Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+        },
+    };
+    const response = await httpClient.sendRequest<Array<{ id: number; name: string }>>(request);
+
+    if (Array.isArray(response.body)) {
+        return response.body.map(calendar => ({ label: calendar.name, value: calendar.id }));
+    }
+    return [];
+}
+
+export async function fetchFormFields(auth: AcuityAuthProps) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API_URL}/forms`,
+        headers: {
+            Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+        },
+    };
+    const response = await httpClient.sendRequest<Array<{ id: number; name: string; fields: Array<{ id: number; name: string }> }>>(request);
+
+    if (Array.isArray(response.body)) {
+        const formFields: Array<{ label: string; value: number }> = [];
+        response.body.forEach(form => {
+            if (Array.isArray(form.fields)) {
+                form.fields.forEach(field => {
+                    formFields.push({ label: `${form.name} - ${field.name}`, value: field.id });
+                });
+            }
+        });
+        return formFields;
+    }
+    return [];
+}
+
+export async function fetchAddons(auth: AcuityAuthProps, appointmentTypeId?: number) {
+    // First, fetch all addons
+    const allAddonsRequest: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API_URL}/appointment-addons`,
+        headers: {
+            Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+        },
+    };
+    const allAddonsResponse = await httpClient.sendRequest<Array<{ id: number; name: string }>>(allAddonsRequest);
+
+    if (!Array.isArray(allAddonsResponse.body)) {
+        return [];
+    }
+
+    let compatibleAddonIds: number[] | null = null;
+
+    // If appointmentTypeId is provided, fetch the specific appointment type to get its compatible addonIDs
+    if (appointmentTypeId) {
+        const appointmentTypeRequest: HttpRequest = {
+            method: HttpMethod.GET,
+            url: `${API_URL}/appointment-types/${appointmentTypeId}`,
+            headers: {
+                Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+            },
+        };
+        try {
+            const appointmentTypeResponse = await httpClient.sendRequest<{ addonIDs: number[] }>(appointmentTypeRequest);
+            if (appointmentTypeResponse.body && Array.isArray(appointmentTypeResponse.body.addonIDs)) {
+                compatibleAddonIds = appointmentTypeResponse.body.addonIDs;
+            }
+        } catch (e) {
+            // Log error or handle if type not found, but still proceed with all addons if necessary
+            console.warn(`Could not fetch compatible addons for appointment type ${appointmentTypeId}, returning all addons. Error: ${e}`)
+        }
+    }
+
+    const allAddons = allAddonsResponse.body.map(addon => ({ label: addon.name, value: addon.id }));
+
+    if (compatibleAddonIds) {
+        return allAddons.filter(addon => compatibleAddonIds.includes(addon.value));
+    }
+
+    return allAddons;
+}
+
+export async function fetchLabels(auth: AcuityAuthProps) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${API_URL}/labels`,
+        headers: {
+            Authorization: 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+        },
+    };
+    const response = await httpClient.sendRequest<Array<{ id: number; name: string; color: string }>>(request);
+
+    if (Array.isArray(response.body)) {
+        return response.body.map(label => ({ label: `${label.name} (${label.color})`, value: label.id }));
+    }
+    return [];
+}

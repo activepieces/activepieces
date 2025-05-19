@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps } from '../common';
+import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps, fetchCalendars } from '../common';
 
 interface RescheduleAppointmentProps {
   id: number;
@@ -113,10 +113,27 @@ export const rescheduleAppointment = createAction({
         }
       },
     }),
-    calendarID: Property.Number({
+    calendarID: Property.Dropdown({
       displayName: 'New Calendar ID (Optional)',
       description: 'Numeric ID of the new calendar to reschedule to. If blank, stays on current calendar. Submit 0 to auto-assign.',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        const calendars = await fetchCalendars(auth as AcuityAuthProps);
+        // Add an option for auto-assign (value 0)
+        const autoAssignOption = { label: "Auto-assign Calendar", value: 0 };
+        return {
+          disabled: false,
+          options: [autoAssignOption, ...calendars],
+        };
+      },
     }),
     adminReschedule: Property.Checkbox({
       displayName: 'Reschedule as Admin',

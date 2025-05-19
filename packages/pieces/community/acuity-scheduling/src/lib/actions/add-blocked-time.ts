@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL } from '../common';
+import { API_URL, AcuityAuthProps, fetchCalendars } from '../common';
 
 interface AddBlockedTimeProps {
   start: string; // ISO DateTime string
@@ -26,10 +26,24 @@ export const addBlockedTime = createAction({
       description: 'The end date and time for the block (ISO 8601 format).',
       required: true,
     }),
-    calendarID: Property.Number({
+    calendarID: Property.Dropdown({
       displayName: 'Calendar ID',
       description: 'The numeric ID of the calendar to add this block to.',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchCalendars(auth as AcuityAuthProps),
+        };
+      },
     }),
     notes: Property.LongText({
       displayName: 'Notes',

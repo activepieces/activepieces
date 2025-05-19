@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps } from '../common';
+import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps, fetchCalendars, fetchAddons, fetchLabels } from '../common';
 
 interface CreateAppointmentProps {
   appointmentTypeID: number;
@@ -20,7 +20,7 @@ interface CreateAppointmentProps {
   smsOptIn?: boolean;
   fields?: Array<{ id: number; value: string }>;
   addonIDs?: Array<{ id: number }>;
-  labels?: Array<{ id: number }>;
+  labels?: number;
 }
 
 export const createAppointment = createAction({
@@ -155,10 +155,24 @@ export const createAppointment = createAction({
       required: false,
       defaultValue: false,
     }),
-    calendarID: Property.Number({
+    calendarID: Property.Dropdown({
       displayName: 'Calendar ID',
       description: 'Numeric ID of the calendar. Required if booking as admin. If not provided, Acuity tries to find an available calendar automatically for non-admin bookings.',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchCalendars(auth as AcuityAuthProps),
+        };
+      },
     }),
     noEmail: Property.Checkbox({
       displayName: 'Suppress Confirmation Email/SMS',
@@ -204,28 +218,43 @@ export const createAppointment = createAction({
         }),
       },
     }),
-    addonIDs: Property.Array({
-      displayName: 'Addon IDs',
-      description: 'List of numeric IDs for addons to be included.',
+    addonIDs: Property.MultiSelectDropdown({
+      displayName: 'Addons',
+      description: 'Select addons for the appointment. Addons are filtered by selected Appointment Type if available.',
       required: false,
-      properties: {
-        id: Property.Number({
-          displayName: 'Addon ID',
-          description: 'Numeric ID of the addon.',
-          required: true,
-        }),
+      refreshers: ['appointmentTypeID'],
+      options: async ({ auth, propsValue }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        const currentProps = propsValue as Pick<CreateAppointmentProps, 'appointmentTypeID'>;
+        return {
+          disabled: false,
+          options: await fetchAddons(auth as AcuityAuthProps, currentProps.appointmentTypeID),
+        };
       },
     }),
-    labels: Property.Array({
-      displayName: 'Labels',
-      description: 'List of labels to apply to the appointment. Currently, only one label is accepted by the API.',
+    labels: Property.Dropdown({
+      displayName: 'Label',
+      description: 'Apply a label to the appointment. The API currently supports one label.',
       required: false,
-      properties: {
-        id: Property.Number({
-          displayName: 'Label ID',
-          description: 'Numeric ID of the label.',
-          required: true,
-        }),
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+        return {
+          disabled: false,
+          options: await fetchLabels(auth as AcuityAuthProps),
+        };
       },
     }),
   },
@@ -260,10 +289,10 @@ export const createAppointment = createAction({
       body['fields'] = props.fields;
     }
     if (props.addonIDs && props.addonIDs.length > 0) {
-      body['addonIDs'] = props.addonIDs.map((item: any) => item.id);
+      body['addonIDs'] = props.addonIDs;
     }
-    if (props.labels && props.labels.length > 0) {
-      body['labels'] = props.labels;
+    if (props.labels) {
+      body['labelID'] = props.labels;
     }
 
     if (props.adminBooking && !props.calendarID) {
