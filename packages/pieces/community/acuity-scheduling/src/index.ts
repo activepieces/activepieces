@@ -21,7 +21,7 @@ export const acuityScheduling = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/acuity-scheduling.png',
   auth: acuitySchedulingAuth,
   minimumSupportedRelease: '0.36.1',
-  authors: [],
+  authors: ['onyedikachi-david'],
   actions: [createAppointment, rescheduleAppointment, createClient, updateClient, addBlockedTime, findAppointments, listClients],
   triggers: [appointmentScheduled, appointmentCanceled],
 });
