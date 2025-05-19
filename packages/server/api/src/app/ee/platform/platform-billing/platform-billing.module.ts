@@ -6,12 +6,12 @@ import Stripe from 'stripe'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
+import { projectRepo } from '../../../project/project-service'
 import { BillingEntityType, usageService } from '../platform-usage-service'
 import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { projectRepo } from '../../../project/project-service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
