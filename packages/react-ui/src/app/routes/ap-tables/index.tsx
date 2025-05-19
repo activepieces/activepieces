@@ -183,7 +183,7 @@ const ApTablesPage = () => {
               e.stopPropagation();
               e.preventDefault();
             }}
-            className="flex justify-center"
+            className="flex items-center justify-end -mr-20"
           >
             <ApTableActionsMenu
               table={row.original}

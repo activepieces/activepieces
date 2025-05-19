@@ -231,7 +231,7 @@ const McpServersPage = () => {
               e.stopPropagation();
               e.preventDefault();
             }}
-            className="flex justify-center"
+            className="flex items-center justify-end -mr-8"
           >
             <McpActionsMenu
               mcp={row.original}
