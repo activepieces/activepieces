@@ -5,13 +5,13 @@ import { exaAuth } from '../../index';
 
 export const generateAnswerAction = createAction({
   name: 'generate_answer',
-  displayName: 'Generate Answer (Ask AI)',
-  description: 'Provide direct answers to queries by summarizing results',
+  displayName: 'Ask AI',
+  description: 'Provides direct answers to queries by summarizing results.',
   auth: exaAuth,
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Ask a question to get summarized answers from the web',
+      description: 'Ask a question to get summarized answers from the web.',
       required: true,
     }),
     text: Property.Checkbox({
@@ -22,8 +22,8 @@ export const generateAnswerAction = createAction({
     }),
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'Choose the Exa model to use for the answer',
-      required: false,
+      description: 'Choose the Exa model to use for the answer.',
+      required: true,
       options: {
         options: [
           { label: 'Exa', value: 'exa' },
@@ -44,11 +44,13 @@ export const generateAnswerAction = createAction({
 
     const body: Record<string, unknown> = {
       query,
+      text,
+      model
     };
 
-    if (text !== undefined) body['text'] = text;
-    if (model) body['model'] = model;
 
-    return await makeRequest(apiKey, HttpMethod.POST, '/answer', body);
+    const response =  await makeRequest(apiKey, HttpMethod.POST, '/answer', body);
+
+    return response.answer;
   },
 });

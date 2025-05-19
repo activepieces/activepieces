@@ -6,7 +6,7 @@ import { exaAuth } from '../../index';
 export const getContentsAction = createAction({
   name: 'get_contents',
   displayName: 'Get Contents',
-  description: 'Retrieve clean HTML content from specified URLs',
+  description: 'Retrieve clean HTML content from specified URLs.',
   auth: exaAuth,
   props: {
     urls: Property.Array({
@@ -48,11 +48,6 @@ export const getContentsAction = createAction({
       description: 'Keyword(s) to find specific subpages.',
       required: false,
     }),
-    extras: Property.Json({
-      displayName: 'Extras',
-      description: 'Extra parameters as JSON',
-      required: false,
-    }),
   },
   async run(context) {
     const apiKey = context.auth as string;
@@ -67,10 +62,8 @@ export const getContentsAction = createAction({
     if (context.propsValue.subpages !== undefined) body['subpages'] = context.propsValue.subpages;
     if (context.propsValue.subpageTarget) body['subpageTarget'] = context.propsValue.subpageTarget;
 
-    if (context.propsValue.extras) {
-      Object.assign(body, context.propsValue.extras);
-    }
 
-    return await makeRequest(apiKey, HttpMethod.POST, '/contents', body);
+    const response =  await makeRequest(apiKey, HttpMethod.POST, '/contents', body) as {results:Record<string,any>[]};
+    return response.results;
   },
 });

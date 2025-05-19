@@ -6,62 +6,57 @@ import { exaAuth } from '../../index';
 export const findSimilarLinksAction = createAction({
   name: 'find_similar_links',
   displayName: 'Find Similar Links',
-  description: 'Find pages similar to a given URL',
+  description: 'Find pages similar to a given URL.',
   auth: exaAuth,
   props: {
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'Reference URL to find semantically similar links',
+      description: 'Reference URL to find semantically similar links.',
       required: true,
     }),
     numResults: Property.Number({
       displayName: 'Number of Results',
-      description: 'Number of results to return (max 100)',
+      description: 'Number of results to return (max 100).',
       required: false,
     }),
     includeDomains: Property.Array({
       displayName: 'Include Domains',
-      description: 'List of domains to include in results',
+      description: 'List of domains to include in results.',
       required: false,
     }),
     excludeDomains: Property.Array({
       displayName: 'Exclude Domains',
-      description: 'List of domains to exclude from results',
+      description: 'List of domains to exclude from results.',
       required: false,
     }),
-    startCrawlDate: Property.ShortText({
+    startCrawlDate: Property.DateTime({
       displayName: 'Start Crawl Date (ISO)',
-      description: 'Include links crawled after this date (ISO format)',
+      description: 'Include links crawled after this date (ISO format).',
       required: false,
     }),
-    endCrawlDate: Property.ShortText({
+    endCrawlDate: Property.DateTime({
       displayName: 'End Crawl Date (ISO)',
-      description: 'Include links crawled before this date (ISO format)',
+      description: 'Include links crawled before this date (ISO format).',
       required: false,
     }),
-    startPublishedDate: Property.ShortText({
+    startPublishedDate: Property.DateTime({
       displayName: 'Start Published Date (ISO)',
-      description: 'Only include links published after this date (ISO format)',
+      description: 'Only include links published after this date (ISO format).',
       required: false,
     }),
-    endPublishedDate: Property.ShortText({
+    endPublishedDate: Property.DateTime({
       displayName: 'End Published Date (ISO)',
-      description: 'Only include links published before this date (ISO format)',
+      description: 'Only include links published before this date (ISO format).',
       required: false,
     }),
     includeText: Property.Array({
       displayName: 'Include Text',
-      description: 'Strings that must be present in the webpage text (max 1 string of up to 5 words)',
+      description: 'Strings that must be present in the webpage text (max 1 string of up to 5 words).',
       required: false,
     }),
     excludeText: Property.Array({
       displayName: 'Exclude Text',
-      description: 'Strings that must not be present in the webpage text (max 1 string of up to 5 words)',
-      required: false,
-    }),
-    contents: Property.Json({
-      displayName: 'Contents',
-      description: 'Optional contents object for fine-tuning the request',
+      description: 'Strings that must not be present in the webpage text (max 1 string of up to 5 words).',
       required: false,
     }),
   },
@@ -79,7 +74,6 @@ export const findSimilarLinksAction = createAction({
       endPublishedDate,
       includeText,
       excludeText,
-      contents,
     } = context.propsValue;
 
     const body: Record<string, unknown> = {
@@ -95,8 +89,8 @@ export const findSimilarLinksAction = createAction({
     if (endPublishedDate) body['endPublishedDate'] = endPublishedDate;
     if (includeText) body['includeText'] = includeText;
     if (excludeText) body['excludeText'] = excludeText;
-    if (contents) body['contents'] = contents;
 
-    return await makeRequest(apiKey, HttpMethod.POST, '/findSimilar', body);
+    const response =  await makeRequest(apiKey, HttpMethod.POST, '/findSimilar', body) as  {results:Record<string,any>[]};
+    return response.results;
   },
 });

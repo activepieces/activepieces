@@ -7,7 +7,7 @@ export async function makeRequest(auth: string, method: HttpMethod, path: string
     method,
     url: `${BASE_URL}${path}`,
     headers: {
-      'Authorization': `Bearer ${auth}`,
+      'x-api-key': `${auth}`,
       'Content-Type': 'application/json',
     },
     body,

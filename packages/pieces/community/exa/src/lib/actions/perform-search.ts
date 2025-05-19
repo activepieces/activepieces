@@ -6,12 +6,12 @@ import { exaAuth } from '../../index';
 export const performSearchAction = createAction({
   name: 'perform_search',
   displayName: 'Perform Search',
-  description: 'Search using semantic or keyword search to find web content',
+  description: "Search the web using semantic or keyword-based search.",
   auth: exaAuth,
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Search query to find related articles and data',
+      description: 'Search query to find related articles and data.',
       required: true,
     }),
     type: Property.StaticDropdown({
@@ -61,22 +61,22 @@ export const performSearchAction = createAction({
       description: 'Exclude results from these domains.',
       required: false,
     }),
-    startCrawlDate: Property.ShortText({
+    startCrawlDate: Property.DateTime({
       displayName: 'Start Crawl Date',
       description: 'Only include results crawled after this ISO date.',
       required: false,
     }),
-    endCrawlDate: Property.ShortText({
+    endCrawlDate: Property.DateTime({
       displayName: 'End Crawl Date',
       description: 'Only include results crawled before this ISO date.',
       required: false,
     }),
-    startPublishedDate: Property.ShortText({
+    startPublishedDate: Property.DateTime({
       displayName: 'Start Published Date',
       description: 'Only include results published after this ISO date.',
       required: false,
     }),
-    endPublishedDate: Property.ShortText({
+    endPublishedDate: Property.DateTime({
       displayName: 'End Published Date',
       description: 'Only include results published before this ISO date.',
       required: false,
@@ -91,23 +91,21 @@ export const performSearchAction = createAction({
       description: 'Strings that must not be present in the text of results.',
       required: false,
     }),
-    contents: Property.Object({
-      displayName: 'Contents (Advanced)',
-      description: 'Optional contents object for custom settings.',
-      required: false,
-    }),
   },
   async run(context) {
     const apiKey = context.auth as string;
 
     const body: Record<string, unknown> = {
       query: context.propsValue.query,
+       contents:{
+        text:true
+       }
     };
 
     const optionalProps = [
       'type', 'category', 'numResults', 'includeDomains', 'excludeDomains',
       'startCrawlDate', 'endCrawlDate', 'startPublishedDate', 'endPublishedDate',
-      'includeText', 'excludeText', 'contents',
+      'includeText', 'excludeText',
     ];
 
     for (const prop of optionalProps) {
@@ -117,6 +115,7 @@ export const performSearchAction = createAction({
       }
     }
 
-    return await makeRequest(apiKey, HttpMethod.POST, '/search', body);
+    const response =  await makeRequest(apiKey, HttpMethod.POST, '/search', body) as {results:Record<string,any>[]};
+    return response.results;
   },
 });
