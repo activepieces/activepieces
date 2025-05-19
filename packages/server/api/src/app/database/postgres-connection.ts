@@ -203,7 +203,7 @@ import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746
 import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
-
+import { RenameAiTokensToAiCredit1747642872017 } from './migration/postgres/1747642872017-RenameAiTokensToAiCredit'
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
     if (useSsl === 'true') {
@@ -426,7 +426,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddManualTaskCommentTable1742305104390,
                 ChangeManualTasksCommentsToTodoComments1742433144687,
                 AddMetadataFieldToFlowTemplates1744780800000,
-              
+                RenameAiTokensToAiCredit1747642872017,
             )
             break
         case ApEdition.COMMUNITY:
