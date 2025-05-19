@@ -30,7 +30,6 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
-import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
@@ -45,17 +44,16 @@ import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { adminPlatformModule } from './ee/platform/admin-platform.controller'
-import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
-import { projectMemberModule } from './ee/project-members/project-member.module'
-import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
-import { projectReleaseModule } from './ee/project-release/project-release.module'
-import { projectRoleModule } from './ee/project-role/project-role.module'
+import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { platformBillingModule } from './ee/platform/platform-billing/platform-billing.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
+import { projectMemberModule } from './ee/projects/project-members/project-member.module'
+import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
+import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { todoCommentModule } from './ee/todos/comment/todos-comment.module'
-import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -95,6 +93,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { appSumoModule } from './ee/appsumo/appsumo.module'
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -289,7 +288,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
@@ -320,7 +318,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)

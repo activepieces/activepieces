@@ -6,8 +6,8 @@ import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { BillingUsageType, usageService } from '../platform/platform-usage-service'
+import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
@@ -46,7 +46,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
         { limit: 0.9, templateName: 'quota-90' },
         { limit: 0.5, templateName: 'quota-50' },
     ]
-    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+    const projectPlan = await projectLimitsService(log).getPlanByProjectId(projectId)
     const tasksPerMonth = projectPlan?.tasks
     if (!tasksPerMonth) {
         return

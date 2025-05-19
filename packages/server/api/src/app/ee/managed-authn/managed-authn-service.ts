@@ -22,8 +22,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
-import { projectMemberService } from '../project-members/project-member.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
+import { projectMemberService } from '../projects/project-members/project-member.service'
+import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = (log: FastifyBaseLogger) => ({
@@ -39,7 +39,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens, log)
 
         const user = await getOrCreateUser(externalPrincipal, log)
 
@@ -87,6 +87,7 @@ const updateProjectLimits = async (
     piecesFilterType: PiecesFilterType,
     tasks: number | undefined,
     aiTokens: number | undefined,
+    log: FastifyBaseLogger,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -94,8 +95,8 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-    await projectLimitsService.upsert({
+    const projectPlan = await projectLimitsService(log).getPlanByProjectId(projectId)
+    await projectLimitsService(log).upsert({
         nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
         tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
         aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,

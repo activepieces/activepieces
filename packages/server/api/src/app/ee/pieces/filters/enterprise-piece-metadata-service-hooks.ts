@@ -1,11 +1,12 @@
 import { FilteredPieceBehavior, isNil, PiecesFilterType } from '@activepieces/shared'
+import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
 import {
     defaultPieceHooks,
     PieceMetadataServiceHooks,
 } from '../../../pieces/piece-metadata-service/hooks'
 import { platformService } from '../../../platform/platform.service'
-import { projectLimitsService } from '../../project-plan/project-plan.service'
+import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {
@@ -27,7 +28,7 @@ async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService.getPiecesFilter(projectId)
+    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPiecesFilter(projectId)
 
     const filterPredicate: Record<
     PiecesFilterType,
