@@ -122,7 +122,7 @@ export const webhookService = {
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await projectUsageService(log).checkMetricUsageLimit(flow.projectId, 0, UsageMetric.TASKS, log)
+    const exceededLimit = await projectUsageService.checkMetricUsageLimit(flow.projectId, 0, UsageMetric.TASKS, log)
     if (!exceededLimit) {
         return
     }

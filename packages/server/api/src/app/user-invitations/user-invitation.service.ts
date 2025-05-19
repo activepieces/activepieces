@@ -18,11 +18,6 @@ import { UserInvitationEntity } from './user-invitation.entity'
 const repo = repoFactory(UserInvitationEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
-    async countByProjectId(projectId: string): Promise<number> {
-        return repo().countBy({
-            projectId,
-        })
-    },
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,

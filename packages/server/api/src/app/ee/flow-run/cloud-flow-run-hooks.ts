@@ -29,7 +29,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const { consumedProjectUsage } = await projectUsageService(log).increaseProjectAndPlatformUsage(flowRun.projectId, flowRun.tasks, UsageMetric.TASKS)
+        const { consumedProjectUsage } = await projectUsageService.increaseProjectAndPlatformUsage(flowRun.projectId, flowRun.tasks, UsageMetric.TASKS)
 
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,

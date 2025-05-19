@@ -31,7 +31,6 @@ export const ProjectUsage = Type.Object({
     tables: Type.Optional(Type.Number()),
     mcpServers: Type.Optional(Type.Number()),
     activeFlows: Type.Optional(Type.Number()),
-    teamMembers: Type.Number(),
     nextLimitResetDate: Type.String(),
 })
 

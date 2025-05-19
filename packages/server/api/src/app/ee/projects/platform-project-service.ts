@@ -228,7 +228,7 @@ async function enrichProject(
             project.id,
             DEFAULT_FREE_PLAN_LIMIT,
         ),
-        usage: await projectUsageService(log).getProjectUsageForBillingPeriod(
+        usage: await projectUsageService.getProjectUsageForBillingPeriod(
             project.id,
         ),
         analytics: {

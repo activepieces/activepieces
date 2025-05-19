@@ -6,15 +6,13 @@ import { system } from '../../helper/system/system'
 import { getUsage, redisKeyGenerator } from '../../helper/usage'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
-import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 const edition = system.getEdition()
 
-export const projectUsageService = (log: FastifyBaseLogger) => ({
+export const projectUsageService = {
     async getProjectUsageForBillingPeriod(projectId: string): Promise<ProjectUsage> {
         const startBillingPeriod = getCurrentBillingPeriodStart()
 
@@ -24,14 +22,9 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
         const mcpServers = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.MCP_SERVERS)
         const activeFlows = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.ACTIVE_FLOWS)
 
-        const projectMembers = await projectMemberService(log).countTeamMembers(projectId)
-        const projectInvitations = await userInvitationsService(log).countByProjectId(projectId)
-        const teamMembers = projectMembers + projectInvitations
-
         return {
             tasks,
             aiCredit,
-            teamMembers,
             tables,
             mcpServers,
             activeFlows,
@@ -71,7 +64,7 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
 
             const platformId = await projectService.getPlatformId(projectId)
 
-            const { consumedProjectUsage, consumedPlatformUsage } = await projectUsageService(log).increaseProjectAndPlatformUsage(projectId, incrementBy, usageMetric)
+            const { consumedProjectUsage, consumedPlatformUsage } = await projectUsageService.increaseProjectAndPlatformUsage(projectId, incrementBy, usageMetric)
 
             const planLimit = usageMetric === UsageMetric.TASKS ? projectPlan.tasks : projectPlan.aiCredit
 
@@ -97,5 +90,5 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
             return false
         }
     },
-})
+}
 

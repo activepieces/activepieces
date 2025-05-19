@@ -186,9 +186,6 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     ): Promise<void> {
         await repo().delete({ projectId, id: invitationId })
     },
-    async countTeamMembers(projectId: ProjectId): Promise<number> {
-        return repo().countBy({ projectId })
-    },
 })
 
 type ListParams = {
