@@ -12,6 +12,7 @@ import { createAppointment } from './lib/actions/create-appointment';
 import { updateClientAction } from './lib/actions/update-client';
 import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
+import { canceledAppointmentTrigger } from './lib/triggers/appointment-canceled';
 
 export const BASE_URL = 'https://acuityscheduling.com/api/v1';
 
@@ -57,7 +58,7 @@ export const acuityscheduling = createPiece({
   auth: acuityschedulingAuth ,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acuityscheduling.png',
-  categories: [PieceCategory.ACCOUNTING],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   authors: [],
   actions: [ addBlockedTimeAction,
     createclientAction,
@@ -67,5 +68,7 @@ export const acuityscheduling = createPiece({
     rescheduleAppointmentAction,
     findAppointmentByClientInfoAction
   ],
-  triggers: [],
+  triggers: [
+    canceledAppointmentTrigger,
+  ],
 });
