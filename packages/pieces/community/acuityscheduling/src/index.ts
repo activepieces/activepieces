@@ -1,11 +1,17 @@
 import {
   createPiece,
   PieceAuth,
-  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import axios from 'axios';
+import { addBlockedTimeAction } from './lib/actions/add-blocked-off-time';
+import { createclientAction } from './lib/actions/create-client';
+import { findClientByNameAction } from './lib/actions/list-clients'; 
+import { createAppointment } from './lib/actions/create-appointment';
+import { updateClientAction } from './lib/actions/update-client';
+import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
+import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
 
 export const BASE_URL = 'https://acuityscheduling.com/api/v1';
 
@@ -53,6 +59,13 @@ export const acuityscheduling = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/acuityscheduling.png',
   categories: [PieceCategory.ACCOUNTING],
   authors: [],
-  actions: [],
+  actions: [ addBlockedTimeAction,
+    createclientAction,
+    findClientByNameAction,
+    createAppointment,
+    updateClientAction,
+    rescheduleAppointmentAction,
+    findAppointmentByClientInfoAction
+  ],
   triggers: [],
 });
