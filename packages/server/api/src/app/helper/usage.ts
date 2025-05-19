@@ -5,19 +5,25 @@ import { system } from './system/system'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
-export async function getUsage(entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageMetric): Promise<number> {
-    if (environment === ApEnvironment.TESTING) {
-        return 0
-    }
 
-    const redisKey = redisKeyGenerator(entityId, entityType, startBillingPeriod, usageType)
-    const redisConnection = getRedisConnection()
 
-    const value = await redisConnection.get(redisKey)
-    return Number(value) || 0
+export const redisMetricHelper = {
+    getUsage: async (entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageMetric): Promise<number> => {
+        if (environment === ApEnvironment.TESTING) {
+            return 0
+        }
+
+        const redisKey = redisMetricHelper.generateRedisKey(entityId, entityType, startBillingPeriod, usageType)
+        const redisConnection = getRedisConnection()
+
+        const value = await redisConnection.get(redisKey)
+        return Number(value) || 0
+    },
+
+
+    generateRedisKey: (entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageMetric): string => {
+        return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`
+    },
+
 }
 
-
-export const redisKeyGenerator = (entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageMetric): string => {
-    return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`
-}

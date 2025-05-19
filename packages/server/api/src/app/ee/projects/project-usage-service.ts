@@ -3,7 +3,7 @@ import { ApEdition, ApEnvironment, getCurrentBillingPeriodEnd, getCurrentBilling
 import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
-import { getUsage, redisKeyGenerator } from '../../helper/usage'
+import { redisMetricHelper } from '../../helper/usage'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
@@ -16,11 +16,11 @@ export const projectUsageService = {
     async getProjectUsageForBillingPeriod(projectId: string): Promise<ProjectUsage> {
         const startBillingPeriod = getCurrentBillingPeriodStart()
 
-        const tasks = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TASKS)
-        const aiCredit = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.AI_CREDIT)
-        const tables = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TABLES)
-        const mcpServers = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.MCP_SERVERS)
-        const activeFlows = await getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.ACTIVE_FLOWS)
+        const tasks = await redisMetricHelper.getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TASKS)
+        const aiCredit = await redisMetricHelper.getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.AI_CREDIT)
+        const tables = await redisMetricHelper.getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.TABLES)
+        const mcpServers = await redisMetricHelper.getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.MCP_SERVERS)
+        const activeFlows = await redisMetricHelper.getUsage(projectId, UsageEntityType.PROJECT, startBillingPeriod, UsageMetric.ACTIVE_FLOWS)
 
         return {
             tasks,
@@ -40,11 +40,11 @@ export const projectUsageService = {
         const redisConnection = getRedisConnection()
         const startBillingPeriod = getCurrentBillingPeriodStart()
 
-        const projectRedisKey = redisKeyGenerator(projectId, UsageEntityType.PROJECT, startBillingPeriod, usageMetric)
+        const projectRedisKey = redisMetricHelper.generateRedisKey(projectId, UsageEntityType.PROJECT, startBillingPeriod, usageMetric)
         const consumedProjectUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
 
         const platformId = await projectService.getPlatformId(projectId)
-        const platformRedisKey = redisKeyGenerator(platformId, UsageEntityType.PLATFORM, startBillingPeriod, usageMetric)
+        const platformRedisKey = redisMetricHelper.generateRedisKey(platformId, UsageEntityType.PLATFORM, startBillingPeriod, usageMetric)
         const consumedPlatformUsage = await redisConnection.incrby(platformRedisKey, incrementBy)
 
         return { consumedProjectUsage, consumedPlatformUsage }
