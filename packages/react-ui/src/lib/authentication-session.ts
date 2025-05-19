@@ -4,11 +4,29 @@ import { jwtDecode } from 'jwt-decode';
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
-
 const tokenKey = 'token';
+class ApStorage {
+  private static instance:Storage;
+  private constructor(value:Storage) {
+    ApStorage.instance = value;
+  }
+  static getInstance() {
+    if(!ApStorage.instance) {
+      ApStorage.instance = window.localStorage;
+    }
+    return ApStorage.instance;
+  }
+  static setInstanceToSessionStorage() {
+    ApStorage.instance = window.sessionStorage;
+  }
+}
+
 export const authenticationSession = {
-  saveResponse(response: AuthenticationResponse) {
-    localStorage.setItem(tokenKey, response.token);
+  saveResponse(response: AuthenticationResponse,isEmbedding:boolean) {
+    if(isEmbedding) {
+      ApStorage.setInstanceToSessionStorage();
+    }
+    ApStorage.getInstance().setItem(tokenKey, response.token);
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -26,7 +44,7 @@ export const authenticationSession = {
     }
   },
   getToken(): string | null {
-    return localStorage.getItem(tokenKey) ?? null;
+    return ApStorage.getInstance().getItem(tokenKey) ?? null;
   },
 
   getProjectId(): string | null {
@@ -67,22 +85,22 @@ export const authenticationSession = {
     const result = await authenticationApi.switchPlatform({
       platformId,
     });
-    localStorage.setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     window.location.href = '/';
   },
-  async switchToSession(projectId: string) {
+  async switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
-    localStorage.setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
     return !!this.getToken();
   },
   clearSession() {
-    localStorage.removeItem(tokenKey);
+    ApStorage.getInstance().removeItem(tokenKey);
   },
   logOut() {
     this.clearSession();
