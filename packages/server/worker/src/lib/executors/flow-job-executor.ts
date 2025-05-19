@@ -9,15 +9,12 @@ type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
-    let flowRun: FlowRun | undefined = undefined
-    const shouldFetchLogs = jobData.executionType === ExecutionType.RESUME || (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1)
-    if (shouldFetchLogs) {
-        flowRun = await engineApiService(engineToken, log).getRun({
-            runId: jobData.runId,
-        })
-    }
+
     switch (jobData.executionType) {
-        case ExecutionType.BEGIN:
+        case ExecutionType.BEGIN:{
+            const flowRun =  (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken, log).getRun({
+                runId: jobData.runId,
+            }) : undefined
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
@@ -26,7 +23,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 executionState: {
-                    steps: flowRun ? flowRun.steps : {},
+                    steps: !isNil(flowRun) ? flowRun.steps : {},
                 },
                 tasks: flowRun?.tasks ?? 0,
                 formatPayload: !isNil(jobData.synchronousHandlerId),
@@ -34,7 +31,12 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
             }
+        }
         case ExecutionType.RESUME: {
+
+            const flowRun = await engineApiService(engineToken, log).getRun({
+                runId: jobData.runId,
+            })
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
