@@ -2,6 +2,7 @@ import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, reject
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
+import { engineRunner } from './engine'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
@@ -42,6 +43,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async close(): Promise<void> {
         closed = true
         clearTimeout(heartbeatInterval)
+        await engineRunner(log).shutdownAllWorkers()
     },
 })
 
