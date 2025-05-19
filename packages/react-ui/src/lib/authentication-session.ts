@@ -3,23 +3,9 @@ import { jwtDecode } from 'jwt-decode';
 
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
+import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
-class ApStorage {
-  private static instance: Storage;
-  private constructor(value: Storage) {
-    ApStorage.instance = value;
-  }
-  static getInstance() {
-    if (!ApStorage.instance) {
-      ApStorage.instance = window.localStorage;
-    }
-    return ApStorage.instance;
-  }
-  static setInstanceToSessionStorage() {
-    ApStorage.instance = window.sessionStorage;
-  }
-}
 
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
