@@ -1,6 +1,5 @@
 import {
     ApSubscriptionStatus,
-    DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
@@ -224,9 +223,8 @@ async function enrichProject(
 
     return {
         ...project,
-        plan: await projectLimitsService(log).getOrCreateDefaultPlan(
+        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
-            DEFAULT_FREE_PLAN_LIMIT,
         ),
         usage: await usageService(log).getUsageForBillingPeriod(
             project.id,

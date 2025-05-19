@@ -5,9 +5,7 @@ import Stripe from 'stripe'
 
 import { repoFactory } from '../../../core/db/repo-factory'
 import { platformService } from '../../../platform/platform.service'
-import { projectRepo } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { PlatformBillingEntity } from './platform-billing.entity'
 import { stripeHelper } from './stripe-helper'
 
@@ -22,9 +20,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
-            const newPlatformBilling = await createInitialBilling(platformId, log)
-            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit, log)
-            return newPlatformBilling
+            return createInitialBilling(platformId, log)
         }
         return platformBilling
     },
@@ -41,7 +37,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await updateAllProjectsLimits(params.platformId, params.tasksLimit, log)
+
         return platformBillingRepo().save({
             tasksLimit: params.tasksLimit,
             id: platformBilling.id,
@@ -81,21 +77,4 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
         stripeCustomerId,
     })
-}
-
-async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined, log: FastifyBaseLogger) {
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (platform.manageProjectsEnabled) {
-        return
-    }
-    const projects = await projectRepo().find({
-        where: {
-            platformId,
-        },
-    })
-    for (const project of projects) {
-        await projectLimitsService(log).upsert({
-            tasks: tasksLimit,
-        }, project.id)
-    }
 }

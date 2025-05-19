@@ -1,5 +1,6 @@
 import { createHash } from 'crypto'
 import {
+    DEFAULT_EMBEDDING_LIMIT,
     DEFAULT_PLATFORM_LIMIT,
 } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
@@ -95,11 +96,10 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const projectPlan = await projectLimitsService(log).getPlanByProjectId(projectId)
     await projectLimitsService(log).upsert({
-        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
-        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
-        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
+        nickname: DEFAULT_PLATFORM_LIMIT.nickname,
+        tasks: tasks ?? DEFAULT_EMBEDDING_LIMIT.tasks,
+        aiTokens: aiTokens ?? DEFAULT_EMBEDDING_LIMIT.aiTokens,
         pieces,
         piecesFilterType,
     }, projectId)

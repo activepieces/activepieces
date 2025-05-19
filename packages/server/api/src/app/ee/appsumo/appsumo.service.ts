@@ -6,7 +6,6 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
 import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
-import { projectLimitsService } from '../projects/project-plan/project-plan.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
@@ -107,14 +106,12 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 await platformBillingService(log).getOrCreateForPlatform(project.platformId)
 
                 if (action === 'refund') {
-                    await projectLimitsService(log).upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
                     await platformBillingService(log).update({
                         platformId: project.platformId,
                         tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
                     })
                 }
                 else {
-                    await projectLimitsService(log).upsert(appSumoPlan, project.id)
                     await platformBillingService(log).update({
                         platformId: project.platformId,
                         tasksLimit: appSumoPlan.tasks,

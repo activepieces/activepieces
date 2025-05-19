@@ -37,11 +37,11 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 
-import { ShowPoweredBy } from '../../components/show-powered-by';
-import { platformHooks } from '../../hooks/platform-hooks';
+import { ShowPoweredBy } from '../../../components/show-powered-by';
+import { platformHooks } from '../../../hooks/platform-hooks';
 
-import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
-import { HelpAndFeedback } from './help-and-feedback';
+import { ApDashboardSidebarHeader } from '../ap-dashboard-sidebar-header';
+import { HelpAndFeedback } from '../help-and-feedback';
 import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';

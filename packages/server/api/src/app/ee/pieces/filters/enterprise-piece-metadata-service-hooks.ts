@@ -28,7 +28,7 @@ async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPiecesFilter(projectId)
+    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPlanWithPlatformLimits(projectId)
 
     const filterPredicate: Record<
     PiecesFilterType,

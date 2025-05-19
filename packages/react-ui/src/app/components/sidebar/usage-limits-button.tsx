@@ -8,7 +8,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
-import { FlagGuard } from './flag-guard';
+import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: string) => {
   const now = dayjs();
@@ -30,13 +30,9 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 };
 
 const UsageLimitsButton = React.memo(() => {
-  const { project, refetch } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
 
-  useEffect(() => {
-    return () => {
-      refetch();
-    };
-  }, [refetch]);
+
   //for ce edition, we don't have plan and usage
   if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
     return null;
