@@ -133,6 +133,9 @@
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],
+      "@activepieces/piece-campaign-monitor": [
+        "packages/pieces/community/campaign-monitor/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
@@ -242,6 +245,7 @@
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
+      "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -455,6 +459,9 @@
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
       ],
+      "@activepieces/piece-manychat": [
+        "packages/pieces/community/manychat/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
@@ -550,6 +557,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf-co": [
+        "packages/pieces/community/pdf-co/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
