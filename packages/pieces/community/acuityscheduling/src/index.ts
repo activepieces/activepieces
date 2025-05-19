@@ -15,7 +15,7 @@ import { findAppointmentByClientInfoAction } from './lib/actions/find-appointmen
 import { canceledAppointmentTrigger } from './lib/triggers/appointment-canceled';
 import { updatedScheduleTrigger } from './lib/triggers/appointment-scheduled';
 
-export const BASE_URL = 'https://acuityscheduling.com/api/v1';
+export const BASE_URL = 'https://acuityscheduling.com/api/v1/appointments';
 
 export const acuityschedulingAuth = PieceAuth.CustomAuth({
  
@@ -64,6 +64,7 @@ export function createClient(auth: { userId: string, apiKey: string }) {
       password: auth.apiKey,
     },
     headers: {
+      'Authorization': `Bearer ${auth.apiKey && auth.userId}`,
       'Content-Type': 'application/json',
     },
   });
