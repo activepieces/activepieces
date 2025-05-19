@@ -8,7 +8,6 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
-import { platformUsageService } from '../platform-billing/platform-usage-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
@@ -39,10 +38,10 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
             nextLimitResetDate: getCurrentBillingPeriodEnd(),
         }
     },
-    async  increaseProjectUsage(projectId: string, incrementBy: number, usageMetric: UsageMetric): Promise<number> {
+    async  increaseProjectAndPlatformUsage(projectId: string, incrementBy: number, usageMetric: UsageMetric): Promise<{ consumedProjectUsage: number, consumedPlatformUsage: number }> {
 
         if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
-            return 0
+            return { consumedProjectUsage: 0, consumedPlatformUsage: 0 }
         }
 
         const redisConnection = getRedisConnection()
@@ -51,8 +50,11 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
         const projectRedisKey = redisKeyGenerator(projectId, UsageEntityType.PROJECT, startBillingPeriod, usageMetric)
         const consumedProjectUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
 
+        const platformId = await projectService.getPlatformId(projectId)
+        const platformRedisKey = redisKeyGenerator(platformId, UsageEntityType.PLATFORM, startBillingPeriod, usageMetric)
+        const consumedPlatformUsage = await redisConnection.incrby(platformRedisKey, incrementBy)
 
-        return consumedProjectUsage
+        return { consumedProjectUsage, consumedPlatformUsage }
 
     },
     async checkMetricUsageLimit( projectId: string, incrementBy: number, usageMetric: UsageMetric, log: FastifyBaseLogger ): Promise<boolean> {
@@ -69,8 +71,7 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
 
             const platformId = await projectService.getPlatformId(projectId)
 
-            const consumedPlatformUsage = await platformUsageService.increasePlatformUsage(platformId, incrementBy, usageMetric)
-            const consumedProjectUsage = await projectUsageService(log).increaseProjectUsage(projectId, incrementBy, usageMetric)
+            const { consumedProjectUsage, consumedPlatformUsage } = await projectUsageService(log).increaseProjectAndPlatformUsage(projectId, incrementBy, usageMetric)
 
             const planLimit = usageMetric === UsageMetric.TASKS ? projectPlan.tasks : projectPlan.aiCredit
 

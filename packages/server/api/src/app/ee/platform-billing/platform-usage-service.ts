@@ -1,11 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, getCurrentBillingPeriodStart, PlatformUsageMetrics, UsageEntityType, UsageMetric  } from '@activepieces/shared'
-import { getRedisConnection } from '../../database/redis-connection'
-import { system } from '../../helper/system/system'
-import { getUsage, redisKeyGenerator } from '../../helper/usage'
-
-const environment = system.get(AppSystemProp.ENVIRONMENT)
-const edition = system.getEdition()
+import { getCurrentBillingPeriodStart, PlatformUsageMetrics, UsageEntityType, UsageMetric  } from '@activepieces/shared'
+import { getUsage } from '../../helper/usage'
 
 export const platformUsageService = {
 
@@ -25,21 +19,6 @@ export const platformUsageService = {
             mcpServers,
             activeFlows,
         }
-    },
-
-    async increasePlatformUsage( platformId: string, incrementBy: number, usageMetric: UsageMetric ): Promise<number> {
-
-        if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
-            return 0
-        }
-
-        const redisConnection = getRedisConnection()
-        const startBillingPeriod = getCurrentBillingPeriodStart()
-
-        const platformRedisKey = redisKeyGenerator(platformId, UsageEntityType.PLATFORM, startBillingPeriod, usageMetric)
-        const consumedPlatformUsage = await redisConnection.incrby(platformRedisKey, incrementBy)
-
-        return consumedPlatformUsage
     },
 }
 

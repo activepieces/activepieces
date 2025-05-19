@@ -4,10 +4,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
-import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { platformUsageService } from '../platform-billing/platform-usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { projectUsageService } from '../projects/project-usage-service'
 
@@ -31,10 +29,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const consumedProjectUsage = await projectUsageService(log).increaseProjectUsage(flowRun.projectId, flowRun.tasks, UsageMetric.TASKS)
-
-        const platformId = await projectService.getPlatformId(flowRun.projectId)
-        await platformUsageService.increasePlatformUsage(platformId, flowRun.tasks, UsageMetric.TASKS)
+        const { consumedProjectUsage } = await projectUsageService(log).increaseProjectAndPlatformUsage(flowRun.projectId, flowRun.tasks, UsageMetric.TASKS)
 
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,

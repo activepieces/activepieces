@@ -5,7 +5,6 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformUsageService } from '../ee/platform-billing/platform-usage-service'
 import { projectUsageService } from '../ee/projects/project-usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
@@ -53,8 +52,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await platformUsageService.increasePlatformUsage(platformId, 1, UsageMetric.AI_CREDIT)
-            await projectUsageService(request.log).increaseProjectUsage(projectId, 1, UsageMetric.AI_CREDIT)
+            await projectUsageService(request.log).increaseProjectAndPlatformUsage(projectId, 1, UsageMetric.AI_CREDIT)
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,
