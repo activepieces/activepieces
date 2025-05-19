@@ -6,7 +6,6 @@ import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscribe
 import { findSubscriberAction } from './lib/actions/find-subscriber';
 import { newSubscriberAddedTrigger } from './lib/triggers/new-subscriber-added';
 import { subscriberUnsubscribedTrigger } from './lib/triggers/subscriber-unsubscribed';
-import { newListTrigger } from './lib/triggers/new-list';
 import { newClientTrigger } from './lib/triggers/new-client';
 
 const markdownDescription = `
@@ -25,9 +24,9 @@ export const campaignMonitorAuth = PieceAuth.SecretText({
 
 export const campaignMonitor = createPiece({
     displayName: 'Campaign Monitor',
-    description: 'Email marketing platform for delivering exceptional email campaigns',
+    description: 'Email marketing platform for delivering exceptional email campaigns.',
     logoUrl: 'https://cdn.activepieces.com/pieces/campaign-monitor.png',
-    authors: ['AnkitSharmaOnGithub'],
+    authors: ['AnkitSharmaOnGithub','kishanprmr'],
     auth: campaignMonitorAuth,
     actions: [
         addSubscriberToListAction,
@@ -38,7 +37,6 @@ export const campaignMonitor = createPiece({
     triggers: [
         newSubscriberAddedTrigger,
         subscriberUnsubscribedTrigger,
-        newListTrigger,
         newClientTrigger
     ],
     categories: [PieceCategory.MARKETING],

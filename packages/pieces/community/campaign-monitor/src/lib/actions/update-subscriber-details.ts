@@ -2,84 +2,104 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../../index';
-
-interface CustomField {
-    key: string;
-    value: string;
-}
+import { clientId, customFields, listId } from '../common/props';
+import { HttpStatusCode } from 'axios';
 
 export const updateSubscriberDetailsAction = createAction({
-    auth: campaignMonitorAuth,
-    name: 'update_subscriber_details',
-    displayName: 'Update Subscriber Details',
-    description: 'Update an existing subscriber in a list',
-    props: {
-        listId: Property.ShortText({
-            displayName: 'List ID',
-            description: 'The ID of the list containing the subscriber',
-            required: true,
-        }),
-        email: Property.ShortText({
-            displayName: 'Email Address',
-            description: 'The email address of the existing subscriber',
-            required: true,
-        }),
-        name: Property.ShortText({
-            displayName: 'Name',
-            description: 'The updated name of the subscriber',
-            required: false,
-        }),
-        customFields: Property.Array({
-            displayName: 'Custom Fields',
-            description: 'Custom fields to update for the subscriber',
-            required: false,
-            properties: {
-                key: Property.ShortText({
-                    displayName: 'Field Key',
-                    required: true,
-                }),
-                value: Property.ShortText({
-                    displayName: 'Field Value',
-                    required: true,
-                }),
-            },
-        }),
-        consentToTrack: Property.StaticDropdown({
-            displayName: 'Consent to Track',
-            description: 'Whether the subscriber has consented to tracking',
-            required: true,
-            defaultValue: 'Yes',
-            options: {
-                options: [
-                    { label: 'Yes', value: 'Yes' },
-                    { label: 'No', value: 'No' },
-                    { label: 'Unchanged', value: 'Unchanged' },
-                ]
-            }
-        }),
-    },
-    async run({ propsValue, auth }) {
-        const { listId, email, name, customFields, consentToTrack } = propsValue;
+  auth: campaignMonitorAuth,
+  name: 'update_subscriber_details',
+  displayName: 'Update Subscriber',
+  description: 'Update an existing subscriber in a list.',
+  props: {
+    clientId: clientId,
+    listId: listId,
+    email: Property.ShortText({
+      displayName: 'Email Address',
+      required: true,
+    }),
+    name: Property.ShortText({
+      displayName: 'Name',
+      required: false,
+    }),
+    phone: Property.ShortText({
+      displayName: 'Phone',
+      required: false,
+    }),
+    consentToTrack: Property.StaticDropdown({
+      displayName: 'Consent to Track',
+      description: 'Whether the subscriber has consented to tracking.',
+      required: false,
+      defaultValue: 'Yes',
+      options: {
+        options: [
+          { label: 'Yes', value: 'Yes' },
+          { label: 'No', value: 'No' },
+          { label: 'Unchanged', value: 'Unchanged' },
+        ],
+      },
+    }),
+    consentToSendSms: Property.StaticDropdown({
+      displayName: 'Consent to Send SMS',
+      required: false,
+      description: 'Whether the subscriber has consented to send SMS.',
+      defaultValue: 'Unchanged',
+      options: {
+        options: [
+          { label: 'Yes', value: 'Yes' },
+          { label: 'No', value: 'No' },
+          { label: 'Unchanged', value: 'Unchanged' },
+        ],
+      },
+    }),
+    resubscribe: Property.Checkbox({
+      displayName: 'Resubscribe',
+      description:
+        'If true, the subscriber will be resubscribed if they previously unsubscribed.',
+      required: false,
+      defaultValue: false,
+    }),
+    fields:customFields,
+  },
+  async run({ propsValue, auth }) {
+    const {
+      listId,
+      email,
+      name,
+      consentToSendSms,
+      phone,
+      resubscribe,
+      consentToTrack,
+      fields
+    } = propsValue;
 
-        const formattedCustomFields = (customFields as CustomField[] | undefined)?.map(field => ({
-            Key: field.key,
-            Value: field.value,
-        })) || [];
+    const payload = {
+      MobileNumber: phone,
+      Name: name,
+      ConsentToTrack: consentToTrack,
+      ConsentToSendSms: consentToSendSms,
+      Resubscribe: resubscribe ?? true,
+        CustomFields: Object.entries(fields).flatMap(([key, value]) =>
+    Array.isArray(value)
+      ? value.map((v) => ({ Key: key, Value: v }))
+      : [{ Key: key, Value: value }]
+  ),
+    };
 
-        const payload = {
-            EmailAddress: email,
-            Name: name || '',
-            CustomFields: formattedCustomFields,
-            ConsentToTrack: consentToTrack,
-        };
+    const response = await makeRequest(
+      { apiKey: auth as string },
+      HttpMethod.PUT,
+      `/subscribers/${listId}.json?email=${encodeURIComponent(email)}`,
+      payload
+    );
 
-        const response = await makeRequest(
-            { apiKey: auth as string },
-            HttpMethod.PUT,
-            `/subscribers/${listId}.json?email=${encodeURIComponent(email)}`,
-            payload
-        );
-
-        return response;
-    },
+    if (response.status === HttpStatusCode.Ok) {
+      return {
+        success: true,
+      };
+    }
+    return {
+      success: false,
+      error: response.body,
+    };
+  },
 });

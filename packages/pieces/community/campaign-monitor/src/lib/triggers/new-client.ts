@@ -4,60 +4,76 @@ import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../../index';
 
 export const newClientTrigger = createTrigger({
-    auth: campaignMonitorAuth,
-    name: 'new_client',
-    displayName: 'New Client',
-    description: 'Triggered when a new client is added to Campaign Monitor',
-    props: {},
-    type: TriggerStrategy.POLLING,
-    sampleData: {
-        "ClientID": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
-        "Name": "New Client"
-    },
-    async onEnable(context) {
-        // Store the current timestamp to use as a starting point
-        await context.store.put('last_clients_check_time', { timestamp: new Date().toISOString() });
+  auth: campaignMonitorAuth,
+  name: 'new_client',
+  displayName: 'New Client',
+  description: 'Triggered when a new client is added to Campaign Monitor.',
+  props: {},
+  type: TriggerStrategy.POLLING,
+  sampleData: {
+    ClientID: 'xyz',
+    Name: 'New Client',
+  },
+  async onEnable(context) {
+    // Store the list of existing clients
+    const response = await makeRequest(
+      { apiKey: context.auth as string },
+      HttpMethod.GET,
+      '/clients.json'
+    );
 
-        // Store the list of existing clients
-        const clients = await makeRequest(
-            { apiKey: context.auth as string },
-            HttpMethod.GET,
-            '/clients.json'
-        ) as Array<{ ClientID: string, Name: string }>;
+    const clients = response.body as Array<{ ClientID: string; Name: string }>;
 
-        await context.store.put('existing_clients', { clients: clients.map(c => c.ClientID) });
-    },
-    async onDisable(context) {
-        // No cleanup needed for polling trigger
-    },
-    async run(context) {
-        const currentTime = new Date().toISOString();
+    await context.store.put('existing_clients', {
+      clients: clients.map((c) => c.ClientID),
+    });
+  },
+  async onDisable(context) {
+    // No cleanup needed for polling trigger
+    await context.store.delete('existing_clients');
+  },
+  async test(context) {
+    const response = await makeRequest(
+      { apiKey: context.auth as string },
+      HttpMethod.GET,
+      '/clients.json'
+    );
 
-        // Get stored list of clients
-        const storedClients = await context.store.get<{ clients: string[] }>('existing_clients');
-        const existingClientIds = storedClients?.clients || [];
+    return response.body;
+  },
+  async run(context) {
+    // Get stored list of clients
+    const storedClients = await context.store.get<{ clients: string[] }>(
+      'existing_clients'
+    );
+    const existingClientIds = storedClients?.clients || [];
 
-        // Get all clients
-        const allClients = await makeRequest(
-            { apiKey: context.auth as string },
-            HttpMethod.GET,
-            '/clients.json'
-        ) as Array<{ ClientID: string, Name: string }>;
+    // Get all clients
+    const response = await makeRequest(
+      { apiKey: context.auth as string },
+      HttpMethod.GET,
+      '/clients.json'
+    );
 
-        // Find new clients
-        const newClients = allClients.filter(client =>
-            !existingClientIds.includes(client.ClientID)
-        );
+    const allClients = response.body as Array<{
+      ClientID: string;
+      Name: string;
+    }>;
 
-        // Update stored client list
-        await context.store.put('existing_clients', {
-            clients: allClients.map(c => c.ClientID)
-        });
+    // Find new clients
+    const newClients = allClients.filter(
+      (client) => !existingClientIds.includes(client.ClientID)
+    );
 
-        // Update the last check time
-        await context.store.put('last_clients_check_time', { timestamp: currentTime });
+    // Update stored client list
+    const updatedClientIds = Array.from(
+      new Set([...existingClientIds, ...allClients.map((c) => c.ClientID)])
+    );
+    await context.store.put('existing_clients', {
+      clients: updatedClientIds,
+    });
 
-        // Return new clients
-        return newClients;
-    },
+    // Return new clients
+    return newClients;
+  },
 });
