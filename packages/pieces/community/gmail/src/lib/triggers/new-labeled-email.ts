@@ -112,8 +112,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
               );
             }
           }
-        }
-        else if (history.messagesAdded) {
+        } else if (history.messagesAdded) {
           for (const messageAdded of history.messagesAdded) {
             if (
               messageAdded.message?.id &&
