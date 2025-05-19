@@ -10,7 +10,7 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
-import { apId } from '@activepieces/shared';
+
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { isNil, SeekPage } from '@activepieces/shared';
+import { apId, isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
 import {
@@ -124,26 +124,26 @@ export function DataTable<
   const columns =
     actions.length > 0
       ? columnsInitial.concat([
-        {
-          accessorKey: '__actions',
-          header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="" />
-          ),
-          cell: ({ row }) => {
-            return (
-              <div className="flex justify-end gap-4">
-                {actions.map((action, index) => {
-                  return (
-                    <React.Fragment key={index}>
-                      {action(row.original)}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            );
+          {
+            accessorKey: '__actions',
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title="" />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="flex justify-end gap-4">
+                  {actions.map((action, index) => {
+                    return (
+                      <React.Fragment key={index}>
+                        {action(row.original)}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              );
+            },
           },
-        },
-      ])
+        ])
       : columnsInitial;
 
   const columnVisibility = columnsInitial.reduce((acc, column) => {
@@ -295,9 +295,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}
