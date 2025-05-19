@@ -37,7 +37,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async getPlanWithPlatformLimits(projectId: string): Promise<ProjectPlan> {
         const projectPlan = await getOrCreateDefaultPlan(projectId)
         const platformId = await projectService.getPlatformId(projectId)
-        const platformBilling = await getPlatformBillingOnCloud(platformId, log)
+        const platformBilling = await getPlatformBillingOnCloudAndManageIsOff(platformId, log)
         return {
             ...projectPlan,
             tasks: projectPlan.tasks ?? platformBilling?.tasksLimit,
@@ -81,8 +81,12 @@ async function getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
 }
 
 
-async function getPlatformBillingOnCloud(platformId: string, log: FastifyBaseLogger): Promise<PlatformBilling | undefined> {
+async function getPlatformBillingOnCloudAndManageIsOff(platformId: string, log: FastifyBaseLogger): Promise<PlatformBilling | undefined> {
     if (edition !== ApEdition.CLOUD) {
+        return undefined
+    }
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (platform.manageProjectsEnabled) {
         return undefined
     }
     return platformBillingService(log).getOrCreateForPlatform(platformId)
