@@ -1,4 +1,4 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithActions, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -107,7 +107,7 @@ const CreateMcpRequest = {
         }),
         body: CreateMcpRequestBody,
         response: {
-            [StatusCodes.OK]: Type.Union([McpWithPieces, Type.Null()]),
+            [StatusCodes.OK]: Type.Union([McpWithActions, Type.Null()]),
         },
     },
 }
@@ -123,7 +123,7 @@ const GetMcpsRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListMcpsRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(McpWithPieces),
+            [StatusCodes.OK]: SeekPage(McpWithActions),
         },
     },
 }
@@ -142,7 +142,7 @@ export const UpdateMcpRequest = {
         }),
         body: UpdateMcpRequestBody,
         response: {
-            [StatusCodes.OK]: McpWithPieces,
+            [StatusCodes.OK]: McpWithActions,
         },
     },
 }
@@ -160,7 +160,7 @@ const RotateTokenRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: McpWithPieces,
+            [StatusCodes.OK]: McpWithActions,
         },
     },
 }
@@ -178,7 +178,7 @@ const GetMcpRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: McpWithPieces,
+            [StatusCodes.OK]: McpWithActions,
         },
     },
 }

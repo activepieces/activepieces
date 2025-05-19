@@ -1,10 +1,10 @@
-import { Mcp, McpPieceWithConnection } from '@activepieces/shared'
+import { Mcp, McpActionWithConnection } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 
 type McpSchema = Mcp & {
-    pieces: McpPieceWithConnection[]
+    actions: McpActionWithConnection[]
 }
 
 export const McpEntity = new EntitySchema<McpSchema>({
@@ -26,9 +26,9 @@ export const McpEntity = new EntitySchema<McpSchema>({
         },
     ],
     relations: {
-        pieces: {
+        actions: {
             type: 'one-to-many',
-            target: 'mcp_piece',
+            target: 'mcp_action',
             cascade: true,
             onDelete: 'CASCADE',
         },

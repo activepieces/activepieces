@@ -14,10 +14,6 @@ export enum McpPropertyType {
     OBJECT = 'Object',
 }
 
-export enum McpPieceStatus {
-    ENABLED = 'ENABLED',
-    DISABLED = 'DISABLED',
-}
 
 export const McpProperty = Type.Object({
     name: Type.String(),
@@ -30,11 +26,10 @@ export type McpProperty = Static<typeof McpProperty>
 
 
 export const McpPiece = Type.Object({
-    ...BaseModelSchema,
     pieceName: Type.String(),
-    connectionId: Type.Optional(ApId),
+    pieceVersion: Type.String(),
     mcpId: ApId,
-    status: Type.Optional(Type.Enum(McpPieceStatus)),
+    connectionId: Type.Optional(ApId),
 })
 
 export type McpPiece = Static<typeof McpPiece>
@@ -47,6 +42,26 @@ export const McpPieceWithConnection = Type.Composite([
 ])
 
 export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
+
+export const McpAction = Type.Object({
+    ...BaseModelSchema,
+    actionName: Type.String(),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+    connectionId: Type.Optional(ApId),
+    mcpId: ApId,
+})
+
+export type McpAction = Static<typeof McpAction>
+
+export const McpActionWithConnection = Type.Composite([
+    McpAction,
+    Type.Object({
+        connection: Type.Optional(AppConnectionWithoutSensitiveData),
+    }),
+])
+
+export type McpActionWithConnection = Static<typeof McpActionWithConnection>
 
 
 
@@ -67,6 +82,15 @@ export const McpWithPieces = Type.Composite([
 ])
 
 export type McpWithPieces = Static<typeof McpWithPieces>
+
+export const McpWithActions = Type.Composite([
+    Mcp,
+    Type.Object({
+        actions: Type.Array(McpActionWithConnection),
+    }),
+])
+
+export type McpWithActions = Static<typeof McpWithActions>
 
 
 export const McpTrigger = Type.Object({

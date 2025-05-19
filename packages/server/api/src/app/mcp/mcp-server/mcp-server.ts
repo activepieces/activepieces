@@ -1,6 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, isNil, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -15,6 +15,7 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpService } from './mcp-service'
 import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mcp-utils'
+import { mcpActionService } from '../mcp-tools/mcp-action-service'
 
 export async function createMcpServer({
     mcpId,
@@ -27,13 +28,13 @@ export async function createMcpServer({
         version: '1.0.0',
     })
 
-    await addPiecesToServer(server, mcpId, logger)
+    await addActionsToServer(server, mcpId, logger)
     await addFlowsToServer(server, mcpId, logger)
 
     return { server, transport }
 }
 
-async function addPiecesToServer(
+async function addActionsToServer(
     server: McpServer,
     mcpId: string,
     logger: FastifyBaseLogger,
@@ -42,94 +43,96 @@ async function addPiecesToServer(
     const projectId = mcp.projectId
     const platformId = await projectService.getPlatformId(projectId)
 
-    // filter out pieces that are not enabled
-    const enabledPieces = mcp.pieces.filter((piece) => piece.status === McpPieceStatus.ENABLED)
-
-    // Get all pieces with their connections
-    const pieces = await Promise.all(enabledPieces.map(async (piece: McpPieceWithConnection) => {
-        return pieceMetadataService(logger).getOrThrow({
-            name: piece.pieceName,
-            version: undefined,
+    // Get all actions for this MCP
+    const actions = await mcpActionService(logger).listActions(mcpId)
+    
+    // Initialize a set to track unique action names
+    const uniqueActions = new Set<string>()
+    
+    for (const mcpAction of actions) {
+        const actionName = fixSchemaNaming(`${mcpAction.pieceName.split('piece-')[1]}-${mcpAction.actionName}`).slice(0, MAX_TOOL_NAME_LENGTH)
+        if (uniqueActions.has(actionName)) {
+            continue
+        }
+        const piece = await pieceMetadataService(logger).getOrThrow({
+            name: mcpAction.pieceName,
+            version: mcpAction.pieceVersion,
             projectId,
             platformId,
         })
-    }))
 
-    const uniqueActions = new Set<string>()
-    pieces.flatMap(piece => {
-        return Object.values(piece.actions).map(action => {
-            if (uniqueActions.has(action.name)) {
-                return
-            }
-            
-            // Find matching piece in mcp pieces
-            const mcpPiece = mcp.pieces.find(p => p.pieceName === piece.name)
-            const pieceConnectionExternalId = mcpPiece?.connection?.externalId
-            
-            const actionName = fixSchemaNaming(`${piece.name.split('piece-')[1]}-${action.name}`).slice(0, MAX_TOOL_NAME_LENGTH)
-            uniqueActions.add(actionName)
-            
-            server.tool(
-                actionName,
-                action.description,
-                Object.fromEntries(
-                    Object.entries(action.props).filter(([_key, prop]) => 
-                        prop.type !== PropertyType.MARKDOWN,
-                    ).map(([key, prop]) =>
-                        [key, piecePropertyToZod(prop)],
-                    ),
+        const action = piece.actions?.[mcpAction.actionName]
+        if (!action) {
+            logger.warn(`Action ${mcpAction.actionName} not found in piece ${mcpAction.pieceName}@${mcpAction.pieceVersion}`)
+            continue
+        }
+        
+        uniqueActions.add(action.name)
+        
+        // Get connection if available
+        const pieceConnectionExternalId = mcpAction.connection?.externalId
+        
+        // Register the tool with the server
+        server.tool(
+            action.name,
+            action.description,
+            Object.fromEntries(
+                Object.entries(action.props).filter(([_key, prop]) => 
+                    prop.type !== PropertyType.MARKDOWN,
+                ).map(([key, prop]) =>
+                    [key, piecePropertyToZod(prop)],
                 ),
-                async (params) => {
-                    const parsedInputs = {
-                        ...params,
-                        ...Object.fromEntries(
-                            Object.entries(action.props)
-                                .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
-                                .map(([key, prop]) => [key, prop.defaultValue]),
-                        ),
-                        ...(pieceConnectionExternalId ? { auth: `{{connections['${pieceConnectionExternalId}']}}` } : {}),
-                    }
-                    
-                    const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                        jobType: UserInteractionJobType.EXECUTE_TOOL,
-                        actionName: action.name,
-                        pieceName: piece.name,
-                        pieceVersion: piece.version,
-                        packageType: piece.packageType,
-                        pieceType: piece.pieceType,
-                        input: parsedInputs,
-                        projectId,
-                    })
+            ),
+            async (params) => {
+                const parsedInputs = {
+                    ...params,
+                    ...Object.fromEntries(
+                        Object.entries(action.props)
+                            .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
+                            .map(([key, prop]) => [key, prop.defaultValue]),
+                    ),
+                    ...(pieceConnectionExternalId ? { auth: `{{connections['${pieceConnectionExternalId}']}}` } : {}),
+                }
+                
+                const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                    jobType: UserInteractionJobType.EXECUTE_TOOL,
+                    actionName: action.name,
+                    pieceName: piece.name,
+                    pieceVersion: piece.version,
+                    packageType: piece.packageType,
+                    pieceType: piece.pieceType,
+                    input: parsedInputs,
+                    projectId,
+                })
 
-                    await mcpService(logger).trackToolCall({
-                        mcpId,
-                        toolName: action.name,
-                    })
+                await mcpService(logger).trackToolCall({
+                    mcpId,
+                    toolName: action.name,
+                })
 
-                    if (result.status === EngineResponseStatus.OK) {
-                        return {
-                            content: [{
-                                type: 'text',
-                                text: `✅ Successfully executed ${action.displayName}\n\n` +
-                                    `${action.description}\n\n` +
-                                    `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
-                            }],
-                        }
+                if (result.status === EngineResponseStatus.OK) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `✅ Successfully executed ${action.displayName}\n\n` +
+                                `${action.description}\n\n` +
+                                `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                        }],
                     }
-                    else {
-                        return {
-                            content: [{
-                                type: 'text',
-                                text: `❌ Error executing ${action.displayName}\n\n` +
-                                    `${action.description}\n\n` +
-                                    `\`\`\`\n${result.standardError || 'Unknown error occurred'}\n\`\`\``,
-                            }],
-                        }
+                }
+                else {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `❌ Error executing ${action.displayName}\n\n` +
+                                `${action.description}\n\n` +
+                                `\`\`\`\n${result.standardError || 'Unknown error occurred'}\n\`\`\``,
+                        }],
                     }
-                },
-            )
-        })
-    })
+                }
+            },
+        )
+    }
 }
 
 async function addFlowsToServer(
@@ -239,6 +242,7 @@ export type CreateMcpServerRequest = {
     reply: FastifyReply
     logger: FastifyBaseLogger
 }
+
 export type CreateMcpServerResponse = {
     server: McpServer
     transport: SSEServerTransport

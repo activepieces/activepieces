@@ -1,5 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithActions, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ILike } from 'typeorm'
@@ -9,7 +9,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
-import { mcpPieceService } from '../mcp-tools/mcp-piece-service'
+import { mcpActionService } from '../mcp-tools/mcp-action-service'
 
 
 
@@ -17,7 +17,7 @@ const repo = repoFactory(McpEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
 
-    async create({ projectId, name }: CreateParams): Promise<McpWithPieces> {
+    async create({ projectId, name }: CreateParams): Promise<McpWithActions> {
         await this.validateCount({ projectId })
         const mcp = await repo().save({
             id: apId(),
@@ -30,7 +30,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithPieces>> {
+    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithActions>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
@@ -56,17 +56,17 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
 
         const populatedMcpPromises = data.map(async (mcp) => {
-            const mcpWithPieces = await this.getOrThrow({
+            const mcpWithActions = await this.getOrThrow({
                 mcpId: mcp.id,
             })
-            return mcpWithPieces
+            return mcpWithActions
         })
 
         const populatedMcps = await Promise.all(populatedMcpPromises)
         return paginationHelper.createPage(populatedMcps, cursor)
     },
 
-    async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithPieces> {
+    async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithActions> {
         const mcp = await repo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
@@ -77,11 +77,11 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         }
         return {
             ...mcp,
-            pieces: await mcpPieceService(_log).list(mcp.id),
+            actions: await mcpActionService(_log).listActions(mcp.id),
         }
     },
 
-    async getByToken({ token }: { token: string }): Promise<McpWithPieces> {
+    async getByToken({ token }: { token: string }): Promise<McpWithActions> {
         const mcp = await repo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
@@ -92,7 +92,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async update({ mcpId, token, name }: UpdateParams): Promise<McpWithPieces> {
+    async update({ mcpId, token, name }: UpdateParams): Promise<McpWithActions> {
         await repo().update(mcpId, {
             ...spreadIfDefined('token', token),
             ...spreadIfDefined('name', name),

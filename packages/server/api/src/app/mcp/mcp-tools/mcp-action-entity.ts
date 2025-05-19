@@ -1,17 +1,25 @@
-import { AppConnectionWithoutSensitiveData, Mcp, McpPiece, McpPieceStatus } from '@activepieces/shared'
+import { AppConnectionWithoutSensitiveData, Mcp, McpAction } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-type McpPieceSchema = McpPiece & {
+type McpActionSchema = McpAction & {
     connection: AppConnectionWithoutSensitiveData | null
     mcp: Mcp
 }
 
-export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
-    name: 'mcp_piece',
+export const McpActionEntity = new EntitySchema<McpActionSchema>({
+    name: 'mcp_action',
     columns: {
         ...BaseColumnSchemaPart,
+        actionName: {
+            type: String,
+            nullable: false,
+        },
         pieceName: {
+            type: String,
+            nullable: false,
+        },
+        pieceVersion: {
             type: String,
             nullable: false,
         },
@@ -23,36 +31,30 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             ...ApIdSchema,
             nullable: true,
         },
-        status: {
-            type: String,
-            enum: Object.values(McpPieceStatus),
-            default: McpPieceStatus.ENABLED,
-            nullable: false,
-        },
     },
     indices: [
         {
-            name: 'idx_mcp_piece_mcp_id',
+            name: 'idx_mcp_action_mcp_id',
             columns: ['mcpId'],
         },
         {
-            name: 'idx_mcp_piece_connection_id',
+            name: 'idx_mcp_action_connection_id',
             columns: ['connectionId'],
         },
         {
-            name: 'idx_mcp_piece_mcp_id_piece_name',
-            columns: ['mcpId', 'pieceName'],
+            name: 'idx_mcp_action_mcp_id_piece_name_action_name',
+            columns: ['mcpId', 'pieceName', 'actionName'],
             unique: true,
         },
     ],
     relations: {
         connection: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'app_connection',
             joinColumn: {
                 name: 'connectionId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_mcp_piece_connection_id',
+                foreignKeyConstraintName: 'fk_mcp_action_connection_id',
             },
             onDelete: 'SET NULL',
             nullable: true,
@@ -63,7 +65,7 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             joinColumn: {
                 name: 'mcpId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_mcp_piece_mcp_id',
+                foreignKeyConstraintName: 'fk_mcp_action_mcp_id',
             },
             onDelete: 'CASCADE',
             nullable: false,
