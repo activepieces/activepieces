@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../../index';
 import { makeRequest } from '../common/client';
@@ -12,10 +12,43 @@ export const createRecordAction = createAction({
   description: 'Create a new record in Attio (e.g., person, company, or deal)',
   auth: attioAuth,
   props: {
-    object_type: Property.ShortText({
+    object_type: Property.Dropdown({
       displayName: 'Object Type',
-      description: 'The type of record to create (e.g., people, companies, deals)',
+      description: 'The type of record to create',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest(
+            auth as string,
+            HttpMethod.GET,
+            '/objects'
+          );
+
+          return {
+            options: response.data.map((object: any) => {
+              return {
+                label: object.plural_noun,
+                value: object.api_slug,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching object types',
+            options: [],
+          };
+        }
+      },
     }),
     attributes: Property.Object({
       displayName: 'Attributes',

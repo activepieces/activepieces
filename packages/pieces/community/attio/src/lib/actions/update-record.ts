@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../../';
 import { makeRequest } from '../common/client';
@@ -12,10 +12,43 @@ export const updateRecordAction = createAction({
   description: 'Update an existing record in Attio',
   auth: attioAuth,
   props: {
-    object_type: Property.ShortText({
+    object_type: Property.Dropdown({
       displayName: 'Object Type',
-      description: 'The type of record to update (e.g., people, companies, deals)',
+      description: 'The type of record to update',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest(
+            auth as string,
+            HttpMethod.GET,
+            '/objects'
+          );
+
+          return {
+            options: response.data.map((object: any) => {
+              return {
+                label: object.plural_noun,
+                value: object.api_slug,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching object types',
+            options: [],
+          };
+        }
+      },
     }),
     record_id: Property.ShortText({
       displayName: 'Record ID',
