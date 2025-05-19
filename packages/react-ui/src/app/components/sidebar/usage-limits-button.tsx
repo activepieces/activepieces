@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
@@ -31,7 +31,6 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 
 const UsageLimitsButton = React.memo(() => {
   const { project } = projectHooks.useCurrentProject();
-
 
   //for ce edition, we don't have plan and usage
   if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {

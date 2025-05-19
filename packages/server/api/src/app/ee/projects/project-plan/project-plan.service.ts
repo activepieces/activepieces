@@ -116,7 +116,7 @@ async function checkUsageLimit({ projectId, incrementBy, usageType, log }: Check
 
 
 async function limitReachedFromProjectPlan(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
-    const { platform, projectId, usageType, consumedProjectUsage, log } = params
+    const { platform, projectId, usageType, consumedProjectUsage } = params
     if (!platform.manageProjectsEnabled) {
         return false
     }
