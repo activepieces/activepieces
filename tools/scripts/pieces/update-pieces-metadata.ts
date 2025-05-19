@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src';
 import { StatusCodes } from 'http-status-codes';
 import { HttpHeader } from '../../../packages/pieces/community/common/src';
-import { AP_CLOUD_API_BASE, findAllPieces, findNewPieces, pieceMetadataExists } from '../utils/piece-script-utils';
+import { AP_CLOUD_API_BASE, findNewPieces, pieceMetadataExists } from '../utils/piece-script-utils';
 
 assert(process.env['AP_CLOUD_API_KEY'], 'API Key is not defined');
 

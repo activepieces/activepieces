@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/mempool-space/package.json",
         "main": "packages/pieces/community/mempool-space/src/index.ts",
         "assets": [
-          "packages/pieces/community/mempool-space/*.md"
+          "packages/pieces/community/mempool-space/*.md",
+          {
+            "input": "packages/pieces/community/mempool-space/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
