@@ -41,7 +41,7 @@ import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-server/mcp-entity'
-import { McpPieceEntity } from '../mcp/mcp-tools/mcp-piece-entity'
+import { McpActionEntity } from '../mcp/mcp-tools/mcp-action-entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -97,7 +97,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        McpPieceEntity,
+        McpActionEntity,
     ]
 
     switch (edition) {

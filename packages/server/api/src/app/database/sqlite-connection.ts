@@ -106,6 +106,7 @@ import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/174706267
 import { ChangeMcpProjectIdIdxSqlite1747253927254 } from './migration/sqlite/1747253927254-ChangeMcpProjectIdIdxSqlite'
 import { AddMcpNameSqlite1747335288716 } from './migration/sqlite/1747335288716-AddMcpNameSqlite'
 import { AddMcpPieceToMcpFKSqlite1747573993369 } from './migration/sqlite/1747573993369-AddMcpPieceToMcpFKSqlite'
+import { ReplaceMcpPieceByMcpActionSqlite1747678999987 } from './migration/sqlite/1747678999987-ReplaceMcpPieceByMcpActionSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -229,6 +230,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeMcpProjectIdIdxSqlite1747253927254,
         AddMcpNameSqlite1747335288716,
         AddMcpPieceToMcpFKSqlite1747573993369,
+        ReplaceMcpPieceByMcpActionSqlite1747678999987,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

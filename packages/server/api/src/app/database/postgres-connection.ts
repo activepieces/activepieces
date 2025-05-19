@@ -205,6 +205,7 @@ import { AddOrderToFolder1747095861746 } from './migration/postgres/174709586174
 import { ChangeMcpProjectIdIdx1747253720779 } from './migration/postgres/1747253720779-ChangeMcpProjectIdIdx'
 import { AddMcpName1747335239942 } from './migration/postgres/1747335239942-AddMcpName'
 import { AddMcpPieceToMcpFK1747573521560 } from './migration/postgres/1747573521560-AddMcpPieceToMcpFK'
+import { ReplaceMcpPieceByMcpAction1747677222538 } from './migration/postgres/1747677222538-ReplaceMcpPieceByMcpAction'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -347,6 +348,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeMcpProjectIdIdx1747253720779,
         AddMcpName1747335239942,
         AddMcpPieceToMcpFK1747573521560,
+        ReplaceMcpPieceByMcpAction1747677222538,
     ]
 
     const edition = system.getEdition()
