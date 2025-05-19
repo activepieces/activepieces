@@ -13,7 +13,7 @@ const AuthenticatePage = () => {
   useEffect(() => {
     if (response) {
       const decodedResponse = JSON.parse(response);
-      authenticationSession.saveResponse(decodedResponse,false);
+      authenticationSession.saveResponse(decodedResponse, false);
       navigate('/flows');
     }
   }, [response]);

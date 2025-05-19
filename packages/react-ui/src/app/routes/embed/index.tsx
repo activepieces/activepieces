@@ -52,7 +52,7 @@ const EmbedPage = React.memo(() => {
           },
           {
             onSuccess: (data) => {
-              authenticationSession.saveResponse(data,true);
+              authenticationSession.saveResponse(data, true);
               const initialRoute = event.data.data.initialRoute ?? '/';
               setEmbedState({
                 hideSideNav: event.data.data.hideSidebar,

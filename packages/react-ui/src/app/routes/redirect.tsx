@@ -37,7 +37,7 @@ const RedirectPage: React.FC = React.memo(() => {
             providerName,
             code,
           });
-          authenticationSession.saveResponse(data,false);
+          authenticationSession.saveResponse(data, false);
           navigate(from);
         } catch (e) {
           if (

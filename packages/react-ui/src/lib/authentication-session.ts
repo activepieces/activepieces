@@ -6,12 +6,12 @@ import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
 class ApStorage {
-  private static instance:Storage;
-  private constructor(value:Storage) {
+  private static instance: Storage;
+  private constructor(value: Storage) {
     ApStorage.instance = value;
   }
   static getInstance() {
-    if(!ApStorage.instance) {
+    if (!ApStorage.instance) {
       ApStorage.instance = window.localStorage;
     }
     return ApStorage.instance;
@@ -22,8 +22,8 @@ class ApStorage {
 }
 
 export const authenticationSession = {
-  saveResponse(response: AuthenticationResponse,isEmbedding:boolean) {
-    if(isEmbedding) {
+  saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
+    if (isEmbedding) {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
