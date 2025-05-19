@@ -14,13 +14,41 @@ export const generateAnswerAction = createAction({
       description: 'Ask a question to get summarized answers from the web',
       required: true,
     }),
+    text: Property.Checkbox({
+      displayName: 'Include Text Content',
+      description: 'If true, includes full text content from the search results',
+      required: false,
+      defaultValue: false,
+    }),
+    model: Property.StaticDropdown({
+      displayName: 'Model',
+      description: 'Choose the Exa model to use for the answer',
+      required: false,
+      options: {
+        options: [
+          { label: 'Exa', value: 'exa' },
+          { label: 'Exa Pro', value: 'exa-pro' },
+        ],
+      },
+      defaultValue: 'exa',
+    }),
   },
-  async run({ auth, propsValue }) {
-    return await makeRequest(
-      auth as string,
-      HttpMethod.POST,
-      '/ask',
-      { query: propsValue.query }
-    );
+  async run(context) {
+    const apiKey = context.auth as string;
+
+    const {
+      query,
+      text,
+      model,
+    } = context.propsValue;
+
+    const body: Record<string, unknown> = {
+      query,
+    };
+
+    if (text !== undefined) body['text'] = text;
+    if (model) body['model'] = model;
+
+    return await makeRequest(apiKey, HttpMethod.POST, '/answer', body);
   },
 });

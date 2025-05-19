@@ -9,18 +9,68 @@ export const getContentsAction = createAction({
   description: 'Retrieve clean HTML content from specified URLs',
   auth: exaAuth,
   props: {
-    url: Property.ShortText({
-      displayName: 'URL',
-      description: 'Webpage URL to extract content from',
+    urls: Property.Array({
+      displayName: 'URLs',
       required: true,
+      description: 'Array of URLs to crawl',
+    }),
+    text: Property.Checkbox({
+      displayName: 'Return Full Text',
+      description: 'If true, returns full page text. If false, disables text return.',
+      required: false,
+      defaultValue: true,
+    }),
+    livecrawl: Property.StaticDropdown({
+      displayName: 'Livecrawl Option',
+      description: 'Options for livecrawling pages.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Never', value: 'never' },
+          { label: 'Fallback', value: 'fallback' },
+          { label: 'Always', value: 'always' },
+          { label: 'Auto', value: 'auto' },
+        ],
+      },
+    }),
+    livecrawlTimeout: Property.Number({
+      displayName: 'Livecrawl Timeout (ms)',
+      description: 'Timeout for livecrawling in milliseconds.',
+      required: false,
+    }),
+    subpages: Property.Number({
+      displayName: 'Number of Subpages',
+      description: 'Number of subpages to crawl.',
+      required: false,
+    }),
+    subpageTarget: Property.ShortText({
+      displayName: 'Subpage Target',
+      description: 'Keyword(s) to find specific subpages.',
+      required: false,
+    }),
+    extras: Property.Json({
+      displayName: 'Extras',
+      description: 'Extra parameters as JSON',
+      required: false,
     }),
   },
-  async run({ auth, propsValue }) {
-    return await makeRequest(
-      auth as string,
-      HttpMethod.POST,
-      '/contents',
-      { url: propsValue.url }
-    );
+  async run(context) {
+    const apiKey = context.auth as string;
+
+    const body: Record<string, unknown> = {
+      urls: context.propsValue.urls,
+    };
+
+    if (context.propsValue.text !== undefined) body['text'] = context.propsValue.text;
+    if (context.propsValue.livecrawl) body['livecrawl'] = context.propsValue.livecrawl;
+    if (context.propsValue.livecrawlTimeout !== undefined) body['livecrawlTimeout'] = context.propsValue.livecrawlTimeout;
+    if (context.propsValue.subpages !== undefined) body['subpages'] = context.propsValue.subpages;
+    if (context.propsValue.subpageTarget) body['subpageTarget'] = context.propsValue.subpageTarget;
+
+    if (context.propsValue.extras) {
+      Object.assign(body, context.propsValue.extras);
+    }
+
+    return await makeRequest(apiKey, HttpMethod.POST, '/contents', body);
   },
 });
