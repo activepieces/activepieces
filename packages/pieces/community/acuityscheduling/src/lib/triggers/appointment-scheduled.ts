@@ -56,7 +56,7 @@ export const updatedScheduleTrigger = createTrigger({
     // Manual webhook removal
   },
 
-  async test(context) {
+  async test(auth) {
     const response = await httpClient.sendRequest({
       url: `${BASE_URL}/staff/schedule-changes`,
       method: HttpMethod.GET,
@@ -66,7 +66,7 @@ export const updatedScheduleTrigger = createTrigger({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: auth.auth.apiKey && auth.auth.userId,
       },
     });
 
@@ -100,7 +100,7 @@ export const updatedScheduleTrigger = createTrigger({
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.apiKey && context.auth.userId,
       },
     });
 

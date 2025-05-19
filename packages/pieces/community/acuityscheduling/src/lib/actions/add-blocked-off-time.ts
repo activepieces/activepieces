@@ -84,7 +84,7 @@ export const addBlockedTimeAction = createAction({
             url: `${BASE_URL}/appointments/createBlockedTime`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: auth,
+                token: auth.apiKey && auth.userId,
             },
             body: {
                 title,

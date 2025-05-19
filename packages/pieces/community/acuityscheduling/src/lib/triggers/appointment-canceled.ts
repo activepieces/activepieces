@@ -57,7 +57,7 @@ export const canceledAppointmentTrigger = createTrigger({
     // No need to unregister webhooks as user will do it manually
   },
 
-  async test(context) {
+  async test({ auth }) {
     const response = await httpClient.sendRequest<{ data: { appointments: Record<string, any>[] } }>({
       url: `${BASE_URL}/appointments`,
       method: HttpMethod.GET,
@@ -67,38 +67,33 @@ export const canceledAppointmentTrigger = createTrigger({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: auth.apiKey && auth.userId,
       },
     });
 
     return response.body.data.appointments;
   },
 
-  async run(context) {
-    const payload = context.payload.body as { 
-      event_type: string; 
-      data: Record<string, any> 
-    };
+  async run(auth) {
     
-    if (payload.event_type !== 'appointment.canceled') {
-      return [];
-    }
+    const payload = auth.payload.body as {
+      id: string;
+      status: string;
+      canceled_at: string;
+      canceled_by: string;
+      cancelation_reason: string;
+    };
 
-    const includePast = context.propsValue.include_past ?? false;
-    const appointmentDate = new Date(payload.data['start_time']);
     const now = new Date();
 
-    if (!includePast && appointmentDate < now) {
-      return [];
-    }
 
     // Fetch full appointment details
     const response = await httpClient.sendRequest({
-      url: `${BASE_URL}/appointments/${payload.data['id']}`,
+      url: `${BASE_URL}/appointments/${payload['id']}`,
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: auth.auth.apiKey && auth.auth.userId,
       },
     });
 

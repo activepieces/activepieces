@@ -13,40 +13,57 @@ import { updateClientAction } from './lib/actions/update-client';
 import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
 import { canceledAppointmentTrigger } from './lib/triggers/appointment-canceled';
+import { updatedScheduleTrigger } from './lib/triggers/appointment-scheduled';
 
 export const BASE_URL = 'https://acuityscheduling.com/api/v1';
 
-export const acuityschedulingAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	required: true,
-	description: `You can create an API key by navigating to **Setting -> Extensions -> API**.`,
-	validate: async ({ auth }) => {
-		try {
-			await httpClient.sendRequest({
-				method: HttpMethod.GET,
-				url: `${BASE_URL}/page/getInfo`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: auth as string,
-				},
-			});
-			return {
-				valid: true,
-			};
-		} catch (e) {
-			return {
-				valid: false,
-				error: 'Invalid API Key',
-			};
-		}
-	},
+export const acuityschedulingAuth = PieceAuth.CustomAuth({
+ 
+  description: 'Authenticate with Acuity Scheduling API',
+  required: true,
+  props: {
+    userId: PieceAuth.SecretText({
+      displayName: 'User ID',
+      description: 'Your Acuity Scheduling user ID',
+      required: true,
+    }),
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      description: 'Your Acuity Scheduling API key (found in Settings → Integrations → API)',
+      required: true,
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${BASE_URL}/appointments`,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: auth.userId,
+          password: auth.apiKey,
+        },
+      });
+      return {
+        valid: true,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid credentials. Please check your User ID and API Key.',
+      };
+    }
+  },
 });
 
-export function createClient(auth: { apiKey: string}) {
+export function createClient(auth: { userId: string, apiKey: string }) {
   return axios.create({
-    url: BASE_URL,
+    baseURL: BASE_URL,
+    auth: {
+      username: auth.userId,
+      password: auth.apiKey,
+    },
     headers: {
-      'Authorization': `Bearer ${auth.apiKey}`,
       'Content-Type': 'application/json',
     },
   });
@@ -54,13 +71,16 @@ export function createClient(auth: { apiKey: string}) {
 
 export const acuityscheduling = createPiece({
   displayName: 'Acuity Scheduling',
-  description: 'Appointment scheduling software',
-  auth: acuityschedulingAuth ,
+  description: 'Professional appointment scheduling software',
+  auth: acuityschedulingAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acuityscheduling.png',
-  categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: [],
-  actions: [ addBlockedTimeAction,
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  authors: [
+    'ActivePieces'
+  ],
+  actions: [
+    addBlockedTimeAction,
     createclientAction,
     findClientByNameAction,
     createAppointment,
@@ -70,5 +90,6 @@ export const acuityscheduling = createPiece({
   ],
   triggers: [
     canceledAppointmentTrigger,
+    updatedScheduleTrigger
   ],
 });

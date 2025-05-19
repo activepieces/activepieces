@@ -29,7 +29,7 @@ export const findClientByNameAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.apiKey && auth.userId,
 			},
 		});
 

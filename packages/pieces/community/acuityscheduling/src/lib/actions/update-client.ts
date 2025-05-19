@@ -59,7 +59,7 @@ export const updateClientAction = createAction({
                 url: `${BASE_URL}/Client/createCleint`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
-                    token: auth,
+                    token: auth.apiKey && auth.userId,
                 },
                 body: {
                     client_id,

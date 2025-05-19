@@ -52,7 +52,7 @@ export const createclientAction = createAction({
 			url: `${BASE_URL}/Client/createCleint`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.apiKey && auth.userId,
 			},
 			body: {
 				first_name,
