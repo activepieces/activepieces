@@ -23,7 +23,7 @@ export const subscriberUnsubscribedTrigger = createTrigger({
     EmailAddress: 'subscriber@example.com',
     Name: 'Former Subscriber',
     Date: '2023-07-15T15:30:00Z',
-    ListID: 'a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1',
+    ListID: 'xyz',
     State: 'Unsubscribed',
   },
   async onEnable(context) {
