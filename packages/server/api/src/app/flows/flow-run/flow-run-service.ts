@@ -122,7 +122,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
                 return flowRunService(log).start({
-                    flowRunId: apId(),
                     payload,
                     projectId: oldFlowRun.projectId,
                     flowVersionId: latestFlowVersion.id,
@@ -241,8 +240,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunSideEffects(log).start({
             flowRun: savedFlowRun,
             httpRequestId,
-            priority,
             payload,
+            priority,
             synchronousHandlerId,
             executionType,
             progressUpdateType,
