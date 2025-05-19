@@ -42,8 +42,6 @@ export const rescheduleAppointmentAction = createAction({
       appointment_id, 
       new_start_time, 
       new_end_time,
-      send_notifications,
-      reason
     } = propsValue;
 
 
