@@ -26,18 +26,18 @@ export const quickbooksAuth = PieceAuth.OAuth2({
         options: [
           {
             label: 'Sandbox',
-            value: 'sandbox'
+            value: 'sandbox-oauth.platform.intuit.com'
           },
           {
             label: 'Production',
-            value: 'production'
+            value: 'oauth.platform.intuit.com'
           }
         ]
       }
     })
   },
   authUrl: QUICKBOOKS_AUTH_URL,
-  tokenUrl: '{{(connections.environment == "sandbox") ? "' + QUICKBOOKS_TOKEN_URL_SANDBOX + '" : "' + QUICKBOOKS_TOKEN_URL_PRODUCTION + '"}}',
+  tokenUrl: 'https://{connections.environment}/oauth2/v1/tokens/bearer',
   required: true,
   scope: [
     'com.intuit.quickbooks.accounting',
