@@ -37,7 +37,7 @@ export const quickbooksAuth = PieceAuth.OAuth2({
     })
   },
   authUrl: QUICKBOOKS_AUTH_URL,
-  tokenUrl: 'https://{connections.environment}/oauth2/v1/tokens/bearer',
+  tokenUrl: 'https://{environment}/oauth2/v1/tokens/bearer',
   required: true,
   scope: [
     'com.intuit.quickbooks.accounting',
