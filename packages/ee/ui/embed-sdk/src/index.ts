@@ -643,7 +643,7 @@ class ActivepiecesEmbedded {
   }
 
 
- async request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}, useJwtToken: boolean = true) {
+ async request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}, useJwtToken = true) {
     const headers:Record<string, string> = {
     }
     if(body) {
