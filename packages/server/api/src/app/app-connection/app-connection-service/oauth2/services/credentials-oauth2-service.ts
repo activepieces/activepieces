@@ -35,6 +35,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
                     if (request.scope) {
                         body.scope = request.scope
+                        Object.entries(request.props ?? {}).forEach(([key, value]) => {
+                            body.scope = body.scope.replace(`{${key}}`, String(value))
+                        })
                     }
                     if (request.props) {
                         Object.entries(request.props).forEach(([key, value]) => {
@@ -102,6 +105,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     clientId: request.clientId,
                     tokenUrl: request.tokenUrl,
                     redirectUrl: request.redirectUrl ?? '',
+                    message: e instanceof AxiosError ? e.response?.data.error_description : 'unknown error',
                 },
             })
         }

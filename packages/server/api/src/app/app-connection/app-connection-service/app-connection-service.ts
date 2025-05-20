@@ -447,6 +447,7 @@ const validateConnectionValue = async (
                 platformId,
                 props: value.props,
             })
+            
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
