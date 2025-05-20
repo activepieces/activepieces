@@ -1,5 +1,4 @@
 import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
-import * as semver from 'semver'
 
 export const projectDiffService = {
     diff({ newState, currentState }: DiffParams): DiffState {
@@ -134,33 +133,22 @@ function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId:
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
     const normalizedFromFlow = normalize(fromFlow.version)
     const normalizedTargetFlow = normalize(targetFlow.version)
-    const isMajorOrMinorChange = Object.entries(normalizedFromFlow.stepPieceVersion).every(([name, version]) => {
-        const targetStepPieceVersion = normalizedTargetFlow.stepPieceVersion[name]
-        return semver.valid(version) && semver.valid(targetStepPieceVersion) && semver.major(targetStepPieceVersion) === semver.major(version) && semver.minor(targetStepPieceVersion) == semver.minor(version)
-    })
-
-    return normalizedFromFlow.flowVersion.displayName !== normalizedTargetFlow.flowVersion.displayName
-        || JSON.stringify(normalizedFromFlow.flowVersion.trigger) !== JSON.stringify(normalizedTargetFlow.flowVersion.trigger)
-        || !isMajorOrMinorChange
+    return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
+        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger)
 }
 
 
-function normalize(flowVersion: FlowVersion): { flowVersion: FlowVersion, stepPieceVersion: Record<string, string> } {
-    const stepPieceVersion: Record<string, string> = {}
-    const flowVersionUpgraded = flowStructureUtil.transferFlow(flowVersion, (step) => {
+function normalize(flowVersion: FlowVersion): FlowVersion {
+    const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
+    return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            stepPieceVersion[step.name] = flowPieceUtil.getExactVersion(step.settings.pieceVersion)
-            clonedStep.settings.pieceVersion = ''
-            if (authExists) {
-                clonedStep.settings.input.auth = ''
-            }
+        if (authExists && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            clonedStep.settings.input.auth = ''
         }
         return clonedStep
     })
-    return { flowVersion: flowVersionUpgraded, stepPieceVersion }
 }
 
 
