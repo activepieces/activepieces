@@ -112,7 +112,7 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
             pieceVersion,
             actionNames,
             projectId: mcp.projectId,
-            platformId: project.platformId
+            platformId: project.platformId,
         })
         
         if (!isNil(connectionId)) {
@@ -121,7 +121,7 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
                 connectionId, 
                 projectId: mcp.projectId, 
                 log: _log, 
-                platformId: project.platformId 
+                platformId: project.platformId, 
             })
         }
 
@@ -136,7 +136,7 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
                 actionName,
                 pieceName,
                 pieceVersion,
-                connectionId
+                connectionId,
             }))
             
             await mcpActionRepo().save(actions)
@@ -177,7 +177,7 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: { 
-                        message: `Invalid action name(s) for piece ${pieceName}@${pieceVersion}: ${invalidActionNames.join(', ')}. Valid actions are: ${Array.from(validActionNames).join(', ')}`
+                        message: `Invalid action name(s) for piece ${pieceName}@${pieceVersion}: ${invalidActionNames.join(', ')}. Valid actions are: ${Array.from(validActionNames).join(', ')}`,
                     },
                 })
             }
@@ -191,7 +191,7 @@ async function _updateMcpTimestamp(mcpId: ApId): Promise<void> {
 
 async function enrichWithConnection(
     item: McpAction | McpPiece,
-    log: FastifyBaseLogger
+    log: FastifyBaseLogger,
 ): Promise<McpActionWithConnection | McpPieceWithConnection> {
     if (!item.connectionId) {
         return {

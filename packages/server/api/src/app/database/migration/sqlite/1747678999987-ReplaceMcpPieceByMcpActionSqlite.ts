@@ -1,10 +1,10 @@
-import { apId } from "@activepieces/shared";
-import { FastifyBaseLogger } from "fastify";
-import { pieceMetadataService } from "../../../pieces/piece-metadata-service";
-import { projectService } from "../../../project/project-service";
-import { mcpService } from "../../../mcp/mcp-server/mcp-service";
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { system } from "../../../helper/system/system";
+import { apId } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+import { mcpService } from '../../../mcp/mcp-server/mcp-service'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { projectService } from '../../../project/project-service'
 
 export class ReplaceMcpPieceByMcpActionSqlite1747678999987 implements MigrationInterface {
     name = 'ReplaceMcpPieceByMcpActionSqlite1747678999987'
@@ -25,41 +25,41 @@ export class ReplaceMcpPieceByMcpActionSqlite1747678999987 implements MigrationI
                 CONSTRAINT "fk_mcp_action_mcp_id" FOREIGN KEY ("mcpId") 
                     REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
 
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_action_mcp_id" ON "mcp_action" ("mcpId")
-        `);
+        `)
 
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_action_connection_id" ON "mcp_action" ("connectionId")
-        `);
+        `)
 
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_mcp_action_mcp_id_piece_name_action_name" 
             ON "mcp_action" ("mcpId", "pieceName", "actionName")
-        `);
+        `)
 
         // Migrate data from mcp_piece to mcp_action
         const mcpPieces = await queryRunner.query(`
             SELECT * FROM "mcp_piece"
-        `);
+        `)
 
-        const logger = system.globalLogger() as FastifyBaseLogger;
+        const logger = system.globalLogger() as FastifyBaseLogger
         
         for (const mcpPiece of mcpPieces) {
-            const mcp = await mcpService(logger).getOrThrow({ mcpId: mcpPiece.mcpId });
-            const projectId = mcp.projectId;
-            const platformId = await projectService.getPlatformId(projectId);
+            const mcp = await mcpService(logger).getOrThrow({ mcpId: mcpPiece.mcpId })
+            const projectId = mcp.projectId
+            const platformId = await projectService.getPlatformId(projectId)
             const piece = await pieceMetadataService(logger).getOrThrow({
                 name: mcpPiece.pieceName,
                 version: undefined,
                 projectId,
                 platformId,
-            });
+            })
 
             for (const [actionName, action] of Object.entries(piece.actions)) {
-                const actionId = apId();
+                const actionId = apId()
                 await queryRunner.query(`
                     INSERT INTO "mcp_action" (
                         "id", "created", "updated", "actionName", 
@@ -73,26 +73,26 @@ export class ReplaceMcpPieceByMcpActionSqlite1747678999987 implements MigrationI
                     piece.name, 
                     piece.version, 
                     mcpPiece.mcpId, 
-                    mcpPiece.connectionId
-                ]);
+                    mcpPiece.connectionId,
+                ])
             }
         }
 
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_mcp_piece_mcp_id_piece_name"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_mcp_piece_connection_id"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_mcp_piece_mcp_id"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP TABLE IF EXISTS "mcp_piece"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -111,16 +111,16 @@ export class ReplaceMcpPieceByMcpActionSqlite1747678999987 implements MigrationI
                 CONSTRAINT "fk_mcp_piece_connection_id" FOREIGN KEY ("connectionId") 
                     REFERENCES "app_connection" ("id") ON DELETE SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
 
         // Restore data
         const uniquePieces = await queryRunner.query(`
             SELECT DISTINCT "pieceName", "mcpId", "connectionId", "created", "updated"
             FROM "mcp_action"
-        `);
+        `)
 
         for (const piece of uniquePieces) {
-            const pieceId = apId();
+            const pieceId = apId()
             await queryRunner.query(`
                 INSERT INTO "mcp_piece" (
                     "id", "created", "updated", "pieceName", 
@@ -133,24 +133,24 @@ export class ReplaceMcpPieceByMcpActionSqlite1747678999987 implements MigrationI
                 piece.pieceName,    
                 piece.mcpId,
                 piece.connectionId,
-                'ENABLED'
-            ]);
+                'ENABLED',
+            ])
         }
 
         await queryRunner.query(`
             DROP INDEX "idx_mcp_action_mcp_id_piece_name_action_name"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP INDEX "idx_mcp_action_connection_id"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP INDEX "idx_mcp_action_mcp_id"
-        `);
+        `)
 
         await queryRunner.query(`
             DROP TABLE "mcp_action"
-        `);
+        `)
     }
 }

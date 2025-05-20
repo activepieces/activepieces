@@ -2,8 +2,8 @@ import { ApId, McpActionWithConnection, McpFlowWithFlow, McpPieceWithConnection,
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { mcpActionService } from './mcp-action-service'
 import { mcpService } from '../mcp-server/mcp-service'
+import { mcpActionService } from './mcp-action-service'
 import { mcpFlowService } from './mcp-flow-service'
 
 export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
@@ -36,9 +36,9 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
         
         const actions = await mcpActionService(req.log).updateBatch({
             mcpId,
-            pieceName: pieceName,
-            pieceVersion: pieceVersion,
-            actionNames: actionNames,
+            pieceName,
+            pieceVersion,
+            actionNames,
             connectionId: connectionId ?? undefined,
         })
 

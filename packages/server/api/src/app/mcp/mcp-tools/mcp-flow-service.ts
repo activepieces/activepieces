@@ -11,9 +11,9 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { flowService } from '../../flows/flow/flow.service'
 import { McpEntity } from '../mcp-server/mcp-entity'
 import { McpFlowEntity } from './mcp-flow-entity'
-import { flowService } from '../../flows/flow/flow.service'
 
 const mcpRepo = repoFactory(McpEntity)
 const mcpFlowRepo = repoFactory(McpFlowEntity)
@@ -122,7 +122,7 @@ async function _updateMcpTimestamp(mcpId: ApId): Promise<void> {
 
 async function enrichWithFlow(
     item: McpFlow,
-    log: FastifyBaseLogger
+    log: FastifyBaseLogger,
 ): Promise<McpFlowWithFlow> {
     const flow = await flowService(log).getOneById(item.flowId)
     if (isNil(flow)) {

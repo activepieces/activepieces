@@ -13,9 +13,9 @@ import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { mcpActionService } from '../mcp-tools/mcp-action-service'
 import { mcpService } from './mcp-service'
 import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mcp-utils'
-import { mcpActionService } from '../mcp-tools/mcp-action-service'
 
 export async function createMcpServer({
     mcpId,

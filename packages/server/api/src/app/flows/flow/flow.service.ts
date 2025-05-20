@@ -32,13 +32,13 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
+import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
