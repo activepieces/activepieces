@@ -179,7 +179,6 @@ class ActivepiecesEmbedded {
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._jwtToken = jwtToken;
     this._embeddingState = embedding;
-    this.getEmbeddingAuth({jwtToken});
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`
@@ -558,7 +557,7 @@ class ActivepiecesEmbedded {
       }
     }
   }
-  private async getEmbeddingAuth(params:{jwtToken:string} | undefined) {
+  private async fetchEmbeddingAuth(params:{jwtToken:string} | undefined) {
     if(this._embeddingAuth) {
       return this._embeddingAuth;
     }
@@ -568,7 +567,7 @@ class ActivepiecesEmbedded {
     }
     const response = await this.request({path: '/managed-authn/external-token', method: 'POST', body: {
       externalAccessToken: jwtToken,
-    }})
+    }}, false)
     this._embeddingAuth = {
       userJwtToken: response.token,
       platformId: response.platformId,
@@ -623,14 +622,15 @@ class ActivepiecesEmbedded {
   }
 
 
-  request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}) {
+ async request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}, useJwtToken: boolean = true) {
     const headers:Record<string, string> = {
     }
     if(body) {
       headers['Content-Type'] = 'application/json'
     }
-    if(this._embeddingAuth) {
-      headers['Authorization'] = `Bearer ${this._embeddingAuth.userJwtToken}`
+    if(useJwtToken) {
+      const embeddingAuth = await this.fetchEmbeddingAuth({jwtToken: this._jwtToken});
+      headers['Authorization'] = `Bearer ${embeddingAuth.userJwtToken}`
     }
     const queryParamsString = queryParams ? `?${new URLSearchParams(queryParams).toString()}` : '';
      return fetch(`${this._removeTrailingSlashes(this._instanceUrl)}/api/v1/${this._removeStartingSlashes(path)}${queryParamsString}`, {
