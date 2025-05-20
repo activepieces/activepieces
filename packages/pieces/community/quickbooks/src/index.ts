@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, Property, OAuth2AuthorizationMethod } from "@activepieces/pieces-framework";
 import { OAuth2GrantType } from "@activepieces/shared";
 import { findInvoiceAction } from "./actions/find-invoice";
 import { findCustomerAction } from "./actions/find-customer";
@@ -41,6 +41,7 @@ export const quickbooksAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://{environment}/oauth2/v1/tokens/bearer',
   required: true,
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,
+  authorizationMethod: OAuth2AuthorizationMethod.BODY,
   scope: [
     'com.intuit.quickbooks.accounting',
     'openid',
