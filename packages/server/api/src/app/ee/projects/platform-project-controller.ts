@@ -22,8 +22,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectService } from './platform-project-service'
+import { projectLimitsService } from './project-plan/project-plan.service'
 
 const DEFAULT_LIMIT_SIZE = 50
 
@@ -41,7 +41,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
         })
-        await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
+        await projectLimitsService(request.log).upsert(DEFAULT_PLATFORM_LIMIT, project.id)
         const projectWithUsage =
             await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
