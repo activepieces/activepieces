@@ -107,6 +107,7 @@ export const recordService = {
         tableId,
         projectId,
         filters,
+        limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
        
         const fields = await fieldService.getAll({
@@ -140,7 +141,7 @@ export const recordService = {
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
     
         return {
-            data: populatedRecords,
+            data: populatedRecords.slice(0, limit),
             next: null,
             previous: null,
         }
