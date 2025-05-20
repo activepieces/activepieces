@@ -69,6 +69,8 @@ const EmbedPage = React.memo(() => {
                 fontFamily: event.data.data.fontFamily,
                 useDarkBackground:
                   initialRoute.startsWith('/embed/connections'),
+                hideExportAndImportFlow:
+                  event.data.data.hideExportAndImportFlow || false,
               });
 
               //previously initialRoute was optional

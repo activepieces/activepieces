@@ -11,6 +11,7 @@ type EmbeddingState = {
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
+  hideExportAndImportFlow: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
   fontUrl?: string;
@@ -26,6 +27,7 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
+  hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
 };
 
