@@ -3,9 +3,9 @@ import { PiecesFilterType } from '@activepieces/shared';
 
 export type FlowPlanLimits = {
   nickname: string;
-  tasks: number;
+  tasks: number | null;
   pieces: string[];
-  aiTokens: number;
+  aiTokens: number | null;
   piecesFilterType: PiecesFilterType;
 };
 
@@ -19,7 +19,15 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
   piecesFilterType: PiecesFilterType.NONE,
 };
 
-export const DEFAULT_PLATFORM_LIMIT = {
+export const DEFAULT_ENTERPRISE_PLATFORM_LIMIT = {
+  nickname: 'enterprise-platform',
+  tasks: null,
+  pieces: [],
+  aiTokens: null,
+  piecesFilterType: PiecesFilterType.NONE,
+}
+
+export const DEFAULT_EMBEDDING_LIMIT = {
   nickname: 'platform',
   tasks: 50000,
   pieces: [],
@@ -27,6 +35,13 @@ export const DEFAULT_PLATFORM_LIMIT = {
   piecesFilterType: PiecesFilterType.NONE,
 };
 
+export const DEFAULT_PLATFORM_LIMIT = {
+  nickname: 'platform',
+  tasks: null,
+  pieces: [],
+  aiTokens: null,
+  piecesFilterType: PiecesFilterType.NONE,
+}
 export function getTasksPriceId(stripeKey: string | undefined) {
   const testMode = stripeKey?.startsWith('sk_test');
   return testMode
