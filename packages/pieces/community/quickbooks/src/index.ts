@@ -14,8 +14,8 @@ import { newDeposit } from "./triggers/new-deposit";
 import { newTransfer } from "./triggers/new-transfer";
 
 const QUICKBOOKS_AUTH_URL = 'https://appcenter.intuit.com/connect/oauth2';
-const QUICKBOOKS_TOKEN_URL_SANDBOX = 'https://sandbox-oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-const QUICKBOOKS_TOKEN_URL_PRODUCTION = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
+// const QUICKBOOKS_TOKEN_URL_SANDBOX = 'https://sandbox-oauth.platform.intuit.com/oauth2/v1/tokens/bearer'; // Commenting out old sandbox URL
+const QUICKBOOKS_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer'; // Using one token URL
 
 export const quickbooksAuth = PieceAuth.OAuth2({
   description: "Connect your QuickBooks account",
@@ -27,18 +27,19 @@ export const quickbooksAuth = PieceAuth.OAuth2({
         options: [
           {
             label: 'Sandbox',
-            value: 'sandbox-oauth.platform.intuit.com'
+            // value no longer directly constructs the URL, but still useful for user selection and potentially other logic
+            value: 'sandbox'
           },
           {
             label: 'Production',
-            value: 'oauth.platform.intuit.com'
+            value: 'production'
           }
         ]
       }
     })
   },
   authUrl: QUICKBOOKS_AUTH_URL,
-  tokenUrl: 'https://{environment}/oauth2/v1/tokens/bearer',
+  tokenUrl: QUICKBOOKS_TOKEN_URL, // Using the unified token URL
   required: true,
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,
   authorizationMethod: OAuth2AuthorizationMethod.BODY,
