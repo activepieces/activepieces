@@ -1,11 +1,12 @@
 import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
-import * as semver from 'semver'
+import { system } from '../../../../helper/system/system'
+import { pieceMetadataService } from '../../../../pieces/piece-metadata-service'
 
 export const projectDiffService = {
-    diff({ newState, currentState }: DiffParams): DiffState {
-        const createFlowOperation = findFlowsToCreate({ newState, currentState })
-        const deleteFlowOperation = findFlowsToDelete({ newState, currentState })
-        const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
+    async diff({ newState, currentState }: DiffParams): Promise<DiffState> {
+        const createFlowOperation = await findFlowsToCreate({ newState, currentState })
+        const deleteFlowOperation = await findFlowsToDelete({ newState, currentState })
+        const updateFlowOperations = await findFlowsToUpdate({ newState, currentState })
         const operations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
         const connections = getFlowConnections(currentState, newState)
         const tables = getTables(currentState, newState)
@@ -17,7 +18,7 @@ export const projectDiffService = {
     },
 }
 
-function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOperation[] {
+async function findFlowsToCreate({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
     return newState.flows.filter((newFlow) => {
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.externalId)
         return isNil(flow)
@@ -26,7 +27,7 @@ function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOpera
         flowState,
     }))
 }
-function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOperation[] {
+async function findFlowsToDelete({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
     return currentState.flows.filter((currentFlowFromState) => {
         const flow = newState.flows.find((flowFromNewState) => currentFlowFromState.externalId === flowFromNewState.externalId)
         return isNil(flow)
@@ -35,15 +36,17 @@ function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOpera
         flowState,
     }))
 }
-function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOperation[] {
+async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
     const newStateFiles = newState.flows.filter((state) => {
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
-    return newStateFiles.map((flowFromNewState) => {
+    
+    const operations = await Promise.all(newStateFiles.map(async (flowFromNewState) => {
         const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
         assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
-        if (isFlowChanged(os, flowFromNewState)) {
+        const flowChanged = await isFlowChanged(os, flowFromNewState)
+        if (flowChanged) {
             return {
                 type: ProjectOperationType.UPDATE_FLOW,
                 flowState: os,
@@ -51,7 +54,9 @@ function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOpera
             } as ProjectOperation
         }
         return null
-    }).filter((op): op is ProjectOperation => op !== null)
+    }))
+    
+    return operations.filter((op): op is ProjectOperation => op !== null)
 }
 
 function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionState): boolean {
@@ -131,36 +136,39 @@ function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId:
     return flows.find((flow) => flow.externalId === externalId)
 }
 
-function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
-    const normalizedFromFlow = normalize(fromFlow.version)
-    const normalizedTargetFlow = normalize(targetFlow.version)
-    const isMajorOrMinorChange = Object.entries(normalizedFromFlow.stepPieceVersion).every(([name, version]) => {
-        const targetStepPieceVersion = normalizedTargetFlow.stepPieceVersion[name]
-        return semver.valid(version) && semver.valid(targetStepPieceVersion) && semver.major(targetStepPieceVersion) === semver.major(version) && semver.minor(targetStepPieceVersion) == semver.minor(version)
-    })
-
-    return normalizedFromFlow.flowVersion.displayName !== normalizedTargetFlow.flowVersion.displayName
-        || JSON.stringify(normalizedFromFlow.flowVersion.trigger) !== JSON.stringify(normalizedTargetFlow.flowVersion.trigger)
-        || !isMajorOrMinorChange
+async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): Promise<boolean> {
+    const normalizedFromFlow = await normalize(fromFlow.version)
+    const normalizedTargetFlow = await normalize(targetFlow.version)
+    return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
+        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger)
 }
 
 
-function normalize(flowVersion: FlowVersion): { flowVersion: FlowVersion, stepPieceVersion: Record<string, string> } {
-    const stepPieceVersion: Record<string, string> = {}
-    const flowVersionUpgraded = flowStructureUtil.transferFlow(flowVersion, (step) => {
+async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
+    const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
+    
+ 
+    const stepVersionToExactVersion: Record<string, string> = {}
+    const allSteps = flowStructureUtil.getAllSteps(flowUpgradable.trigger)
+    for (const step of allSteps) {
+        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            stepVersionToExactVersion[step.name] = await pieceMetadataService(system.globalLogger()).resolveExactVersion(step.settings.pieceVersion)
+        }
+    }
+    
+    return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
+        
         if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            stepPieceVersion[step.name] = flowPieceUtil.getExactVersion(step.settings.pieceVersion)
-            clonedStep.settings.pieceVersion = ''
+            clonedStep.settings.pieceVersion = stepVersionToExactVersion[step.name]!
             if (authExists) {
                 clonedStep.settings.input.auth = ''
             }
         }
         return clonedStep
     })
-    return { flowVersion: flowVersionUpgraded, stepPieceVersion }
 }
 
 

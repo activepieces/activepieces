@@ -77,5 +77,5 @@ export type PieceMetadataService = {
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
     updateUsage(params: UpdateUsage): Promise<void>
-    getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
+    resolveExactVersion(params: GetExactPieceVersionParams): Promise<string>
 }

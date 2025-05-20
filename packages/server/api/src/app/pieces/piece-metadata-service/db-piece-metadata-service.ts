@@ -98,7 +98,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 created: existingMetadata.created,
             })
         },
-        async getExactPieceVersion({ name, version, projectId, platformId }): Promise<string> {
+        async resolveExactVersion({ name, version, projectId, platformId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
