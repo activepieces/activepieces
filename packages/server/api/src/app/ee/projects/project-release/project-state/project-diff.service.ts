@@ -148,7 +148,8 @@ function isSameVersion(versionOne: string, versionTwo: string): boolean {
     
     if (versionOneObj.major >= 1 || versionTwoObj.major >= 1) {
         return versionOneObj.major === versionTwoObj.major
-    } else {
+    }
+    else {
         return versionOneObj.major === versionTwoObj.major && 
                versionOneObj.minor === versionTwoObj.minor
     }
