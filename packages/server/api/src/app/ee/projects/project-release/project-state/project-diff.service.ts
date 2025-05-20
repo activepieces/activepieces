@@ -1,6 +1,5 @@
 import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
-import { system } from '../../../../helper/system/system'
-import { pieceMetadataService } from '../../../../pieces/piece-metadata-service'
+import semver from 'semver'
 
 export const projectDiffService = {
     async diff({ newState, currentState }: DiffParams): Promise<DiffState> {
@@ -136,33 +135,60 @@ function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId:
     return flows.find((flow) => flow.externalId === externalId)
 }
 
+function isSameVersion(versionOne: string, versionTwo: string): boolean {
+    const cleanedVersionOne = flowPieceUtil.getExactVersion(versionOne)
+    const cleanedVersionTwo = flowPieceUtil.getExactVersion(versionTwo)
+    
+    const versionOneObj = semver.parse(cleanedVersionOne)
+    const versionTwoObj = semver.parse(cleanedVersionTwo)
+    
+    if (!versionOneObj || !versionTwoObj) {
+        return cleanedVersionOne === cleanedVersionTwo
+    }
+    
+    if (versionOneObj.major >= 1 || versionTwoObj.major >= 1) {
+        return versionOneObj.major === versionTwoObj.major
+    }
+    else {
+        return versionOneObj.major === versionTwoObj.major && 
+               versionOneObj.minor === versionTwoObj.minor
+    }
+}
+
 async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): Promise<boolean> {
     const normalizedFromFlow = await normalize(fromFlow.version)
     const normalizedTargetFlow = await normalize(targetFlow.version)
+
+    const versionSetOne: Record<string, string> = flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).reduce<Record<string, string>>((acc, step) => {
+        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            acc[step.name] = step.settings.pieceVersion as string
+        }
+        return acc
+    }, {})
+
+    const versionSetTwo: Record<string, string> = flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).reduce<Record<string, string>>((acc, step) => {
+        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            acc[step.name] = step.settings.pieceVersion as string
+        }
+        return acc
+    }, {})
+
+    const isMatched = Object.keys(versionSetOne).every(key => isSameVersion(versionSetTwo[key], versionSetOne[key]))
+
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
-        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger)
+        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger) || !isMatched
 }
 
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
-    
- 
-    const stepVersionToExactVersion: Record<string, string> = {}
-    const allSteps = flowStructureUtil.getAllSteps(flowUpgradable.trigger)
-    for (const step of allSteps) {
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            stepVersionToExactVersion[step.name] = await pieceMetadataService(system.globalLogger()).resolveExactVersion(step.settings.pieceVersion)
-        }
-    }
-    
     return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
         
         if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            clonedStep.settings.pieceVersion = stepVersionToExactVersion[step.name]!
+            clonedStep.settings.pieceVersion = ''
             if (authExists) {
                 clonedStep.settings.input.auth = ''
             }
