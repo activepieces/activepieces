@@ -124,7 +124,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
             })}
             className="mx-2"
           >
-            <div className="max-h-[80vh]  overflow-y-auto space-y-4 px-1 ">
+            <div className="max-h-[450px]  overflow-y-auto space-y-4 px-1 ">
               <FormField
                 control={form.control}
                 name="name"
