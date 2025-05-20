@@ -9,10 +9,43 @@ export const findListEntryAction = createAction({
   description: 'Find entries in a list in Attio based on criteria',
   auth: attioAuth,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to search in',
+    list_id: Property.Dropdown({
+      displayName: 'List',
+      description: 'The list to search in',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest(
+            auth as string,
+            HttpMethod.GET,
+            '/lists'
+          );
+
+          return {
+            options: response.data.map((list: any) => {
+              return {
+                label: list.name,
+                value: list.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching lists',
+            options: [],
+          };
+        }
+      },
     }),
     filter_criteria: Property.Object({
       displayName: 'Filter Criteria',
