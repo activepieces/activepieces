@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionWithoutSensitiveData } from '../app-connection/app-connection'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
+import { Flow } from '../flows/flow'
 
 export type McpId = ApId
 
@@ -13,6 +14,15 @@ export enum McpPropertyType {
     ARRAY = 'Array',
     OBJECT = 'Object',
 }
+
+export const Mcp = Type.Object({
+    ...BaseModelSchema,
+    name: Type.String(),
+    projectId: ApId,
+    token: ApId,
+})
+
+export type Mcp = Static<typeof Mcp> 
 
 
 export const McpProperty = Type.Object({
@@ -64,33 +74,36 @@ export const McpActionWithConnection = Type.Composite([
 export type McpActionWithConnection = Static<typeof McpActionWithConnection>
 
 
-
-export const Mcp = Type.Object({
+export const McpFlow = Type.Object({
     ...BaseModelSchema,
-    name: Type.String(),
-    projectId: ApId,
-    token: ApId,
+    flowId: ApId,
+    mcpId: ApId,
 })
 
-export type Mcp = Static<typeof Mcp> 
+export type McpFlow = Static<typeof McpFlow>
 
-export const McpWithPieces = Type.Composite([
+export const McpFlowWithFlow = Type.Composite([
+    McpFlow,
+    Type.Object({
+        flow: Flow,
+    }),
+])
+
+export type McpFlowWithFlow = Static<typeof McpFlowWithFlow>
+
+
+
+export const McpWithTools = Type.Composite([
     Mcp,
     Type.Object({
         pieces: Type.Array(McpPieceWithConnection),
-    }),
-])
-
-export type McpWithPieces = Static<typeof McpWithPieces>
-
-export const McpWithActions = Type.Composite([
-    Mcp,
-    Type.Object({
         actions: Type.Array(McpActionWithConnection),
+        flows: Type.Array(McpFlowWithFlow),
     }),
 ])
 
-export type McpWithActions = Static<typeof McpWithActions>
+export type McpWithTools = Static<typeof McpWithTools>
+
 
 
 export const McpTrigger = Type.Object({

@@ -45,6 +45,12 @@ export const UpdateMcpActionsRequestBody = Type.Object({
 export type UpdateMcpActionsRequestBody = Static<typeof UpdateMcpActionsRequestBody>
 
 
+export const UpdateMcpFlowsRequestBody = Type.Object({
+    flowIds: Type.Array(Type.String()),
+})
+
+export type UpdateMcpFlowsRequestBody = Static<typeof UpdateMcpFlowsRequestBody>
+
 
 
 
