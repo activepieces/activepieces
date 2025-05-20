@@ -43,7 +43,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async close(): Promise<void> {
         closed = true
         clearTimeout(heartbeatInterval)
-        await engineRunner(log).shutdownAllWorkers()
+        if (workerMachine.hasSettings()) {
+            await engineRunner(log).shutdownAllWorkers()
+        }
     },
 })
 
