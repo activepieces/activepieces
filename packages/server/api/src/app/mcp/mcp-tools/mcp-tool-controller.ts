@@ -1,9 +1,10 @@
-import { ApId, McpActionWithConnection, McpPieceWithConnection, McpWithActions, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpActionsRequestBody } from '@activepieces/shared'
+import { ApId, McpActionWithConnection, McpFlowWithFlow, McpPieceWithConnection, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpActionsRequestBody, UpdateMcpFlowsRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { mcpActionService } from './mcp-action-service'
 import { mcpService } from '../mcp-server/mcp-service'
+import { mcpFlowService } from './mcp-flow-service'
 
 export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -21,13 +22,19 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
         const actions = await mcpActionService(req.log).listActions(mcpId)
         return { actions }
     })
+
+    app.get('/:mcpId/flows', GetMcpFlowsRequest, async (req) => {
+        const { mcpId } = req.params
+        const flows = await mcpFlowService(req.log).listFlows(mcpId)
+        return { flows }
+    })
     
     
     app.post('/:mcpId/actions', UpdateMcpActionsRequest, async (req) => {
         const { mcpId } = req.params
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
-        await mcpActionService(req.log).updateBatch({
+        const actions = await mcpActionService(req.log).updateBatch({
             mcpId,
             pieceName: pieceName,
             pieceVersion: pieceVersion,
@@ -35,12 +42,20 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
             connectionId: connectionId ?? undefined,
         })
 
-
-        return mcpService(req.log).getOrThrow({ 
-            mcpId,
-        })
+        return { actions }
     })
-    
+
+    app.post('/:mcpId/flows', UpdateMcpFlowsRequest, async (req) => {
+        const { mcpId } = req.params
+        const { flowIds } = req.body
+        
+        const flows = await mcpFlowService(req.log).updateBatch({
+            mcpId,
+            flowIds,
+        })
+
+        return { flows }
+    })
 
 }
 
@@ -84,6 +99,26 @@ const GetMcpActionsRequest = {
     },
 }
 
+const GetMcpFlowsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.READ_MCP],
+    },
+    schema: {
+        tags: ['mcp-flow'],
+        description: 'Get MCP flows',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            mcpId: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                flows: Type.Array(McpFlowWithFlow),
+            }),
+        },
+    },
+}
+
 
 const UpdateMcpActionsRequest = {
     config: {
@@ -99,7 +134,30 @@ const UpdateMcpActionsRequest = {
         }),
         body: UpdateMcpActionsRequestBody,
         response: {
-            [StatusCodes.OK]: McpWithActions,
+            [StatusCodes.OK]: Type.Object({
+                actions: Type.Array(McpActionWithConnection),
+            }),
+        },
+    },
+}
+
+const UpdateMcpFlowsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp-flow'],
+        description: 'Update MCP flows',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            mcpId: ApId,
+        }),
+        body: UpdateMcpFlowsRequestBody,
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                flows: Type.Array(McpFlowWithFlow),
+            }),
         },
     },
 }

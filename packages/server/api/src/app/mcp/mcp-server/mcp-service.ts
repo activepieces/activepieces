@@ -1,5 +1,17 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithActions, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { 
+    ActivepiecesError, 
+    apId, 
+    ApId, 
+    Cursor, 
+    ErrorCode, 
+    isNil, 
+    Mcp, 
+    McpWithTools, 
+    SeekPage, 
+    spreadIfDefined, 
+    TelemetryEventName 
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ILike } from 'typeorm'
@@ -11,13 +23,10 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpActionService } from '../mcp-tools/mcp-action-service'
 
-
-
 const repo = repoFactory(McpEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
-
-    async create({ projectId, name }: CreateParams): Promise<McpWithActions> {
+    async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
         await this.validateCount({ projectId })
         const mcp = await repo().save({
             id: apId(),
@@ -30,9 +39,8 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithActions>> {
+    async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithTools>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
         const paginator = buildPaginator({
             entity: McpEntity,
             query: {
@@ -50,23 +58,20 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         }
 
         const queryBuilder = repo().createQueryBuilder('mcp').where(queryWhere)
-
-
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-
         const populatedMcpPromises = data.map(async (mcp) => {
-            const mcpWithActions = await this.getOrThrow({
+            const mcpWithTools = await this.getOrThrow({
                 mcpId: mcp.id,
             })
-            return mcpWithActions
+            return mcpWithTools
         })
 
         const populatedMcps = await Promise.all(populatedMcpPromises)
         return paginationHelper.createPage(populatedMcps, cursor)
     },
 
-    async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithActions> {
+    async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithTools> {
         const mcp = await repo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
@@ -75,13 +80,28 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
                 params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
+
+        const pieces = await mcpPieceService(_log).list({
+            mcpId: mcp.id,
+        })
+
+        const actions = await mcpActionService(_log).list({
+            mcpId: mcp.id,
+        })
+
+        const flows = await mcpFlowService(_log).list({
+            mcpId: mcp.id,
+        })
+
         return {
             ...mcp,
-            actions: await mcpActionService(_log).listActions(mcp.id),
+            pieces,
+            actions,
+            flows,
         }
     },
 
-    async getByToken({ token }: { token: string }): Promise<McpWithActions> {
+    async getByToken({ token }: { token: string }): Promise<McpWithTools> {
         const mcp = await repo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
@@ -92,7 +112,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async update({ mcpId, token, name }: UpdateParams): Promise<McpWithActions> {
+    async update({ mcpId, token, name }: UpdateParams): Promise<McpWithTools> {
         await repo().update(mcpId, {
             ...spreadIfDefined('token', token),
             ...spreadIfDefined('name', name),
@@ -138,24 +158,24 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             where: { projectId },
         })
     },
+
     async validateCount(params: CountParams): Promise<void> {
         const countRes = await this.count(params)
         if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Max mcps per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)}`,
+                params: { 
+                    message: `Max mcps per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)}`,
                 },
             })
         }
     },
 })
 
-
 type CreateParams = {
     projectId: ApId
     name: string
 }
-
 
 type ListParams = {
     projectId: ApId

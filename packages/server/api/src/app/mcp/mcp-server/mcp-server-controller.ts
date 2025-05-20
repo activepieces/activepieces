@@ -107,7 +107,7 @@ const CreateMcpRequest = {
         }),
         body: CreateMcpRequestBody,
         response: {
-            [StatusCodes.OK]: Type.Union([McpWithActions, Type.Null()]),
+            [StatusCodes.OK]: Type.Union([McpWithTools, Type.Null()]),
         },
     },
 }
@@ -123,7 +123,7 @@ const GetMcpsRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListMcpsRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(McpWithActions),
+            [StatusCodes.OK]: SeekPage(McpWithTools),
         },
     },
 }
@@ -142,7 +142,7 @@ export const UpdateMcpRequest = {
         }),
         body: UpdateMcpRequestBody,
         response: {
-            [StatusCodes.OK]: McpWithActions,
+            [StatusCodes.OK]: McpWithTools,
         },
     },
 }
@@ -160,7 +160,7 @@ const RotateTokenRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: McpWithActions,
+            [StatusCodes.OK]: McpWithTools,
         },
     },
 }
@@ -178,7 +178,7 @@ const GetMcpRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: McpWithActions,
+            [StatusCodes.OK]: McpWithTools,
         },
     },
 }
