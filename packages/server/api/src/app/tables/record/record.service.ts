@@ -17,10 +17,12 @@ import {
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { from as copyFrom } from 'pg-copy-streams'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { system } from '../../helper/system/system'
+import { databaseConnection, getDatabaseType } from '../../database/database-connection'
+import { DatabaseType, system } from '../../helper/system/system'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
@@ -29,12 +31,15 @@ import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
+const MAX_BATCH_SIZE = 50
+
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
 export const recordService = {
     async create({
         request,
         projectId,
+        logger,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         return transaction(async (entityManager: EntityManager) => {
@@ -49,57 +54,66 @@ export const recordService = {
                     existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
-            // to avoid sql query text limit
-            const batches = chunk(validRecords, 50)
+
+            if (validRecords.length > MAX_BATCH_SIZE && getDatabaseType() == DatabaseType.POSTGRES) {
+                try {
+                    const now = new Date()
+
+                    const recordInsertions = prepareRecordInsertions(validRecords, request.tableId, projectId, now)
+
+                    const connection = databaseConnection().createQueryRunner()
+                    const client = await connection.connect()
+                    const recordStream = client.query(copyFrom('COPY record (id, "tableId", "projectId", created) FROM STDIN WITH (FORMAT text)'))
+                    for (const record of recordInsertions) {
+                        recordStream.write(`${record.id}\t${record.tableId}\t${record.projectId}\t${record.created}\n`)
+                    }
+                    recordStream.end()
+                    await new Promise((resolve, reject) => {
+                        recordStream.on('finish', resolve)
+                        recordStream.on('error', reject)
+                    })
+
+                    const cellStream = client.query(copyFrom('COPY cell (id, "recordId", "fieldId", "projectId", value) FROM STDIN WITH (FORMAT text)'))
+                    const cellInsertions = prepareCellInsertions(validRecords, recordInsertions, projectId)
+
+                    for (const cell of cellInsertions) {
+                        cellStream.write(`${cell.id}\t${cell.recordId}\t${cell.fieldId}\t${cell.projectId}\t${cell.value}\n`)
+                    }
+                    cellStream.end()
+                    await new Promise((resolve, reject) => {
+                        cellStream.on('finish', resolve)
+                        cellStream.on('error', reject)
+                    })
+
+                    // Fetch and return fully populated records
+                    const insertedRecordIds = recordInsertions.map((r) => r.id)
+                    const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)
+                    
+                    return await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+                }
+                catch (error) {
+                    logger.error({ error, validRecordsLength: validRecords.length }, 'COPY operation failed, falling back to batch insert:')
+                }
+            }
+
+            // Use batch insert for smaller sets or as fallback
+            const batches = chunk(validRecords, MAX_BATCH_SIZE)
             const records: RecordSchema[] = []
+            const insertedRecordIds: string[] = []
             for (const batch of batches) {
                 const now = new Date(new Date().getTime() + records.length)
-                const recordInsertions = batch.map((_, index) => {
-                    const created = new Date(now.getTime() + index).toISOString()
-                    return {
-                        tableId: request.tableId,
-                        projectId,
-                        created,
-                        id: apId(),
-                    }
-                })
+                const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
                 await entityManager.getRepository(RecordEntity).insert(recordInsertions)
 
                 // Prepare cells for insertion
-                const cellInsertions = batch.flatMap((recordData, index) =>
-                    recordData.map((cellData) => {
-                        return {
-                            recordId: recordInsertions[index].id,
-                            fieldId: cellData.fieldId,
-                            projectId,
-                            value: cellData.value,
-                            id: apId(),
-                        }
-                    }),
-                )
-
+                const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
                 await entityManager.getRepository(CellEntity).insert(cellInsertions)
 
                 // Fetch and return fully populated records
-                const insertedRecordIds = recordInsertions.map((r) => r.id)
-                const result = await entityManager
-                    .getRepository(RecordEntity)
-                    .find({
-                        where: {
-                            id: In(insertedRecordIds),
-                            tableId: request.tableId,
-                            projectId,
-                        },
-                        relations: ['cells'],
-                        order: {
-                            created: 'ASC',
-                        },
-                    })
-                records.push(...result)
+                insertedRecordIds.push(...recordInsertions.map((r) => r.id))
             }
-            return formatRecordsAndFetchField({ records, tableId: request.tableId, projectId })
-          
-        
+            const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)
+            return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
         })
     },
 
@@ -335,6 +349,7 @@ export const recordService = {
 type CreateParams = {
     request: CreateRecordsRequest
     projectId: string
+    logger: FastifyBaseLogger
 }
 
 type ListParams = {
@@ -374,8 +389,71 @@ type CountParams = {
     tableId: string
 }
 
+type RecordInsertion = {
+    id: string
+    tableId: string
+    projectId: string
+    created: string
+}
 
+type CellInsertion = {
+    id: string
+    recordId: string
+    fieldId: string
+    projectId: string
+    value: string
+}
 
+function prepareRecordInsertions(
+    records: Array<Array<{ fieldId: string, value: string }>>,
+    tableId: string,
+    projectId: string,
+    baseDate: Date,
+): RecordInsertion[] {
+    return records.map((_, index) => {
+        const created = new Date(baseDate.getTime() + index).toISOString()
+        return {
+            tableId,
+            projectId,
+            created,
+            id: apId(),
+        }
+    })
+}
+
+function prepareCellInsertions(
+    records: Array<Array<{ fieldId: string, value: string }>>,
+    recordInsertions: RecordInsertion[],
+    projectId: string,
+): CellInsertion[] {
+    return records.flatMap((recordData, index) =>
+        recordData.map((cellData) => {
+            return {
+                recordId: recordInsertions[index].id,
+                fieldId: cellData.fieldId,
+                projectId,
+                value: cellData.value,
+                id: apId(),
+            }
+        }),
+    )
+}
+
+async function fetchRecordsByIds(recordIds: string[], tableId: string, projectId: string, entityManager: EntityManager) {
+    return entityManager
+        .getRepository(RecordEntity)
+        .find({
+            where: {
+                id: In(recordIds),
+                tableId,
+                projectId,
+            },
+            relations: ['cells'],
+            order: {
+                created: 'ASC',
+            },
+        })
+}
 
 async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
     const fields = await fieldService.getAll({
@@ -405,7 +483,6 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
         }
     })
 }
-
 
 function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
     if (filters.length === 0) {
@@ -449,7 +526,6 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
     })
    
 }
-
 
 const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
     if (typeof cellValue === 'string' || typeof cellValue === 'number') {

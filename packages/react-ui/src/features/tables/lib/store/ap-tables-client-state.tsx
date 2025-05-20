@@ -68,6 +68,7 @@ export type TableState = {
   renameField: (fieldIndex: number, newName: string) => void;
   setRecords: (records: PopulatedRecord[]) => void;
   serverFields: Field[];
+  serverRecords: PopulatedRecord[];
 };
 
 export const createApTableStore = (
@@ -199,6 +200,7 @@ export const createApTableStore = (
         });
       },
       serverFields: serverState.fields,
+      serverRecords: serverState.records,
     };
   });
 };
