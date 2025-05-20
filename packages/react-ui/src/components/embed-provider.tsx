@@ -17,6 +17,8 @@ type EmbeddingState = {
   fontUrl?: string;
   fontFamily?: string;
   useDarkBackground: boolean;
+  hideHomeButtonInBuilder: boolean;
+  emitHomeButtonClickedEvent: boolean;
 };
 
 const defaultState: EmbeddingState = {
@@ -29,6 +31,8 @@ const defaultState: EmbeddingState = {
   hideFlowNameInBuilder: false,
   hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
+  hideHomeButtonInBuilder: false,
+  emitHomeButtonClickedEvent: false,
 };
 
 const EmbeddingContext = createContext<{
