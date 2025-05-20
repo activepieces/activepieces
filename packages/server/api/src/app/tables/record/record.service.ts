@@ -85,14 +85,12 @@ export const recordService = {
                         cellStream.on('error', reject)
                     })
 
-                    // Fetch and return fully populated records
                     const insertedRecordIds = recordInsertions.map((r) => r.id)
-                    const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)
-                    
+                    const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)                    
                     return await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
                 }
                 catch (error) {
-                    logger.error({ error, validRecordsLength: validRecords.length }, 'COPY operation failed, falling back to batch insert:')
+                    logger.error({ error, validRecords }, 'COPY operation failed, falling back to batch insert:')
                 }
             }
 
@@ -105,11 +103,9 @@ export const recordService = {
                 const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
                 await entityManager.getRepository(RecordEntity).insert(recordInsertions)
 
-                // Prepare cells for insertion
                 const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
                 await entityManager.getRepository(CellEntity).insert(cellInsertions)
 
-                // Fetch and return fully populated records
                 insertedRecordIds.push(...recordInsertions.map((r) => r.id))
             }
             const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)
