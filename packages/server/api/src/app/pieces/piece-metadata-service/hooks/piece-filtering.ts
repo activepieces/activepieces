@@ -57,7 +57,7 @@ export const filterPiecesBasedOnEmbedding = async ({
     if (isNil(platform)) {
         return pieces
     }
-    if (!platform.embeddingEnabled) {
+    if (!platform.plan.embeddingEnabled) {
         return pieces
     }
 

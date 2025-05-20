@@ -7,7 +7,7 @@ import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
+import { platformBillingService } from '../platform/platform-plan/platform-plan.service'
 import { BillingUsageType, usageService } from '../platform/platform-usage-service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({

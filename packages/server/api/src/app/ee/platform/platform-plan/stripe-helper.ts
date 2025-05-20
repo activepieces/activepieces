@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { usageService } from '../platform-usage-service'
-import { platformBillingService } from './platform-billing.service'
+import { platformBillingService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
@@ -69,7 +69,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
         const session = await stripe.billingPortal.sessions.create({
-            customer: platformBilling.stripeCustomerId,
+            customer: platformBilling.stripeCustomerId!,
             return_url: 'https://cloud.activepieces.com/platform/billing',
         })
         return session.url

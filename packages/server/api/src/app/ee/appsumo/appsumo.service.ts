@@ -5,7 +5,7 @@ import { userIdentityService } from '../../authentication/user-identity/user-ide
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
-import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
+import { platformBillingService } from '../platform/platform-plan/platform-plan.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)

@@ -13,7 +13,7 @@ export const projectEnterpriseHooks = (log: FastifyBaseLogger): ProjectHooks => 
         })
         const identity = await userIdentityService(log).getBasicInformation(owner.identityId)
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.embeddingEnabled) {
+        if (!platform.plan.embeddingEnabled) {
             await alertsService(log).add({
                 channel: AlertChannel.EMAIL,
                 projectId: project.id,

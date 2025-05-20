@@ -5,7 +5,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
-import { platformBillingService } from './platform-billing.service'
+import { platformBillingService } from './platform-plan.service'
 import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {

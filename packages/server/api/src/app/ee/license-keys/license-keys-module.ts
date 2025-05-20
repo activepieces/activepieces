@@ -12,13 +12,13 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
         const platforms = await platformService.getAll()
         for (const platform of platforms) {
-            if (isNil(platform.licenseKey) || isEmpty(platform.licenseKey)) {
+            if (isNil(platform.plan.licenseKey) || isEmpty(platform.plan.licenseKey)) {
                 continue
             }
             try {
                 const key = await licenseKeysService(app.log).verifyKeyOrReturnNull({
                     platformId: platform.id,
-                    license: platform.licenseKey,
+                    license: platform.plan.licenseKey,
                 })
                 if (isNil(key)) {
                     await licenseKeysService(app.log).downgradeToFreePlan(platform.id)

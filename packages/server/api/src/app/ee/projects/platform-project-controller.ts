@@ -29,7 +29,7 @@ const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
-        await platformMustHaveFeatureEnabled(platform => platform.manageProjectsEnabled).call(app, request, reply)
+        await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const platform = await platformService.getOneOrThrow(platformId)

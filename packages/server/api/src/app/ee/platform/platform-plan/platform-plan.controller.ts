@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { BillingEntityType, usageService } from '../platform-usage-service'
-import { platformBillingService } from './platform-billing.service'
+import { platformBillingService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -45,6 +45,8 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
             const stripe = stripeHelper(request.log).getStripe()
             assertNotNullOrUndefined(stripe, 'Stripe is not configured')
             const projectBilling = await platformBillingService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+            const customerId = projectBilling.stripeCustomerId
+            assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
             if (projectBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
                 await reply.status(StatusCodes.BAD_REQUEST).send({
                     message: 'Already subscribed',
@@ -54,7 +56,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
 
             await platformBillingService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
             return {
-                paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
+                paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
             }
         },
     )

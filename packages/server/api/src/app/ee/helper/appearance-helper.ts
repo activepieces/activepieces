@@ -32,7 +32,7 @@ const enterpriseThemeChecker = async (platform: Platform) => {
                 primaryColor: platform.primaryColor,
             })
         case ApEdition.ENTERPRISE:
-            if (platform.customAppearanceEnabled) {
+            if (platform.plan.customAppearanceEnabled) {
                 return generateTheme({
                     websiteName: platform.name,
                     fullLogoUrl: platform.fullLogoUrl,

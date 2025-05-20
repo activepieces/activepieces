@@ -92,7 +92,7 @@ export const authenticationUtils = {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        if (!platform.plan.ssoEnabled) {
             return
         }
         const emailDomain = email.split('@')[1]
@@ -119,7 +119,7 @@ export const authenticationUtils = {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        if (!platform.plan.ssoEnabled) {
             return
         }
         if (provider !== UserIdentityProvider.EMAIL) {
@@ -164,7 +164,7 @@ export const authenticationUtils = {
         if (environment !== ApEnvironment.PRODUCTION) {
             return
         }
-        if (platform.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
         try {

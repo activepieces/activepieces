@@ -17,7 +17,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(issue.projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (platform.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
 

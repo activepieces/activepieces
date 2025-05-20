@@ -66,6 +66,54 @@ export const PlatformUsage = Type.Object({
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
+
+export const PlatformPlan = Type.Object({
+    ...BaseModelSchema,
+    platformId: Type.String(),
+    includedTasks: Type.Number(),
+    includedAiCredits: Type.Number(),
+    tasksLimit: Type.Optional(Type.Number()),
+    aiCreditsLimit: Type.Optional(Type.Number()),
+
+    environmentsEnabled: Type.Boolean(),
+    analyticsEnabled: Type.Boolean(),
+    showPoweredBy: Type.Boolean(),
+    auditLogEnabled: Type.Boolean(),
+    embeddingEnabled: Type.Boolean(),
+    managePiecesEnabled: Type.Boolean(),
+    manageTemplatesEnabled: Type.Boolean(),
+    customAppearanceEnabled: Type.Boolean(),
+    manageProjectsEnabled: Type.Boolean(),
+    projectRolesEnabled: Type.Boolean(),
+    customDomainsEnabled: Type.Boolean(),
+    globalConnectionsEnabled: Type.Boolean(),
+    customRolesEnabled: Type.Boolean(),
+    apiKeysEnabled: Type.Boolean(),
+
+    alertsEnabled: Type.Boolean(),
+    ssoEnabled: Type.Boolean(),
+    
+    licenseKey: Type.Optional(Type.String()),
+
+    stripeCustomerId: Type.Optional(Type.String()),
+    stripeSubscriptionId: Type.Optional(Type.String()),
+    stripeSubscriptionStatus: Type.Optional(Type.String()),
+  })
+  
+  export type PlatformPlan = Static<typeof PlatformPlan>
+
+  export const PlatformPlanWithoutEntityData = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
+  export type PlatformPlanWithoutEntityData = Static<typeof PlatformPlanWithoutEntityData>
+
+  export const PlatformPlanResponse = Type.Object({
+    nextBillingDate: Type.String(),
+    subscription: PlatformPlanWithoutEntityData,
+    flowRunCount: Type.Number(),
+    aiCredits: Type.Number(),
+  })
+  
+  export type PlatformPlanResponse = Static<typeof PlatformPlanResponse>
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -84,32 +132,13 @@ export const Platform = Type.Object({
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
-    environmentsEnabled: Type.Boolean(),
-    analyticsEnabled: Type.Boolean(),
-    showPoweredBy: Type.Boolean(),
-    auditLogEnabled: Type.Boolean(),
-    embeddingEnabled: Type.Boolean(),
-    managePiecesEnabled: Type.Boolean(),
-    manageTemplatesEnabled: Type.Boolean(),
-    customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
-    projectRolesEnabled: Type.Boolean(),
-    customDomainsEnabled: Type.Boolean(),
-    globalConnectionsEnabled: Type.Boolean(),
-    customRolesEnabled: Type.Boolean(),
-    apiKeysEnabled: Type.Boolean(),
-    /**
-     * @deprecated flow issues is open source
-     */
-    flowIssuesEnabled: Type.Boolean(),
-    alertsEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
-    ssoEnabled: Type.Boolean(),
+
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
-    licenseKey: Type.Optional(Type.String()),
+    plan: Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated']),
     pinnedPieces: Type.Array(Type.String()),
     copilotSettings: Type.Optional(CopilotSettings),
 })
@@ -130,6 +159,7 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'updated',
     'ownerId',
     'name',
+    'plan',
     'primaryColor',
     'logoIconUrl',
     'fullLogoUrl',
@@ -137,24 +167,6 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'filteredPieceNames',
     'filteredPieceBehavior',
     'cloudAuthEnabled',
-    'gitSyncEnabled',
-    'analyticsEnabled',
-    'showPoweredBy',
-    'environmentsEnabled',
-    'auditLogEnabled',
-    'embeddingEnabled',
-    'managePiecesEnabled',
-    'manageTemplatesEnabled',
-    'customAppearanceEnabled',
-    'manageProjectsEnabled',
-    'projectRolesEnabled',
-    'customDomainsEnabled',
-    'globalConnectionsEnabled',
-    'customRolesEnabled',
-    'apiKeysEnabled',
-    'flowIssuesEnabled',
-    'alertsEnabled',
-    'ssoEnabled',
     'enforceAllowedAuthDomains',
     'allowedAuthDomains',
     'emailAuthEnabled',

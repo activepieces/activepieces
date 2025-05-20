@@ -27,7 +27,7 @@ export const platformUtils = {
         if (edition !== ApEdition.CLOUD) {
             return false
         }
-        return platform.ssoEnabled || platform.embeddingEnabled
+        return platform.plan.ssoEnabled || platform.plan.embeddingEnabled
     },
 }
 

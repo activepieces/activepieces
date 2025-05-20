@@ -41,7 +41,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             'paramId',
         )
         const platform = await platformService.getOneOrThrow(req.params.id)
-        const licenseKey = await licenseKeysService(req.log).getKey(platform.licenseKey)
+        const licenseKey = await licenseKeysService(req.log).getKey(platform.plan.licenseKey)
        
         const platformWithoutSensitiveData = platform as PlatformWithoutSensitiveData
         platformWithoutSensitiveData.licenseExpiresAt = licenseKey?.expiresAt

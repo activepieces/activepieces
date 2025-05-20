@@ -91,7 +91,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled || platform.embeddingEnabled) {
+        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
             return
         }
 
