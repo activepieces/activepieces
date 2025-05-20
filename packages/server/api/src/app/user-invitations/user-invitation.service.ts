@@ -6,8 +6,8 @@ import { repoFactory } from '../core/db/repo-factory'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
-import { projectMemberService } from '../ee/project-members/project-member.service'
-import { projectRoleService } from '../ee/project-role/project-role.service'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
+import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -18,11 +18,6 @@ import { UserInvitationEntity } from './user-invitation.entity'
 const repo = repoFactory(UserInvitationEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
-    async countByProjectId(projectId: string): Promise<number> {
-        return repo().countBy({
-            projectId,
-        })
-    },
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
