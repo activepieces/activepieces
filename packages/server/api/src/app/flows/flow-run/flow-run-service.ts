@@ -167,7 +167,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (matchRequestId || !checkRequestId) {
             return flowRunService(log).start({
                 payload,
-                flowRunId: flowRunToResume.id,
+                existingFlowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
@@ -209,7 +209,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async start({
         projectId,
         flowVersionId,
-        flowRunId,
+        existingFlowRunId,
         payload,
         environment,
         executionType,
@@ -225,7 +225,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         const flowRun = await getFlowRunOrCreate({
-            id: flowRunId,
+            id: existingFlowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
@@ -379,7 +379,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunService(log).start({
             payload,
-            flowRunId: flowRun.id,
+            existingFlowRunId: flowRun.id,
             projectId: flowRun.projectId,
             flowVersionId: flowRun.flowVersionId,
             synchronousHandlerId,
@@ -540,7 +540,7 @@ type GetOneParams = {
 type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    flowRunId?: FlowRunId
+    existingFlowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId: string | undefined

@@ -34,7 +34,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-// import { projectMemberService } from '../../ee/project-members/project-member.service'
+// import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -199,13 +199,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectId,
             platformId,
         })
-        
+
         const targetAppConnection = await this.getOneOrThrowWithoutValue({
             id: targetAppConnectionId,
             projectId,
             platformId,
         })
-        
+
         if (sourceAppConnection.pieceName !== targetAppConnection.pieceName) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

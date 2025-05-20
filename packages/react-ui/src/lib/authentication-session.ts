@@ -3,16 +3,20 @@ import { jwtDecode } from 'jwt-decode';
 
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
+import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
-
 const tokenKey = 'token';
 const botxTokenKey = 'botx_token';
 export const authenticationSession = {
   saveToken(token: string) {
-    localStorage.setItem(tokenKey, token);
+    // localStorage.setItem(tokenKey, token);
+    ApStorage.getInstance().setItem(tokenKey, token);
   },
-  saveResponse(response: AuthenticationResponse) {
-    localStorage.setItem(tokenKey, response.token);
+  saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
+    if (isEmbedding) {
+      ApStorage.setInstanceToSessionStorage();
+    }
+    ApStorage.getInstance().setItem(tokenKey, response.token);
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -30,7 +34,7 @@ export const authenticationSession = {
     }
   },
   getToken(): string | null {
-    return localStorage.getItem(tokenKey) ?? null;
+    return ApStorage.getInstance().getItem(tokenKey) ?? null;
   },
 
   getProjectId(): string | null {
@@ -71,32 +75,34 @@ export const authenticationSession = {
     const result = await authenticationApi.switchPlatform({
       platformId,
     });
-    localStorage.setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     window.location.href = '/';
   },
-  async switchToSession(projectId: string) {
+  async switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
-    localStorage.setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
     return !!this.getToken();
   },
   clearSession() {
-    localStorage.removeItem(tokenKey);
+    ApStorage.getInstance().removeItem(tokenKey);
   },
   logOut() {
     this.clearSession();
     window.location.href = '/sign-in';
   },
   saveBotxToken(token: string) {
-    localStorage.setItem(botxTokenKey, token);
+    // localStorage.setItem(botxTokenKey, token);
+    ApStorage.getInstance().setItem(botxTokenKey, token);
   },
   getBotxToken(): string | null {
-    return localStorage.getItem(botxTokenKey) ?? null;
+    // return localStorage.getItem(botxTokenKey) ?? null;
+    return ApStorage.getInstance().getItem(botxTokenKey) ?? null;
   },
 };
 

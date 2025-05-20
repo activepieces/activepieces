@@ -72,7 +72,7 @@ function ProjectSwitcher() {
           className="gap-2 w-full justify-start px-2 enabled:hover:bg-gray-200"
         >
           <div className="flex grow flex-col justify-start items-start">
-            <span className="flex-grow truncate overflow-hidden text-sm">
+            <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
               {currentProject?.displayName}
             </span>
           </div>

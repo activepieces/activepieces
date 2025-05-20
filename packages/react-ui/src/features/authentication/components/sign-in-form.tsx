@@ -64,7 +64,7 @@ const SignInForm: React.FC = () => {
   >({
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
-      authenticationSession.saveResponse(data);
+      authenticationSession.saveResponse(data, false);
       redirectAfterLogin();
     },
     onError: (error) => {

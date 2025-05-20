@@ -39,7 +39,7 @@ const ApDashboardSidebarHeader = ({
           alt={t('home')}
           width={28}
           height={28}
-          className="max-h-[28px] max-w-[28px] object-contain"
+          className="max-h-[22px] max-w-[22px] object-contain"
         />
       );
     }
