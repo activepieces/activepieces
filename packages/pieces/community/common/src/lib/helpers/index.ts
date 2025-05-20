@@ -209,16 +209,16 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
         : response.headers?.['content-type']
 
       // Return unaltered response if content type is associated with objects or strings
-      if (objectContentTypes.includes(contentTypeValue ?? '')) {
+      if (objectContentTypes.some(type => (contentTypeValue ?? '').includes(type))) {
         try {
-          response.body = JSON.parse(response.body)
-        } catch {
-          response.body = response.body ?? {}
+          // Parse JSON responses if valid
+          response.body = JSON.parse(response.body || '{}');
+        } catch (err) {
+          // Fall back to returning plain text if JSON parsing fails
+          response.body = response.body?.toString() || '';
         }
-        return {
-          ...response,
-          body: response.body
-        }
+      
+        return response
       }
 
       // Get file extension from content type
