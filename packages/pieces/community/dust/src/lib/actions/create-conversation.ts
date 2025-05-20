@@ -88,7 +88,7 @@ export const createConversation = createAction({
       return await getConversationContent(
         conversationId,
         propsValue.timeout,
-        auth
+        auth as DustAuthType
       );
     } else {
       return response.value;

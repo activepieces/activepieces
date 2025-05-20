@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/apify/package.json",
         "main": "packages/pieces/community/apify/src/index.ts",
         "assets": [
-          "packages/pieces/community/apify/*.md"
+          "packages/pieces/community/apify/*.md",
+          {
+            "input": "packages/pieces/community/apify/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

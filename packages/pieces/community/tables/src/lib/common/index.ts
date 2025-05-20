@@ -1,7 +1,8 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
+import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
 import { z } from 'zod';
+import qs from 'qs';
 
 type FormattedRecord = {
   id: string;
@@ -32,18 +33,9 @@ export const tablesCommon = {
     required: true,
     refreshers: [],
     refreshOnSearch: true,
-    options: async (propsValue, context) => {
+    options: async (_propsValue, context) => {
       try {
-        const res = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${context.server.apiUrl}v1/tables?limit=100`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: context.server.token,
-          },
-        });
-        const resultBody = res.body as SeekPage<Table>
-        const tables = [...resultBody.data];
+        const tables = await fetchAllTables(context);
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
@@ -51,23 +43,8 @@ export const tablesCommon = {
             placeholder: 'No tables found. Please create a table first.',
           };
         }
-        let next = resultBody.next;
-        while (next) {
-          const nextPage = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: context.server.token,
-            },
-          });
-          const nextPageBody = nextPage.body as SeekPage<Table>
-          tables.push(...nextPageBody.data)
-          next = nextPageBody.next
-        }
-
         return {
-          options: tables.map((table: Table) => ({ label: table.name, value: table.id })),
+          options: tables.map((table: Table) => ({ label: table.name, value: table.externalId })),
         };
       } catch (e) {
         console.error('Error fetching tables:', e);
@@ -87,11 +64,12 @@ export const tablesCommon = {
   }),
 
   async getTableFields({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }) {
+    const convertedTableId = await this.convertTableExternalIdToId(tableId, context);
     const fieldsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/fields`,
       queryParams: {
-        tableId,
+        tableId: convertedTableId,
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -260,12 +238,8 @@ export const tablesCommon = {
     }
 
     const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/records/list`,
-      body: {
-        tableId,
-        limit
-      },
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/records?tableId=${tableId}&limit=${limit}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
@@ -291,5 +265,53 @@ export const tablesCommon = {
         }]
       })) : {},
     }
+  },
+
+  async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string } }) {
+    const list: ListTablesRequest = {
+      externalIds: [tableId],
+    }
+    const res = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables?${qs.stringify(list)}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+    const table = (res.body as SeekPage<Table>).data[0];
+    assertNotNullOrUndefined(table, `Table with externalId ${tableId} not found`);
+    return table.id;
   }
+}
+
+const fetchAllTables = async (context: { server: { apiUrl: string, token: string } }): Promise<Table[]> => {
+  const res = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${context.server.apiUrl}v1/tables?limit=100`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: context.server.token,
+    },
+  });
+  const resultBody = res.body as SeekPage<Table>
+  const tables = [...resultBody.data];
+  if (!Array.isArray(tables) || tables.length === 0) {
+    return [];
+  }
+  let next = resultBody.next;
+  while (next) {
+    const nextPage = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+    const nextPageBody = nextPage.body as SeekPage<Table>
+    tables.push(...nextPageBody.data)
+    next = nextPageBody.next
+  }
+  return tables;
 }

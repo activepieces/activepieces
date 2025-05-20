@@ -144,7 +144,7 @@ describe('flow execution', () => {
             synchronousHandlerId: null,
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
-        }, engineToken)
+        }, 1, engineToken)
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')

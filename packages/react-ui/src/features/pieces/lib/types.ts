@@ -27,6 +27,14 @@ export type PieceStepMetadata = BaseStepMetadata & {
   packageType: PackageType;
   pieceType: PieceType;
   auth: PieceAuthProperty | undefined;
+  errorHandlingOptions?: {
+    continueOnFailure: {
+      hide: boolean;
+    };
+    retryOnFailure: {
+      hide: boolean;
+    };
+  };
 };
 
 type PrimitiveStepMetadata = BaseStepMetadata & {

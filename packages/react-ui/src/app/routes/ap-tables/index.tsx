@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2 } from 'lucide-react';
+import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -18,6 +18,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
@@ -33,12 +34,18 @@ import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
-  const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
+  const [selectedRows, setSelectedRows] = useState<Table[]>([]);
   const { data: maxTables } = flagsHooks.useFlag(
     ApFlagId.MAX_TABLES_PER_PROJECT,
   );
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_TABLE,
+  );
+  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['tables', searchParams.toString(), project.id],
     queryFn: () =>
@@ -50,9 +57,6 @@ const ApTablesPage = () => {
         name: searchParams.get('name') ?? undefined,
       }),
   });
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
   const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
       const table = await tablesApi.create({ name: data.name });
@@ -238,8 +242,26 @@ const ApTablesPage = () => {
           </div>
         ),
       },
+      {
+        render: (_) => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToPushToGit}
+            >
+              <PushToGitDialog type="table" tables={selectedRows}>
+                {selectedRows.length > 0 && (
+                  <Button className="w-full mr-2" size="sm" variant="outline">
+                    <UploadCloud className="mr-2 w-4" />
+                    {`${t('Push to Git')} (${selectedRows.length})`}
+                  </Button>
+                )}
+              </PushToGitDialog>
+            </PermissionNeededTooltip>
+          </div>
+        ),
+      },
     ],
-    [bulkDeleteMutation, selectedRows],
+    [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
   );
   if (isCreatingTable) {
     return <LoadingScreen mode="container" />;

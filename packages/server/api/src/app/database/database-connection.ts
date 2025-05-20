@@ -5,7 +5,9 @@ import {
     DataSource,
     EntitySchema,
     FindOperator,
+    ObjectLiteral,
     Raw,
+    SelectQueryBuilder,
 } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -14,19 +16,19 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
+import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
-import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
-import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
-import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
-import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
-import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
-import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
+import { PlatformBillingEntity } from '../ee/platform/platform-billing/platform-billing.entity'
+import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
+import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
+import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
+import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
+import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
@@ -158,11 +160,34 @@ export const databaseConnection = () => {
     return _databaseConnection
 }
 
+export function getDatabaseType(): DatabaseType {
+    return system.getOrThrow<DatabaseType>(AppSystemProp.DB_TYPE)
+}
+
+
+export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    columnName: string,
+    values: string[],
+): void {
+    switch (getDatabaseType()) {
+        case DatabaseType.POSTGRES:
+            queryBuilder.andWhere(`${columnName} @> :values`, { values })
+            break
+        case DatabaseType.SQLITE3:{
+            for (const value of values) {
+                queryBuilder.andWhere(`${columnName} LIKE :value${values.indexOf(value)}`, { [`value${values.indexOf(value)}`]: `%${value}%` })
+            }
+            break
+        }
+    }
+}
+
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
 ): Record<string, FindOperator<T>> {
-    const databaseType = system.get(AppSystemProp.DB_TYPE)
+    const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
             return {

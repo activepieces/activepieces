@@ -10,7 +10,6 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
-import { v4 as uuid } from 'uuid';
 
 import {
   Table,
@@ -21,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { isNil, SeekPage } from '@activepieces/shared';
+import { apId, isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
 import {
@@ -57,7 +56,7 @@ export type DataTableFilter<Keys extends string> = {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: React.ComponentType<{ className?: string }> | string;
   }[];
 };
 
@@ -85,6 +84,7 @@ interface DataTableProps<
   ) => void;
   isLoading: boolean;
   filters?: F[];
+  customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
@@ -119,6 +119,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  customFilters,
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns =
     actions.length > 0
@@ -144,6 +145,13 @@ export function DataTable<
           },
         ])
       : columnsInitial;
+
+  const columnVisibility = columnsInitial.reduce((acc, column) => {
+    if (column.enableHiding && 'accessorKey' in column) {
+      acc[column.accessorKey as string] = false;
+    }
+    return acc;
+  }, {} as Record<string, boolean>);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
@@ -190,11 +198,12 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
-    getRowId: () => uuid(),
+    getRowId: () => apId(),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
       },
+      columnVisibility,
     },
   });
 
@@ -254,6 +263,10 @@ export function DataTable<
                     title={filter.title}
                     options={filter.options}
                   />
+                ))}
+              {customFilters &&
+                customFilters.map((filter, idx) => (
+                  <React.Fragment key={idx}>{filter}</React.Fragment>
                 ))}
             </div>
             {bulkActions.length > 0 && (
