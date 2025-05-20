@@ -147,6 +147,9 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(EngineOperationType.EXECUTE_TOOL, sandbox, input, log)
     },
+    async shutdownAllWorkers() {
+        await sandboxProvisioner(log).shutdown()
+    },
 })
 
 const execute = async <Result extends EngineHelperResult>(

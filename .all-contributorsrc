@@ -1742,6 +1742,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "krushnarout",
+      "name": "Krushna Kanta Rout",
+      "avatar_url": "https://avatars.githubusercontent.com/u/129386740?v=4",
+      "profile": "https://github.com/krushnarout",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

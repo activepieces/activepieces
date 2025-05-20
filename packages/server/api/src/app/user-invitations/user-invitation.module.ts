@@ -23,7 +23,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 // import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 // import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
-// import { projectRoleService } from '../ee/project-role/project-role.service'
+// import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
 

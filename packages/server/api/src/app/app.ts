@@ -253,7 +253,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     // await app.register(adminPlatformModule)
     await app.register(changelogModule)
-    
+
     app.get(
         '/redirect',
         async (

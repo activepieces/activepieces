@@ -72,7 +72,6 @@ export const OneTimeJobData = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
     executionType: Type.Enum(ExecutionType),
-    retryPayload: Type.Optional(Type.Any()),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
