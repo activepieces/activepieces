@@ -28,7 +28,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         const pieces = steps.filter((step) => step.type === TriggerType.PIECE || step.type === ActionType.PIECE).map((step) => {
             const { packageType, pieceType, pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-            return pieceEngineUtil(log).getExactPieceVersion(engineToken, {
+            return pieceEngineUtil(log).resolveExactVersion(engineToken, {
                 packageType,
                 pieceType,
                 pieceName,
@@ -42,7 +42,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         const { trigger } = flowVersion
         return this.getExactPieceForStep(engineToken, trigger)
     },
-    async getExactPieceVersion(engineToken: string, piece: BasicPieceInformation): Promise<PiecePackage> {
+    async resolveExactVersion(engineToken: string, piece: BasicPieceInformation): Promise<PiecePackage> {
         const { pieceName, pieceVersion, pieceType, packageType } = piece
 
         switch (packageType) {
@@ -78,7 +78,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
     async getExactPieceForStep(engineToken: string, step: Action | Trigger): Promise<PiecePackage> {
         const pieceSettings = step.settings as PieceTriggerSettings | PieceActionSettings
         const { pieceName, pieceVersion, pieceType, packageType } = pieceSettings
-        return this.getExactPieceVersion(engineToken, {
+        return this.resolveExactVersion(engineToken, {
             pieceName,
             pieceVersion,
             pieceType,

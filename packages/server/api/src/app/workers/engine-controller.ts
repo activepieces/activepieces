@@ -4,7 +4,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
+import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -146,7 +146,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        const exceededLimit = await usageService(request.log).tasksExceededLimit(request.principal.projectId)
+        const exceededLimit = await projectLimitsService(request.log).tasksExceededLimit(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
