@@ -22,7 +22,7 @@ import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpActionService } from '../mcp-tools/mcp-action-service'
-
+import { mcpFlowService } from '../mcp-tools/mcp-flow-service'
 const repo = repoFactory(McpEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
@@ -81,17 +81,11 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             })
         }
 
-        const pieces = await mcpPieceService(_log).list({
-            mcpId: mcp.id,
-        })
+        const pieces = await mcpActionService(_log).listPieces(mcp.id)
 
-        const actions = await mcpActionService(_log).list({
-            mcpId: mcp.id,
-        })
+        const actions = await mcpActionService(_log).listActions(mcp.id)
 
-        const flows = await mcpFlowService(_log).list({
-            mcpId: mcp.id,
-        })
+        const flows = await mcpFlowService(_log).listFlows(mcp.id)
 
         return {
             ...mcp,

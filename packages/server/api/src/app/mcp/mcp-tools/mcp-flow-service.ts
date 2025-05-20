@@ -5,19 +5,12 @@ import {
     ErrorCode, 
     isNil, 
     Mcp,
-    McpAction,
-    McpActionWithConnection,
     McpFlow,
     McpFlowWithFlow,
-    McpPiece,
-    McpPieceWithConnection,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { projectService } from '../../project/project-service'
 import { McpEntity } from '../mcp-server/mcp-entity'
 import { McpFlowEntity } from './mcp-flow-entity'
 import { flowService } from '../../flows/flow/flow.service'
@@ -83,24 +76,13 @@ export const mcpFlowService = (_log: FastifyBaseLogger) => ({
     },
 
     async delete(flowId: string): Promise<void> {
-        const flow = await this.getOneOrThrow(flowId)
         await mcpFlowRepo().delete({ id: flowId })
-        await _updateMcpTimestamp(flow.mcpId)
     },
     
-    // TODO
     async updateBatch({ mcpId, flowIds }: UpdateBatchParams): Promise<McpFlowWithFlow[]> {
         const mcp = await this.validateMcp(mcpId)
-        
-        // const project = await projectService.getOneOrThrow(mcp.projectId)
-        // await this.validateFlow({
-        //     flowIds,
-        //     projectId: mcp.projectId,
-        //     platformId: project.platformId
-        // })
-        
-
-        await mcpFlowRepo().delete({ mcpId })
+  
+        await mcpFlowRepo().delete({ mcpId: mcp.id })
         
         if (flowIds.length > 0) {
             const flows = flowIds.map(flowId => ({
@@ -132,29 +114,6 @@ export const mcpFlowService = (_log: FastifyBaseLogger) => ({
         return mcp
     },
 
-    async validateFlow({ flowIds }: ValidateFlowParams): Promise<void> {
-
-        // const flowPromises = flowIds.map(async (flowId: string) => {
-        //     const flow = await flowService(_log).getOneById(flowId)
-        //     if (isNil(flow)) {
-        //         throw new ActivepiecesError({
-        //             code: ErrorCode.ENTITY_NOT_FOUND,
-        //             params: { entityId: flowId, entityType: 'Flow' },
-        //         })
-        //     }
-        //     const version = await flowService(_log).getOnePopulatedOrThrow({
-        //         flowId,
-        //         versionId: (flow.state === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
-        //     })
-        //     if (version.trigger.type !== TriggerType.PIECE || version.trigger.settings.pieceName !== '@activepieces/piece-mcp') {
-        //         throw new ActivepiecesError({
-        //             code: ErrorCode.VALIDATION,
-        //             params: { message: `Flow ${flowId} does not start with an MCP trigger` },
-        //         })
-        //     }
-        //     return flow
-        // })
-    },
 })
 
 async function _updateMcpTimestamp(mcpId: ApId): Promise<void> {
