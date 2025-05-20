@@ -99,7 +99,7 @@ export const projectReleaseService = {
 async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
     const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
     const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
-    const diffs = projectDiffService.diff({
+    const diffs = await projectDiffService.diff({
         newState,
         currentState,
     })

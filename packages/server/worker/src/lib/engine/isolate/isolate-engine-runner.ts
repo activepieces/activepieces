@@ -26,7 +26,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         log.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: apId(),
@@ -74,7 +74,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeProp(engineToken, operation) {
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: operation.projectId,
@@ -91,7 +91,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeValidateAuth(engineToken, operation) {
         const { piece, platformId } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: platformId,
@@ -134,7 +134,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(EngineOperationType.EXECUTE_STEP, sandbox, input, log)
     },
     async excuteTool(engineToken, operation) {
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: `${operation.projectId}-${operation.pieceName}-${operation.pieceVersion}`,
