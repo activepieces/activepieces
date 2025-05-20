@@ -19,11 +19,43 @@ export const createEntryAction = createAction({
       description: 'The ID of the record to add to the list',
       required: true,
     }),
-    parent_object: Property.ShortText({
+    parent_object: Property.Dropdown({
       displayName: 'Parent Object Type',
       description: 'The type of object the record belongs to (e.g., people, companies, deals)',
       required: true,
-      defaultValue: 'people',
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest(
+            auth as string,
+            HttpMethod.GET,
+            '/objects'
+          );
+
+          return {
+            options: response.data.map((object: any) => {
+              return {
+                label: object.plural_noun,
+                value: object.api_slug,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching object types',
+            options: [],
+          };
+        }
+      },
     }),
     attributes: Property.Object({
       displayName: 'Entry Attributes',
