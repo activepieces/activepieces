@@ -1751,6 +1751,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nish17",
+      "name": "Nimesh Solanki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12984120?v=4",
+      "profile": "https://www.snimesh.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
