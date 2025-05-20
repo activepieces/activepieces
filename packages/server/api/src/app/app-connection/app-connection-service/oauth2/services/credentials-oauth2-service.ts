@@ -33,16 +33,23 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     break
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
+                    if (request.scope) {
+                        body.scope = request.scope
+                        Object.entries(request.props ?? {}).forEach(([key, value]) => {
+                            body.scope = body.scope.replace(`{${key}}`, String(value))
+                        })
+                    }
+                    if (request.props) {
+                        Object.entries(request.props).forEach(([key, value]) => {
+                            body[key] = value
+                        })
+                    }
                     break
             }
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-            if (request.props && grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
-                Object.entries(request.props).forEach(([key, value]) => {
-                    body[key] = value
-                })
-            }
+           
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
@@ -98,6 +105,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     clientId: request.clientId,
                     tokenUrl: request.tokenUrl,
                     redirectUrl: request.redirectUrl ?? '',
+                    message: e instanceof AxiosError ? e.response?.data.error_description : 'unknown error',
                 },
             })
         }
@@ -121,6 +129,16 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
                 body.grant_type = grantType
+                if (appConnection.scope) {
+                    body.scope = appConnection.scope
+                }
+                if (appConnection.props) {
+                    Object.entries(appConnection.props).forEach(([key, value]) => {
+                        if (typeof value === 'string') {
+                            body[key] = value
+                        }
+                    })
+                }
                 break
             }
             default:
