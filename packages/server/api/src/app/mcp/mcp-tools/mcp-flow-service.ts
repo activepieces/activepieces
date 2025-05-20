@@ -138,19 +138,6 @@ async function enrichWithFlow(
     }
 }
 
-async function validateMcpPieceConnection({ pieceName, connectionId, projectId, platformId, log }: ValidateMcpPieceConnectionParams) {
-    const connection = await appConnectionService(log).getOneOrThrowWithoutValue({
-        id: connectionId,
-        platformId,
-        projectId,
-    })
-    if (connection.pieceName !== pieceName) {
-        throw new ActivepiecesError({
-            code: ErrorCode.MCP_PIECE_CONNECTION_MISMATCH,
-            params: { pieceName, connectionPieceName: connection.pieceName, connectionId },
-        })
-    } 
-}
 
 type UpdateBatchParams = {
     mcpId: ApId

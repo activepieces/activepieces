@@ -20,7 +20,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId,
+    SeekPage, TelemetryEventName, TriggerType, UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
@@ -38,7 +38,7 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-
+import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
@@ -370,6 +370,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowToUpdate.schedule = scheduleOptions
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
+
+            const populatedFlow = await this.getOnePopulatedOrThrow({
+                id,
+                projectId,
+                entityManager,
+            })
+
+            const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
+            if (isDisableMcpFlow) {
+                await mcpFlowService(log).delete(id)
+            }
+
+            return populatedFlow
         }
 
         return this.getOnePopulatedOrThrow({
@@ -601,6 +614,11 @@ const assertFlowIsNotNull: <T extends Flow>(
             params: {},
         })
     }
+}
+
+function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
+    return flowVersion.trigger.type === TriggerType.PIECE && 
+           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
 }
 
 type CreateParams = {

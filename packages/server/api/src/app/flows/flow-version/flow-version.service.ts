@@ -33,6 +33,7 @@ import { userService } from '../../user/user-service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
+import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 
 export const flowVersionRepo = repoFactory(FlowVersionEntity)
 
@@ -280,6 +281,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 })
 
+function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
+    return flowVersion.trigger.type === TriggerType.PIECE && 
+           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+}
+
 async function applySingleOperation(
     projectId: ProjectId,
     flowVersion: FlowVersion,
@@ -293,7 +299,13 @@ async function applySingleOperation(
         operation,
     })
     operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
-    return flowOperations.apply(flowVersion, operation)
+    const updatedFlowVersion = await flowOperations.apply(flowVersion, operation)
+
+    const isMcpTriggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && isMcpTriggerPiece(flowVersion) && !isMcpTriggerPiece(updatedFlowVersion)
+    if(isMcpTriggerChanged) {
+        await mcpFlowService(log).delete(flowVersion.flowId)
+    }
+    return updatedFlowVersion   
 }
 
 async function removeSecretsFromFlow(
