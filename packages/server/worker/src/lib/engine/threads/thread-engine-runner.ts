@@ -201,6 +201,9 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
     },
+    async shutdownAllWorkers() {
+        await engineWorkers.shutdown()
+    },
 })
 
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment): Promise<void> {

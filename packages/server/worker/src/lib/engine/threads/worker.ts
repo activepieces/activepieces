@@ -218,6 +218,12 @@ export class EngineWorker {
         }
     }
 
+    async shutdown(): Promise<void> {
+        this.log.info('Sending shutdown signal to all workers')
+        for (const worker of this.workers) {
+            worker?.kill()
+        }
+    }
 }
 
 function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout | undefined): void {

@@ -1,5 +1,5 @@
 import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRun, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
@@ -8,9 +8,13 @@ import { workerMachine } from '../utils/machine'
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
-async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
+async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
+
     switch (jobData.executionType) {
-        case ExecutionType.BEGIN:
+        case ExecutionType.BEGIN:{
+            const flowRun =  (jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1) ? await engineApiService(engineToken, log).getRun({
+                runId: jobData.runId,
+            }) : undefined
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
@@ -18,12 +22,18 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
+                executionState: {
+                    steps: !isNil(flowRun) ? flowRun.steps : {},
+                },
+                tasks: flowRun?.tasks ?? 0,
                 formatPayload: !isNil(jobData.synchronousHandlerId),
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
             }
+        }
         case ExecutionType.RESUME: {
+
             const flowRun = await engineApiService(engineToken, log).getRun({
                 runId: jobData.runId,
             })
@@ -32,9 +42,11 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
-                tasks: flowRun.tasks ?? 0,
+                tasks: flowRun?.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
-                steps: flowRun.steps,
+                executionState: {
+                    steps: flowRun?.steps ?? {},
+                },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 resumePayload: jobData.payload as ResumePayload,
@@ -43,6 +55,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
         }
     }
 }
+
 
 async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     await engineApiService(engineToken, log).updateRunStatus({
@@ -125,7 +138,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeFlow(jobData: OneTimeJobData, engineToken: string): Promise<void> {
+    async executeFlow(jobData: OneTimeJobData, attempsStarted: number, engineToken: string): Promise<void> {
         try {
 
             const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
@@ -143,7 +156,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             })
             await engineApiService(engineToken, log).checkTaskLimit()
 
-            const input = await prepareInput(flow.version, jobData, engineToken, log)
+            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, log)
             const { result } = await engineRunner(runLog).executeFlow(
                 engineToken,
                 input,

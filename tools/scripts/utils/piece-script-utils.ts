@@ -8,8 +8,8 @@ import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
 import { execSync } from 'child_process'
-
-type Piece = {
+import { pieceTranslation } from '../../../packages/pieces/community/framework/src'
+type SubPiece = {
     name: string;
     displayName: string;
     version: string;
@@ -162,16 +162,18 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
+        const piece = extractPieceFromModule<SubPiece>({
             module,
             pieceName,
             pieceVersion
         });
-
+        const originalMetadata = piece.metadata()
+        const i18n = await pieceTranslation.initializeI18n(packageJson.name)
         const metadata = {
-            ...piece.metadata(),
+            ...originalMetadata,
             name: packageJson.name,
-            version: packageJson.version
+            version: packageJson.version,
+            i18n
         };
         metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;
