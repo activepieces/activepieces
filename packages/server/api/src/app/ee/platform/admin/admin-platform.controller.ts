@@ -53,7 +53,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                             const platformId = await projectService.getPlatformId(flow?.projectId)
                             const piece = await pieceMetadataService(req.log).getOrThrow({
                                 name: (step.settings as (PieceTriggerSettings | PieceActionSettings)).pieceName,
-                                version: (step.settings as (PieceTriggerSettings | PieceActionSettings)).pieceVersion,
+                                version: undefined,
                                 platformId: platformId,
                                 projectId: flow.projectId,
                             })
