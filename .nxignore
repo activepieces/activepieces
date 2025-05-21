@@ -2,3 +2,4 @@ deploy/
 dist/
 cache/
 dev/
+/node-modules/

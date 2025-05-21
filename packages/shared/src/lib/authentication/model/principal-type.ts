@@ -4,6 +4,7 @@ export enum PrincipalType {
     SERVICE = 'SERVICE',
     WORKER = 'WORKER',
     UNKNOWN = 'UNKNOWN',
+    TMS ='TMS',
 
     /**
      * @deprecated

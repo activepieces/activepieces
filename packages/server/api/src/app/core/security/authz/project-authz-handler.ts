@@ -30,6 +30,9 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         if (request.principal.type === PrincipalType.WORKER) {
             return Promise.resolve()
         }
+        if (request.principal.type === PrincipalType.TMS) {
+            return Promise.resolve()
+        } 
         const projectId = requestUtils.extractProjectId(request)
 
         if (projectId && projectId !== request.principal.projectId) {

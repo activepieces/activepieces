@@ -1,10 +1,12 @@
 
 
-import { ApEdition, isNil, Platform, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, isNil, Platform, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
+import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
+import { userService } from '../user/user-service'
 
 export const platformUtils = {
     async getPlatformIdForRequest(req: FastifyRequest): Promise<PlatformId | null> {
@@ -21,6 +23,35 @@ export const platformUtils = {
         const oldestPlatform = await platformService.getOldestPlatform()
         return oldestPlatform?.id ?? null
     },
+    async getPlatformIdForTmsToken(email: string): Promise<PlatformId | null> {
+        // const oldestPlatform = await platformService.getOldestPlatform()
+        const userIdenityByEmail = await userIdentityRepository().findOne({ where: { email } })
+        if (!userIdenityByEmail){
+            throw new ActivepiecesError({
+                            code: ErrorCode.ENTITY_NOT_FOUND,
+                            params: {
+                                message: "User does not exist",
+                                entityId: email,
+                                entityType:"user_identity"
+                            },
+                        })
+        }
+        const user = await userService.getOneByIdentityIdOnly({identityId:userIdenityByEmail.id})
+        if (!user){
+            throw new ActivepiecesError({
+                            code: ErrorCode.ENTITY_NOT_FOUND,
+                            params: {
+                                message: "User does not exist",
+                                entityId: userIdenityByEmail.id,
+                                entityType:"user"
+                            },
+                        })
+        }
+        
+        return user.platformId || null
+    },
+
+
     // TODO (@amrabuaza) this is a temporary function to check if the platform is an enterprise customer on cloud
     isEnterpriseCustomerOnCloud(platform: Platform | PlatformWithoutSensitiveData): boolean {
         const edition = system.getEdition()
