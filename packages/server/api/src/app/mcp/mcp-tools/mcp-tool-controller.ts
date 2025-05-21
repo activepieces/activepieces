@@ -29,7 +29,7 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
         const { id } = req.params
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
-        const pieces = await mcpPieceService(req.log).update({
+        const piece = await mcpPieceService(req.log).update({
             mcpId: id,
             pieceName,
             pieceVersion,
@@ -37,7 +37,11 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
             connectionId: connectionId ?? undefined,
         })
 
-        return { pieces }
+        if(actionNames.length === 0) {
+            await mcpPieceService(req.log).delete(piece.id)
+        }
+
+        return { piece }
     })
 
     app.post('/:id/flows', UpdateMcpFlowsRequest, async (req) => {
@@ -124,7 +128,7 @@ const UpdateMcpPieceRequest = {
         body: UpdateMcpPieceRequestBody,
         response: {
             [StatusCodes.OK]: Type.Object({
-                pieces: Type.Array(McpPieceWithConnection),
+                piece: McpPieceWithConnection,
             }),
         },
     },

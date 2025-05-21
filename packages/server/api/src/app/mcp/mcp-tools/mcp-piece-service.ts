@@ -75,13 +75,24 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         return piece.mcpId
     },
 
+    async getPieceId(mcpId: string, pieceName: string, pieceVersion: string): Promise<string> {
+        const piece = await mcpPieceRepo().findOneBy({ mcpId, pieceName, pieceVersion })
+        if (isNil(piece)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: pieceName, entityType: 'McpPiece' },
+            })
+        }
+        return piece.id
+    },
+
     async delete(pieceId: string): Promise<void> {
         const piece = await this.getOneOrThrow(pieceId)
         await mcpPieceRepo().delete({ id: pieceId })
         await _updateMcpTimestamp(piece.mcpId)
     },
     
-    async update({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection[]> {
+    async update({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection> {
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         
@@ -107,7 +118,8 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         
         await _updateMcpTimestamp(mcpId)
         
-        return this.list(mcpId)
+        const pieceId = await this.getPieceId(mcpId, pieceName, pieceVersion)
+        return this.getOneOrThrow(pieceId)
     },
 
     async validateMcp(mcpId: ApId): Promise<Mcp> {
