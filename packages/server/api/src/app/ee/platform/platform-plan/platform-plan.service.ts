@@ -1,5 +1,6 @@
 import { ApSubscriptionStatus, FREE_CLOUD_PLAN, OPENSOURCE_PLAN } from '@activepieces/ee-shared'
-import { ApEdition, apId, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
@@ -102,7 +103,8 @@ function getInitialPlanByEdition(): PlatformPlanLimits {
 }
 
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | null> {
-    if (edition !== ApEdition.CLOUD) {
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING) {
         return null
     }
     const stripeCustomerId = await stripeHelper(log).createCustomer(
