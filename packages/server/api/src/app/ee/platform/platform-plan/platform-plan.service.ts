@@ -37,7 +37,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('environmentsEnabled', params.environmentsEnabled),
             ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),

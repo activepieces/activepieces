@@ -23,6 +23,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
 import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
@@ -59,7 +60,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {

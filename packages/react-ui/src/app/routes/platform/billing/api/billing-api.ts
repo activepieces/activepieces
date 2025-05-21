@@ -1,8 +1,5 @@
 import { api } from '@/lib/api';
-import {
-  PlatformPlan,
-  PlatformPlanResponse,
-} from '@activepieces/shared';
+import { PlatformPlan, PlatformPlanResponse } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscription() {

@@ -225,7 +225,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFolderDisplayOrder1747062679388,
         AddI18nColumnToPieceMetadata1746714949131,
         ChangeExternalIdsForTables1747346473000,
-        RemoveFeatureFlagsFromSqlite1747824740845
+        RemoveFeatureFlagsFromSqlite1747824740845,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

@@ -17,7 +17,6 @@ import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { BillingUsageType, usageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
-import { FlowPlanLimits } from '@activepieces/ee-shared'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 const edition = system.getEdition()
