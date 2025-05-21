@@ -41,7 +41,6 @@ export const mcpApi = {
     );
   },
 
-
   async getFlows(mcpId: string): Promise<{ flows: McpFlowWithFlow[] }> {
     return await api.get<{ flows: McpFlowWithFlow[] }>(
       `/v1/mcp-tools/${mcpId}/flows`
@@ -61,4 +60,14 @@ export const mcpApi = {
   ): Promise<McpWithTools> {
     return await api.post(`/v1/mcp-tools/${mcpId}/flows`, request);
   },
+
+  async deletePiece(pieceId: string): Promise<void> {
+    return await api.delete(`/v1/mcp-tools/pieces/${pieceId}`);
+  },
+
+  async deleteFlow(flowId: string): Promise<void> {
+    return await api.delete(`/v1/mcp-tools/flows/${flowId}`);
+  },
 };
+
+

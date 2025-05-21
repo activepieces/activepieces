@@ -52,6 +52,19 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
         return { flows }
     })
 
+    app.delete('/:id/pieces/:pieceId', DeleteMcpPieceRequest, async (req, reply) => {
+        const { pieceId } = req.params
+        await mcpPieceService(req.log).delete(pieceId)
+        await reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    
+    app.delete('/:id/flows/:flowId', DeleteMcpFlowRequest, async (req, reply) => {
+        const { flowId } = req.params
+        await mcpFlowService(req.log).delete(flowId)
+        await reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
 }
 
 const GetMcpPiecesRequest = {
@@ -135,5 +148,43 @@ const UpdateMcpFlowsRequest = {
                 flows: Type.Array(McpFlowWithFlow),
             }),
         },
+    },
+}
+
+const DeleteMcpPieceRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp-piece'],
+        description: 'Delete MCP piece',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+            pieceId: ApId,
+        }),
+    },
+    response: {
+        [StatusCodes.NO_CONTENT]: Type.Never(),
+    },
+}
+
+const DeleteMcpFlowRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp-flow'],
+        description: 'Delete MCP flow',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+            flowId: ApId,
+        }),
+    },
+    response: {
+        [StatusCodes.NO_CONTENT]: Type.Never(),
     },
 }

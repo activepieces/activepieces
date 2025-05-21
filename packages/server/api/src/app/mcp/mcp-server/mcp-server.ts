@@ -28,13 +28,13 @@ export async function createMcpServer({
         version: '1.0.0',
     })
 
-    await addActionsToServer(server, mcpId, logger)
+    await addPiecesToServer(server, mcpId, logger)
     await addFlowsToServer(server, mcpId, logger)
 
     return { server, transport }
 }
 
-async function addActionsToServer(
+async function addPiecesToServer(
     server: McpServer,
     mcpId: string,
     logger: FastifyBaseLogger,
@@ -72,8 +72,6 @@ async function addActionsToServer(
             uniqueActions.add(actionName)
 
             const pieceConnectionExternalId = piece.connection?.externalId
-            
- 
             
             server.tool(
                 actionName,
