@@ -109,8 +109,7 @@ export const pieceHelper = {
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
         const server = {
-            token: params.engineToken,
-            apiUrl: params.internalApiUrl.endsWith('/') ?params.internalApiUrl : params.internalApiUrl + '/' ,
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
         }
         if (piece.auth?.validate === undefined) {
