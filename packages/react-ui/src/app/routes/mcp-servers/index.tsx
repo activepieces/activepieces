@@ -34,11 +34,11 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ApFlagId, McpWithPieces, Permission } from '@activepieces/shared';
+import { ApFlagId, McpWithTools, Permission } from '@activepieces/shared';
 
 const McpServersPage = () => {
   const navigate = useNavigate();
-  const [selectedRows, setSelectedRows] = useState<McpWithPieces[]>([]);
+  const [selectedRows, setSelectedRows] = useState<McpWithTools[]>([]);
   const { data: maxMcps } = flagsHooks.useFlag(ApFlagId.MAX_MCPS_PER_PROJECT);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
@@ -86,7 +86,7 @@ const McpServersPage = () => {
     },
   });
 
-  const columns: ColumnDef<RowDataWithActions<McpWithPieces>, unknown>[] = [
+  const columns: ColumnDef<RowDataWithActions<McpWithTools>, unknown>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -256,7 +256,7 @@ const McpServersPage = () => {
     },
   });
 
-  const bulkActions: BulkAction<McpWithPieces>[] = useMemo(
+  const bulkActions: BulkAction<McpWithTools>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => (

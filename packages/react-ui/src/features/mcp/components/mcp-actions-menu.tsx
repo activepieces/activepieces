@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { McpWithPieces, Permission } from '@activepieces/shared';
+import { McpWithTools, Permission } from '@activepieces/shared';
 
 import RenameMcpDialog from './rename-mcp-dialog'; // Adjusted path
 
@@ -20,7 +20,7 @@ const McpActionsMenu = ({
   refetch,
   deleteMutation,
 }: {
-  mcp: McpWithPieces;
+  mcp: McpWithTools;
   refetch: () => void;
   deleteMutation: UseMutationResult<void, Error, string[], unknown>;
 }) => {
