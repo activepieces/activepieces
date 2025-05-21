@@ -104,6 +104,7 @@ import { ChangeMcpPieceForeignKey1746543346220 } from './migration/sqlite/174654
 import { AddI18nColumnToPieceMetadata1746714949131 } from './migration/sqlite/1746714949131-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/sqlite/1746845932780-AddHandshakeConfigurationToFlowSqlite'
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
+import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/1747824740845-RemoveFeatureFlagsFromSqlite'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -224,6 +225,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFolderDisplayOrder1747062679388,
         AddI18nColumnToPieceMetadata1746714949131,
         ChangeExternalIdsForTables1747346473000,
+        RemoveFeatureFlagsFromSqlite1747824740845
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

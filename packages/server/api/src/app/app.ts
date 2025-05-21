@@ -46,7 +46,7 @@ import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
-import { platformBillingModule } from './ee/platform/platform-billing/platform-billing.module'
+import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -271,7 +271,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
-            await app.register(platformBillingModule)
+            await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
@@ -303,6 +303,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
@@ -392,12 +393,5 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
     }
-    const oldestPlatform = await platformService.getOldestPlatform()
-    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
-    if (!isNil(oldestPlatform) && !isNil(key)) {
-        await platformService.update({
-            id: oldestPlatform.id,
-            licenseKey: key,
-        })
-    }
+
 }
