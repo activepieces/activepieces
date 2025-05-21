@@ -86,35 +86,36 @@ export const BuilderHeader = () => {
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
         <div className="flex items-center gap-2">
           <div className="flex gap-2 items-center">
-            {!embedState.hideFolders && (
-              <>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger
-                      onClick={() =>
-                        navigate({
-                          pathname:
-                            authenticationSession.appendProjectRoutePrefix(
-                              '/flows',
-                            ),
-                          search: createSearchParams({
-                            folderId: folderData?.id ?? 'NULL',
-                          }).toString(),
-                        })
-                      }
-                    >
-                      {folderName}
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <span>
-                        {t('Go to folder')} {folderName}
-                      </span>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {' / '}
-              </>
-            )}
+            {!embedState.hideFolders &&
+              !embedState.disableNavigationInBuilder && (
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger
+                        onClick={() =>
+                          navigate({
+                            pathname:
+                              authenticationSession.appendProjectRoutePrefix(
+                                '/flows',
+                              ),
+                            search: createSearchParams({
+                              folderId: folderData?.id ?? 'NULL',
+                            }).toString(),
+                          })
+                        }
+                      >
+                        {folderName}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <span>
+                          {t('Go to folder')} {folderName}
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {' / '}
+                </>
+              )}
             {!embedState.hideFlowNameInBuilder && (
               <EditableText
                 className="font-semibold"
