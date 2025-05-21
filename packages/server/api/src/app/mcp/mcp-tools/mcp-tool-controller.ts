@@ -29,7 +29,7 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
         const { id } = req.params
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
-        const pieces = await mcpPieceService(req.log).updateBatch({
+        const pieces = await mcpPieceService(req.log).update({
             mcpId: id,
             pieceName,
             pieceVersion,

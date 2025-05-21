@@ -81,7 +81,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         await _updateMcpTimestamp(piece.mcpId)
     },
     
-    async updateBatch({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection[]> {
+    async update({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection[]> {
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         
