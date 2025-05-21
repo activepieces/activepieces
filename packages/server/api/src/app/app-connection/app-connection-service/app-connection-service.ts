@@ -32,7 +32,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { projectMemberService } from '../../ee/project-members/project-member.service'
+import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -294,9 +294,22 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
                 id: apConnection.ownerId,
             })
+            const flowIds = await Promise.all(apConnection.projectIds.map(async (projectId) => {
+                const flows = await flowService(log).list({
+                    projectId,
+                    cursorRequest: null,
+                    limit: 1000,
+                    folderId: undefined,
+                    name: undefined,
+                    status: undefined,
+                    connectionExternalIds: [apConnection.externalId],
+                })
+                return flows.data.map((flow) => flow.id)
+            }))
             return {
                 ...apConnection,
                 owner,
+                flowIds: flowIds.flat(),
             }
         })
         const refreshConnections = await Promise.all(promises)
@@ -434,6 +447,7 @@ const validateConnectionValue = async (
                 platformId,
                 props: value.props,
             })
+            
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
@@ -448,6 +462,7 @@ const validateConnectionValue = async (
                     clientSecret: value.client_secret,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    scope: value.scope,
                 },
             })
             await engineValidateAuth({

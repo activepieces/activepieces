@@ -18,7 +18,7 @@ export const createDocumentBasedOnTemplate = createAction({
     }),
     values: Property.Object({
       displayName: 'Variables',
-      description: 'Dont include the "[[]]", only the key name and its value',
+      description: 'Dont include the placeholder format "[[]]" or "{{}}", only the key name and its value',
       required: true,
     }),
     images: Property.Object({
@@ -27,10 +27,24 @@ export const createDocumentBasedOnTemplate = createAction({
         'Key: Image ID (get it manually from the Read File Action), Value: Image URL',
       required: true,
     }),
+    placeholder_format: Property.StaticDropdown({
+      displayName: 'Placeholder Format',
+      description: 'Choose the format of placeholders in your template',
+      required: true,
+      defaultValue: '[[]]',
+      options: {
+          disabled: false,
+          options: [
+              { label: 'Curly Braces {{}}', value: '{{}}' },
+              { label: 'Square Brackets [[]]', value: '[[]]' }
+          ],
+        },
+  }),
   },
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
+    const placeholder_format = context.propsValue.placeholder_format;
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
@@ -40,10 +54,13 @@ export const createDocumentBasedOnTemplate = createAction({
 
     for (const key in values) {
       const value = values[key];
+      const new_key = placeholder_format === '[[]]' 
+                        ? `[[${key}]]` 
+                        : `{{${key}}}`;
       requests.push({
         replaceAllText: {
           containsText: {
-            text: '[[' + key + ']]',
+            text: new_key,
             matchCase: true,
           },
           replaceText: String(value),

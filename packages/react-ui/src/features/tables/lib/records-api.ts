@@ -12,7 +12,7 @@ import { FieldsMapping } from './utils';
 
 export const recordsApi = {
   list(request: ListRecordsRequest): Promise<SeekPage<PopulatedRecord>> {
-    return api.post<SeekPage<PopulatedRecord>>('/v1/records/list', request);
+    return api.get<SeekPage<PopulatedRecord>>('/v1/records', request);
   },
 
   create(request: CreateRecordsRequest): Promise<PopulatedRecord[]> {

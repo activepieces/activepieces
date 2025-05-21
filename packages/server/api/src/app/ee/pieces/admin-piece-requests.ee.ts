@@ -1,7 +1,6 @@
 import {
     ErrorHandlingOptionsParam,
     TriggerStrategy,
-    WebhookHandshakeConfiguration,
     WebhookRenewConfiguration,
 } from '@activepieces/pieces-framework'
 import {
@@ -9,6 +8,7 @@ import {
     PieceCategory,
     PrincipalType,
     TriggerTestStrategy,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { Type } from '@fastify/type-provider-typebox'
 

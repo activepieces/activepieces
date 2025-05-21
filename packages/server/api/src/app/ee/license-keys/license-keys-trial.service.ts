@@ -126,7 +126,9 @@ async function generateLicenseKey(workEmail: string, companyName: string, disabl
 async function applyLicenseKeyToPlatform(platformId: string, licenseKey: LicenseKeyEntity, log: FastifyBaseLogger) {
     await platformService.update({
         id: platformId,
-        licenseKey: licenseKey.key,
+        plan: {
+            licenseKey: licenseKey.key,
+        },
     })
     await licenseKeysService(log).applyLimits(platformId, licenseKey)
 }

@@ -43,13 +43,17 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowStatus.DISABLED,
         },
+        handshakeConfiguration: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
         schedule: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
         externalId: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         publishedVersionId: {
             ...ApIdSchema,

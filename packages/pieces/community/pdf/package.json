@@ -1,4 +1,12 @@
 {
   "name": "@activepieces/piece-pdf",
-  "version": "0.2.3"
+  "version": "0.2.4",
+  "dependencies": {
+    "jimp": "^0.22.12",
+    "pdf-parse": "1.1.1",
+    "pdf-lib": "1.17.1"
+  },
+  "devDependencies": {
+    "@types/pdf-parse": "1.1.4"
+  }
 }

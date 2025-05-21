@@ -70,6 +70,20 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.all('/:id/requests/:requestId/sync', ResumeFlowRunRequest, async (req, reply) => {
+        const headers = req.headers as Record<string, string>
+        const queryParams = req.query as Record<string, string>
+        const response = await flowRunService(req.log).handleSyncResumeFlow({
+            runId: req.params.id,
+            payload: {
+                body: req.body,
+                headers,
+                queryParams,
+            },
+            requestId: req.params.requestId,
+        })
+        await reply.status(response.status).headers(response.headers).send(response.body)
+    })
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         const flowRun = await flowRunService(req.log).retry({
             flowRunId: req.params.id,

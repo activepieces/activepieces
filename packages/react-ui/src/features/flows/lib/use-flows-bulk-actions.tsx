@@ -74,7 +74,7 @@ export const useFlowsBulkActions = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -113,7 +113,7 @@ export const useFlowsBulkActions = ({
                     hasPermission={userHasPermissionToWroteProjectRelease}
                   >
                     <PublishedNeededTooltip allowPush={allowPush}>
-                      <PushToGitDialog flows={selectedRows}>
+                      <PushToGitDialog type="flow" flows={selectedRows}>
                         <DropdownMenuItem
                           disabled={
                             !userHasPermissionToWroteProjectRelease ||

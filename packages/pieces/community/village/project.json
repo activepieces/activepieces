@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/village/package.json",
         "main": "packages/pieces/community/village/src/index.ts",
         "assets": [
-          "packages/pieces/community/village/*.md"
+          "packages/pieces/community/village/*.md",
+          {
+            "input": "packages/pieces/community/village/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

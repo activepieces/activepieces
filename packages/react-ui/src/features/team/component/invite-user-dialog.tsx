@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -130,7 +131,8 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
     enabled:
-      !isNil(platform.projectRolesEnabled) && platform.projectRolesEnabled,
+      !isNil(platform.plan.projectRolesEnabled) &&
+      platform.plan.projectRolesEnabled,
   });
 
   const roles = rolesData?.data ?? [];
@@ -139,7 +141,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.projectRolesEnabled
+      type: platform.plan.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
@@ -247,7 +249,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
                                 {t('Entire Platform')}
                               </SelectItem>
                             )}
-                            {platform.projectRolesEnabled && (
+                            {platform.plan.projectRolesEnabled && (
                               <SelectItem value={InvitationType.PROJECT}>
                                 {project.displayName} (Current)
                               </SelectItem>
@@ -305,6 +307,11 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
                   </FormMessage>
                 )}
                 <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant={'outline'}>
+                      {t('Cancel')}
+                    </Button>
+                  </DialogClose>
                   <Button type="submit" loading={isPending}>
                     {t('Invite')}
                   </Button>

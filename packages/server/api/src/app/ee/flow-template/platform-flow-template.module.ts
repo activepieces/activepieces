@@ -77,8 +77,8 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
     if (principal.type === PrincipalType.UNKNOWN) {
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.manageTemplatesEnabled) {
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    if (!platform.plan.manageTemplatesEnabled) {
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
     return platform.id
