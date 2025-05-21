@@ -8,6 +8,7 @@ export enum ActivepiecesClientEventName {
   CLIENT_AUTHENTICATION_FAILED = 'CLIENT_AUTHENTICATION_FAILED',
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
   CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
+  CLIENT_BUILDER_HOME_BUTTON_CLICKED = 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
 }
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
@@ -54,6 +55,12 @@ export interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
   data: { connection?: { id: string; name: string } };
 }
+export interface ActivepiecesBuilderHomeButtonClicked {
+  type: ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED;
+  data: {
+    route: string;
+  };
+}
 
 type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
@@ -86,7 +93,7 @@ export interface ActivepiecesVendorInit {
     hideSidebar: boolean;
     hideLogoInBuilder?: boolean;
     hideFlowNameInBuilder?: boolean;
-    disableNavigationInBuilder: boolean;
+    disableNavigationInBuilder: boolean | 'keep_home_button_only';
     hideFolders?: boolean;
     sdkVersion?: string;
     jwtToken?: string; // Added jwtToken here
@@ -94,6 +101,7 @@ export interface ActivepiecesVendorInit {
     fontUrl?: string;
     fontFamily?: string;
     hideExportAndImportFlow?: boolean;
+    emitHomeButtonClickedEvent?: boolean;
   };
 }
 // We used to send JWT in query params, now we send it in local storage
@@ -129,6 +137,9 @@ type EmbeddingParam = {
     disableNavigation?: boolean;
     hideLogo?: boolean;
     hideFlowName?: boolean;
+    homeButtonClickedHandler?: (data: {
+      route: string;
+    }) => void;
   };
   dashboard?: {
     hideSidebar?: boolean;
@@ -210,6 +221,7 @@ class ActivepiecesEmbedded {
             }).contentWindow;
             this._dashboardAndBuilderIframeWindow = iframeWindow;
             this._checkForClientRouteChanges(iframeWindow);
+            this._checkForBuilderHomeButtonClicked(iframeWindow);
           }
           else {
             reject({
@@ -246,6 +258,7 @@ class ActivepiecesEmbedded {
                 fontUrl: this._embeddingState?.styling?.fontUrl,
                 fontFamily: this._embeddingState?.styling?.fontFamily,
                 hideExportAndImportFlow: this._embeddingState?.hideExportAndImportFlow ?? false,
+                emitHomeButtonClickedEvent: this._embeddingState?.builder?.homeButtonClickedHandler !== undefined,
               },
             };
             targetWindow.postMessage(apEvent, '*');
@@ -425,6 +438,14 @@ class ActivepiecesEmbedded {
       }
     );
   };
+
+  private _checkForBuilderHomeButtonClicked = (source: Window) => {
+    window.addEventListener('message', (event: MessageEvent<ActivepiecesBuilderHomeButtonClicked>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_BUILDER_HOME_BUTTON_CLICKED && event.source === source) {
+        this._embeddingState?.builder?.homeButtonClickedHandler?.(event.data.data);
+      }
+    });
+  }
 
 
 
