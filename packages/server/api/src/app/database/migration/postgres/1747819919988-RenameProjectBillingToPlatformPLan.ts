@@ -1,11 +1,11 @@
+import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class RenameProjectBillingToPlatformPLan1747819919988 implements MigrationInterface {
     name = 'RenameProjectBillingToPlatformPLan1747819919988'
 
-
     public async up(queryRunner: QueryRunner): Promise<void> {
-
         const tableExists = await queryRunner.hasTable('platform_billing')
 
         if (tableExists) {
@@ -48,6 +48,77 @@ export class RenameProjectBillingToPlatformPLan1747819919988 implements Migratio
                 ALTER TABLE "platform_plan" 
                 RENAME CONSTRAINT "fk_platform_billing_platform_id" TO "fk_platform_plan_platform_id"
             `)
+
+            const edition = system.getEdition()
+            if (edition === ApEdition.ENTERPRISE) {
+                // Create platform_plan entries for platforms that don't have one
+                const platforms = await queryRunner.query(`
+                SELECT p."id"
+                FROM "platform" p
+                LEFT JOIN "platform_plan" pp ON p."id" = pp."platformId"
+                WHERE pp."platformId" IS NULL
+            `)
+
+                system.globalLogger().info({
+                    count: platforms.length,
+                }, 'Creating platform_plan entries for platforms that don\'t have one')
+
+                for (const platform of platforms) {
+                    await queryRunner.query(`
+                    INSERT INTO "platform_plan" (
+                        "id",
+                        "platformId",
+                        "includedTasks",
+                        "tasksLimit",
+                        "includedAiCredits",
+                        "aiCreditsLimit",
+                        "environmentsEnabled",
+                        "analyticsEnabled",
+                        "showPoweredBy",
+                        "auditLogEnabled",
+                        "embeddingEnabled",
+                        "managePiecesEnabled",
+                        "manageTemplatesEnabled",
+                        "customAppearanceEnabled",
+                        "manageProjectsEnabled",
+                        "projectRolesEnabled",
+                        "customDomainsEnabled",
+                        "globalConnectionsEnabled",
+                        "customRolesEnabled",
+                        "apiKeysEnabled",
+                        "alertsEnabled",
+                        "ssoEnabled",
+                        "tablesEnabled",
+                        "todosEnabled"
+                    ) VALUES (
+                        $1,
+                        $2,
+                        0,
+                        null,
+                        0,
+                        null,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        true,
+                        true
+                    )
+                `, [apId(), platform.id])
+                }
+            }
 
             // Copy values from platform table to platform_plan
             await queryRunner.query(`
