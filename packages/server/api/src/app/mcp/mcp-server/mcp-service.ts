@@ -6,7 +6,6 @@ import {
     Cursor, 
     ErrorCode, 
     isNil, 
-    Mcp, 
     McpWithTools, 
     SeekPage, 
     spreadIfDefined, 
@@ -20,7 +19,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
-import { mcpActionService } from '../mcp-tools/mcp-action-service'
+import { mcpPieceService } from '../mcp-tools/mcp-piece-service'
 import { mcpFlowService } from '../mcp-tools/mcp-flow-service'
 import { McpEntity } from './mcp-entity'
 const repo = repoFactory(McpEntity)
@@ -81,16 +80,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             })
         }
 
-        const pieces = await mcpActionService(_log).listPieces(mcp.id)
-
-        const actions = await mcpActionService(_log).listActions(mcp.id)
-
-        const flows = await mcpFlowService(_log).listFlows(mcp.id)
+        const pieces = await mcpPieceService(_log).list(mcp.id)
+        
+        const flows = await mcpFlowService(_log).list(mcp.id)
 
         return {
             ...mcp,
             pieces,
-            actions,
             flows,
         }
     },

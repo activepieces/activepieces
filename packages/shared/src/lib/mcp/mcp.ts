@@ -36,8 +36,10 @@ export type McpProperty = Static<typeof McpProperty>
 
 
 export const McpPiece = Type.Object({
+    ...BaseModelSchema,
     pieceName: Type.String(),
     pieceVersion: Type.String(),
+    actionNames: Type.Array(Type.String()),
     mcpId: ApId,
     connectionId: Type.Optional(ApId),
 })
@@ -52,26 +54,6 @@ export const McpPieceWithConnection = Type.Composite([
 ])
 
 export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
-
-export const McpAction = Type.Object({
-    ...BaseModelSchema,
-    actionName: Type.String(),
-    pieceName: Type.String(),
-    pieceVersion: Type.String(),
-    connectionId: Type.Optional(ApId),
-    mcpId: ApId,
-})
-
-export type McpAction = Static<typeof McpAction>
-
-export const McpActionWithConnection = Type.Composite([
-    McpAction,
-    Type.Object({
-        connection: Type.Optional(AppConnectionWithoutSensitiveData),
-    }),
-])
-
-export type McpActionWithConnection = Static<typeof McpActionWithConnection>
 
 
 export const McpFlow = Type.Object({
@@ -91,19 +73,15 @@ export const McpFlowWithFlow = Type.Composite([
 
 export type McpFlowWithFlow = Static<typeof McpFlowWithFlow>
 
-
-
 export const McpWithTools = Type.Composite([
     Mcp,
     Type.Object({
         pieces: Type.Array(McpPieceWithConnection),
-        actions: Type.Array(McpActionWithConnection),
         flows: Type.Array(McpFlowWithFlow),
     }),
 ])
 
 export type McpWithTools = Static<typeof McpWithTools>
-
 
 
 export const McpTrigger = Type.Object({

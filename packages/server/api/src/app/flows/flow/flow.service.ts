@@ -2,6 +2,7 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -371,9 +372,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
 
+            assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'Published version id is not set')
             const populatedFlow = await this.getOnePopulatedOrThrow({
                 id,
                 projectId,
+                versionId: flowToUpdate.publishedVersionId,
                 entityManager,
             })
 
@@ -381,8 +384,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             if (isDisableMcpFlow) {
                 await mcpFlowService(log).delete(id)
             }
-
-            return populatedFlow
         }
 
         return this.getOnePopulatedOrThrow({

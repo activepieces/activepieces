@@ -5,8 +5,6 @@ import {
     ErrorCode, 
     isNil, 
     Mcp,
-    McpAction,
-    McpActionWithConnection,
     McpPiece,
     McpPieceWithConnection,
 } from '@activepieces/shared'
@@ -17,93 +15,73 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { McpEntity } from '../mcp-server/mcp-entity'
-import { McpActionEntity } from './mcp-action-entity'
+import { McpPieceEntity } from './mcp-piece-entity'
 
 const mcpRepo = repoFactory(McpEntity)
-const mcpActionRepo = repoFactory(McpActionEntity)
+const mcpPieceRepo = repoFactory(McpPieceEntity)
 
-export const mcpActionService = (_log: FastifyBaseLogger) => ({
-    async listActions(mcpId: ApId): Promise<McpActionWithConnection[]> {
+export const mcpPieceService = (_log: FastifyBaseLogger) => ({
+    async list(mcpId: ApId): Promise<McpPieceWithConnection[]> {
         await this.validateMcp(mcpId)
         
-        const actions = await mcpActionRepo().find({ 
+        const pieces = await mcpPieceRepo().find({ 
             where: { mcpId },
         })
         
-        const actionsWithConnection = await Promise.all(
-            actions.map(async (action) => {
-                return enrichWithConnection(action, _log) as Promise<McpActionWithConnection>
-            }),
-        )
-        
-        return actionsWithConnection
-    },
-
-    async listPieces(mcpId: ApId): Promise<McpPieceWithConnection[]> {
-        await this.validateMcp(mcpId)
-        
-        const pieces = await mcpActionRepo()
-            .createQueryBuilder('action')
-            .select(['action.pieceName', 'action.pieceVersion', 'action.mcpId'])
-            .where('action.mcpId = :mcpId', { mcpId })
-            .distinct(true)
-            .getMany()
-
         const piecesWithConnection = await Promise.all(
             pieces.map(async (piece) => {
-                return enrichWithConnection(piece, _log)
+                return enrichPieceWithConnection(piece, _log)
             }),
         )
         
         return piecesWithConnection
     },
 
-    async getOne(actionId: string): Promise<McpActionWithConnection | null> {      
-        const action = await mcpActionRepo().findOne({
-            where: { id: actionId },
-        })
 
-        if (isNil(action)) {
+    async getOne(pieceId: string): Promise<McpPieceWithConnection | null> {      
+        const piece = await mcpPieceRepo().findOneBy({ id: pieceId })
+
+        if (isNil(piece)) {
             return null
         }
 
-        return enrichWithConnection(action, _log) as Promise<McpActionWithConnection>
+        return enrichPieceWithConnection(piece, _log)
     },
 
-    async getOneOrThrow(actionId: string): Promise<McpActionWithConnection> {
-        const action = await this.getOne(actionId)
+    async getOneOrThrow(pieceId: string): Promise<McpPieceWithConnection> {
+        const piece = await this.getOne(pieceId)
         
-        if (isNil(action)) {
+        if (isNil(piece)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    entityId: actionId,
-                    entityType: 'McpAction',
+                    entityId: pieceId,
+                    entityType: 'McpPiece',
                 },
             })
         }
         
-        return enrichWithConnection(action, _log) as Promise<McpActionWithConnection>
+        return enrichPieceWithConnection(piece, _log)
     },
 
-    async getMcpId(actionId: string): Promise<string> {
-        const action = await this.getOne(actionId)
-        if (isNil(action)) {
+    async getMcpId(pieceId: string): Promise<string> {
+        const piece = await this.getOne(pieceId)
+        if (isNil(piece)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: actionId, entityType: 'McpAction' },
+                params: { entityId: pieceId, entityType: 'McpPiece' },
             })
         }
-        return action.mcpId
+        return piece.mcpId
     },
 
-    async delete(actionId: string): Promise<void> {
-        const action = await this.getOneOrThrow(actionId)
-        await mcpActionRepo().delete({ id: actionId })
-        await _updateMcpTimestamp(action.mcpId)
+    async delete(pieceId: string): Promise<void> {
+        const piece = await this.getOneOrThrow(pieceId)
+        await mcpPieceRepo().delete({ id: pieceId })
+        await _updateMcpTimestamp(piece.mcpId)
     },
     
-    async updateBatch({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpActionWithConnection[]> {
+    async updateBatch({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection[]> {
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         
@@ -125,26 +103,11 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
             })
         }
 
-        await mcpActionRepo().delete({ mcpId, pieceName })
-        
-        if (actionNames.length > 0) {
-            const actions = actionNames.map(actionName => ({
-                id: apId(),
-                created: dayjs().toISOString(),
-                updated: dayjs().toISOString(),
-                mcpId,
-                actionName,
-                pieceName,
-                pieceVersion,
-                connectionId,
-            }))
-            
-            await mcpActionRepo().save(actions)
-        }
+        await mcpPieceRepo().update({ mcpId, pieceName }, { pieceVersion, actionNames, connectionId })
         
         await _updateMcpTimestamp(mcpId)
         
-        return this.listActions(mcpId)
+        return this.list(mcpId)
     },
 
     async validateMcp(mcpId: ApId): Promise<Mcp> {
@@ -168,6 +131,7 @@ export const mcpActionService = (_log: FastifyBaseLogger) => ({
             platformId,
         })
 
+        
         if (actionNames.length > 0) {
             const validActionNames = new Set(Object.keys(piece.actions || {}))
             
@@ -189,25 +153,22 @@ async function _updateMcpTimestamp(mcpId: ApId): Promise<void> {
     await mcpRepo().update({ id: mcpId }, { updated: dayjs().toISOString() })
 }
 
-async function enrichWithConnection(
-    item: McpAction | McpPiece,
-    log: FastifyBaseLogger,
-): Promise<McpActionWithConnection | McpPieceWithConnection> {
-    if (!item.connectionId) {
+async function enrichPieceWithConnection(piece: McpPiece, log: FastifyBaseLogger): Promise<McpPieceWithConnection> {
+    if (!piece.connectionId) {
         return {
-            ...item,
+            ...piece,
             connection: undefined,
         }
     }
-    
+
     try {
         const connection = await appConnectionsRepo().findOneBy({ 
-            id: item.connectionId,
+            id: piece.connectionId,
         })
-        
+
         if (isNil(connection)) {
             return {
-                ...item,
+                ...piece,
                 connection: undefined,
             }
         }
@@ -219,13 +180,13 @@ async function enrichWithConnection(
         })
 
         return {
-            ...item,
+            ...piece,
             connection: connectionWithoutSensitiveData,
         }
     }
     catch (error) {
         return {
-            ...item,
+            ...piece,
             connection: undefined,
         }
     }

@@ -19,7 +19,7 @@ const mcpRepo = repoFactory(McpEntity)
 const mcpFlowRepo = repoFactory(McpFlowEntity)
 
 export const mcpFlowService = (_log: FastifyBaseLogger) => ({
-    async listFlows(mcpId: ApId): Promise<McpFlowWithFlow[]> {
+    async list(mcpId: ApId): Promise<McpFlowWithFlow[]> {
         await this.validateMcp(mcpId)
         
         const flows = await mcpFlowRepo().find({ 
@@ -98,7 +98,7 @@ export const mcpFlowService = (_log: FastifyBaseLogger) => ({
         
         await _updateMcpTimestamp(mcpId)
         
-        return this.listFlows(mcpId)
+        return this.list(mcpId)
     },
 
     async validateMcp(mcpId: ApId): Promise<Mcp> {

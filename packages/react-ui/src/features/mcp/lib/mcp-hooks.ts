@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  McpWithActions,
+  McpWithTools,
   ListMcpsRequestQuery,
   SeekPage,
 } from '@activepieces/shared';
@@ -17,7 +17,7 @@ export const mcpHooks = {
         'trying to use projectId when the authentication session is not set',
       );
     }
-    return useQuery<SeekPage<McpWithActions>, Error>({
+    return useQuery<SeekPage<McpWithTools>, Error>({
       queryKey: ['mcp-servers', request, projectId],
       queryFn: () =>
         mcpApi.list({
@@ -28,7 +28,7 @@ export const mcpHooks = {
     });
   },
   useMcp: (id: string) => {
-    return useQuery<McpWithActions, Error>({
+    return useQuery<McpWithTools, Error>({
       queryKey: ['mcp', id],
       queryFn: () => mcpApi.get(id),
       enabled: !!id,

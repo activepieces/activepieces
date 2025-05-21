@@ -35,14 +35,14 @@ export const UpdateMcpRequestBody = Type.Object({
 export type UpdateMcpRequestBody = Static<typeof UpdateMcpRequestBody>
 
 
-export const UpdateMcpActionsRequestBody = Type.Object({
+export const UpdateMcpPieceRequestBody = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionNames: Type.Array(Type.String()),
     connectionId: Nullable(Type.String()),
 })
 
-export type UpdateMcpActionsRequestBody = Static<typeof UpdateMcpActionsRequestBody>
+export type UpdateMcpPieceRequestBody = Static<typeof UpdateMcpPieceRequestBody>
 
 
 export const UpdateMcpFlowsRequestBody = Type.Object({

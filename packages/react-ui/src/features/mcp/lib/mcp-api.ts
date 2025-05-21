@@ -2,15 +2,19 @@ import { api } from '@/lib/api';
 import {
   ListMcpsRequestQuery,
   McpPieceWithConnection,
-  McpActionWithConnection,
   McpFlowWithFlow,
   SeekPage,
   UpdateMcpRequestBody,
-  UpdateMcpActionsRequestBody,
   McpWithTools,
+  UpdateMcpPieceRequestBody,
+  UpdateMcpFlowsRequestBody,
 } from '@activepieces/shared';
 
 export const mcpApi = {
+  async create(name: string): Promise<McpWithTools> {
+    return await api.post<McpWithTools>('/v1/mcp-servers', { name });
+  },
+
   async list(request: ListMcpsRequestQuery): Promise<SeekPage<McpWithTools>> {
     return await api.get<SeekPage<McpWithTools>>('/v1/mcp-servers', request);
   },
@@ -19,20 +23,16 @@ export const mcpApi = {
     return await api.get<McpWithTools>(`/v1/mcp-servers/${id}`);
   },
 
-  async create(name: string): Promise<McpWithTools> {
-    return await api.post<McpWithTools>('/v1/mcp-servers', { name });
-  },
-
   async update(id: string, request: UpdateMcpRequestBody): Promise<McpWithTools> {
     return await api.post<McpWithTools>(`/v1/mcp-servers/${id}`, request);
   },
 
-  async delete(id: string): Promise<void> {
-    return await api.delete(`/v1/mcp-servers/${id}`);
-  },
-
   async rotateToken(id: string): Promise<McpWithTools> {
     return await api.post<McpWithTools>(`/v1/mcp-servers/${id}/rotate`);
+  },
+
+  async delete(id: string): Promise<void> {
+    return await api.delete(`/v1/mcp-servers/${id}`);
   },
 
   async getPieces(mcpId: string): Promise<{ pieces: McpPieceWithConnection[] }> {
@@ -41,11 +41,6 @@ export const mcpApi = {
     );
   },
 
-  async getActions(mcpId: string): Promise<{ actions: McpActionWithConnection[] }> {
-    return await api.get<{ actions: McpActionWithConnection[] }>(
-      `/v1/mcp-tools/${mcpId}/actions`
-    );
-  },
 
   async getFlows(mcpId: string): Promise<{ flows: McpFlowWithFlow[] }> {
     return await api.get<{ flows: McpFlowWithFlow[] }>(
@@ -53,10 +48,17 @@ export const mcpApi = {
     );
   },
 
-  async updateActions(
+  async updatePiece(
     mcpId: string,
-    request: UpdateMcpActionsRequestBody
+    request: UpdateMcpPieceRequestBody
   ): Promise<McpWithTools> {
-    return await api.post(`/v1/mcp-tools/${mcpId}/actions`, request);
+    return await api.post(`/v1/mcp-tools/${mcpId}/pieces`, request);
+  },
+
+  async updateFlow(
+    mcpId: string,
+    request: UpdateMcpFlowsRequestBody
+  ): Promise<McpWithTools> {
+    return await api.post(`/v1/mcp-tools/${mcpId}/flows`, request);
   },
 };

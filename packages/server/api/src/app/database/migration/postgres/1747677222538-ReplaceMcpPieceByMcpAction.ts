@@ -3,7 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { mcpService } from '../../../mcp/mcp-server/mcp-service'
-import { mcpActionService } from '../../../mcp/mcp-tools/mcp-action-service'
+import { mcpPieceService } from '../../../mcp/mcp-tools/mcp-piece-service'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
 
