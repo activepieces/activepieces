@@ -109,7 +109,6 @@ export const recordService = {
         filters,
         limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-       
         const fields = await fieldService.getAll({
             tableId,
             projectId,
