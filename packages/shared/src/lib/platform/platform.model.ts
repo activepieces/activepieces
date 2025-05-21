@@ -101,21 +101,21 @@ export const PlatformPlan = Type.Object({
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
-  })
+})
   
-  export type PlatformPlan = Static<typeof PlatformPlan>
+export type PlatformPlan = Static<typeof PlatformPlan>
 
-  export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
-  export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
+export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
+export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
 
-  export const PlatformPlanResponse = Type.Object({
+export const PlatformPlanResponse = Type.Object({
     nextBillingDate: Type.String(),
     subscription: PlatformPlanLimits,
     flowRunCount: Type.Number(),
     aiCredits: Type.Number(),
-  })
+})
   
-  export type PlatformPlanResponse = Static<typeof PlatformPlanResponse>
+export type PlatformPlanResponse = Static<typeof PlatformPlanResponse>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
