@@ -21,6 +21,16 @@ export const postCallTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async test(context) {
     const data = context.propsValue.sampleData;
+    if (data === null || data === undefined || Object.keys(data!).length === 0) {
+      return [
+        await volubileCommon.getContext(
+          context.auth,
+          context.propsValue.agentId!,
+          TriggerType.POST_CALL
+        ),
+      ];
+    }
+
     return [data];
   },
   async onEnable(context) {
