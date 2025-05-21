@@ -1,20 +1,28 @@
 import {
+    ActionType,
     ActivepiecesError,
+    AdminRestoreFlowRequestBody,
     AdminRetryRunsRequestBody,
     ErrorCode,
     FlowRetryStrategy,
     FlowRun,
     FlowRunStatus,
+    flowStructureUtil,
     isNil,
     Platform,
     Project,
     ProjectId,
     RunEnvironment,
+    Step,
+    Trigger,
+    TriggerType,
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
+import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectRepo, projectService } from '../../../project/project-service'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
@@ -116,6 +124,60 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
     },
 
+    restoreFlowVersion: async ({
+        flowId,
+        flowVersionToRestore,
+    }: AdminRestoreFlowRequestBody): Promise<void> => {
+        const flow = await flowService(log).getOneById(flowId)
+        if (isNil(flow) || isNil(flowVersionToRestore)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: flowId,
+                    entityType: 'flow',
+                },
+            })
+        }
+
+        // Get the current version of the flow
+        const currentVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId,
+            versionId: undefined,
+        })
+
+        // Create a map of step names to their piece versions from the version to restore
+        const pieceVersionsMap = new Map<string, string>()
+        flowStructureUtil.getAllSteps(flowVersionToRestore.trigger).forEach((step: Step) => {
+            if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
+                pieceVersionsMap.set(step.name, step.settings.pieceVersion)
+            }
+        })
+
+        // Traverse the current flow and update piece versions
+        const updatedTrigger = flowStructureUtil.transferStep(currentVersion.trigger, (step: Step) => {
+            if ((step.type === ActionType.PIECE || step.type === TriggerType.PIECE) && pieceVersionsMap.has(step.name)) {
+                const pieceVersion = pieceVersionsMap.get(step.name)
+                if (!pieceVersion) {
+                    return step
+                }
+                return {
+                    ...step,
+                    settings: {
+                        ...step.settings,
+                        pieceVersion,
+                    },
+                }
+            }
+            return step
+        }) as Trigger
+
+        // Update the flow version
+        await flowVersionRepo().update({
+            id: flowVersionToRestore.id,
+        }, {
+            trigger: updatedTrigger as any,
+        })
+    },
 })
 
 type AdminAddPlatformParams = {

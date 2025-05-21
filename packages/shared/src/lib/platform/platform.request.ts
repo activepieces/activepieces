@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { LocalesEnum, SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
+import { FlowVersion } from '../flows/flow-version'
 import { CopilotSettings, FilteredPieceBehavior, SMTPInformation } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
@@ -42,4 +43,11 @@ export const AdminRetryRunsRequestBody = Type.Object({
 })
 
 export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
+
+export const AdminRestoreFlowRequestBody = Type.Object({
+    flowId: ApId,
+    flowVersionToRestore: FlowVersion,
+})
+
+export type AdminRestoreFlowRequestBody = Static<typeof AdminRestoreFlowRequestBody>
 
