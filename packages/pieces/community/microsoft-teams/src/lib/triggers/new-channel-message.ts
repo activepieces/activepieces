@@ -110,7 +110,7 @@ const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> =
 				messages.push(...response.value);
 			}
 		} else {
-			let requestUrl =
+			const requestUrl =
 				(await store.get<string>('deltalink')) ??
 				`/teams/${teamId}/channels/${channelId}/messages/delta`;
 			let nextLink: string | null = requestUrl;
