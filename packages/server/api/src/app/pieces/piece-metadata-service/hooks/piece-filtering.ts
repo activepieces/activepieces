@@ -53,11 +53,11 @@ export const filterPiecesBasedOnEmbedding = async ({
     if (isNil(platformId)) {
         return pieces
     }
-    const platform = await platformService.getOne(platformId)
+    const platform = await platformService.getOneWithPlan(platformId)
     if (isNil(platform)) {
         return pieces
     }
-    if (!platform.embeddingEnabled) {
+    if (!platform.plan.embeddingEnabled) {
         return pieces
     }
 

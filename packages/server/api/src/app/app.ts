@@ -1,7 +1,7 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, McpPieceWithConnection, McpWithPieces, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, McpPieceWithConnection, McpWithPieces, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -46,7 +46,7 @@ import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
-import { platformBillingModule } from './ee/platform/platform-billing/platform-billing.module'
+import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -80,7 +80,6 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
-import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
@@ -271,7 +270,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
-            await app.register(platformBillingModule)
+            await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
@@ -303,6 +302,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
@@ -391,13 +391,5 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         app.log.warn(
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
-    }
-    const oldestPlatform = await platformService.getOldestPlatform()
-    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
-    if (!isNil(oldestPlatform) && !isNil(key)) {
-        await platformService.update({
-            id: oldestPlatform.id,
-            licenseKey: key,
-        })
     }
 }

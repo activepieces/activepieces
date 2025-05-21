@@ -34,7 +34,7 @@ import {
 import { TableTitle } from '../../../../../components/ui/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.managePiecesEnabled;
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
   const {

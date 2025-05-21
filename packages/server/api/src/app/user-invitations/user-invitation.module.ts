@@ -141,7 +141,7 @@ async function assertPrincipalHasPermissionToProject(fastify: FastifyInstance, r
             },
         })
     }
-    await platformMustHaveFeatureEnabled((platform) => platform.projectRolesEnabled).call(fastify, request, reply)
+    await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
     await assertRoleHasPermission(request.principal, permission, request.log)
 }
 

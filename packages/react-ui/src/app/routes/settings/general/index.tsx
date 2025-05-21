@@ -175,7 +175,7 @@ export default function GeneralPage() {
                   )}
                 />
               </FlagGuard>
-              {platform.embeddingEnabled &&
+              {platform.plan.embeddingEnabled &&
                 platformRole === PlatformRole.ADMIN && (
                   <FormField
                     name="externalId"
