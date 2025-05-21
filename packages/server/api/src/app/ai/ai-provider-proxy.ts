@@ -5,7 +5,8 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { BillingUsageType, usageService } from '../ee/platform-billing/usage/usage-service'
+import { BillingUsageType, usageService } from '../ee/platform/platform-usage-service'
+import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { aiProviderService } from './ai-provider.service'
@@ -24,7 +25,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
             platformId,
             provider,
         })
-        const exceededLimit = await usageService(request.log).aiTokensExceededLimit(projectId, 0)
+        const exceededLimit = await projectLimitsService(request.log).aiTokensExceededLimit(projectId, 0)
         if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(

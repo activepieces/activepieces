@@ -1,6 +1,6 @@
 import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
@@ -20,7 +20,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -71,7 +71,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -85,7 +85,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         log.debug({ operation }, '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -128,6 +128,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                     globalCachePath: sandboxPath,
                     globalCodesPath: codesPath,
                     customPiecesPath: sandboxPath,
+                    runEnvironment: operation.runEnvironment,
                 })
                 break
             }
@@ -150,6 +151,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
+            runEnvironment: operation.runEnvironment,
         }
 
         return execute(log, input, EngineOperationType.EXECUTE_STEP)
@@ -163,7 +165,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const { piece } = operation
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -183,7 +185,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async excuteTool(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#excuteTool]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -199,9 +201,12 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
     },
+    async shutdownAllWorkers() {
+        await engineWorkers.shutdown()
+    },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion): Promise<void> {
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment): Promise<void> {
     const pieces = await pieceEngineUtil(log).extractFlowPieces({
         flowVersion,
         engineToken,
@@ -213,6 +218,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
         globalCachePath: sandboxPath,
         globalCodesPath: codesPath,
         customPiecesPath: sandboxPath,
+        runEnvironment,
     })
 }
 

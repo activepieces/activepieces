@@ -27,7 +27,6 @@ export enum NotificationStatus {
 
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
-    teamMembers: Type.Number(),
     aiTokens: Type.Number(),
     nextLimitResetDate: Type.String(),
 })

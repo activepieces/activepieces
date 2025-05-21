@@ -15,7 +15,7 @@ type FlowValue = {
 export const callFlow = createAction({
   name: 'callFlow',
   displayName: 'Call Flow',
-  description: 'Call another sub flow',
+  description: 'Call a flow that has "Callable Flow" trigger',
   props: {
     flow: Property.Dropdown<FlowValue>({
       displayName: 'Flow',
@@ -167,4 +167,14 @@ export const callFlow = createAction({
     }
     return response.body;
   },
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue:false,
+      hide:false,
+    },
+    retryOnFailure: {
+      defaultValue:false,
+      hide:false,
+    }
+  }
 });
