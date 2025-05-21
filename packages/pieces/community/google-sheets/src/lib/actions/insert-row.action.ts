@@ -31,6 +31,16 @@ export const insertRowAction = createAction({
       defaultValue: false,
     }),
     values: rowValuesProp(),
+    test: Property.Custom({
+      code:(({property})=>{
+        console.log(`testing from piece itself ${property.displayName}`);
+      }),
+      displayName: 'Test',
+      required: true,
+      onUnmount: (({property})=>{
+        console.log(`onUnmount + ${property.displayName}`);
+      }),
+    })
   },
   async run({ propsValue, auth }) {
     const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;

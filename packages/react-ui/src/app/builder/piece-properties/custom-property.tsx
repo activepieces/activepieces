@@ -2,20 +2,24 @@ import { useEffect, useId, useRef } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
-
+import { CustomProperty as CustomPropertyType } from '@activepieces/pieces-framework';
 const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
+
+type CustomPropertyParams = {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  code: string;
+  disabled: boolean;
+  property: CustomPropertyType<boolean>;
+};
 
 const CustomProperty = ({
   value,
   onChange,
   code,
   disabled,
-}: {
-  value: unknown;
-  onChange: (value: unknown) => void;
-  code: string;
-  disabled: boolean;
-}) => {
+  property,
+}: CustomPropertyParams) => {
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const alreadyRendered = useRef(false);
@@ -40,6 +44,7 @@ const CustomProperty = ({
         isEmbedded: embedState.isEmbedded,
         projectId: project.id,
         disabled,
+        property
       });
 
       // If the result is a Promise, handle it
@@ -51,6 +56,26 @@ const CustomProperty = ({
     } catch (error) {
       console.error('Error executing custom code:', error);
     }
+
+    return () => { 
+      if(property.onUnmount){
+      const unmountFn = new Function(
+        'params',
+        `
+        return (${property.onUnmount})(params);
+      `,
+      );
+      unmountFn({
+        containerId,
+        value,
+        onChange,
+        isEmbedded: embedState.isEmbedded,
+        projectId: project.id,
+        disabled,
+        property
+        });
+      }
+    };
   }, []);
 
   return <div id={containerId}></div>;

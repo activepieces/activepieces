@@ -12,10 +12,21 @@ export const CustomProperty = Type.Composite([
   TPropertyValue(Type.Unknown(), PropertyType.CUSTOM),
   Type.Object({
     code: Type.String(),
+    onUnmount: Type.Optional(Type.String()),
   })
 ])
 
 export type CustomProperty<R extends boolean> = BasePropertySchema &
   TPropertyValue<unknown, PropertyType.CUSTOM, R> & {
     code:string;
+    onUnmount?: string;
+  }
+
+export type CustomPropertyCodeFunctionParams = 
+  { 
+    containerId:string,
+    value: unknown,
+    onChange: (value: unknown) => void, isEmbeded: boolean, projectId:string,
+    property: CustomProperty<boolean>
+
   }

@@ -298,12 +298,14 @@ const selectFormComponentForProperty = ({
     case PropertyType.OAUTH2:
       return <></>;
     case PropertyType.CUSTOM:
+      property
       return (
         <CustomProperty
           code={property.code}
           value={field.value}
           onChange={field.onChange}
           disabled={disabled}
+          property={property}
         ></CustomProperty>
       );
     case PropertyType.COLOR:
