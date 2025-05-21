@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { CardList, CardListItem, CardListEmpty } from "@/components/ui/card-list";
+import McpToolDialog from "./mcp-tool-dialog";
 
 export const McpConfigPage = () => {
   const [isAddToolDialogOpen, setIsAddToolDialogOpen] = useState(false);
@@ -191,11 +192,7 @@ mcp?.pieces?.forEach((piece) => {
 });
 
 const handleEditPiece = (piece: McpPieceWithConnection) => {
-  // Dummy function for now
-  toast({
-    description: t('Edit piece functionality coming soon'),
-    duration: 3000,
-  });
+  // The edit functionality is now handled by the McpToolDialog
 };
 
 const handleDeleteFlow = (flowId: string) => {
@@ -207,11 +204,8 @@ const handleDeleteFlow = (flowId: string) => {
 };
 
 const handleEditFlow = (flowId: string) => {
-  // Dummy function for now
-  toast({
-    description: t('Edit flow functionality coming soon'),
-    duration: 3000,
-  });
+  // Navigate to the flow editor
+  navigate(`/flows/${flowId}`);
 };
 
 if (isLoading || isFlowsLoading) {
@@ -222,10 +216,12 @@ if (isLoading || isFlowsLoading) {
     <div className="w-full space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">{t('Tools')}</h2>
-        <Button onClick={() => setIsAddToolDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('Add tool')}
-        </Button>
+        <McpToolDialog mcpId={mcpId!} onSuccess={refetchMcp}>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('Add tool')}
+          </Button>
+        </McpToolDialog>
       </div>
       
       <div className="space-y-4">
@@ -247,8 +243,13 @@ if (isLoading || isFlowsLoading) {
                         className="h-5 w-5 mr-3"
                       />
                     )}
+                    <span className="flex-grow">{pieceInfoMap[piece.id].displayName}</span>
+                    {piece.actionNames && piece.actionNames.length > 0 && (
+                      <span className="text-xs text-muted-foreground mr-4">
+                        {piece.actionNames.length} {piece.actionNames.length === 1 ? t('action') : t('actions')}
+                      </span>
+                    )}
                   </div>
-                  <span className="flex-grow">{pieceInfoMap[piece.id].displayName}</span>
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -257,18 +258,14 @@ if (isLoading || isFlowsLoading) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditPiece(piece);
-                      }}>
-                        {t('Edit')}
-                      </DropdownMenuItem>
+                      <McpToolDialog mcpId={mcpId!} mcpPieceToUpdate={piece} onSuccess={refetchMcp}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          {t('Edit')}
+                        </DropdownMenuItem>
+                      </McpToolDialog>
                       <DropdownMenuItem 
                         className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removePiece(piece);
-                        }}
+                        onClick={() => removePiece(piece)}
                       >
                         {t('Delete')}
                       </DropdownMenuItem>
@@ -326,31 +323,6 @@ if (isLoading || isFlowsLoading) {
           <CardListEmpty message={t('No tools found. Click "Add tool" to create one.')} />
         )}
       </div>
-
-      <Dialog open={isAddToolDialogOpen} onOpenChange={setIsAddToolDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('Add Tool')}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground">{t('Tool creation dialog will be implemented here.')}</p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddToolDialogOpen(false)}>
-              {t('Cancel')}
-            </Button>
-            <Button onClick={() => {
-              setIsAddToolDialogOpen(false);
-              toast({
-                description: t('Tool creation coming soon'),
-                duration: 3000,
-              });
-            }}>
-              {t('Add')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
