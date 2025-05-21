@@ -1,13 +1,18 @@
+import { AxiosError } from 'axios';
+
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createApiClient } from './lib/common';
-import { AxiosError } from 'axios';
 
-const docusignAuth = PieceAuth.CustomAuth({
+import { createApiClient } from './lib/common';
+import { listEnvelopes } from './lib/actions/list-envelopes';
+import { getEnvelope } from './lib/actions/get-envelope';
+import { getDocument } from './lib/actions/get-document';
+
+export const docusignAuth = PieceAuth.CustomAuth({
   required: true,
   props: {
     clientId: Property.ShortText({
@@ -109,6 +114,9 @@ export const docusign = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/docusign.png',
   authors: ['AdamSelene'],
   actions: [
+    listEnvelopes,
+    getEnvelope,
+    getDocument,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return `https://${
