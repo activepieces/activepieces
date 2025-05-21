@@ -1,14 +1,12 @@
-import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, assertNotNullOrUndefined, isNil, PieceActionSettings, PieceTriggerSettings, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { AdminAddPlatformRequestBody, AdminRestoreFlowRequestBody, AdminRetryRunsRequestBody, ApEdition, assertNotNullOrUndefined, flowStructureUtil, isNil, PieceActionSettings, PieceTriggerSettings, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { system } from '../../../helper/system/system'
-import { adminPlatformService } from './admin-platform.service'
-import { flowStructureUtil } from '@activepieces/shared'
-import { Type } from '@fastify/type-provider-typebox'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
+import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
+import { adminPlatformService } from './admin-platform.service'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -31,17 +29,17 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
     app.post('/fix', FixFlowRequest, async (req, res) => {
         const { flowId, flowVersionId } = req.body
-        const flow = await flowService(req.log).getOneById(flowId);
+        const flow = await flowService(req.log).getOneById(flowId)
         assertNotNullOrUndefined(flow, 'Flow not found')
         const flowVersions = await flowVersionService(req.log).list({
             flowId,
             limit: 10000,
-            cursorRequest: null
+            cursorRequest: null,
         })
-        let updated = 0;
+        let updated = 0
         for (const flowVersion of flowVersions.data) {
             if (flowVersionId && flowVersion.id !== flowVersionId) {
-                continue;
+                continue
             }
             const trigger = flowVersion.trigger
             const isAllStepVersionOne = await flowStructureUtil.getAllSteps(trigger).filter(step => step.type === 'PIECE' || step.type === 'PIECE_TRIGGER').every(step => (step.settings as (PieceTriggerSettings | PieceActionSettings)).pieceVersion === '1.0.0')
@@ -60,9 +58,9 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                             return {
                                 piece,
                                 stepName: step.name,
-                                pieceVersion: piece.version
+                                pieceVersion: piece.version,
                             }
-                        })
+                        }),
                 ).then(results => results.reduce((acc, curr) => {
                     acc[curr.stepName] = curr.pieceVersion
                     return acc
@@ -73,13 +71,13 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                             ...step,
                             settings: {
                                 ...step.settings,
-                                pieceVersion: piecesAndLatestVersions[step.name]
-                            }
+                                pieceVersion: piecesAndLatestVersions[step.name],
+                            },
                         }
                     }
                     return step
                 })
-                updated++;
+                updated++
                 await flowVersionRepo().update({
                     id: flowVersion.id,
                 }, {
@@ -90,6 +88,11 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         return res.status(StatusCodes.OK).send({
             updated,
         })
+    })
+
+    app.post('/restore-flow-version', AdminRestoreFlowRequest, async (req, res) => {
+        await adminPlatformService(req.log).restoreFlowVersion(req.body)
+        return res.status(StatusCodes.OK).send()
     })
 }
 
@@ -122,3 +125,13 @@ const FixFlowRequest = {
         allowedPrincipals: [PrincipalType.SUPER_USER],
     },
 }
+
+const AdminRestoreFlowRequest = {
+    schema: {
+        body: AdminRestoreFlowRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SUPER_USER],
+    },
+}
+
