@@ -30,8 +30,8 @@ const Progress = React.forwardRef<
         />
       </ProgressPrimitive.Root>
 
-      <div className="absolute -top-6 left-0 text-sm text-gray-500">
-        {value}
+      <div className="absolute -top-6 left-0 text-sm font-medium">
+        {value} of {limit} used
       </div>
 
       {!withoutLimit && (
