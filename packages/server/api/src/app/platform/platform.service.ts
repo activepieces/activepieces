@@ -1,4 +1,3 @@
-import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,

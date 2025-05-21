@@ -71,7 +71,6 @@ export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     platformId: Type.String(),
     includedTasks: Type.Number(),
-    name: Type.Optional(Type.String()),
     includedAiCredits: Type.Number(),
     tasksLimit: Type.Optional(Type.Number()),
     aiCreditsLimit: Type.Optional(Type.Number()),
