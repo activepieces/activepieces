@@ -137,7 +137,9 @@ export class RenameProjectBillingToPlatformPLan1747819919988 implements Migratio
                     "apiKeysEnabled" = p."apiKeysEnabled",
                     "alertsEnabled" = p."alertsEnabled",
                     "ssoEnabled" = p."ssoEnabled",
-                    "licenseKey" = p."licenseKey"
+                    "licenseKey" = p."licenseKey",
+                    "globalConnectionsEnabled" = p."globalConnectionsEnabled",
+                    "customRolesEnabled" = p."customRolesEnabled"
                 FROM "platform" p
                 WHERE pp."platformId" = p."id"
             `)
