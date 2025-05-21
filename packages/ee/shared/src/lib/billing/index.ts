@@ -21,7 +21,7 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
 
 export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
   tasksLimit: 1000,
-  aiCreditsLimit: 100,
+  aiCreditsLimit: 200,
   embeddingEnabled: false,
   tablesEnabled: true,
   todosEnabled: true,
