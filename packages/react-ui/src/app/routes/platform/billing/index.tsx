@@ -11,8 +11,9 @@ import {
   Server,
   LucideIcon,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress-bar';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -20,7 +21,7 @@ import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 
 import { platformBillingApi } from './api/billing-api';
 import {
@@ -97,7 +98,6 @@ export default function Billing() {
 
   return (
     <article className="flex flex-col w-full gap-8">
-
       <div className="flex justify-between items-center">
         <div>
           <TableTitle>Billing</TableTitle>
@@ -110,9 +110,12 @@ export default function Billing() {
           <Button variant="outline" onClick={() => manageBilling()}>
             Billing portal
           </Button>
-          <Button onClick={() => {}}>
+          <Link
+            to="/platform/setup/billing/add-ons"
+            className={cn(buttonVariants({ variant: 'default' }))}
+          >
             Purchase Add-ons
-          </Button>
+          </Link>
         </div>
       </div>
 
