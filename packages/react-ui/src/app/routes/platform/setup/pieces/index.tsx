@@ -143,9 +143,14 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
-
-            const isOAuth2Enabled = row.original.auth && row.original.auth.type === PropertyType.OAUTH2 &&
-              (row.original.auth.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE || row.original.auth.grantType === OAuth2GrantType.AUTHORIZATION_CODE || isNil(row.original.auth.grantType))
+            const isOAuth2Enabled =
+              row.original.auth &&
+              row.original.auth.type === PropertyType.OAUTH2 &&
+              (row.original.auth.grantType ===
+                BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
+                row.original.auth.grantType ===
+                  OAuth2GrantType.AUTHORIZATION_CODE ||
+                isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">
                 {isOAuth2Enabled && (
