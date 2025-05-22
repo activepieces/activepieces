@@ -70,9 +70,7 @@ export default function Billing() {
 
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
-      if (
-        platformSubscription?.subscription.stripeSubscriptionStatus === 'active'
-      ) {
+      if (platformSubscription?.plan.stripeSubscriptionStatus === 'active') {
         const { portalLink } = await platformBillingApi.portalLink();
         openNewWindow(portalLink);
         return;
@@ -84,12 +82,12 @@ export default function Billing() {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const tasksLimit = platformSubscription?.subscription.tasksLimit ?? 0;
-  const aiLimit = platformSubscription?.subscription.aiCreditsLimit ?? 0;
+  const tasksLimit = platformSubscription?.plan.tasksLimit ?? 0;
+  const aiLimit = platformSubscription?.plan.aiCreditsLimit ?? 0;
 
   const calculateTaskCost = calculateTaskCostHelper(
-    platformSubscription?.flowRunCount || 0,
-    platformSubscription?.subscription.includedTasks || 0,
+    platformSubscription?.usage.tasks || 0,
+    platformSubscription?.plan.tasksLimit || 0,
   );
 
   const calculateTotalCost = calculateTotalCostHelper(
@@ -97,7 +95,7 @@ export default function Billing() {
   );
 
   const isSubscriptionActive =
-    platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
+    platformSubscription?.plan.stripeSubscriptionStatus === 'active';
 
   if (isLoading) {
     return (
@@ -170,15 +168,14 @@ export default function Billing() {
                     <div className="text-sm font-sm text-gray-500">
                       {t(
                         `First ${
-                          platformSubscription?.subscription?.includedTasks ||
-                          1000
+                          platformSubscription?.plan.includedTasks || 1000
                         } tasks free`,
                       )}
                     </div>
                   </div>
                   <div className="basis-2/3">
                     <Progress
-                      value={platformSubscription?.flowRunCount || 0}
+                      value={platformSubscription?.usage.tasks || 0}
                       limit={tasksLimit ?? 0}
                       label={t('Billing Limit')}
                     />
@@ -221,15 +218,14 @@ export default function Billing() {
                     <div className="text-sm font-sm text-gray-500">
                       {t(
                         `First ${
-                          platformSubscription?.subscription
-                            ?.includedAiCredits || 200
+                          platformSubscription?.plan.includedAiCredits || 200
                         } credits free`,
                       )}
                     </div>
                   </div>
                   <div className="basis-2/3">
                     <Progress
-                      value={platformSubscription?.aiCredits || 0}
+                      value={platformSubscription?.usage.aiCredits || 0}
                       limit={aiLimit ?? 0}
                       label={t('Billing Limit')}
                     />
