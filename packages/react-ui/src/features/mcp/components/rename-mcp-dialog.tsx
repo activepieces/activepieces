@@ -59,14 +59,8 @@ const RenameMcpDialog = ({
       setShowRenameMcpDialog(false);
       onRename();
       toast({
-        title: t('MCP Server Renamed'),
-        description: t(
-          'MCP server "{{oldName}}" was successfully renamed to "{{newName}}".',
-          {
-            oldName: mcpName,
-            newName: form.getValues('name'),
-          },
-        ),
+        title: t('MCP Server Renamed successfully'),
+        duration: 3000,
       });
     },
     onError: (error: Error) => {
