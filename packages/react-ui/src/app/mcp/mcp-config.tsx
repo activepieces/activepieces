@@ -92,7 +92,7 @@ export const McpConfigPage = () => {
     queryKey: ['mcp-flows'],
     queryFn: async () => {
       const flowsResponse = await mcpApi.getFlows(mcpId!);
-      const populatedFlows = await Promise.all(flowsResponse.flows.map(async (mcpFlow: McpFlowWithFlow) => {
+      const populatedFlows = await Promise.all(flowsResponse.map(async (mcpFlow: McpFlowWithFlow) => {
         const populatedFlow = await flowsApi.get(mcpFlow.flow.id, {
           versionId: mcpFlow.flow.publishedVersionId || undefined,
         });

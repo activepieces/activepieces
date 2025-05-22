@@ -35,38 +35,60 @@ export const mcpApi = {
     return await api.delete(`/v1/mcp-servers/${id}`);
   },
 
-  async getPieces(mcpId: string): Promise<{ pieces: McpPieceWithConnection[] }> {
-    return await api.get<{ pieces: McpPieceWithConnection[] }>(
-      `/v1/mcp-tools/${mcpId}/pieces`
+  async getPieces(mcpId: string): Promise<McpPieceWithConnection[]> {
+    return await api.get<McpPieceWithConnection[]>(
+      `/v1/mcp-tools/pieces`, {
+        query: {
+          mcpId
+        }
+      }
     );
   },
 
-  async getFlows(mcpId: string): Promise<{ flows: McpFlowWithFlow[] }> {
-    return await api.get<{ flows: McpFlowWithFlow[] }>(
-      `/v1/mcp-tools/${mcpId}/flows`
+  async getFlows(mcpId: string): Promise<McpFlowWithFlow[]> {
+    return await api.get<McpFlowWithFlow[]>(
+      `/v1/mcp-tools/flows`, {
+        query: {
+          mcpId
+        }
+      }
     );
   },
 
   async upsertPiece(
     mcpId: string,
     request: UpsertMcpPieceRequestBody,
-  ): Promise<McpWithTools> {
-    return await api.post(`/v1/mcp-tools/${mcpId}/pieces`, request);
+  ): Promise<McpPieceWithConnection> {
+    return await api.post(`/v1/mcp-tools/pieces`, {
+      query: {
+        mcpId
+      },
+      body: request
+    });
   },
 
-  async updateFlow(
+  async updateFlows(
     mcpId: string,
     request: UpdateMcpFlowsRequestBody
-  ): Promise<McpWithTools> {
-    return await api.post(`/v1/mcp-tools/${mcpId}/flows`, request);
+  ): Promise<McpFlowWithFlow[]> {
+    return await api.post(`/v1/mcp-tools/flows`, {
+      query: {
+        mcpId
+      },
+      body: request
+    });
   },
 
   async deletePiece(pieceId: string): Promise<void> {
-    return await api.delete(`/v1/mcp-tools/pieces/${pieceId}`);
+    return await api.delete(`/v1/mcp-tools/pieces`, {
+      pieceId
+    });
   },
 
   async deleteFlow(flowId: string): Promise<void> {
-    return await api.delete(`/v1/mcp-tools/flows/${flowId}`);
+    return await api.delete(`/v1/mcp-tools/flows`, {
+      flowId
+    });
   },
 };
 

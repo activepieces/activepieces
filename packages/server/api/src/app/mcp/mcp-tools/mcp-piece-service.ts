@@ -34,8 +34,15 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
                 return enrichPieceWithConnection(piece, _log)
             }),
         )
-        
-        return piecesWithConnection
+
+
+        // TODO: See why this is not working
+        // return piecesWithConnection
+        // Ensure all pieces have a valid actionNames array
+        return piecesWithConnection.map(piece => ({
+            ...piece,
+            actionNames: Array.isArray(piece.actionNames) ? piece.actionNames : []
+        }))
     },
 
 

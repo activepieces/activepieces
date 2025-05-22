@@ -11,62 +11,59 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     
 
-    app.get('/:id/pieces', GetMcpPiecesRequest, async (req) => {
-        const { id } = req.params
-        const pieces = await mcpPieceService(req.log).list(id)
-        return { pieces }
+    app.get('/pieces', GetMcpPiecesRequest, async (req) => {
+        const { mcpId } = req.query
+        const pieces = await mcpPieceService(req.log).list(mcpId)
+        return pieces
     })
 
 
-    app.get('/:id/flows', GetMcpFlowsRequest, async (req) => {
-        const { id } = req.params
-        const flows = await mcpFlowService(req.log).list(id)
-        return { flows }
+    app.get('/flows', GetMcpFlowsRequest, async (req) => {
+        const { mcpId } = req.query
+        const flows = await mcpFlowService(req.log).list(mcpId)
+        return flows
     })
     
     
-    app.post('/:id/pieces', UpsertMcpPieceRequest, async (req) => {
-        console.log('HAHAHAHAHA upsert piece', req.body)
-        const { id } = req.params
+    app.post('/pieces', UpsertMcpPieceRequest, async (req) => {
+        const { mcpId } = req.query
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
         const piece = await mcpPieceService(req.log).upsert({
-            mcpId: id,
+            mcpId: mcpId,
             pieceName,
             pieceVersion,
             actionNames,
             connectionId: connectionId ?? undefined,
         })
-        console.log('HAHAHAHAHA after get one or throw', piece)
 
         if(actionNames.length === 0) {
             await mcpPieceService(req.log).delete(piece.id)
         }
-        console.log('HAHAHAHAHA after delete', piece)
         return piece
     })
 
-    app.post('/:id/flows', UpdateMcpFlowsRequest, async (req) => {
-        const { id } = req.params
+    app.post('/flows', UpdateMcpFlowsRequest, async (req) => {
+        const { mcpId } = req.query
         const { flowIds } = req.body
         
         const flows = await mcpFlowService(req.log).updateBatch({
-            mcpId: id,
+            mcpId,
             flowIds,
         })
 
-        return { flows }
+        return flows
     })
 
-    app.delete('/:id/pieces/:pieceId', DeleteMcpPieceRequest, async (req, reply) => {
-        const { pieceId } = req.params
+    app.delete('/pieces', DeleteMcpPieceRequest, async (req, reply) => {
+        const { pieceId } = req.query
         await mcpPieceService(req.log).delete(pieceId)
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     
-    app.delete('/:id/flows/:flowId', DeleteMcpFlowRequest, async (req, reply) => {
-        const { flowId } = req.params
+    app.delete('/flows', DeleteMcpFlowRequest, async (req, reply) => {
+        const { flowId } = req.query
         await mcpFlowService(req.log).delete(flowId)
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -82,9 +79,12 @@ const GetMcpPiecesRequest = {
         tags: ['mcp-piece'],
         description: 'Get MCP pieces',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
+            mcpId: ApId,
         }),
+    },
+    response: {
+        [StatusCodes.OK]: Type.Array(McpPieceWithConnection)
     },
 }
 
@@ -98,9 +98,12 @@ const GetMcpFlowsRequest = {
         tags: ['mcp-flow'],
         description: 'Get MCP flows',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
+            mcpId: ApId,
         }),
+    },
+    response: {
+        [StatusCodes.OK]: Type.Array(McpFlowWithFlow),
     },
 }
 
@@ -114,10 +117,13 @@ const UpsertMcpPieceRequest = {
         tags: ['mcp-piece'],
         description: 'Upsert MCP piece actions',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
+            mcpId: ApId,
         }),
         body: UpsertMcpPieceRequestBody,
+    },
+    response: {
+        [StatusCodes.OK]: McpPieceWithConnection,
     },
 }
 
@@ -130,10 +136,13 @@ const UpdateMcpFlowsRequest = {
         tags: ['mcp-flow'],
         description: 'Update MCP flows',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
+            mcpId: ApId,
         }),
         body: UpdateMcpFlowsRequestBody,
+    },
+    response: {
+        [StatusCodes.OK]: Type.Array(McpFlowWithFlow),
     },
 }
 
@@ -146,10 +155,12 @@ const DeleteMcpPieceRequest = {
         tags: ['mcp-piece'],
         description: 'Delete MCP piece',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
             pieceId: ApId,
         }),
+    },
+    response: {
+        [StatusCodes.NO_CONTENT]: Type.Never(),
     },
 }
 
@@ -162,9 +173,11 @@ const DeleteMcpFlowRequest = {
         tags: ['mcp-flow'],
         description: 'Delete MCP flow',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
+        querystring: Type.Object({
             flowId: ApId,
         }),
+    },
+    response: {
+        [StatusCodes.NO_CONTENT]: Type.Never(),
     },
 }
