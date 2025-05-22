@@ -1,9 +1,9 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-	OAuth2PropertyValue,
-	PieceAuth,
-	createPiece,
-	Property,
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import crypto from 'node:crypto';
@@ -35,147 +35,160 @@ import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
+import { setChannelTopicAction } from './lib/actions/set-channel-topic';
+import { getMessageAction } from './lib/actions/get-message';
+import { findUserByIdAction } from './lib/actions/find-user-by-id';
+import { newUserTrigger } from './lib/triggers/new-user';
+import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
+import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
+import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
-	description: '',
-	authUrl:
-		'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history',
-	tokenUrl: 'https://slack.com/api/oauth.v2.access',
-	required: true,
-	scope: [
-		'channels:read',
-		'channels:manage',
-		'channels:history',
-		'chat:write',
-		'groups:read',
-		'groups:write',
-		'groups:history',
-		'reactions:read',
-		'mpim:read',
-		'mpim:write',
-		'mpim:history',
-		'im:write',
-		'im:read',
-		'im:history',
-		'users:read',
-		'files:write',
-		'files:read',
-		'users:read.email',
-		'reactions:write',
-		'usergroups:read',
-		'chat:write.customize',
-	],
+  description: '',
+  authUrl:
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read',
+  tokenUrl: 'https://slack.com/api/oauth.v2.access',
+  required: true,
+  scope: [
+    'channels:read',
+    'channels:manage',
+    'channels:history',
+    'chat:write',
+    'groups:read',
+    'groups:write',
+    'groups:history',
+    'reactions:read',
+    'mpim:read',
+    'mpim:write',
+    'mpim:history',
+    'im:write',
+    'im:read',
+    'im:history',
+    'users:read',
+    'files:write',
+    'files:read',
+    'users:read.email',
+    'reactions:write',
+    'usergroups:read',
+    'chat:write.customize',
+    'links:read',
+    'links:write',
+		'emoji:read',
+		'users.profile:read'
+  ],
 });
 
 export const slack = createPiece({
-	displayName: 'Slack',
-	description: 'Channel-based messaging platform',
-	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-	categories: [PieceCategory.COMMUNICATION],
-	auth: slackAuth,
-	events: {
-		parseAndReply: ({ payload }) => {
-			const payloadBody = payload.body as PayloadBody;
-			if (payloadBody.challenge) {
-				return {
-					reply: {
-						body: payloadBody['challenge'],
-						headers: {},
-					},
-				};
-			}
-			return {
-				event: payloadBody?.event?.type,
-				identifierValue: payloadBody.team_id,
-			};
-		},
-		verify: ({ webhookSecret, payload }) => {
-			// Construct the signature base string
-			const timestamp = payload.headers['x-slack-request-timestamp'];
-			const signature = payload.headers['x-slack-signature'];
-			const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
-			const hmac = crypto.createHmac('sha256', webhookSecret as string);
-			hmac.update(signatureBaseString);
-			const computedSignature = `v0=${hmac.digest('hex')}`;
-			return signature === computedSignature;
-		},
-	},
-	authors: [
-		'rita-gorokhod',
-		'AdamSelene',
-		'Abdallah-Alwarawreh',
-		'kishanprmr',
-		'MoShizzle',
-		'AbdulTheActivePiecer',
-		'khaledmashaly',
-		'abuaboud',
-	],
-	actions: [
-		addRectionToMessageAction,
-		slackSendDirectMessageAction,
-		slackSendMessageAction,
-		requestApprovalDirectMessageAction,
-		requestSendApprovalMessageAction,
-		requestActionDirectMessageAction,
-		requestActionMessageAction,
-		uploadFile,
-		getFileAction,
-		searchMessages,
-		findUserByEmailAction,
-		findUserByHandleAction,
-		updateMessage,
-		createChannelAction,
-		updateProfileAction,
-		getChannelHistory,
-		setUserStatusAction,
-		markdownToSlackFormat,
-		retrieveThreadMessages,
-		createCustomApiCallAction({
-			baseUrl: () => {
-				return 'https://slack.com/api';
-			},
-			auth: slackAuth,
-			authMapping: async (auth, propsValue) => {
-				if (propsValue.useUserToken) {
-					return {
-						Authorization: `Bearer ${(auth as OAuth2PropertyValue).data['authed_user']?.access_token
-							}`,
-					};
-				} else {
-					return {
-						Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token
-							}`,
-					};
-				}
-			},
-			extraProps: {
-				useUserToken: Property.Checkbox({
-					displayName: 'Use user token',
-					description: 'Use user token instead of bot token',
-					required: true,
-					defaultValue: false,
-				}),
-			},
-		}),
-	],
-	triggers: [
-		newMessageTrigger,
-		newMessageInChannelTrigger,
-		newDirectMessageTrigger,
-		newMention,
-		newMentionInDirectMessageTrigger,
-		newReactionAdded,
-		channelCreated, newCommand,
-		newCommandInDirectMessageTrigger
-		
-	],
+  displayName: 'Slack',
+  description: 'Channel-based messaging platform',
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
+  categories: [PieceCategory.COMMUNICATION],
+  auth: slackAuth,
+  events: {
+    parseAndReply: ({ payload }) => {
+      const payloadBody = payload.body as PayloadBody;
+      if (payloadBody.challenge) {
+        return {
+          reply: {
+            body: payloadBody['challenge'],
+            headers: {},
+          },
+        };
+      }
+      return {
+        event: payloadBody?.event?.type,
+        identifierValue: payloadBody.team_id,
+      };
+    },
+    verify: ({ webhookSecret, payload }) => {
+      // Construct the signature base string
+      const timestamp = payload.headers['x-slack-request-timestamp'];
+      const signature = payload.headers['x-slack-signature'];
+      const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
+      const hmac = crypto.createHmac('sha256', webhookSecret as string);
+      hmac.update(signatureBaseString);
+      const computedSignature = `v0=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    },
+  },
+  authors: [
+    'rita-gorokhod',
+    'AdamSelene',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
+  actions: [
+    addRectionToMessageAction,
+    slackSendDirectMessageAction,
+    slackSendMessageAction,
+    requestApprovalDirectMessageAction,
+    requestSendApprovalMessageAction,
+    requestActionDirectMessageAction,
+    requestActionMessageAction,
+    uploadFile,
+    getFileAction,
+    searchMessages,
+    findUserByEmailAction,
+    findUserByHandleAction,
+    updateMessage,
+    createChannelAction,
+    updateProfileAction,
+    getChannelHistory,
+    setUserStatusAction,
+    markdownToSlackFormat,
+    retrieveThreadMessages,
+    createCustomApiCallAction({
+      baseUrl: () => {
+        return 'https://slack.com/api';
+      },
+      auth: slackAuth,
+      authMapping: async (auth, propsValue) => {
+        if (propsValue.useUserToken) {
+          return {
+            Authorization: `Bearer ${
+              (auth as OAuth2PropertyValue).data['authed_user']?.access_token
+            }`,
+          };
+        } else {
+          return {
+            Authorization: `Bearer ${
+              (auth as OAuth2PropertyValue).access_token
+            }`,
+          };
+        }
+      },
+      extraProps: {
+        useUserToken: Property.Checkbox({
+          displayName: 'Use user token',
+          description: 'Use user token instead of bot token',
+          required: true,
+          defaultValue: false,
+        }),
+      },
+    }),
+  ],
+  triggers: [
+    newMessageTrigger,
+    newMessageInChannelTrigger,
+    newDirectMessageTrigger,
+    newMention,
+    newMentionInDirectMessageTrigger,
+    newReactionAdded,
+    channelCreated,
+    newCommand,
+    newCommandInDirectMessageTrigger,
+  ],
 });
 
 type PayloadBody = {
-	challenge: string;
-	event: {
-		type: string;
-	};
-	team_id: string;
+  challenge: string;
+  event: {
+    type: string;
+  };
+  team_id: string;
 };

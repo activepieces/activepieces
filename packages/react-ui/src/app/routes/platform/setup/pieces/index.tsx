@@ -24,12 +24,17 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  OAuth2GrantType,
+  PieceScope,
+} from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.managePiecesEnabled;
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
   const {
@@ -139,7 +144,10 @@ const PlatformPiecesPage = () => {
             return (
               <div className="flex justify-end">
                 {row.original.auth &&
-                  row.original.auth.type === PropertyType.OAUTH2 && (
+                  row.original.auth.type === PropertyType.OAUTH2 &&
+                  (row.original.auth.allowsSwitchingGrantType ||
+                    row.original.auth.grantType ===
+                      OAuth2GrantType.AUTHORIZATION_CODE) && (
                     <ConfigurePieceOAuth2Dialog
                       pieceName={row.original.name}
                       onConfigurationDone={() => {

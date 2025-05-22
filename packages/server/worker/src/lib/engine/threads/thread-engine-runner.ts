@@ -71,7 +71,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async extractPieceMetadata(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -85,7 +85,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         log.debug({ operation }, '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -165,7 +165,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const { piece } = operation
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -185,7 +185,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async excuteTool(engineToken, operation) {
         log.debug({ operation }, '[threadEngineRunner#excuteTool]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
@@ -200,6 +200,9 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
+    },
+    async shutdownAllWorkers() {
+        await engineWorkers.shutdown()
     },
 })
 

@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/fliqr-ai/package.json",
         "main": "packages/pieces/community/fliqr-ai/src/index.ts",
         "assets": [
-          "packages/pieces/community/fliqr-ai/*.md"
+          "packages/pieces/community/fliqr-ai/*.md",
+          {
+            "input": "packages/pieces/community/fliqr-ai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

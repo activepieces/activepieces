@@ -1733,6 +1733,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Daniel-Klippa",
+      "name": "Daniel-Klippa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/207180643?v=4",
+      "profile": "https://github.com/Daniel-Klippa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "krushnarout",
+      "name": "Krushna Kanta Rout",
+      "avatar_url": "https://avatars.githubusercontent.com/u/129386740?v=4",
+      "profile": "https://github.com/krushnarout",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nish17",
+      "name": "Nimesh Solanki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12984120?v=4",
+      "profile": "https://www.snimesh.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
