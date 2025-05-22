@@ -97,6 +97,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         
+        console.log('HAHAHAHAHA BEFORE VALIDATE')
         await this.validatePiece({
             pieceName,
             pieceVersion,
@@ -104,6 +105,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
             projectId: mcp.projectId,
             platformId: project.platformId,
         })
+        console.log('HAHAHAHAHA AFTER VALIDATE')
         
         if (!isNil(connectionId)) {
             await validateMcpPieceConnection({ 
@@ -113,12 +115,13 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
                 log: _log, 
                 platformId: project.platformId, 
             })
+            console.log('HAHAHAHAHA AFTER VALIDATE CONNECTION')
         }
 
         const existingPiece = await mcpPieceRepo().findOneBy({ mcpId, pieceName, pieceVersion })
-
+        console.log('HAHAHAHAHA AFTER FIND ONE')
         const newId = existingPiece?.id ?? apId()
-
+        console.log('HAHAHAHAHA AFTER NEW ID')
         const piece = {
             id: newId,
             mcpId,
@@ -127,11 +130,11 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
             actionNames,
             ...spreadIfDefined('connectionId', connectionId),
         }
-
+        console.log('HAHAHAHAHA AFTER PIECE')
         await mcpPieceRepo().upsert(piece, ['id'])
-        
+        console.log('HAHAHAHAHA AFTER UPSERT')
         await _updateMcpTimestamp(mcpId)
-        
+        console.log('HAHAHAHAHA AFTER UPDATE MCP TIMESTAMP')
         return this.getOneOrThrow(newId)
     },
 

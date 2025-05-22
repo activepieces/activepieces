@@ -17,10 +17,6 @@ export const McpFlowEntity = new EntitySchema<McpFlowSchema>({
     },
     indices: [
         {
-            name: 'idx_mcp_flow_mcp_id',
-            columns: ['mcpId'],
-        },
-        {
             name: 'idx_mcp_flow_flow_id',
             columns: ['flowId'],
         },

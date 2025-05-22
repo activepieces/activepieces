@@ -4,7 +4,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuthorization } from "@/hooks/authorization-hooks";
-import { Permission } from "@activepieces/shared";
+import { FlowStatus, FlowVersionState, Permission } from "@activepieces/shared";
 import { flagsHooks } from "@/hooks/flags-hooks";
 import { piecesHooks } from "@/features/pieces/lib/pieces-hook";
 import { mcpApi } from "@/features/mcp/lib/mcp-api";
@@ -25,7 +25,18 @@ import {
   PieceStepMetadataWithSuggestions,
   StepMetadata,
 } from '@/features/pieces/lib/types';
-import { MoreVertical, Plus } from "lucide-react";
+import {
+  MoreVertical,
+  Plus,
+  Trash2,
+  Edit2,
+  Workflow,
+  Puzzle,
+  AlertCircle,
+  Settings,
+  ChevronRight,
+  ArrowRight
+} from "lucide-react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,13 +51,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
+  DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { CardList, CardListItem, CardListEmpty } from "@/components/ui/card-list";
+import { CardListEmpty } from "@/components/ui/card-list";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import McpToolDialog from "./mcp-tool-dialog";
 
 export const McpConfigPage = () => {
-  const [isAddToolDialogOpen, setIsAddToolDialogOpen] = useState(false);
+  const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
   const { theme } = useTheme();
   const { mcpId } = useParams<{ mcpId: string }>();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
@@ -92,7 +110,7 @@ export const McpConfigPage = () => {
     mutationFn: async (pieceId: string) => mcpApi.deletePiece(pieceId),
     onSuccess: () => {
       toast({
-        description: t('Piece removed successfully'),
+        description: t('Tool removed successfully'),
         duration: 3000,
       });
       refetchMcp();
@@ -102,7 +120,7 @@ export const McpConfigPage = () => {
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description: t('Failed to remove piece'),
+        description: t('Failed to remove tool'),
         duration: 5000,
       });
     },
@@ -191,10 +209,6 @@ mcp?.pieces?.forEach((piece) => {
   pieceInfoMap[piece.id] = getPieceInfo(piece);
 });
 
-const handleEditPiece = (piece: McpPieceWithConnection) => {
-  // The edit functionality is now handled by the McpToolDialog
-};
-
 const handleDeleteFlow = (flowId: string) => {
   // Dummy function for now
   toast({
@@ -209,122 +223,246 @@ const handleEditFlow = (flowId: string) => {
 };
 
 if (isLoading || isFlowsLoading) {
-    return <LoadingScreen mode="container" />;
-  }
+  return <LoadingScreen mode="container" />;
+}
 
-  return (
-    <div className="w-full space-y-4">
+const piecesCount = mcp?.pieces?.length || 0;
+const flowsCount = flowsData?.data?.length || 0;
+const totalToolsCount = piecesCount + flowsCount;
+const hasTools = totalToolsCount > 0;
+
+return (
+  <div className="w-full py-6 space-y-6">
+    <div className="flex flex-col space-y-2">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">{t('Tools')}</h2>
-        <McpToolDialog mcpId={mcpId!} onSuccess={refetchMcp}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('Add tool')}
-          </Button>
-        </McpToolDialog>
+        <h1 className="text-3xl font-bold tracking-tight">{t('Tools Dashboard')}</h1>
+        <div className="flex gap-2">
+          <McpToolDialog 
+            mcpId={mcpId!} 
+            onSuccess={() => {
+              refetchMcp();
+              setShowAddPieceDialog(false);
+            }}
+            onClose={() => {
+              setShowAddPieceDialog(false);
+            }}
+          >
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('Add Tool')}
+            </Button>
+          </McpToolDialog>
+        </div>
       </div>
-      
-      <div className="space-y-4">
-        {mcp?.pieces && mcp.pieces.length > 0 && (
-          <div>
-            <h3 className="text-sm text-muted-foreground mb-2">{t('Pieces')}</h3>
-            <CardList className="max-h-none">
-              {mcp.pieces.map((piece) => (
-                <CardListItem
-                  key={piece.id}
-                  onClick={() => handleEditPiece(piece)}
-                  className="p-3 border rounded-md hover:bg-muted"
-                >
-                  <div className="flex items-center">
-                    {pieceInfoMap[piece.id]?.logoUrl && (
+      <p className="text-muted-foreground">
+        {t('Manage your integration tools and automated workflows')}
+      </p>
+    </div>
+
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <span>{t('Tools')}</span>
+          {totalToolsCount > 0 && (
+            <Badge variant="secondary">
+              {totalToolsCount}
+            </Badge>
+          )}
+        </h2>
+      </div>
+
+      {hasTools ? (
+        <ScrollArea className="h-[calc(100vh-220px)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
+            {/* Integration Pieces */}
+            {mcp?.pieces && mcp.pieces.map((piece) => (
+              <Card key={`piece-${piece.id}`} className="overflow-hidden transition-all hover:shadow-md">
+                <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2">
+                  <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
+                    {pieceInfoMap[piece.id]?.logoUrl ? (
                       <img 
                         src={pieceInfoMap[piece.id].logoUrl} 
                         alt={pieceInfoMap[piece.id].displayName} 
-                        className="h-5 w-5 mr-3"
+                        className="h-6 w-6 object-contain"
                       />
-                    )}
-                    <span className="flex-grow">{pieceInfoMap[piece.id].displayName}</span>
-                    {piece.actionNames && piece.actionNames.length > 0 && (
-                      <span className="text-xs text-muted-foreground mr-4">
-                        {piece.actionNames.length} {piece.actionNames.length === 1 ? t('action') : t('actions')}
-                      </span>
+                    ) : (
+                      <Puzzle className="h-6 w-6 text-muted-foreground" />
                     )}
                   </div>
-                  
+                  <div className="flex-1 overflow-hidden">
+                    <h3 className="text-lg font-semibold truncate">{pieceInfoMap[piece.id].displayName}</h3>
+                    <Badge variant="outline" className="text-xs">Integration</Badge>
+                  </div>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <McpToolDialog mcpId={mcpId!} mcpPieceToUpdate={piece} onSuccess={refetchMcp}>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <McpToolDialog mcpId={mcpId!} mcpPieceToUpdate={piece} onSuccess={refetchMcp} onClose={() => {
+                        setShowAddPieceDialog(false);
+                      }}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2">
+                          <Edit2 className="h-4 w-4" />
                           {t('Edit')}
                         </DropdownMenuItem>
                       </McpToolDialog>
                       <DropdownMenuItem 
-                        className="text-destructive"
+                        className="text-destructive flex items-center gap-2"
                         onClick={() => removePiece(piece)}
                       >
+                        <Trash2 className="h-4 w-4" />
                         {t('Delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </CardListItem>
-              ))}
-            </CardList>
-          </div>
-        )}
-        
-        {flowsData && flowsData.data.length > 0 && (
-          <div>
-            <h3 className="text-sm text-muted-foreground mb-2">{t('Flows')}</h3>
-            <CardList className="max-h-none">
-              {flowsData.data.map((flow) => (
-                <CardListItem
-                  key={flow.id}
-                  onClick={() => navigate(`/flows/${flow.id}`)}
-                  className="p-3 border rounded-md hover:bg-muted"
-                >
-                  <span className="flex-grow">{flow.version.displayName}</span>
-                  
+                </CardHeader>
+                <Separator />
+                <CardContent className="p-4 pt-3">
+                  {piece.actionNames && piece.actionNames.length > 0 ? (
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-2">
+                        {t('Available Actions')}:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {piece.actionNames.slice(0, 3).map((action, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {action}
+                          </Badge>
+                        ))}
+                        {piece.actionNames.length > 3 && (
+                          <Badge variant="outline" className="text-xs bg-muted">
+                            +{piece.actionNames.length - 3} {t('more')}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {t('No actions available for this tool')}
+                    </span>
+                  )}
+                </CardContent>
+                <CardFooter className="p-0">
+                  <McpToolDialog mcpId={mcpId!} mcpPieceToUpdate={piece} onSuccess={refetchMcp} onClose={() => {
+                    setShowAddPieceDialog(false);
+                  }}>
+                    <Button variant="ghost" className="w-full rounded-none h-10 text-xs justify-between font-normal">
+                      <span>{t('Configure')}</span>
+                      <Settings className="h-3 w-3 ml-1" />
+                    </Button>
+                  </McpToolDialog>
+                </CardFooter>
+              </Card>
+            ))}
+
+            {/* Flows */}
+            {flowsData && flowsData.data.map((flow) => (
+              <Card key={`flow-${flow.id}`} className="overflow-hidden transition-all hover:shadow-md">
+                <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2">
+                  <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
+                    <Workflow className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold truncate">{flow.version.displayName}</h3>
+                    <Badge variant="outline" className="text-xs">Flow</Badge>
+                  </div>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditFlow(flow.id);
-                      }}>
+                      <DropdownMenuItem 
+                        onClick={() => handleEditFlow(flow.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit2 className="h-4 w-4" />
                         {t('Edit')}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteFlow(flow.id);
-                        }}
+                        className="text-destructive flex items-center gap-2"
+                        onClick={() => handleDeleteFlow(flow.id)}
                       >
+                        <Trash2 className="h-4 w-4" />
                         {t('Delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </CardListItem>
-              ))}
-            </CardList>
+                </CardHeader>
+                <Separator />
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={flow.status === FlowStatus.ENABLED ? "default" : "secondary"}>
+                        {flow.status === FlowStatus.ENABLED ? t('Active') : t('Inactive')}
+                      </Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      ID: {flow.id.substring(0, 8)}
+                    </span>
+                  </div>
+                </CardContent>
+                <CardFooter className="p-0">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full rounded-none h-10 text-xs justify-between font-normal"
+                    onClick={() => navigate(`/flows/${flow.id}`)}
+                  >
+                    <span>{t('Open Flow Editor')}</span>
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
-        )}
-        
-        {(!mcp?.pieces || mcp.pieces.length === 0) && (!flowsData || flowsData.data.length === 0) && (
-          <CardListEmpty message={t('No tools found. Click "Add tool" to create one.')} />
-        )}
-      </div>
+        </ScrollArea>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 border rounded-lg bg-muted/20">
+          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+            <Puzzle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-medium">{t('No Tools Added Yet')}</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            {t('Add your first tool to start building powerful integrations')}
+          </p>
+          <McpToolDialog 
+            mcpId={mcpId!} 
+            onSuccess={() => {
+              refetchMcp();
+              setShowAddPieceDialog(false);
+            }}
+            onClose={() => {
+              setShowAddPieceDialog(false);
+            }}
+          >
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('Add Tool')}
+            </Button>
+          </McpToolDialog>
+        </div>
+      )}
     </div>
-  );
+
+    {showAddPieceDialog && (
+      <McpToolDialog 
+        mcpId={mcpId!} 
+        onSuccess={() => {
+          refetchMcp();
+          setShowAddPieceDialog(false);
+        }}
+        onClose={() => {
+          setShowAddPieceDialog(false);
+        }}
+      >
+        <></>
+      </McpToolDialog>
+    )}
+  </div>
+);
 };
 
 McpConfigPage.displayName = 'McpConfigPage';

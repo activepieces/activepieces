@@ -34,10 +34,6 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
     },
     indices: [
         {
-            name: 'idx_mcp_piece_mcp_id',
-            columns: ['mcpId'],
-        },
-        {
             name: 'idx_mcp_piece_connection_id',
             columns: ['connectionId'],
         },

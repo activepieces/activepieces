@@ -1,11 +1,19 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import { pieceMetadataService } from "../../../pieces/piece-metadata-service";
+import { system } from "../../../helper/system/system";
 
-export class AddMcpFlowAndPieceActions1747910561708 implements MigrationInterface {
-    name = 'AddMcpFlowAndPieceActions1747910561708'
+
+export class AddMcpFlowAndPieceActions1747917306587 implements MigrationInterface {
+    name = 'AddMcpFlowAndPieceActions1747917306587'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const logger = system.globalLogger()
+
         await queryRunner.query(`
             DROP INDEX "public"."mcp_project_id"
+        `);
+        await queryRunner.query(`
+            DROP INDEX "public"."idx_mcp_piece_mcp_id"
         `);
         await queryRunner.query(`
             CREATE TABLE "mcp_flow" (
@@ -14,11 +22,8 @@ export class AddMcpFlowAndPieceActions1747910561708 implements MigrationInterfac
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "flowId" character varying(21) NOT NULL,
                 "mcpId" character varying(21) NOT NULL,
-                CONSTRAINT "pk_mcp_flow" PRIMARY KEY ("id")
+                CONSTRAINT "PK_4ab889ada17f77f05239f005048" PRIMARY KEY ("id")
             )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_mcp_flow_mcp_id" ON "mcp_flow" ("mcpId")
         `);
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_flow_flow_id" ON "mcp_flow" ("flowId")
@@ -37,6 +42,31 @@ export class AddMcpFlowAndPieceActions1747910561708 implements MigrationInterfac
             ALTER TABLE "mcp_piece"
             ADD "pieceVersion" character varying NOT NULL
         `);
+
+        // const allMcpPieces = await queryRunner.query(`
+        //     SELECT * FROM "mcp_piece"
+        // `);
+        // for (const mcpPiece of allMcpPieces) {
+        //     console.log(`HAHAHAHAAH mcpPiece`, mcpPiece)
+        //     const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
+        //         name: mcpPiece.pieceName,
+        //         version: undefined,
+        //         projectId: mcpPiece.projectId,
+        //         platformId: mcpPiece.platformId,
+        //     })
+            
+        //     await queryRunner.query(`
+        //         UPDATE "mcp_piece" SET "pieceVersion" = $1 WHERE "id" = $2
+        //     `, [pieceMetadata.version, mcpPiece.id]);
+        // }
+        
+
+        // await queryRunner.query(`
+        //     ALTER TABLE "mcp_piece"
+        //     ALTER COLUMN "pieceVersion" SET NOT NULL
+        // `);
+
+
         await queryRunner.query(`
             ALTER TABLE "mcp_piece"
             ADD "actionNames" character varying NOT NULL
@@ -91,10 +121,10 @@ export class AddMcpFlowAndPieceActions1747910561708 implements MigrationInterfac
             DROP INDEX "public"."idx_mcp_flow_flow_id"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_flow_mcp_id"
+            DROP TABLE "mcp_flow"
         `);
         await queryRunner.query(`
-            DROP TABLE "mcp_flow"
+            CREATE INDEX "idx_mcp_piece_mcp_id" ON "mcp_piece" ("mcpId")
         `);
         await queryRunner.query(`
             CREATE UNIQUE INDEX "mcp_project_id" ON "mcp" ("projectId")

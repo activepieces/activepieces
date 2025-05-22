@@ -26,6 +26,7 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
     
     
     app.post('/:id/pieces', UpsertMcpPieceRequest, async (req) => {
+        console.log('HAHAHAHAHA upsert piece', req.body)
         const { id } = req.params
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
@@ -36,12 +37,13 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
             actionNames,
             connectionId: connectionId ?? undefined,
         })
+        console.log('HAHAHAHAHA after get one or throw', piece)
 
         if(actionNames.length === 0) {
             await mcpPieceService(req.log).delete(piece.id)
         }
-
-        return { piece }
+        console.log('HAHAHAHAHA after delete', piece)
+        return piece
     })
 
     app.post('/:id/flows', UpdateMcpFlowsRequest, async (req) => {
@@ -83,11 +85,6 @@ const GetMcpPiecesRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        response: {
-            [StatusCodes.OK]: Type.Object({
-                pieces: Type.Array(McpPieceWithConnection),
-            }),
-        },
     },
 }
 
@@ -104,11 +101,6 @@ const GetMcpFlowsRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        response: {
-            [StatusCodes.OK]: Type.Object({
-                flows: Type.Array(McpFlowWithFlow),
-            }),
-        },
     },
 }
 
@@ -126,11 +118,6 @@ const UpsertMcpPieceRequest = {
             id: ApId,
         }),
         body: UpsertMcpPieceRequestBody,
-        response: {
-            [StatusCodes.OK]: Type.Object({
-                piece: McpPieceWithConnection,
-            }),
-        },
     },
 }
 
@@ -147,11 +134,6 @@ const UpdateMcpFlowsRequest = {
             id: ApId,
         }),
         body: UpdateMcpFlowsRequestBody,
-        response: {
-            [StatusCodes.OK]: Type.Object({
-                flows: Type.Array(McpFlowWithFlow),
-            }),
-        },
     },
 }
 
@@ -169,9 +151,6 @@ const DeleteMcpPieceRequest = {
             pieceId: ApId,
         }),
     },
-    response: {
-        [StatusCodes.NO_CONTENT]: Type.Never(),
-    },
 }
 
 const DeleteMcpFlowRequest = {
@@ -187,8 +166,5 @@ const DeleteMcpFlowRequest = {
             id: ApId,
             flowId: ApId,
         }),
-    },
-    response: {
-        [StatusCodes.NO_CONTENT]: Type.Never(),
     },
 }

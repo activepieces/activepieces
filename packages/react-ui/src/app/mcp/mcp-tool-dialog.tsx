@@ -1,512 +1,300 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-
-import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import React, { useState, useMemo } from 'react';
+import { Search, Puzzle, Workflow, WorkflowIcon, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { StepMetadata } from '@/features/pieces/lib/types';
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+import { piecesHooks } from "@/features/pieces/lib/pieces-hook";
+import { mcpApi } from "@/features/mcp/lib/mcp-api";
+import { flowsApi } from "@/features/flows/lib/flows-api";
+import { authenticationSession } from "@/lib/authentication-session";
+import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { assertNotNullOrUndefined } from "@activepieces/shared";
+import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import { FlowOperationType } from "@activepieces/shared";
+import type { 
+  Trigger,
+  PopulatedFlow,
+  FlowOperationRequest,
+} from "@activepieces/shared";
 import {
-  isNil,
-  McpPieceWithConnection,
-  ActionType,
-  PackageType,
-  PieceType
-} from '@activepieces/shared';
-
-import { mcpApi } from '../../features/mcp/lib/mcp-api';
+  PieceStepMetadataWithSuggestions,
+  StepMetadata,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/lib/types';
+import { useDebounce } from 'use-debounce';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { CardList, CardListItem, CardListItemSkeleton } from '@/components/ui/card-list';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { SearchX } from 'lucide-react';
+import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 type McpToolDialogProps = {
   children: React.ReactNode;
-  mcpPieceToUpdate?: McpPieceWithConnection;
+  mcpPieceToUpdate?: any;
   mcpId: string;
+  onClose: () => void;
   onSuccess?: () => void;
 };
 
-export const McpToolDialog = React.memo(
-  ({ children, mcpPieceToUpdate, mcpId, onSuccess }: McpToolDialogProps) => {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('pieces');
-    const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedPieceActions, setSelectedPieceActions] = useState<string[]>([]);
-    const [allActionsSelected, setAllActionsSelected] = useState(false);
-    const { toast } = useToast();
-    
-    const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp(mcpId);
-    const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
-    
-    const form = useForm<{ 
-      pieceName: string; 
-      connectionId: string | null;
-      pieceVersion: string;
-    }>({
-      defaultValues: {
-        pieceName: '',
-        connectionId: null,
-        pieceVersion: '',
-      },
-    });
+export default function McpToolDialog({ mcpId, mcpPieceToUpdate, onSuccess, children, onClose }: McpToolDialogProps) {
+  const [activeTab, setActiveTab] = useState("pieces");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const [selectedPiece, setSelectedPiece] = useState<PieceStepMetadataWithSuggestions | null>(null);
+  const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [selectedActionName, setSelectedActionName] = useState<string | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-    // Initialize form and selected actions when editing a tool
-    useEffect(() => {
-      if (dialogOpen && mcpPieceToUpdate) {
-        form.setValue('pieceName', mcpPieceToUpdate.pieceName);
-        form.setValue('connectionId', mcpPieceToUpdate.connectionId || null);
-        form.setValue('pieceVersion', mcpPieceToUpdate.pieceVersion || '');
-        
-        if (mcpPieceToUpdate.actionNames) {
-          setSelectedPieceActions(mcpPieceToUpdate.actionNames);
-        }
-      }
-    }, [dialogOpen, mcpPieceToUpdate, form]);
+  const { metadata, isLoading: isPiecesLoading } = piecesHooks.useAllStepsMetadata({
+    searchQuery: debouncedQuery,
+    type: 'action',
+  });
 
-    const selectedPiece = pieces?.find(
-      (piece) => piece.name === form.watch('pieceName')
-    );
-    
-    // Create a StepMetadata object for the selected piece to use with usePieceActionsOrTriggers
-    const stepMetadata: StepMetadata | undefined = useMemo(() => {
-      if (!selectedPiece) return undefined;
-      
-      return {
-        type: ActionType.PIECE,
-        displayName: selectedPiece.displayName,
-        logoUrl: selectedPiece.logoUrl,
-        description: selectedPiece.description || '',
-        pieceName: selectedPiece.name,
-        pieceVersion: selectedPiece.version,
-        categories: selectedPiece.categories || [],
-        packageType: PackageType.REGISTRY,
-        pieceType: PieceType.OFFICIAL,
-        auth: selectedPiece.auth
-      };
-    }, [selectedPiece]);
-    
-    // Use the hook to fetch piece actions
-    const { data: pieceActions, isLoading: actionsLoading } = piecesHooks.usePieceActionsOrTriggers({
-      stepMetadata
-    });
-    
-    // Update allActionsSelected when selectedPieceActions changes
-    useEffect(() => {
-      if (Array.isArray(pieceActions) && pieceActions.length > 0) {
-        const allSelected = pieceActions.length === selectedPieceActions.length;
-        setAllActionsSelected(allSelected);
-      }
-    }, [selectedPieceActions, pieceActions]);
-    
-    const {
-      data: connections,
-      isLoading: connectionsLoading,
-      refetch: refetchConnections,
-      isRefetching: isRefetchingConnections,
-    } = appConnectionsHooks.useConnections({
-      pieceName: selectedPiece?.name || '',
-      cursor: undefined,
-      limit: 1000,
-    });
+  const pieceMetadata = useMemo(() => {
+    return metadata?.filter((m): m is PieceStepMetadataWithSuggestions => 
+      'suggestedActions' in m && 'suggestedTriggers' in m
+    ) ?? [];
+  }, [metadata]);
 
-    const filteredPieces = pieces?.filter((piece) => {
-      return (
-        piece.name !== '@activepieces/piece-mcp' &&
-        piece.name !== '@activepieces/piece-webhook' &&
-        piece.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
+    mutationFn: async () => {
+      const flow = await flowsApi.create({
+        projectId: authenticationSession.getProjectId()!,
+        displayName: t('Untitled'),
+      });
+      return flow;
+    },
+    onSuccess: async (flow) => {
+      const triggerMetadata = metadata?.find(
+        (m) => (m as PieceStepMetadataWithSuggestions).pieceName === '@activepieces/piece-mcp'
       );
-    });
-
-    const pieceHasAuth = !isNil(selectedPiece?.auth);
-    const connectionOptions = connections?.map((connection) => ({
-      label: connection.displayName,
-      value: connection.id,
-    })) ?? [];
-
-    const connectionOptionsWithNewConnectionOption = [
-      { label: t('+ New Connection'), value: '' },
-      ...connectionOptions,
-    ];
-
-    const addOrUpdateMcpPieceMutation = useMutation({
-      mutationFn: async ({
-        mcpId,
-        pieceName,
-        pieceVersion,
-        connectionId,
-        actionNames,
-      }: {
-        mcpId: string;
-        pieceName: string;
-        pieceVersion: string;
-        connectionId?: string;
-        actionNames: string[];
-      }) => {
-        return mcpApi.updatePiece(
-          mcpId,
-          {
-            pieceName,
-            pieceVersion,
-            connectionId,
-            actionNames,
-          }
-        );
-      },
-      onSuccess: () => {
-        toast({
-          description: mcpPieceToUpdate
-            ? t('Tool updated successfully')
-            : t('Tool added successfully'),
-          duration: 3000,
-        });
-        refetchMcp();
-        setDialogOpen(false);
-        if (onSuccess) {
-          onSuccess();
-        }
-      },
-      onError: (err) => {
-        console.error(err);
-        toast({
-          variant: 'destructive',
-          title: t('Error'),
-          description: mcpPieceToUpdate
-            ? t('Failed to update tool')
-            : t('Failed to add tool'),
-          duration: 5000,
-        });
-      },
-    });
-
-    const onSubmit = () => {
-      if (mcp && selectedPiece) {
-        const values = form.getValues();
-        addOrUpdateMcpPieceMutation.mutate({
-          mcpId: mcp.id,
-          pieceName: values.pieceName,
-          pieceVersion: values.pieceVersion || selectedPiece.version || '',
-          connectionId: values.connectionId ?? undefined,
-          actionNames: selectedPieceActions,
-        });
-      }
-    };
-
-    const clickPiece = (name: string) => {
-      if (!name) {
-        form.setValue('pieceName', '');
-        setSelectedPieceActions([]);
-        return;
-      }
+      const trigger = (triggerMetadata as PieceStepMetadataWithSuggestions)
+        ?.suggestedTriggers?.find((t: any) => t.name === 'mcp_tool');
       
-      form.setValue('pieceName', name);
+      assertNotNullOrUndefined(trigger, 'Trigger not found');
       
-      // Set the piece version
-      const piece = pieces?.find(p => p.name === name);
-      if (piece) {
-        form.setValue('pieceVersion', piece.version);
-      }
-      
-      // If the piece is already added, set the selected actions
-      const existingPiece = mcp?.pieces.find(piece => piece.pieceName === name);
-      if (existingPiece && existingPiece.actionNames && existingPiece.actionNames.length > 0) {
-        setSelectedPieceActions(existingPiece.actionNames);
-      } else {
-        setSelectedPieceActions([]);
-      }
-    };
-
-    const toggleAction = (actionName: string) => {
-      setSelectedPieceActions(prev => {
-        if (prev.includes(actionName)) {
-          return prev.filter(a => a !== actionName);
-        } else {
-          return [...prev, actionName];
-        }
+      const stepData = pieceSelectorUtils.getDefaultStep({
+        stepName: 'trigger',
+        stepMetadata: triggerMetadata as StepMetadata,
+        actionOrTrigger: trigger,
       });
-    };
 
-    const toggleSelectAll = (checked: boolean) => {
-      setAllActionsSelected(checked);
-      if (checked && Array.isArray(pieceActions)) {
-        const allActionNames = pieceActions.map((action) => action.name);
-        setSelectedPieceActions(allActionNames);
-      } else {
-        setSelectedPieceActions([]);
-      }
-    };
-
-    // Reset state when dialog closes
-    const handleDialogOpenChange = (open: boolean) => {
-      setDialogOpen(open);
-      if (!open) {
-        // Reset everything when closing
-        resetForm();
-      } else {
-        // If we're opening without an editing piece, make sure the form is reset
-        if (!mcpPieceToUpdate) {
-          resetForm();
-        }
-      }
-    };
-
-    // Extract the reset logic to avoid repetition
-    const resetForm = () => {
-      form.reset({
-        pieceName: '',
-        connectionId: null,
-        pieceVersion: '',
+      await applyOperation(flow, {
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: stepData as Trigger,
       });
-      setSelectedPieceActions([]);
-      setSearchTerm('');
-      setActiveTab('pieces');
-      setAllActionsSelected(false);
-    };
 
-    const renderPiecesTab = () => (
-      <div className="space-y-4">
-        {!selectedPiece ? (
+      toast({
+        description: t('Flow created successfully'),
+        duration: 3000,
+      });
+      navigate(`/flows/${flow.id}`);
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to create flow'),
+        duration: 5000,
+      });
+    },
+  });
+
+  const applyOperation = async (
+    flow: PopulatedFlow,
+    operation: FlowOperationRequest,
+  ) => {
+    try {
+      const updatedFlowVersion = await flowsApi.update(flow.id, operation, true);
+      return {
+        flowVersion: {
+          ...flow.version,
+          id: updatedFlowVersion.version.id,
+          state: updatedFlowVersion.version.state,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handlePieceSelect = (piece: any) => {
+    setSelectedPiece(piece);
+    setSelectedActions([]);
+    setSelectedActionName(null);
+  };
+
+  const handleActionSelect = (action: string) => {
+    setSelectedActions(prev => {
+      const newSelected = prev.includes(action)
+        ? prev.filter(a => a !== action)
+        : [...prev, action];
+      setSelectedActionName(action);
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && selectedPiece) {
+      setSelectedActions(selectedPiece.suggestedActions?.map(a => a.name) ?? []);
+    } else {
+      setSelectedActions([]);
+    }
+  };
+
+  const handleCreateFlow = () => {
+    createFlow();
+  };
+
+  const handleSavePiece = async () => {
+    if (!selectedPiece || selectedActions.length === 0) return;
+
+    try {
+      await mcpApi.upsertPiece(mcpId, {
+        pieceName: selectedPiece.pieceName,
+        actionNames: selectedActions,
+        pieceVersion: selectedPiece.pieceVersion,
+      });
+
+      toast({
+        description: t('Integration added successfully'),
+        duration: 3000,
+      });
+
+      onSuccess?.();
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to add integration'),
+        duration: 5000,
+      });
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col">
+        <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
+          <DialogTitle className="text-2xl font-bold">
+            {selectedPiece ? (
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      setSelectedPiece(null)
+                      setSearchQuery('')
+                    }}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Back')}</TooltipContent>
+                </Tooltip>
+                {selectedPiece.displayName}
+              </div>
+            ) : (
+              t('Add Tool')
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {selectedPiece ? null : t('Select actions to add to your mcp tool')}
+          </DialogDescription>
+        </DialogHeader>
+        {selectedPiece ? (
+          <McpPieceActionsDialog
+            piece={selectedPiece}
+            selectedActions={selectedActions}
+            onSelectAction={handleActionSelect}
+            onSelectAll={handleSelectAll}
+            onDone={() => setSelectedPiece(null)}
+          />
+        ) : (
           <>
             <div className="mb-4">
               <Input
                 placeholder={t('Search')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <ScrollArea className="flex-grow overflow-y-auto">
-              <div className="grid grid-cols-4 gap-4">
-                {(piecesLoading ||
-                  (filteredPieces && filteredPieces.length === 0)) && (
-                  <div className="text-center">{t('No pieces found')}</div>
-                )}
-                {!piecesLoading &&
-                  filteredPieces &&
-                  filteredPieces.map((piece, index) => (
+            {isPiecesLoading && (
+              <div className="flex items-center justify-center w-full">
+                <LoadingSpinner />
+              </div>
+            )}
+            {(!isPiecesLoading && pieceMetadata && pieceMetadata.length === 0) && (
+              <div className="text-center">{t('No pieces found')}</div>
+            )}
+            <ScrollArea className="flex-grow overflow-y-auto w-full ">
+              <div className="grid grid-cols-2 gap-1">
+                {!isPiecesLoading &&
+                  pieceMetadata &&
+                  pieceMetadata.map((piece, index) => (
                     <div
                       key={index}
-                      onClick={() => clickPiece(piece.name)}
-                      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg"
+                      onClick={() => handlePieceSelect(piece)}
+                      className="flex items-center h-[30px] w-full justify-between gap-2 p-4  hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm group"
                     >
-                      <img
-                        className="w-[40px] h-[40px]"
-                        src={piece.logoUrl}
-                        alt={piece.displayName}
-                      />
-                      <div className="mt-2 text-center text-md">
-                        {piece.displayName}
+                      <div className="flex items-center gap-2">
+                        <img
+                          className="w-[15px] h-[15px]"
+                          src={piece.logoUrl}
+                        />
+                        <div className="text-center text-sm">
+                          {piece.displayName}
+                        </div>
+                        {piece.description && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[300px]">{piece.description}</TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                     </div>
                   ))}
               </div>
             </ScrollArea>
+
           </>
-        ) : (
-          <div className="space-y-5">
-            <div className="flex items-center gap-2 p-2">
-              {selectedPiece.logoUrl && (
-                <img
-                  src={selectedPiece.logoUrl}
-                  alt={selectedPiece.displayName}
-                  className="w-6 h-6"
-                />
-              )}
-              <div>
-                <h3 className="text-base font-medium">{selectedPiece.displayName}</h3>
-                {selectedPiece.description && (
-                  <p className="text-xs text-muted-foreground">{selectedPiece.description}</p>
-                )}
-              </div>
-            </div>
-
-        {/* Connection selector if needed */}
-        {pieceHasAuth && (
-          <div className="space-y-1.5">
-            <Label className="text-sm">{t('Connection')}</Label>
-            <SearchableSelect
-              value={form.watch('connectionId') ?? undefined}
-              onChange={(value) => {
-                if (value) {
-                  form.setValue('connectionId', value);
-                } else {
-                  setConnectionDialogOpen(true);
-                }
-              }}
-              options={connectionOptionsWithNewConnectionOption}
-              placeholder={t('Select a connection')}
-              loading={connectionsLoading || isRefetchingConnections}
-            />
-          </div>
         )}
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-2">
-                <Label className="text-sm font-medium">{t('Actions')}</Label>
-                <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    id="select-all"
-                    checked={allActionsSelected}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                  <label
-                    htmlFor="select-all"
-                    className="text-xs font-medium cursor-pointer"
-                  >
-                    {t('Select All')}
-                  </label>
-                </div>
-              </div>
-              
-              <ScrollArea className="h-[350px] border rounded-md">
-                {actionsLoading && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {t('Loading actions...')}
-                  </div>
-                )}
-                {!actionsLoading && (!Array.isArray(pieceActions) || pieceActions.length === 0) ? (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {t('No actions available for this piece')}
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    {pieceActions?.map((action, index) => (
-                      <div 
-                        key={action.name}
-                        className="hover:bg-accent/5 cursor-pointer border-b border-border/30 last:border-b-0"
-                        onClick={() => toggleAction(action.name)}
-                      >
-                        <div className="flex items-start py-2.5">
-                          <div className="mx-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
-                            <Checkbox
-                              id={action.name}
-                              checked={selectedPieceActions.includes(action.name)}
-                              onCheckedChange={() => toggleAction(action.name)}
-                            />
-                          </div>
-                          <img
-                            src={selectedPiece.logoUrl}
-                            alt={selectedPiece.displayName}
-                            className="w-4 h-4 mt-0.5 mr-2"
-                          />
-                          <div className="flex-1 pr-2">
-                            <div className="text-sm font-medium">{action.displayName}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {action.description}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-
-    const renderFlowsTab = () => (
-      <div className="p-4 text-center text-muted-foreground">
-        {t('Flow configuration will be implemented here')}
-      </div>
-    );
-
-    return (
-      <>
-        {selectedPiece && pieceHasAuth && (
-          <CreateOrEditConnectionDialog
-            piece={selectedPiece}
-            open={connectionDialogOpen}
-            setOpen={(open, connection) => {
-              setConnectionDialogOpen(open);
-              if (connection) {
-                form.setValue('connectionId', connection.id);
-                refetchConnections();
-              }
-            }}
-            reconnectConnection={null}
-            isGlobalConnection={false}
-          />
-        )}
-        <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger asChild>{children}</DialogTrigger>
-          <DialogContent className="min-w-[700px] max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle>
-                {mcpPieceToUpdate ? t('Edit Tool') : t('Add Tool')}
-              </DialogTitle>
-            </DialogHeader>
-
-            <Tabs defaultValue="pieces" value={activeTab} onValueChange={setActiveTab} className="mt-4">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="pieces">{t('Pieces')}</TabsTrigger>
-                <TabsTrigger value="flows">{t('Flows')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="pieces" className="mt-0">
-                {renderPiecesTab()}
-              </TabsContent>
-              <TabsContent value="flows" className="mt-0">
-                {renderFlowsTab()}
-              </TabsContent>
-            </Tabs>
-
-            {selectedPiece && (
-              <DialogFooter className="mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    form.setValue('pieceName', '');
-                    setSelectedPieceActions([]);
-                  }}
-                >
-                  {t('Back')}
-                </Button>
-                <Button
-                  onClick={onSubmit}
-                  disabled={
-                    selectedPieceActions.length === 0 ||
-                    (pieceHasAuth && !form.watch('connectionId'))
-                  }
-                  loading={addOrUpdateMcpPieceMutation.isPending}
-                >
-                  {t('Confirm')}
-                </Button>
-              </DialogFooter>
-            )}
-
-            {!selectedPiece && (
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="ghost">
-                    {t('Close')}
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            )}
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-);
-
-McpToolDialog.displayName = 'McpToolDialog';
-export default McpToolDialog; 
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="ghost" onClick={() => onClose()}>
+              {t('Close')}
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSavePiece} disabled={selectedActions.length === 0}>
+            {t('Add Tool')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+} 
