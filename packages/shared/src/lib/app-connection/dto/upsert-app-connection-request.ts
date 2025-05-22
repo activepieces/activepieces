@@ -11,6 +11,9 @@ const commonAuthProps = {
     metadata: Type.Optional(Metadata),
 }
 
+
+export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code'
+
 export enum OAuth2GrantType {
     AUTHORIZATION_CODE = 'authorization_code',
     CLIENT_CREDENTIALS = 'client_credentials',
