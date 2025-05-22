@@ -304,6 +304,7 @@ const selectFormComponentForProperty = ({
           value={field.value}
           onChange={field.onChange}
           disabled={disabled}
+          property={property}
         ></CustomProperty>
       );
     case PropertyType.COLOR:

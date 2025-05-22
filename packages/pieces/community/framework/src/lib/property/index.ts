@@ -37,7 +37,8 @@ export { CustomAuthProperty } from './authentication/custom-auth-prop';
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
-
+export {CustomProperty} from './input/custom-property'
+export type {CustomPropertyCodeFunctionParams} from './input/custom-property'
 export const PiecePropertyMap = Type.Record(Type.String(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;
