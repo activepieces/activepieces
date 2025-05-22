@@ -19,6 +19,12 @@ export const PlatformBillingResponse = Type.Object({
   subscription: PlatformBilling,
   flowRunCount: Type.Number(),
   aiCredits: Type.Number(),
+  users: Type.Number(),
+  activeFlows: Type.Number(),
+  projects: Type.Number(),
+  privatePieces: Type.Number(),
+  tables: Type.Number(),
+  todos: Type.Number(),
 })
 
 export type PlatformBillingResponse = Static<typeof PlatformBillingResponse>

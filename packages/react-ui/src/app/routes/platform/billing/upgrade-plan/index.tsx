@@ -113,7 +113,7 @@ const UpgradePage: FC = () => {
           selected={selected}
           setSelected={setSelected}
         />
-        <div className="flex-1 h-fit">
+        <div className="flex-1 h-fit sticky top-6">
           <AddonsCustomizer selectedPlan={selected} isMonthly={isMonthly} />
         </div>
       </section>

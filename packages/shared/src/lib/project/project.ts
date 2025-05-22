@@ -29,6 +29,12 @@ export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     aiTokens: Type.Number(),
     nextLimitResetDate: Type.String(),
+    users: Type.Optional(Type.Number()),
+    activeFlows: Type.Optional(Type.Number()),
+    projects: Type.Optional(Type.Number()),
+    privatePieces: Type.Optional(Type.Number()),
+    tables: Type.Optional(Type.Number()),
+    todos: Type.Optional(Type.Number()),
 })
 
 export const SwitchProjectResponse = Type.Object({

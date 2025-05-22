@@ -139,27 +139,42 @@ export default function Billing() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        <UsageCard icon={Users} title={t('Member seats')} used={3} total={10} />
+        <UsageCard
+          icon={Users}
+          title={t('Member seats')}
+          used={platformSubscription?.users || 0}
+          total={platformSubscription?.users || 0}
+        />
         <UsageCard
           icon={LayoutGrid}
           title={t('Projects')}
-          used={3}
-          total={10}
+          used={platformSubscription?.projects || 0}
+          total={platformSubscription?.projects || 0}
         />
         <UsageCard
           icon={Package}
           title={t('Private pieces')}
-          used={3}
-          total={10}
+          used={platformSubscription?.privatePieces || 0}
+          total={platformSubscription?.privatePieces || 0}
         />
 
-        <UsageCard icon={Database} title={t('Tables')} used={3} total={10} />
-        <UsageCard icon={Server} title={t('MCP servers')} used={3} total={10} />
+        <UsageCard
+          icon={Database}
+          title={t('Tables')}
+          used={platformSubscription?.tables || 0}
+          total={platformSubscription?.tables || 0}
+        />
+        <UsageCard
+          icon={Server}
+          title={t('Active flows')}
+          used={platformSubscription?.activeFlows || 0}
+          total={platformSubscription?.activeFlows || 0}
+        />
         <UsageCard
           icon={ClipboardCheck}
-          title={t('Tasks')}
-          used={3}
-          total={10}
+          title={t('Todos')}
+          used={platformSubscription?.todos || 0}
+          total={platformSubscription?.todos || 0}
         />
       </div>
 

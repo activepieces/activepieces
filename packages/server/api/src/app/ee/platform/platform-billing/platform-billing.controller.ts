@@ -19,12 +19,19 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         },
     }, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const { tasks, aiTokens } = await usageService(request.log).getUsageForBillingPeriod(platform.id, BillingEntityType.PLATFORM)
+        const { tasks, aiTokens, users, activeFlows, projects, privatePieces, tables, todos } = await usageService(request.log).getUsageForBillingPeriod(platform.id, BillingEntityType.PLATFORM)
+
         return {
             subscription: await platformBillingService(request.log).getOrCreateForPlatform(platform.id),
             nextBillingDate: usageService(request.log).getCurrentBillingPeriodEnd(),
             flowRunCount: tasks,
             aiTokens,
+            users,
+            activeFlows,
+            projects,
+            privatePieces,
+            tables,
+            todos,
         }
     })
 
@@ -44,7 +51,9 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         async (request, reply) => {
             const stripe = stripeHelper(request.log).getStripe()
             assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
             const projectBilling = await platformBillingService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+
             if (projectBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
                 await reply.status(StatusCodes.BAD_REQUEST).send({
                     message: 'Already subscribed',
