@@ -244,10 +244,10 @@ export const Property = {
        * 
        * You can return a cleanup function that will be called when the component is unmounted in the frontend.
        * */
-      code: string | ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
+      code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
     }
   ): R extends true ? CustomProperty<true> : CustomProperty<false> {
-    const code = typeof request.code === 'string' ? request.code : request.code.toString();
+    const code = request.code.toString();
     return {
       ...request,
       code,
