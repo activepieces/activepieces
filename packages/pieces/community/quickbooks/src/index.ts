@@ -42,14 +42,9 @@ export const quickbooksAuth = PieceAuth.OAuth2({
   tokenUrl: QUICKBOOKS_TOKEN_URL, // Using the unified token URL
   required: true,
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-  authorizationMethod: OAuth2AuthorizationMethod.BODY,
+  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   scope: [
-    'com.intuit.quickbooks.accounting',
-    'openid',
-    'profile',
-    'email',
-    'phone',
-    'address'
+    'com.intuit.quickbooks.accounting'
   ]
 });
 
