@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/scenario/package.json",
         "main": "packages/pieces/community/scenario/src/index.ts",
         "assets": [
-          "packages/pieces/community/scenario/*.md"
+          "packages/pieces/community/scenario/*.md",
+          {
+            "input": "packages/pieces/community/scenario/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

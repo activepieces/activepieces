@@ -236,10 +236,6 @@ const ReplaceConnectionsDialog = ({
               <>
                 {t('This action requires ')}
                 <span className="font-bold text-black">
-                  {t('republishing')}
-                </span>
-                {t(' affected flows and ')}
-                <span className="font-bold text-black">
                   {t('reconnecting')}
                 </span>
                 {t(' any associated MCP pieces.')}

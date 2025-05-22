@@ -2,6 +2,7 @@ import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, reject
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
+import { engineRunner } from './engine'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
@@ -42,6 +43,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async close(): Promise<void> {
         closed = true
         clearTimeout(heartbeatInterval)
+        if (workerMachine.hasSettings()) {
+            await engineRunner(log).shutdownAllWorkers()
+        }
     },
 })
 
@@ -74,14 +78,15 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
                 job: {
                     queueName,
                     jobId: job?.id,
+                    attempsStarted: job?.attempsStarted,
                 },
             }, 'Job polled')
             if (isNil(job)) {
                 continue
             }
-            const { data, engineToken: jobEngineToken } = job
+            const { data, engineToken: jobEngineToken, attempsStarted } = job
             engineToken = jobEngineToken
-            await consumeJob(queueName, data, engineToken, log)
+            await consumeJob(queueName, data, attempsStarted, engineToken, log)
             await markJobAsCompleted(queueName, engineToken, log)
             log.debug({
                 job: {
@@ -106,13 +111,13 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     switch (queueName) {
         case QueueName.USERS_INTERACTION:
             await userInteractionJobExecutor(log).execute(jobData as UserInteractionJobData, engineToken, workerToken)
             break
         case QueueName.ONE_TIME:
-            await flowJobExecutor(log).executeFlow(jobData as OneTimeJobData, engineToken)
+            await flowJobExecutor(log).executeFlow(jobData as OneTimeJobData, attempsStarted, engineToken)
             break
         case QueueName.SCHEDULED:
             await repeatingJobExecutor(log).executeRepeatingJob({

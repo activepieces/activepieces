@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/linka/package.json",
         "main": "packages/pieces/community/linka/src/index.ts",
         "assets": [
-          "packages/pieces/community/linka/*.md"
+          "packages/pieces/community/linka/*.md",
+          {
+            "input": "packages/pieces/community/linka/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -91,8 +91,8 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.ssoEnabled) {
             return
         }
         const emailDomain = email.split('@')[1]
@@ -118,8 +118,8 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.ssoEnabled) {
             return
         }
         if (provider !== UserIdentityProvider.EMAIL) {
@@ -159,12 +159,12 @@ export const authenticationUtils = {
     },
 
     async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
         if (environment !== ApEnvironment.PRODUCTION) {
             return
         }
-        if (platform.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
         try {

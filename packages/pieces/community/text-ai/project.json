@@ -15,13 +15,22 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/text-ai",
         "tsConfig": "packages/pieces/community/text-ai/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/text-ai/package.json",
         "main": "packages/pieces/community/text-ai/src/index.ts",
-        "assets": ["packages/pieces/community/text-ai/*.md"],
+        "assets": [
+          "packages/pieces/community/text-ai/*.md",
+          {
+            "input": "packages/pieces/community/text-ai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -33,7 +42,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   }
 }

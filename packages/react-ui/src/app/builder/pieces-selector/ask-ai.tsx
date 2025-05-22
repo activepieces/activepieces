@@ -29,7 +29,6 @@ const AskAiButton = ({
       variant={varitant}
       size="sm"
       onClick={() => {
-        console.log(operation);
         setAskAiButtonProps(operation);
         onClick();
       }}

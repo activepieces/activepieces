@@ -16,10 +16,10 @@ export default function AnalyticsPage() {
     queryKey: ['analytics'],
     queryFn: analyticsApi.get,
     staleTime: 60 * 1000,
-    enabled: platform.analyticsEnabled,
+    enabled: platform.plan.analyticsEnabled,
   });
 
-  const isEnabled = platform.analyticsEnabled;
+  const isEnabled = platform.plan.analyticsEnabled;
   return (
     <LockedFeatureGuard
       featureKey="ANALYTICS"
