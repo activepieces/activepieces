@@ -24,6 +24,9 @@ export type CustomPropertyCodeFunctionParams =
   { 
     containerId:string,
     value: unknown,
-    onChange: (value: unknown) => void, isEmbeded: boolean, projectId:string,
-    property: CustomProperty<boolean>
+    onChange: (value: unknown) => void,
+    isEmbeded: boolean,
+    projectId:string,
+    property: CustomProperty<boolean>,
+    disabled: boolean
   }
