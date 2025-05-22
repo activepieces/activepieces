@@ -22,12 +22,17 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { mcpPieceService } from '../mcp-tools/mcp-piece-service'
 import { mcpFlowService } from '../mcp-tools/mcp-flow-service'
 import { McpEntity } from './mcp-entity'
-const repo = repoFactory(McpEntity)
+import { McpPieceToolHistoryEntity } from './mcp-piece-tool-history-entity'
+import { McpFlowToolHistoryEntity } from './mcp-flow-tool-history-entity'
+
+const mcpRepo = repoFactory(McpEntity)
+const mcpPieceToolHistoryRepo = repoFactory(McpPieceToolHistoryEntity)
+const mcpFlowToolHistoryRepo = repoFactory(McpFlowToolHistoryEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
     async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
         await this.validateCount({ projectId })
-        const mcp = await repo().save({
+        const mcp = await mcpRepo().save({
             id: apId(),
             projectId,
             name,
@@ -56,7 +61,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             queryWhere.name = ILike(`%${name}%`)
         }
 
-        const queryBuilder = repo().createQueryBuilder('mcp').where(queryWhere)
+        const queryBuilder = mcpRepo().createQueryBuilder('mcp').where(queryWhere)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const populatedMcpPromises = data.map(async (mcp) => {
@@ -71,7 +76,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithTools> {
-        const mcp = await repo().findOneBy({ id: mcpId })
+        const mcp = await mcpRepo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
             throw new ActivepiecesError({
@@ -92,7 +97,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async getByToken({ token }: { token: string }): Promise<McpWithTools> {
-        const mcp = await repo().findOne({ where: { token } })
+        const mcp = await mcpRepo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -103,7 +108,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async update({ mcpId, token, name }: UpdateParams): Promise<McpWithTools> {
-        await repo().update(mcpId, {
+        await mcpRepo().update(mcpId, {
             ...spreadIfDefined('token', token),
             ...spreadIfDefined('name', name),
             updated: dayjs().toISOString(),
@@ -112,8 +117,40 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId })
     },
 
+    async delete({ mcpId, projectId }: { mcpId: ApId, projectId: ApId }): Promise<void> {
+        const deleteResult = await mcpRepo().delete({ 
+            id: mcpId,
+            projectId,
+        })
+
+        if (deleteResult.affected === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
+            })
+        }
+    },
+
+    async count({ projectId }: CountParams): Promise<number> {
+        return mcpRepo().count({
+            where: { projectId },
+        })
+    },
+
+    async validateCount(params: CountParams): Promise<void> {
+        const countRes = await this.count(params)
+        if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { 
+                    message: `Max mcps per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)}`,
+                },
+            })
+        }
+    },
+
     async trackToolCall({ mcpId, toolName }: { mcpId: ApId, toolName: string }): Promise<void> {
-        const mcp = await repo().findOneBy({ id: mcpId })
+        const mcp = await mcpRepo().findOneBy({ id: mcpId })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -129,36 +166,34 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         }), _log)
     },
 
-    async delete({ mcpId, projectId }: { mcpId: ApId, projectId: ApId }): Promise<void> {
-        const deleteResult = await repo().delete({ 
-            id: mcpId,
-            projectId,
-        })
-
-        if (deleteResult.affected === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: mcpId, entityType: 'MCP' },
-            })
-        }
-    },
-
-    async count({ projectId }: CountParams): Promise<number> {
-        return repo().count({
-            where: { projectId },
+    async addPieceToolHistory({ mcpId, pieceName, pieceVersion, toolName, input, output, success }: AddPieceToolHistoryParams): Promise<void> {
+        await mcpPieceToolHistoryRepo().save({
+            id: apId(),
+            mcpId,
+            pieceName,
+            pieceVersion,
+            toolName,
+            input,
+            output,
+            success,
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
         })
     },
 
-    async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
-        if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { 
-                    message: `Max mcps per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_MCPS_PER_PROJECT)}`,
-                },
-            })
-        }
+    async addFlowToolHistory({ mcpId, flowId, flowVersionId, toolName, input, output, success }: AddFlowToolHistoryParams): Promise<void> {
+        await mcpFlowToolHistoryRepo().save({
+            id: apId(),
+            mcpId,
+            flowId,
+            flowVersionId,
+            toolName,
+            input,
+            output,
+            success,
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
+        })
     },
 })
 
@@ -183,3 +218,24 @@ type UpdateParams = {
 type CountParams = {
     projectId: ApId
 }
+
+type AddPieceToolHistoryParams = {
+    mcpId: ApId
+    pieceName: string
+    pieceVersion: string
+    toolName: string
+    input: Record<string, unknown>
+    output: Record<string, unknown>
+    success: boolean
+}
+
+type AddFlowToolHistoryParams = {
+    mcpId: ApId
+    flowId: ApId
+    flowVersionId?: ApId
+    toolName: string
+    input: Record<string, unknown>
+    output: Record<string, unknown>
+    success: boolean
+}
+
