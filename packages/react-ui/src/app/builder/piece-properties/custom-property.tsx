@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -13,6 +13,14 @@ type CustomPropertyParams = {
   property: CustomPropertyType<boolean>;
 };
 
+const parseFunctionString = (code: string) => {
+  return new Function(
+    'params',
+    `
+    return (${code})(params);
+  `,
+  );
+}
 const CustomProperty = ({
   value,
   onChange,
@@ -22,22 +30,11 @@ const CustomProperty = ({
 }: CustomPropertyParams) => {
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
-  const alreadyRendered = useRef(false);
   const id = useId();
   const containerId = CUSTOM_PROPERTY_CONTAINER_ID + '-' + id;
   useEffect(() => {
-    if (alreadyRendered.current) return;
-    alreadyRendered.current = true;
     try {
-      // Create function that takes a params object
-      const fn = new Function(
-        'params',
-        `
-        return (${code})(params);
-      `,
-      );
-      // Execute the function with args as the params object
-      const result = fn({
+      const params = {
         containerId,
         value,
         onChange,
@@ -45,39 +42,18 @@ const CustomProperty = ({
         projectId: project.id,
         disabled,
         property
-      });
-
-      // If the result is a Promise, handle it
-      if (result instanceof Promise) {
-        result.then(onChange).catch(console.error);
-      } else {
-        onChange(result);
+      }
+      // Create function that takes a params object
+      const fn = parseFunctionString(code);
+      // Execute the function with args as the params object
+      const cleanUpFunction = fn(params);
+      if(cleanUpFunction && typeof cleanUpFunction === 'function'){
+        return cleanUpFunction;
       }
     } catch (error) {
       console.error('Error executing custom code:', error);
     }
-
-    return () => { 
-      if(property.onUnmount){
-      const unmountFn = new Function(
-        'params',
-        `
-        return (${property.onUnmount})(params);
-      `,
-      );
-      unmountFn({
-        containerId,
-        value,
-        onChange,
-        isEmbedded: embedState.isEmbedded,
-        projectId: project.id,
-        disabled,
-        property
-        });
-      }
-    };
   }, []);
-
   return <div id={containerId}></div>;
 };
 

@@ -241,17 +241,16 @@ export const Property = {
        * This is designed to be self-contained and operates independently of any
        * external libraries or imported dependencies. All necessary logic and
        * functionality are implemented within this function itself.
+       * 
+       * You can return a cleanup function that will be called when the component is unmounted in the frontend.
        * */
-      code: string | ((ctx: CustomPropertyCodeFunctionParams) => void)
-      onUnmount?: ((ctx: CustomPropertyCodeFunctionParams) => void)
+      code: string | ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
     }
   ): R extends true ? CustomProperty<true> : CustomProperty<false> {
     const code = typeof request.code === 'string' ? request.code : request.code.toString();
-    const onUnmount = request.onUnmount?.toString();
     return {
       ...request,
       code,
-      onUnmount,
       valueSchema: undefined,
       type: PropertyType.CUSTOM,
     } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;

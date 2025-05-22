@@ -32,14 +32,33 @@ export const insertRowAction = createAction({
     }),
     values: rowValuesProp(),
     test: Property.Custom({
-      code:(({property})=>{
-        console.log(`testing from piece itself ${property.displayName}`);
+      code:(({value,onChange,containerId})=>{
+        const container = document.getElementById(containerId);
+        const input = document.createElement('input');
+        input.classList.add(...['border','border-solid', 'border-border', 'rounded-md','bg-red-500']) 
+        input.type = 'text';
+        input.value = `${value}`;
+        input.oninput = (e: any) => {
+          console.log("input changed", e.target.value);
+          onChange(e.target.value);
+        }
+       container?.appendChild(input);
+       const windowCallback = (e:MessageEvent<{type:string,value:string,propertyName:string}>) => {
+        if(e.data.type === 'updateInput' && e.data.propertyName === 'test'){
+          console.log(e)
+          input.value= e.data.value;
+          onChange(e.data.value);
+          console.log('input changed', e.data.value);
+        }
+       }
+       window.addEventListener('message', windowCallback);
+        return ()=>{
+          window.removeEventListener('message', windowCallback);
+          container?.removeChild(input);
+        }
       }),
       displayName: 'Test',
-      required: true,
-      onUnmount: (({property})=>{
-        console.log(`onUnmount + ${property.displayName}`);
-      }),
+      required: true
     })
   },
   async run({ propsValue, auth }) {
