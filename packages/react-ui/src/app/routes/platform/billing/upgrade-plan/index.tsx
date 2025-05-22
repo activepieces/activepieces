@@ -1,14 +1,16 @@
 import { t } from 'i18next';
-import { CheckIcon, XIcon } from 'lucide-react';
+import { CheckIcon, ExternalLinkIcon, XIcon } from 'lucide-react';
 import { FC, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { TableTitle } from '@/components/ui/table-title';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { planData } from '../data';
 
-/* ---------- tiny helper ---------- */
+import AddonsCustomizer from './customize-addons';
+
 const FeatureValue: FC<{ v: boolean | string }> = ({ v }) =>
   typeof v === 'boolean' ? (
     v ? (
@@ -20,7 +22,6 @@ const FeatureValue: FC<{ v: boolean | string }> = ({ v }) =>
     <span className="text-sm">{v}</span>
   );
 
-/* ---------- Plan card ---------- */
 const PlanCard: FC<{
   plan: (typeof planData.plans)[0];
   isMonthly: boolean;
@@ -31,7 +32,6 @@ const PlanCard: FC<{
   const isEnterprise = plan.id === 'enterprise';
   const openNewWindow = useNewWindow();
 
-  // Border styling for selected state
   const border = isSelected ? 'ring-2 ring-primary' : 'ring-0';
 
   return (
@@ -43,7 +43,6 @@ const PlanCard: FC<{
         isEnterprise && 'cursor-default',
       )}
     >
-      {/* Header */}
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className="text-2xl font-semibold">{plan.name}</h3>
@@ -51,7 +50,6 @@ const PlanCard: FC<{
         </div>
       </div>
 
-      {/* Price */}
       <div className="mt-2 flex items-baseline gap-1">
         {plan.isCustom ? (
           <span className="text-xl font-bold">{plan.salesPrice}</span>
@@ -62,10 +60,9 @@ const PlanCard: FC<{
         )}
       </div>
 
-      {/* CTA */}
       {isEnterprise && (
         <Button
-          variant="default"
+          variant="secondary"
           size="sm"
           className="mt-4"
           onClick={() => openNewWindow('https://activepieces.com/sales')}
@@ -74,7 +71,6 @@ const PlanCard: FC<{
         </Button>
       )}
 
-      {/* Features - not scrollable */}
       <div className="mt-5">
         <p className="text-sm font-bold mb-3">{t('Includes')}</p>
         <ul className="space-y-4">
@@ -96,16 +92,47 @@ const PlanCard: FC<{
   );
 };
 
-/* ---------- Page ---------- */
-const PricingPlans: FC = () => {
+const UpgradePage: FC = () => {
   const [isMonthly, setIsMonthly] = useState(true);
   const [selected, setSelected] = useState('free');
 
   return (
-    <section className="space-y-6 w-1/2">
-      {/* Top bar */}
+    <article className="flex flex-col w-full gap-8">
+      <div>
+        <TableTitle>Upgrade Plan</TableTitle>
+        <p className="text-sm text-muted-foreground">
+          Choose the perfect plan for your needs and customize it with add-ons
+          to scale your automation journey
+        </p>
+      </div>
+
+      <section className="flex gap-8 justify-between w-full">
+        <PricingPlans
+          isMonthly={isMonthly}
+          setIsMonthly={setIsMonthly}
+          selected={selected}
+          setSelected={setSelected}
+        />
+        <div className="flex-1 h-fit">
+          <AddonsCustomizer selectedPlan={selected} isMonthly={isMonthly} />
+        </div>
+      </section>
+    </article>
+  );
+};
+
+export default UpgradePage;
+
+const PricingPlans: FC<{
+  isMonthly: boolean;
+  setIsMonthly: (isMonthly: boolean) => void;
+  selected: string;
+  setSelected: (selected: string) => void;
+}> = ({ isMonthly, setIsMonthly, selected, setSelected }) => {
+  return (
+    <div className="space-y-6 w-[55%]">
       <header className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('Choose your plan')}</h2>
+        <h2 className="text-2xl font-bold">{t('Choose Your Plan')}</h2>
         <div>
           <Button
             variant="link"
@@ -116,15 +143,16 @@ const PricingPlans: FC = () => {
             }
           >
             {t('See all features')}
+            <ExternalLinkIcon className="w-4 h-4 ml-1" />
           </Button>
           <div className="inline-flex rounded-md space-x-1 border p-1">
             {planData.tabs.map((tab) => (
               <Button
                 key={tab}
                 variant="ghost"
-                size="sm"
+                size="xs"
                 className={cn(
-                  'px-3 rounded-sm',
+                  'text-sm font-medium',
                   (tab === t('Monthly') && isMonthly) ||
                     (tab === t('Annual') && !isMonthly)
                     ? 'bg-secondary'
@@ -144,8 +172,7 @@ const PricingPlans: FC = () => {
         </div>
       </header>
 
-      {/* Cards */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {planData.plans.map((plan) => (
           <PlanCard
             key={plan.id}
@@ -156,8 +183,6 @@ const PricingPlans: FC = () => {
           />
         ))}
       </div>
-    </section>
+    </div>
   );
 };
-
-export default PricingPlans;
