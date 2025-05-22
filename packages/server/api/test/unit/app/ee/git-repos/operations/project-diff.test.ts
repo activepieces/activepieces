@@ -1,14 +1,13 @@
-
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/project-release/project-state/project-diff.service'
+import { projectDiffService } from '../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
 
 describe('Project Diff Service', () => {
 
     it('should return the flow to delete', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowTwo],
             },
@@ -16,14 +15,14 @@ describe('Project Diff Service', () => {
                 flows: [],
             },
         })
-        expect(diff.length).toBe(1)
-        expect(diff[0].type).toBe('DELETE_FLOW')
-        expect(diff[0].flowState).toBe(flowTwo)
+        expect(diff.operations.length).toBe(1)
+        expect(diff.operations[0].type).toBe('DELETE_FLOW')
+        expect(diff.operations[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [],
             },
@@ -31,15 +30,15 @@ describe('Project Diff Service', () => {
                 flows: [flowTwo],
             },
         })
-        expect(diff.length).toBe(1)
-        expect(diff[0].type).toBe('CREATE_FLOW')
-        expect(diff[0].flowState).toBe(flowTwo)
+        expect(diff.operations.length).toBe(1)
+        expect(diff.operations[0].type).toBe('CREATE_FLOW')
+        expect(diff.operations[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create If the mapping is invalid', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger(nanoid())
         const flowTwo = flowGenerator.simpleActionAndTrigger()
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowTwo],
             },
@@ -47,7 +46,7 @@ describe('Project Diff Service', () => {
                 flows: [flowOne],
             },
         })
-        expect(diff).toEqual([
+        expect(diff.operations).toEqual([
             {
                 type: 'DELETE_FLOW',
                 flowState: flowTwo,
@@ -63,7 +62,7 @@ describe('Project Diff Service', () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const flowOne = flowGenerator.simpleActionAndTrigger(flowTwo.id)
 
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowOne],
             },
@@ -71,8 +70,8 @@ describe('Project Diff Service', () => {
                 flows: [flowTwo],
             },
         })
-        expect(diff.length).toBe(1)
-        expect(diff[0]).toEqual({
+        expect(diff.operations.length).toBe(1)
+        expect(diff.operations[0]).toEqual({
             type: 'UPDATE_FLOW',
             flowState: flowOne,
             newFlowState: flowTwo,
@@ -86,7 +85,7 @@ describe('Project Diff Service', () => {
         flowOneDist.version.trigger.settings.inputUiInfo = faker.airline.airplane()
         flowOne.externalId = flowOneDist.id
 
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowOne],
             },
@@ -94,7 +93,7 @@ describe('Project Diff Service', () => {
                 flows: [flowOneDist],
             },
         })
-        expect(diff).toEqual([])
+        expect(diff.operations).toEqual([])
     })
 
     it('should return the flow to create, update and delete', async () => {
@@ -103,7 +102,7 @@ describe('Project Diff Service', () => {
         const flowThree = flowGenerator.simpleActionAndTrigger()
         const flowOneDist = flowGenerator.simpleActionAndTrigger()
         flowOne.externalId = flowOneDist.id
-        const diff = projectDiffService.diff({
+        const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowOne, flowThree],
             },
@@ -111,8 +110,8 @@ describe('Project Diff Service', () => {
                 flows: [flowOneDist, flowTwo],
             },
         })
-        expect(diff.length).toBe(3)
-        expect(diff).toEqual([
+        expect(diff.operations.length).toBe(3)
+        expect(diff.operations).toEqual([
             {
                 type: 'DELETE_FLOW',
                 flowState: flowThree,

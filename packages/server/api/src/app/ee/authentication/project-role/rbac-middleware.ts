@@ -12,8 +12,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
-import { projectMemberService } from '../../project-members/project-member.service'
-import { projectRoleService } from '../../project-role/project-role.service'
+import { projectMemberService } from '../../projects/project-members/project-member.service'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
@@ -55,7 +55,8 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.DELETE_BRANCH:
         case FlowOperationType.DUPLICATE_BRANCH:
         case FlowOperationType.UPDATE_METADATA:
-        case FlowOperationType.SET_SKIP_ACTION: {
+        case FlowOperationType.SET_SKIP_ACTION:
+        case FlowOperationType.MOVE_BRANCH: {
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
             break
         }

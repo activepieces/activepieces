@@ -6,25 +6,38 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/supadata",
         "tsConfig": "packages/pieces/community/supadata/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/supadata/package.json",
         "main": "packages/pieces/community/supadata/src/index.ts",
-        "assets": ["packages/pieces/community/supadata/*.md"],
+        "assets": [
+          "packages/pieces/community/supadata/*.md",
+          {
+            "input": "packages/pieces/community/supadata/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-supadata {args.ver} {args.tag}",
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []
-} 
+}
