@@ -4,6 +4,7 @@ import {
     ApId, 
     ErrorCode, 
     isNil, 
+    spreadIfDefined,
     Mcp,
     McpPiece,
     McpPieceWithConnection,
@@ -92,7 +93,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         await _updateMcpTimestamp(piece.mcpId)
     },
     
-    async update({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpdateBatchParams): Promise<McpPieceWithConnection> {
+    async upsert({ mcpId, pieceName, pieceVersion, actionNames, connectionId }: UpsertParams): Promise<McpPieceWithConnection> {
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         
@@ -114,12 +115,24 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
             })
         }
 
-        await mcpPieceRepo().update({ mcpId, pieceName }, { pieceVersion, actionNames, connectionId })
+        const existingPiece = await mcpPieceRepo().findOneBy({ mcpId, pieceName, pieceVersion })
+
+        const newId = existingPiece?.id ?? apId()
+
+        const piece = {
+            id: newId,
+            mcpId,
+            pieceName,
+            pieceVersion,
+            actionNames,
+            ...spreadIfDefined('connectionId', connectionId),
+        }
+
+        await mcpPieceRepo().upsert(piece, ['id'])
         
         await _updateMcpTimestamp(mcpId)
         
-        const pieceId = await this.getPieceId(mcpId, pieceName, pieceVersion)
-        return this.getOneOrThrow(pieceId)
+        return this.getOneOrThrow(newId)
     },
 
     async validateMcp(mcpId: ApId): Promise<Mcp> {
@@ -218,7 +231,7 @@ async function validateMcpPieceConnection({ pieceName, connectionId, projectId, 
     } 
 }
 
-type UpdateBatchParams = {
+type UpsertParams = {
     mcpId: string
     pieceName: string
     pieceVersion: string

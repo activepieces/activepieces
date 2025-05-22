@@ -6,7 +6,7 @@ import {
   SeekPage,
   UpdateMcpRequestBody,
   McpWithTools,
-  UpdateMcpPieceRequestBody,
+  UpsertMcpPieceRequestBody,
   UpdateMcpFlowsRequestBody,
 } from '@activepieces/shared';
 
@@ -47,9 +47,9 @@ export const mcpApi = {
     );
   },
 
-  async updatePiece(
+  async upsertPiece(
     mcpId: string,
-    request: UpdateMcpPieceRequestBody
+    request: UpsertMcpPieceRequestBody,
   ): Promise<McpWithTools> {
     return await api.post(`/v1/mcp-tools/${mcpId}/pieces`, request);
   },

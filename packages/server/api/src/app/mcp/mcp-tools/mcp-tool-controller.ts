@@ -1,4 +1,4 @@
-import { ApId, McpFlowWithFlow, McpPieceWithConnection, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpPieceRequestBody, UpdateMcpFlowsRequestBody } from '@activepieces/shared'
+import { ApId, McpFlowWithFlow, McpPieceWithConnection, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpsertMcpPieceRequestBody as UpsertMcpPieceRequestBody, UpdateMcpFlowsRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
@@ -25,11 +25,11 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
     })
     
     
-    app.post('/:id/pieces', UpdateMcpPieceRequest, async (req) => {
+    app.post('/:id/pieces', UpsertMcpPieceRequest, async (req) => {
         const { id } = req.params
         const { pieceName, pieceVersion, actionNames, connectionId } = req.body
         
-        const piece = await mcpPieceService(req.log).update({
+        const piece = await mcpPieceService(req.log).upsert({
             mcpId: id,
             pieceName,
             pieceVersion,
@@ -113,19 +113,19 @@ const GetMcpFlowsRequest = {
 }
 
 
-const UpdateMcpPieceRequest = {
+const UpsertMcpPieceRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
         permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp-piece'],
-        description: 'Update MCP piece actions',
+        description: 'Upsert MCP piece actions',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
         }),
-        body: UpdateMcpPieceRequestBody,
+        body: UpsertMcpPieceRequestBody,
         response: {
             [StatusCodes.OK]: Type.Object({
                 piece: McpPieceWithConnection,
