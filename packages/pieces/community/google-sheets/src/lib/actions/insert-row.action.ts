@@ -31,35 +31,6 @@ export const insertRowAction = createAction({
       defaultValue: false,
     }),
     values: rowValuesProp(),
-    test: Property.Custom({
-      code:(({value,onChange,containerId})=>{
-        const container = document.getElementById(containerId);
-        const input = document.createElement('input');
-        input.classList.add(...['border','border-solid', 'border-border', 'rounded-md','bg-red-500']) 
-        input.type = 'text';
-        input.value = `${value}`;
-        input.oninput = (e: any) => {
-          console.log("input changed", e.target.value);
-          onChange(e.target.value);
-        }
-       container?.appendChild(input);
-       const windowCallback = (e:MessageEvent<{type:string,value:string,propertyName:string}>) => {
-        if(e.data.type === 'updateInput' && e.data.propertyName === 'test'){
-          console.log(e)
-          input.value= e.data.value;
-          onChange(e.data.value);
-          console.log('input changed', e.data.value);
-        }
-       }
-       window.addEventListener('message', windowCallback);
-        return ()=>{
-          window.removeEventListener('message', windowCallback);
-          container?.removeChild(input);
-        }
-      }),
-      displayName: 'Test',
-      required: true
-    })
   },
   async run({ propsValue, auth }) {
     const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
