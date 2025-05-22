@@ -16,7 +16,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { oauth2Utils } from '@/lib/oauth2-utils';
 import {
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -28,6 +27,7 @@ import {
   ApFlagId,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
