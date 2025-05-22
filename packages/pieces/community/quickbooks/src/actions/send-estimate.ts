@@ -58,7 +58,7 @@ export const sendEstimateAction = createAction({
         }),
         sendToEmail: Property.ShortText({
             displayName: "Send To Email",
-            description: "The email address to send the estimate to. If left blank, QuickBooks will use the customer\'s email address.",
+            description: "The email address to send the estimate to. If left blank, QuickBooks will use the customer's email address.",
             required: false,
         })
     },
@@ -101,4 +101,4 @@ export const sendEstimateAction = createAction({
 
         return response.body.Estimate;
     },
-}); 
+});
