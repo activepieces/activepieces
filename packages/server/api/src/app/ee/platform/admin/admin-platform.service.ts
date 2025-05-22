@@ -149,7 +149,11 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const pieceVersionsMap = new Map<string, string>()
         flowStructureUtil.getAllSteps(flowVersionToRestore.trigger).forEach((step: Step) => {
             if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-                pieceVersionsMap.set(step.name, step.settings.pieceVersion)
+                if (step.settings.pieceName === '@activepieces/piece-tables') {
+                    pieceVersionsMap.set(step.name, '0.1.0')
+                } else {
+                    pieceVersionsMap.set(step.name, step.settings.pieceVersion)
+                }
             }
         })
 
