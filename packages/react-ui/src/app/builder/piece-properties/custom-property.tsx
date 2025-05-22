@@ -20,7 +20,7 @@ const parseFunctionString = (code: string) => {
     return (${code})(params);
   `,
   );
-}
+};
 const CustomProperty = ({
   value,
   onChange,
@@ -41,13 +41,13 @@ const CustomProperty = ({
         isEmbedded: embedState.isEmbedded,
         projectId: project.id,
         disabled,
-        property
-      }
+        property,
+      };
       // Create function that takes a params object
       const fn = parseFunctionString(code);
       // Execute the function with args as the params object
       const cleanUpFunction = fn(params);
-      if(cleanUpFunction && typeof cleanUpFunction === 'function'){
+      if (cleanUpFunction && typeof cleanUpFunction === 'function') {
         return cleanUpFunction;
       }
     } catch (error) {
