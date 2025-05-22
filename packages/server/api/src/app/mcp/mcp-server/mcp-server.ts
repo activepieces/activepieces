@@ -2,8 +2,7 @@ import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
 import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, isNil, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
-import { FastifyBaseLogger, FastifyReply } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
 import { flowService } from '../../flows/flow/flow.service'
@@ -19,10 +18,8 @@ import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mc
 
 export async function createMcpServer({
     mcpId,
-    reply,
     logger,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
-    const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
     const server = new McpServer({
         name: 'Activepieces',
         version: '1.0.0',
@@ -31,7 +28,7 @@ export async function createMcpServer({
     await addPiecesToServer(server, mcpId, logger)
     await addFlowsToServer(server, mcpId, logger)
 
-    return { server, transport }
+    return { server }
 }
 
 async function addPiecesToServer(
@@ -237,14 +234,11 @@ async function addFlowsToServer(
         )
     }
 }
-
 export type CreateMcpServerRequest = {
     mcpId: string
-    reply: FastifyReply
     logger: FastifyBaseLogger
 }
 
 export type CreateMcpServerResponse = {
     server: McpServer
-    transport: SSEServerTransport
 }
