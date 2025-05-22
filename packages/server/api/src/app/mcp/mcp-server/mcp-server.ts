@@ -1,6 +1,16 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, isNil, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
+import { 
+    EngineResponseStatus, 
+    ExecuteActionResponse, 
+    fixSchemaNaming, 
+    FlowStatus, 
+    FlowVersionState, 
+    isNil, 
+    McpPieceWithConnection, 
+    McpTrigger, 
+    TriggerType 
+} from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -43,97 +53,124 @@ async function addPiecesToServer(
     const projectId = mcp.projectId
     const platformId = await projectService.getPlatformId(projectId)
 
-    // Get all actions for this MCP
-    const pieces = await Promise.all(mcp.pieces.map(async (piece: McpPieceWithConnection) => {
-        const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
-            name: piece.pieceName,
-            version: piece.pieceVersion,
-            projectId,
-            platformId,
+    const pieces = await Promise.all(
+        mcp.pieces.map(async (piece: McpPieceWithConnection) => {
+            const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
+                name: piece.pieceName,
+                version: piece.pieceVersion,
+                projectId,
+                platformId,
+            })
+            return { ...pieceMetadata, ...piece }
         })
-        return {
-            ...pieceMetadata,
-            ...piece,
-        }
-    }))
+    )
     
-    // Initialize a set to track unique action names
     const uniqueActions = new Set<string>()
 
-    pieces.flatMap(piece => {
-        return Object.values(piece.actions).map(action => {
-            if (!piece.actionNames.includes(action.name)) {
-                return
-            }
-            const actionName = fixSchemaNaming(`${piece.name.split('piece-')[1]}-${action.name}`).slice(0, MAX_TOOL_NAME_LENGTH)
-            if (uniqueActions.has(actionName)) {
-                return
-            }
-            uniqueActions.add(actionName)
+    pieces.flatMap(piece => 
+        Object.values(piece.actions)
+            .filter(action => piece.actionNames.includes(action.name))
+            .map(action => {
+                const actionName = fixSchemaNaming(`${piece.name.split('piece-')[1]}-${action.name}`)
+                    .slice(0, MAX_TOOL_NAME_LENGTH)
+                
+                if (uniqueActions.has(actionName)) return
+                uniqueActions.add(actionName)
 
-            const pieceConnectionExternalId = piece.connection?.externalId
-            
-            server.tool(
-                actionName,
-                action.description,
-                Object.fromEntries(
-                    Object.entries(action.props).filter(([_key, prop]) => 
-                        prop.type !== PropertyType.MARKDOWN,
-                    ).map(([key, prop]) =>
-                        [key, piecePropertyToZod(prop)],
+                const pieceConnectionExternalId = piece.connection?.externalId
+                
+                server.tool(
+                    actionName,
+                    action.description,
+                    Object.fromEntries(
+                        Object.entries(action.props)
+                            .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
+                            .map(([key, prop]) => [key, piecePropertyToZod(prop)])
                     ),
-                ),
-                async (params) => {
-                    const parsedInputs = {
-                        ...params,
-                        ...Object.fromEntries(
-                            Object.entries(action.props)
-                                .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
-                                .map(([key, prop]) => [key, prop.defaultValue]),
-                        ),
-                        ...(pieceConnectionExternalId ? { auth: `{{connections['${pieceConnectionExternalId}']}}` } : {}),
-                    }
-                    
-                    const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                        jobType: UserInteractionJobType.EXECUTE_TOOL,
-                        actionName: action.name,
-                        pieceName: piece.name,
-                        pieceVersion: piece.version,
-                        packageType: piece.packageType,
-                        pieceType: piece.pieceType,
-                        input: parsedInputs,
-                        projectId,
-                    })
+                    async (params) => {
+                        const parsedInputs = {
+                            ...params,
+                            ...Object.fromEntries(
+                                Object.entries(action.props)
+                                    .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
+                                    .map(([key, prop]) => [key, prop.defaultValue])
+                            ),
+                            ...(pieceConnectionExternalId ? { 
+                                auth: `{{connections['${pieceConnectionExternalId}']}}` 
+                            } : {})
+                        }
+                        
+                        const result = await userInteractionWatcher(logger)
+                            .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                                jobType: UserInteractionJobType.EXECUTE_TOOL,
+                                actionName: action.name,
+                                pieceName: piece.name,
+                                pieceVersion: piece.version,
+                                packageType: piece.packageType,
+                                pieceType: piece.pieceType,
+                                input: parsedInputs,
+                                projectId,
+                            })
 
-                    await mcpService(logger).trackToolCall({
-                        mcpId,
-                        toolName: action.name,
-                    })
+                        await mcpService(logger).trackToolCall({
+                            mcpId,
+                            toolName: action.name,
+                        })
 
-                    if (result.status === EngineResponseStatus.OK) {
+                        if (result.status === EngineResponseStatus.OK) {
+                            await mcpService(logger).addPieceToolHistory({
+                                mcpId,
+                                pieceName: piece.pieceName,
+                                pieceVersion: piece.pieceVersion,
+                                toolName: action.name,
+                                input: params,
+                                output: result.result.output as Record<string, unknown>,
+                                success: result.result.success,
+                            })
+
+                            if (!result.result.success) {
+                                return {
+                                    content: [{
+                                        type: 'text',
+                                        text: `⚠️ ${action.displayName} completed with issues:\n\n` +
+                                              `${action.description}\n\n` +
+                                              `Output:\n\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                                    }],
+                                }
+                            }
+
+                            return {
+                                content: [{
+                                    type: 'text',
+                                    text: `✅ Successfully executed ${action.displayName}\n\n` +
+                                          `${action.description}\n\n` +
+                                          `Output:\n\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                                }],
+                            }
+                        }
+
+                        await mcpService(logger).addPieceToolHistory({
+                            mcpId,
+                            pieceName: piece.pieceName,
+                            pieceVersion: piece.pieceVersion,
+                            toolName: action.name,
+                            input: params,
+                            output: { error: result.standardError },
+                            success: false,
+                        })
+
                         return {
                             content: [{
                                 type: 'text',
-                                text: `✅ Successfully executed ${action.displayName}\n\n` +
-                                    `${action.description}\n\n` +
-                                    `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                                text: `❌ Error executing ${action.displayName}:\n\n` +
+                                      `${action.description}\n\n` +
+                                      `Error details:\n\`\`\`\n${result.standardError || 'Unknown engine error occurred'}\n\`\`\``,
                             }],
                         }
                     }
-                    else {
-                        return {
-                            content: [{
-                                type: 'text',
-                                text: `❌ Error executing ${action.displayName}\n\n` +
-                                    `${action.description}\n\n` +
-                                    `\`\`\`\n${result.standardError || 'Unknown error occurred'}\n\`\`\``,
-                            }],
-                        }
-                    }
-                },
-            )
-        })
-    })
+                )
+            })
+    )
 }
 
 async function addFlowsToServer(
@@ -154,44 +191,43 @@ async function addFlowsToServer(
         versionState: FlowVersionState.LOCKED,
     })
 
-    const mcpFlows = flows.data.filter((flow) => 
+    const mcpFlows = flows.data.filter(flow => 
         flow.version.trigger.type === TriggerType.PIECE &&
-        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
+        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp'
     )
 
     for (const flow of mcpFlows) {
         const triggerSettings = flow.version.trigger.settings as McpTrigger
-        const toolName = fixSchemaNaming('flow-' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
+        const toolName = fixSchemaNaming('flow-' + triggerSettings.input?.toolName)
+            .slice(0, MAX_TOOL_NAME_LENGTH)
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
 
-
         const paramNameMapping = Object.fromEntries(
-            inputSchema.map((prop) => {
-                const transformedName = fixSchemaNaming(prop.name)
-                return [transformedName, prop.name]
-            }),
+            inputSchema.map(prop => [
+                fixSchemaNaming(prop.name),
+                prop.name
+            ])
         )
 
         const zodFromInputSchema = Object.fromEntries(
-            inputSchema.map((prop) => [
+            inputSchema.map(prop => [
                 fixSchemaNaming(prop.name),
-                mcpPropertyToZod(prop),
-            ]),
+                mcpPropertyToZod(prop)
+            ])
         )
 
         server.tool(
             toolName,
             toolDescription,
             zodFromInputSchema,
-            async (params) => { 
-                // Transform parameter names back to original names for the payload
+            async (params) => {
                 const originalParams = Object.fromEntries(
-                    Object.entries(params).map(([key, value]) => {
-                        const originalName = paramNameMapping[key]
-                        return [originalName || key, value]
-                    }),
+                    Object.entries(params).map(([key, value]) => [
+                        paramNameMapping[key] || key,
+                        value
+                    ])
                 )
 
                 const response = await webhookService.handleWebhook({
@@ -207,9 +243,7 @@ async function addFlowsToServer(
                     flowId: flow.id,
                     async: !returnsResponse,
                     flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                    saveSampleData: await webhookSimulationService(logger).exists(
-                        flow.id,
-                    ),
+                    saveSampleData: await webhookSimulationService(logger).exists(flow.id),
                     payload: originalParams,
                     execute: true,
                 })
@@ -219,18 +253,30 @@ async function addFlowsToServer(
                     toolName,
                 })
 
+                await mcpService(logger).addFlowToolHistory({
+                    mcpId,
+                    flowId: flow.id,
+                    flowVersionId: flow.version.id,
+                    toolName,
+                    input: params,
+                    output: response,
+                    success: response.status === StatusCodes.OK,
+                })
+
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n` +
+                                  `Error details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
                         }],
                     }
                 }
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Successfully executed flow ${flow.version.displayName}\n\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
+                        text: `✅ Successfully executed flow ${flow.version.displayName}\n\n` +
+                              `Output:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
                     }],
                 }
             },
