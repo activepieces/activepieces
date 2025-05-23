@@ -14,16 +14,17 @@ export const createLeadListAction = createAction({
       description: 'Name of the lead list',
       required: true,
     }),
-    description: Property.LongText({
-      displayName: 'Description',
-      description: 'Description of the lead list',
+    has_enrichment_task: Property.Checkbox({
+      displayName: 'Enable Enrichment',
+      description: 'Whether this list runs the enrichment process on every added lead or not',
       required: false,
+      defaultValue: false,
     }),
   },
   async run(context) {
     const {
       name,
-      description,
+      has_enrichment_task,
     } = context.propsValue;
     const { auth: apiKey } = context;
 
@@ -31,8 +32,8 @@ export const createLeadListAction = createAction({
       name,
     };
 
-    if (description) {
-      payload['description'] = description;
+    if (has_enrichment_task !== undefined) {
+      payload['has_enrichment_task'] = has_enrichment_task;
     }
 
     return await makeRequest({

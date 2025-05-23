@@ -20,11 +20,23 @@ export const searchCampaignsAction = createAction({
       required: false,
       defaultValue: 20,
     }),
+    starting_after: Property.ShortText({
+      displayName: 'Starting After',
+      description: 'The ID of the last item in the previous page - used for pagination',
+      required: false,
+    }),
+    tag_ids: Property.ShortText({
+      displayName: 'Tag IDs',
+      description: 'Filter campaigns by tag ids. Specify multiple tag ids by separating them with a comma',
+      required: false,
+    }),
   },
   async run(context) {
     const {
       name,
       limit,
+      starting_after,
+      tag_ids,
     } = context.propsValue;
     const { auth: apiKey } = context;
 
@@ -32,6 +44,14 @@ export const searchCampaignsAction = createAction({
 
     if (name) {
       queryParams['search'] = name;
+    }
+
+    if (starting_after) {
+      queryParams['starting_after'] = starting_after;
+    }
+
+    if (tag_ids) {
+      queryParams['tag_ids'] = tag_ids;
     }
 
     // Ensure limit is within range and defaulted to 20

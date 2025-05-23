@@ -10,8 +10,8 @@ export const replyToEmailAction = createAction({
   description: 'Send a reply to a Unibox email in Instantly',
   props: {
     reply_to_uuid: Property.ShortText({
-      displayName: 'Email ID',
-      description: 'The ID of the email to reply to',
+      displayName: 'Reply to UUID',
+      description: 'The id of the email to reply to',
       required: true,
     }),
     eaccount: Property.ShortText({
@@ -26,12 +26,12 @@ export const replyToEmailAction = createAction({
     }),
     body_html: Property.LongText({
       displayName: 'HTML Body',
-      description: 'The HTML body of the reply email',
+      description: 'HTML body of the email message',
       required: false,
     }),
     body_text: Property.LongText({
       displayName: 'Text Body',
-      description: 'The text body of the reply email',
+      description: 'Text body of the email message',
       required: false,
     }),
     cc_address_email_list: Property.ShortText({
@@ -44,6 +44,16 @@ export const replyToEmailAction = createAction({
       description: 'Comma-separated list of BCC email addresses',
       required: false,
     }),
+    reminder_ts: Property.ShortText({
+      displayName: 'Reminder Timestamp',
+      description: 'Timestamp for the reminder. If this field is included, then this email will be added to the database, but will be sent at the specified timestamp',
+      required: false,
+    }),
+    assigned_to: Property.ShortText({
+      displayName: 'Assigned To',
+      description: 'The user id assigned to the lead',
+      required: false,
+    }),
   },
   async run(context) {
     const {
@@ -54,6 +64,8 @@ export const replyToEmailAction = createAction({
       body_text,
       cc_address_email_list,
       bcc_address_email_list,
+      reminder_ts,
+      assigned_to,
     } = context.propsValue;
     const { auth: apiKey } = context;
 
@@ -89,6 +101,14 @@ export const replyToEmailAction = createAction({
 
     if (bcc_address_email_list) {
       payload['bcc_address_email_list'] = bcc_address_email_list;
+    }
+
+    if (reminder_ts) {
+      payload['reminder_ts'] = reminder_ts;
+    }
+
+    if (assigned_to) {
+      payload['assigned_to'] = assigned_to;
     }
 
     return await makeRequest({
