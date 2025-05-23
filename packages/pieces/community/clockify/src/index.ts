@@ -21,9 +21,7 @@ export const clockify = createPiece({
   displayName: 'Clockify',
   description: 'Track time, manage projects and tasks via Clockify',
   auth: clockifyAuth,
-  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockify.png',
-  
   authors: ['krushnarout'],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [createTaskAction, createTimeEntryAction, startTimerAction, stopTimerAction, findTaskAction, findTimeEntryAction, findRunningTimerAction],

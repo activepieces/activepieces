@@ -22,6 +22,7 @@ export class AxiosHttpClient extends BaseHttpClient {
     request: HttpRequest<HttpRequestBody>
   ): Promise<HttpResponse<ResponseBody>> {
     try {
+      process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
       const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
       const headers = this.getHeaders(request);
       const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
