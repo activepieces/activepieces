@@ -13,13 +13,14 @@ export const stopTimerAction = createAction({
       displayName: 'Workspace ID',
       required: true,
     }),
+    userId: Property.ShortText({
+      displayName: 'User ID',
+      required: true,
+    }),
   },
   async run(context) {
     const apiKey = context.auth as string;
-    const { workspaceId } = context.propsValue;
-
-    const user = await makeRequest(apiKey, HttpMethod.GET, `/user`);
-    const userId = user.id;
+    const { workspaceId, userId } = context.propsValue;
 
     const entries = await makeRequest(
       apiKey,

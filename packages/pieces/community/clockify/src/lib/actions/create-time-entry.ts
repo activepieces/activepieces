@@ -3,11 +3,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { clockifyAuth } from '../../index';
 
-export const createTaskAction = createAction({
+export const createTimeEntryAction = createAction({
   auth: clockifyAuth,
-  name: 'create_task',
-  displayName: 'Create Task',
-  description: 'Create a new task in Clockify',
+  name: 'create_time_entry',
+  displayName: 'Create Time Entry',
+  description: 'Log time in Clockify',
   props: {
     workspaceId: Property.ShortText({
       displayName: 'Workspace ID',
@@ -15,80 +15,97 @@ export const createTaskAction = createAction({
     }),
     projectId: Property.ShortText({
       displayName: 'Project ID',
+      required: false,
+    }),
+    taskId: Property.ShortText({ displayName: 'Task ID', required: false }),
+    description: Property.ShortText({
+      displayName: 'Description',
+      required: false,
+    }),
+    start: Property.ShortText({
+      displayName: 'Start Time (ISO)',
       required: true,
     }),
-    name: Property.ShortText({
-      displayName: 'Task Name',
+    end: Property.ShortText({
+      displayName: 'End Time (ISO)',
       required: true,
     }),
-    assigneeIds: Property.Array({
-      displayName: 'Assignee IDs',
+    billable: Property.Checkbox({
+      displayName: 'Billable',
       required: false,
-      description: 'List of user IDs to assign to the task.',
     }),
-    budgetEstimate: Property.Number({
-      displayName: 'Budget Estimate (ms)',
-      required: false,
-      description: 'Estimated task budget in milliseconds.',
-    }),
-    estimate: Property.ShortText({
-      displayName: 'Estimate (ISO-8601 Duration)',
-      required: false,
-      description: 'Estimated task duration (e.g., PT1H30M).',
-    }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
+    type: Property.StaticDropdown({
+      displayName: 'Time Entry Type',
       required: false,
       options: {
         options: [
-          { label: 'Active', value: 'ACTIVE' },
-          { label: 'Done', value: 'DONE' },
-          { label: 'All', value: 'ALL' },
+          { label: 'Regular', value: 'REGULAR' },
+          { label: 'Break', value: 'BREAK' },
         ],
       },
     }),
-    userGroupIds: Property.Array({
-      displayName: 'User Group IDs',
+    tagIds: Property.Array({
+      displayName: 'Tag IDs',
       required: false,
-      description: 'User group IDs assigned to this task.',
+      description: 'IDs of tags to attach to this entry.',
     }),
-    containsAssignee: Property.Checkbox({
-      displayName: 'Contains Assignee',
+    customFields: Property.Json({
+      displayName: 'Custom Fields (Object)',
       required: false,
-      defaultValue: true,
-      description: 'Whether the task contains assignees.',
+      description:
+        'Object of custom field values (e.g. from dropdowns or text fields).',
+    }),
+    customAttributes: Property.Json({
+      displayName: 'Custom Attributes (Object)',
+      required: false,
+      description: 'Object of new custom attribute request values.',
     }),
   },
   async run(context) {
     const {
       workspaceId,
       projectId,
-      name,
-      assigneeIds,
-      budgetEstimate,
-      estimate,
-      status,
-      userGroupIds,
-      containsAssignee,
+      taskId,
+      description,
+      start,
+      end,
+      billable,
+      type,
+      tagIds,
+      customFields,
+      customAttributes,
     } = context.propsValue;
 
     const apiKey = context.auth as string;
 
-    const body = {
-      name: name,
-      ...(assigneeIds !== undefined ? { assigneeIds: assigneeIds as string[] } : {}),
-      ...(budgetEstimate !== undefined ? { budgetEstimate } : {}),
-      ...(estimate ? { estimate } : {}),
-      ...(status ? { status } : {}),
-      ...(userGroupIds !== undefined ? { userGroupIds: userGroupIds as string[] } : {}),
+    const body: {
+      start: string;
+      end: string;
+      description?: string;
+      projectId?: string;
+      taskId?: string;
+      billable?: boolean;
+      type?: 'REGULAR' | 'BREAK';
+      tagIds?: string[];
+      customFields?: Record<string, unknown>;
+      customAttributes?: Record<string, unknown>;
+    } = {
+      start,
+      end,
+      ...(description && { description }),
+      ...(projectId && { projectId }),
+      ...(taskId && { taskId }),
+      ...(typeof billable === 'boolean' && { billable }),
+      ...(type && { type: type as 'REGULAR' | 'BREAK' }),
+      ...(tagIds && { tagIds: tagIds as string[] }),
+      ...(customFields && { customFields }),
+      ...(customAttributes && { customAttributes }),
     };
-
-    const queryParam = containsAssignee === false ? '?contains-assignee=false' : '';
 
     return await makeRequest(
       apiKey,
       HttpMethod.POST,
-      `/workspaces/${workspaceId}/projects/${projectId}/tasks${queryParam}`,
+      `/workspaces/${workspaceId}/time-entries`,
       body
     );
   },
