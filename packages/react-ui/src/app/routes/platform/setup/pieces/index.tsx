@@ -27,6 +27,8 @@ import {
 import {
   ApEdition,
   ApFlagId,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  isNil,
   OAuth2GrantType,
   PieceScope,
 } from '@activepieces/shared';
@@ -34,7 +36,7 @@ import {
 import { TableTitle } from '../../../../../components/ui/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.managePiecesEnabled;
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
   const {
@@ -141,23 +143,26 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
+            const isOAuth2Enabled =
+              row.original.auth &&
+              row.original.auth.type === PropertyType.OAUTH2 &&
+              (row.original.auth.grantType ===
+                BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
+                row.original.auth.grantType ===
+                  OAuth2GrantType.AUTHORIZATION_CODE ||
+                isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">
-                {row.original.auth &&
-                  row.original.auth.type === PropertyType.OAUTH2 &&
-                  (row.original.auth.allowsSwitchingGrantType ||
-                    row.original.auth.grantType ===
-                      OAuth2GrantType.AUTHORIZATION_CODE ||
-                    row.original.auth.grantType === undefined) && (
-                    <ConfigurePieceOAuth2Dialog
-                      pieceName={row.original.name}
-                      onConfigurationDone={() => {
-                        refetchPieces();
-                        refetchPiecesClientIdsMap();
-                      }}
-                      isEnabled={isEnabled}
-                    />
-                  )}
+                {isOAuth2Enabled && (
+                  <ConfigurePieceOAuth2Dialog
+                    pieceName={row.original.name}
+                    onConfigurationDone={() => {
+                      refetchPieces();
+                      refetchPiecesClientIdsMap();
+                    }}
+                    isEnabled={isEnabled}
+                  />
+                )}
                 <PieceActions
                   pieceName={row.original.name}
                   isEnabled={isEnabled}

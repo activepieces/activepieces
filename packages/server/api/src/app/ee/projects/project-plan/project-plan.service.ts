@@ -1,10 +1,12 @@
-import { FlowPlanLimits, PlatformBilling } from '@activepieces/ee-shared'
+import { FlowPlanLimits } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,
     isNil,
-    PiecesFilterType, Platform, ProjectPlan,
+    PiecesFilterType,
+    PlatformPlan,
+    ProjectPlan,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -12,7 +14,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { platformBillingService } from '../../platform/platform-billing/platform-billing.service'
+import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { BillingUsageType, usageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
 
@@ -81,15 +83,15 @@ async function getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
 }
 
 
-async function getPlatformBillingOnCloudAndManageIsOff(platformId: string, log: FastifyBaseLogger): Promise<PlatformBilling | undefined> {
+async function getPlatformBillingOnCloudAndManageIsOff(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan | undefined> {
     if (edition !== ApEdition.CLOUD) {
         return undefined
     }
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (platform.manageProjectsEnabled) {
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    if (platform.plan.manageProjectsEnabled) {
         return undefined
     }
-    return platformBillingService(log).getOrCreateForPlatform(platformId)
+    return platformPlanService(log).getOrCreateForPlatform(platformId)
 }
 
 async function checkUsageLimit({ projectId, incrementBy, usageType, log }: CheckUsageLimitParams): Promise<boolean> {
@@ -97,14 +99,15 @@ async function checkUsageLimit({ projectId, incrementBy, usageType, log }: Check
         return false
     }
     try {
+        // TODO (@abuaboud): optmize this by not querying the database
         const projectPlan = await getOrCreateDefaultPlan(projectId)
         if (!projectPlan) {
             return false
         }
         const platformId = await projectService.getPlatformId(projectId)
-        const platform = await platformService.getOneOrThrow(platformId)
+        const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const { consumedProjectUsage, consumedPlatformUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType })
-        const limitProject = await limitReachedFromProjectPlan({ projectId, platform, usageType, consumedProjectUsage, log })
+        const limitProject = await limitReachedFromProjectPlan({ projectId, manageProjectsEnabled, usageType, consumedProjectUsage, log })
         const limitPlatform = await limitReachedFromPlatformBilling({ platformId, usageType, consumedPlatformUsage, log })
         return limitProject || limitPlatform
     }
@@ -116,8 +119,8 @@ async function checkUsageLimit({ projectId, incrementBy, usageType, log }: Check
 
 
 async function limitReachedFromProjectPlan(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
-    const { platform, projectId, usageType, consumedProjectUsage } = params
-    if (!platform.manageProjectsEnabled) {
+    const { manageProjectsEnabled, projectId, usageType, consumedProjectUsage } = params
+    if (!manageProjectsEnabled) {
         return false
     }
     const projectPlan = await getOrCreateDefaultPlan(projectId)
@@ -143,7 +146,7 @@ async function limitReachedFromPlatformBilling(params: LimitReachedFromPlatformB
         return false
     }
     const { platformId, usageType, consumedPlatformUsage, log } = params
-    const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
     const platformLimit = getPlatformLimit(platformBilling, usageType)
     if (isNil(platformLimit)) {
         return false
@@ -151,7 +154,7 @@ async function limitReachedFromPlatformBilling(params: LimitReachedFromPlatformB
     return consumedPlatformUsage >= platformLimit
 }
 
-function getPlatformLimit(platformBilling: PlatformBilling, usageType: BillingUsageType): number | undefined {
+function getPlatformLimit(platformBilling: PlatformPlan, usageType: BillingUsageType): number | undefined {
     switch (usageType) {
         case BillingUsageType.TASKS:
             return platformBilling.tasksLimit
@@ -162,7 +165,7 @@ function getPlatformLimit(platformBilling: PlatformBilling, usageType: BillingUs
 
 type LimitReachedFromProjectPlanParams = {
     projectId: string
-    platform: Platform
+    manageProjectsEnabled: boolean
     usageType: BillingUsageType
     log: FastifyBaseLogger
     consumedProjectUsage: number

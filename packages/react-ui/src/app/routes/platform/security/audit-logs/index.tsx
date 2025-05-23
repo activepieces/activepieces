@@ -116,7 +116,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const isEnabled = platform.auditLogEnabled;
+  const isEnabled = platform.plan.auditLogEnabled;
   return (
     <LockedFeatureGuard
       featureKey="AUDIT_LOGS"

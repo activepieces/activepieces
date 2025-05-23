@@ -1,8 +1,4 @@
 import { createHash } from 'crypto'
-import {
-    DEFAULT_EMBEDDING_LIMIT,
-    DEFAULT_PLATFORM_LIMIT,
-} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
@@ -97,9 +93,9 @@ const updateProjectLimits = async (
         piecesFilterType,
     })
     await projectLimitsService(log).upsert({
-        nickname: DEFAULT_PLATFORM_LIMIT.nickname,
-        tasks: tasks ?? DEFAULT_EMBEDDING_LIMIT.tasks,
-        aiTokens: aiTokens ?? DEFAULT_EMBEDDING_LIMIT.aiTokens,
+        nickname: 'default-embeddings-limit',
+        tasks: tasks ?? 50000,
+        aiTokens: aiTokens ?? 1000,
         pieces,
         piecesFilterType,
     }, projectId)

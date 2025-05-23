@@ -34,7 +34,7 @@ import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformBillingService } from '../platform/platform-billing/platform-billing.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { BillingEntityType, usageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
@@ -187,7 +187,7 @@ async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger
         return false
     }
     const project = await projectService.getOneOrThrow(projectId)
-    const status = await platformBillingService(log).getOrCreateForPlatform(project.platformId)
+    const status = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
     return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
 }
 function isCustomerPlatform(platformId: string | undefined): boolean {

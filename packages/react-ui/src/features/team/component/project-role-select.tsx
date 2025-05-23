@@ -34,7 +34,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
       if (f === DefaultProjectRole.ADMIN) {
         return true;
       }
-      const showNonAdmin = platform.projectRolesEnabled;
+      const showNonAdmin = platform.plan.projectRolesEnabled;
       return showNonAdmin;
     })
     .map((role) => {
