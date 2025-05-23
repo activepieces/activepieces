@@ -62,7 +62,7 @@
   "logo": "logo",
   "Step Icon": "Ikon Langkah",
   "Branch": "Branch",
-  "incompleteSteps": "{invalidSteps, plural, =0 {tidak ada langkah yang belum lengkap} =1 {Selesaikan 1 langkah} other {Selesaikan # langkah}}",
+  "incompleteSteps": "{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}",
   "Test Flow": "Uji Alur",
   "Please test the trigger first": "Harap uji pemicu terlebih dahulu",
   "View Only": "Hanya Lihat",
