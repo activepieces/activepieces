@@ -147,7 +147,8 @@ const PlatformPiecesPage = () => {
                   row.original.auth.type === PropertyType.OAUTH2 &&
                   (row.original.auth.allowsSwitchingGrantType ||
                     row.original.auth.grantType ===
-                      OAuth2GrantType.AUTHORIZATION_CODE) && (
+                      OAuth2GrantType.AUTHORIZATION_CODE ||
+                    row.original.auth.grantType === undefined) && (
                     <ConfigurePieceOAuth2Dialog
                       pieceName={row.original.name}
                       onConfigurationDone={() => {

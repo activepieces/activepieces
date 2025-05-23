@@ -59,6 +59,7 @@ export const oauth2AppsHooks = {
             clientId: cloudApps[key].clientId,
           };
         });
+        console.log(appsMap);
         apps.data.forEach((app) => {
           appsMap[`${app.pieceName}-${AppConnectionType.PLATFORM_OAUTH2}`] = {
             type: AppConnectionType.PLATFORM_OAUTH2,
