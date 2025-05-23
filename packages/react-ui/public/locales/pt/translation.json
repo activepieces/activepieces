@@ -1026,7 +1026,7 @@
   "Draft Version": "Versão de Rascunho",
   "Published Version": "Published Version",
   "Locked Version": "Versão Bloqueada",
-  "flowsImported": "{flowsCount, plural, one {}=0 {Nenhum fluxo importado} =1 {Fluxo importado com sucesso} other {Fluxos importados com sucesso}}",
+  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}",
   "Template file is invalid": "Template file is invalid",
   "No valid templates found. The following files failed to import: ": "No valid templates found. The following files failed to import: ",
   "Please select a file first": "Please select a file first",
