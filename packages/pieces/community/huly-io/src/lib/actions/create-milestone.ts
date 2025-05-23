@@ -1,51 +1,51 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
+import { hulyIoAuth } from '../../index';
+import { IssueClasses } from '../common/constants';
 
 export const createMilestone = createAction({
+    auth: hulyIoAuth,
     name: 'create_milestone',
     displayName: 'Create Milestone',
-    description: 'Create a milestone in a project and assign open issues to it',
+    description: 'Create a milestone in a project',
     props: {
-        projectId: Property.ShortText({
-            displayName: 'Project ID',
-            description: 'The ID of the project to create the milestone in',
+        _class: Property.StaticDropdown({
+            displayName: 'Class',
+            description: 'The class of the object to create',
+            required: true,
+            options: {
+                options: [
+                    { label: 'Milestone', value: IssueClasses.Milestone }
+                ]
+            },
+            defaultValue: IssueClasses.Milestone
+        }),
+        space: Property.ShortText({
+            displayName: 'Space',
+            description: 'The space (project ID) to create the object in',
             required: true,
         }),
-        name: Property.ShortText({
-            displayName: 'Name',
-            description: 'The name of the milestone',
+        attributes: Property.Object({
+            displayName: 'Attributes',
+            description: 'The attributes of the object to create (name, description, dueDate, issueIds, etc.)',
             required: true,
-        }),
-        description: Property.LongText({
-            displayName: 'Description',
-            description: 'The description of the milestone in Markdown format',
-            required: false,
-        }),
-        dueDate: Property.DateTime({
-            displayName: 'Due Date',
-            description: 'The due date for the milestone',
-            required: false,
-        }),
-        issueIds: Property.Array({
-            displayName: 'Issue IDs',
-            description: 'IDs of open issues to assign to this milestone',
-            required: false,
-        }),
+        })
     },
     async run({ propsValue, auth }) {
         const client = createClient(auth as string);
-        const response = await client.request(
-            'POST',
-            '/milestones/create',
-            {
-                projectId: propsValue.projectId,
-                name: propsValue.name,
-                description: propsValue.description || '',
-                dueDate: propsValue.dueDate || undefined,
-                issueIds: propsValue.issueIds || []
-            }
-        );
 
-        return response.data || {};
+        try {
+            const milestoneId = await client.createDoc(
+                propsValue._class,
+                propsValue.space,
+                propsValue.attributes
+            );
+
+            await client.disconnect();
+            return { id: milestoneId };
+        } catch (error) {
+            await client.disconnect();
+            throw error;
+        }
     },
 });

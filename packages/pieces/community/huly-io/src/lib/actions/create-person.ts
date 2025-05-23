@@ -1,52 +1,57 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
 import { hulyIoAuth } from '../../index';
+import { PeopleClasses, PeopleSpaces } from '../common/constants';
 
 export const createPerson = createAction({
     auth: hulyIoAuth,
     name: 'create_person',
     displayName: 'Create Person',
-    description: 'Create a new person record and attach an email as a communication channel',
+    description: 'Create a new person record',
     props: {
-        firstName: Property.ShortText({
-            displayName: 'First Name',
-            description: 'The person\'s first name',
+        _class: Property.StaticDropdown({
+            displayName: 'Class',
+            description: 'The class of the object to create',
             required: true,
+            options: {
+                options: [
+                    { label: 'Person', value: PeopleClasses.Person }
+                ]
+            },
+            defaultValue: PeopleClasses.Person
         }),
-        lastName: Property.ShortText({
-            displayName: 'Last Name',
-            description: 'The person\'s last name',
+        space: Property.StaticDropdown({
+            displayName: 'Space',
+            description: 'The space to create the object in',
             required: true,
+            options: {
+                options: [
+                    { label: 'People', value: PeopleSpaces.People }
+                ]
+            },
+            defaultValue: PeopleSpaces.People
         }),
-        email: Property.ShortText({
-            displayName: 'Email',
-            description: 'The person\'s email address',
+        attributes: Property.Object({
+            displayName: 'Attributes',
+            description: 'The attributes of the object to create (firstName, lastName, email, role, etc.)',
             required: true,
-        }),
-        role: Property.ShortText({
-            displayName: 'Role',
-            description: 'The person\'s role in the organization',
-            required: false,
-        }),
+        })
     },
     async run({ propsValue, auth }) {
         const client = createClient(auth as string);
-        const response = await client.request(
-            'POST',
-            '/people/create',
-            {
-                firstName: propsValue.firstName,
-                lastName: propsValue.lastName,
-                channels: [
-                    {
-                        type: 'email',
-                        value: propsValue.email
-                    }
-                ],
-                role: propsValue.role || undefined
-            }
-        );
 
-        return response.data || {};
+        try {
+            const personId = await client.createDoc(
+                propsValue._class,
+                propsValue.space,
+                propsValue.attributes
+            );
+
+            await client.disconnect();
+            return { id: personId };
+        } catch (error) {
+            await client.disconnect();
+            throw error;
+        }
     },
 });

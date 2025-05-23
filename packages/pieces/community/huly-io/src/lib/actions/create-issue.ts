@@ -1,66 +1,51 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
+import { hulyIoAuth } from '../../index';
+import { IssueClasses } from '../common/constants';
 
 export const createIssue = createAction({
+    auth: hulyIoAuth,
     name: 'create_issue',
     displayName: 'Create Issue',
-    description: 'Create a new issue under a project with a title, description, priority, and due date',
+    description: 'Create a new issue under a project',
     props: {
-        projectId: Property.ShortText({
-            displayName: 'Project ID',
-            description: 'The ID of the project to create the issue in',
+        _class: Property.StaticDropdown({
+            displayName: 'Class',
+            description: 'The class of the object to create',
             required: true,
-        }),
-        title: Property.ShortText({
-            displayName: 'Title',
-            description: 'The title of the issue',
-            required: true,
-        }),
-        description: Property.LongText({
-            displayName: 'Description',
-            description: 'The description of the issue in Markdown format',
-            required: false,
-        }),
-        priority: Property.StaticDropdown({
-            displayName: 'Priority',
-            description: 'The priority of the issue',
-            required: false,
             options: {
                 options: [
-                    { label: 'Low', value: 'low' },
-                    { label: 'Medium', value: 'medium' },
-                    { label: 'High', value: 'high' },
-                    { label: 'Critical', value: 'critical' }
+                    { label: 'Issue', value: IssueClasses.Issue }
                 ]
             },
-            defaultValue: 'medium'
+            defaultValue: IssueClasses.Issue
         }),
-        dueDate: Property.DateTime({
-            displayName: 'Due Date',
-            description: 'The due date for the issue',
-            required: false,
+        space: Property.ShortText({
+            displayName: 'Space',
+            description: 'The space (project ID) to create the object in',
+            required: true,
         }),
-        assigneeId: Property.ShortText({
-            displayName: 'Assignee ID',
-            description: 'The ID of the person to assign the issue to',
-            required: false,
-        }),
+        attributes: Property.Object({
+            displayName: 'Attributes',
+            description: 'The attributes of the object to create (title, description, priority, etc.)',
+            required: true,
+        })
     },
     async run({ propsValue, auth }) {
         const client = createClient(auth as string);
-        const response = await client.request(
-            'POST',
-            '/issues/create',
-            {
-                projectId: propsValue.projectId,
-                title: propsValue.title,
-                description: propsValue.description || '',
-                priority: propsValue.priority || 'medium',
-                dueDate: propsValue.dueDate || undefined,
-                assigneeId: propsValue.assigneeId || undefined
-            }
-        );
 
-        return response.data || {};
+        try {
+            const issueId = await client.createDoc(
+                propsValue._class,
+                propsValue.space,
+                propsValue.attributes
+            );
+
+            await client.disconnect();
+            return { id: issueId };
+        } catch (error) {
+            await client.disconnect();
+            throw error;
+        }
     },
 });

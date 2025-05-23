@@ -1,18 +1,18 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
+import { hulyIoAuth } from '../../index';
 
 const markdown = `
-To set up the Huly.io webhook trigger for new milestone creation:
+To set up the Huly.io WebSocket trigger for new milestone creation:
 
-1. You'll need to configure a webhook in your Huly.io account to send notifications to Activepieces when a new milestone is created.
-2. Copy the webhook URL from below and add it to your Huly.io webhooks configuration.
-3. Set the event type to "milestone.created" when configuring the webhook.
-4. Activepieces will start receiving notifications when new milestones are created in your Huly.io account.
-
-Note: In a production environment, we would use the @hcengineering/api-client package to automatically register for real-time events.
+1. This trigger uses Huly.io's WebSocket API to register for real-time events.
+2. When enabled, Activepieces will automatically register to receive notifications when new milestones are created.
+3. Milestones will be delivered to your flow in real-time.
+4. No additional webhook configuration is needed in your Huly.io account.
 `;
 
 export const newMilestoneCreated = createTrigger({
+    auth: hulyIoAuth,
     name: 'new_milestone_created',
     displayName: 'New Milestone Created',
     description: 'Triggered when a new milestone is created in Huly.io',
@@ -36,19 +36,33 @@ export const newMilestoneCreated = createTrigger({
         }
     },
     async onEnable(context) {
-        // In a real implementation with @hcengineering/api-client:
-        // const client = createClient(context.auth);
-        // await client.request('POST', '/webhooks/register', {
-        //     url: context.webhookUrl,
-        //     events: ['milestone.created']
-        // });
+        const client = createClient(context.auth);
+
+        try {
+            // Register for milestone creation events
+            await client.request('POST', '/webhooks/register', {
+                url: context.webhookUrl,
+                events: ['milestone.created']
+            });
+        } catch (error) {
+            console.error('Failed to register webhook:', error);
+        } finally {
+            await client.disconnect();
+        }
     },
     async onDisable(context) {
-        // In a real implementation with @hcengineering/api-client:
-        // const client = createClient(context.auth);
-        // await client.request('POST', '/webhooks/unregister', {
-        //     url: context.webhookUrl
-        // });
+        const client = createClient(context.auth);
+
+        try {
+            // Unregister from milestone creation events
+            await client.request('POST', '/webhooks/unregister', {
+                url: context.webhookUrl
+            });
+        } catch (error) {
+            console.error('Failed to unregister webhook:', error);
+        } finally {
+            await client.disconnect();
+        }
     },
     async run(context) {
         return [context.payload];

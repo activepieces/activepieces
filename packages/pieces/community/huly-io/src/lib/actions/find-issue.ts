@@ -1,51 +1,81 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
+import { hulyIoAuth } from '../../index';
+import { IssueClasses } from '../common/constants';
 
 export const findIssue = createAction({
+    auth: hulyIoAuth,
     name: 'find_issue',
     displayName: 'Find Issue',
-    description: 'List issues in a project sorted by last modified date',
+    description: 'Retrieves multiple issues matching the query criteria',
     props: {
-        projectId: Property.ShortText({
-            displayName: 'Project ID',
-            description: 'The ID of the project to search for issues in',
+        _class: Property.StaticDropdown({
+            displayName: 'Class',
+            description: 'Class of the object to find, results will include all subclasses of the target class',
             required: true,
-        }),
-        status: Property.StaticDropdown({
-            displayName: 'Status',
-            description: 'Filter issues by status',
-            required: false,
             options: {
-                options: [
-                    { label: 'Open', value: 'open' },
-                    { label: 'In Progress', value: 'in_progress' },
-                    { label: 'Closed', value: 'closed' },
-                    { label: 'All', value: 'all' }
-                ]
+                options: Object.entries(IssueClasses).map(([key, value]) => ({
+                    label: key,
+                    value: value
+                }))
             },
-            defaultValue: 'all'
+            defaultValue: IssueClasses.Issue
+        }),
+        query: Property.Object({
+            displayName: 'Query',
+            description: 'Query criteria',
+            required: false,
         }),
         limit: Property.Number({
             displayName: 'Limit',
-            description: 'Maximum number of issues to return',
+            description: 'Limit the number of results returned',
             required: false,
             defaultValue: 10,
+        }),
+        sort: Property.Object({
+            displayName: 'Sort',
+            description: 'Sorting criteria',
+            required: false,
+        }),
+        lookup: Property.Object({
+            displayName: 'Lookup',
+            description: 'Lookup criteria',
+            required: false,
+        }),
+        projection: Property.Object({
+            displayName: 'Projection',
+            description: 'Projection criteria',
+            required: false,
+        }),
+        total: Property.Checkbox({
+            displayName: 'Return Total',
+            description: 'If specified total will be returned',
+            required: false,
+            defaultValue: false,
         }),
     },
     async run({ propsValue, auth }) {
         const client = createClient(auth as string);
-        const response = await client.request(
-            'GET',
-            '/issues/search',
-            {
-                projectId: propsValue.projectId,
-                status: propsValue.status !== 'all' ? propsValue.status : undefined,
-                limit: propsValue.limit || 10,
-                sortBy: 'lastModified',
-                sortOrder: 'desc'
-            }
-        );
+        try {
+            const options = {
+                limit: propsValue.limit,
+                sort: propsValue.sort,
+                lookup: propsValue.lookup,
+                projection: propsValue.projection,
+                total: propsValue.total
+            };
 
-        return response.data || [];
+            const issues = await client.findAll(
+                propsValue._class,
+                propsValue.query || {},
+                options
+            );
+
+            await client.disconnect();
+            return issues || [];
+        } catch (error) {
+            await client.disconnect();
+            throw error;
+        }
     },
 });

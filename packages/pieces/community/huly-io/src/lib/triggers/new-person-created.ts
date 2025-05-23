@@ -1,18 +1,18 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { createClient } from '../common/client';
+import { hulyIoAuth } from '../../index';
 
 const markdown = `
-To set up the Huly.io webhook trigger for new person creation:
+To set up the Huly.io WebSocket trigger for new person creation:
 
-1. You'll need to configure a webhook in your Huly.io account to send notifications to Activepieces when a new person is created.
-2. Copy the webhook URL from below and add it to your Huly.io webhooks configuration.
-3. Set the event type to "person.created" when configuring the webhook.
-4. Activepieces will start receiving notifications when new people are created in your Huly.io account.
-
-Note: In a production environment, we would use the @hcengineering/api-client package to automatically register for real-time events.
+1. This trigger uses Huly.io's WebSocket API to register for real-time events.
+2. When enabled, Activepieces will automatically register to receive notifications when new people are created.
+3. Person information will be delivered to your flow in real-time.
+4. No additional webhook configuration is needed in your Huly.io account.
 `;
 
 export const newPersonCreated = createTrigger({
+    auth: hulyIoAuth,
     name: 'new_person_created',
     displayName: 'New Person Created',
     description: 'Triggered when a new person is created in Huly.io',
@@ -35,19 +35,33 @@ export const newPersonCreated = createTrigger({
         createdAt: '2023-09-12T14:30:00Z'
     },
     async onEnable(context) {
-        // In a real implementation with @hcengineering/api-client:
-        // const client = createClient(context.auth);
-        // await client.request('POST', '/webhooks/register', {
-        //     url: context.webhookUrl,
-        //     events: ['person.created']
-        // });
+        const client = createClient(context.auth);
+
+        try {
+            // Register for person creation events
+            await client.request('POST', '/webhooks/register', {
+                url: context.webhookUrl,
+                events: ['person.created']
+            });
+        } catch (error) {
+            console.error('Failed to register webhook:', error);
+        } finally {
+            await client.disconnect();
+        }
     },
     async onDisable(context) {
-        // In a real implementation with @hcengineering/api-client:
-        // const client = createClient(context.auth);
-        // await client.request('POST', '/webhooks/unregister', {
-        //     url: context.webhookUrl
-        // });
+        const client = createClient(context.auth);
+
+        try {
+            // Unregister from person creation events
+            await client.request('POST', '/webhooks/unregister', {
+                url: context.webhookUrl
+            });
+        } catch (error) {
+            console.error('Failed to unregister webhook:', error);
+        } finally {
+            await client.disconnect();
+        }
     },
     async run(context) {
         return [context.payload];
