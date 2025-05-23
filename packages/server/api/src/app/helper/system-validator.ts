@@ -132,6 +132,7 @@ const systemPropValidators: {
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
+    [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     // Copilot
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 

@@ -118,7 +118,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
         const queryWhere: Record<string, unknown> = { projectId }
-        
+
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
         }
@@ -456,7 +456,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.ENABLED
+            if (AppSystemProp.ENABLE_FLOW_ON_PUBLISH) {
+                flowToUpdate.status = FlowStatus.ENABLED
+            }
             flowToUpdate.schedule = scheduleOptions
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
