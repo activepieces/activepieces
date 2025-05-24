@@ -847,6 +847,9 @@
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
+      "@activepieces/piece-zagomail": [
+        "packages/pieces/community/zagomail/src/index.ts"
+      ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
       ],
