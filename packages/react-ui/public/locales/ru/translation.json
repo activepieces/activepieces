@@ -62,7 +62,7 @@
   "logo": "логотип",
   "Step Icon": "Значок шага",
   "Branch": "Branch",
-  "incompleteSteps": "{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}",
+  "incompleteSteps": "{invalidSteps, plural, =0 {нет незавершенных шагов} =1 {Завершите 1 шаг} other {Завершите # шага(ов)}}",
   "Test Flow": "Тест потока",
   "Please test the trigger first": "Пожалуйста, проверьте сначала триггер",
   "View Only": "Только просмотр",
