@@ -1,5 +1,5 @@
-import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineOperation, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
+import { PiecesSource, systemConstants, threadSafeMkdir } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, EngineOperation, ExecutionMode, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from './code-builder'
@@ -16,10 +16,13 @@ export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
     getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
-        if ('projectId' in params) {
-            return path.resolve(GLOBAL_CACHE_PATH, params.projectId)
-        }           
-        return path.resolve(GLOBAL_CACHE_PATH, params.platformId)
+        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED) {
+            if ('projectId' in params) {
+                return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.projectId)
+            }
+            return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.platformId)
+        }
+        return GLOBAL_CACHE_PATH
     },
     async provision({
         pieces,
@@ -45,7 +48,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         })
         await Promise.all(buildJobs)
         log.info({
-            path: GLOBAL_CACHE_COMMON_PATH,
+            path: GLOBAL_CODE_CACHE_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeCode)}ms`,
         }, 'Installed code in sandbox')
 

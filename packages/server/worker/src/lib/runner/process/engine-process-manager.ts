@@ -22,14 +22,12 @@ export class EngineProcessManager {
     availableWorkerIndexes: number[]
     workerIds: string[]
     log: FastifyBaseLogger
-    enginePath: string
     options: EngineProcessOptions
     lock: ApSemaphore
     engineSocketServer: ReturnType<typeof engineRunnerSocket>
 
     constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: EngineProcessOptions) {
         this.log = log
-        this.enginePath = enginePath
         this.options = options
         this.processes = []
         this.availableWorkerIndexes = []
@@ -44,47 +42,13 @@ export class EngineProcessManager {
         }
     }
 
-    private async createWorkerIfNeeded(workerIndex: number, operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-        try {
-            const workerIsDead = isNil(this.processes[workerIndex]) || !this.processes[workerIndex]?.connected
-            if (workerIsDead) {
-                const workerId = this.workerIds[workerIndex]
-                this.log.info({
-                    workerIndex,
-                }, 'Worker is not available, creating a new one')
-                if (!isNil(this.processes[workerIndex])) {
-                    this.processes[workerIndex]?.kill()
-                    cleanUp(this.processes[workerIndex], undefined)
-                }
-                this.processes[workerIndex] = await engineProcessFactory(this.log).create({
-                    enginePath: this.enginePath,
-                    workerId,
-                    workerIndex,
-                    customPiecesPath: executionFiles(this.log).getCustomPiecesPath(operation),
-                    flowVersionId: getFlowVersionId(operation, operationType),
-                    options: this.options,
-                })
-                await this.engineSocketServer.waitForConnect(workerId)
-
-                this.log.info({
-                    workerIndex,
-                }, 'Worker connected')
-            }
-        }
-        catch (error) {
-            this.log.error({
-                error,
-            }, 'Error creating worker')
-            throw error
-        }
-    }
-
     private async processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
         const worker = this.processes[workerIndex]
         assertNotNullOrUndefined(worker, 'Worker should not be undefined')
         const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
         let didTimeout = false
         const workerId = this.workerIds[workerIndex]
+        let timeoutWorker: NodeJS.Timeout | undefined
         try {
 
             const result = await new Promise<WorkerResult>(async (resolve, reject) => {
@@ -92,14 +56,13 @@ export class EngineProcessManager {
                 let stdOut = ''
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                const timeoutWorker = setTimeout(() => {
+                timeoutWorker = setTimeout(() => {
                     didTimeout = true
                     worker.kill()
                 }, timeout * 1000)
 
 
                 const onResult = (result: EngineResult) => {
-                    cleanUp(worker, timeoutWorker)
 
                     resolve({
                         engine: result.result as EngineResponse<unknown>,
@@ -108,7 +71,6 @@ export class EngineProcessManager {
                     })
                 }
                 const onError = (error: EngineError) => {
-                    cleanUp(worker, timeoutWorker)
                     reject({ status: EngineResponseStatus.ERROR, response: error.error })
                 }
                 const onStdout = (stdout: EngineStdout) => {
@@ -121,7 +83,6 @@ export class EngineProcessManager {
                 this.engineSocketServer.subscribe(workerId, onResult, onError, onStdout, onStderr)
 
                 worker.on('error', (error) => {
-                    cleanUp(worker, timeoutWorker)
                     this.log.info({
                         error,
                     }, 'Worker returned something in stderr')
@@ -140,8 +101,6 @@ export class EngineProcessManager {
                         signal,
                     }, 'Worker exited')
 
-                    cleanUp(worker, timeoutWorker)
-                    this.processes[workerIndex] = undefined
 
                     if (didTimeout) {
                         resolve({
@@ -181,8 +140,13 @@ export class EngineProcessManager {
             throw error
         } finally {
             this.engineSocketServer.unsubscribe(workerId)
-
-            if (shouldCleanWorkerOnFinish()) {
+            worker.removeAllListeners('exit')
+            worker.removeAllListeners('error')
+            worker.removeAllListeners('message')
+            if (!isNil(timeoutWorker)) {
+                clearTimeout(timeoutWorker)
+            }
+            if (isWorkerNotResuable()) {
                 killWorker(worker, workerIndex, this.log)
                 this.processes[workerIndex] = undefined
             }
@@ -208,7 +172,33 @@ export class EngineProcessManager {
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
 
-            await this.createWorkerIfNeeded(workerIndex, operation, operationType)
+            const workerIsDead = isNil(this.processes[workerIndex]) || !this.processes[workerIndex]?.connected || isWorkerNotResuable()
+            if (workerIsDead) {
+                const workerId = this.workerIds[workerIndex]
+                this.log.info({
+                    workerIndex,
+                }, 'Worker is not available, creating a new one')
+                if (!isNil(this.processes[workerIndex])) {
+                    this.processes[workerIndex]?.kill()
+                }
+                this.processes[workerIndex] = await engineProcessFactory(this.log).create({
+                    workerId,
+                    workerIndex,
+                    customPiecesPath: executionFiles(this.log).getCustomPiecesPath(operation),
+                    flowVersionId: getFlowVersionId(operation, operationType),
+                    options: this.options,
+                })
+                const connection = await this.engineSocketServer.waitForConnect(workerId)
+                if (!connection) {
+                    this.log.error({
+                        workerIndex,
+                    }, 'Worker connection failed')
+                    throw new Error('Worker connection failed')
+                }
+                this.log.info({
+                    workerIndex,
+                }, 'Worker connected')
+            }
 
             const result = await this.processTask(workerIndex, operationType, operation)
             // Keep an await so finally does not run before the task is finished
@@ -255,7 +245,7 @@ function killWorker(worker: ChildProcess, workerIndex: number, log: FastifyBaseL
     try {
         log.debug({
             workerIndex,
-        }, 'Removing worker in development mode to avoid caching issues')
+        }, 'Removing worker to avoid caching or better isolation')
         worker.kill()
     }
     catch (e) {
@@ -265,17 +255,8 @@ function killWorker(worker: ChildProcess, workerIndex: number, log: FastifyBaseL
     }
 }
 
-function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout | undefined): void {
-    worker.removeAllListeners('exit')
-    worker.removeAllListeners('error')
-    worker.removeAllListeners('message')
-    if (!isNil(timeout)) {
-        clearTimeout(timeout)
-    }
-}
 
-
-function shouldCleanWorkerOnFinish(): boolean {
+function isWorkerNotResuable(): boolean {
     const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
     const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
     return isDevelopment || isSandboxed

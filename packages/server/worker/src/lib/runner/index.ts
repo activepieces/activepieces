@@ -10,7 +10,7 @@ import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUti
 import { EngineProcessManager } from './process/engine-process-manager'
 
 
-let engineWorkers: EngineProcessManager
+let processManager: EngineProcessManager
 
 export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
@@ -186,8 +186,8 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
     },
     async shutdownAllWorkers() {
-        if (!isNil(engineWorkers)) {
-            await engineWorkers.shutdown()
+        if (!isNil(processManager)) {
+            await processManager.shutdown()
         }
     },
 })
@@ -211,8 +211,8 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
     const memoryLimit = Math.floor(Number(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
 
     const startTime = Date.now()
-    if (isNil(engineWorkers)) {
-        engineWorkers = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, ENGINE_PATH, {
+    if (isNil(processManager)) {
+        processManager = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, ENGINE_PATH, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
@@ -226,7 +226,7 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
             ],
         })
     }
-    const { engine, stdError, stdOut } = await engineWorkers.executeTask(operationType, operation)
+    const { engine, stdError, stdOut } = await processManager.executeTask(operationType, operation)
     return engineRunnerUtils(log).readResults({
         timeInSeconds: (Date.now() - startTime) / 1000,
         verdict: engine.status,

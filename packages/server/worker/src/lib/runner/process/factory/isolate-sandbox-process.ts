@@ -1,11 +1,10 @@
-import { fork } from "child_process"
 import { arch } from "node:process"
 import { EngineProcess } from "./engine-factory-types"
-import { exec } from "node:child_process"
+import { spawn } from "node:child_process"
 import path from "node:path"
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
 import { workerMachine } from "../../../utils/machine"
-import { PiecesSource } from "@activepieces/server-shared"
+import { exec, PiecesSource } from "@activepieces/server-shared"
 import { FastifyBaseLogger } from "fastify"
 
 const getIsolateExecutableName = (): string => {
@@ -14,9 +13,10 @@ const getIsolateExecutableName = (): string => {
         arm: 'isolate-arm',
         arm64: 'isolate-arm',
     }
-    
+
     return executableNameMap[arch] ?? defaultName
 }
+
 const currentDir = process.cwd()
 const nodeExecutablePath = process.execPath
 const isolateBinaryPath = path.resolve(currentDir, 'packages/server/api/src/assets', getIsolateExecutableName())
@@ -24,13 +24,12 @@ const isolateBinaryPath = path.resolve(currentDir, 'packages/server/api/src/asse
 export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => ({
     create: async (params) => {
         const { workerId, workerIndex, options } = params
-        const propagatedEnvVars = Object.entries({
-            ...options.env,
-            AP_BASE_CODE_DIRECTORY: `/codes`,
-            WORKER_ID: workerId,
-        }).map(([key, value]) => `--env=${key}='${value}'`)
-        await cleanUp(workerIndex.toString(), log)
 
+        const { stdout: cleanupOutput, stderr: cleanupError } = await exec(`${isolateBinaryPath} --box-id=${workerIndex} --cleanup`)
+        const { stdout: initOutput, stderr: initError } = await exec(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
+        log.debug({ cleanupOutput, cleanupError, initOutput, initError }, '[IsolateSandboxProcess#create] Isolate cleanup and init output')
+
+        const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
         const dirsToBindArgs: string[] = getDirsToBindArgs(params.flowVersionId, params.customPiecesPath)
         const fullCommand = [
             isolateBinaryPath,
@@ -45,34 +44,20 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
         ].join(' ')
 
         log.debug({ command: fullCommand }, '[IsolateSandboxProcess#create] Executing command')
-        return exec(fullCommand, options)
+        const isolateProcess = spawn(fullCommand, { shell: true, ...options })
+        isolateProcess.stdout?.pipe(process.stdout)
+        isolateProcess.stderr?.pipe(process.stderr)
+        return isolateProcess
     }
 })
 
-async function cleanUp(boxId: string, log: FastifyBaseLogger): Promise<void> {
-    const cleanupCmd = `--box-id=${boxId} --cleanup`
-    const initCmd = `--box-id=${boxId} --init`
-    await runIsolateAndStore(cleanupCmd, log)
-    await runIsolateAndStore(initCmd, log)
-}
 
-function runIsolateAndStore(cmd: string, log: FastifyBaseLogger): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const fullCmd = `${isolateBinaryPath} ${cmd}`
-        log.debug({ command: fullCmd }, '[IsolateSandboxProcess#runIsolateAndStore] Executing command')
-        
-        exec(fullCmd, (error: Error | null, stdout: string, stderr: string) => {
-            if (error) {
-                reject(error)
-                return
-            }
-            if (stderr) {
-                resolve(stderr)
-                return
-            }
-            resolve(stdout)
-        })
-    })
+function getEnvironmentVariables(env: Record<string, string | undefined>, workerId: string): string[] {
+    return Object.entries({
+        ...env,
+        AP_BASE_CODE_DIRECTORY: `/codes`,
+        WORKER_ID: workerId,
+    }).map(([key, value]) => `--env=${key}='${value}'`)
 }
 
 function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string): string[] {
@@ -84,7 +69,7 @@ function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: 
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
     if (flowVersionId) {
-        dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
+        dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}:maybe`)
     }
     if (customPiecesPath) {
         dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)

@@ -4,8 +4,6 @@ import { FastifyInstance } from 'fastify'
 import { flowWorker, piecesBuilder } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { system } from './helper/system/system'
-import { log } from 'console'
-import { engineRunnerSocket } from 'packages/server/worker/src/lib/runner/engine-runner-socket'
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
@@ -14,14 +12,12 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
     await piecesBuilder(app, app.io, devPieces, piecesSource)
     
     app.addHook('onClose', async () => {
-        await engineRunnerSocket(app.log).disconnect()
         await flowWorker(app.log).close()
     })
 }
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    await engineRunnerSocket(app.log).init(app)
     await flowWorker(app.log).init({ workerToken })
 }
 

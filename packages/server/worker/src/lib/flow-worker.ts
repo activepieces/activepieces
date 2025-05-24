@@ -9,6 +9,7 @@ import { userInteractionJobExecutor } from './executors/user-interaction-job-exe
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
 import { workerMachine } from './utils/machine'
+import { engineRunnerSocket } from './runner/engine-runner-socket'
 
 let closed = true
 let workerToken: string
@@ -16,6 +17,8 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+        await engineRunnerSocket(log).init()
+
         closed = false
         workerToken = token
         await initializeWorker(log)
@@ -41,6 +44,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         }
     },
     async close(): Promise<void> {
+        await engineRunnerSocket(log).disconnect()
         closed = true
         clearTimeout(heartbeatInterval)
         if (workerMachine.hasSettings()) {

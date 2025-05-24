@@ -18,7 +18,6 @@ export type EngineProcessOptions =  {
 }
 
 type CreateEngineParams = {
-    enginePath: string
     workerId: string
     workerIndex: number
     customPiecesPath: string

@@ -1,11 +1,11 @@
 import { fork } from "child_process"
 import { EngineProcess } from "./engine-factory-types"
-import { GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
+import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
 import { FastifyBaseLogger } from "fastify"
 
 export const noSandboxProcess = (_log: FastifyBaseLogger): EngineProcess => ({
     create: async (params) => {
-        return fork(params.enginePath, [], {
+        return fork(ENGINE_PATH, [], {
             ...params.options,
             env: {
                 ...params.options.env,
