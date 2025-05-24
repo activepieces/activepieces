@@ -2,7 +2,7 @@ import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/ser
 import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
-import { engineRunner } from '../engine'
+import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
@@ -157,10 +157,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             await engineApiService(engineToken, log).checkTaskLimit()
 
             const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, log)
-            const { result } = await engineRunner(runLog).executeFlow(
-                engineToken,
-                input,
-            )
+            const { result } = await engineRunner(log).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
                 await handleInternalError(jobData, engineToken, new ActivepiecesError({

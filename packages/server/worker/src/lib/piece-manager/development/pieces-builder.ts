@@ -7,7 +7,7 @@ import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { cacheHandler } from '../../utils/cache-handler'
+import { cacheState } from '../../cache/cache-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -68,7 +68,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
-        const cache = cacheHandler(globalCachePath)
+        const cache = cacheState(globalCachePath)
         await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.setCache('@activepieces/shared', CacheState.PENDING)

@@ -2,13 +2,14 @@ import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, reject
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
-import { engineRunner } from './engine'
+import { engineRunner } from './runner'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
 import { workerMachine } from './utils/machine'
+import { engineRunnerSocket } from './runner/engine-runner-socket'
 
 let closed = true
 let workerToken: string
@@ -16,6 +17,8 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+        await engineRunnerSocket(log).init()
+
         closed = false
         workerToken = token
         await initializeWorker(log)
@@ -41,6 +44,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         }
     },
     async close(): Promise<void> {
+        await engineRunnerSocket(log).disconnect()
         closed = true
         clearTimeout(heartbeatInterval)
         if (workerMachine.hasSettings()) {

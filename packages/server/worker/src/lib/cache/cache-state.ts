@@ -22,7 +22,7 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
     return cache
 }
 
-export const cacheHandler = (folderPath: string) => {
+export const cacheState = (folderPath: string) => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
 

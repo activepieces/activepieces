@@ -1,7 +1,7 @@
 import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
-import { CodeArtifact } from './engine-runner'
+import { CodeArtifact } from '../runner/engine-runner-types'
 
 type ExtractFlowPiecesParams = {
     flowVersion: FlowVersion
