@@ -63,7 +63,7 @@ export type ApErrorParams =
     | ExistingAlertChannelErrorParams
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
-    | AITokenLimitExceededParams
+    | AICreditLimitExceededParams
     | SessionExpiredParams
     | InvalidLicenseKeyParams
     | NoChatResponseParams
@@ -118,7 +118,7 @@ Record<string, string> &
 }
 >
 
-export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+export type AICreditLimitExceededParams = BaseErrorParams<ErrorCode.AI_CREDIT_LIMIT_EXCEEDED, {
     usage: number
     limit: number
 }> 
@@ -488,7 +488,7 @@ export enum ErrorCode {
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
-    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
+    AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',

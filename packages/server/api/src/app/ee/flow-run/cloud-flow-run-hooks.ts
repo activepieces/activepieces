@@ -8,7 +8,7 @@ import { projectService } from '../../project/project-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { BillingUsageType, usageService } from '../platform/platform-usage-service'
+import { BillingUsageType, platformUsageService } from '../platform/platform-usage-service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
@@ -30,7 +30,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const { consumedProjectUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
+        const { consumedProjectUsage } = await platformUsageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
             consumedTasks: consumedProjectUsage,
@@ -57,7 +57,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
     if (!tasksPerMonth) {
         return
     }
-    const resetDate = usageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
+    const resetDate = platformUsageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
     const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 

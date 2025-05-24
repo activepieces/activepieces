@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { usageService } from '../platform-usage-service'
+import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
@@ -46,7 +46,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const startBillingPeriod = usageService(log).getCurrentBillingPeriodStart()
+        const startBillingPeriod = platformUsageService(log).getCurrentBillingPeriodStart()
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

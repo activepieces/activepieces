@@ -98,6 +98,26 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         todosEnabled: {
             type: Boolean,
         },
+        userSeatsLimit: {
+            type: Number,
+            nullable: true,
+        },
+        projectsLimit: {
+            type: Number,
+            nullable: true,
+        },
+        tablesLimit: {
+            type: Number,
+            nullable: true,
+        },
+        mcpLimit: {
+            type: Number,
+            nullable: true,
+        },
+        activeFlowsLimit: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {
