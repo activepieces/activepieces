@@ -7,13 +7,13 @@ import { zagomailAuth } from '../../index';
 import { zagoMailApiService, } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
 
-const CACHE_KEY = 'zagomail_added_subscriber_trigger_store';
+const CACHE_KEY = 'zagomail_added_subscriber_trigger';
 
 export const addedSubscriber = createTrigger({
   auth: zagomailAuth,
   name: 'addedSubscriber',
   displayName: 'Subscriber Added',
-  description: 'when subscriber is signed up or confirmed',
+  description: 'Triggers when subscriber is signed up or confirmed.',
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

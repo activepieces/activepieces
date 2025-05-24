@@ -25,11 +25,7 @@ export const zagoMailApiService = {
   createSubscriber: async (
     publicKey: string,
     listUid: string,
-    body: {
-      email: string;
-      fname: string;
-      lname: string;
-    }
+    body: any
   ) => {
     const response = await fireHttpRequest({
       method: HttpMethod.POST,
@@ -46,11 +42,7 @@ export const zagoMailApiService = {
     publicKey: string,
     listUid: string,
     subscriberUid: string,
-    body: {
-      email: string;
-      fname: string;
-      lname: string;
-    }
+    body: any
   ) => {
     const response = await fireHttpRequest({
       method: HttpMethod.POST,
@@ -94,7 +86,7 @@ export const zagoMailApiService = {
       },
     });
 
-    return response.data;
+    return response;
   },
   getSubscriberDetails: async (
     publicKey: string,
@@ -197,4 +189,37 @@ export const zagoMailApiService = {
       },
     });
   },
+  getAllLists:async (publicKey:string) =>{
+    const response =  await fireHttpRequest({
+      method:HttpMethod.GET,
+      path:`${API_ENDPOINTS.LIST_ALL_LISTS}`,
+      body:{
+        publicKey
+      }
+    })
+
+    return response;
+  },
+  getListFields:async (publicKey:string,listUid:string)=>{
+    const response =  await fireHttpRequest({
+      method:HttpMethod.GET,
+      path:`${API_ENDPOINTS.GET_LIST_FIELDS}?list_uid=${listUid}`,
+      body:{
+        publicKey
+      }
+    })
+
+    return response.data
+  },
+  getCampaigns:async (publicKey:string)=>{
+    const response = await fireHttpRequest({
+      method:HttpMethod.GET,
+      path:`${API_ENDPOINTS.GET_CAMPAIGNS}`,
+    body:{
+        publicKey
+      }
+    })
+
+    return response.data
+  }
 };

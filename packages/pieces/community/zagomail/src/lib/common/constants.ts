@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
   CREATE_TAG: '/tags/create-tag',
   CREATE_WEBHOOK: '/webhooks/create',
   DELETE_WEBHOOK: '/webhooks/delete',
+  LIST_ALL_LISTS : '/lists/all-lists',
+  GET_LIST_FIELDS:'/lists/get-fields'
 };
 
 

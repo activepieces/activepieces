@@ -2,27 +2,24 @@ import { zagomailAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { Tag } from '../common/constants';
+import { listUId } from '../common/props';
 
 export const tagSubscriber = createAction({
   auth: zagomailAuth,
   name: 'tagSubscriber',
   displayName: 'Tag Subscriber',
-  description: 'Adds A Tag to A Subscriber',
+  description: 'Adds A Tag to A Subscriber.',
   props: {
     tags: Property.Array({
       displayName: 'Tags',
       description:
-        'Add one or more tags you would like to add to this subscriber',
+        'Add one or more tags you would like to add to this subscriber.',
       required: true,
     }),
-    listUId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to add the subscriber to',
-      required: true,
-    }),
+    listUId:listUId,
     subscriberUid: Property.ShortText({
       displayName: 'Subscriber ID',
-      description: 'The ID of the subscriber you want to add the tag to',
+      description: 'The ID of the subscriber you want to add the tag to.',
       required: true,
     }),
   },

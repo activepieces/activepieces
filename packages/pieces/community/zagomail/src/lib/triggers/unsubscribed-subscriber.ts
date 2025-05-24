@@ -11,7 +11,7 @@ export const unsubscribedSubscriber = createTrigger({
   auth: zagomailAuth,
   name: 'unsubscribedSubscriber',
   displayName: 'Unsubscribed Subscriber',
-  description: 'when subscriber is unsubscribed',
+  description: 'Triggers when subscriber is unsubscribed.',
   props: {},
   sampleData: {
     action: 'subscriber-unsubscribe',

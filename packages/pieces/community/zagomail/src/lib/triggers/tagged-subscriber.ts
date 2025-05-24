@@ -8,17 +8,17 @@ import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, Tag, WebhookResponse } from '../common/constants';
 import { isNil } from '@activepieces/shared';
 
-const CACHE_KEY = 'zagomail_tagged_subscriber_trigger_store';
+const CACHE_KEY = 'zagomail_tagged_subscriber_trigger';
 
 export const taggedSubscriber = createTrigger({
   auth: zagomailAuth,
   name: 'taggedSubscriber',
   displayName: 'Tagged Subscriber',
-  description: 'when subscriber is tagged with a tag. Required parameter tagID',
+  description: 'Trigers when subscriber is tagged with a tag.',
   props: {
     tagName: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'An Arbitrary name you would like to call this tag',
+      description: 'An Arbitrary name you would like to call this tag.',
       required: true,
     }),
   },
