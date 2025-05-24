@@ -404,6 +404,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Daniel-Klippa"><img src="https://avatars.githubusercontent.com/u/207180643?v=4?s=100" width="100px;" alt="Daniel-Klippa"/><br /><sub><b>Daniel-Klippa</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Daniel-Klippa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/krushnarout"><img src="https://avatars.githubusercontent.com/u/129386740?v=4?s=100" width="100px;" alt="Krushna Kanta Rout"/><br /><sub><b>Krushna Kanta Rout</b></sub></a><br /><a href="#plugin-krushnarout" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.snimesh.com"><img src="https://avatars.githubusercontent.com/u/12984120?v=4?s=100" width="100px;" alt="Nimesh Solanki"/><br /><sub><b>Nimesh Solanki</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=nish17" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rimjhimyadav"><img src="https://avatars.githubusercontent.com/u/187646079?v=4?s=100" width="100px;" alt="Rimjhim Yadav"/><br /><sub><b>Rimjhim Yadav</b></sub></a><br /><a href="#plugin-rimjhimyadav" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
