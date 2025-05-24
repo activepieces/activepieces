@@ -40,8 +40,8 @@ import { FolderEntity } from '../flows/folder/folder.entity'
 import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { McpEntity } from '../mcp/mcp-entity'
-import { McpPieceEntity } from '../mcp/mcp-piece-entity'
+import { McpEntity } from '../mcp/mcp-server/mcp-entity'
+import { McpPieceEntity } from '../mcp/mcp-tools/mcp-piece-entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -60,6 +60,10 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { McpFlowEntity } from '../mcp/mcp-tools/mcp-flow-entity'
+import { McpPieceToolHistoryEntity } from '../mcp/mcp-server/mcp-piece-tool-history-entity'
+import { McpFlowToolHistoryEntity } from '../mcp/mcp-server/mcp-flow-tool-history-entity'
+
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
@@ -98,6 +102,9 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoEntity,
         McpEntity,
         McpPieceEntity,
+        McpFlowEntity,
+        McpPieceToolHistoryEntity,
+        McpFlowToolHistoryEntity,
     ]
 
     switch (edition) {

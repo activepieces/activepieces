@@ -1,9 +1,10 @@
-import { AppConnectionWithoutSensitiveData, McpPiece, McpPieceStatus } from '@activepieces/shared'
+import { AppConnectionWithoutSensitiveData, Mcp, McpPiece } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart } from '../../database/database-common'
 
 type McpPieceSchema = McpPiece & {
     connection: AppConnectionWithoutSensitiveData | null
+    mcp: Mcp
 }
 
 export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
@@ -14,6 +15,14 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             type: String,
             nullable: false,
         },
+        pieceVersion: {
+            type: String,
+            nullable: false,
+        },
+        actionNames: {
+            type: ARRAY_COLUMN_TYPE,
+            nullable: false,
+        },  
         mcpId: {
             ...ApIdSchema,
             nullable: false,
@@ -22,18 +31,8 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             ...ApIdSchema,
             nullable: true,
         },
-        status: {
-            type: String,
-            enum: Object.values(McpPieceStatus),
-            default: McpPieceStatus.ENABLED,
-            nullable: false,
-        },
     },
     indices: [
-        {
-            name: 'idx_mcp_piece_mcp_id',
-            columns: ['mcpId'],
-        },
         {
             name: 'idx_mcp_piece_connection_id',
             columns: ['connectionId'],
@@ -55,6 +54,17 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             },
             onDelete: 'SET NULL',
             nullable: true,
+        },
+        mcp: {
+            type: 'many-to-one',
+            target: 'mcp',
+            joinColumn: {
+                name: 'mcpId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_mcp_action_mcp_id',
+            },
+            onDelete: 'CASCADE',
+            nullable: false,
         },
     },
 })

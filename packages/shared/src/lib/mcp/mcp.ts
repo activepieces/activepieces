@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionWithoutSensitiveData } from '../app-connection/app-connection'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
+import { Flow } from '../flows/flow'
 
 export type McpId = ApId
 
@@ -14,10 +15,15 @@ export enum McpPropertyType {
     OBJECT = 'Object',
 }
 
-export enum McpPieceStatus {
-    ENABLED = 'ENABLED',
-    DISABLED = 'DISABLED',
-}
+export const Mcp = Type.Object({
+    ...BaseModelSchema,
+    name: Type.String(),
+    projectId: ApId,
+    token: ApId,
+})
+
+export type Mcp = Static<typeof Mcp> 
+
 
 export const McpProperty = Type.Object({
     name: Type.String(),
@@ -32,9 +38,10 @@ export type McpProperty = Static<typeof McpProperty>
 export const McpPiece = Type.Object({
     ...BaseModelSchema,
     pieceName: Type.String(),
-    connectionId: Type.Optional(ApId),
+    pieceVersion: Type.String(),
+    actionNames: Type.Array(Type.String()),
     mcpId: ApId,
-    status: Type.Optional(Type.Enum(McpPieceStatus)),
+    connectionId: Type.Optional(ApId),
 })
 
 export type McpPiece = Static<typeof McpPiece>
@@ -49,23 +56,32 @@ export const McpPieceWithConnection = Type.Composite([
 export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
 
 
-
-export const Mcp = Type.Object({
+export const McpFlow = Type.Object({
     ...BaseModelSchema,
-    projectId: ApId,
-    token: ApId,
+    flowId: ApId,
+    mcpId: ApId,
 })
 
-export type Mcp = Static<typeof Mcp> 
+export type McpFlow = Static<typeof McpFlow>
 
-export const McpWithPieces = Type.Composite([
-    Mcp,
+export const McpFlowWithFlow = Type.Composite([
+    McpFlow,
     Type.Object({
-        pieces: Type.Array(McpPieceWithConnection),
+        flow: Flow,
     }),
 ])
 
-export type McpWithPieces = Static<typeof McpWithPieces>
+export type McpFlowWithFlow = Static<typeof McpFlowWithFlow>
+
+export const McpWithTools = Type.Composite([
+    Mcp,
+    Type.Object({
+        pieces: Type.Array(McpPieceWithConnection),
+        flows: Type.Array(McpFlowWithFlow),
+    }),
+])
+
+export type McpWithTools = Static<typeof McpWithTools>
 
 
 export const McpTrigger = Type.Object({
@@ -80,6 +96,37 @@ export const McpTrigger = Type.Object({
 })
 
 export type McpTrigger = Static<typeof McpTrigger>
+
+
+export const McpToolHistory = Type.Object({
+    ...BaseModelSchema,
+    mcpId: ApId,
+    toolName: Type.String(),
+    input: Type.Object({}),
+    output: Type.Object({}),
+    success: Type.Boolean(),
+})
+
+export const McpPieceToolHistory = Type.Composite([
+    McpToolHistory,
+    Type.Object({
+        pieceName: Type.String(),
+        pieceVersion: Type.String(),
+    }),
+])
+
+export type McpPieceToolHistory = Static<typeof McpPieceToolHistory>
+
+
+export const McpFlowToolHistory = Type.Composite([
+    McpToolHistory,
+    Type.Object({
+        flowId: ApId,
+        flowVersionId: ApId,
+    }),
+])
+
+export type McpFlowToolHistory = Static<typeof McpFlowToolHistory>
 
 export const fixSchemaNaming = (schemaName: string) => {
     return schemaName.replace(/\s+/g, '-')

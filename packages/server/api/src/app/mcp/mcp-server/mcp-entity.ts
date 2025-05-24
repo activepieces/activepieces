@@ -1,6 +1,6 @@
 import { Mcp, McpPieceWithConnection } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 
 type McpSchema = Mcp & {
@@ -11,6 +11,10 @@ export const McpEntity = new EntitySchema<McpSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
+        name: {
+            type: String,
+            default: 'MCP Server',
+        },
         projectId: ApIdSchema,
         token: ApIdSchema,
     },
@@ -18,7 +22,7 @@ export const McpEntity = new EntitySchema<McpSchema>({
         {
             name: 'mcp_project_id',
             columns: ['projectId'],
-            unique: true,
+            unique: false,
         },
     ],
     relations: {
