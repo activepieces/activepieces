@@ -20,11 +20,20 @@ const props = {
 const polling: Polling<string, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
+    const { base, tableId, viewId } = propsValue;
+
+    if (!tableId) {
+      // If tableId is not provided, we cannot fetch records.
+      // Optionally, log an error or warning here.
+      // console.warn('Airtable New Record Trigger: Table ID is not selected.');
+      return [];
+    }
+
     const records = await airtableCommon.getTableSnapshot({
       personalToken: auth,
-      baseId: propsValue.base,
-      tableId: propsValue.tableId!,
-      limitToView: propsValue.viewId,
+      baseId: base,
+      tableId: tableId,
+      limitToView: viewId,
     });
     return records.map((record) => ({
       epochMilliSeconds: Date.parse(record.createdTime),
