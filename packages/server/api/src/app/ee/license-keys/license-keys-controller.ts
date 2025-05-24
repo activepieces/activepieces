@@ -47,7 +47,10 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
         }
         await platformService.update({
             id: platformId,
-            licenseKey: key.key,
+            plan: {
+                ...key,
+                licenseKey: key.key,
+            },
         })
         await licenseKeysService(app.log).applyLimits(platformId, key)
         return key

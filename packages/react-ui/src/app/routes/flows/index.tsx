@@ -22,6 +22,7 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -83,6 +84,8 @@ const FlowsPage = () => {
         ? parseInt(searchParams.get('limit')!)
         : 10;
       const folderId = searchParams.get('folderId') ?? undefined;
+      const connectionExternalId =
+        searchParams.getAll('connectionExternalId') ?? undefined;
 
       return flowsApi.list({
         projectId,
@@ -91,6 +94,17 @@ const FlowsPage = () => {
         name: name ?? undefined,
         status,
         folderId,
+        connectionExternalIds: connectionExternalId,
+      });
+    },
+  });
+
+  const { data: connections, isLoading: isLoadingConnections } = useQuery({
+    queryKey: ['connections', projectId],
+    queryFn: () => {
+      return appConnectionsApi.list({
+        projectId,
+        limit: 10000,
       });
     },
   });
@@ -161,7 +175,13 @@ const FlowsPage = () => {
             <></>
           )}
           <TabsContent value={FlowsPageTabs.FLOWS}>
-            <FlowsTable data={data} isLoading={isLoading} refetch={refetch} />
+            <FlowsTable
+              data={data}
+              isLoading={isLoading}
+              refetch={refetch}
+              connections={connections?.data ?? []}
+              isLoadingConnections={isLoadingConnections}
+            />
           </TabsContent>
           <TabsContent value={FlowsPageTabs.HISTORY}>
             <RunsTable />
@@ -187,7 +207,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
   const [refresh, setRefresh] = useState(0);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const { embedState } = useEmbedding();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -249,21 +269,23 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
             </DropdownMenuItem>
           </SelectFlowTemplateDialog>
 
-          <ImportFlowDialog
-            insideBuilder={false}
-            onRefresh={() => {
-              setRefresh(refresh + 1);
-              refetch();
-            }}
-          >
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              disabled={!doesUserHavePermissionToWriteFlow}
+          {!embedState.hideExportAndImportFlow && (
+            <ImportFlowDialog
+              insideBuilder={false}
+              onRefresh={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
             >
-              <Upload className="h-4 w-4 me-2" />
-              {t('From local file')}
-            </DropdownMenuItem>
-          </ImportFlowDialog>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                disabled={!doesUserHavePermissionToWriteFlow}
+              >
+                <Upload className="h-4 w-4 me-2" />
+                {t('From local file')}
+              </DropdownMenuItem>
+            </ImportFlowDialog>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </PermissionNeededTooltip>

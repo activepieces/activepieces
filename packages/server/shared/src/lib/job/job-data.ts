@@ -71,8 +71,8 @@ export const OneTimeJobData = Type.Object({
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
+    executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
-    retryPayload: Type.Optional(Type.Any()),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
@@ -119,6 +119,7 @@ export const ExecuteActionJobData = Type.Object({
     stepName: Type.String(),
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
+    runEnvironment: Type.Enum(RunEnvironment),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
 

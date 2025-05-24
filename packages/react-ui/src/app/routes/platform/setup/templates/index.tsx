@@ -194,7 +194,7 @@ export default function TemplatesPage() {
     [selectedRows, bulkDeleteMutation],
   );
 
-  const isEnabled = platform.manageTemplatesEnabled;
+  const isEnabled = platform.plan.manageTemplatesEnabled;
   return (
     <LockedFeatureGuard
       featureKey="TEMPLATES"
