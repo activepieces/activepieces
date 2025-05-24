@@ -1,8 +1,15 @@
+import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogInIcon } from 'lucide-react';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
+
+import { recordsApi } from '../lib/records-api';
+import { FieldsMapping } from '../lib/utils';
+
+import { useTableState } from './ap-table-state-provider';
+import { FieldsMappingControl } from './fields-mapping';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -25,26 +32,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import { ApFlagId } from '@activepieces/shared';
-
-import { recordsApi } from '../lib/records-api';
-import { FieldsMapping } from '../lib/utils';
-
-import { useTableState } from './ap-table-state-provider';
-import { FieldsMappingControl } from './fields-mapping';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [tableId, setRecords, serverFields, recordsCount] = useTableState(
-    (state) => [
+  const [tableId, setRecords, serverFields, serverRecords, recordsCount] =
+    useTableState((state) => [
       state.table.id,
       state.setRecords,
       state.serverFields,
+      state.serverRecords,
       state.records.length,
-    ],
-  );
+    ]);
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
   const { data: maxFileSize } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FILE_SIZE_MB,
@@ -90,18 +91,13 @@ const ImportCsvDialog = () => {
     mutationFn: async (data: { file: File; fieldsMapping: FieldsMapping }) => {
       setServerError(null);
       const csv = await data.file.text();
-      await recordsApi.importCsv({
+      const records = await recordsApi.importCsv({
         csv,
         tableId,
         fieldsMapping: data.fieldsMapping,
         maxRecordsLimit: (maxRecords ?? 1000) - recordsCount,
       });
-      const records = await recordsApi.list({
-        tableId,
-        limit: 99999999, // TODO: we should implement pagination in ui.
-        cursor: undefined,
-      });
-      setRecords(records.data);
+      setRecords([...serverRecords, ...records]);
     },
     onSuccess: async () => {
       setIsOpen(false);
@@ -175,22 +171,24 @@ const ImportCsvDialog = () => {
               )}
             />
 
-            {csvColumns.length > 0 && (
-              <FormField
-                control={form.control}
-                name="fieldsMapping"
-                key={form.watch('file')?.name}
-                render={({ field }) => (
-                  <FormItem>
-                    <FieldsMappingControl
-                      fields={serverFields}
-                      csvColumns={csvColumns}
-                      onChange={field.onChange}
-                    />
-                  </FormItem>
-                )}
-              />
-            )}
+            <ScrollArea className="max-h-[calc(100vh-500px)] overflow-y-auto flex-1">
+              {csvColumns.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="fieldsMapping"
+                  key={form.watch('file')?.name}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FieldsMappingControl
+                        fields={serverFields}
+                        csvColumns={csvColumns}
+                        onChange={field.onChange}
+                      />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </ScrollArea>
 
             {serverError && (
               <div className=" flex items-center justify-between">
