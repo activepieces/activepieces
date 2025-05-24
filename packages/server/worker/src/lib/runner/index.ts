@@ -212,7 +212,7 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
 
     const startTime = Date.now()
     if (isNil(processManager)) {
-        processManager = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, ENGINE_PATH, {
+        processManager = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
@@ -242,7 +242,6 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        HOME: '/tmp/',
         AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
         AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
         AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,

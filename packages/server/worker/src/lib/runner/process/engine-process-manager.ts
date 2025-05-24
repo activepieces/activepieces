@@ -8,7 +8,7 @@ import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { nanoid } from 'nanoid'
 import { executionFiles } from '../../cache/execution-files'
-
+import terminate from 'terminate'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -26,7 +26,7 @@ export class EngineProcessManager {
     lock: ApSemaphore
     engineSocketServer: ReturnType<typeof engineRunnerSocket>
 
-    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: EngineProcessOptions) {
+    constructor(log: FastifyBaseLogger, maxWorkers: number, options: EngineProcessOptions) {
         this.log = log
         this.options = options
         this.processes = []
@@ -58,7 +58,7 @@ export class EngineProcessManager {
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 timeoutWorker = setTimeout(() => {
                     didTimeout = true
-                    worker.kill()
+                    forceTerminate(worker)
                 }, timeout * 1000)
 
 
@@ -147,8 +147,11 @@ export class EngineProcessManager {
                 clearTimeout(timeoutWorker)
             }
             if (isWorkerNotResuable()) {
-                killWorker(worker, workerIndex, this.log)
+                if (!isNil(this.processes[workerIndex])) {
+                    await forceTerminate(this.processes[workerIndex])
+                }
                 this.processes[workerIndex] = undefined
+                this.workerIds[workerIndex] = nanoid()
             }
             this.log.debug({
                 workerIndex,
@@ -174,13 +177,18 @@ export class EngineProcessManager {
 
             const workerIsDead = isNil(this.processes[workerIndex]) || !this.processes[workerIndex]?.connected || isWorkerNotResuable()
             if (workerIsDead) {
-                const workerId = this.workerIds[workerIndex]
                 this.log.info({
                     workerIndex,
                 }, 'Worker is not available, creating a new one')
                 if (!isNil(this.processes[workerIndex])) {
-                    this.processes[workerIndex]?.kill()
+                    const pid = this.processes[workerIndex].pid
+                    assertNotNullOrUndefined(pid, 'Worker pid should not be undefined')
+                    await terminate(pid)
+                    this.workerIds[workerIndex] = nanoid()
                 }
+
+                const workerId = this.workerIds[workerIndex]
+
                 this.processes[workerIndex] = await engineProcessFactory(this.log).create({
                     workerId,
                     workerIndex,
@@ -241,18 +249,11 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
     }
 }
 
-function killWorker(worker: ChildProcess, workerIndex: number, log: FastifyBaseLogger): void {
-    try {
-        log.debug({
-            workerIndex,
-        }, 'Removing worker to avoid caching or better isolation')
-        worker.kill()
-    }
-    catch (e) {
-        log.error({
-            error: e,
-        }, 'Error terminating worker')
-    }
+
+async function forceTerminate(childProcess: ChildProcess): Promise<void> {
+    const pid = childProcess.pid
+    assertNotNullOrUndefined(pid, 'Worker pid should not be undefined')
+    await terminate(pid)
 }
 
 

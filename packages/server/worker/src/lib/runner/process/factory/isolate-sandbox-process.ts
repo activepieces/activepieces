@@ -1,11 +1,12 @@
 import { arch } from "node:process"
 import { EngineProcess } from "./engine-factory-types"
-import { spawn } from "node:child_process"
 import path from "node:path"
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
 import { workerMachine } from "../../../utils/machine"
-import { exec, PiecesSource } from "@activepieces/server-shared"
+import { execPromise, fileExists, PiecesSource } from "@activepieces/server-shared"
 import { FastifyBaseLogger } from "fastify"
+import { exec } from "node:child_process"
+import { isNil } from "@activepieces/shared"
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -25,18 +26,18 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
     create: async (params) => {
         const { workerId, workerIndex, options } = params
 
-        const { stdout: cleanupOutput, stderr: cleanupError } = await exec(`${isolateBinaryPath} --box-id=${workerIndex} --cleanup`)
-        const { stdout: initOutput, stderr: initError } = await exec(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
-        log.debug({ cleanupOutput, cleanupError, initOutput, initError }, '[IsolateSandboxProcess#create] Isolate cleanup and init output')
+        await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --cleanup`)
+        await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
 
         const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
-        const dirsToBindArgs: string[] = getDirsToBindArgs(params.flowVersionId, params.customPiecesPath)
+        const dirsToBindArgs: string[] = await getDirsToBindArgs(params.flowVersionId, params.customPiecesPath)
         const fullCommand = [
             isolateBinaryPath,
             ...dirsToBindArgs,
             '--share-net',
             `--box-id=${workerIndex}`,
             '--processes',
+            '--chdir=/root',
             '--run',
             ...propagatedEnvVars,
             nodeExecutablePath,
@@ -44,23 +45,31 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
         ].join(' ')
 
         log.debug({ command: fullCommand }, '[IsolateSandboxProcess#create] Executing command')
-        const isolateProcess = spawn(fullCommand, { shell: true, ...options })
-        isolateProcess.stdout?.pipe(process.stdout)
-        isolateProcess.stderr?.pipe(process.stderr)
+        const isolateProcess = await exec(fullCommand)
+        if (isolateProcess.stdout) {
+            isolateProcess.stdout.on('data', (data) => {
+                process.stdout.write(data)
+            })
+        }
+        if (isolateProcess.stderr) {
+            isolateProcess.stderr.on('data', (data) => {
+                process.stderr.write(data)
+            })
+        }
         return isolateProcess
     }
 })
-
 
 function getEnvironmentVariables(env: Record<string, string | undefined>, workerId: string): string[] {
     return Object.entries({
         ...env,
         AP_BASE_CODE_DIRECTORY: `/codes`,
+        HOME: '/tmp/',
         WORKER_ID: workerId,
     }).map(([key, value]) => `--env=${key}='${value}'`)
 }
 
-function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string): string[] {
+async function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string): Promise<string[]> {
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
 
     const dirsToBind = [
@@ -68,8 +77,9 @@ function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: 
         `--dir=/etc/=${etcDir}`,
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
-    if (flowVersionId) {
-        dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}:maybe`)
+    const fExists = !isNil(flowVersionId) && await fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
+    if (fExists) {
+        dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
     }
     if (customPiecesPath) {
         dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
