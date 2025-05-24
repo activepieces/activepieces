@@ -1,48 +1,60 @@
 import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineOperation, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
-import { codeBuilder } from '../utils/code-builder'
-import { engineInstaller } from '../utils/engine-installer'
+import { codeBuilder } from './code-builder'
+import { engineInstaller } from './engine-installer'
 import { workerMachine } from '../utils/machine'
-import { CodeArtifact } from './engine-runner'
+import { CodeArtifact } from '../runner/engine-runner-types'
+import path from 'path'
+
+export const GLOBAL_CACHE_PATH = path.resolve('cache')
+export const GLOBAL_CACHE_COMMON_PATH = path.resolve('cache', 'common')
+export const GLOBAL_CODE_CACHE_PATH = path.resolve('cache', 'codes')
+export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
+
+    getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
+        if ('projectId' in params) {
+            return path.resolve(GLOBAL_CACHE_PATH, params.projectId)
+        }           
+        return path.resolve(GLOBAL_CACHE_PATH, params.platformId)
+    },
     async provision({
         pieces,
-        globalCachePath,
         codeSteps,
-        globalCodesPath,
         customPiecesPath,
         runEnvironment,
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
         const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
-        await threadSafeMkdir(globalCachePath)
+        await threadSafeMkdir(GLOBAL_CACHE_PATH)
 
         const startTimeCode = performance.now()
+        await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
         const buildJobs = codeSteps.map(async (artifact) => {
             assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
             return codeBuilder(log).processCodeStep({
                 artifact,
-                codesFolderPath: globalCodesPath,
+                codesFolderPath: GLOBAL_CODE_CACHE_PATH,
                 runEnvironment,
                 log,
             })
         })
         await Promise.all(buildJobs)
         log.info({
-            path: globalCachePath,
+            path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeCode)}ms`,
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
         await engineInstaller(log).install({
-            path: globalCachePath,
+            path: GLOBAL_CACHE_COMMON_PATH,
         })
         log.info({
-            path: globalCachePath,
+            path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
         }, 'Installed engine in sandbox')
 
@@ -50,13 +62,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         if (officialPieces.length > 0) {
             const startTime = performance.now()
             await pieceManager(source).install({
-                projectPath: globalCachePath,
+                projectPath: GLOBAL_CACHE_COMMON_PATH,
                 pieces: officialPieces,
                 log,
             })
             log.info({
                 pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
-                globalCachePath,
+                path: GLOBAL_CACHE_COMMON_PATH,
                 timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
             }, 'Installed official pieces in sandbox')
         }
@@ -87,8 +99,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
 type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
-    globalCachePath: string
-    globalCodesPath: string
     customPiecesPath: string
     runEnvironment?: RunEnvironment
 }

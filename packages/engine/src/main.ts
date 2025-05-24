@@ -1,68 +1,87 @@
-import { argv } from 'process'
 import {
     EngineOperation,
     EngineOperationType,
+    EngineSocketEvent,
+    EngineResult,
+    EngineError,
+    EngineStdout,
+    EngineStderr,
+    isNil,
 } from '@activepieces/shared'
-import { EngineConstants } from './lib/handler/context/engine-constants'
 import { execute } from './lib/operations'
-import { utils } from './lib/utils'
+import { io } from 'socket.io-client'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
-async function executeFromFile(operationType: string): Promise<void> {
-    const input: EngineOperation = await utils.parseJsonFile(EngineConstants.INPUT_FILE)
-    const operationTypeCasted = operationType as EngineOperationType
-    const result = await execute(operationTypeCasted, input)
-    await utils.writeToJsonFile(EngineConstants.OUTPUT_FILE, result)
-}
+const WORKER_ID = process.env.WORKER_ID
+const WS_URL = 'http://127.0.0.1:12345'
 
-async function executeFromWorkerData(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
+let socket: ReturnType<typeof io> | undefined
+
+async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     try {
         const result = await execute(operationType, operation)
         const resultParsed = JSON.parse(JSON.stringify(result))
-        process.send?.({
-            type: 'result',
-            message: resultParsed,
-        })
+        const engineResult: EngineResult = {
+            result: resultParsed,
+        }
+        socket?.emit(EngineSocketEvent.ENGINE_RESULT, engineResult)
     }
     catch (error) {
-        process.send?.({
-            type: 'error',
-            message: error,
-        })
+        const engineError: EngineError = {
+            error: error instanceof Error ? error.message : error,
+        }
+        socket?.emit(EngineSocketEvent.ENGINE_ERROR, engineError)
     }
 }
 
-const operationType = argv[2]
+function setupSocket() {
+    assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
 
-if (operationType) {
-    executeFromFile(operationType).catch(e => console.error(e))
-}
-else {
-    if (process.send) {
-        const originalLog = console.log
-        console.log = function (...args) {
-            process.send?.({
-                type: 'stdout',
-                message: args.join(' ') + '\n',
-            })
-            originalLog.apply(console, args)
+    socket = io(WS_URL, {
+        path: '/worker/ws',
+        extraHeaders: {
+            'worker-id': WORKER_ID
         }
+    })
 
-        const originalError = console.error
-        console.error = function (...args) {
-            process.send?.({
-                type: 'stderr',
-                message: args.join(' ') + '\n',
-            })
-            originalError.apply(console, args)
+    // Redirect console.log/error to socket
+    const originalLog = console.log
+    console.log = function (...args) {
+        const engineStdout: EngineStdout = {
+            message: args.join(' ') + '\n',
         }
-        
-        process.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
-            executeFromWorkerData(m.operation, m.operationType).catch(e => {
-                process.send?.({
-                    type: 'error',
-                    message: e,
-                })
-            })
-        })
+        socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
+        originalLog.apply(console, args)
     }
+
+    const originalError = console.error
+    console.error = function (...args) {
+        const engineStderr: EngineStderr = {
+            message: args.join(' ') + '\n',
+        }
+        socket?.emit(EngineSocketEvent.ENGINE_STDERR, engineStderr)
+        originalError.apply(console, args)
+    }
+
+    socket.on(EngineSocketEvent.ENGINE_OPERATION, (data) => {
+        try {
+            executeFromSocket(data.operation, data.operationType).catch(e => {
+                const engineError: EngineError = {
+                    error: e instanceof Error ? e.message : e,
+                }
+                socket?.emit(EngineSocketEvent.ENGINE_ERROR, engineError)
+            })
+        } catch (error) {
+            console.error('Error handling operation:', error)
+        }
+    })
+
+    socket.on('disconnect', () => {
+        console.log('Socket disconnected, exiting process')
+        process.exit(0)
+    })
+}
+
+if (!isNil(WORKER_ID)) {
+    setupSocket()
 }

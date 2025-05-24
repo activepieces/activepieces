@@ -2,7 +2,7 @@ import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, reject
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
-import { engineRunner } from './engine'
+import { engineRunner } from './runner'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'

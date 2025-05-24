@@ -9,10 +9,10 @@ import {
     TriggerPayload,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../../api/server-api.service'
-import { engineRunner } from '../../engine'
-import { workerMachine } from '../../utils/machine'
-import { webhookUtils } from '../../utils/webhook-utils'
+import { engineApiService } from '../../../api/server-api.service'
+import { engineRunner } from '../../../runner'
+import { workerMachine } from '../../../utils/machine'
+import { webhookUtils } from '../../../utils/webhook-utils'
 
 export async function extractPayloads(
     engineToken: string,

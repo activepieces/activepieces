@@ -35,6 +35,38 @@ export type EngineOperation =
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
 
+export const enum EngineSocketEvent {
+    ENGINE_RESULT = 'engine-result',
+    ENGINE_ERROR = 'engine-error',
+    ENGINE_STDOUT = 'engine-stdout',
+    ENGINE_STDERR = 'engine-stderr',
+    ENGINE_READY = 'engine-ready',
+    ENGINE_OPERATION = 'engine-operation',
+}
+
+export const EngineResult = Type.Object({
+    result: Type.Unknown(),
+})
+
+export const EngineError = Type.Object({
+    error: Type.Unknown(),
+})
+
+export const EngineStdout = Type.Object({
+    message: Type.String(),
+})
+
+export const EngineStderr = Type.Object({
+    message: Type.String(),
+})
+
+
+export type EngineResult = Static<typeof EngineResult>
+export type EngineError = Static<typeof EngineError>
+export type EngineStdout = Static<typeof EngineStdout>
+export type EngineStderr = Static<typeof EngineStderr>
+
+
 export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
@@ -48,9 +80,9 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage
+export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation &  {
+export type ExecuteStepOperation = BaseEngineOperation & {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
@@ -185,10 +217,10 @@ export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
-        H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.RENEW ? Record<string, never> :
-                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                    ExecuteOnEnableTriggerResponse
+    H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.RENEW ? Record<string, never> :
+    H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+    ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
     success: boolean
