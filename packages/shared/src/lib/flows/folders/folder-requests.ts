@@ -29,12 +29,3 @@ export const ListFolderRequest = Type.Object({
 })
 
 export type ListFolderRequest = Omit<Static<typeof ListFolderRequest>, 'cursor'> & { cursor: Cursor | undefined }
-
-export type FolderOrderItem = {
-    folderId: FolderId
-    order: number
-}
-
-export type UpdateFoldersOrderRequest = {
-    folderOrders: FolderOrderItem[]
-}

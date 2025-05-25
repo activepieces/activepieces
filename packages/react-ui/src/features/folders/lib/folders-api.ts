@@ -4,10 +4,8 @@ import {
   CreateFolderRequest,
   Folder,
   FolderDto,
-  FolderOrderItem,
   ListFolderRequest,
   UpdateFolderRequest,
-  UpdateFoldersOrderRequest,
 } from '@activepieces/shared';
 
 export const foldersApi = {
@@ -32,12 +30,5 @@ export const foldersApi = {
   },
   renameFolder(folderId: string, req: UpdateFolderRequest) {
     return api.post<Folder>(`/v1/folders/${folderId}`, req);
-  },
-  updateOrder(folderOrders: FolderOrderItem[]) {
-    const request: UpdateFoldersOrderRequest = {
-      folderOrders,
-    };
-
-    return api.post<void>('/v1/folders/order', request);
   },
 };
