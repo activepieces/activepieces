@@ -35,6 +35,7 @@ const MAX_BATCH_SIZE = 50
 
 const recordRepo = repoFactory(RecordEntity)
 const cellsRepo = repoFactory(CellEntity)
+
 export const recordService = {
     async create({
         request,
@@ -42,75 +43,35 @@ export const recordService = {
         logger,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        return transaction(async (entityManager: EntityManager) => {
-            const existingFields = await entityManager
-                .getRepository(FieldEntity)
-                .find({
-                    where: { tableId: request.tableId, projectId },
-                })
-
-            const validRecords = request.records.map((recordData) =>
-                recordData.filter((cellData) =>
-                    existingFields.some((field) => field.id === cellData.fieldId),
-                ),
-            )
-
-            if (validRecords.length > MAX_BATCH_SIZE && getDatabaseType() == DatabaseType.POSTGRES) {
-                try {
-                    const now = new Date()
-
-                    const recordInsertions = prepareRecordInsertions(validRecords, request.tableId, projectId, now)
-
-                    const connection = databaseConnection().createQueryRunner()
-                    const client = await connection.connect()
-                    const recordStream = client.query(copyFrom('COPY record (id, "tableId", "projectId", created) FROM STDIN WITH (FORMAT text)'))
-                    for (const record of recordInsertions) {
-                        recordStream.write(`${record.id}\t${record.tableId}\t${record.projectId}\t${record.created}\n`)
-                    }
-                    recordStream.end()
-                    await new Promise((resolve, reject) => {
-                        recordStream.on('finish', resolve)
-                        recordStream.on('error', reject)
-                    })
-
-                    const cellStream = client.query(copyFrom('COPY cell (id, "recordId", "fieldId", "projectId", value) FROM STDIN WITH (FORMAT text)'))
-                    const cellInsertions = prepareCellInsertions(validRecords, recordInsertions, projectId)
-
-                    for (const cell of cellInsertions) {
-                        cellStream.write(`${cell.id}\t${cell.recordId}\t${cell.fieldId}\t${cell.projectId}\t${cell.value}\n`)
-                    }
-                    cellStream.end()
-                    await new Promise((resolve, reject) => {
-                        cellStream.on('finish', resolve)
-                        cellStream.on('error', reject)
-                    })
-
-                    const insertedRecordIds = recordInsertions.map((r) => r.id)
-                    const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)                    
-                    return await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
-                }
-                catch (error) {
-                    logger.error({ error, validRecords }, 'COPY operation failed, falling back to batch insert:')
-                }
-            }
-
-            // Use batch insert for smaller sets or as fallback
-            const batches = chunk(validRecords, MAX_BATCH_SIZE)
-            const records: RecordSchema[] = []
-            const insertedRecordIds: string[] = []
-            for (const batch of batches) {
-                const now = new Date(new Date().getTime() + records.length)
-                const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
-                await entityManager.getRepository(RecordEntity).insert(recordInsertions)
-
-                const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
-                await entityManager.getRepository(CellEntity).insert(cellInsertions)
-
-                insertedRecordIds.push(...recordInsertions.map((r) => r.id))
-            }
-            const insertedRecords = await fetchRecordsByIds(insertedRecordIds, request.tableId, projectId, entityManager)
-            return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        const existingFields = await fieldService.getAll({
+            tableId: request.tableId,
+            projectId,
         })
+
+        const validRecords = request.records.map((recordData) =>
+            recordData.filter((cellData) =>
+                existingFields.some((field) => field.id === cellData.fieldId),
+            ),
+        )
+
+        let insertedRecordIds: string[] = []
+        if (validRecords.length > MAX_BATCH_SIZE && getDatabaseType() == DatabaseType.POSTGRES) {
+            insertedRecordIds = await pgCopyInsert({ validRecords, tableId: request.tableId, projectId, logger })
+            if (insertedRecordIds.length === 0) {
+                insertedRecordIds = await batchInsert({ validRecords, tableId: request.tableId, projectId })
+            }
+        } else {
+            insertedRecordIds = await batchInsert({ validRecords, tableId: request.tableId, projectId })
+        }
+
+        const insertedRecords = await recordRepo().find({
+            where: { id: In(insertedRecordIds), tableId: request.tableId, projectId },
+            relations: ['cells'],
+            order: {
+                created: 'ASC',
+            },
+        })
+        return await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
     },
 
     async list({
@@ -119,7 +80,7 @@ export const recordService = {
         filters,
         limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-       
+
         const fields = await fieldService.getAll({
             tableId,
             projectId,
@@ -147,9 +108,9 @@ export const recordService = {
         const filteredOutRecords = records.filter((record) => {
             return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
         })
-       
+
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
-    
+
         return {
             data: populatedRecords.slice(0, limit),
             next: null,
@@ -274,17 +235,17 @@ export const recordService = {
             where: { id: In(ids), projectId, tableId: firstRecord.tableId },
             relations: ['cells'],
         })
-        
+
         await recordRepo().delete({
             id: In(ids),
             projectId,
             tableId: firstRecord.tableId,
         })
-     
+
         if (records.length === 0) {
             return []
         }
-       
+
         return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
@@ -335,7 +296,8 @@ export const recordService = {
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
+                params: {
+                    message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
                 },
             })
         }
@@ -435,22 +397,6 @@ function prepareCellInsertions(
     )
 }
 
-async function fetchRecordsByIds(recordIds: string[], tableId: string, projectId: string, entityManager: EntityManager) {
-    return entityManager
-        .getRepository(RecordEntity)
-        .find({
-            where: {
-                id: In(recordIds),
-                tableId,
-                projectId,
-            },
-            relations: ['cells'],
-            order: {
-                created: 'ASC',
-            },
-        })
-}
-
 async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
     const fields = await fieldService.getAll({
         tableId,
@@ -474,7 +420,7 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
                     updated: cell.updated,
                     created: cell.created,
                 }
-                return acc  
+                return acc
             }, {}),
         }
     })
@@ -493,34 +439,34 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
             return true
         }
         switch (filter.operator) {
-            case FilterOperator.EQ:{
+            case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
-            case FilterOperator.NEQ:{
+            case FilterOperator.NEQ: {
                 return cell.value !== filter.value
             }
-            case FilterOperator.GT:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue > filterValue })
+            case FilterOperator.GT: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue > filterValue })
             }
-            case FilterOperator.GTE:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue >= filterValue })
+            case FilterOperator.GTE: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue >= filterValue })
             }
-            case FilterOperator.LT:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue < filterValue })          
+            case FilterOperator.LT: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue < filterValue })
             }
-            case FilterOperator.LTE:{
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue <= filterValue })
+            case FilterOperator.LTE: {
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue <= filterValue })
             }
-            case FilterOperator.CO:{
+            case FilterOperator.CO: {
                 if (typeof cell.value === 'string') {
                     return cell.value.toLowerCase().includes(filter.value.toLowerCase())
                 }
                 return false
             }
-        
+
         }
     })
-   
+
 }
 
 const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
@@ -533,4 +479,84 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
         return cb({ cellValue: cv, filterValue: fv })
     }
     return false
+}
+
+async function pgCopyInsert({ validRecords, tableId, projectId, logger }: PgCopyInsertParams): Promise<string[]> {
+    const queryRunner = databaseConnection().createQueryRunner()
+    const txn = await queryRunner.connect()
+    try {
+        const now = new Date()
+        const recordInsertions = prepareRecordInsertions(validRecords, tableId, projectId, now)
+
+        await txn.query('START TRANSACTION')
+        const recordStream = txn.query(copyFrom('COPY record (id, "tableId", "projectId", created) FROM STDIN WITH (FORMAT text)'))
+        for (const record of recordInsertions) {
+            recordStream.write(`${record.id}\t${record.tableId}\t${record.projectId}\t${record.created}\n`)
+        }
+        recordStream.end()
+        await new Promise((resolve, reject) => {
+            recordStream.on('finish', resolve)
+            recordStream.on('error', (error: Error) => {
+                reject({ error, entity: 'record' })
+            })
+        })
+
+        const cellStream = txn.query(copyFrom('COPY cell (id, "recordId", "fieldId", "projectId", value) FROM STDIN WITH (FORMAT text)'))
+        const cellInsertions = prepareCellInsertions(validRecords, recordInsertions, projectId)
+
+        for (const cell of cellInsertions) {
+            cellStream.write(`${cell.id}\t${cell.recordId}\t${cell.fieldId}\t${cell.projectId}\t${cell.value}\n`)
+        }
+        cellStream.end()
+        await new Promise((resolve, reject) => {
+            cellStream.on('finish', () => {
+                txn.query('COMMIT')
+                resolve(true)
+            })
+            cellStream.on('error', (error: Error) => {
+                reject({ error, entity: 'cell' })
+            })
+        })
+
+        const insertedRecordIds = recordInsertions.map((r) => r.id)
+        return insertedRecordIds
+    }
+    catch (error) {
+        await txn.query("ROLLBACK")
+        logger.error({ error, validRecords }, 'COPY operation failed, falling back to batch insert:')
+        return []
+    } finally {
+        await queryRunner.release()
+    }
+}
+
+async function batchInsert({ validRecords, tableId, projectId }: BatchInsertParams): Promise<string[]> {
+    return transaction(async (entityManager: EntityManager) => {
+        const batches = chunk(validRecords, MAX_BATCH_SIZE)
+        const records: RecordSchema[] = []
+        const insertedRecordIds: string[] = []
+
+        for (const batch of batches) {
+            const now = new Date(new Date().getTime() + records.length)
+            const recordInsertions = prepareRecordInsertions(batch, tableId, projectId, now)
+            await entityManager.getRepository(RecordEntity).insert(recordInsertions)
+
+            const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
+            await entityManager.getRepository(CellEntity).insert(cellInsertions)
+
+            insertedRecordIds.push(...recordInsertions.map((r) => r.id))
+        }
+
+        return insertedRecordIds
+    })
+}
+
+type BatchInsertParams = {
+    validRecords: { fieldId: string, value: string }[][]
+    tableId: string
+    projectId: string
+}
+
+type PgCopyInsertParams = BatchInsertParams & {
+    logger: FastifyBaseLogger
 }
