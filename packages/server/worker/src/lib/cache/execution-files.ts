@@ -7,28 +7,13 @@ import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
-import { cacheState } from './cache-state'
-import { rmdir } from 'fs/promises'
 
 export const GLOBAL_CACHE_PATH = path.resolve('cache')
 export const GLOBAL_CACHE_COMMON_PATH = path.resolve('cache', 'common')
 export const GLOBAL_CODE_CACHE_PATH = path.resolve('cache', 'codes')
 export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
-const LATEST_CACHE_VERSION = '1';
 export const executionFiles = (log: FastifyBaseLogger) => ({
-    async init(): Promise<void> {
-        /*const cacheVersion = await cacheState(GLOBAL_CACHE_PATH).cacheCheckState('cache_version')
-        if (cacheVersion !== LATEST_CACHE_VERSION) {
-            log.info({
-                message: 'Stale cache detected, clearing cache',
-                cacheVersion,
-                latestCacheVersion: LATEST_CACHE_VERSION,
-            })
-            await rmdir(GLOBAL_CACHE_PATH, { recursive: true })
-            await threadSafeMkdir(GLOBAL_CACHE_PATH)
-            await cacheState(GLOBAL_CACHE_PATH).setCache('cache_version', LATEST_CACHE_VERSION)
-        }*/
-    },
+
     getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
         if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED) {
             if ('projectId' in params) {
