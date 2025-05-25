@@ -172,6 +172,9 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
+      "@activepieces/piece-comfyicu": [
+        "packages/pieces/community/comfyicu/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -636,6 +639,9 @@
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
+      "@activepieces/piece-saleor": [
+        "packages/pieces/community/saleor/src/index.ts"
+      ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
@@ -840,6 +846,9 @@
       "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-zagomail": [
+        "packages/pieces/community/zagomail/src/index.ts"
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"

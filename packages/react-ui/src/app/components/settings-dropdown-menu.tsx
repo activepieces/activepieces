@@ -84,7 +84,7 @@ const SettingsDropdownMenu = () => {
   ];
 
   const filterAlerts = (item: ProjectSettingsLinkItem) =>
-    platform.alertsEnabled || item.title !== t('Alerts');
+    platform.plan.alertsEnabled || item.title !== t('Alerts');
 
   const filterOnPermission = (item: ProjectSettingsLinkItem) =>
     isNil(item.hasPermission) || item.hasPermission;

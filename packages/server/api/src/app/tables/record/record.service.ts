@@ -80,7 +80,6 @@ export const recordService = {
         filters,
         limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-
         const fields = await fieldService.getAll({
             tableId,
             projectId,
@@ -106,7 +105,18 @@ export const recordService = {
             record.cells = cells.filter((cell) => cell.recordId === record.id)
         })
         const filteredOutRecords = records.filter((record) => {
-            return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
+            if (!filters || filters.length === 0) {
+                return true
+            }
+
+            const relevantCells = record.cells.filter(cell => 
+                filters.some(filter => filter.fieldId === cell.fieldId),
+            )
+
+            if (relevantCells.length === 0) {
+                return false
+            }
+            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
         })
 
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
@@ -430,11 +440,10 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
     if (filters.length === 0) {
         return true
     }
-    const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
-    if (filtersForCellFields.length === 0) {
-        return true
-    }
-    return filtersForCellFields.every((filter) => {
+    return filters.every((filter) => {
+        if (filter.fieldId !== cell.fieldId) {
+            return true
+        }
         if (filter.operator === undefined) {
             return true
         }

@@ -8,7 +8,7 @@ import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
-import { projectRoleService } from '../../project-role/project-role.service'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
@@ -90,8 +90,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled || platform.embeddingEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
             return
         }
 

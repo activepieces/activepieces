@@ -110,6 +110,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 httpRequestId,
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
+                executeTrigger: false,
             }),
         )
         return Promise.all(createFlowRuns)
@@ -126,7 +127,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         const data = request.body
         await flowRunService(request.log).start({
             payload: null,
-            flowRunId: data.runId,
+            existingFlowRunId: data.runId,
+            executeTrigger: false,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
             projectId: data.projectId,
             flowVersionId: data.flowVersionId,
@@ -176,7 +178,7 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
     }, log)
 }
 
-async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
+async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData, attempsStarted: number }) {
     const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, job.data)
     const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
@@ -188,6 +190,7 @@ async function enrichEngineToken(token: string, queueName: QueueName, job: { id:
         data: job.data,
         id: job.id,
         engineToken,
+        attempsStarted: job.attempsStarted,
     }
 }
 

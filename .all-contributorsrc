@@ -1751,6 +1751,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nish17",
+      "name": "Nimesh Solanki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12984120?v=4",
+      "profile": "https://www.snimesh.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rimjhimyadav",
+      "name": "Rimjhim Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187646079?v=4",
+      "profile": "https://github.com/rimjhimyadav",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "gs03-dev",
+      "name": "gs03",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70076620?v=4",
+      "profile": "https://github.com/gs03-dev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

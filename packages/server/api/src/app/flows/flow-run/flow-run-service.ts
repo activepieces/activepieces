@@ -130,6 +130,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     progressUpdateType: ProgressUpdateType.NONE,
                     executionType: ExecutionType.BEGIN,
                     environment: RunEnvironment.PRODUCTION,
+                    executeTrigger: false,
                 })
             }
         }
@@ -167,12 +168,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (matchRequestId || !checkRequestId) {
             return flowRunService(log).start({
                 payload,
-                flowRunId: flowRunToResume.id,
+                existingFlowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
                 httpRequestId: requestId,
                 progressUpdateType,
+                executeTrigger: false,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
             })
@@ -209,7 +211,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async start({
         projectId,
         flowVersionId,
-        flowRunId,
+        existingFlowRunId,
         payload,
         environment,
         executionType,
@@ -225,7 +227,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         const flowRun = await getFlowRunOrCreate({
-            id: flowRunId,
+            id: existingFlowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
@@ -265,8 +267,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: engineResponseWatcher(log).getServerId(),
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
+            executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
@@ -379,11 +382,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunService(log).start({
             payload,
-            flowRunId: flowRun.id,
+            existingFlowRunId: flowRun.id,
             projectId: flowRun.projectId,
             flowVersionId: flowRun.flowVersionId,
             synchronousHandlerId,
             httpRequestId: requestId,
+            executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
             environment: RunEnvironment.PRODUCTION,
@@ -540,9 +544,10 @@ type GetOneParams = {
 type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    flowRunId?: FlowRunId
+    existingFlowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
+    executeTrigger: boolean
     synchronousHandlerId: string | undefined
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
