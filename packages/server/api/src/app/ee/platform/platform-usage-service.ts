@@ -27,7 +27,7 @@ const redisKeyGenerator = (entityId: string, entityType: BillingEntityType, star
     return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`
 }
 
-export const platformUsageService = (_log: FastifyBaseLogger) => ({
+export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
     async getActiveFlows(platformId: string): Promise<number> {
         const projectIds = await getProjectIds(platformId)

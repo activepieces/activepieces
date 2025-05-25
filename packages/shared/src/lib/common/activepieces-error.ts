@@ -2,6 +2,7 @@ import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
+import { PlatformUsageMetric } from '../platform'
 import { ProjectId } from '../project'
 import { ProjectRole } from '../project-role/project-role'
 import { UserId } from '../user'
@@ -360,7 +361,7 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'tasks' | 'team-members' | 'ai-tokens'
+    metric: PlatformUsageMetric
     quota?: number
 }
 >

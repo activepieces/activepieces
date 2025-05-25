@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -7,6 +6,7 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
+    PlatformUsageMetric,
     SeekPage,
     Table,
     TableWebhook,
@@ -16,9 +16,12 @@ import {
 import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
+import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
+import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
@@ -29,13 +32,24 @@ const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 
 export const tableService = {
-
-
     async create({
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-        await this.validateCount({ projectId })
+
+        const platformId = await projectService.getPlatformId(projectId)
+        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        const platformUsage = await platformUsageService().getPlatformUsage(platformId)
+
+        if (plan.tablesLimit && platformUsage.tables >= plan.tablesLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: PlatformUsageMetric.TABLES,
+                },
+            })
+        }
+
         const table = await tableRepo().save({
             id: apId(),
             externalId: request.externalId ?? apId(),
@@ -184,16 +198,6 @@ export const tableService = {
         return tableRepo().count({
             where: { projectId },
         })
-    },
-    async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
-        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `Max tables per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)}`,
-                },
-            })
-        }
     },
   
 }

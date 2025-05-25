@@ -59,6 +59,17 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
+
+export enum PlatformUsageMetric {
+    TASKS = 'tasks',
+    AI_TOKENS = 'ai-tokens',
+    ACTIVE_FLOWS = 'active-flows',
+    USER_SEATS = 'user-seats',
+    PROJECTS = 'projects',
+    TABLES = 'tables',
+}
+
+
 export const PlatformUsage = Type.Object({
     tasks: Type.Number(),
     aiCredits: Type.Number(),
