@@ -2,7 +2,6 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import {
     ActivepiecesError,
     apId,
-    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -21,7 +20,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, TriggerType, UserId,
+    SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
@@ -371,13 +370,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
 
-            assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'Published version id is not set')
-            const populatedFlow = await this.getOnePopulatedOrThrow({
-                id,
-                projectId,
-                versionId: flowToUpdate.publishedVersionId,
-                entityManager,
-            })
+            // assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'Published version id is not set')
+            // const populatedFlow = await this.getOnePopulatedOrThrow({
+            //     id,
+            //     projectId,
+            //     versionId: flowToUpdate.publishedVersionId,
+            //     entityManager,
+            // })
 
             // const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
             // if (isDisableMcpFlow) {
@@ -616,10 +615,10 @@ const assertFlowIsNotNull: <T extends Flow>(
     }
 }
 
-function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
-}
+// function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
+//     return flowVersion.trigger.type === TriggerType.PIECE && 
+//            flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+// }
 
 type CreateParams = {
     projectId: ProjectId

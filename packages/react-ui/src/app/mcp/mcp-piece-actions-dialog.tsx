@@ -1,24 +1,15 @@
-import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { t } from 'i18next';
-import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import React from 'react';
 
-interface Action {
-  name: string;
-  displayName: string;
-  description?: string;
-  logoUrl?: string;
-  premium?: boolean;
-}
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 
 interface McpPieceActionsDialogProps {
   piece: PieceStepMetadataWithSuggestions;
   selectedActions: string[];
   onSelectAction: (actionName: string) => void;
   onSelectAll: (checked: boolean) => void;
-  onDone: () => void;
 }
 
 export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
@@ -26,14 +17,12 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   selectedActions,
   onSelectAction,
   onSelectAll,
-  onDone,
 }) => {
   const allSelected =
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
     piece.suggestedActions.every((a) => selectedActions.includes(a.name));
-  const someSelected =
-    selectedActions.length > 0 && !allSelected;
+  const someSelected = selectedActions.length > 0 && !allSelected;
 
   return (
     <>
@@ -46,36 +35,43 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
       </div>
       <ScrollArea className="flex-grow overflow-y-auto  rounded-md">
         <div className="flex flex-col gap-2 ">
-          {piece.suggestedActions && piece.suggestedActions.map((action) => (
-            <div
-              key={action.name}
-              className="flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent cursor-pointer"
-              onClick={() => onSelectAction(action.name)}
-            >
-              <Checkbox
-                checked={selectedActions.includes(action.name)}
-                onCheckedChange={() => onSelectAction(action.name)}
-                className="mt-1"
-                onClick={e => e.stopPropagation()}
-              />
-              <div className="flex gap-2">
-                <img src={piece.logoUrl} alt="" className="w-5 h-5 mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{action.displayName}</span>
+          {piece.suggestedActions &&
+            piece.suggestedActions.map((action) => (
+              <div
+                key={action.name}
+                className="flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent cursor-pointer"
+                onClick={() => onSelectAction(action.name)}
+              >
+                <Checkbox
+                  checked={selectedActions.includes(action.name)}
+                  onCheckedChange={() => onSelectAction(action.name)}
+                  className="mt-1"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="flex gap-2">
+                  <img src={piece.logoUrl} alt="" className="w-5 h-5 mt-1" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">
+                        {action.displayName}
+                      </span>
+                    </div>
+                    {action.description && (
+                      <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {action.description}
+                      </div>
+                    )}
                   </div>
-                  {action.description && (
-                    <div className="text-xs text-muted-foreground mt-0.5">{action.description}</div>
-                  )}
-                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           {piece.suggestedActions && piece.suggestedActions.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">{t('No actions available')}</div>
+            <div className="text-center text-muted-foreground py-8">
+              {t('No actions available')}
+            </div>
           )}
         </div>
       </ScrollArea>
     </>
   );
-}; 
+};

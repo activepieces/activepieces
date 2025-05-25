@@ -19,7 +19,10 @@ export const mcpApi = {
     return await api.get<McpWithTools>(`/v1/mcp-servers/${id}`);
   },
 
-  async update(id: string, request: UpdateMcpRequestBody): Promise<McpWithTools> {
+  async update(
+    id: string,
+    request: UpdateMcpRequestBody,
+  ): Promise<McpWithTools> {
     return await api.post<McpWithTools>(`/v1/mcp-servers/${id}`, request);
   },
 
@@ -31,5 +34,3 @@ export const mcpApi = {
     return await api.delete(`/v1/mcp-servers/${id}`);
   },
 };
-
-

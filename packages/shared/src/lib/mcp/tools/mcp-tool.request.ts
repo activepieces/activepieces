@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion } from '../../common'
-import { McpFlowToolData, McpPieceToolData, McpToolType } from './mcp-tool'
 import { ApId } from '../../common/id-generator'
+import { McpFlowToolData, McpPieceToolData, McpToolType } from './mcp-tool'
 
 export const UpsertMcpFlowToolRequestBody = Type.Object({
     type: Type.Literal(McpToolType.FLOW),

@@ -10,7 +10,7 @@ import {
     McpToolType, 
     McpToolWithPiece, 
     McpTrigger, 
-    TriggerType 
+    TriggerType, 
 } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
@@ -61,7 +61,7 @@ async function addPiecesToServer(
                     platformId,
                 })
                 return { ...pieceMetadata, ...mcpPiece.piece }
-            })
+            }),
     )
     
     const uniqueActions = new Set<string>()
@@ -84,7 +84,7 @@ async function addPiecesToServer(
                     Object.fromEntries(
                         Object.entries(action.props)
                             .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
-                            .map(([key, prop]) => [key, piecePropertyToZod(prop)])
+                            .map(([key, prop]) => [key, piecePropertyToZod(prop)]),
                     ),
                     async (params) => {
                         const parsedInputs = {
@@ -92,24 +92,24 @@ async function addPiecesToServer(
                             ...Object.fromEntries(
                                 Object.entries(action.props)
                                     .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
-                                    .map(([key, prop]) => [key, prop.defaultValue])
+                                    .map(([key, prop]) => [key, prop.defaultValue]),
                             ),
                             ...(pieceConnectionExternalId ? { 
-                                auth: `{{connections['${pieceConnectionExternalId}']}}` 
-                            } : {})
+                                auth: `{{connections['${pieceConnectionExternalId}']}}`, 
+                            } : {}),
                         }
                         
                         const result = await userInteractionWatcher(logger)
                             .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                                jobType: UserInteractionJobType.EXECUTE_TOOL,
-                                actionName: action.name,
-                                pieceName: piece.name,
-                                pieceVersion: piece.version,
-                                packageType: piece.packageType,
-                                pieceType: piece.pieceType,
-                                input: parsedInputs,
-                                projectId,
-                            })
+                            jobType: UserInteractionJobType.EXECUTE_TOOL,
+                            actionName: action.name,
+                            pieceName: piece.name,
+                            pieceVersion: piece.version,
+                            packageType: piece.packageType,
+                            pieceType: piece.pieceType,
+                            input: parsedInputs,
+                            projectId,
+                        })
 
                         await mcpService(logger).trackToolCall({
                             mcpId,
@@ -166,9 +166,9 @@ async function addPiecesToServer(
                                       `Error details:\n\`\`\`\n${result.standardError || 'Unknown engine error occurred'}\n\`\`\``,
                             }],
                         }
-                    }
+                    },
                 )
-            })
+            }),
     )
 }
 
@@ -192,7 +192,7 @@ async function addFlowsToServer(
 
     const mcpFlows = flows.data.filter(flow => 
         flow.version.trigger.type === TriggerType.PIECE &&
-        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp'
+        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
     )
 
     for (const flow of mcpFlows) {
@@ -206,15 +206,15 @@ async function addFlowsToServer(
         const paramNameMapping = Object.fromEntries(
             inputSchema.map(prop => [
                 fixSchemaNaming(prop.name),
-                prop.name
-            ])
+                prop.name,
+            ]),
         )
 
         const zodFromInputSchema = Object.fromEntries(
             inputSchema.map(prop => [
                 fixSchemaNaming(prop.name),
-                mcpPropertyToZod(prop)
-            ])
+                mcpPropertyToZod(prop),
+            ]),
         )
 
         server.tool(
@@ -225,8 +225,8 @@ async function addFlowsToServer(
                 const originalParams = Object.fromEntries(
                     Object.entries(params).map(([key, value]) => [
                         paramNameMapping[key] || key,
-                        value
-                    ])
+                        value,
+                    ]),
                 )
 
                 const response = await webhookService.handleWebhook({

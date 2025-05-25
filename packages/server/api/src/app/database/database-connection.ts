@@ -41,6 +41,7 @@ import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-server/mcp-entity'
+import { McpToolEntity } from '../mcp/mcp-tools/mcp-tool.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -59,7 +60,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { McpToolEntity } from '../mcp/mcp-tools/mcp-tool.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -212,4 +212,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

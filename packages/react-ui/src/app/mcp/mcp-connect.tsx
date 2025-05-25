@@ -1,5 +1,5 @@
-
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronDown,
@@ -19,6 +19,7 @@ import { Link, useParams } from 'react-router-dom';
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
+import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import { useTheme } from '@/components/theme-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -31,13 +32,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
+import { mcpApi } from '@/features/mcp/lib/mcp-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
-
-import { SimpleJsonViewer } from '@/components/simple-json-viewer';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { useMutation } from '@tanstack/react-query';
-import { mcpApi } from "@/features/mcp/lib/mcp-api";
 
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
 
@@ -192,24 +190,22 @@ const ConfigDisplay = ({
               }
             />
 
-
-              <ButtonWithTooltip
-                tooltip={t(
-                  'Create a new URL. The current one will stop working.',
-                )}
-                onClick={onRotateToken}
-                variant="outline"
-                disabled={isRotating || !hasValidMcp}
-                hasPermission={hasPermissionToWriteMcp}
-                icon={
-                  isRotating ? (
-                    <ReloadIcon className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4" />
-                  )
-                }
-              />
-
+            <ButtonWithTooltip
+              tooltip={t(
+                'Create a new URL. The current one will stop working.',
+              )}
+              onClick={onRotateToken}
+              variant="outline"
+              disabled={isRotating || !hasValidMcp}
+              hasPermission={hasPermissionToWriteMcp}
+              icon={
+                isRotating ? (
+                  <ReloadIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )
+              }
+            />
 
             <ButtonWithTooltip
               tooltip={t('Copy configuration')}
@@ -272,21 +268,14 @@ export const McpConnectPage = () => {
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const toggleTokenVisibility = () => setShowToken(!showToken);
   const toggleExpanded = () => setIsExpanded(!isExpanded);
- 
 
-  
+  const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp(mcpId!);
 
-  const {
-    data: mcp,
-    isLoading,
-    refetch: refetchMcp,
-    error: mcpError,
-  } = mcpHooks.useMcp(mcpId!);
-
-  const mcpServerUrl = replaceIpWithLocalhost(publicUrl ?? '') +
-  'api/v1/mcp/' +
-  (mcp?.token || '') +
-  '/sse';
+  const mcpServerUrl =
+    replaceIpWithLocalhost(publicUrl ?? '') +
+    'api/v1/mcp/' +
+    (mcp?.token || '') +
+    '/sse';
 
   const hasPermissionToWriteMcp = true;
   const hasValidMcp = !!mcp;

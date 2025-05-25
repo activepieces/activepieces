@@ -1,4 +1,4 @@
-import { ApId, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpsertMcpToolRequestBody, McpTool, McpToolWithPiece, McpToolWithFlow } from '@activepieces/shared'
+import { ApId, McpToolWithFlow, McpToolWithPiece, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpsertMcpToolRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
@@ -9,7 +9,7 @@ export const mcpToolController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.get('/', GetMcpToolsRequest, async (req) => {
         const { mcpId } = req.query
-        return await mcpToolService(req.log).list({
+        return mcpToolService(req.log).list({
             mcpId,
             projectId: req.principal.projectId,
             platformId: req.principal.platform.id,
@@ -53,7 +53,7 @@ const GetMcpToolsRequest = {
     response: {
         [StatusCodes.OK]: Type.Object({
             tools: Type.Array(Type.Union([McpToolWithFlow, McpToolWithPiece])),
-        })
+        }),
     },
 }
 

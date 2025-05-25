@@ -8,14 +8,12 @@ export const mcpToolApi = {
   async list(mcpId: string): Promise<McpToolWithPiece[]> {
     return await api.get<McpToolWithPiece[]>(`/v1/mcp-tools`, {
       query: {
-        mcpId
-      }
+        mcpId,
+      },
     });
   },
 
-  async upsert(
-    request: UpsertMcpToolRequestBody,
-  ): Promise<McpToolWithPiece> {
+  async upsert(request: UpsertMcpToolRequestBody): Promise<McpToolWithPiece> {
     return await api.post(`/v1/mcp-tools/`, request);
   },
 
@@ -23,5 +21,3 @@ export const mcpToolApi = {
     return await api.delete(`/v1/mcp-tools/${id}`);
   },
 };
-
-

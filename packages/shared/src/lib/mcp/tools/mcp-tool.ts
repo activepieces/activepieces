@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ApId } from '../../common/id-generator'
-import { BaseModelSchema, DiscriminatedUnion } from '../../common'
-import { Flow } from '../../flows/flow'
 import { AppConnectionWithoutSensitiveData } from '../../app-connection/app-connection'
+import { BaseModelSchema, DiscriminatedUnion } from '../../common'
+import { ApId } from '../../common/id-generator'
+import { PopulatedFlow } from '../../flows/flow'
 
 export enum McpToolType {
     PIECE = 'PIECE',
@@ -11,7 +11,7 @@ export enum McpToolType {
 
 export const McpFlowToolData = Type.Object({
     type: Type.Literal(McpToolType.FLOW),
-    flowId: ApId,
+    flowIds: Type.Array(ApId),
 })
 
 export const McpPieceToolData = Type.Object({
@@ -35,7 +35,7 @@ export const McpTool = Type.Object({
 export const McpToolWithFlow = Type.Composite([
     McpTool,
     Type.Object({
-        flow: Flow,
+        flows: Type.Array(PopulatedFlow),
     }),
 ])
 

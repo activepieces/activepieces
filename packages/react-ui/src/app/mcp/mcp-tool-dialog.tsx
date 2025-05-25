@@ -1,9 +1,11 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ChevronLeft } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
-import { Search, Puzzle, Workflow, WorkflowIcon, ChevronLeft, ChevronRight, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useDebounce } from 'use-debounce';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,214 +14,251 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
-import { piecesHooks } from "@/features/pieces/lib/pieces-hook";
-import { mcpApi } from "@/features/mcp/lib/mcp-api";
-import { flowsApi } from "@/features/flows/lib/flows-api";
-import { authenticationSession } from "@/lib/authentication-session";
-import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { assertNotNullOrUndefined, McpToolType } from "@activepieces/shared";
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-import { FlowOperationType } from "@activepieces/shared";
-import type { 
-  Trigger,
-  PopulatedFlow,
-  FlowOperationRequest,
-} from "@activepieces/shared";
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  PieceStepMetadataWithSuggestions,
-  StepMetadata,
-  StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
-import { useDebounce } from 'use-debounce';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { CardList, CardListItem, CardListItemSkeleton } from '@/components/ui/card-list';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { SearchX } from 'lucide-react';
-import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { LoadingSpinner } from '@/components/ui/spinner';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useToast } from '@/components/ui/use-toast';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { mcpToolApi } from '@/features/mcp/lib/mcp-tool-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { isNil, McpToolType } from '@activepieces/shared';
+import type { McpToolWithFlow, McpToolWithPiece } from '@activepieces/shared';
+
+import { McpFlowsContent } from './mcp-flows-content';
+import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
+import { McpPiecesContent } from './mcp-pieces-content';
 
 type McpToolDialogProps = {
   children: React.ReactNode;
-  mcpPieceToUpdate?: any;
+  mcpPieceToUpdate?: McpToolWithPiece | McpToolWithFlow;
   mcpId: string;
+  mode: 'add' | 'edit';
+  open: boolean;
+  activeTab: 'pieces' | 'flows';
+  setActiveTab: (value: 'pieces' | 'flows') => void;
+  onSuccess: () => void;
   onClose: () => void;
-  onSuccess?: () => void;
 };
 
-export default function McpToolDialog({ mcpId, mcpPieceToUpdate, onSuccess, children, onClose }: McpToolDialogProps) {
-  const [activeTab, setActiveTab] = useState("pieces");
-  const [searchQuery, setSearchQuery] = useState("");
+export default function McpToolDialog({
+  mcpId,
+  mcpPieceToUpdate,
+  mode,
+  open,
+  activeTab,
+  setActiveTab,
+  onSuccess,
+  children,
+  onClose,
+}: McpToolDialogProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [selectedPiece, setSelectedPiece] = useState<PieceStepMetadataWithSuggestions | null>(null);
-  const [selectedActions, setSelectedActions] = useState<string[]>([]);
-  const [selectedActionName, setSelectedActionName] = useState<string | null>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { metadata, isLoading: isPiecesLoading } =
+    piecesHooks.useAllStepsMetadata({
+      searchQuery: debouncedQuery,
+      type: 'action',
+    });
 
-  const { metadata, isLoading: isPiecesLoading } = piecesHooks.useAllStepsMetadata({
-    searchQuery: debouncedQuery,
-    type: 'action',
-  });
+  const [selectedPiece, setSelectedPiece] =
+    useState<PieceStepMetadataWithSuggestions | null>(() => {
+      if (
+        !isNil(mcpPieceToUpdate) &&
+        mcpPieceToUpdate.data.type === McpToolType.PIECE
+      ) {
+        return metadata?.find((m) => {
+          if (
+            mcpPieceToUpdate.data.type === McpToolType.PIECE &&
+            (m as PieceStepMetadataWithSuggestions).pieceName ===
+              mcpPieceToUpdate.data.pieceName
+          ) {
+            return true;
+          }
+          return false;
+        }) as PieceStepMetadataWithSuggestions | null;
+      }
+      return null;
+    });
+
+  const [selectedActions, setSelectedActions] = useState<string[]>(() =>
+    mcpPieceToUpdate?.data.type === McpToolType.PIECE
+      ? mcpPieceToUpdate.data.actionNames
+      : [],
+  );
+
+  const { toast } = useToast();
 
   const pieceMetadata = useMemo(() => {
-    return metadata?.filter((m): m is PieceStepMetadataWithSuggestions => 
-      'suggestedActions' in m && 'suggestedTriggers' in m
-    ) ?? [];
+    return (
+      metadata?.filter(
+        (m): m is PieceStepMetadataWithSuggestions =>
+          'suggestedActions' in m && 'suggestedTriggers' in m,
+      ) ?? []
+    );
   }, [metadata]);
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
-    mutationFn: async () => {
-      const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId()!,
-        displayName: t('Untitled'),
-      });
-      return flow;
-    },
-    onSuccess: async (flow) => {
-      const triggerMetadata = metadata?.find(
-        (m) => (m as PieceStepMetadataWithSuggestions).pieceName === '@activepieces/piece-mcp'
-      );
-      const trigger = (triggerMetadata as PieceStepMetadataWithSuggestions)
-        ?.suggestedTriggers?.find((t: any) => t.name === 'mcp_tool');
-      
-      assertNotNullOrUndefined(trigger, 'Trigger not found');
-      
-      const stepData = pieceSelectorUtils.getDefaultStep({
-        stepName: 'trigger',
-        stepMetadata: triggerMetadata as StepMetadata,
-        actionOrTrigger: trigger,
-      });
+  const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
+    const existingTool = mcp?.tools?.find(
+      (tool) =>
+        tool.data.type === McpToolType.PIECE &&
+        (tool as McpToolWithPiece).piece.pieceName === piece.pieceName,
+    );
 
-      await applyOperation(flow, {
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: stepData as Trigger,
-      });
-
-      toast({
-        description: t('Flow created successfully'),
-        duration: 3000,
-      });
-      navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to create flow'),
-        duration: 5000,
-      });
-    },
-  });
-
-  const applyOperation = async (
-    flow: PopulatedFlow,
-    operation: FlowOperationRequest,
-  ) => {
-    try {
-      const updatedFlowVersion = await flowsApi.update(flow.id, operation, true);
-      return {
-        flowVersion: {
-          ...flow.version,
-          id: updatedFlowVersion.version.id,
-          state: updatedFlowVersion.version.state,
-        },
-      };
-    } catch (error) {
-      console.error(error);
+    if (existingTool && existingTool.data.type === McpToolType.PIECE) {
+      setSelectedActions(existingTool.data.actionNames);
+    } else {
+      setSelectedActions([]);
     }
-  };
 
-  const handlePieceSelect = (piece: any) => {
     setSelectedPiece(piece);
-    setSelectedActions([]);
-    setSelectedActionName(null);
   };
 
   const handleActionSelect = (action: string) => {
-    setSelectedActions(prev => {
+    setSelectedActions((prev) => {
       const newSelected = prev.includes(action)
-        ? prev.filter(a => a !== action)
+        ? prev.filter((a) => a !== action)
         : [...prev, action];
-      setSelectedActionName(action);
       return newSelected;
     });
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked && selectedPiece) {
-      setSelectedActions(selectedPiece.suggestedActions?.map(a => a.name) ?? []);
+      setSelectedActions(
+        selectedPiece.suggestedActions?.map((a) => a.name) ?? [],
+      );
     } else {
       setSelectedActions([]);
     }
   };
 
-  const handleCreateFlow = () => {
-    createFlow();
-  };
+  const { isPending, mutate: saveTool } = useMutation({
+    mutationFn: async () => {
+      if (activeTab === 'pieces') {
+        if (!selectedPiece || selectedActions.length === 0 || !mcpId) return;
 
-  const handleSavePiece = async () => {
-    if (!selectedPiece || selectedActions.length === 0) return;
-
-    try {
-      await mcpToolApi.upsert({
-        type: McpToolType.PIECE,
-        mcpId: mcpId,
-        data: {
+        return await mcpToolApi.upsert({
           type: McpToolType.PIECE,
-          pieceName: selectedPiece.pieceName,
-          actionNames: selectedActions,
-          pieceVersion: selectedPiece.pieceVersion || '',
-        },
-      });
-
+          mcpId: mcpId,
+          data: {
+            type: McpToolType.PIECE,
+            pieceName: selectedPiece.pieceName,
+            actionNames: selectedActions,
+            pieceVersion: selectedPiece.pieceVersion || '',
+          },
+        });
+      } else {
+        if (!selectedFlows.length || !mcpId) return;
+        return await mcpToolApi.upsert({
+          type: McpToolType.FLOW,
+          mcpId: mcpId,
+          data: {
+            type: McpToolType.FLOW,
+            flowIds: selectedFlows,
+          },
+        });
+      }
+    },
+    onSuccess: () => {
       toast({
-        description: t('Integration added successfully'),
+        description:
+          mode === 'edit'
+            ? t('Tool updated successfully')
+            : t('Tool added successfully'),
         duration: 3000,
       });
-
       onSuccess?.();
-    } catch (error) {
+      handleClose();
+    },
+    onError: (error) => {
       console.error(error);
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description: t('Failed to add integration'),
+        description:
+          mode === 'edit'
+            ? t('Failed to update tool')
+            : t('Failed to add tool'),
         duration: 5000,
       });
-    }
+    },
+  });
+
+  const { data: mcp } = mcpHooks.useMcp(mcpId);
+
+  const { addedPieces, otherPieces } = useMemo(() => {
+    const added = pieceMetadata.filter((piece) =>
+      mcp?.tools?.some(
+        (tool) =>
+          tool.data.type === McpToolType.PIECE &&
+          (tool as McpToolWithPiece).piece.pieceName === piece.pieceName,
+      ),
+    );
+    const other = pieceMetadata.filter(
+      (piece) =>
+        !mcp?.tools?.some(
+          (tool) =>
+            tool.data.type === McpToolType.PIECE &&
+            (tool as McpToolWithPiece).piece.pieceName === piece.pieceName,
+        ),
+    );
+    return { addedPieces: added, otherPieces: other };
+  }, [pieceMetadata, mcp?.tools]);
+
+  const handleClose = () => {
+    setSelectedPiece(null);
+    setSearchQuery('');
+    setSelectedActions([]);
+    setActiveTab('pieces');
+    onClose();
   };
 
+  const [selectedFlows, setSelectedFlows] = useState<string[]>(
+    () =>
+      mcp?.tools
+        .find(
+          (tool): tool is McpToolWithFlow =>
+            tool.data.type === McpToolType.FLOW,
+        )
+        ?.flows.map((flow) => flow.id) ?? [],
+  );
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
           <DialogTitle className="text-2xl font-bold">
             {selectedPiece ? (
               <div className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      setSelectedPiece(null)
-                      setSearchQuery('')
-                    }}>
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Back')}</TooltipContent>
-                </Tooltip>
+                {mode === 'add' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedPiece(null);
+                          setSearchQuery('');
+                        }}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('Back')}</TooltipContent>
+                  </Tooltip>
+                )}
                 {selectedPiece.displayName}
               </div>
             ) : (
@@ -227,7 +266,11 @@ export default function McpToolDialog({ mcpId, mcpPieceToUpdate, onSuccess, chil
             )}
           </DialogTitle>
           <DialogDescription>
-            {selectedPiece ? null : t('Select actions to add to your mcp tool')}
+            {selectedPiece
+              ? mode === 'edit'
+                ? t('Edit the selected actions for this tool')
+                : t('Select actions to add to your mcp tool')
+              : null}
           </DialogDescription>
         </DialogHeader>
         {selectedPiece ? (
@@ -236,71 +279,64 @@ export default function McpToolDialog({ mcpId, mcpPieceToUpdate, onSuccess, chil
             selectedActions={selectedActions}
             onSelectAction={handleActionSelect}
             onSelectAll={handleSelectAll}
-            onDone={() => setSelectedPiece(null)}
           />
         ) : (
-          <>
-            <div className="mb-4">
-              <Input
-                placeholder={t('Search')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            {isPiecesLoading && (
-              <div className="flex items-center justify-center w-full">
-                <LoadingSpinner />
-              </div>
-            )}
-            {(!isPiecesLoading && pieceMetadata && pieceMetadata.length === 0) && (
-              <div className="text-center">{t('No pieces found')}</div>
-            )}
-            <ScrollArea className="flex-grow overflow-y-auto w-full ">
-              <div className="grid grid-cols-2 gap-1">
-                {!isPiecesLoading &&
-                  pieceMetadata &&
-                  pieceMetadata.map((piece, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handlePieceSelect(piece)}
-                      className="flex items-center h-[30px] w-full justify-between gap-2 p-4  hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <img
-                          className="w-[15px] h-[15px]"
-                          src={piece.logoUrl}
-                        />
-                        <div className="text-center text-sm">
-                          {piece.displayName}
-                        </div>
-                        {piece.description && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[300px]">{piece.description}</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                    </div>
-                  ))}
-              </div>
-            </ScrollArea>
-
-          </>
+          <div className="flex flex-col h-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) =>
+                setActiveTab(value as 'pieces' | 'flows')
+              }
+              className="flex-1 flex flex-col min-h-0"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pieces">{t('Pieces')}</TabsTrigger>
+                <TabsTrigger value="flows">{t('Flows')}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="pieces" className="flex flex-col mt-4">
+                <McpPiecesContent
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  isPiecesLoading={isPiecesLoading}
+                  pieceMetadata={pieceMetadata}
+                  addedPieces={addedPieces}
+                  otherPieces={otherPieces}
+                  onPieceSelect={handlePieceSelect}
+                />
+              </TabsContent>
+              <TabsContent value="flows" className="flex flex-col mt-4">
+                <McpFlowsContent
+                  selectedFlows={selectedFlows}
+                  setSelectedFlows={setSelectedFlows}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="ghost" onClick={() => onClose()}>
+            <Button type="button" variant="ghost">
               {t('Close')}
             </Button>
           </DialogClose>
-          <Button type="button" onClick={handleSavePiece} disabled={selectedActions.length === 0}>
-            {t('Add Tool')}
+          <Button
+            loading={isPending}
+            type="button"
+            onClick={() => saveTool()}
+            disabled={
+              activeTab === 'pieces'
+                ? selectedActions.length === 0
+                : selectedFlows.length === 0
+            }
+          >
+            {mode === 'edit' ||
+            (selectedPiece &&
+              addedPieces.some((p) => p.pieceName === selectedPiece.pieceName))
+              ? t('Save')
+              : t('Add Tool')}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-} 
+}

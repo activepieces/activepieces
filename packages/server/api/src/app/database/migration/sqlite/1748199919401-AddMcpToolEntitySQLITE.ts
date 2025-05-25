@@ -1,12 +1,12 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
-    name = 'AddMcpToolEntitySQLITE1748185391237'
+export class AddMcpToolEntitySQLITE1748199919401 implements MigrationInterface {
+    name = 'AddMcpToolEntitySQLITE1748199919401'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "mcp_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -16,10 +16,10 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "type" varchar CHECK("type" IN ('PIECE', 'FLOW')) NOT NULL,
                 "data" text NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+            CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -64,7 +64,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
@@ -109,14 +109,14 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "pinnedPieces",
                 "copilotSettings"
             FROM "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_mcp" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -126,7 +126,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "token" varchar(21) NOT NULL,
                 "name" varchar NOT NULL DEFAULT ('MCP Server')
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_mcp"("id", "created", "updated", "projectId", "token")
             SELECT "id",
@@ -135,20 +135,20 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "projectId",
                 "token"
             FROM "mcp"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_mcp"
                 RENAME TO "mcp"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "mcp_project_id" ON "mcp" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -159,7 +159,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "data" text NOT NULL,
                 CONSTRAINT "fk_mcp_tool_mcp_id" FOREIGN KEY ("mcpId") REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_mcp_tool"(
                     "id",
@@ -176,27 +176,27 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "type",
                 "data"
             FROM "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_mcp_tool"
                 RENAME TO "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+            CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "mcp_tool"
                 RENAME TO "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -206,7 +206,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "type" varchar CHECK("type" IN ('PIECE', 'FLOW')) NOT NULL,
                 "data" text NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "mcp_tool"(
                     "id",
@@ -223,20 +223,20 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "type",
                 "data"
             FROM "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+            CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
+        `)
         await queryRunner.query(`
             DROP INDEX "mcp_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "mcp"
                 RENAME TO "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -245,7 +245,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "projectId" varchar(21) NOT NULL,
                 "token" varchar(21) NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "mcp"("id", "created", "updated", "projectId", "token")
             SELECT "id",
@@ -254,14 +254,14 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "projectId",
                 "token"
             FROM "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_mcp"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -324,7 +324,7 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
@@ -369,19 +369,19 @@ export class AddMcpToolEntitySQLITE1748185391237 implements MigrationInterface {
                 "pinnedPieces",
                 "copilotSettings"
             FROM "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "mcp_project_id" ON "mcp" ("projectId")
-        `);
+        `)
     }
 
 }

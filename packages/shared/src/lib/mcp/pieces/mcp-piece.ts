@@ -1,6 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../common'
-import { ApId } from '../../common/id-generator'
 
 export enum McpPropertyType {
     TEXT = 'Text',

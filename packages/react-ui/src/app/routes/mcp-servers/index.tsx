@@ -34,7 +34,12 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ApFlagId, McpToolType, McpWithTools, Permission } from '@activepieces/shared';
+import {
+  ApFlagId,
+  McpToolType,
+  McpWithTools,
+  Permission,
+} from '@activepieces/shared';
 
 const McpServersPage = () => {
   const navigate = useNavigate();
@@ -154,9 +159,20 @@ const McpServersPage = () => {
         const visiblePieces = mcpPieces.slice(0, MAX_ICONS_TO_SHOW);
         const extraPiecesCount = mcpPieces.length - visiblePieces.length;
 
-        const allDisplayNames = mcpPieces.map(
-          (p) => pieceMetadataMap.get(p.data.type === McpToolType.PIECE ? p.data.pieceName : p.data.flowId)?.displayName || (p.data.type === McpToolType.PIECE ? p.data.pieceName : p.data.flowId),
-        );
+        const allDisplayNames = mcpPieces.map((p) => {
+          if (p.data.type === McpToolType.PIECE) {
+            return (
+              pieceMetadataMap.get(p.data.pieceName)?.displayName ||
+              p.data.pieceName
+            );
+          } else {
+            return p.data.flowIds
+              .map(
+                (flowId) => pieceMetadataMap.get(flowId)?.displayName || flowId,
+              )
+              .join(', ');
+          }
+        });
 
         let pieceDisplayNamesTooltip = '';
         if (allDisplayNames.length === 1) {
@@ -173,13 +189,20 @@ const McpServersPage = () => {
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-2">
                   {visiblePieces.map((mcpPiece) => {
-                    const metadata = pieceMetadataMap.get(mcpPiece.data.type === McpToolType.PIECE ? mcpPiece.data.pieceName : mcpPiece.data.flowId);
+                    const metadata = pieceMetadataMap.get(
+                      mcpPiece.data.type === McpToolType.PIECE
+                        ? mcpPiece.data.pieceName
+                        : mcpPiece.data.flowIds[0],
+                    );
                     return (
                       <PieceIcon
                         key={mcpPiece.id}
                         logoUrl={metadata?.logoUrl}
                         displayName={
-                          metadata?.displayName || (mcpPiece.data.type === McpToolType.PIECE ? mcpPiece.data.pieceName : mcpPiece.data.flowId)
+                          metadata?.displayName ||
+                          (mcpPiece.data.type === McpToolType.PIECE
+                            ? mcpPiece.data.pieceName
+                            : mcpPiece.data.flowIds[0])
                         }
                         size="md"
                         circle={true}

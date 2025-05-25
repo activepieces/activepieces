@@ -2,6 +2,7 @@ import {
     ActivepiecesError, 
     apId,
     ApId, 
+    assertNotNullOrUndefined, 
     ErrorCode, 
     isNil, 
     McpTool,
@@ -11,11 +12,13 @@ import {
     McpToolWithPiece,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../core/db/repo-factory'
-import { McpToolEntity } from './mcp-tool.entity'
-import { flowService } from '../../flows/flow/flow.service'
+import { Raw } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { flowService } from '../../flows/flow/flow.service'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { mcpToolHandler } from './mcp-tool-handler'
+import { McpToolEntity } from './mcp-tool.entity'
 
 const mcpToolRepo = repoFactory(McpToolEntity)
 
@@ -49,14 +52,15 @@ export const mcpToolService = (log: FastifyBaseLogger) => ({
 
     async upsert(params: UpsertParams): Promise<McpTool> {
         switch (params.data.type) {
-            case McpToolType.FLOW:
+            case McpToolType.FLOW: {
                 await mcpToolHandler.validateFlow({
                     data: params.data,
                     projectId: params.projectId,
                     log,
                 })
                 break
-            case McpToolType.PIECE:
+            }
+            case McpToolType.PIECE: {
                 await mcpToolHandler.validatePiece({
                     data: params.data,
                     projectId: params.projectId,
@@ -64,6 +68,7 @@ export const mcpToolService = (log: FastifyBaseLogger) => ({
                     log,
                 })
                 break
+            }
         }
         
         const existingTool = await getExistingTool({
@@ -86,7 +91,7 @@ export const mcpToolService = (log: FastifyBaseLogger) => ({
             where: { mcpId },
         })
 
-        return await Promise.all(tools.map(tool => enrichToolWithData(tool, projectId, platformId, log)))
+        return Promise.all(tools.map(tool => enrichToolWithData(tool, projectId, platformId, log)))
     },
 
     async delete(mcpToolId: string): Promise<void> {
@@ -99,20 +104,20 @@ async function getExistingTool(params: GetExistingToolParams): Promise<McpTool |
     const { data, mcpId } = params
     switch (data.type) {
         case McpToolType.FLOW:
-            return await mcpToolRepo().findOne({
+            return mcpToolRepo().findOne({
                 where: {
                     mcpId,
                     type: McpToolType.FLOW,
                 },
             })
         case McpToolType.PIECE:
-            return await mcpToolRepo().findOne({
+            return mcpToolRepo().findOne({
                 where: {
                     mcpId,
                     type: McpToolType.PIECE,
-                    data: {
+                    data: Raw((alias) => `${alias}->>'pieceName' = :pieceName`, {
                         pieceName: data.pieceName,
-                    },
+                    }),
                 },
             })
     }
@@ -124,18 +129,28 @@ async function enrichToolWithData(
     platformId: ApId,
     log: FastifyBaseLogger,
 ): Promise<McpToolWithFlow | McpToolWithPiece> {
-
     switch (item.data.type) {
-        case McpToolType.FLOW:
-            const flow = await flowService(log).getOneOrThrow({
-                id: item.data.flowId,
+        case McpToolType.FLOW: {
+            const flows = await Promise.all(item.data.flowIds.map(flowId => flowService(log).getOneOrThrow({
+                id: flowId,
                 projectId,
-            })
+            })))
+            const flowsWithPublishedVersion = await Promise.all(flows.map(async flow => {
+                assertNotNullOrUndefined(flow.publishedVersionId, `Flow ${flow.id} has no published version`)
+                return {
+                    ...flow,
+                    version: await flowVersionService(log).getFlowVersionOrThrow({
+                        flowId: flow.id, 
+                        versionId: flow.publishedVersionId,
+                    }),
+                }
+            }))
             return {
                 ...item,
-                flow,
+                flows: flowsWithPublishedVersion,
             }
-        case McpToolType.PIECE:
+        }
+        case McpToolType.PIECE: {
             const connection = item.data.connectionExternalId ? await appConnectionService(log).getOne({
                 projectId,
                 platformId,
@@ -146,6 +161,7 @@ async function enrichToolWithData(
                 piece: item.data,
                 connection: connection ?? undefined,
             }
+        }
     }
 }
 

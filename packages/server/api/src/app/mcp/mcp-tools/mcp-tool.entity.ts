@@ -19,13 +19,12 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
         data: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
-        }
+        },
     },
     indices: [
         {
             name: 'idx_mcp_tool_mcp_id',
             columns: ['mcpId'],
-            unique: true,
         },
     ],
     relations: {
