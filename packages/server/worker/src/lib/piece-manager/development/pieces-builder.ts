@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import fs from 'fs/promises'
 import { Server } from 'http'
 import path, { resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
@@ -17,7 +18,20 @@ enum CacheState {
     PENDING = 'PENDING',
 }
 
-async function handleFileChange(packages: string[], pieceProjectName: string, piecePackageName: string, io: Server, log: FastifyBaseLogger): Promise<void> {
+async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
+    try {
+        const nxProjectJson = JSON.parse(await fs.readFile(nxProjectFilePath, 'utf-8'))
+        if ('targets' in nxProjectJson && nxProjectJson.targets && nxProjectJson.targets['build-with-deps']) {
+            return 'build-with-deps'
+        }
+        return 'build'
+    }
+    catch (error) {
+        return 'build'
+    }
+}
+
+async function handleFileChange(packages: string[], pieceProjectName: string, piecePackageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
     log.info(
         chalk.blueBright.bold(
             '👀 Detected changes in pieces. Waiting... 👀 ' + pieceProjectName,
@@ -27,14 +41,33 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
-        log.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
+        const buildTarget = await checkBuildTarget(nxProjectFilePath)
+        log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
+
         if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
-        const cmd = `npx nx run-many -t build --projects=${pieceProjectName}`
+
+        const cmd = `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`
+
+        const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
+        log.info(
+            chalk.blueBright.bold(
+                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
+            ),
+        )
+        // TODO disable until we have a way to build with shared version bumped
+        // const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
+        //  await runCommandWithLiveOutput(postBuildCommand)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
-        
+        const endTime = Date.now()
+        const buildTime = (endTime - startTime) / 1000
+
+        log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
+
+        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
+
         const cache = cacheHandler(globalCachePath)
         await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
@@ -96,8 +129,9 @@ export async function piecesBuilder(app: FastifyInstance, io: Server, packages: 
 
         const pieceProjectName = `pieces-${packageName}`
         const packageJsonName = await filePiecesUtils(packages, app.log).getPackageNameFromFolderPath(pieceDirectory)
+        const nxProjectJson = await filePiecesUtils(packages, app.log).getProjectJsonFromFolderPath(pieceDirectory)
         const debouncedHandleFileChange = debounce(() => {
-            handleFileChange(packages, pieceProjectName, packageJsonName, io, app.log).catch(app.log.error)
+            handleFileChange(packages, pieceProjectName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
         }, 2000)
 
         const watcher = chokidar.watch(resolve(pieceDirectory), {

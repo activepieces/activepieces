@@ -176,6 +176,14 @@ const CreateOrEditConnectionDialogContent = React.memo(
               );
               break;
             }
+            case ErrorCode.INVALID_CLAIM: {
+              setErrorMessage(
+                t('Connection failed with error {msg}', {
+                  msg: apError.params.message,
+                }),
+              );
+              break;
+            }
             case ErrorCode.INVALID_APP_CONNECTION: {
               setErrorMessage(
                 t('Connection failed with error {msg}', {
@@ -191,6 +199,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
               );
               break;
             }
+
             default: {
               setErrorMessage('Unexpected error, please contact support');
               toast(INTERNAL_ERROR_TOAST);
@@ -202,8 +211,8 @@ const CreateOrEditConnectionDialogContent = React.memo(
     });
     return (
       <>
-        <DialogHeader>
-          <DialogTitle>
+        <DialogHeader className="mb-0">
+          <DialogTitle className="px-5">
             {reconnectConnection
               ? t('Reconnect {displayName} Connection', {
                   displayName: reconnectConnection.displayName,
@@ -214,14 +223,19 @@ const CreateOrEditConnectionDialogContent = React.memo(
           </DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-full">
-          <ApMarkdown markdown={auth?.description}></ApMarkdown>
-          {auth?.description && <Separator className="my-4" />}
-          <Form {...form}>
-            <form
-              onSubmit={() => console.log('submitted')}
-              className="flex flex-col gap-4"
+
+        <Form {...form}>
+          <form
+            onSubmit={() => console.log('submitted')}
+            className="flex flex-col gap-4"
+          >
+            <ScrollArea
+              className="px-2"
+              viewPortClassName="max-h-[calc(70vh-180px)] px-4"
             >
+              {' '}
+              <ApMarkdown markdown={auth?.description}></ApMarkdown>
+              {auth?.description && <Separator className="my-4" />}
               {(isNil(externalIdComingFromSdk) ||
                 externalIdComingFromSdk === '') && (
                 <FormField
@@ -246,7 +260,6 @@ const CreateOrEditConnectionDialogContent = React.memo(
                   )}
                 ></FormField>
               )}
-
               {isGlobalConnection && (
                 <AssignConnectionToProjectsControl
                   control={form.control}
@@ -268,7 +281,6 @@ const CreateOrEditConnectionDialogContent = React.memo(
                   authProperty={piece.auth as CustomAuthProperty<any>}
                 />
               )}
-
               {auth?.type === PropertyType.OAUTH2 && (
                 <div className="mt-3.5">
                   <OAuth2ConnectionSettings
@@ -278,26 +290,25 @@ const CreateOrEditConnectionDialogContent = React.memo(
                   />
                 </div>
               )}
-
-              <DialogFooter>
-                <Button
-                  onClick={(e) => form.handleSubmit(() => mutate())(e)}
-                  className="w-full"
-                  loading={isPending}
-                  type="submit"
-                  disabled={!form.formState.isValid}
-                >
-                  {t('Save')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </ScrollArea>
+            </ScrollArea>
+            <DialogFooter className="mt-0">
+              <Button
+                onClick={(e) => form.handleSubmit(() => mutate())(e)}
+                className="w-full mx-5"
+                loading={isPending}
+                type="submit"
+                disabled={!form.formState.isValid}
+              >
+                {t('Save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
 
         {errorMessage && (
           <FormError
             formMessageId="create-connection-server-error-message"
-            className="text-left mt-4"
+            className="text-left mt-4  px-5 "
           >
             {errorMessage}
           </FormError>
@@ -327,7 +338,7 @@ const CreateOrEditConnectionDialog = React.memo(
       >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
+          className="max-h-[70vh] px-0  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
           <CreateOrEditConnectionDialogContent
             piece={piece}

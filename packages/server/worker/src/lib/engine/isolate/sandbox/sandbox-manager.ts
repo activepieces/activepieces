@@ -51,6 +51,17 @@ export const sandboxManager = (log: FastifyBaseLogger) => ({
             sandbox.inUse = false
         })
     },
+
+    async shutdown(): Promise<void> {
+        log.debug({}, '[SandboxManager#shutdown]')
+
+        for (const sandbox of sandboxes) {
+            if (sandbox.inUse) {
+                await sandbox.shutdown()
+                sandbox.inUse = false
+            }
+        }
+    },
 })
 
 const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {

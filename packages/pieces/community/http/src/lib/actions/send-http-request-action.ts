@@ -4,6 +4,7 @@ import {
   HttpHeaders,
   HttpRequest,
   QueryParams,
+  AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
   createAction,
@@ -15,6 +16,12 @@ import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
+
+enum AuthType {
+  NONE = 'NONE',
+  BASIC = AuthenticationType.BASIC,
+  BEARER_TOKEN = AuthenticationType.BEARER_TOKEN,
+}
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -33,6 +40,62 @@ export const httpSendRequestAction = createAction({
     queryParams: Property.Object({
       displayName: 'Query params',
       required: true,
+    }),
+    authType: Property.StaticDropdown<AuthType>({
+      displayName: 'Authentication',
+      required: true,
+      defaultValue: AuthType.NONE,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'None', value: AuthType.NONE },
+          { label: 'Basic Auth', value: AuthType.BASIC },
+          { label: 'Bearer Token', value: AuthType.BEARER_TOKEN },
+        ],
+      },
+    }),
+    authFields: Property.DynamicProperties({
+      displayName: 'Authentication Fields',
+      required: false,
+      refreshers: ['authType'],
+      props: async ({ authType }) => {
+        if (!authType) {
+          return {};
+        }
+        const authTypeEnum = authType.toString() as AuthType;
+        let fields: DynamicPropsValue = {};
+        switch (authTypeEnum) {
+          case AuthType.NONE:
+            fields = {};
+            break;
+          case AuthType.BASIC:
+            fields = {
+              username: Property.ShortText({
+                displayName: 'Username',
+                description: 'The username to use for authentication.',
+                required: true,
+              }),
+              password: Property.ShortText({
+                displayName: 'Password',
+                description: 'The password to use for authentication.',
+                required: true,
+              }),
+            };
+            break;
+          case AuthType.BEARER_TOKEN:
+            fields = {
+              token: Property.ShortText({
+                displayName: 'Token',
+                description: 'The Bearer token to use for authentication.',
+                required: true,
+              }),
+            };
+            break;
+          default:
+            throw new Error('Invalid authentication type');
+        }
+        return fields;
+      },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
@@ -158,6 +221,8 @@ export const httpSendRequestAction = createAction({
       timeout,
       failsafe,
       use_proxy,
+      authType,
+      authFields,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -170,6 +235,27 @@ export const httpSendRequestAction = createAction({
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
     };
+
+    switch (authType) {
+      case AuthType.BASIC:
+        if (authFields) {
+          request.authentication = {
+            username: authFields['username'],
+            password: authFields['password'],
+            type: AuthenticationType.BASIC,
+          };
+        }
+        break;
+      case AuthType.BEARER_TOKEN:
+        if (authFields) {
+          request.authentication = {
+            token: authFields['token'],
+            type: AuthenticationType.BEARER_TOKEN,
+          };
+        }
+        break;
+    }
+
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
@@ -197,8 +283,8 @@ export const httpSendRequestAction = createAction({
         } else {
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
-  
-        const httpsAgent = new HttpsProxyAgent(proxyUrl)
+
+        const httpsAgent = new HttpsProxyAgent(proxyUrl);
         const axiosClient = axios.create({
           httpsAgent,
         });

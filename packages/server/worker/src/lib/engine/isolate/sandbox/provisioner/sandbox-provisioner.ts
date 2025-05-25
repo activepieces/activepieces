@@ -1,6 +1,6 @@
 import path from 'path'
 import { enrichErrorContext } from '@activepieces/server-shared'
-import { PiecePackage, PieceType } from '@activepieces/shared'
+import { PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../../../engine-runner'
 import { executionFiles } from '../../../execution-files'
@@ -15,6 +15,7 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
         customPiecesPathKey,
         pieces = [],
         codeSteps = [],
+        runEnvironment,
         ...cacheInfo
     }: ProvisionParams): Promise<IsolateSandbox> {
         try {
@@ -27,6 +28,7 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
                 globalCachePath,
                 globalCodesPath,
                 customPiecesPath,
+                runEnvironment,
             })
 
             const hasAnyCustomPieces = pieces.some((f: PiecePackage) => f.pieceType === PieceType.CUSTOM)
@@ -64,12 +66,18 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
 
         await sandboxManager(log).release(sandbox.boxId)
     },
+
+    async shutdown(): Promise<void> {
+        log.debug({}, '[SandboxProvisioner#shutdown]')
+        await sandboxManager(log).shutdown()
+    },
 })
 
 type ProvisionParams = {
     pieces?: PiecePackage[]
     codeSteps?: CodeArtifact[]
     customPiecesPathKey: string
+    runEnvironment?: RunEnvironment
 }
 
 type ReleaseParams = {

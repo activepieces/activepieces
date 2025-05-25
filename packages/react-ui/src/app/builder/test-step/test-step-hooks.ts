@@ -10,6 +10,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
+import { wait } from '@/lib/utils';
 import {
   Action,
   ApErrorParams,
@@ -52,16 +53,24 @@ const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    return useMutation<TriggerEventWithPayload[], Error, void>({
-      mutationFn: async () => {
+    return useMutation<TriggerEventWithPayload[], Error, AbortSignal>({
+      mutationFn: async (abortSignal: AbortSignal) => {
         setErrorMessage?.(undefined);
         const ids = (
           await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
         ).data.map((triggerEvent) => triggerEvent.id);
-        await triggerEventsApi.startWebhookSimulation(flowId);
+        const webhookSimulation = await triggerEventsApi.getWebhookSimulation(
+          flowId,
+        );
+        if (!webhookSimulation) {
+          await triggerEventsApi.startWebhookSimulation(flowId);
+        }
         // TODO REFACTOR: replace this with a websocket
         let attempt = 0;
         while (attempt < 1000) {
+          if (abortSignal.aborted) {
+            return [];
+          }
           const newData = await triggerEventsApi.list({
             flowId,
             cursor: undefined,
@@ -78,7 +87,7 @@ const testStepHooks = {
             }
             return newData.data;
           }
-          await waitFor1Second();
+          await wait(2000);
           attempt++;
         }
         return [];
@@ -327,8 +336,5 @@ async function updateTriggerSampleData({
   setSampleData(formValues.name, data.payload);
   setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
 }
-
-const waitFor1Second = () =>
-  new Promise((resolve) => setTimeout(resolve, 10000));
 
 export default testStepHooks;
