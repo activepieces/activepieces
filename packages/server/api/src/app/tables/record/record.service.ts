@@ -71,7 +71,7 @@ export const recordService = {
                 created: 'ASC',
             },
         })
-        return await formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
+        return formatRecordsAndFetchField({ records: insertedRecords, tableId: request.tableId, projectId })
     },
 
     async list({

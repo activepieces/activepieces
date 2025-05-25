@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { LogInIcon } from 'lucide-react';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
+import { parse } from 'papaparse';
 
 import { recordsApi } from '../lib/records-api';
 import { FieldsMapping } from '../lib/utils';
@@ -47,6 +48,7 @@ const ImportCsvDialog = () => {
       state.records.length,
     ]);
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
+  const [csvRecords, setCsvRecords] = useState<string[][]>([]);
   const { data: maxFileSize } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FILE_SIZE_MB,
   );
@@ -90,9 +92,8 @@ const ImportCsvDialog = () => {
   const { mutate: importCsv, isPending: isLoading } = useMutation({
     mutationFn: async (data: { file: File; fieldsMapping: FieldsMapping }) => {
       setServerError(null);
-      const csv = await data.file.text();
       const records = await recordsApi.importCsv({
-        csv,
+        csvRecords,
         tableId,
         fieldsMapping: data.fieldsMapping,
         maxRecordsLimit: (maxRecords ?? 1000) - recordsCount,
@@ -139,12 +140,12 @@ const ImportCsvDialog = () => {
             <ApMarkdown
               markdown={`
                 ${t(
-                  'Imported records will be added to the bottom of the table',
-                )} \n           
+                'Imported records will be added to the bottom of the table',
+              )} \n           
                 ${t(
-                  'Any records after the limit ({maxRecords} records) will be ignored',
-                  { maxRecords: maxRecords ?? 0 },
-                )}
+                'Any records after the limit ({maxRecords} records) will be ignored',
+                { maxRecords: maxRecords ?? 0 },
+              )}
                     `}
             />
             <FormField
@@ -159,10 +160,21 @@ const ImportCsvDialog = () => {
                       accept=".csv"
                       onChange={async (e) => {
                         field.onChange(e.target.files?.[0]);
-                        const readCsvColumns = await e.target.files?.[0].text();
-                        const csvColumnsArray =
-                          readCsvColumns?.split('\n')[0].split(',') ?? [];
-                        setCsvColumns(csvColumnsArray);
+
+                        const csvRecords = await new Promise<string[][]>(
+                          (resolve) => {
+                            if (!e.target.files || !e.target.files[0]) return;
+                            parse(e.target.files[0], {
+                              header: false,
+                              skipEmptyLines: 'greedy',
+                              worker: true,
+                              complete: (results) => {
+                                resolve(results.data as string[][]);
+                              },
+                            });
+                          });
+                        setCsvColumns(csvRecords[0] ?? []);
+                        setCsvRecords(csvRecords.slice(1));
                       }}
                     />
                   </FormControl>
