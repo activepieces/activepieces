@@ -4,8 +4,8 @@ import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
-import { workerMachine } from '../utils/machine'
 import { packageManager } from '../cache/package-manager'
+import { workerMachine } from '../utils/machine'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
 enum CacheState {

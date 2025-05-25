@@ -2,14 +2,14 @@ import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, reject
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
-import { engineRunner } from './runner'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
-import { workerMachine } from './utils/machine'
+import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
+import { workerMachine } from './utils/machine'
 
 let closed = true
 let workerToken: string

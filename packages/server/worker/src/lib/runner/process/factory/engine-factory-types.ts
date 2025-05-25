@@ -1,4 +1,4 @@
-import { ChildProcess } from "child_process"
+import { ChildProcess } from 'child_process'
 
 
 export type EngineProcess = {
@@ -13,7 +13,7 @@ export type EngineProcessOptions =  {
         maxOldGenerationSizeMb: number
         maxYoungGenerationSizeMb: number
         stackSizeMb: number
-    },
+    }
     execArgv: string[]
 }
 

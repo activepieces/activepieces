@@ -1,14 +1,13 @@
 import { ChildProcess } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResult, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType, EngineStderr, EngineResponseStatus, EngineStdout } from '@activepieces/shared'
+import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { workerMachine } from '../../utils/machine'
-import { engineProcessFactory } from './factory/index'
-import { EngineProcessOptions } from './factory/engine-factory-types'
-import { engineRunnerSocket } from '../engine-runner-socket'
 import { nanoid } from 'nanoid'
 import { executionFiles } from '../../cache/execution-files'
-import terminate from 'terminate'
+import { workerMachine } from '../../utils/machine'
+import { engineRunnerSocket } from '../engine-runner-socket'
+import { EngineProcessOptions } from './factory/engine-factory-types'
+import { engineProcessFactory } from './factory/index'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -51,14 +50,14 @@ export class EngineProcessManager {
         let timeoutWorker: NodeJS.Timeout | undefined
         try {
 
-            const result = await new Promise<WorkerResult>(async (resolve, reject) => {
+            const result = await new Promise<WorkerResult>((resolve, reject) => {
                 let stdError = ''
                 let stdOut = ''
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                timeoutWorker = setTimeout(() => {
+                timeoutWorker = setTimeout(async () => {
                     didTimeout = true
-                    forceTerminate(worker)
+                    await forceTerminate(worker, this.log)
                 }, timeout * 1000)
 
 
@@ -129,7 +128,7 @@ export class EngineProcessManager {
                 this.log.debug({
                     workerIndex,
                 }, 'Sending operation to worker')
-                await this.engineSocketServer.send(workerId, { operation, operationType })
+                this.engineSocketServer.send(workerId, { operation, operationType })
             })
             return result
         }
@@ -138,7 +137,8 @@ export class EngineProcessManager {
                 error,
             }, 'Worker throw unexpected error')
             throw error
-        } finally {
+        }
+        finally {
             this.engineSocketServer.unsubscribe(workerId)
             worker.removeAllListeners('exit')
             worker.removeAllListeners('error')
@@ -148,7 +148,7 @@ export class EngineProcessManager {
             }
             if (isWorkerNotResuable()) {
                 if (!isNil(this.processes[workerIndex])) {
-                    await forceTerminate(this.processes[workerIndex])
+                    await forceTerminate(this.processes[workerIndex], this.log)
                 }
                 this.processes[workerIndex] = undefined
                 this.workerIds[workerIndex] = nanoid()
@@ -181,9 +181,7 @@ export class EngineProcessManager {
                     workerIndex,
                 }, 'Worker is not available, creating a new one')
                 if (!isNil(this.processes[workerIndex])) {
-                    const pid = this.processes[workerIndex].pid
-                    assertNotNullOrUndefined(pid, 'Worker pid should not be undefined')
-                    await terminate(pid)
+                    await forceTerminate(this.processes[workerIndex], this.log)
                     this.workerIds[workerIndex] = nanoid()
                 }
 
@@ -250,10 +248,8 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
 }
 
 
-async function forceTerminate(childProcess: ChildProcess): Promise<void> {
-    const pid = childProcess.pid
-    assertNotNullOrUndefined(pid, 'Worker pid should not be undefined')
-    await terminate(pid)
+async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger): Promise<void> {
+    childProcess.kill('SIGKILL')
 }
 
 

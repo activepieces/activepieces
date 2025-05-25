@@ -5,8 +5,8 @@ import { memoryLock, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { cacheState } from './cache-state'
 import { workerMachine } from '../utils/machine'
+import { cacheState } from './cache-state'
 
 const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()

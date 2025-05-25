@@ -154,10 +154,10 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 flowId: flow.id,
                 flowVersionId: flow.version.id,
             })
-            await engineApiService(engineToken, log).checkTaskLimit()
+            await engineApiService(engineToken, runLog).checkTaskLimit()
 
-            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, log)
-            const { result } = await engineRunner(log).executeFlow(engineToken, input)
+            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, runLog)
+            const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
                 await handleInternalError(jobData, engineToken, new ActivepiecesError({

@@ -1,12 +1,12 @@
-import { arch } from "node:process"
-import { EngineProcess } from "./engine-factory-types"
-import path from "node:path"
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from "../../../cache/execution-files"
-import { workerMachine } from "../../../utils/machine"
-import { execPromise, fileExists, PiecesSource } from "@activepieces/server-shared"
-import { FastifyBaseLogger } from "fastify"
-import { exec } from "node:child_process"
-import { isNil } from "@activepieces/shared"
+import { exec } from 'node:child_process'
+import path from 'node:path'
+import { arch } from 'node:process'
+import { execPromise, fileExists, PiecesSource } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/execution-files'
+import { workerMachine } from '../../../utils/machine'
+import { EngineProcess } from './engine-factory-types'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -41,11 +41,11 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
             '--run',
             ...propagatedEnvVars,
             nodeExecutablePath,
-            `/root/main.js`
+            '/root/main.js',
         ].join(' ')
 
         log.debug({ command: fullCommand }, '[IsolateSandboxProcess#create] Executing command')
-        const isolateProcess = await exec(fullCommand)
+        const isolateProcess = exec(fullCommand)
         if (isolateProcess.stdout) {
             isolateProcess.stdout.on('data', (data) => {
                 process.stdout.write(data)
@@ -57,13 +57,13 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
             })
         }
         return isolateProcess
-    }
+    },
 })
 
 function getEnvironmentVariables(env: Record<string, string | undefined>, workerId: string): string[] {
     return Object.entries({
         ...env,
-        AP_BASE_CODE_DIRECTORY: `/codes`,
+        AP_BASE_CODE_DIRECTORY: '/codes',
         HOME: '/tmp/',
         WORKER_ID: workerId,
     }).map(([key, value]) => `--env=${key}='${value}'`)

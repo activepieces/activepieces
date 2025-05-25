@@ -4,8 +4,8 @@ import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-sh
 import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
-import { cacheState } from './cache-state'
 import { workerMachine } from '../utils/machine'
+import { cacheState } from './cache-state'
 import { PackageInfo, packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `

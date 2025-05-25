@@ -1,11 +1,10 @@
-import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { executionFiles } from '../cache/execution-files'
+import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { ENGINE_PATH, executionFiles, GLOBAL_CACHE_PATH } from '../cache/execution-files'
-import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from './engine-runner-types'
 import { EngineProcessManager } from './process/engine-process-manager'
 

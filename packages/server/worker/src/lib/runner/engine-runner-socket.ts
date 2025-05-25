@@ -1,9 +1,9 @@
-import { Server } from 'socket.io'
+import { assertNotNullOrUndefined, EngineError, EngineResult, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { assertNotNullOrUndefined, EngineError, EngineResult, EngineStderr, EngineStdout, EngineSocketEvent, isNil } from '@activepieces/shared'
+import { Server, Socket } from 'socket.io'
 
 let io: Server | null = null
-const sockets: Record<string, any> = {}
+const sockets: Record<string, Socket> = {}
 const resolvePromises: Record<string, (value: boolean) => void> = {}
 
 export const engineRunnerSocket = (log: FastifyBaseLogger) => {
@@ -14,19 +14,18 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                     path: '/worker/ws',
                     cors: {
                         origin: '*',
-                    }
+                    },
                 })
 
                 io.on('connection', (socket) => {
                     const workerId = socket.handshake.headers['worker-id'] as string
                     log.info('Client connected to engine socket server ' + workerId)
-                    
+
                     // Clean up any existing socket for this workerId
                     if (sockets[workerId]) {
-                        sockets[workerId].removeAllListeners()
-                        sockets[workerId].disconnect()
+                        this.cleanupSocket(workerId)
                     }
-                    
+
                     sockets[workerId] = socket
 
                     if (!isNil(resolvePromises[workerId])) {
@@ -36,16 +35,13 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
                     socket.on('disconnect', () => {
                         log.info({ workerId }, 'Client disconnected from engine socket server')
-                        // Clean up all listeners and references
-                        socket.removeAllListeners()
-                        delete sockets[workerId]
-                        delete resolvePromises[workerId]
+                        this.cleanupSocket(workerId)
                     })
 
                     // Handle errors
                     socket.on('error', (error) => {
                         log.error({ error, workerId }, 'Socket error occurred')
-                        socket.disconnect()
+                        this.cleanupSocket(workerId)
                     })
                 })
 
@@ -56,9 +52,22 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 process.on('SIGINT', async () => {
                     await this.disconnect()
                 })
-            } catch (error) {
+            }
+            catch (error) {
                 log.error({ error }, 'Failed to initialize socket server')
                 throw error
+            }
+        },
+
+        cleanupSocket(workerId: string): void {
+            const socket = sockets[workerId]
+            if (socket) {
+                socket.removeAllListeners()
+                socket.disconnect(true)
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete sockets[workerId]
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete resolvePromises[workerId]
             }
         },
 
@@ -69,20 +78,22 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
             const promise = new Promise<boolean>((resolve) => {
                 const timeout = setTimeout(() => {
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete resolvePromises[workerId]
                     resolve(false)
                 }, 30000)
 
                 resolvePromises[workerId] = (value: boolean) => {
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete resolvePromises[workerId]
                     clearTimeout(timeout)
                     resolve(value)
                 }
             })
-            return await promise
+            return promise
         },
 
-        async send(workerId: string, message: unknown): Promise<void> {
+        send(workerId: string, message: unknown): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'socket')
             if (!socket.connected) {
@@ -96,7 +107,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onResult: (result: EngineResult) => void,
             onError: (error: EngineError) => void,
             onStdout: (stdout: EngineStdout) => void,
-            onStderr: (stderr: EngineStderr) => void
+            onStderr: (stderr: EngineStderr) => void,
         ): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
@@ -124,15 +135,11 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             if (io) {
                 // Clean up all sockets
                 Object.keys(sockets).forEach(workerId => {
-                    const socket = sockets[workerId]
-                    if (socket) {
-                        socket.removeAllListeners()
-                        socket.disconnect()
-                    }
+                    this.cleanupSocket(workerId)
                 })
                 await io.close()
                 io = null
             }
-        }
+        },
     }
 }
