@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PlatformUsageMetric, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -149,7 +149,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                     throw new ActivepiecesError({
                         code: ErrorCode.QUOTA_EXCEEDED,
                         params: {
-                            metric: 'tasks',
+                            metric: PlatformUsageMetric.TASKS,
                         },
                     })
                 }
