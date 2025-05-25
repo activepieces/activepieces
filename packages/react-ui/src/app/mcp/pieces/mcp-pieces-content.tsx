@@ -1,14 +1,11 @@
 import { t } from 'i18next';
 import React from 'react';
 
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 
 interface McpPiecesContentProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
   isPiecesLoading: boolean;
   pieceMetadata: PieceStepMetadataWithSuggestions[];
   addedPieces: PieceStepMetadataWithSuggestions[];
@@ -17,8 +14,6 @@ interface McpPiecesContentProps {
 }
 
 export const McpPiecesContent: React.FC<McpPiecesContentProps> = ({
-  searchQuery,
-  onSearchChange,
   isPiecesLoading,
   pieceMetadata,
   addedPieces,
@@ -26,14 +21,7 @@ export const McpPiecesContent: React.FC<McpPiecesContentProps> = ({
   onPieceSelect,
 }) => {
   return (
-    <div className="flex flex-col h-[calc(100vh-300px)] overflow-y-auto">
-      <div className="mb-4">
-        <Input
-          placeholder={t('Search')}
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+    <div className="flex flex-col h-[calc(100vh-400px)] overflow-y-auto">
       {isPiecesLoading && (
         <div className="flex items-center justify-center w-full flex-1">
           <LoadingSpinner />

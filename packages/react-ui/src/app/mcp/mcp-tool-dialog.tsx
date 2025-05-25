@@ -1,7 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Puzzle, Workflow, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -289,14 +290,41 @@ export default function McpToolDialog({
               }
               className="flex-1 flex flex-col min-h-0"
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="pieces">{t('Pieces')}</TabsTrigger>
-                <TabsTrigger value="flows">{t('Flows')}</TabsTrigger>
-              </TabsList>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <div className="relative mt-1">
+                    <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t('Search')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+                <TabsList className="w-full p-0 bg-background justify-start border-b rounded-none">
+                  <TabsTrigger
+                    value="pieces"
+                    className="rounded-none bg-background h-full data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Puzzle className="w-4 h-4" />
+                      {t('Pieces')}
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="flows"
+                    className="rounded-none bg-background h-full data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Workflow className="w-4 h-4" />
+                      {t('Flows')}
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
               <TabsContent value="pieces" className="flex flex-col mt-4">
                 <McpPiecesContent
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
                   isPiecesLoading={isPiecesLoading}
                   pieceMetadata={pieceMetadata}
                   addedPieces={addedPieces}
@@ -306,6 +334,7 @@ export default function McpToolDialog({
               </TabsContent>
               <TabsContent value="flows" className="flex flex-col mt-4">
                 <McpFlowsContent
+                  searchQuery={searchQuery}
                   selectedFlows={selectedFlows}
                   setSelectedFlows={setSelectedFlows}
                 />

@@ -1,14 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Workflow, Plus, AlertCircle, Search } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { Workflow, Plus, AlertCircle } from 'lucide-react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
@@ -36,16 +35,17 @@ interface McpFlowActionsDialogProps {
   flows: PopulatedFlow[];
   selectedFlows: string[];
   setSelectedFlows: (value: string[] | ((prev: string[]) => string[])) => void;
+  searchQuery: string;
 }
 
 export const McpFlowActionsDialog = ({
   flows,
   selectedFlows,
   setSelectedFlows,
+  searchQuery,
 }: McpFlowActionsDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
   const allSelected =
@@ -176,17 +176,6 @@ export const McpFlowActionsDialog = ({
   return (
     <>
       <div className="flex flex-col gap-4">
-        <div className="px-3">
-          <div className="relative mt-1">
-            <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('Search flows...')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-        </div>
         <div className="flex items-center justify-between px-3">
           <div className="flex items-center gap-4">
             <Checkbox

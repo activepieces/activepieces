@@ -9,11 +9,13 @@ import { TriggerType, PopulatedFlow } from '@activepieces/shared';
 import { McpFlowActionsDialog } from './mcp-flow-actions-dialog';
 
 type McpFlowsContentProps = {
+  searchQuery: string;
   selectedFlows: string[];
   setSelectedFlows: (value: string[] | ((prev: string[]) => string[])) => void;
 };
 
 export const McpFlowsContent = ({
+  searchQuery,
   selectedFlows,
   setSelectedFlows,
 }: McpFlowsContentProps) => {
@@ -40,7 +42,7 @@ export const McpFlowsContent = ({
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-300px)]">
+    <div className="flex flex-col h-[calc(100vh-400px)]">
       {isFlowsLoading && (
         <div className="flex items-center justify-center w-full flex-1">
           <LoadingSpinner />
@@ -51,6 +53,7 @@ export const McpFlowsContent = ({
           <div className="pr-4">
             <McpFlowActionsDialog
               flows={flows || []}
+              searchQuery={searchQuery}
               selectedFlows={selectedFlows}
               setSelectedFlows={setSelectedFlows}
             />
