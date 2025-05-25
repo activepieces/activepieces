@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
 import { execPromise, fileExists, PiecesSource } from '@activepieces/server-shared'
@@ -31,8 +31,7 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
 
         const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
         const dirsToBindArgs: string[] = await getDirsToBindArgs(params.flowVersionId, params.customPiecesPath)
-        const fullCommand = [
-            isolateBinaryPath,
+        const args = [
             ...dirsToBindArgs,
             '--share-net',
             `--box-id=${workerIndex}`,
@@ -42,20 +41,20 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
             ...propagatedEnvVars,
             nodeExecutablePath,
             '/root/main.js',
-        ].join(' ')
+        ]
 
-        log.debug({ command: fullCommand }, '[IsolateSandboxProcess#create] Executing command')
-        const isolateProcess = exec(fullCommand)
-        if (isolateProcess.stdout) {
-            isolateProcess.stdout.on('data', (data) => {
-                process.stdout.write(data)
-            })
-        }
-        if (isolateProcess.stderr) {
-            isolateProcess.stderr.on('data', (data) => {
-                process.stderr.write(data)
-            })
-        }
+        log.debug({ command: `${isolateBinaryPath} ${args.join(' ')}` }, '[IsolateSandboxProcess#create] Executing command')
+        const isolateProcess = spawn(isolateBinaryPath, args, {
+            shell: true,
+        })
+
+        isolateProcess.stdout?.on('data', (data) => {
+            process.stdout.write(data)
+        })
+        isolateProcess.stderr?.on('data', (data) => {
+            process.stderr.write(data)
+        })
+
         return isolateProcess
     },
 })

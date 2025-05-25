@@ -8,6 +8,7 @@ import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
+import treeKill from 'tree-kill'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -58,6 +59,7 @@ export class EngineProcessManager {
                 timeoutWorker = setTimeout(async () => {
                     didTimeout = true
                     await forceTerminate(worker, this.log)
+                    this.processes[workerIndex] = undefined
                 }, timeout * 1000)
 
 
@@ -247,9 +249,26 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
     }
 }
 
-
 async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger): Promise<void> {
-    childProcess.kill('SIGKILL')
+    const pid = childProcess.pid
+    if (!pid) {
+        throw new Error('No PID found for child process')
+    }
+    await new Promise<void>((resolve) => {
+        treeKill(pid, 'SIGKILL', (err) => {
+            if (err) {
+                log.error({
+                    pid,
+                    error: err,
+                }, 'Failed to kill child process tree')
+            } else {
+                log.info({
+                    pid,
+                }, 'Killed child process tree')
+            }
+            resolve()
+        })
+    })
 }
 
 
