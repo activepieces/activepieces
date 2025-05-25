@@ -19,11 +19,11 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
-import { mcpPieceService } from '../mcp-tools/mcp-piece-service'
-import { mcpFlowService } from '../mcp-tools/mcp-flow-service'
+import { mcpToolService } from '../mcp-tools/mcp-tool.service'
 import { McpEntity } from './mcp-entity'
 import { McpPieceToolHistoryEntity } from './mcp-piece-tool-history-entity'
 import { McpFlowToolHistoryEntity } from './mcp-flow-tool-history-entity'
+import { projectService } from '../../project/project-service'
 
 const mcpRepo = repoFactory(McpEntity)
 const mcpPieceToolHistoryRepo = repoFactory(McpPieceToolHistoryEntity)
@@ -75,7 +75,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(populatedMcps, cursor)
     },
 
-    async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithTools> {
+    async getOrThrow({ mcpId }: GetOrThrowParams): Promise<McpWithTools> {
         const mcp = await mcpRepo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
@@ -84,15 +84,18 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
                 params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
-
-        const pieces = await mcpPieceService(_log).list(mcp.id)
         
-        const flows = await mcpFlowService(_log).list(mcp.id)
+        const project = await projectService.getOneOrThrow(mcp.projectId)
+
+        const tools = await mcpToolService(_log).list({
+            mcpId: mcp.id,
+            projectId: mcp.projectId,
+            platformId: project.platformId,
+        })
 
         return {
             ...mcp,
-            pieces,
-            flows,
+            tools,
         }
     },
 
@@ -239,3 +242,6 @@ type AddFlowToolHistoryParams = {
     success: boolean
 }
 
+type GetOrThrowParams = {
+    mcpId: ApId
+}

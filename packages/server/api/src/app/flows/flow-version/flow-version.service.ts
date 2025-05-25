@@ -27,7 +27,6 @@ import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -301,10 +300,10 @@ async function applySingleOperation(
     operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
     const updatedFlowVersion = await flowOperations.apply(flowVersion, operation)
 
-    const isMcpTriggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && isMcpTriggerPiece(flowVersion) && !isMcpTriggerPiece(updatedFlowVersion)
-    if (isMcpTriggerChanged) {
-        await mcpFlowService(log).delete(flowVersion.flowId)
-    }
+    // const isMcpTriggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && isMcpTriggerPiece(flowVersion) && !isMcpTriggerPiece(updatedFlowVersion)
+    // if (isMcpTriggerChanged) {
+    //     await mcpFlowService(log).delete(flowVersion.flowId)
+    // }
     return updatedFlowVersion   
 }
 

@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Nullable } from '../../common'
-import { ApId } from '../../common/id-generator'
+import { Nullable } from '../common'
 
 export const ListMcpsRequest = Type.Object({
     limit: Type.Optional(Type.Number({})),
@@ -48,11 +47,4 @@ export type UpsertMcpPieceRequestBody = Static<typeof UpsertMcpPieceRequestBody>
 export const UpdateMcpFlowsRequestBody = Type.Object({
     flowIds: Type.Array(Type.String()),
 })
-
 export type UpdateMcpFlowsRequestBody = Static<typeof UpdateMcpFlowsRequestBody>
-
-
-
-
-
-

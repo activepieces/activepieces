@@ -25,7 +25,7 @@ import { flowsApi } from "@/features/flows/lib/flows-api";
 import { authenticationSession } from "@/lib/authentication-session";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { assertNotNullOrUndefined } from "@activepieces/shared";
+import { assertNotNullOrUndefined, McpToolType } from "@activepieces/shared";
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { FlowOperationType } from "@activepieces/shared";
 import type { 
@@ -46,6 +46,7 @@ import { SearchX } from 'lucide-react';
 import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { mcpToolApi } from '@/features/mcp/lib/mcp-tool-api';
 
 type McpToolDialogProps = {
   children: React.ReactNode;
@@ -170,10 +171,15 @@ export default function McpToolDialog({ mcpId, mcpPieceToUpdate, onSuccess, chil
     if (!selectedPiece || selectedActions.length === 0) return;
 
     try {
-      await mcpApi.upsertPiece(mcpId, {
-        pieceName: selectedPiece.pieceName,
-        actionNames: selectedActions,
-        pieceVersion: selectedPiece.pieceVersion,
+      await mcpToolApi.upsert({
+        type: McpToolType.PIECE,
+        mcpId: mcpId,
+        data: {
+          type: McpToolType.PIECE,
+          pieceName: selectedPiece.pieceName,
+          actionNames: selectedActions,
+          pieceVersion: selectedPiece.pieceVersion || '',
+        },
       });
 
       toast({

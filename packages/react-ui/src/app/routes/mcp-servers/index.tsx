@@ -34,7 +34,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ApFlagId, McpWithTools, Permission } from '@activepieces/shared';
+import { ApFlagId, McpToolType, McpWithTools, Permission } from '@activepieces/shared';
 
 const McpServersPage = () => {
   const navigate = useNavigate();
@@ -146,7 +146,7 @@ const McpServersPage = () => {
         <DataTableColumnHeader column={column} title={t('Tools')} />
       ),
       cell: ({ row }) => {
-        const mcpPieces = row.original.pieces || [];
+        const mcpPieces = row.original.tools || [];
         if (isLoadingPiecesMetadata) {
           return <div className="text-left">{t('Loading...')}</div>;
         }
@@ -155,7 +155,7 @@ const McpServersPage = () => {
         const extraPiecesCount = mcpPieces.length - visiblePieces.length;
 
         const allDisplayNames = mcpPieces.map(
-          (p) => pieceMetadataMap.get(p.pieceName)?.displayName || p.pieceName,
+          (p) => pieceMetadataMap.get(p.data.type === McpToolType.PIECE ? p.data.pieceName : p.data.flowId)?.displayName || (p.data.type === McpToolType.PIECE ? p.data.pieceName : p.data.flowId),
         );
 
         let pieceDisplayNamesTooltip = '';
@@ -173,13 +173,13 @@ const McpServersPage = () => {
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-2">
                   {visiblePieces.map((mcpPiece) => {
-                    const metadata = pieceMetadataMap.get(mcpPiece.pieceName);
+                    const metadata = pieceMetadataMap.get(mcpPiece.data.type === McpToolType.PIECE ? mcpPiece.data.pieceName : mcpPiece.data.flowId);
                     return (
                       <PieceIcon
                         key={mcpPiece.id}
                         logoUrl={metadata?.logoUrl}
                         displayName={
-                          metadata?.displayName || mcpPiece.pieceName
+                          metadata?.displayName || (mcpPiece.data.type === McpToolType.PIECE ? mcpPiece.data.pieceName : mcpPiece.data.flowId)
                         }
                         size="md"
                         circle={true}

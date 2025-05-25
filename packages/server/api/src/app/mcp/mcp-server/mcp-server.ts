@@ -7,7 +7,8 @@ import {
     FlowStatus, 
     FlowVersionState, 
     isNil, 
-    McpPieceWithConnection, 
+    McpToolType, 
+    McpToolWithPiece, 
     McpTrigger, 
     TriggerType 
 } from '@activepieces/shared'
@@ -22,7 +23,6 @@ import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
-import { mcpPieceService } from '../mcp-tools/mcp-piece-service'
 import { mcpService } from './mcp-service'
 import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mcp-utils'
 
@@ -51,15 +51,17 @@ async function addPiecesToServer(
     const platformId = await projectService.getPlatformId(projectId)
 
     const pieces = await Promise.all(
-        mcp.pieces.map(async (piece: McpPieceWithConnection) => {
-            const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
-                name: piece.pieceName,
-                version: piece.pieceVersion,
-                projectId,
-                platformId,
+        mcp.tools
+            .filter((tool): tool is McpToolWithPiece => tool.type === McpToolType.PIECE)
+            .map(async (mcpPiece) => {
+                const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
+                    name: mcpPiece.piece.pieceName,
+                    version: mcpPiece.piece.pieceVersion,
+                    projectId,
+                    platformId,
+                })
+                return { ...pieceMetadata, ...mcpPiece.piece }
             })
-            return { ...pieceMetadata, ...piece }
-        })
     )
     
     const uniqueActions = new Set<string>()
@@ -74,7 +76,7 @@ async function addPiecesToServer(
                 if (uniqueActions.has(actionName)) return
                 uniqueActions.add(actionName)
 
-                const pieceConnectionExternalId = piece.connection?.externalId
+                const pieceConnectionExternalId = piece.connectionExternalId
                 
                 server.tool(
                     actionName,

@@ -4,7 +4,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuthorization } from "@/hooks/authorization-hooks";
-import { FlowStatus, FlowVersionState, Permission } from "@activepieces/shared";
+import { FlowStatus, FlowVersionState, McpToolType, Permission } from "@activepieces/shared";
 import { flagsHooks } from "@/hooks/flags-hooks";
 import { piecesHooks } from "@/features/pieces/lib/pieces-hook";
 import { mcpApi } from "@/features/mcp/lib/mcp-api";
@@ -15,11 +15,11 @@ import { assertNotNullOrUndefined } from "@activepieces/shared";
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { FlowOperationType, ApFlagId } from "@activepieces/shared";
 import type { 
-  McpPieceWithConnection,
   Trigger,
   PopulatedFlow,
   FlowOperationRequest,
-  McpFlowWithFlow
+  McpToolWithPiece,
+  McpToolWithFlow
 } from "@activepieces/shared";
 import {
   PieceStepMetadataWithSuggestions,
@@ -62,6 +62,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import McpToolDialog from "./mcp-tool-dialog";
+import { mcpToolApi } from "@/features/mcp/lib/mcp-tool-api";
 
 export const McpConfigPage = () => {
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
@@ -91,23 +92,14 @@ export const McpConfigPage = () => {
   const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
     queryKey: ['mcp-flows'],
     queryFn: async () => {
-      const flowsResponse = await mcpApi.getFlows(mcpId!);
-      const populatedFlows = await Promise.all(flowsResponse.map(async (mcpFlow: McpFlowWithFlow) => {
-        const populatedFlow = await flowsApi.get(mcpFlow.flow.id, {
-          versionId: mcpFlow.flow.publishedVersionId || undefined,
-        });
-        return populatedFlow;
-      }));
-      return {
-        data: populatedFlows,
-      };
+      return undefined;
     },
   });
 
   const { pieces } = piecesHooks.usePieces({});
 
   const removePieceMutation = useMutation({
-    mutationFn: async (pieceId: string) => mcpApi.deletePiece(pieceId),
+    mutationFn: async (pieceId: string) => mcpToolApi.delete(pieceId),
     onSuccess: () => {
       toast({
         description: t('Tool removed successfully'),
@@ -188,15 +180,15 @@ export const McpConfigPage = () => {
     }
   };
 
-  const removePiece = async (piece: McpPieceWithConnection) => {
+  const removePiece = async (piece: McpToolWithPiece) => {
     if (!mcp?.id || removePieceMutation.isPending) return;
     removePieceMutation.mutate(piece.id);
   };
 
-  const getPieceInfo = (piece: McpPieceWithConnection) => {
-    const pieceMetadata = pieces?.find((p) => p.name === piece.pieceName);
+  const getPieceInfo = (mcpPiece: McpToolWithPiece) => {
+    const pieceMetadata = pieces?.find((p) => p.name === mcpPiece.piece.pieceName);
     return {
-      displayName: pieceMetadata?.displayName || piece.pieceName,
+      displayName: pieceMetadata?.displayName || mcpPiece.piece.pieceName,
       logoUrl: pieceMetadata?.logoUrl,
     };
   };
@@ -205,8 +197,10 @@ export const McpConfigPage = () => {
   string,
   { displayName: string; logoUrl?: string }
 > = {};
-mcp?.pieces?.forEach((piece) => {
-  pieceInfoMap[piece.id] = getPieceInfo(piece);
+mcp?.tools?.forEach((mcpPiece) => {
+  if (mcpPiece.data.type === McpToolType.PIECE) {
+    pieceInfoMap[mcpPiece.id] = getPieceInfo(mcpPiece as McpToolWithPiece);
+  }
 });
 
 const handleDeleteFlow = (flowId: string) => {
@@ -226,8 +220,8 @@ if (isLoading || isFlowsLoading) {
   return <LoadingScreen mode="container" />;
 }
 
-const piecesCount = mcp?.pieces?.length || 0;
-const flowsCount = flowsData?.data?.length || 0;
+const piecesCount = mcp?.tools?.length || 0;
+const flowsCount = 0;
 const totalToolsCount = piecesCount + flowsCount;
 const hasTools = totalToolsCount > 0;
 
@@ -275,7 +269,7 @@ return (
         <ScrollArea className="h-[calc(100vh-220px)]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
             {/* Integration Pieces */}
-            {mcp?.pieces && mcp.pieces.map((piece) => (
+            {mcp?.tools && mcp.tools.map((piece) => (
               <Card key={`piece-${piece.id}`} className="overflow-hidden transition-all hover:shadow-md">
                 <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2">
                   <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
@@ -310,7 +304,9 @@ return (
                       </McpToolDialog>
                       <DropdownMenuItem 
                         className="text-destructive flex items-center gap-2"
-                        onClick={() => removePiece(piece)}
+                        onClick={() => {
+                          removePiece(piece as McpToolWithPiece);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                         {t('Delete')}
@@ -320,20 +316,20 @@ return (
                 </CardHeader>
                 <Separator />
                 <CardContent className="p-4 pt-3">
-                  {piece.actionNames && piece.actionNames.length > 0 ? (
+                  {piece.data.type === McpToolType.PIECE && piece.data.actionNames && piece.data.actionNames.length > 0 ? (
                     <div>
                       <span className="text-sm text-muted-foreground block mb-2">
                         {t('Available Actions')}:
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {piece.actionNames.slice(0, 3).map((action, idx) => (
+                        {piece.data.actionNames.slice(0, 3).map((action: string, idx: number) => (
                           <Badge key={idx} variant="outline" className="text-xs">
                             {action}
                           </Badge>
                         ))}
-                        {piece.actionNames.length > 3 && (
+                        {piece.data.actionNames && piece.data.actionNames.length > 3 && (
                           <Badge variant="outline" className="text-xs bg-muted">
-                            +{piece.actionNames.length - 3} {t('more')}
+                            +{piece.data.actionNames.length - 3} {t('more')}
                           </Badge>
                         )}
                       </div>
@@ -358,7 +354,7 @@ return (
             ))}
 
             {/* Flows */}
-            {flowsData && flowsData.data.map((flow) => (
+            {/* {flowsData && flowsData.map((flow) => (
               <Card key={`flow-${flow.id}`} className="overflow-hidden transition-all hover:shadow-md">
                 <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2">
                   <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
@@ -416,7 +412,7 @@ return (
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            ))} */}
           </div>
         </ScrollArea>
       ) : (

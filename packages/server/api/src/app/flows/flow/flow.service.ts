@@ -33,7 +33,6 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
-import { mcpFlowService } from '../../mcp/mcp-tools/mcp-flow-service'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -380,10 +379,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
 
-            const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
-            if (isDisableMcpFlow) {
-                await mcpFlowService(log).delete(id)
-            }
+            // const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
+            // if (isDisableMcpFlow) {
+            //     await mcpFlowService(log).delete(id)
+            // }
         }
 
         return this.getOnePopulatedOrThrow({
