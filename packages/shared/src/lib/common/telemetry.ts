@@ -1,5 +1,6 @@
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
+import { McpId } from '../mcp/mcp'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
@@ -138,6 +139,12 @@ type AiProviderConfiguredOrUsed = {
     projectId: string
     platformId: string
 }
+
+type McpToolCalled = {
+    mcpId: McpId
+    toolName: string
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -171,6 +178,7 @@ export enum TelemetryEventName {
     TRIGGER_FAILURES_EXCEEDED = 'trigger.failures.exceeded',
     AI_PROVIDER_USED = 'ai.provider.used',
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
+    MCP_TOOL_CALLED = 'mcp.tool.called',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -242,3 +250,4 @@ export type TelemetryEvent =
   TelemetryEventName.AI_PROVIDER_CONFIGURED,
   AiProviderConfiguredOrUsed
   >
+  | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>

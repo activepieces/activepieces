@@ -4,6 +4,6 @@ import { signingKeyController } from './signing-key-controller'
 
 export const signingKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.embeddingEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled))
     await app.register(signingKeyController, { prefix: '/v1/signing-keys' })
 }

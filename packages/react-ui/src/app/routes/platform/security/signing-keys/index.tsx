@@ -62,7 +62,7 @@ const SigningKeysPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="SIGNING_KEYS"
-      locked={!platform.embeddingEnabled}
+      locked={!platform.plan.embeddingEnabled}
       lockTitle={t('Unlock Embedding Through JS SDK')}
       lockDescription={t(
         'Enable signing keys to access embedding functionalities.',

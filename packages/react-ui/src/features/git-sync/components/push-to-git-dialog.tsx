@@ -59,7 +59,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {

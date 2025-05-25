@@ -119,13 +119,14 @@
       "icon": "code",
       "pages": [
         "handbook/engineering/overview",
+        "handbook/engineering/onboarding/onboarding-check-list",
         "handbook/engineering/onboarding/how-we-work",
         "handbook/engineering/onboarding/on-call",
         "handbook/engineering/onboarding/downtime-incident"
       ]
     },
     {
-      "group": "Engineering Playbooks", 
+      "group": "Engineering Playbooks",
       "icon": "code",
       "pages": [
         "handbook/engineering/playbooks/setup-incident-io",
@@ -286,9 +287,6 @@
             "endpoints/mcp-pieces/list"
           ]
         }
-
-        
-      
       ]
     },
     {
@@ -399,11 +397,12 @@
         "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
-        "developers/piece-reference/custom-api-calls"
+        "developers/piece-reference/custom-api-calls",
+        "developers/piece-reference/i18n"
       ]
     },
     {
-      "group": "Unified AI",
+      "group": "Universal AI",
       "pages": [
         "developers/unified-ai/overview",
         "developers/unified-ai/chat",

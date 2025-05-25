@@ -103,13 +103,10 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
 const globalCacheFlowPath = path.resolve('cache', 'flows')
 const flowCache = cacheHandler(globalCacheFlowPath)
 
-async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
     try {
-        if (flowVersionIdToRun) {
-            const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
-            return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
-        }
-        return null
+        const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
+        return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
     }
     catch (error) {
         return null
@@ -164,7 +161,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
 
             const cachedFlow = await readFlowFromCache(request.versionId)
-            if (cachedFlow) {
+            if (!isNil(cachedFlow)) {
                 log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
                 return cachedFlow
             }

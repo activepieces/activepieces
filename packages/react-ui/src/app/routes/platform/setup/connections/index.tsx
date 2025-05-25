@@ -345,7 +345,7 @@ const GlobalConnectionsTable = () => {
     <div className="flex-col w-full">
       <LockedFeatureGuard
         featureKey="GLOBAL_CONNECTIONS"
-        locked={!platform.globalConnectionsEnabled}
+        locked={!platform.plan.globalConnectionsEnabled}
         lockTitle={t('Enable Global Connections')}
         lockDescription={t(
           'Manage platform-wide connections to external systems.',

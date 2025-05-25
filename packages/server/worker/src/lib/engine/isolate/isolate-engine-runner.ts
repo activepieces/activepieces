@@ -26,7 +26,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         log.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: apId(),
@@ -74,7 +74,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeProp(engineToken, operation) {
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: operation.projectId,
@@ -91,7 +91,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeValidateAuth(engineToken, operation) {
         const { piece, platformId } = operation
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: platformId,
@@ -117,6 +117,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             lockedFlowVersion.state,
             step,
             operation.projectId,
+            operation.runEnvironment,
             log,
         )
         const input: ExecuteStepOperation = {
@@ -127,12 +128,13 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
+            runEnvironment: operation.runEnvironment,
         }
 
         return execute(EngineOperationType.EXECUTE_STEP, sandbox, input, log)
     },
     async excuteTool(engineToken, operation) {
-        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: `${operation.projectId}-${operation.pieceName}-${operation.pieceVersion}`,
@@ -144,6 +146,9 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             engineToken,
         }
         return execute(EngineOperationType.EXECUTE_TOOL, sandbox, input, log)
+    },
+    async shutdownAllWorkers() {
+        await sandboxProvisioner(log).shutdown()
     },
 })
 
@@ -175,20 +180,12 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, r
         engineToken,
     })
     const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
-    switch (runEnvironment) {
-        case RunEnvironment.PRODUCTION:
-            return sandboxProvisioner(log).provision({
-                pieces,
-                codeSteps,
-                customPiecesPathKey: projectId,
-            })
-        case RunEnvironment.TESTING:
-            return sandboxProvisioner(log).provision({
-                pieces,
-                codeSteps,
-                customPiecesPathKey: projectId,
-            })
-    }
+    return sandboxProvisioner(log).provision({
+        pieces,
+        codeSteps,
+        runEnvironment,
+        customPiecesPathKey: projectId,
+    })
 }
 
 async function getSandboxForAction(
@@ -197,6 +194,7 @@ async function getSandboxForAction(
     flowVersionState: FlowVersionState,
     action: Action,
     projectId: string,
+    runEnvironment: RunEnvironment,
     log: FastifyBaseLogger,
 ): Promise<IsolateSandbox> {
     switch (action.type) {
@@ -217,6 +215,7 @@ async function getSandboxForAction(
                     },
                 ],
                 customPiecesPathKey: projectId,
+                runEnvironment,
             })
         }
         case ActionType.ROUTER:

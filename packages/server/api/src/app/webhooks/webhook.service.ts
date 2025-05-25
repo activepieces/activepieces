@@ -1,24 +1,12 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
+import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
-
-type HandleWebhookParams = {
-    flowId: string
-    async: boolean
-    saveSampleData: boolean
-    flowVersionToRun: WebhookFlowVersionToRun
-    data: (projectId: string) => Promise<EventPayload>
-    logger: FastifyBaseLogger
-    payload?: Record<string, unknown>
-    execute: boolean
-}
-
 
 export const webhookService = {
     async handleWebhook({
@@ -47,10 +35,18 @@ export const webhookService = {
 
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
-        await assertExceedsLimit(flow, pinoLogger)
+        const exceededLimit = await projectLimitsService(pinoLogger).tasksExceededLimit(flow.projectId)
+        if (exceededLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: 'tasks',
+                },
+            })
+        }
 
         const response = await handshakeHandler.handleHandshakeRequest({
-            payload: payload as TriggerPayload,
+            payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
             handshakeConfiguration: flow.handshakeConfiguration ?? null,
             log: pinoLogger,
             flowId: flow.id,
@@ -121,15 +117,13 @@ export const webhookService = {
     },
 }
 
-async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
-    if (!exceededLimit) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.QUOTA_EXCEEDED,
-        params: {
-            metric: 'tasks',
-        },
-    })
+type HandleWebhookParams = {
+    flowId: string
+    async: boolean
+    saveSampleData: boolean
+    flowVersionToRun: WebhookFlowVersionToRun
+    data: (projectId: string) => Promise<EventPayload>
+    logger: FastifyBaseLogger
+    payload?: Record<string, unknown>
+    execute: boolean
 }
