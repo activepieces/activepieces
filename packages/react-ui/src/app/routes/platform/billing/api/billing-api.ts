@@ -12,7 +12,7 @@ export const platformBillingApi = {
     return api.post<{ paymentLink: string }>('/v1/platform-billing/upgrade');
   },
   update(tasksLimit: number | null | undefined) {
-    return api.patch<PlatformPlan>('/v1/platform-billing', {
+    return api.post<PlatformPlan>('/v1/platform-billing', {
       tasksLimit,
     });
   },

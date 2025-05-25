@@ -38,6 +38,6 @@ export const foldersApi = {
       folderOrders,
     };
 
-    return api.patch<void>('/v1/folders/order', request);
+    return api.post<void>('/v1/folders/order', request);
   },
 };

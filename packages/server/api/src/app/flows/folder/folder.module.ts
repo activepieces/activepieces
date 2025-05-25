@@ -106,7 +106,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
     )
 
-    fastify.patch(
+    fastify.post(
         '/order',
         UpdateFolderOrderParams,
         async (request, reply) => {

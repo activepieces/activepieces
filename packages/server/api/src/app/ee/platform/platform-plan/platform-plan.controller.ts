@@ -61,7 +61,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         },
     )
 
-    fastify.patch(
+    fastify.post(
         '/',
         {
             schema: {
