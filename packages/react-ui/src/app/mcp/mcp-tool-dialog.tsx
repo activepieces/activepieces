@@ -29,9 +29,9 @@ import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { isNil, McpToolType } from '@activepieces/shared';
 import type { McpToolWithFlow, McpToolWithPiece } from '@activepieces/shared';
 
-import { McpFlowsContent } from './mcp-flows-content';
-import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
-import { McpPiecesContent } from './mcp-pieces-content';
+import { McpFlowsContent } from './flows/mcp-flows-content';
+import { McpPieceActionsDialog } from './pieces/mcp-piece-actions-dialog';
+import { McpPiecesContent } from './pieces/mcp-pieces-content';
 
 type McpToolDialogProps = {
   children: React.ReactNode;

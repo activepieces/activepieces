@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash2, CheckIcon, Table2 } from 'lucide-react';
+import { Plus, Trash2, CheckIcon, Table2, WorkflowIcon } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -166,11 +166,7 @@ const McpServersPage = () => {
               p.data.pieceName
             );
           } else {
-            return p.data.flowIds
-              .map(
-                (flowId) => pieceMetadataMap.get(flowId)?.displayName || flowId,
-              )
-              .join(', ');
+            return 'Flows';
           }
         });
 
@@ -189,27 +185,43 @@ const McpServersPage = () => {
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-2">
                   {visiblePieces.map((mcpPiece) => {
-                    const metadata = pieceMetadataMap.get(
+                    const metadata =
                       mcpPiece.data.type === McpToolType.PIECE
-                        ? mcpPiece.data.pieceName
-                        : mcpPiece.data.flowIds[0],
-                    );
-                    return (
-                      <PieceIcon
-                        key={mcpPiece.id}
-                        logoUrl={metadata?.logoUrl}
-                        displayName={
-                          metadata?.displayName ||
-                          (mcpPiece.data.type === McpToolType.PIECE
-                            ? mcpPiece.data.pieceName
-                            : mcpPiece.data.flowIds[0])
-                        }
-                        size="md"
-                        circle={true}
-                        border={true}
-                        showTooltip={false}
-                      />
-                    );
+                        ? pieceMetadataMap.get(mcpPiece.data.pieceName)
+                        : undefined;
+                    if (metadata) {
+                      return (
+                        <PieceIcon
+                          key={mcpPiece.id}
+                          logoUrl={metadata?.logoUrl}
+                          displayName={
+                            metadata?.displayName ||
+                            (mcpPiece.data.type === McpToolType.PIECE
+                              ? mcpPiece.data.pieceName
+                              : 'Flows')
+                          }
+                          size="md"
+                          circle={true}
+                          border={true}
+                          showTooltip={false}
+                        />
+                      );
+                    } else {
+                      return (
+                        <div
+                          key={mcpPiece.id}
+                          className={
+                            'dark:bg-accent-foreground/25 rounded-full bg-accent/35 p-2 border border-solid size-[36px]'
+                          }
+                        >
+                          <WorkflowIcon
+                            size={16}
+                            className="w-full h-full"
+                            strokeWidth={1.5}
+                          />
+                        </div>
+                      );
+                    }
                   })}
                   {extraPiecesCount > 0 && (
                     <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none size-[36px] text-sm">
