@@ -18,6 +18,7 @@ export const findContact = createAction({
           { label: 'By Email', value: 'email' },
           { label: 'By Phone', value: 'phone' },
           { label: 'By Lead ID', value: 'lead_id' },
+          {label: 'By Contact ID', value: 'contact_id' },
         ],
       },
     }),

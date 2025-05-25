@@ -18,6 +18,7 @@ export const findLead = createAction({
           { label: 'By Contact Email', value: 'contact_email' },
           { label: 'By Status', value: 'status' },
           { label: 'By Custom Field', value: 'custom_field' },
+          {label: 'By Lead ID', value: 'lead_id' },
         ],
       },
     }),

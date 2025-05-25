@@ -15,9 +15,9 @@ export const findOpportunity = createAction({
       options: {
         options: [
           { label: 'By Status', value: 'status' },
-          { label: 'By Lead', value: 'lead' },
+          { label: 'By Lead', value: 'lead_id' },
           { label: 'By User', value: 'user' },
-          { label: 'By Contact', value: 'contact' },
+          { label: 'By Contact', value: 'contact_id' },
           { label: 'By Value Range', value: 'value' },
           { label: 'By Date Range', value: 'date' },
         ],
@@ -48,7 +48,7 @@ export const findOpportunity = createAction({
     lead_id: Property.ShortText({
       displayName: 'Lead ID',
       description: 'The lead ID to filter by',
-      required: false,
+      required: true,
     }),
     user_id: Property.ShortText({
       displayName: 'User ID',
@@ -58,26 +58,6 @@ export const findOpportunity = createAction({
     contact_id: Property.ShortText({
       displayName: 'Contact ID',
       description: 'The contact ID to filter by',
-      required: false,
-    }),
-    min_value: Property.Number({
-      displayName: 'Minimum Value',
-      description: 'Minimum opportunity value (in cents)',
-      required: false,
-    }),
-    max_value: Property.Number({
-      displayName: 'Maximum Value',
-      description: 'Maximum opportunity value (in cents)',
-      required: false,
-    }),
-    date_created_after: Property.DateTime({
-      displayName: 'Created After',
-      description: 'Find opportunities created after this date',
-      required: false,
-    }),
-    date_created_before: Property.DateTime({
-      displayName: 'Created Before',
-      description: 'Find opportunities created before this date',
       required: false,
     }),
     include_fields: Property.StaticDropdown({
@@ -116,16 +96,8 @@ export const findOpportunity = createAction({
       status_label,
       status_type,
       lead_id,
-      user_id,
-      contact_id,
-      min_value,
-      max_value,
-      date_created_after,
-      date_created_before,
-      include_fields,
       limit,
     } = context.propsValue;
-    const { apiKey, environment } = context.auth;
 
     // Validate search parameters
     if (search_type === 'status' && !status_id && !status_label && !status_type) {

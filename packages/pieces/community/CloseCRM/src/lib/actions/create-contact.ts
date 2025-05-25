@@ -14,6 +14,11 @@ export const createContact = createAction({
       description: 'The ID of the lead to associate this contact with',
       required: true,
     }),
+    contact_id: Property.ShortText({
+      displayName: 'Contact ID',
+      description: 'The ID of the contact',
+      required: true,
+    }),
     name: Property.ShortText({
       displayName: 'Full Name',
       required: true,
@@ -95,10 +100,11 @@ export const createContact = createAction({
     }),
   },
   async run(context) {
-    const { lead_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
+    const { lead_id,contact_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
 
     const contactData: Partial<CloseCRMContact> = { // Use Partial for creation
       lead_id: lead_id,
+      contact_id: contact_id,
       title: title,
       custom: customFields,
       name: name,

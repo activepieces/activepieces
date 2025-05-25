@@ -93,28 +93,28 @@ export const logEmail = createAction({
     const client = makeClient(context.auth);
 
     const emailData: CloseCRMEmailActivity = {
-        lead_id,
-        direction: 'outgoing' as const, 
-        note: body,
-        date_created: date ?? new Date().toISOString(),
-        _type: 'email',
-        email: {
-          subject,
-          body,
-          ...(direction === 'incoming' && { sender }), // Only include sender for incoming emails
-          to: recipients ? recipients.map((r:any) => ({
-            email: r.email,
-            ...(r.name && { name: r.name })
-          })) : [],
-          ...(attachments && attachments.length > 0 && {
-            attachments: attachments.map((a:any) => ({
-              name: a.filename,
-              url: a.url,
-              ...(a.size && { size: a.size })
-            }))
-          })
-        }
-      };
+      lead_id,
+      direction: 'outgoing' as const,
+      note: body,
+      date_created: date ?? new Date().toISOString(),
+      _type: 'email',
+      email: {
+        subject,
+        body,
+        ...(direction === 'incoming' && { sender }), // Only include sender for incoming emails
+        to: recipients ? recipients.map((r: any) => ({
+          email: r.email,
+          ...(r.name && { name: r.name })
+        })) : [],
+        ...(attachments && attachments.length > 0 && {
+          attachments: attachments.map((a: any) => ({
+            name: a.filename,
+            url: a.url,
+            ...(a.size && { size: a.size })
+          }))
+        })
+      }
+    };
     try {
       const response = await client.post('/activity/email/', emailData);
       return response.data;

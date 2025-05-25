@@ -13,6 +13,11 @@ export const createLead = createAction({
       description: 'The name of the lead/company',
       required: true,
     }),
+    lead_id: Property.ShortText({
+      displayName: 'Lead ID',
+      description: 'The ID of the lead to associate this contact with',
+      required: true,
+    }),
     contacts: Property.Array({
       displayName: 'Contacts',
       description: 'Array of contact details for this lead',
@@ -52,17 +57,18 @@ export const createLead = createAction({
     }),
   },
   async run(context) {
-    const { name, contacts, status, customFields } = context.propsValue;
+    const { name, contacts, status, customFields, lead_id } = context.propsValue;
 
     const payload: any = {
       name: name,
       contacts: contacts,
       status: status,
       custom: customFields,
+      lead_id: lead_id,
 
     };
 
-     const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.close.com/api/v1/lead',
       headers: {
@@ -73,6 +79,6 @@ export const createLead = createAction({
     });
     return response.body;
 
-   
+
   },
 });
