@@ -30,19 +30,18 @@ export const recordsApi = {
   delete(request: DeleteRecordsRequest): Promise<void> {
     return api.delete<void>(`/v1/records/`, undefined, request);
   },
+
   async importCsv({
-    csv,
+    csvRecords,
     tableId,
     fieldsMapping,
     maxRecordsLimit,
   }: {
-    csv: string;
+    csvRecords: string[][];
     tableId: string;
     fieldsMapping: FieldsMapping;
     maxRecordsLimit: number;
   }) {
-    const csvData = csv.split('\n');
-    const csvRecords = csvData.slice(1).map((row) => row.split(','));
     const records: CreateRecordsRequest['records'] = csvRecords.map(
       (recordCells) => {
         return recordCells
