@@ -9,6 +9,9 @@ import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
+const globalCacheFlowPath = path.resolve('cache', 'flows')
+const flowCache = cacheState(globalCacheFlowPath)
+
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
@@ -99,9 +102,6 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
 
     return batches
 }
-
-const globalCacheFlowPath = path.resolve('cache', 'flows')
-const flowCache = cacheState(globalCacheFlowPath)
 
 async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
     try {

@@ -10,6 +10,7 @@ import { jobPoller } from './job-polling'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+import { executionFiles } from './cache/execution-files'
 
 let closed = true
 let workerToken: string
@@ -17,6 +18,8 @@ let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+
+        await executionFiles(log).init()
         await engineRunnerSocket(log).init()
 
         closed = false
