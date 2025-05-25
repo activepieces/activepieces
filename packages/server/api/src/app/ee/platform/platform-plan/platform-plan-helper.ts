@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ErrorCode, PlatformUsageMetric } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
@@ -52,7 +52,7 @@ export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void>
     const limit = plan[limitKey]
     const currentUsage = platformUsage[usageKey]
 
-    if (limit && currentUsage >= limit) {
+    if (!isNil(limit) && currentUsage >= limit) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
             params: {
