@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, PlatformUsageMetric } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
@@ -26,9 +26,14 @@ const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.TABLES]: 'tables',
 } as const
 
+const edition = system.getEdition()
+
 export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void> {
+    if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
+        return;
+    }
     const { platformId, metric } = params
-    
+
     const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
     const platformUsage = await platformUsageService(system.globalLogger()).getPlatformUsage(platformId)
 
