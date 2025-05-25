@@ -24,7 +24,7 @@ export const addLeadToCampaignAction = createAction({
 
     const response = (await makeRequest({
       apiKey: context.auth,
-      endpoint: 'leads/list',
+      endpoint: 'leads/move',
       method: HttpMethod.POST,
       body: {
         ids: [lead_id],

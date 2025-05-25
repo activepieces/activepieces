@@ -126,21 +126,22 @@ export const leadId = (required = true) =>
       let hasMore = true;
 
       do {
-        const qs: QueryParams = {
-          limit: '100',
+        const body:Record<string,any> = {
+          limit: 100,
         };
 
-        if (startingAfter) qs['starting_after'] = startingAfter;
+        if (startingAfter) body['starting_after'] = startingAfter;
 
         const response = (await makeRequest({
           endpoint: 'leads/list',
-          method: HttpMethod.GET,
+          method: HttpMethod.POST,
           apiKey: auth as string,
-          queryParams: qs,
+          body
         })) as {
           next_starting_after?: string;
           items: { id: string; email: string ,first_name:string,last_name:string}[];
         };
+
 
         const items = response.items || [];
         for (const item of items) {

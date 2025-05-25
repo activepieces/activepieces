@@ -9,7 +9,6 @@ import {
   HttpMethod,
   Polling,
   pollingHelper,
-  QueryParams,
 } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
@@ -25,17 +24,17 @@ const polling: Polling<
     let hasMore = true;
 
     do {
-      const qs: QueryParams = {
-        limit: isTest ? '10' : '100',
+      const body: Record<string, any> = {
+        limit: isTest ? 10 : 100,
       };
 
-      if (startingAfter) qs['starting_after'] = startingAfter;
+      if (startingAfter) body['starting_after'] = startingAfter;
 
       const response = (await makeRequest({
         endpoint: 'leads/list',
-        method: HttpMethod.GET,
+        method: HttpMethod.POST,
         apiKey: auth,
-        queryParams: qs,
+        body,
       })) as {
         next_starting_after?: string;
         items: { timestamp_created: string }[];
@@ -87,16 +86,27 @@ export const newLeadAddedTrigger = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
   sampleData: {
-    timestamp: '2023-08-22T15:45:30.123Z',
-    event_type: 'email_sent',
-    campaign_name: 'Product Demo Campaign',
-    workspace: 'workspace_123456',
-    campaign_id: 'campaign_789012',
-    lead_email: 'contact@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    companyName: 'Example Inc',
-    website: 'example.com',
-    phone: '+1234567890',
+    id: 'd1f61dbc-bcb2-44fb-86b8-3d01c8701fe9',
+    timestamp_created: '2025-05-25T12:50:04.748Z',
+    timestamp_updated: '2025-05-25T13:00:52.019Z',
+    organization: '31ef9f6c-00f0-481f-b309-95694ed324bb',
+    status: 1,
+    email_open_count: 0,
+    email_reply_count: 0,
+    email_click_count: 0,
+    company_domain: 'test@gmail.com',
+    status_summary: {},
+    campaign: 'd228fc8f-44f2-42f3-b63f-3667dafc24cf',
+    email: 'test@gmail.com',
+    payload: {
+      email: 'test@gmail.com',
+      lastTouch: null,
+      leadOwner: 'Test',
+      leadSource: 'manual',
+    },
+    uploaded_by_user: '7f74fadd-b96b-4011-a1da-9b81a5bed165',
+    upload_method: 'manual',
+    assigned_to: '7f74fadd-b96b-4011-a1da-9b81a5bed165',
+    esp_code: 1,
   },
 });
