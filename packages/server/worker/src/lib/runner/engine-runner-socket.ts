@@ -1,7 +1,7 @@
+import { IncomingMessage } from 'http'
 import { assertNotNullOrUndefined, EngineError, EngineResult, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { WebSocketServer, WebSocket } from 'ws'
-import { IncomingMessage } from 'http'
+import { WebSocket, WebSocketServer } from 'ws'
 
 let wss: WebSocketServer | null = null
 const sockets: Record<string, WebSocket> = {}
@@ -26,6 +26,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
                     if (!isNil(resolvePromises[workerId])) {
                         resolvePromises[workerId](true)
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                         delete resolvePromises[workerId]
                     }
 
@@ -46,10 +47,11 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                                 // Forward the operation to the worker
                                 ws.send(JSON.stringify({
                                     type: EngineSocketEvent.ENGINE_OPERATION,
-                                    data: message.data
+                                    data: message.data,
                                 }))
                             }
-                        } catch (error) {
+                        }
+                        catch (error) {
                             log.error({ error }, 'Error parsing message')
                         }
                     })
@@ -111,7 +113,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             }
             socket.send(JSON.stringify({
                 type: EngineSocketEvent.ENGINE_OPERATION,
-                data: message
+                data: message,
             }))
         },
 
@@ -145,7 +147,8 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                             onStderr(message.data)
                             break
                     }
-                } catch (error) {
+                }
+                catch (error) {
                     log.error({ error }, 'Error parsing message')
                 }
             }

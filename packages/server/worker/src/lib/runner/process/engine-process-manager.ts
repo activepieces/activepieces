@@ -3,12 +3,12 @@ import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineError, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, EngineResult, EngineStderr, EngineStdout, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionMode, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import treeKill from 'tree-kill'
 import { executionFiles } from '../../cache/execution-files'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
-import treeKill from 'tree-kill'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -261,7 +261,8 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
                     pid,
                     error: err,
                 }, 'Failed to kill child process tree')
-            } else {
+            }
+            else {
                 log.info({
                     pid,
                 }, 'Killed child process tree')
