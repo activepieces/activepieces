@@ -7,16 +7,15 @@ export const createLeadListAction = createAction({
   auth: instantlyAiAuth,
   name: 'create_lead_list',
   displayName: 'Create Lead List',
-  description: 'Create a new list for organizing leads in Instantly',
+  description: 'Creates a new lead list.',
   props: {
     name: Property.ShortText({
       displayName: 'List Name',
-      description: 'Name of the lead list',
       required: true,
     }),
     has_enrichment_task: Property.Checkbox({
       displayName: 'Enable Enrichment',
-      description: 'Whether this list runs the enrichment process on every added lead or not',
+      description: 'Whether this list runs the enrichment process on every added lead or not.',
       required: false,
       defaultValue: false,
     }),

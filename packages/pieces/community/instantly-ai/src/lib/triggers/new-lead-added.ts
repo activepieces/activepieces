@@ -1,67 +1,102 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  PiecePropValueSchema,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { instantlyAiAuth } from '../../index';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import {
+  DedupeStrategy,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+  QueryParams,
+} from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import dayjs from 'dayjs';
+const polling: Polling<
+  PiecePropValueSchema<typeof instantlyAiAuth>,
+  Record<string, any>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  async items({ auth, lastFetchEpochMS }) {
+    const result = [];
+    const isTest = lastFetchEpochMS === 0;
+    let startingAfter: string | undefined = undefined;
+    let hasMore = true;
 
-interface InstantlyLeadWebhookPayload {
-  timestamp: string;
-  event_type: string;
-  campaign_name: string;
-  workspace: string;
-  campaign_id: string;
-  lead_email: string;
-  firstName?: string;
-  lastName?: string;
-  companyName?: string;
-  website?: string;
-  phone?: string;
-  [key: string]: any;
-}
+    do {
+      const qs: QueryParams = {
+        limit: isTest ? '10' : '100',
+      };
+
+      if (startingAfter) qs['starting_after'] = startingAfter;
+
+      const response = (await makeRequest({
+        endpoint: 'leads/list',
+        method: HttpMethod.GET,
+        apiKey: auth,
+        queryParams: qs,
+      })) as {
+        next_starting_after?: string;
+        items: { timestamp_created: string }[];
+      };
+
+      const items = response.items || [];
+      result.push(...items);
+
+      if (isTest) break;
+
+      startingAfter = response.next_starting_after;
+      hasMore = !!startingAfter && items.length > 0;
+    } while (hasMore);
+
+    return result.map((lead) => {
+      return {
+        epochMilliSeconds: dayjs(lead.timestamp_created).valueOf(),
+        data: lead,
+      };
+    });
+  },
+};
 
 export const newLeadAddedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'new_lead_added',
   displayName: 'New Lead Added',
   description: 'Triggers when a new lead is added to a campaign',
-  props: {
-    md: Property.MarkDown({
-      value: `
-      To use this trigger, manually set up a webhook in Instantly.ai:
-
-      1. Go to Instantly settings
-      2. Navigate to Integrations tab and find webhooks
-      3. Click "Add Webhook"
-      4. Enter the webhook URL provided below:
-          \`\`\`text
-          {{webhookUrl}}
-          \`\`\`
-      5. Select the campaign and event type "Email Sent"
-      5. Click "Add Webhook"
-      `,
-    }),
-  },
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    timestamp: "2023-08-22T15:45:30.123Z",
-    event_type: "email_sent",
-    campaign_name: "Product Demo Campaign",
-    workspace: "workspace_123456",
-    campaign_id: "campaign_789012",
-    lead_email: "contact@example.com",
-    firstName: "John",
-    lastName: "Doe",
-    companyName: "Example Inc",
-    website: "example.com",
-    phone: "+1234567890"
-  },
+  props: {},
+  type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    // Empty
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
   async onDisable(context) {
-    // Empty
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
   },
   async run(context) {
-    return [context.payload.body];
+    return await pollingHelper.poll(polling, context);
+  },
+  sampleData: {
+    timestamp: '2023-08-22T15:45:30.123Z',
+    event_type: 'email_sent',
+    campaign_name: 'Product Demo Campaign',
+    workspace: 'workspace_123456',
+    campaign_id: 'campaign_789012',
+    lead_email: 'contact@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    companyName: 'Example Inc',
+    website: 'example.com',
+    phone: '+1234567890',
   },
 });

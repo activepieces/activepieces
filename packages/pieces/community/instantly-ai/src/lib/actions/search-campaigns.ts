@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { instantlyAiAuth } from '../../index';
 
@@ -7,62 +7,47 @@ export const searchCampaignsAction = createAction({
   auth: instantlyAiAuth,
   name: 'search_campaigns',
   displayName: 'Search Campaigns',
-  description: 'Search for campaigns in Instantly using various filters',
+  description: 'Searchs for campaigns using various filters.',
   props: {
     name: Property.ShortText({
       displayName: 'Campaign Name',
-      description: 'Filter campaigns by name (partial match)',
-      required: false,
-    }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of campaigns to return (1-100)',
-      required: false,
-      defaultValue: 20,
-    }),
-    starting_after: Property.ShortText({
-      displayName: 'Starting After',
-      description: 'The ID of the last item in the previous page - used for pagination',
-      required: false,
-    }),
-    tag_ids: Property.ShortText({
-      displayName: 'Tag IDs',
-      description: 'Filter campaigns by tag ids. Specify multiple tag ids by separating them with a comma',
-      required: false,
+      required: true,
     }),
   },
   async run(context) {
-    const {
-      name,
-      limit,
-      starting_after,
-      tag_ids,
-    } = context.propsValue;
+    const { name } = context.propsValue;
     const { auth: apiKey } = context;
 
-    const queryParams: Record<string, string | number | boolean> = {};
+    const result = [];
 
-    if (name) {
-      queryParams['search'] = name;
-    }
+    let startingAfter: string | undefined = undefined;
+    let hasMore = true;
 
-    if (starting_after) {
-      queryParams['starting_after'] = starting_after;
-    }
+    do {
+      const qs: QueryParams = {
+        limit: '100',
+        search: name,
+      };
 
-    if (tag_ids) {
-      queryParams['tag_ids'] = tag_ids;
-    }
+      if (startingAfter) qs['starting_after'] = startingAfter;
 
-    // Ensure limit is within range and defaulted to 20
-    const actualLimit = Math.min(100, Math.max(1, limit || 20));
-    queryParams['limit'] = actualLimit;
+      const response = (await makeRequest({
+        endpoint: 'campaigns',
+        method: HttpMethod.GET,
+        apiKey,
+        queryParams: qs,
+      })) as { next_starting_after?: string; items: Record<string, any>[] };
 
-    return await makeRequest({
-      endpoint: 'campaigns',
-      method: HttpMethod.GET,
-      apiKey: apiKey as string,
-      queryParams,
-    });
+      const items = response.items || [];
+      result.push(...items);
+
+      startingAfter = response.next_starting_after;
+      hasMore = !!startingAfter && items.length > 0;
+    } while (hasMore);
+
+    return {
+      found: result.length > 0,
+      result,
+    };
   },
 });

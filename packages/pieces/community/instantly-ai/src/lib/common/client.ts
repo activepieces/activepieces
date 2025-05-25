@@ -24,7 +24,6 @@ export async function makeRequest({
 
   const finalUrl = queryString ? `${url}?${queryString}` : url;
 
-  console.log(`Ankit wants to log final url: ${finalUrl}`);
   const response = await httpClient.sendRequest({
     method,
     url: finalUrl,
@@ -34,8 +33,6 @@ export async function makeRequest({
     },
     body,
   });
-
-  console.log(`Ankit wants to log response: ${JSON.stringify(response)}`);
 
   if (response.status < 200 || response.status >= 300) {
     throw new Error(

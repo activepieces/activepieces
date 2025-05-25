@@ -2,7 +2,6 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 
 import { createCampaignAction } from './lib/actions/create-campaign';
-import { replyToEmailAction } from './lib/actions/reply-to-email';
 import { createLeadListAction } from './lib/actions/create-lead-list';
 import { addLeadToCampaignAction } from './lib/actions/add-lead-to-campaign';
 import { searchCampaignsAction } from './lib/actions/search-campaigns';
@@ -11,7 +10,7 @@ import { campaignStatusChangedTrigger } from './lib/triggers/campaign-status-cha
 import { newLeadAddedTrigger } from './lib/triggers/new-lead-added';
 
 const markdownDescription = `
-To use this piece, you need to obtain an API key from [Instantly](https://developer.instantly.ai/api/v2).
+You can obtain an API key from **Settings->Integrations->API Keys**.
 `;
 
 export const instantlyAiAuth = PieceAuth.SecretText({
@@ -22,15 +21,14 @@ export const instantlyAiAuth = PieceAuth.SecretText({
 
 export const instantlyAi = createPiece({
   displayName: 'Instantly.ai',
-  description: 'Powerful cold email outreach and lead engagement platform',
+  description: 'Powerful cold email outreach and lead engagement platform.',
   auth: instantlyAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.prod.website-files.com/63860c8c65e7bef4a1eeebeb/67ab2655638fdc00dc35c630_Group%201%20(2).svg', // TO BE UPDATED
+  logoUrl: 'https://cdn.activepieces.com/pieces/instantly-ai.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: [],
   actions: [
     createCampaignAction,
-    replyToEmailAction,
     createLeadListAction,
     addLeadToCampaignAction,
     searchCampaignsAction,
