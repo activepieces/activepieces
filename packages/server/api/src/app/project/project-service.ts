@@ -16,29 +16,22 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
+import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
 
-        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(params.platformId)
-        const platformUsage = await platformUsageService().getPlatformUsage(params.platformId)
-
-        if (plan.projectsLimit && platformUsage.projects >= plan.projectsLimit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED,
-                params: {
-                    metric: PlatformUsageMetric.PROJECTS,
-                },
-            })
-        }
+        await checkQuotaOrThrow({
+            platformId: params.platformId,
+            metric: PlatformUsageMetric.PROJECTS,
+        })
 
         const newProject: NewProject = {
             id: apId(),

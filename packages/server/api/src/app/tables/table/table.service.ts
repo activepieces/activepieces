@@ -16,11 +16,9 @@ import {
 import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../../ee/platform/platform-usage-service'
+import { checkQuotaOrThrow } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
@@ -38,17 +36,10 @@ export const tableService = {
     }: CreateParams): Promise<Table> {
 
         const platformId = await projectService.getPlatformId(projectId)
-        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-        const platformUsage = await platformUsageService().getPlatformUsage(platformId)
-
-        if (plan.tablesLimit && platformUsage.tables >= plan.tablesLimit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED,
-                params: {
-                    metric: PlatformUsageMetric.TABLES,
-                },
-            })
-        }
+        await checkQuotaOrThrow({
+            platformId,
+            metric: PlatformUsageMetric.TABLES,
+        })
 
         const table = await tableRepo().save({
             id: apId(),

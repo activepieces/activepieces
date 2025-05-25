@@ -11,6 +11,7 @@ import {
   Server,
   LucideIcon,
   CircleHelp,
+  CalendarDays,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -100,10 +101,6 @@ export default function Billing() {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const daysRemaining = platformSubscription?.nextBillingDate
-    ? dayjs(platformSubscription.nextBillingDate).diff(dayjs(), 'day')
-    : 0;
-
   const tasksLimit = platformSubscription?.plan.tasksLimit ?? 0;
   const aiLimit = platformSubscription?.plan.aiCreditsLimit ?? 0;
 
@@ -149,16 +146,12 @@ export default function Billing() {
           <div className="text-5xl font-semibold">{calculateTotalCost}</div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>
-        {platformSubscription && (
-          <div className="text-sm text-muted-foreground flex items-center gap-1">
+        {platformSubscription?.nextBillingDate && (
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <CalendarDays className="w-4 h-4" />
             <span>
-              Next billing on{' '}
-              {formatUtils.formatDate(
-                new Date(platformSubscription.nextBillingDate || ''),
-              )}
+              Resets {dayjs(platformSubscription.nextBillingDate).format('MMM D, YYYY')}
             </span>
-            <span>•</span>
-            <span>{daysRemaining} days remaining</span>
           </div>
         )}
       </div>

@@ -32,12 +32,9 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../../ee/platform/platform-usage-service'
+import { checkQuotaOrThrow } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
-import { system } from '../../helper/system/system'
-import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -64,20 +61,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
 
         if (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) {
-            const platformId = await projectService.getPlatformId(request.principal.projectId)
-            const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-            const platformUsage = await platformUsageService().getPlatformUsage(platformId)
-
-            if (plan.activeFlowsLimit && platformUsage.activeFlows >= plan.activeFlowsLimit) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.QUOTA_EXCEEDED,
-                    params: {
-                        metric: PlatformUsageMetric.ACTIVE_FLOWS,
-                    },
-                })
-            }
+            await checkQuotaOrThrow({
+                platformId: request.principal.platform.id,
+                metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            })
         }
-
 
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
