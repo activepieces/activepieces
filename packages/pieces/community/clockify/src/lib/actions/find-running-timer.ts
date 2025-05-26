@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 export const findRunningTimer = createAction({
   auth: clockifyAuth,
@@ -9,16 +10,8 @@ export const findRunningTimer = createAction({
   displayName: 'Find Running Timer',
   description: 'Find the currently running timer in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace',
-      required: true,
-    }),
-    userId: Property.ShortText({
-      displayName: 'User ID',
-      description: 'The ID of the user',
-      required: true,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
+    userId: clockifyCommon.user_id(),
   },
   async run({ propsValue, auth }) {
     const response = await makeRequest(

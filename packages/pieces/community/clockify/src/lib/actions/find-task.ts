@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 interface Task {
   id: string;
@@ -16,26 +17,14 @@ export const findTask = createAction({
   displayName: 'Find Task',
   description: 'Find a task in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace',
-      required: true,
-    }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'The ID of the project',
-      required: true,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
+    projectId: clockifyCommon.project_id(),
     taskName: Property.ShortText({
       displayName: 'Task Name',
       description: 'The name of the task to search for',
       required: false,
     }),
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task to find',
-      required: false,
-    }),
+    taskId: clockifyCommon.task_id(false),
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'The status of the task',

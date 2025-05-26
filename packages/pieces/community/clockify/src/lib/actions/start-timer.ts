@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 export const startTimer = createAction({
   auth: clockifyAuth,
@@ -9,26 +10,14 @@ export const startTimer = createAction({
   displayName: 'Start Timer',
   description: 'Start a timer in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace',
-      required: true,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
     description: Property.LongText({
       displayName: 'Description',
       description: 'The description of the time entry',
       required: false,
     }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'The ID of the project',
-      required: false,
-    }),
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task',
-      required: false,
-    }),
+    projectId: clockifyCommon.project_id(false),
+    taskId: clockifyCommon.task_id(false),
     billable: Property.Checkbox({
       displayName: 'Billable',
       description: 'Whether the time entry is billable',

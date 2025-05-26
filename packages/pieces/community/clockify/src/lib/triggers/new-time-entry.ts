@@ -1,7 +1,8 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 export const newTimeEntryTrigger = createTrigger({
   auth: clockifyAuth,
@@ -9,16 +10,8 @@ export const newTimeEntryTrigger = createTrigger({
   displayName: 'New Time Entry',
   description: 'Triggers when a new time entry is created in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace',
-      required: true,
-    }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'The ID of the project (leave empty to trigger for all projects)',
-      required: false,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
+    projectId: clockifyCommon.project_id(false),
   },
   sampleData: {
     id: '456789',

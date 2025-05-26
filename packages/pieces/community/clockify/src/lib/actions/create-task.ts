@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 export const createTask = createAction({
   auth: clockifyAuth,
@@ -9,16 +10,8 @@ export const createTask = createAction({
   displayName: 'Create Task',
   description: 'Create a new task in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace where the task will be created',
-      required: true,
-    }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'The ID of the project where the task will be created',
-      required: true,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
+    projectId: clockifyCommon.project_id(),
     name: Property.ShortText({
       displayName: 'Task Name',
       description: 'The name of the task',

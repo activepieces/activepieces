@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
+import { clockifyCommon } from '../common/props';
 
 interface TimeEntry {
   id: string;
@@ -15,31 +16,15 @@ export const findTimeEntry = createAction({
   displayName: 'Find Time Entry',
   description: 'Find a time entry in Clockify',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace',
-      required: true,
-    }),
-    userId: Property.ShortText({
-      displayName: 'User ID',
-      description: 'The ID of the user',
-      required: true,
-    }),
+    workspaceId: clockifyCommon.workspace_id(),
+    userId: clockifyCommon.user_id(),
     description: Property.ShortText({
       displayName: 'Description',
       description: 'Search by description text',
       required: false,
     }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'Filter by project ID',
-      required: false,
-    }),
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'Filter by task ID',
-      required: false,
-    }),
+    projectId: clockifyCommon.project_id(false),
+    taskId: clockifyCommon.task_id(false),
     startDate: Property.DateTime({
       displayName: 'Start Date',
       description: 'Filter by start date',
