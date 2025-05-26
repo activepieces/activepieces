@@ -15,7 +15,7 @@ import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
-import { BillingUsageType, usageService } from '../../platform/platform-usage-service'
+import { BillingUsageType, platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
@@ -32,7 +32,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('name', planLimits.nickname),
             ...spreadIfDefined('pieces', planLimits.pieces),
             ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
-            ...spreadIfDefined('aiTokens', planLimits.aiTokens),
+            ...spreadIfDefined('aiCredits', planLimits.aiCredits),
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
     },
@@ -43,7 +43,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         return {
             ...projectPlan,
             tasks: projectPlan.tasks ?? platformBilling?.tasksLimit,
-            aiTokens: projectPlan.aiTokens ?? platformBilling?.aiCreditsLimit,
+            aiCredits: projectPlan.aiCredits ?? platformBilling?.aiCreditsLimit,
         }
     },
     async tasksExceededLimit(projectId: string): Promise<boolean> {
@@ -55,11 +55,11 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
+    async aiCreditsExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
         return checkUsageLimit({
             projectId,
             incrementBy: tokensToConsume,
-            usageType: BillingUsageType.AI_TOKENS,
+            usageType: BillingUsageType.AI_CREDITS,
             log,
         })
     },
@@ -74,7 +74,7 @@ async function getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
             pieces: [],
             piecesFilterType: PiecesFilterType.NONE,
             tasks: null,
-            aiTokens: null,
+            aiCredits: null,
             name: 'free',
         }, ['projectId'])
 
@@ -106,7 +106,7 @@ async function checkUsageLimit({ projectId, incrementBy, usageType, log }: Check
         }
         const platformId = await projectService.getPlatformId(projectId)
         const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        const { consumedProjectUsage, consumedPlatformUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType })
+        const { consumedProjectUsage, consumedPlatformUsage } = await platformUsageService(log).increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType })
         const limitProject = await limitReachedFromProjectPlan({ projectId, manageProjectsEnabled, usageType, consumedProjectUsage, log })
         const limitPlatform = await limitReachedFromPlatformBilling({ platformId, usageType, consumedPlatformUsage, log })
         return limitProject || limitPlatform
@@ -135,8 +135,8 @@ function getProjectLimit(projectPlan: ProjectPlan, usageType: BillingUsageType):
     switch (usageType) {
         case BillingUsageType.TASKS:
             return projectPlan.tasks ?? undefined
-        case BillingUsageType.AI_TOKENS:
-            return projectPlan.aiTokens ?? undefined
+        case BillingUsageType.AI_CREDITS:
+            return projectPlan.aiCredits ?? undefined
     }
 }
 
@@ -158,7 +158,7 @@ function getPlatformLimit(platformBilling: PlatformPlan, usageType: BillingUsage
     switch (usageType) {
         case BillingUsageType.TASKS:
             return platformBilling.tasksLimit
-        case BillingUsageType.AI_TOKENS:
+        case BillingUsageType.AI_CREDITS:
             return platformBilling.aiCreditsLimit
     }
 }

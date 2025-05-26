@@ -47,7 +47,7 @@ export default function GeneralPage() {
       externalId: project?.externalId,
       plan: {
         tasks: project?.plan?.tasks ?? undefined,
-        aiTokens: project?.plan?.aiTokens ?? undefined,
+        aiCredits: project?.plan?.aiCredits ?? undefined,
       },
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -60,7 +60,7 @@ export default function GeneralPage() {
     {
       displayName: string;
       externalId?: string;
-      plan: { tasks: number | undefined; aiTokens?: number | undefined };
+      plan: { tasks: number | undefined; aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {
@@ -152,10 +152,10 @@ export default function GeneralPage() {
                   )}
                 />
                 <FormField
-                  name="plan.aiTokens"
+                  name="plan.aiCredits"
                   render={({ field }) => (
                     <FormItem className="grid space-y-2">
-                      <Label htmlFor="plan.aiTokens">{t('AI Credits')}</Label>
+                      <Label htmlFor="plan.aiCredits">{t('AI Credits')}</Label>
                       <Input
                         type="number"
                         {...field}
@@ -166,7 +166,7 @@ export default function GeneralPage() {
                               : undefined,
                           )
                         }
-                        id="plan.aiTokens"
+                        id="plan.aiCredits"
                         placeholder={t('AI Credits')}
                         className="rounded-sm"
                       />

@@ -26,7 +26,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                     steps: !isNil(flowRun) ? flowRun.steps : {},
                 },
                 tasks: flowRun?.tasks ?? 0,
-                formatPayload: !isNil(jobData.synchronousHandlerId),
+                executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
