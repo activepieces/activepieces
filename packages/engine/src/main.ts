@@ -1,16 +1,15 @@
 import {
+    assertNotNullOrUndefined,
+    EngineError,
     EngineOperation,
     EngineOperationType,
-    EngineSocketEvent,
     EngineResult,
-    EngineError,
-    EngineStdout,
+    EngineSocketEvent,
     EngineStderr,
-    isNil,
-} from '@activepieces/shared'
-import { execute } from './lib/operations'
+    EngineStdout,
+    isNil } from '@activepieces/shared'
 import WebSocket from 'ws'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { execute } from './lib/operations'
 
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
@@ -26,7 +25,7 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_RESULT,
-            data: engineResult
+            data: engineResult,
         }))
     }
     catch (error) {
@@ -35,7 +34,7 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_ERROR,
-            data: engineError
+            data: engineError,
         }))
     }
 }
@@ -45,8 +44,8 @@ function setupSocket() {
 
     socket = new WebSocket(WS_URL, {
         headers: {
-            'worker-id': WORKER_ID
-        }
+            'worker-id': WORKER_ID,
+        },
     })
 
     // Redirect console.log/error to socket
@@ -57,7 +56,7 @@ function setupSocket() {
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_STDOUT,
-            data: engineStdout
+            data: engineStdout,
         }))
         originalLog.apply(console, args)
     }
@@ -69,7 +68,7 @@ function setupSocket() {
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_STDERR,
-            data: engineStderr
+            data: engineStderr,
         }))
         originalError.apply(console, args)
     }
@@ -84,11 +83,12 @@ function setupSocket() {
                     }
                     socket?.send(JSON.stringify({
                         type: EngineSocketEvent.ENGINE_ERROR,
-                        data: engineError
+                        data: engineError,
                     }))
                 })
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Error handling operation:', error)
         }
     })
