@@ -31,7 +31,7 @@ const McpServerPage = () => {
   const { data: mcp } = mcpHooks.useMcp(mcpId!);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center gap-8 pb-12">
+    <div className="w-full flex flex-col items-center justify-center gap-8">
       <div className="w-full flex flex-col gap-4">
         <h1 className="text-2xl font-bold">{mcp?.name}</h1>
         <Tabs defaultValue={tabs[0].value} className="w-full">

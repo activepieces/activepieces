@@ -134,7 +134,7 @@ export const McpConfigPage = () => {
 
       <div className="space-y-6">
         {hasTools ? (
-          <ScrollArea className="h-[calc(100vh-220px)]">
+          <ScrollArea>
             <div className="space-y-2">
               {mcp?.tools &&
                 mcp.tools.map((tool) => {
