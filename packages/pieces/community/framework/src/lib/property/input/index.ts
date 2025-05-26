@@ -236,7 +236,7 @@ export const Property = {
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
   Custom<R extends boolean>(
-    request: Omit<Properties<CustomProperty<R>>, 'code' | 'onUnmount'> & {
+    request: Omit<Properties<CustomProperty<R>>, 'code'> & {
       /** 
        * This is designed to be self-contained and operates independently of any
        * external libraries or imported dependencies. All necessary logic and

@@ -27,6 +27,6 @@ export type CustomPropertyCodeFunctionParams =
     onChange: (value: unknown) => void,
     isEmbeded: boolean,
     projectId:string,
-    property: CustomProperty<boolean>,
+    property: Pick<CustomProperty<boolean>, 'displayName' | 'description' | 'required'>,
     disabled: boolean
   }
