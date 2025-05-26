@@ -1,18 +1,21 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createTask } from './lib/actions/create-task';
+import { updateTask } from './lib/actions/update-task';
+import { createProject } from './lib/actions/create-project';
+import { getTask } from './lib/actions/get-task';
+import { taskCreated } from './lib/triggers/task-created';
 
 export const motionAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
+  displayName: 'Motion API Key',
+  description: 'Enter your Motion API key',
   required: true,
-  description: 'Please use Motion API Key',
 });
 
 export const motion = createPiece({
   displayName: 'Motion',
-  auth: motionAuth,
-  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/motion.png',
-  authors: [],
-  actions: [createTask],
-  triggers: [],
+  auth: motionAuth,
+  authors: ['activepieces'],
+  actions: [createTask, updateTask, createProject, getTask],
+  triggers: [taskCreated],
 });
