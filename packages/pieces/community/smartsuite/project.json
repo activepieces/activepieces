@@ -12,7 +12,12 @@
         "tsConfig": "packages/pieces/community/smartsuite/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/smartsuite/package.json",
         "main": "packages/pieces/community/smartsuite/src/index.ts",
-        "assets": ["packages/pieces/community/smartsuite/*.md"],
+        "assets": ["packages/pieces/community/smartsuite/*.md",
+      {
+            "input": "packages/pieces/community/smartsuite/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
