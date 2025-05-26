@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { makeRequest, fetchWorkspaces } from '../common';
 import { clockifyAuth } from '../../index';
 
 export const newTaskTrigger = createTrigger({
@@ -14,9 +14,27 @@ export const newTaskTrigger = createTrigger({
   description: 'Triggers when a new task is created in Clockify',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
+    workspaceId: Property.Dropdown({
+      displayName: 'Workspace',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        const workspaces = await fetchWorkspaces(auth as string);
+        return {
+          options: workspaces.map((workspace: { id: string; name: string }) => ({
+            label: workspace.name,
+            value: workspace.id,
+          })),
+        };
+      },
     }),
     projectId: Property.ShortText({
       displayName: 'Project ID',

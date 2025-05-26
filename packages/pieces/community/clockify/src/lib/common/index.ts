@@ -20,3 +20,7 @@ export async function makeRequest(
 
   return response.body;
 }
+
+export async function fetchWorkspaces(apiKey: string) {
+  return await makeRequest(apiKey, HttpMethod.GET, '/workspaces');
+}

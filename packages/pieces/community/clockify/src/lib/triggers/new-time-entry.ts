@@ -1,6 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { makeRequest, fetchWorkspaces } from '../common';
 import { clockifyAuth } from '../../index';
 
 export const newTimeEntryTrigger = createTrigger({
@@ -10,20 +10,34 @@ export const newTimeEntryTrigger = createTrigger({
   description: 'Triggers when a new time entry is created',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
+    workspaceId: Property.Dropdown({
+      displayName: 'Workspace',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        const workspaces = await fetchWorkspaces(auth as string);
+        return {
+          options: workspaces.map((workspace: { id: string; name: string }) => ({
+            label: workspace.name,
+            value: workspace.id,
+          })),
+        };
+      },
     }),
   },
   sampleData: {
     id: 'entry_123',
     description: 'Worked on feature X',
     start: '2024-01-01T09:00:00Z',
-    end: '2024-01-01T11:00:00Z',
-    duration: 7200,
-    userId: 'user_abc',
-    projectId: 'project_xyz',
-    workspaceId: 'workspace_123',
+    end: '2024-01-01T11:00:00Z'
   },
 
   async onEnable(context) {
