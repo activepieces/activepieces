@@ -348,6 +348,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddI18nColumnToPieceMetadata1746714836833,
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
+        UpgradePieceVersionsToLatest1748253670449,
         AddMcpToolEntity1748199841100,
     ]
 
