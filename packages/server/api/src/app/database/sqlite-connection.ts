@@ -19,7 +19,7 @@ import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
-import { ChangeExternalIdsForTables1747346473000 } from './migration/common/1747346473000-ChangeExternalIdsForTables'
+import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -105,6 +105,7 @@ import { AddI18nColumnToPieceMetadata1746714949131 } from './migration/sqlite/17
 import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/sqlite/1746845932780-AddHandshakeConfigurationToFlowSqlite'
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/1747824740845-RemoveFeatureFlagsFromSqlite'
+import { UpgradePieceVersionsToLatest1748253670449 } from './migration/postgres/1748253670449-UpgradePieceVersionsToLatest'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -224,8 +225,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddHandshakeConfigurationToFlowSqlite1746845932780,
         AddFolderDisplayOrder1747062679388,
         AddI18nColumnToPieceMetadata1746714949131,
-        ChangeExternalIdsForTables1747346473000,
+        ChangeExternalIdsForTables1747346473001,
         RemoveFeatureFlagsFromSqlite1747824740845,
+        UpgradePieceVersionsToLatest1748253670449
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
