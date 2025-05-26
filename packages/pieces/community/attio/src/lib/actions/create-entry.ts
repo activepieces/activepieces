@@ -11,12 +11,12 @@ export const createEntryAction = createAction({
   props: {
     list_id: Property.ShortText({
       displayName: 'List ID',
-      description: 'The ID of the list to add the entry to',
+      description: 'The unique identifier of the list to add the entry to',
       required: true,
     }),
     record_id: Property.ShortText({
       displayName: 'Record ID',
-      description: 'The ID of the record to add to the list',
+      description: 'The unique identifier of the record to add to the list',
       required: true,
     }),
     parent_object: Property.Dropdown({
@@ -40,18 +40,23 @@ export const createEntryAction = createAction({
             '/objects'
           );
 
+          if (!response?.data || !Array.isArray(response.data)) {
+            throw new Error('Invalid response format from objects endpoint');
+          }
+
           return {
             options: response.data.map((object: any) => {
               return {
-                label: object.plural_noun,
+                label: object.plural_noun || object?.singular_noun,
                 value: object.api_slug,
               };
             }),
           };
         } catch (error) {
+          console.error('Error fetching object types:', error);
           return {
             disabled: true,
-            placeholder: 'Error fetching object types',
+            placeholder: 'Error fetching object types. Please check your API key.',
             options: [],
           };
         }
@@ -59,29 +64,49 @@ export const createEntryAction = createAction({
     }),
     attributes: Property.Object({
       displayName: 'Entry Attributes',
-      description: 'The attributes of the entry (e.g., status, custom fields)',
+      description: 'Additional attributes for the list entry (e.g., status, priority, custom fields). Leave empty if no additional attributes are needed.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { list_id, record_id, parent_object, attributes } = propsValue;
+    try {
+      const { list_id, record_id, parent_object, attributes } = propsValue;
 
-    // Format the request payload according to Attio API requirements
-    const payload = {
-      data: {
-        parent_record_id: record_id,
-        parent_object: parent_object,
-        entry_values: attributes || {}
+      if (!list_id) {
+        throw new Error('List ID is required');
       }
-    };
 
-    const response = await makeRequest(
-      auth,
-      HttpMethod.POST,
-      `/lists/${list_id}/entries`,
-      payload
-    );
+      if (!record_id) {
+        throw new Error('Record ID is required');
+      }
 
-    return response;
+      if (!parent_object) {
+        throw new Error('Parent object type is required');
+      }
+
+      const payload = {
+        data: {
+          parent_record_id: record_id,
+          parent_object: parent_object,
+          entry_values: attributes || {}
+        }
+      };
+
+      const response = await makeRequest(
+        auth,
+        HttpMethod.POST,
+        `/lists/${list_id}/entries`,
+        payload
+      );
+
+      if (!response?.data) {
+        throw new Error('Invalid response from Attio API');
+      }
+
+      return response.data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to create list entry: ${errorMessage}`);
+    }
   },
 });

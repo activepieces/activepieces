@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { attioAuth } from '../../index';
 import { makeRequest } from '../common/client';
@@ -14,7 +14,7 @@ export const createRecordAction = createAction({
   props: {
     object_type: Property.Dropdown({
       displayName: 'Object Type',
-      description: 'The type of record to create',
+      description: 'The type of record to create (e.g., people, companies, deals)',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -33,60 +33,81 @@ export const createRecordAction = createAction({
             '/objects'
           );
 
+          if (!response?.data || !Array.isArray(response.data)) {
+            throw new Error('Invalid response format from objects endpoint');
+          }
+
           return {
             options: response.data.map((object: any) => {
               return {
-                label: object.plural_noun,
+                label: object.plural_noun || object?.singular_noun,
                 value: object.api_slug,
               };
             }),
           };
         } catch (error) {
+          console.error('Error fetching object types:', error);
           return {
             disabled: true,
-            placeholder: 'Error fetching object types',
+            placeholder: 'Error fetching object types. Please check your API key.',
             options: [],
           };
         }
       },
     }),
     attributes: Property.Object({
-      displayName: 'Attributes',
-      description: 'The attributes of the record. Use exact attribute names (API slugs) from your Attio workspace. Note: Some attributes like email_addresses, phone_numbers, etc. require array values - if you provide a string, it will be automatically converted to an array.',
+      displayName: 'Record Attributes',
+      description: 'The attributes of the record using exact API field names.',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { object_type, attributes } = propsValue;
+    try {
+      const { object_type, attributes } = propsValue;
 
-    // Process attributes to ensure they're properly formatted
-    const formattedValues: Record<string, unknown> = {};
-
-    // Copy attributes to formatted values, ensuring proper formatting for multi-select fields
-    for (const [key, value] of Object.entries(attributes)) {
-      if (MULTI_SELECT_ATTRIBUTES.includes(key) && typeof value === 'string') {
-        // If this is a known multi-select field and a string was provided, wrap it in an array
-        formattedValues[key] = [value];
-      } else if (key === 'email_addresses' && typeof value === 'string') {
-        // Special case for email_addresses which is very common
-        formattedValues[key] = [value];
-      } else {
-        // Use the value as-is for other fields
-        formattedValues[key] = value;
+      if (!object_type) {
+        throw new Error('Object type is required');
       }
-    }
 
-    const response = await makeRequest(
-      auth,
-      HttpMethod.POST,
-      `/objects/${object_type}/records`,
-      {
-        data: {
-          values: formattedValues
+      if (!attributes || typeof attributes !== 'object') {
+        throw new Error('Attributes must be a valid object');
+      }
+
+      const formattedValues: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(attributes)) {
+        if (value === null || value === undefined || value === '') {
+          continue;
+        }
+
+        if (MULTI_SELECT_ATTRIBUTES.includes(key) && typeof value === 'string') {
+          formattedValues[key] = [value];
+        } else if (key === 'email_addresses' && typeof value === 'string') {
+          formattedValues[key] = [value];
+        } else {
+          formattedValues[key] = value;
         }
       }
-    );
 
-    return response;
+      const response = await makeRequest(
+        auth,
+        HttpMethod.POST,
+        `/objects/${object_type}/records`,
+        {
+          data: {
+            values: formattedValues
+          }
+        }
+      );
+
+      if (!response?.data) {
+        throw new Error('Invalid response from Attio API');
+      }
+
+      return response.data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to create record: ${errorMessage}`);
+    }
   },
 });
