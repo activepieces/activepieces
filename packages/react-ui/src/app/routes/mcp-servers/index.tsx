@@ -41,6 +41,8 @@ import {
   Permission,
 } from '@activepieces/shared';
 
+import { CreateMcpServerDialog } from './create-mcp-server-dialog';
+
 const McpServersPage = () => {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<McpWithTools[]>([]);
@@ -340,15 +342,15 @@ const McpServersPage = () => {
           {t('MCP Servers')}
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-          <Button
-            size="sm"
-            onClick={() => createMcp({ name: t('New MCP Server') })}
-            className="flex items-center gap-2"
+          <CreateMcpServerDialog
+            onCreateMcp={(name) => createMcp({ name })}
             disabled={!userHasMcpWritePermission}
           >
-            <Plus className="h-4 w-4" />
-            {t('New MCP Server')}
-          </Button>
+            <Button size="sm" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              {t('New MCP Server')}
+            </Button>
+          </CreateMcpServerDialog>
         </PermissionNeededTooltip>
       </div>
 

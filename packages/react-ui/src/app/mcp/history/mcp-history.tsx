@@ -111,7 +111,6 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
 
   return (
     <div className="w-full space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -134,7 +133,6 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -181,7 +179,6 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
         </Card>
       </div>
 
-      {/* DataTable */}
       <DataTable
         emptyStateTextTitle={t('No tool executions yet')}
         emptyStateTextDescription={t(
@@ -192,13 +189,11 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
         page={pageData}
         isLoading={isLoading || isPiecesLoading}
         filters={filters}
-        hidePagination={true}
         onRowClick={(row) => {
           setSelectedItem(row);
         }}
       />
 
-      {/* Detail Sheet */}
       <Sheet open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <SheetContent className="w-[600px] sm:w-[700px] sm:max-w-none">
           {selectedItem && (

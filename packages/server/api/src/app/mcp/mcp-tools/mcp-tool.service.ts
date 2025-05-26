@@ -101,10 +101,7 @@ export const mcpToolService = (log: FastifyBaseLogger) => ({
     },
 
     async delete(mcpToolId: string): Promise<void> {
-        // First delete all related history records to avoid foreign key constraint violation
         await mcpToolHistoryRepo().delete({ toolId: mcpToolId })
-        
-        // Then delete the tool itself
         await mcpToolRepo().delete({ id: mcpToolId })
     },
 })
