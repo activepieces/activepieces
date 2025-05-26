@@ -16,6 +16,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -238,7 +239,7 @@ export default function McpToolDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col">
+      <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
           <DialogTitle className="text-2xl font-bold">
             {selectedPiece ? (
@@ -282,26 +283,18 @@ export default function McpToolDialog({
             onSelectAll={handleSelectAll}
           />
         ) : (
-          <div className="flex flex-col h-full">
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) =>
-                setActiveTab(value as 'pieces' | 'flows')
-              }
-              className="flex-1 flex flex-col min-h-0"
-            >
-              <div className="flex flex-col gap-4">
-                <div>
-                  <div className="relative mt-1">
-                    <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder={t('Search')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
+          <>
+            <div className="flex flex-col gap-4 px-1">
+              <div className="relative mt-1">
+                <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('Search')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'flows')}>
                 <TabsList className="w-full p-0 bg-background justify-start border-b rounded-none">
                   <TabsTrigger
                     value="pieces"
@@ -322,8 +315,10 @@ export default function McpToolDialog({
                     </div>
                   </TabsTrigger>
                 </TabsList>
-              </div>
-              <TabsContent value="pieces" className="flex flex-col mt-4">
+              </Tabs>
+            </div>
+            <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
+              {activeTab === 'pieces' && (
                 <McpPiecesContent
                   isPiecesLoading={isPiecesLoading}
                   pieceMetadata={pieceMetadata}
@@ -331,16 +326,16 @@ export default function McpToolDialog({
                   otherPieces={otherPieces}
                   onPieceSelect={handlePieceSelect}
                 />
-              </TabsContent>
-              <TabsContent value="flows" className="flex flex-col mt-4">
+              )}
+              {activeTab === 'flows' && (
                 <McpFlowsContent
                   searchQuery={searchQuery}
                   selectedFlows={selectedFlows}
                   setSelectedFlows={setSelectedFlows}
                 />
-              </TabsContent>
-            </Tabs>
-          </div>
+              )}
+            </ScrollArea>
+          </>
         )}
         <DialogFooter>
           <DialogClose asChild>

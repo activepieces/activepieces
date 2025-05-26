@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -41,25 +40,20 @@ export const McpFlowsContent = ({
     },
   });
 
+  if (isFlowsLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-400px)]">
-      {isFlowsLoading && (
-        <div className="flex items-center justify-center w-full flex-1">
-          <LoadingSpinner />
-        </div>
-      )}
-      {!isFlowsLoading && (
-        <ScrollArea className="flex-1">
-          <div className="pr-4">
-            <McpFlowActionsDialog
-              flows={flows || []}
-              searchQuery={searchQuery}
-              selectedFlows={selectedFlows}
-              setSelectedFlows={setSelectedFlows}
-            />
-          </div>
-        </ScrollArea>
-      )}
-    </div>
+    <McpFlowActionsDialog
+      flows={flows || []}
+      searchQuery={searchQuery}
+      selectedFlows={selectedFlows}
+      setSelectedFlows={setSelectedFlows}
+    />
   );
 };
