@@ -25,7 +25,7 @@ import { McpEntity } from './mcp-entity'
 import { McpFlowToolHistoryEntity } from './mcp-flow-tool-history-entity'
 import { McpPieceToolHistoryEntity } from './mcp-piece-tool-history-entity'
 
-const mcpRepo = repoFactory(McpEntity)
+export const mcpRepo = repoFactory(McpEntity)
 const mcpPieceToolHistoryRepo = repoFactory(McpPieceToolHistoryEntity)
 const mcpFlowToolHistoryRepo = repoFactory(McpFlowToolHistoryEntity)
 
