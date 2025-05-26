@@ -81,6 +81,7 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import UpgradePage from '../routes/platform/billing/upgrade-plan';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -555,6 +556,16 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="System Health">
           <SettingsHealthPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+{
+    path: '/platform/setup/billing/add-ons',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Add-ons">
+          <UpgradePage />
         </PageTitle>
       </PlatformAdminContainer>
     ),
