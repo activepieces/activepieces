@@ -3,8 +3,8 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class ChangeExternalIdsForTables1747346473000 implements MigrationInterface {
-    name = 'ChangeExternalIdsForTables1747346473000'
+export class ChangeExternalIdsForTables1747346473001 implements MigrationInterface {
+    name = 'ChangeExternalIdsForTables1747346473001'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -15,7 +15,7 @@ export class ChangeExternalIdsForTables1747346473000 implements MigrationInterfa
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
-            'ChangeExternalIdsForTables1747346473000: found ' +
+            'ChangeExternalIdsForTables1747346473001: found ' +
         flowVersionIds.length +
         ' versions',
         )
@@ -39,14 +39,14 @@ export class ChangeExternalIdsForTables1747346473000 implements MigrationInterfa
             updatedFlows++
             if (updatedFlows % 100 === 0) {
                 log.info(
-                    'ChangeExternalIdsForTables1747346473000: ' +
+                    'ChangeExternalIdsForTables1747346473001: ' +
             updatedFlows +
             ' flows updated',
                 )
             }
         }
 
-        log.info('ChangeExternalIdsForTables1747346473000: up')
+        log.info('ChangeExternalIdsForTables1747346473001: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -54,7 +54,7 @@ export class ChangeExternalIdsForTables1747346473000 implements MigrationInterfa
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         log.info(
-            'ChangeExternalIdsForTables1747346473000 down: found ' +
+            'ChangeExternalIdsForTables1747346473001 down: found ' +
         flowVersionIds.length +
         ' versions',
         )
@@ -78,14 +78,14 @@ export class ChangeExternalIdsForTables1747346473000 implements MigrationInterfa
             updatedFlows++
             if (updatedFlows % 100 === 0) {
                 log.info(
-                    'ChangeExternalIdsForTables1747346473000 down: ' +
+                    'ChangeExternalIdsForTables1747346473001 down: ' +
             updatedFlows +
             ' flows updated',
                 )
             }
         }
 
-        log.info('ChangeExternalIdsForTables1747346473000: down')
+        log.info('ChangeExternalIdsForTables1747346473001: down')
     }
 
 }
@@ -135,7 +135,7 @@ const traverseAndUpdateSubFlow = (
 const updateVersionOfTablesStep = (
     step: Step,
 ): Step => {
-    if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
+    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.1.0'
     }
     return step
@@ -144,7 +144,7 @@ const updateVersionOfTablesStep = (
 const downgradeVersionOfTablesStep = (
     step: Step,
 ): Step => {
-    if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER' && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
+    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.0.6'
     }
     return step
