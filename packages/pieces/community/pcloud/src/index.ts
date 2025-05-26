@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 
 import { copyFile } from './lib/actions/copy-file';
 import { createFolder } from './lib/actions/create-folder';
@@ -8,13 +8,8 @@ import { findFolder } from './lib/actions/find-folder';
 import { uploadFile } from './lib/actions/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
-export const pcloudAuth = PieceAuth.OAuth2({
-  description: 'OAuth2 authentication for pCloud',
-  authUrl: 'https://my.pcloud.com/oauth2/authorize',
-  tokenUrl: 'https://api.pcloud.com/oauth2_token',
-  required: true,
-  scope: ['fileops', 'readwrite'],
-});
+import { pcloudAuth } from './lib/auth';
+
 export const pcloud = createPiece({
   displayName: 'Pcloud',
   auth: pcloudAuth,
