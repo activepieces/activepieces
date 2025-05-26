@@ -406,10 +406,12 @@ It has a `code` property which is a function that takes in an object parameter w
 | isEmbedded | `boolean` | The flag that tells you if the code is running inside an [embedded instance](/embedding/overview) of Activepieces |
 | projectId | `string` | The project ID of the flow the step that contains this property is in |
 | disabled | `boolean` | The flag that tells you whether or not the property is disabled |
-| property | `{ displayName:string, description: string, required: boolean}` | The current property information|
+| property | `{ displayName:string, description?: string, required: boolean}` | The current property information|
 
 - You can return a clean up function at the end of the `code` property function to remove any listeners or HTML elements you inserted (this is important for development mode, the component gets [mounted twice](https://react.dev/reference/react/useEffect#my-effect-runs-twice-when-the-component-mounts)).
 - This function must be pure without any imports from external packages or variables outside the function scope. 
+- **Must** mark your piece `minimumSupportedRelease` property to be at least `0.58.0` after introducing this property to it.
+
 Here is how to define such a property:
 ```typescript
  Property.Custom({
