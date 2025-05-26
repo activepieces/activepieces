@@ -9,15 +9,60 @@ export const createContact = createAction({
   displayName: 'Create Contact',
   description: 'Add a new contact to a lead in Close CRM with comprehensive details',
   props: {
-    lead_id: Property.ShortText({
-      displayName: 'Lead ID',
-      description: 'The ID of the lead to associate this contact with',
-      required: true,
+    lead_id: Property.Dropdown({
+      displayName: 'Lead_id',
+      description: 'Select a lead to associate this contact with',
+      required: true,                                    
+      refreshers: ['auth'],
+      options: async ({ auth }) => {                 // Fetches the leads available
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+        try {
+          const response = await httpClient.sendRequest<{
+            data: Array<{
+              id: string;
+              name: string;
+              status_label?: string;
+            }>
+          }>({
+            method: HttpMethod.GET,
+            url: 'https://api.close.com/api/v1/lead/',
+            headers: {
+              'Authorization': `Bearer ${auth}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          return {
+            disabled: false,
+            options: response.body.data.map(lead => ({
+              label: `${lead.name} (${lead.status_label || 'No status'})`,
+              value: lead.id
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not fetch leads. Check your connection.'
+          };
+        }
+      }
     }),
-    contact_id: Property.ShortText({
+    contact_id: Property.StaticDropdown({
       displayName: 'Contact ID',
       description: 'The ID of the contact',
       required: true,
+      options: {
+        options: [
+          { label: 'Select Contact', value: '' },
+        ],
+      },
     }),
     name: Property.ShortText({
       displayName: 'Full Name',
@@ -100,7 +145,7 @@ export const createContact = createAction({
     }),
   },
   async run(context) {
-    const { lead_id,contact_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
+    const { lead_id, contact_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
 
     const contactData: Partial<CloseCRMContact> = { // Use Partial for creation
       lead_id: lead_id,
@@ -108,17 +153,17 @@ export const createContact = createAction({
       title: title,
       custom: customFields,
       name: name,
-      email: emails ? emails.map(email => ({ 
+      email: emails ? emails.map(email => ({
         type: email as string,
-        email: email as string 
+        email: email as string
       })) : [],
-      phone: phones ? phones.map(phone => ({ 
+      phone: phones ? phones.map(phone => ({
         type: phone as string,
-        phone: phone as string 
+        phone: phone as string
       })) : [],
-      url: urls ? urls.map(url => ({ 
+      url: urls ? urls.map(url => ({
         type: url as string,
-        url: url as string 
+        url: url as string
       })) : [],
     };
     try {
