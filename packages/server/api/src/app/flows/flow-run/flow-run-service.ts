@@ -214,6 +214,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         existingFlowRunId,
         payload,
         environment,
+        executeTrigger,
         executionType,
         synchronousHandlerId,
         progressUpdateType,
@@ -245,6 +246,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             payload,
             priority,
             synchronousHandlerId,
+            executeTrigger,
             executionType,
             progressUpdateType,
         })

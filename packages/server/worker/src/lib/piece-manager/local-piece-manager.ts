@@ -3,9 +3,9 @@ import { join, resolve, sep } from 'node:path'
 import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheHandler } from '../utils/cache-handler'
+import { cacheState } from '../cache/cache-state'
+import { packageManager } from '../cache/package-manager'
 import { workerMachine } from '../utils/machine'
-import { packageManager } from '../utils/package-manager'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
 enum CacheState {
@@ -62,7 +62,7 @@ const linkPackages = async (
     packages: Record<string, string>,
     log: FastifyBaseLogger,
 ): Promise<void> => {
-    const cache = cacheHandler(projectPath)
+    const cache = cacheState(projectPath)
     if (await cache.cacheCheckState(packageName) === CacheState.READY) {
         return
     }
