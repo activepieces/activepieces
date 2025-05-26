@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Cursor } from '../../common/seek-page'
-import { FolderId } from './folder'
 
 export const CreateFolderRequest = Type.Object({
     displayName: Type.String(),
