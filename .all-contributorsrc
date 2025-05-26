@@ -1778,6 +1778,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Kunal-Darekar",
+      "name": "Kunal Darekar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/150500530?v=4",
+      "profile": "https://github.com/Kunal-Darekar",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

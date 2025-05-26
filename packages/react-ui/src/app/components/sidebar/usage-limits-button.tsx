@@ -50,8 +50,8 @@ const UsageLimitsButton = React.memo(() => {
               />
               <UsageProgress
                 name={t('AI Credits')}
-                value={project.usage.aiTokens}
-                max={project.plan.aiTokens}
+                value={project.usage.aiCredits}
+                max={project.plan.aiCredits}
               />
             </div>
           </div>
