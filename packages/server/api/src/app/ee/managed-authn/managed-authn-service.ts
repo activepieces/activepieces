@@ -1,8 +1,4 @@
 import { createHash } from 'crypto'
-import {
-    DEFAULT_EMBEDDING_LIMIT,
-    DEFAULT_PLATFORM_LIMIT,
-} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
@@ -40,7 +36,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens, log)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiCredits, log)
 
         const user = await getOrCreateUser(externalPrincipal, log)
 
@@ -87,7 +83,7 @@ const updateProjectLimits = async (
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
     tasks: number | undefined,
-    aiTokens: number | undefined,
+    aiCredits: number | undefined,
     log: FastifyBaseLogger,
 ): Promise<void> => {
     const pieces = await getPiecesList({
@@ -97,9 +93,9 @@ const updateProjectLimits = async (
         piecesFilterType,
     })
     await projectLimitsService(log).upsert({
-        nickname: DEFAULT_PLATFORM_LIMIT.nickname,
-        tasks: tasks ?? DEFAULT_EMBEDDING_LIMIT.tasks,
-        aiTokens: aiTokens ?? DEFAULT_EMBEDDING_LIMIT.aiTokens,
+        nickname: 'default-embeddings-limit',
+        tasks: tasks ?? 50000,
+        aiCredits: aiCredits ?? 1000,
         pieces,
         piecesFilterType,
     }, projectId)

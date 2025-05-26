@@ -5,7 +5,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
-import { platformBillingService } from './platform-billing.service'
+import { platformPlanService } from './platform-plan.service'
 import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -34,10 +34,10 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         message: 'Subscription does not have a price for tasks',
                     }
                 }
-                const platformBilling = await platformBillingService(request.log).updateSubscriptionIdByCustomerId(subscription)
+                const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId(subscription)
                 if (subscription.status === ApSubscriptionStatus.CANCELED) {
                     request.log.info(`Subscription canceled for project ${platformBilling.platformId}, downgrading to free plan`)
-                    await platformBillingService(request.log).update({ platformId: platformBilling.platformId, tasksLimit: undefined })
+                    await platformPlanService(request.log).update({ platformId: platformBilling.platformId, tasksLimit: undefined })
                 }
                 return await reply.status(StatusCodes.OK).send()
             }

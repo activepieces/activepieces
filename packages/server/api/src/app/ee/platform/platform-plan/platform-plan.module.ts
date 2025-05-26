@@ -7,15 +7,15 @@ import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { projectRepo } from '../../../project/project-service'
-import { BillingEntityType, usageService } from '../platform-usage-service'
-import { platformBillingController } from './platform-billing.controller'
-import { platformBillingService } from './platform-billing.service'
+import { BillingEntityType, platformUsageService } from '../platform-usage-service'
+import { platformPlanController } from './platform-plan.controller'
+import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
-export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
+export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.PLATFORM_USAGE_REPORT, async () => {
         const log = app.log
         log.info('Running platform-daily-report')
@@ -37,7 +37,7 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         for (const { platformId } of platforms) {
-            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+            const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
             if (isNil(platformBilling.stripeSubscriptionId) || platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
                 continue
             }
@@ -46,9 +46,9 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
-            const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, BillingEntityType.PLATFORM)
+            const { tasks, aiCredits } = await platformUsageService(log).getTaskAndCreditUsage(platformId, BillingEntityType.PLATFORM)
 
-            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
+            log.info({ platformId, tasks, aiCredits, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
 
             await stripe.subscriptionItems.createUsageRecord(item.id, {
                 quantity: Math.max(tasks - (platformBilling.includedTasks || 0), 0),
@@ -69,6 +69,6 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             cron: EVERY_4_HOURS,
         },
     })
-    await app.register(platformBillingController, { prefix: '/v1/platform-billing' })
+    await app.register(platformPlanController, { prefix: '/v1/platform-billing' })
     await app.register(stripeBillingController, { prefix: '/v1/stripe-billing' })
 }

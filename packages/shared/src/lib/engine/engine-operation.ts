@@ -96,7 +96,7 @@ export enum ProgressUpdateType {
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
-    formatPayload: boolean
+    executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {

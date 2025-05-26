@@ -5,7 +5,7 @@ import { piecesAnalyticsService } from './pieces-analytics.service'
 
 export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.analyticsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(analyticsController, { prefix: '/v1/analytics' })
 }

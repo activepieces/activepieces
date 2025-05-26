@@ -43,7 +43,7 @@ export function PlatformAdminContainer({
       to: '/platform/analytics',
       label: t('Overview'),
       icon: LineChart,
-      locked: isLocked(!platform.analyticsEnabled),
+      locked: isLocked(!platform.plan.analyticsEnabled),
       isSubItem: false,
     },
     {
@@ -51,7 +51,7 @@ export function PlatformAdminContainer({
       to: '/platform/projects',
       label: t('Projects'),
       icon: LayoutGrid,
-      locked: isLocked(!platform.manageProjectsEnabled),
+      locked: isLocked(!platform.plan.manageProjectsEnabled),
       isSubItem: false,
     },
     {
