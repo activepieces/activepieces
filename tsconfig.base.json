@@ -690,9 +690,8 @@
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
-      "@activepieces/piece-smartsuite":[
+      "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
-
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
@@ -768,6 +767,9 @@
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
+      ],
+      "@activepieces/piece-ticktick": [
+        "packages/pieces/community/ticktick/src/index.ts"
       ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
