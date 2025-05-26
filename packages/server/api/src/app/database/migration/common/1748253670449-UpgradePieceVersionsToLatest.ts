@@ -1,7 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { system } from "../../../helper/system/system";
-import { PieceMetadataSchema } from "../../../pieces/piece-metadata-entity";
-
+import { gt } from 'semver'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
@@ -20,16 +19,16 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
-        const allPieceMetadata = await queryRunner.query(`
-            SELECT name, version
-            FROM piece_metadata p1
-            WHERE created = (
-                SELECT MAX(p2.created)
-                FROM piece_metadata p2
-                WHERE p2.name = p1.name
-            )
-        `);
+        const allPieceVersions = await queryRunner.query('SELECT name, version FROM piece_metadata')
         
+        // Create a map of piece names to their latest versions
+        const pieceNameToLatestVersion = new Map<string, string>()
+        for (const piece of allPieceVersions) {
+            const currentLatest = pieceNameToLatestVersion.get(piece.name)
+            if (!currentLatest || gt(piece.version, currentLatest)) {
+                pieceNameToLatestVersion.set(piece.name, piece.version)
+            }
+        }
 
         log.info(
             'UpgradePieceVersionsToLatest1748253670449: found ' +
@@ -47,7 +46,7 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
             if (flowVersion.length > 0) {
                 const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
                 const updated = traverseAndUpdateSubFlow(
-                    (step) => updateVersionOfPieceStep(step, allPieceMetadata),
+                    (step) => updateVersionOfPieceStep(step, pieceNameToLatestVersion),
                     trigger,
                 )
                 if (updated) {
@@ -65,11 +64,9 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
         }
 
         log.info('UpgradePieceVersionsToLatest1748253670449: up')
-
-
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // No need to downgrade
     }
 }
@@ -118,15 +115,15 @@ const traverseAndUpdateSubFlow = (
 
 const updateVersionOfPieceStep = (
     step: Step,
-    allPieceMetadata: PieceMetadataSchema[],
+    pieceNameToLatestVersion: Map<string, string>,
 ): Step => {    
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') {
         const pieceStep = step as PieceStep
-        const pieceVersion = allPieceMetadata.find(piece => piece.name === pieceStep.settings.pieceName)
-        if (pieceVersion) {
-            pieceStep.settings.pieceVersion = pieceVersion.version
+        const latestVersion = pieceNameToLatestVersion.get(pieceStep.settings.pieceName as string)
+        if (latestVersion) {
+            pieceStep.settings.pieceVersion = latestVersion
         }
-        else{
+        else {
             throw new Error(`Piece ${pieceStep.settings.pieceName} not found`)
         }
     }
@@ -145,7 +142,6 @@ type BaseStep<T extends StepType> = {
     type: T
     nextAction?: Step
 }
-
 
 type RouterStep = BaseStep<'ROUTER'> & {
     children: (Step | null)[]
