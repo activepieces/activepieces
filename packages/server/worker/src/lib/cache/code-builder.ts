@@ -3,9 +3,9 @@ import path from 'node:path'
 import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { CodeArtifact } from '../engine/engine-runner'
-import { cacheHandler } from '../utils/cache-handler'
-import { workerMachine } from './machine'
+import { CodeArtifact } from '../runner/engine-runner-types'
+import { workerMachine } from '../utils/machine'
+import { cacheState } from './cache-state'
 import { PackageInfo, packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
@@ -65,7 +65,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
         const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}-${runEnvironment}`)
         try {
-            const cache = cacheHandler(codePath)
+            const cache = cacheState(codePath)
             const fState = await cache.cacheCheckState(codePath)
             if (fState === CacheState.READY && artifact.flowVersionState === FlowVersionState.LOCKED) {
                 return

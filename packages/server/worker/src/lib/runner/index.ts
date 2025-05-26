@@ -1,26 +1,23 @@
-import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { workerMachine } from '../../utils/machine'
-import { webhookUtils } from '../../utils/webhook-utils'
-import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
-import { executionFiles } from '../execution-files'
-import { pieceEngineUtil } from '../flow-engine-util'
-import { EngineWorker } from './worker'
+import { executionFiles } from '../cache/execution-files'
+import { pieceEngineUtil } from '../utils/flow-engine-util'
+import { workerMachine } from '../utils/machine'
+import { webhookUtils } from '../utils/webhook-utils'
+import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from './engine-runner-types'
+import { EngineProcessManager } from './process/engine-process-manager'
 
-const sandboxPath = path.resolve('cache')
-const codesPath = path.resolve('cache', 'codes')
-const enginePath = path.join(sandboxPath, 'main.js')
-let engineWorkers: EngineWorker
 
-export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
+let processManager: EngineProcessManager
+
+export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
         log.debug({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.runEnvironment, operation.projectId)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -62,9 +59,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         await executionFiles(log).provision({
             pieces: [triggerPiece],
             codeSteps: [],
-            globalCachePath: sandboxPath,
-            globalCodesPath: codesPath,
-            customPiecesPath: sandboxPath,
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         return execute(log, input, EngineOperationType.EXECUTE_TRIGGER_HOOK)
     },
@@ -75,9 +70,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
-            globalCachePath: sandboxPath,
-            globalCodesPath: codesPath,
-            customPiecesPath: sandboxPath,
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
@@ -89,9 +82,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
-            globalCachePath: sandboxPath,
-            globalCodesPath: codesPath,
-            customPiecesPath: sandboxPath,
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
@@ -114,9 +105,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                 await executionFiles(log).provision({
                     pieces: [lockedPiece],
                     codeSteps: [],
-                    globalCachePath: sandboxPath,
-                    globalCodesPath: codesPath,
-                    customPiecesPath: sandboxPath,
+                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
                 })
                 break
             }
@@ -125,9 +114,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                 await executionFiles(log).provision({
                     pieces: [],
                     codeSteps: codes,
-                    globalCachePath: sandboxPath,
-                    globalCodesPath: codesPath,
-                    customPiecesPath: sandboxPath,
+                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
                     runEnvironment: operation.runEnvironment,
                 })
                 break
@@ -169,9 +156,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
-            globalCachePath: sandboxPath,
-            globalCodesPath: codesPath,
-            customPiecesPath: sandboxPath,
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
 
         const input: ExecutePropsOptions = {
@@ -189,9 +174,7 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         await executionFiles(log).provision({
             pieces: [lockedPiece],
             codeSteps: [],
-            globalCachePath: sandboxPath,
-            globalCodesPath: codesPath,
-            customPiecesPath: sandboxPath,
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         const input: ExecuteToolOperation = {
             ...operation,
@@ -202,11 +185,13 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, input, EngineOperationType.EXECUTE_TOOL)
     },
     async shutdownAllWorkers() {
-        await engineWorkers.shutdown()
+        if (!isNil(processManager)) {
+            await processManager.shutdown()
+        }
     },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment): Promise<void> {
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, runEnvironment: RunEnvironment, projectId: string): Promise<void> {
     const pieces = await pieceEngineUtil(log).extractFlowPieces({
         flowVersion,
         engineToken,
@@ -215,19 +200,18 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     await executionFiles(log).provision({
         pieces,
         codeSteps,
-        globalCachePath: sandboxPath,
-        globalCodesPath: codesPath,
-        customPiecesPath: sandboxPath,
+        customPiecesPath: executionFiles(log).getCustomPiecesPath({ projectId }),
         runEnvironment,
     })
 }
+
 
 async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
     const memoryLimit = Math.floor(Number(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
 
     const startTime = Date.now()
-    if (isNil(engineWorkers)) {
-        engineWorkers = new EngineWorker(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, enginePath, {
+    if (isNil(processManager)) {
+        processManager = new EngineProcessManager(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
@@ -241,7 +225,7 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
             ],
         })
     }
-    const { engine, stdError, stdOut } = await engineWorkers.executeTask(operationType, operation)
+    const { engine, stdError, stdOut } = await processManager.executeTask(operationType, operation)
     return engineRunnerUtils(log).readResults({
         timeInSeconds: (Date.now() - startTime) / 1000,
         verdict: engine.status,
@@ -260,7 +244,6 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
         AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
         AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
-        AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
         AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
         AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
         AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,

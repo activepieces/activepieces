@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, exec, fileExists, memoryLock } from '@activepieces/server-shared'
+import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@activepieces/server-shared'
 import { isEmpty } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -35,7 +35,7 @@ const runCommand = async (
         log.debug({ path, command, args }, '[PackageManager#execute]')
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
-        return await exec(commandLine, { cwd: path })
+        return await execPromise(commandLine, { cwd: path })
     }
     catch (error) {
         const contextKey = '[PackageManager#runCommand]'
