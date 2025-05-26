@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -59,6 +59,8 @@ export default function McpToolDialog({
   onClose,
 }: McpToolDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
+    useState<string | null>(null);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const { metadata, isLoading: isPiecesLoading } =
     piecesHooks.useAllStepsMetadata({
@@ -151,6 +153,7 @@ export default function McpToolDialog({
             pieceName: selectedPiece.pieceName,
             actionNames: selectedActions,
             pieceVersion: selectedPiece.pieceVersion || '',
+            connectionExternalId: selectedConnectionExternalId ?? undefined,
           },
         });
       } else {
@@ -281,6 +284,8 @@ export default function McpToolDialog({
             selectedActions={selectedActions}
             onSelectAction={handleActionSelect}
             onSelectAll={handleSelectAll}
+            selectedConnectionExternalId={selectedConnectionExternalId}
+            setSelectedConnectionExternalId={setSelectedConnectionExternalId}
           />
         ) : (
           <>
@@ -294,7 +299,12 @@ export default function McpToolDialog({
                   className="pl-8"
                 />
               </div>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'flows')}>
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) =>
+                  setActiveTab(value as 'pieces' | 'flows')
+                }
+              >
                 <TabsList className="w-full p-0 bg-background justify-start border-b rounded-none">
                   <TabsTrigger
                     value="pieces"

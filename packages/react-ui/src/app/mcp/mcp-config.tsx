@@ -98,7 +98,7 @@ export const McpConfigPage = () => {
   const hasTools = totalToolsCount > 0;
 
   return (
-    <div className="w-full py-6 space-y-6">
+    <div className="max-w-[800px] py-6 space-y-6">
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -135,7 +135,7 @@ export const McpConfigPage = () => {
       <div className="space-y-6">
         {hasTools ? (
           <ScrollArea className="h-[calc(100vh-220px)]">
-            <div className="space-y-2 pr-4">
+            <div className="space-y-2">
               {mcp?.tools &&
                 mcp.tools.map((tool) => {
                   if (tool.data.type === McpToolType.PIECE) {

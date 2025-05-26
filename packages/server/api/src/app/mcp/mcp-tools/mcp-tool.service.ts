@@ -10,6 +10,7 @@ import {
     McpToolType,
     McpToolWithFlow,
     McpToolWithPiece,
+    spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Raw } from 'typeorm'
@@ -18,9 +19,11 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { mcpToolHandler } from './mcp-tool-handler'
+import { McpToolHistoryEntity } from './mcp-tool-history/mcp-tool-history.entity'
 import { McpToolEntity } from './mcp-tool.entity'
 
 const mcpToolRepo = repoFactory(McpToolEntity)
+const mcpToolHistoryRepo = repoFactory(McpToolHistoryEntity)
 
 export const mcpToolService = (log: FastifyBaseLogger) => ({
     async getOne(mcpToolId: string): Promise<McpTool | null> {      
@@ -86,15 +89,22 @@ export const mcpToolService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow(mcpTool.id)
     },
 
-    async list({ mcpId, projectId, platformId }: ListParams): Promise<(McpToolWithFlow | McpToolWithPiece)[]> {
+    async list({ mcpId, projectId, platformId, type }: ListParams): Promise<(McpToolWithFlow | McpToolWithPiece)[]> {
         const tools = await mcpToolRepo().find({ 
-            where: { mcpId },
+            where: { 
+                mcpId,
+                ...spreadIfDefined('type', type),
+            },
         })
 
         return Promise.all(tools.map(tool => enrichToolWithData(tool, projectId, platformId, log)))
     },
 
     async delete(mcpToolId: string): Promise<void> {
+        // First delete all related history records to avoid foreign key constraint violation
+        await mcpToolHistoryRepo().delete({ toolId: mcpToolId })
+        
+        // Then delete the tool itself
         await mcpToolRepo().delete({ id: mcpToolId })
     },
 })
@@ -169,6 +179,7 @@ type ListParams = {
     mcpId: ApId
     projectId: ApId
     platformId: ApId
+    type?: McpToolType
 }
 
 type UpsertParams = {

@@ -6,23 +6,30 @@ import { cn } from '@/lib/utils';
 const RightDrawerContext = React.createContext<{
   className?: string;
   disableAutoFocus?: boolean;
+  dismissible?: boolean;
 }>({
   className: undefined,
   disableAutoFocus: false,
+  dismissible: true,
 });
 
 const RightDrawer = ({
   shouldScaleBackground = true,
   className,
   disableAutoFocus = false,
+  dismissible = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root> & {
   className?: string;
   disableAutoFocus?: boolean;
+  dismissible?: boolean;
 }) => (
-  <RightDrawerContext.Provider value={{ className, disableAutoFocus }}>
+  <RightDrawerContext.Provider
+    value={{ className, disableAutoFocus, dismissible }}
+  >
     <DrawerPrimitive.Root
       direction="right"
+      dismissible={dismissible}
       shouldScaleBackground={shouldScaleBackground}
       {...props}
     />
@@ -59,7 +66,7 @@ const RightDrawerContent = React.forwardRef<
         ref={ref}
         className={cn(
           'fixed inset-y-0 right-0 z-50 h-full flex flex-col border bg-background shadow-lg',
-          drawerClassName || 'w-3/4 max-w-md', // Apply drawer className or default width
+          drawerClassName ?? 'w-3/4 max-w-md', // Apply drawer className or default width
           contentClassName, // Apply content className (has higher priority)
         )}
         style={{ userSelect: 'text', ...props.style }}

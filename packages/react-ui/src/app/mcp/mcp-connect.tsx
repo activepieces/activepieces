@@ -2,31 +2,25 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Link as LinkIcon,
   Server,
   AlertTriangle,
   Eye,
   EyeOff,
   Copy,
   RefreshCw,
-  Download,
-  Settings,
-  FileText,
-  Plug,
-  CheckCircle,
-  ExternalLink,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
-import { useTheme } from '@/components/theme-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -38,9 +32,6 @@ import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
 
@@ -151,55 +142,29 @@ const ButtonWithTooltip = ({
   </PermissionNeededTooltip>
 );
 
-const StepCard = ({ 
-  stepNumber, 
-  title, 
-  children, 
-  icon 
-}: { 
-  stepNumber: number; 
-  title: string; 
+const StepCard = ({
+  stepNumber,
+  title,
+  children,
+  icon,
+}: {
+  stepNumber: number;
+  title: string;
   children: React.ReactNode;
   icon?: React.ReactNode;
 }) => (
-  <div className="flex gap-3 p-3 rounded-lg border bg-muted/20">
+  <div className="flex gap-3 p-4 rounded-lg bg-background">
     <div className="flex-shrink-0">
-      <div className="h-6 w-6 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center text-xs font-semibold">
+      <div className="h-6 w-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-semibold">
         {stepNumber}
       </div>
     </div>
-    <div className="flex-1 space-y-1">
-      <div className="flex items-center gap-2">
-        {icon && <div className="text-muted-foreground">{icon}</div>}
-        <h4 className="font-medium text-sm">{title}</h4>
+    <div className="flex-1 space-y-2">
+      <h4 className="font-medium text-sm">{title}</h4>
+      <div className="text-sm text-muted-foreground leading-relaxed">
+        {children}
       </div>
-      <div className="text-sm text-muted-foreground leading-relaxed">{children}</div>
     </div>
-  </div>
-);
-
-const PrerequisiteCard = ({ 
-  title, 
-  linkText, 
-  linkUrl, 
-  icon 
-}: { 
-  title: string; 
-  linkText: string; 
-  linkUrl: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/10">
-    <div className="text-primary">{icon}</div>
-    <div className="flex-1">
-      <p className="text-sm font-medium">{title}</p>
-    </div>
-    <Button variant="outline" size="sm" asChild>
-      <Link to={linkUrl} target="_blank" className="flex items-center gap-1">
-        {linkText}
-        <ExternalLink className="h-3 w-3" />
-      </Link>
-    </Button>
   </div>
 );
 
@@ -228,15 +193,22 @@ const ConfigDisplay = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">{t('Configuration')}</h3>
           <SecurityNote />
         </div>
         <div className="flex gap-2">
           <ButtonWithTooltip
-            tooltip={showToken ? t('Hide sensitive data') : t('Show sensitive data')}
+            tooltip={
+              showToken ? t('Hide sensitive data') : t('Show sensitive data')
+            }
             onClick={toggleTokenVisibility}
             variant="outline"
-            icon={showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            icon={
+              showToken ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )
+            }
           />
           <ButtonWithTooltip
             tooltip={t('Create a new URL. The current one will stop working.')}
@@ -280,7 +252,7 @@ const ConfigDisplay = ({
           />
         </div>
       </div>
-      
+
       <div className="rounded-lg border overflow-hidden">
         <SimpleJsonViewer
           hideCopyButton={true}
@@ -300,25 +272,6 @@ const ConfigDisplay = ({
         />
       </div>
     </div>
-  );
-};
-
-const ReconnectWarning = () => {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <AlertTriangle className="h-4 w-4 text-amber-500 cursor-help" />
-        </TooltipTrigger>
-        <TooltipContent className="w-64">
-          <span className="text-sm">
-            {t(
-              'After changing connections or flows, reconnect your MCP server for changes to take effect.',
-            )}
-          </span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 };
 
@@ -396,19 +349,6 @@ export const McpConnectPage = () => {
 
   return (
     <div className="w-full h-full">
-      {/* Header */}
-      <div className="px-6 py-4 border-b bg-background">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">{t('MCP Setup')}</h1>
-            <ReconnectWarning />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t('Connect your AI client to access tools')}
-          </p>
-        </div>
-      </div>
-
       {/* Main Content with Vertical Tabs */}
       <div className="p-6">
         <Tabs
@@ -421,7 +361,7 @@ export const McpConnectPage = () => {
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className="border-l-2 border-transparent justify-start rounded-none data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:bg-primary/5 py-2 px-4 gap-3 w-full"
+                className="border-l-2 border-transparent justify-start rounded-none data-[state=active]:shadow-none data-[state=active]:border-foreground data-[state=active]:bg-muted py-2 px-4 gap-3 w-full"
               >
                 {tab.isImage ? (
                   <img
@@ -443,182 +383,132 @@ export const McpConnectPage = () => {
                 <Alert variant="warning">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    {t('Note: MCPs only work with Claude Desktop, not the web version.')}
+                    {t(
+                      'Note: MCPs only work with Claude Desktop, not the web version.',
+                    )}
                   </AlertDescription>
                 </Alert>
 
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Download className="h-4 w-4 text-primary" />
-                    {t('Prerequisites')}
-                  </h3>
-                  <div className="grid gap-2">
-                    <PrerequisiteCard
-                      title="Node.js"
-                      linkText={t('Download')}
-                      linkUrl={NODE_JS_DOWNLOAD_URL}
-                      icon={<Download className="h-4 w-4" />}
-                    />
-                    <PrerequisiteCard
-                      title="Claude Desktop"
-                      linkText={t('Download')}
-                      linkUrl="https://claude.ai/download"
-                      icon={<Download className="h-4 w-4" />}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-primary" />
-                    {t('Setup')}
-                  </h3>
-                  <div className="space-y-2">
-                    <StepCard
-                      stepNumber={1}
-                      title={t('Open Settings')}
-                      icon={<Settings className="h-4 w-4" />}
-                    >
-                      {t('Menu')} → <Badge variant="outline">{t('Settings')}</Badge> → <Badge variant="outline">{t('Developer')}</Badge>
+                  <h3 className="text-lg font-semibold">{t('Setup')}</h3>
+                  <div className="space-y-3">
+                    <StepCard stepNumber={1} title={t('Install Prerequisites')}>
+                      {t('Download and install')}{' '}
+                      <a
+                        href={NODE_JS_DOWNLOAD_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Node.js
+                      </a>{' '}
+                      {t('and')}{' '}
+                      <a
+                        href="https://claude.ai/download"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Claude Desktop
+                      </a>
+                      .
                     </StepCard>
 
                     <StepCard
                       stepNumber={2}
-                      title={t('Edit Config')}
-                      icon={<FileText className="h-4 w-4" />}
+                      title={t('Configure Claude Desktop')}
                     >
-                      {t('Click')} <Badge variant="outline">{t('Edit Config')}</Badge> {t('and paste below')}
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={3}
-                      title={t('Restart')}
-                      icon={<CheckCircle className="h-4 w-4" />}
-                    >
-                      {t('Save and restart Claude Desktop')}
+                      {t('Open Claude Desktop')} → {t('Menu')} →{' '}
+                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Developer')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Edit Config')}</Badge>.{' '}
+                      {t(
+                        'Paste the configuration below, save, and restart Claude Desktop.',
+                      )}
+                      <div className="mt-3">
+                        <ConfigDisplay
+                          mcpServerUrl={mcpServerUrl}
+                          type="npx"
+                          onRotateToken={handleRotateToken}
+                          isRotating={rotateMutation.isPending}
+                          hasValidMcp={!!mcp}
+                          hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+                        />
+                      </div>
                     </StepCard>
                   </div>
                 </div>
-
-                <ConfigDisplay
-                  mcpServerUrl={mcpServerUrl}
-                  type="npx"
-                  onRotateToken={handleRotateToken}
-                  isRotating={rotateMutation.isPending}
-                  hasValidMcp={!!mcp}
-                  hasPermissionToWriteMcp={hasPermissionToWriteMcp}
-                />
               </div>
             </TabsContent>
 
             <TabsContent value="cursor" className="mt-0">
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-primary" />
-                    {t('Setup')}
-                  </h3>
-                  <div className="space-y-2">
-                    <StepCard
-                      stepNumber={1}
-                      title={t('Open Settings')}
-                      icon={<Settings className="h-4 w-4" />}
-                    >
-                      <Badge variant="outline">{t('Settings')}</Badge> → <Badge variant="outline">{t('Cursor Settings')}</Badge> → <Badge variant="outline">{t('MCP')}</Badge>
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={2}
-                      title={t('Add Server')}
-                      icon={<Plug className="h-4 w-4" />}
-                    >
-                      {t('Click')} <Badge variant="outline">{t('Add new global MCP server')}</Badge>
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={3}
-                      title={t('Configure')}
-                      icon={<FileText className="h-4 w-4" />}
-                    >
-                      {t('Paste configuration and save')}
+                  <h3 className="text-lg font-semibold">{t('Setup')}</h3>
+                  <div className="space-y-3">
+                    <StepCard stepNumber={1} title={t('Configure Cursor')}>
+                      {t('Open Cursor')} →{' '}
+                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Cursor Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('MCP')}</Badge> →{' '}
+                      <Badge variant="outline">
+                        {t('Add new global MCP server')}
+                      </Badge>
+                      . {t('Paste the configuration below and save.')}
+                      <div className="mt-3">
+                        <ConfigDisplay
+                          mcpServerUrl={mcpServerUrl}
+                          type="url"
+                          onRotateToken={handleRotateToken}
+                          isRotating={rotateMutation.isPending}
+                          hasValidMcp={!!mcp}
+                          hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+                        />
+                      </div>
                     </StepCard>
                   </div>
                 </div>
-
-                <ConfigDisplay
-                  mcpServerUrl={mcpServerUrl}
-                  type="url"
-                  onRotateToken={handleRotateToken}
-                  isRotating={rotateMutation.isPending}
-                  hasValidMcp={!!mcp}
-                  hasPermissionToWriteMcp={hasPermissionToWriteMcp}
-                />
               </div>
             </TabsContent>
 
             <TabsContent value="windsurf" className="mt-0">
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-primary" />
-                    {t('Setup')}
-                  </h3>
-                  <div className="space-y-2">
-                    <StepCard
-                      stepNumber={1}
-                      title={t('Open Settings')}
-                      icon={<Settings className="h-4 w-4" />}
-                    >
-                      <Badge variant="outline">{t('Windsurf')}</Badge> → <Badge variant="outline">{t('Settings')}</Badge> → <Badge variant="outline">{t('Advanced')}</Badge>
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={2}
-                      title={t('Navigate to Cascade')}
-                      icon={<Settings className="h-4 w-4" />}
-                    >
-                      {t('Select')} <Badge variant="outline">{t('Cascade')}</Badge> {t('in sidebar')}
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={3}
-                      title={t('Add Server')}
-                      icon={<Plug className="h-4 w-4" />}
-                    >
-                      <Badge variant="outline">{t('Add Server')}</Badge> → <Badge variant="outline">{t('Add custom server +')}</Badge>
-                    </StepCard>
-
-                    <StepCard
-                      stepNumber={4}
-                      title={t('Configure')}
-                      icon={<FileText className="h-4 w-4" />}
-                    >
-                      {t('Paste configuration and save')}
+                  <h3 className="text-lg font-semibold">{t('Setup')}</h3>
+                  <div className="space-y-3">
+                    <StepCard stepNumber={1} title={t('Configure Windsurf')}>
+                      {t('Open')}{' '}
+                      <Badge variant="outline">{t('Windsurf')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Advanced')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Cascade')}</Badge> →{' '}
+                      <Badge variant="outline">{t('Add Server')}</Badge> →{' '}
+                      <Badge variant="outline">
+                        {t('Add custom server +')}
+                      </Badge>
+                      . {t('Paste the configuration below and save.')}
+                      <div className="mt-3">
+                        <ConfigDisplay
+                          mcpServerUrl={mcpServerUrl}
+                          type="url"
+                          onRotateToken={handleRotateToken}
+                          isRotating={rotateMutation.isPending}
+                          hasValidMcp={!!mcp}
+                          hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+                        />
+                      </div>
                     </StepCard>
                   </div>
                 </div>
-
-                <ConfigDisplay
-                  mcpServerUrl={mcpServerUrl}
-                  type="url"
-                  onRotateToken={handleRotateToken}
-                  isRotating={rotateMutation.isPending}
-                  hasValidMcp={!!mcp}
-                  hasPermissionToWriteMcp={hasPermissionToWriteMcp}
-                />
               </div>
             </TabsContent>
 
             <TabsContent value="server" className="mt-0">
               <div className="space-y-4">
                 <ExposeMcpNote />
-                
+
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4 text-primary" />
-                    <h3 className="text-lg font-semibold">{t('Server URL')}</h3>
-                    <SecurityNote />
-                  </div>
+                  <h3 className="text-lg font-semibold">{t('Server URL')}</h3>
 
                   <div className="flex items-center gap-2">
                     <div className="font-mono bg-muted/50 border rounded-lg px-3 py-2 text-sm flex-1 overflow-x-auto">
@@ -630,7 +520,13 @@ export const McpConnectPage = () => {
                         onClick={toggleTokenVisibility}
                         variant="outline"
                         className="h-8 w-8"
-                        icon={showToken ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        icon={
+                          showToken ? (
+                            <EyeOff className="h-3 w-3" />
+                          ) : (
+                            <Eye className="h-3 w-3" />
+                          )
+                        }
                       />
                       <ButtonWithTooltip
                         tooltip={t('Rotate')}

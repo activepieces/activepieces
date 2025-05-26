@@ -3,13 +3,21 @@ import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { isNil } from '@activepieces/shared';
+import { ConnectionDropdown } from './connection-dropdown';
 
 interface McpPieceActionsDialogProps {
   piece: PieceStepMetadataWithSuggestions;
   selectedActions: string[];
   onSelectAction: (actionName: string) => void;
   onSelectAll: (checked: boolean) => void;
+  selectedConnectionExternalId: string | null;
+  setSelectedConnectionExternalId: (
+    connectionExternalId: string | null,
+  ) => void;
 }
 
 export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
@@ -17,15 +25,41 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   selectedActions,
   onSelectAction,
   onSelectAll,
+  selectedConnectionExternalId,
+  setSelectedConnectionExternalId,
 }) => {
+  const { pieces } = piecesHooks.usePieces({});
+  const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
+
   const allSelected =
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
     piece.suggestedActions.every((a) => selectedActions.includes(a.name));
   const someSelected = selectedActions.length > 0 && !allSelected;
 
+  const pieceHasAuth = selectedPiece && !isNil(selectedPiece.auth);
+
   return (
     <>
+      {pieceHasAuth && (
+        <>
+          <div className="px-3 mb-4">
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">{t('Connection')}</h4>
+              <ConnectionDropdown
+                piece={selectedPiece}
+                value={selectedConnectionExternalId}
+                onChange={setSelectedConnectionExternalId}
+                placeholder={t('Select a connection')}
+                showLabel={false}
+                required={false}
+              />
+            </div>
+          </div>
+          <Separator className="mb-4" />
+        </>
+      )}
+
       <div className="flex items-center mb-2 gap-4 px-3">
         <Checkbox
           checked={allSelected ? true : someSelected ? 'indeterminate' : false}
@@ -33,8 +67,9 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
         />
         <span className="text-sm font-bold select-none">{t('Select all')}</span>
       </div>
-      <ScrollArea className="flex-grow overflow-y-auto  rounded-md">
-        <div className="flex flex-col gap-2 ">
+
+      <ScrollArea className="flex-grow overflow-y-auto rounded-md">
+        <div className="flex flex-col gap-2">
           {piece.suggestedActions &&
             piece.suggestedActions.map((action) => (
               <div

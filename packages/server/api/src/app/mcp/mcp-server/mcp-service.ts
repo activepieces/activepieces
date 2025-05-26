@@ -22,12 +22,8 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { mcpToolService } from '../mcp-tools/mcp-tool.service'
 import { McpEntity } from './mcp-entity'
-import { McpFlowToolHistoryEntity } from './mcp-flow-tool-history-entity'
-import { McpPieceToolHistoryEntity } from './mcp-piece-tool-history-entity'
 
 export const mcpRepo = repoFactory(McpEntity)
-const mcpPieceToolHistoryRepo = repoFactory(McpPieceToolHistoryEntity)
-const mcpFlowToolHistoryRepo = repoFactory(McpFlowToolHistoryEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
     async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
@@ -168,36 +164,6 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             },
         }), _log)
     },
-
-    async addPieceToolHistory({ mcpId, pieceName, pieceVersion, toolName, input, output, success }: AddPieceToolHistoryParams): Promise<void> {
-        await mcpPieceToolHistoryRepo().save({
-            id: apId(),
-            mcpId,
-            pieceName,
-            pieceVersion,
-            toolName,
-            input,
-            output,
-            success,
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        })
-    },
-
-    async addFlowToolHistory({ mcpId, flowId, flowVersionId, toolName, input, output, success }: AddFlowToolHistoryParams): Promise<void> {
-        await mcpFlowToolHistoryRepo().save({
-            id: apId(),
-            mcpId,
-            flowId,
-            flowVersionId,
-            toolName,
-            input,
-            output,
-            success,
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        })
-    },
 })
 
 type CreateParams = {
@@ -220,26 +186,6 @@ type UpdateParams = {
 
 type CountParams = {
     projectId: ApId
-}
-
-type AddPieceToolHistoryParams = {
-    mcpId: ApId
-    pieceName: string
-    pieceVersion: string
-    toolName: string
-    input: Record<string, unknown>
-    output: Record<string, unknown>
-    success: boolean
-}
-
-type AddFlowToolHistoryParams = {
-    mcpId: ApId
-    flowId: ApId
-    flowVersionId?: ApId
-    toolName: string
-    input: Record<string, unknown>
-    output: Record<string, unknown>
-    success: boolean
 }
 
 type GetOrThrowParams = {

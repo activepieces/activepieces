@@ -4,25 +4,24 @@ import {
     EngineResponseStatus, 
     ExecuteActionResponse, 
     fixSchemaNaming, 
-    FlowStatus, 
-    FlowVersionState, 
     isNil, 
+    McpToolHistoryStatus, 
     McpToolType, 
+    McpToolWithFlow, 
     McpToolWithPiece, 
     McpTrigger, 
-    TriggerType, 
 } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
-import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { mcpToolHistoryService } from '../mcp-tools/mcp-tool-history/mcp-tool-history.service'
 import { mcpService } from './mcp-service'
 import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mcp-utils'
 
@@ -60,10 +59,10 @@ async function addPiecesToServer(
                     projectId,
                     platformId,
                 })
-                return { ...pieceMetadata, ...mcpPiece.piece }
+                return { ...pieceMetadata, ...mcpPiece.piece, toolId: mcpPiece.id }
             }),
     )
-    
+
     const uniqueActions = new Set<string>()
 
     pieces.flatMap(piece => 
@@ -117,14 +116,18 @@ async function addPiecesToServer(
                         })
 
                         if (result.status === EngineResponseStatus.OK) {
-                            await mcpService(logger).addPieceToolHistory({
+
+                            await mcpToolHistoryService(logger).create({
                                 mcpId,
-                                pieceName: piece.pieceName,
-                                pieceVersion: piece.pieceVersion,
-                                toolName: action.name,
+                                toolId: piece.toolId,
+                                metadata: {
+                                    pieceName: piece.pieceName,
+                                    pieceVersion: piece.pieceVersion,
+                                    actionName: action.name,
+                                },
                                 input: params,
                                 output: result.result.output as Record<string, unknown>,
-                                success: result.result.success,
+                                status: result.result.success ? McpToolHistoryStatus.SUCCESS : McpToolHistoryStatus.FAILED,
                             })
 
                             if (!result.result.success) {
@@ -148,14 +151,17 @@ async function addPiecesToServer(
                             }
                         }
 
-                        await mcpService(logger).addPieceToolHistory({
+                        await mcpToolHistoryService(logger).create({
                             mcpId,
-                            pieceName: piece.pieceName,
-                            pieceVersion: piece.pieceVersion,
-                            toolName: action.name,
+                            toolId: piece.toolId,
+                            metadata: {
+                                pieceName: piece.pieceName,
+                                pieceVersion: piece.pieceVersion,
+                                actionName: action.name,
+                            },
                             input: params,
                             output: { error: result.standardError },
-                            success: false,
+                            status: McpToolHistoryStatus.FAILED,
                         })
 
                         return {
@@ -178,24 +184,21 @@ async function addFlowsToServer(
     logger: FastifyBaseLogger,
 ): Promise<void> {
     const mcp = await mcpService(logger).getOrThrow({ mcpId })
-    const projectId = mcp.projectId
+    const mcpFlowsTool = mcp.tools
+        .filter((tool): tool is McpToolWithFlow => tool.type === McpToolType.FLOW)
+        .map(mcpFlow => ({
+            flows: mcpFlow.flows,
+            toolId: mcpFlow.id,
+        }))
+    
+    if (mcpFlowsTool.length === 0) {
+        return
+    }
 
-    const flows = await flowService(logger).list({ 
-        projectId,
-        cursorRequest: null,
-        limit: 100,
-        folderId: undefined,
-        status: [FlowStatus.ENABLED],
-        name: undefined,
-        versionState: FlowVersionState.LOCKED,
-    })
+    const flows = mcpFlowsTool[0].flows
+    const toolId = mcpFlowsTool[0].toolId
 
-    const mcpFlows = flows.data.filter(flow => 
-        flow.version.trigger.type === TriggerType.PIECE &&
-        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
-    )
-
-    for (const flow of mcpFlows) {
+    for (const flow of flows) {
         const triggerSettings = flow.version.trigger.settings as McpTrigger
         const toolName = fixSchemaNaming('flow-' + triggerSettings.input?.toolName)
             .slice(0, MAX_TOOL_NAME_LENGTH)
@@ -252,14 +255,16 @@ async function addFlowsToServer(
                     toolName,
                 })
 
-                await mcpService(logger).addFlowToolHistory({
+                await mcpToolHistoryService(logger).create({
                     mcpId,
-                    flowId: flow.id,
-                    flowVersionId: flow.version.id,
-                    toolName,
+                    toolId,
+                    metadata: {
+                        flowId: flow.id,
+                        flowVersionId: flow.version.id,
+                    },
                     input: params,
                     output: response,
-                    success: response.status === StatusCodes.OK,
+                    status: response.status === StatusCodes.OK ? McpToolHistoryStatus.SUCCESS : McpToolHistoryStatus.FAILED,
                 })
 
                 if (response.status !== StatusCodes.OK) {

@@ -207,6 +207,7 @@ import { AddOrderToFolder1747095861746 } from './migration/postgres/174709586174
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddMcpToolEntity1748199841100 } from './migration/postgres/1748199841100-AddMcpToolEntity'
+import { AddMcpToolHistory1748282988335 } from './migration/postgres/1748282988335-AddMcpToolHistory'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -350,6 +351,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
         AddMcpToolEntity1748199841100,
+        AddMcpToolHistory1748282988335,
     ]
 
     const edition = system.getEdition()
