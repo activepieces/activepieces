@@ -206,6 +206,7 @@ import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgr
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
+import { AddMcpToolEntity1748199841100 } from './migration/postgres/1748199841100-AddMcpToolEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -347,6 +348,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddI18nColumnToPieceMetadata1746714836833,
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
+        AddMcpToolEntity1748199841100,
     ]
 
     const edition = system.getEdition()
