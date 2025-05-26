@@ -37,7 +37,7 @@ export function SidebarUser() {
             <span className="truncate text-xs">{user.email}</span>
           </div>
         </div>
-        {/* <Tooltip>
+        <Tooltip>
           <TooltipTrigger asChild>
             <Button
               className="flex items-center ml-2"
@@ -55,7 +55,7 @@ export function SidebarUser() {
           <TooltipContent>
             <span>{t('Logout')}</span>
           </TooltipContent>
-        </Tooltip> */}
+        </Tooltip>
       </SidebarMenuItem>
     </SidebarMenu>
   );

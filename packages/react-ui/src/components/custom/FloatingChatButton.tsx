@@ -116,7 +116,7 @@ export const FloatingChatButton: React.FC = () => {
     }
   }, [chatHistory]);
 
-  if (!user || embedState.isEmbedded) {
+  if (!user || embedState.isEmbedded || !BOTX_API_URL) {
     return null;
   }
 

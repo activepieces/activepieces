@@ -178,11 +178,13 @@ export function SidebarComponent({
   const location = useLocation();
   const { checkAccess } = useAuthorization();
 
+  const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
   const showProjectUsage =
     location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
   const showConnectionsLink =
     location.pathname.startsWith('/project') &&
     checkAccess(Permission.READ_APP_CONNECTION);
+  const isExternalLogin = !!loginUrl;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -232,8 +234,8 @@ export function SidebarComponent({
                   </SidebarGroup>
                 </ScrollArea>
               </SidebarContent>
-              {/* <SidebarFooter className="pb-4">
-                <SidebarMenu>
+              <SidebarFooter className="pb-4">
+                {/* <SidebarMenu>
                   <SidebarInviteUserButton />
                 </SidebarMenu>
                 <SidebarMenu>
@@ -245,9 +247,9 @@ export function SidebarComponent({
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
-                {showProjectUsage && <Separator />}
-                <SidebarUser />
-              </SidebarFooter> */}
+                {showProjectUsage && <Separator />} */}
+                {!isExternalLogin && <SidebarUser />}
+              </SidebarFooter>
             </SidebarContent>
           </Sidebar>
         )}
