@@ -17,7 +17,7 @@ export class AddMcpToolHistory1748282988335 implements MigrationInterface {
                 "metadata" jsonb NOT NULL,
                 "input" jsonb NOT NULL,
                 "output" jsonb NOT NULL,
-                "status" "public"."mcp_tool_history_status_enum" NOT NULL,
+                "status" character varying NOT NULL,
                 CONSTRAINT "PK_c225b88f2595007c3ea704b8a8b" PRIMARY KEY ("id")
             )
         `)

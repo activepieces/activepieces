@@ -1,4 +1,4 @@
-import { Mcp, McpTool, McpToolHistory, McpToolHistoryStatus } from '@activepieces/shared'
+import { Mcp, McpTool, McpToolHistory } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../../database/database-common'
 
@@ -32,8 +32,7 @@ export const McpToolHistoryEntity = new EntitySchema<McpToolHistorySchema>({
             nullable: false,
         },
         status: {
-            type: 'enum',
-            enum: McpToolHistoryStatus,
+            type: String,
             nullable: false,
         },
     },

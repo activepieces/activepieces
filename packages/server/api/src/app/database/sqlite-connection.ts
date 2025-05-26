@@ -107,6 +107,7 @@ import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/1747824740845-RemoveFeatureFlagsFromSqlite'
 import { AddMcpToolEntitySQLITE1748199919401 } from './migration/sqlite/1748199919401-AddMcpToolEntitySQLITE'
+import { AddMcpToolHistorySQLITE1748296086205 } from './migration/sqlite/1748296086205-AddMcpToolHistorySQLITE'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -231,6 +232,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveFeatureFlagsFromSqlite1747824740845,
         UpgradePieceVersionsToLatest1748253670449,
         AddMcpToolEntitySQLITE1748199919401,
+        AddMcpToolHistorySQLITE1748296086205,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
