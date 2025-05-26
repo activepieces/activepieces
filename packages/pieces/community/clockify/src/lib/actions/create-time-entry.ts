@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces } from '../common';
+import { makeRequest, fetchWorkspaces, fetchProjects, fetchTasks } from '../common';
 import { clockifyAuth } from '../../index';
 
 export const createTimeEntryAction = createAction({
@@ -33,11 +33,54 @@ export const createTimeEntryAction = createAction({
         };
       },
     }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
+    projectId: Property.Dropdown({
+      displayName: 'Project',
       required: false,
+      refreshers: ['workspaceId'],
+      options: async ({ auth, workspaceId }) => {
+        if (!auth || !workspaceId) {
+          return {
+            disabled: true,
+            placeholder: 'Please select a workspace first',
+            options: [],
+          };
+        }
+
+        const apiKey = auth as string;
+        const projects = await fetchProjects(apiKey, workspaceId as string);
+
+        return {
+          options: projects.map((project: any) => ({
+            label: project.name,
+            value: project.id,
+          })),
+        };
+      },
     }),
-    taskId: Property.ShortText({ displayName: 'Task ID', required: false }),
+    taskId: Property.Dropdown({
+      displayName: 'Task',
+      required: false,
+      refreshers: ['workspaceId', 'projectId'],
+      options: async ({ auth, workspaceId, projectId }) => {
+        if (!auth || !workspaceId || !projectId) {
+          return {
+            disabled: true,
+            placeholder: 'Please select a project first',
+            options: [],
+          };
+        }
+
+        const apiKey = auth as string;
+        const tasks = await fetchTasks(apiKey, workspaceId as string, projectId as string);
+
+        return {
+          options: tasks.map((task: any) => ({
+            label: task.name,
+            value: task.id,
+          })),
+        };
+      },
+    }),
     description: Property.ShortText({
       displayName: 'Description',
       required: false,

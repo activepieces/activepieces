@@ -24,3 +24,15 @@ export async function makeRequest(
 export async function fetchWorkspaces(apiKey: string) {
   return await makeRequest(apiKey, HttpMethod.GET, '/workspaces');
 }
+
+export async function fetchProjects(apiKey: string, workspaceId: string) {
+  return await makeRequest(apiKey, HttpMethod.GET, `/workspaces/${workspaceId}/projects`);
+}
+
+export async function fetchTasks(apiKey: string, workspaceId: string, projectId: string) {
+  return await makeRequest(apiKey, HttpMethod.GET, `/workspaces/${workspaceId}/projects/${projectId}/tasks`);
+}
+
+export async function fetchUsers(apiKey: string, workspaceId: string) {
+  return await makeRequest(apiKey, HttpMethod.GET, `/workspaces/${workspaceId}/users`);
+}

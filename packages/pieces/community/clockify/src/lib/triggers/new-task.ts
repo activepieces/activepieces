@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces } from '../common';
+import { makeRequest, fetchWorkspaces, fetchProjects } from '../common';
 import { clockifyAuth } from '../../index';
 
 export const newTaskTrigger = createTrigger({
@@ -36,9 +36,29 @@ export const newTaskTrigger = createTrigger({
         };
       },
     }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
+    projectId: Property.Dropdown({
+      displayName: 'Project',
       required: true,
+      refreshers: ['workspaceId'],
+      options: async ({ auth, workspaceId }) => {
+        if (!auth || !workspaceId) {
+          return {
+            disabled: true,
+            placeholder: 'Please select a workspace first',
+            options: [],
+          };
+        }
+
+        const apiKey = auth as string;
+        const projects = await fetchProjects(apiKey, workspaceId as string);
+
+        return {
+          options: projects.map((project: any) => ({
+            label: project.name,
+            value: project.id,
+          })),
+        };
+      },
     }),
   },
   sampleData: {
