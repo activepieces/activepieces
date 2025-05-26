@@ -15,7 +15,7 @@ export const motion = createPiece({
   displayName: 'Motion',
   logoUrl: 'https://cdn.activepieces.com/pieces/motion.png',
   auth: motionAuth,
-  authors: ['activepieces'],
+  authors: ['Sanket6652'],
   actions: [createTask, updateTask, createProject, getTask],
   triggers: [taskCreated],
 });
