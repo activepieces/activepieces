@@ -160,7 +160,7 @@ type ConfigureParams = {
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.4.0";
+  readonly _sdkVersion = "0.4.1";
   _prefix = '';
   _instanceUrl = '';
   //this is used to authenticate embedding for the first time
@@ -278,7 +278,7 @@ class ActivepiecesEmbedded {
     initialRoute: string,
     callbackAfterConfigurationFinished?: () => void
   }): IframeWithWindow {
-    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
+    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?currentDate=${Date.now()}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
       this._errorCreator('iframe window not accessible');
