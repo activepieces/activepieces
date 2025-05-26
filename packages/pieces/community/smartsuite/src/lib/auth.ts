@@ -1,43 +1,39 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
-import { SMARTSUITE_API_URL, API_ENDPOINTS } from './common/constants';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { smartSuiteApiCall } from './common';
 
-export const smartsuiteAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Your SmartSuite API key',
+export const smartsuiteAuth = PieceAuth.CustomAuth({
+  description: `
+  You can obtain API key by navigate to **My Profile->API Key** from top-right corner.
+  
+  You can obtain Account ID from browser URL.For example, if smartsuite workspace URL is https://app.smartsuite.com/xyz/home, your Account ID is **xyz**.`,
   required: true,
+  props: {
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
+    }),
+    accountId: Property.ShortText({
+      displayName: 'Account ID',
+      required: true,
+    }),
+  },
   validate: async ({ auth }) => {
-    if (!auth) {
-      return {
-        valid: false,
-        error: 'API Key is required',
-      };
-    }
-
     try {
-      const response = await httpClient.sendRequest({
+      await smartSuiteApiCall({
+        apiKey: auth.apiKey,
+        accountId: auth.accountId,
         method: HttpMethod.GET,
-        url: `${SMARTSUITE_API_URL}${API_ENDPOINTS.LIST_SOLUTIONS}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
+        resourceUri: '/solutions',
       });
 
-      if (response.status === 200) {
-        return {
-          valid: true,
-        };
-      }
-
       return {
-        valid: false,
-        error: `Invalid API Key: ${response.status} ${response.body?.message || 'Unknown error'}`,
+        valid: true,
       };
-    } catch (error) {
+    } catch (e) {
       return {
         valid: false,
-        error: (error as Error)?.message || 'Invalid API Key',
+        error: 'Invalid Credentials.',
       };
     }
   },

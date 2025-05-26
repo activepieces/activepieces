@@ -1,54 +1,41 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod} from '@activepieces/pieces-common';
 import { smartsuiteAuth } from '../auth';
-import { smartsuiteCommon } from '../common';
-import { SMARTSUITE_API_URL, API_ENDPOINTS } from '../common/constants';
+import { smartsuiteCommon } from '../common/props';
+import { smartSuiteApiCall } from '../common';
 
 export const deleteRecord = createAction({
-  name: 'delete_record',
-  displayName: 'Delete a Record',
-  description: 'Deletes a record from the specified table',
-  auth: smartsuiteAuth,
-  props: {
-    solution: smartsuiteCommon.solution,
-    table: smartsuiteCommon.table,
-    record: smartsuiteCommon.record,
-  },
-  async run({ auth, propsValue }) {
-    const { solution, table, record } = propsValue;
+	name: 'delete_record',
+	displayName: 'Delete a Record',
+	description: 'Deletes a record from the specified table',
+	auth: smartsuiteAuth,
+	props: {
+		solutionId: smartsuiteCommon.solutionId,
+		tableId: smartsuiteCommon.tableId,
+		recordId: smartsuiteCommon.recordId,
+	},
+	async run({ auth, propsValue }) {
+		const { tableId, recordId } = propsValue;
 
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `${SMARTSUITE_API_URL}${API_ENDPOINTS.DELETE_RECORD
-          .replace('{solutionId}', solution as string)
-          .replace('{appId}', table as string)
-          .replace('{recordId}', record as string)}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
-      });
+		try {
+			const response = await smartSuiteApiCall<Record<string, any>>({
+				apiKey: auth.apiKey,
+				accountId: auth.accountId,
+				method: HttpMethod.DELETE,
+				resourceUri: `/applications/${tableId}/records/${recordId}/`,
+			});
 
-      if (response.status === 204) {
-        return {
-          success: true,
-          message: 'Record deleted successfully',
-          recordId: record
-        };
-      }
+			return response;
+		} catch (error: any) {
+			if (error.response?.status === 404) {
+				throw new Error(`Record with ID ${recordId} not found in table ${tableId}`);
+			}
 
-      return response.body;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error(`Record with ID ${record} not found in table ${table}`);
-      }
+			if (error.response?.status === 403) {
+				throw new Error('You do not have permission to delete this record');
+			}
 
-      if (error.response?.status === 403) {
-        throw new Error('You do not have permission to delete this record');
-      }
-
-      throw new Error(`Failed to delete record: ${error.message || 'Unknown error'}`);
-    }
-  },
+			throw new Error(`Failed to delete record: ${error.message || 'Unknown error'}`);
+		}
+	},
 });

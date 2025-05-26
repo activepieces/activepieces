@@ -1,46 +1,52 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { smartsuiteAuth } from '../auth';
-import { smartsuiteCommon } from '../common';
-import { SMARTSUITE_API_URL, API_ENDPOINTS } from '../common/constants';
+import { smartsuiteCommon, transformRecordFields } from '../common/props';
+import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const getRecord = createAction({
-  name: 'get_record',
-  displayName: 'Get a Record',
-  description: 'Retrieves a specific record by ID',
-  auth: smartsuiteAuth,
-  props: {
-    solution: smartsuiteCommon.solution,
-    table: smartsuiteCommon.table,
-    record: smartsuiteCommon.record,
-  },
-  async run({ auth, propsValue }) {
-    const { solution, table, record } = propsValue;
+	name: 'get_record',
+	displayName: 'Get a Record',
+	description: 'Retrieves a specific record by ID',
+	auth: smartsuiteAuth,
+	props: {
+		solutionId: smartsuiteCommon.solutionId,
+		tableId: smartsuiteCommon.tableId,
+		recordId: smartsuiteCommon.recordId,
+	},
+	async run({ auth, propsValue }) {
+		const { tableId, recordId } = propsValue;
 
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${SMARTSUITE_API_URL}${API_ENDPOINTS.GET_RECORD
-          .replace('{solutionId}', solution as string)
-          .replace('{appId}', table as string)
-          .replace('{recordId}', record as string)}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
-      });
+		try {
+			const tableResponse = await smartSuiteApiCall<{
+				structure: TableStucture[];
+			}>({
+				apiKey: auth.apiKey,
+				accountId: auth.accountId,
+				method: HttpMethod.GET,
+				resourceUri: `/applications/${tableId}`,
+			});
+			const tableSchema = tableResponse.structure;
+			const response = await smartSuiteApiCall<Record<string, any>>({
+				apiKey: auth.apiKey,
+				accountId: auth.accountId,
+				method: HttpMethod.GET,
+				resourceUri: `/applications/${tableId}/records/${recordId}/`,
+			});
 
-      return response.body;
-    } catch (error: any) {
-      if (error.response?.status === 403) {
-        throw new Error('You do not have permission to access this record');
-      }
+			const transformedFields = transformRecordFields(tableSchema, response);
 
-      if (error.response?.status === 404) {
-        throw new Error(`Record with ID ${record} not found in table ${table}`);
-      }
+			return transformedFields;
+		} catch (error: any) {
+			if (error.response?.status === 403) {
+				throw new Error('You do not have permission to access this record');
+			}
 
-      throw new Error(`Failed to get record: ${error.message || 'Unknown error'}`);
-    }
-  },
+			if (error.response?.status === 404) {
+				throw new Error(`Record with ID ${recordId} not found in table ${tableId}`);
+			}
+
+			throw new Error(`Failed to get record: ${error.message || 'Unknown error'}`);
+		}
+	},
 });

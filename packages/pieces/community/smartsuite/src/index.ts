@@ -21,7 +21,7 @@ export const smartsuite = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   auth: smartsuiteAuth,
   minimumSupportedRelease: '0.30.0',
-  authors: ['activepieces-community'],
+  authors: ['Kunal-Darekar','kishanprmr'],
   actions: [
     createRecord,
     updateRecord,
