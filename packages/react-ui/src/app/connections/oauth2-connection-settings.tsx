@@ -29,6 +29,7 @@ import {
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
+  OAuth2PkceCodeChallengeMethod,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
@@ -277,16 +278,19 @@ const OAuth2ConnectionSettingsForm = ({
       authProperty.scope.join(' '),
       props ?? {},
     );
-    const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
+    const { code, codeVerifier } = await oauth2Utils.openOAuth2Popup({
       authUrl,
       clientId,
       redirectUrl,
       scope,
       pkce: authProperty.pkce ?? false,
+      pkceCodeChallengeMethod:
+        authProperty.pkceCodeChallengeMethod ??
+        OAuth2PkceCodeChallengeMethod.PLAIN,
       extraParams: authProperty.extra ?? {},
     });
     form.setValue('request.value.code', code, { shouldValidate: true });
-    form.setValue('request.value.code_challenge', codeChallenge, {
+    form.setValue('request.value.code_challenge', codeVerifier, {
       shouldValidate: true,
     });
     setRefresh(refresh + 1);

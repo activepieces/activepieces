@@ -1,4 +1,8 @@
-import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/shared';
+import {
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  OAuth2GrantType,
+  OAuth2PkceCodeChallengeMethod,
+} from '@activepieces/shared';
 import { Type } from '@sinclair/typebox';
 import { ShortTextProperty } from '../input/text-property';
 import { SecretTextProperty } from './secret-text-property';
@@ -51,6 +55,7 @@ type OAuth2ExtraProps = {
   tokenUrl: string
   scope: string[]
   pkce?: boolean
+  pkceCodeChallengeMethod?: OAuth2PkceCodeChallengeMethod
   authorizationMethod?: OAuth2AuthorizationMethod
   grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   extra?: Record<string, string>,

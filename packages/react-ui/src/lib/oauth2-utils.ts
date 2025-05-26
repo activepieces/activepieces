@@ -1,7 +1,10 @@
 import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
 
-import { ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
+import {
+  ThirdPartyAuthnProviderEnum,
+  OAuth2PkceCodeChallengeMethod,
+} from '@activepieces/shared';
 
 import {
   FROM_QUERY_PARAM,
@@ -36,16 +39,45 @@ function useThirdPartyLogin() {
   };
 }
 
+// Base64 includes some characters that aren't safe for use in a URL so those need to be
+// replaced with something that is valid.
+function base64urlEncode(arr: Uint8Array): string {
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+async function createPkceCodeChallenge(
+  verifier: string,
+  method: OAuth2PkceCodeChallengeMethod,
+): Promise<string> {
+  switch (method) {
+    case OAuth2PkceCodeChallengeMethod.S256: {
+      const data = new TextEncoder().encode(verifier);
+      const hashed = await crypto.subtle.digest('SHA-256', data);
+      return base64urlEncode(new Uint8Array(hashed));
+    }
+    case OAuth2PkceCodeChallengeMethod.PLAIN:
+      return verifier;
+  }
+}
+
 async function openOAuth2Popup(
   params: OAuth2PopupParams,
 ): Promise<OAuth2PopupResponse> {
   closeOAuth2Popup();
-  const pckeChallenge = nanoid(43);
-  const url = constructUrl(params, pckeChallenge);
+  const pkceVerifier = nanoid(43);
+  const pkceChallenge = await createPkceCodeChallenge(
+    pkceVerifier,
+    params.pkceCodeChallengeMethod,
+  );
+  const url = constructUrl(params, pkceChallenge);
   currentPopup = openWindow(url);
   return {
     code: await getCode(params.redirectUrl),
-    codeChallenge: params.pkce ? pckeChallenge : undefined,
+    codeChallenge: params.pkce ? pkceChallenge : undefined,
+    codeVerifier: params.pkce ? pkceVerifier : undefined,
   };
 }
 
@@ -82,7 +114,7 @@ function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
     ...(params.extraParams || {}),
   };
   if (params.pkce) {
-    queryParams['code_challenge_method'] = 'plain';
+    queryParams['code_challenge_method'] = params.pkceCodeChallengeMethod;
     queryParams['code_challenge'] = pckeChallenge;
   }
   const url = new URL(params.authUrl);
@@ -114,10 +146,12 @@ type OAuth2PopupParams = {
   redirectUrl: string;
   scope: string;
   pkce: boolean;
+  pkceCodeChallengeMethod: OAuth2PkceCodeChallengeMethod;
   extraParams?: Record<string, string>;
 };
 
 type OAuth2PopupResponse = {
   code: string;
   codeChallenge: string | undefined;
+  codeVerifier: string | undefined;
 };

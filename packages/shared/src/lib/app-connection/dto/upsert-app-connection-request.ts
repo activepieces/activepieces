@@ -19,6 +19,11 @@ export enum OAuth2GrantType {
     CLIENT_CREDENTIALS = 'client_credentials',
 }
 
+export enum OAuth2PkceCodeChallengeMethod {
+    S256 = 'S256',
+    PLAIN = 'plain',
+}
+
 export const UpsertCustomAuthRequest = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
@@ -179,7 +184,7 @@ const GlobalConnectionExtras =  Type.Object({
     externalId: Type.Optional(Type.String()),
     metadata: Type.Optional(Metadata),
 })
-export const UpsertGlobalConnectionRequestBody = 
+export const UpsertGlobalConnectionRequestBody =
     Type.Union([
         Type.Composite([Type.Omit(UpsertSecretTextRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
         Type.Composite([Type.Omit(UpsertOAuth2Request, ['projectId', 'externalId']), GlobalConnectionExtras]),
