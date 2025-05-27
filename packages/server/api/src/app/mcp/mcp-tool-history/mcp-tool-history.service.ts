@@ -11,9 +11,9 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { buildPaginator } from '../../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { McpToolHistoryEntity } from './mcp-tool-history.entity'
 
 const mcpToolHistoryRepo = repoFactory(McpToolHistoryEntity)
@@ -32,7 +32,7 @@ export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
             updated: dayjs().toISOString(),
         })
     },
-    async list({ mcpId, cursorRequest, limit, status, metadata }: ListParams): Promise<SeekPage<McpToolHistory>> {
+    async list({ mcpId, projectId, cursorRequest, limit, status, metadata }: ListParams): Promise<SeekPage<McpToolHistory>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: McpToolHistoryEntity,
@@ -45,7 +45,7 @@ export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
         })
         const queryBuilder = mcpToolHistoryRepo()
             .createQueryBuilder('mcp_tool_history')
-            .where({ mcpId })
+            .where({ mcpId, projectId })
 
         if (status) {
             queryBuilder.andWhere({ status: In(status) })
@@ -74,6 +74,7 @@ type CreateParams = {
 
 type ListParams = {
     mcpId: ApId
+    projectId: ApId
     cursorRequest: Cursor | null
     limit: number
     status?: McpToolHistoryStatus[]

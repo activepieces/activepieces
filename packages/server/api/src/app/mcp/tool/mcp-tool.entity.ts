@@ -1,9 +1,10 @@
-import { Mcp, McpTool, McpToolType } from '@activepieces/shared'
+import { Flow, Mcp, McpTool, McpToolType } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type McpToolSchema = McpTool & {
     mcp: Mcp
+    flow: Flow
 }
 
 export const McpToolEntity = new EntitySchema<McpToolSchema>({
@@ -16,9 +17,13 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
             enum: McpToolType,
             nullable: false,
         },
-        data: {
+        pieceMetadata: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
+        },
+        flowId: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [
@@ -28,16 +33,13 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
         },
     ],
     relations: {
-        mcp: {
+        flow: {
             type: 'many-to-one',
-            target: 'mcp',
+            target: 'flow',
             joinColumn: {
-                name: 'mcpId',
+                name: 'flowId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_mcp_tool_mcp_id',
             },
-            onDelete: 'CASCADE',
-            nullable: false,
         },
     },
 })
