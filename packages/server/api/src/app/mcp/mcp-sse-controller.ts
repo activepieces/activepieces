@@ -10,7 +10,7 @@ import { mcpSessionManager } from './mcp-session-manager'
 const HEARTBEAT_INTERVAL = 30 * 1000 // 30 seconds
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/:id/sse', SSERequest, async (req, reply) => {
+   /* app.get('/:id/sse', SSERequest, async (req, reply) => {
         const token = req.params.id
         const mcp = await mcpService(req.log).getByToken({
             token,
@@ -25,9 +25,9 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         })
 
         await handleStreamableHttpRequest(req, reply, mcp.id, req.log)
-    })
+    })*/
 
-    app.post('/messages', MessagesRequest, async (req, reply) => {
+   /* app.post('/messages', MessagesRequest, async (req, reply) => {
         const sessionId = req.query?.sessionId as string
 
         if (!sessionId) {
@@ -36,7 +36,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         }
         await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')
         await reply.code(202).send()
-    })
+    })*/
 }
 
 async function handleStreamableHttpRequest(
