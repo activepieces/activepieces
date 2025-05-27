@@ -151,6 +151,9 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
+      "@activepieces/piece-circle-so": [
+        "packages/pieces/community/circle-so/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
@@ -690,9 +693,8 @@
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
-      "@activepieces/piece-smartsuite":[
+      "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
-
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
