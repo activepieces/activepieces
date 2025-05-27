@@ -1,0 +1,69 @@
+---
+title: "Production"
+description: ""
+icon: "building"
+---
+
+## Creating a Predefined Connection in Production
+
+<Steps> 
+<Step title="Publish Your Piece"> 
+ Check the docs [here](/developers/sharing-pieces/overview) to do so.
+</Step>
+
+<Step title="Create an API Key">
+Go to **Platform Admin -> Security -> API Keys**, create an API key and save it:
+![API Keys](/resources/screenshots/create-api-key.png)   
+</Step>
+
+
+
+<Step title="Create a Project via API (skip this if a project for your user already exists)"> 
+ 
+ ```js
+ const options = {
+  method: 'POST',
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json'},
+  body: '{"displayName":"PROJECT_NAME","externalId":"PROJECT_EXTERNAL_ID","metadata":{}}'
+};
+
+fetch('https://YOUR_INSTANCE_URL/api/v1/projects', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+  ``` 
+  You can check the [projects API](/endpoints/projects/create) for more info.
+
+</Step> 
+
+<Step title="Create a Global Connection via API">
+```js
+const options = {
+  method: 'POST',
+  headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json'},
+  body: '{"displayName":"DISPLAY_NAME","pieceName":"PIECE_NAME","metadata":{},
+  "type":"CUSTOM_AUTH","value":{//whatever props you have in your custom auth},
+  "scope":"PLATFORM","projectIds":["ID_OF_YOUR_CREATED_PROJECT"],"externalId":"CONNECTION_EXTERNAL_ID"}'
+};
+
+fetch('https://YOUR_INSTANCE_URL/api/v1/global-connections', options)
+  .then(response => response.json())
+  .then(response => console.log(response))
+  .catch(err => console.error(err));
+  ```
+  You can check the [global connections API](/endpoints/global-connections/upsert) for more info. <br></br>
+  Make sure the connection external ID matches the pattern expected in your piece when fetching it. 
+</Step>
+
+<Step title="Provision User">
+
+Follow the docs [here](/docs/embedding/provision-users) to do so, but you must use the **same external project id** you used when you created the project for your user.
+
+</Step>
+
+</Steps>
+
+
+
+
+

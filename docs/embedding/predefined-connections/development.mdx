@@ -1,0 +1,134 @@
+---
+title: "Development"
+description: ""
+icon: "wrench"
+---
+
+## Prerequisites
+<Steps>
+
+<Step title="Start the devcontainer">
+ Follow the documentation [here](/developers/development-setup/dev-container) to do so.
+</Step>
+
+<Step title="Set Your Environment Variables">
+Set the following in your packages/server-api/.env file:
+```bash
+## these variables are set to align with the .devcontainer/docker-compose.yml file
+AP_DB_TYPE=POSTGRES
+AP_DEV_PIECES="your_piece_name"
+AP_ENVIRONMENT="dev"
+AP_EDITION=ee
+AP_EXECUTION_MODE=SANDBOXED
+AP_FRONTEND_URL="http://localhost:4200"
+AP_WEBHOOK_URL="http://localhost:3000"
+AP_PIECES_SOURCE='FILE'
+AP_PIECES_SYNC_MODE='NONE'
+AP_LOG_LEVEL=debug
+AP_LOG_PRETTY=true
+AP_QUEUE_MODE=REDIS
+AP_REDIS_HOST="redis"
+AP_REDIS_PORT="6379"
+AP_TRIGGER_DEFAULT_POLL_INTERVAL=1
+AP_CACHE_PATH=/workspace/cache
+AP_POSTGRES_DATABASE=activepieces
+AP_POSTGRES_HOST=db
+AP_POSTGRES_PORT=5432
+AP_POSTGRES_USERNAME=postgres
+AP_POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
+AP_ENCRYPTION_KEY=secret
+AP_JWT_SECRET=secret
+```
+</Step>
+
+
+
+<Step title="Activate Your License Key">
+After signing in, activate the license key by going to **Platform Admin -> Setup -> License Keys**
+![Activation License Key](/resources/screenshots/activation-license-key-settings.png)
+</Step>
+
+<Step title="Create Your Piece">
+
+Follow the instructions [here](/developers/building-pieces/overview) to create your piece
+</Step>
+</Steps>
+## Implementation
+
+<Steps>
+ 
+  <Step title="Set Project External ID">
+    Go to your **Project Settings** and set the external Id to something specific like `xyz`:
+    ![Project Settings](/resources/screenshots/project-settings.png)    
+  </Step>
+  <Step title="Create Global Connection">
+    Create a global connection by going to **Platform Admin -> Setup -> Global Connections** and set the external ID to something like `gelato_xyz`:
+     ![Global Connections](/resources/screenshots/create-global-connection.png)    
+  </Step>
+   <Step title="Don't Ask for Authentication in Your Actions/Triggers">
+    After you have created your [piece definition](../developers/building-pieces/piece-definition) and added [its authentication](../developers/building-pieces/piece-authentication).
+    Once you are [creating an action](../developers/building-pieces/create-action) or a [trigger](..developers/building-pieces/create-trigger), you can set the param `requireAuth` to be false in the `createAction` or `createTrigger` methods.
+  </Step>
+  <Step title="Fetch Connections to Use in Actions/Triggers">
+    Let's suppose the predefined connection externalId you want to store is **gelato_projectExternalId**, now in **run/test** method of your action or trigger, or the **onEnable/onDisable/onRenew** methods in your trigger, you can fetch the connection like this:
+   ```ts
+import { PieceAuth, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger } from "@activepieces/pieces-framework";
+import { isNil } from "@activepieces/shared";
+
+
+const auth = PieceAuth.CustomAuth({
+	required: true,
+	props: {
+	  apiUrl: Property.ShortText({
+		displayName: 'API URL',
+		required: true,
+	  }),
+	  apiKey: Property.ShortText({
+		displayName: 'API Key',
+		required: true,
+	  }),
+	},
+  });
+export const newFlavorCreated = createTrigger({
+    requireAuth:false,
+	auth,
+    name: 'newFlavorCreated',
+    displayName: 'new flavor created',
+    description: 'triggers when a new icecream flavor is created.',
+    props: {},
+    sampleData: {},
+    type: TriggerStrategy.POLLING,
+    async test(context) {
+		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
+	   if(isNil(connection)) throw new Error('No connection found')
+
+	   return []
+    },
+    async onEnable(context) {
+		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
+		if(isNil(connection)) throw new Error('No connection found')
+       // your logic here...
+    },
+
+    async onDisable(context) {
+		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
+		if(isNil(connection)) throw new Error('No connection found')
+       // your logic here...
+    },
+
+    async run(context) {
+		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
+		if(isNil(connection)) throw new Error('No connection found')
+       // your logic here...
+	   return []
+    },
+    });
+  ```
+  </Step>
+  <Step title="Test Your Piece"> 
+    Create a flow in your project and add a step from your piece and test it, you should see it working correctly.
+  </Step>
+  
+</Steps>
+
