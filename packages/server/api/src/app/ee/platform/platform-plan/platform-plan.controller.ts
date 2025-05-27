@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BilingCycle, PaymentTiming, PlanName, ProrationBehavior, UpgradeSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -32,19 +32,91 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/upgrade', UpgradeRequest, async (request, reply) => {
         const stripe = stripeHelper(request.log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const projectBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = projectBilling.stripeCustomerId
+   
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-        if (projectBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
+
+        const { plan, billing, addons, paymentTiming, prorationBehavior } = request.body
+
+        if (!plan || ![PlanName.PLUS, PlanName.BUSINESS].includes(plan)) {
             await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Already subscribed',
+                message: 'Invalid plan selected. Choose PLUS or BUSINESS.',
             })
             return
         }
 
-        await platformPlanService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
-        return {
-            paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
+        if (!billing || ![BilingCycle.MONTHLY, BilingCycle.ANNUAL].includes(billing)) {
+            await reply.status(StatusCodes.BAD_REQUEST).send({
+                message: 'Invalid billing period. Choose MONTHLY or ANNUAL.',
+            })
+            return
+        }
+
+        const upgradeParams = {
+            plan,
+            billing,
+            addons: addons || {},
+            paymentTiming: paymentTiming || PaymentTiming.IMMEDIATE,
+            prorationBehavior: prorationBehavior || ProrationBehavior.CREATE_PRORATIONS,
+        }
+
+        try {
+            if (platformBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE && platformBilling.stripeSubscriptionId) {
+                request.log.info({ 
+                    platformId: request.principal.platform.id, 
+                    subscriptionId: platformBilling.stripeSubscriptionId,
+                    upgradeParams, 
+                }, 'Upgrading existing subscription')
+
+                const updatedSubscription = await stripeHelper(request.log).upgradeSubscription(
+                    platformBilling.stripeSubscriptionId,
+                    upgradeParams,
+                )
+
+                const planLimits = platformPlanService(request.log).getPlanLimits(plan, addons)
+
+                await platformPlanService(request.log).update({ 
+                    platformId: request.principal.platform.id, 
+                    ...planLimits,
+                })
+
+                return {
+                    subscription: {
+                        id: updatedSubscription.id,
+                        status: updatedSubscription.status,
+                        current_period_end: updatedSubscription.current_period_end,
+                        plan,
+                        billing,
+                        addons,
+                    },
+                }
+            }
+            else {
+                request.log.info({ 
+                    platformId: request.principal.platform.id, 
+                    customerId,
+                    upgradeParams, 
+                }, 'Creating new subscription')
+
+                const checkoutUrl = await stripeHelper(request.log).createSubscriptionCheckoutUrl(
+                    customerId,
+                    upgradeParams,
+                )
+
+                return {
+                    paymentLink: checkoutUrl,
+                }
+            }
+        }
+        catch (error) {
+            request.log.error({ error, platformId: request.principal.platform.id }, 'Failed to upgrade subscription')
+            
+            await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+                message: 'Failed to process subscription upgrade. Please try again.',
+                error: error instanceof Error ? error.message : 'Unknown error',
+            })
+            return
         }
     })
 
@@ -84,6 +156,9 @@ const UpdateLimitsRequest = {
 }
 
 const UpgradeRequest = {
+    schema: {
+        body: UpgradeSubscriptionParamsSchema,
+    },
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },

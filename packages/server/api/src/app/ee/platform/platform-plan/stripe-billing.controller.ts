@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -29,15 +29,40 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     stripeWebhookSecret,
                 )
                 const subscription = webhook.data.object as Stripe.Subscription
-                if (!stripeHelper(request.log).isPriceForTasks(subscription)) {
+                
+                const isPlanBasedSubscription = stripeHelper(request.log).isPriceForPlan(subscription)
+                const isTaskBasedSubscription = stripeHelper(request.log).isPriceForTasks(subscription)
+                
+                if (!isPlanBasedSubscription && !isTaskBasedSubscription) {
                     return {
-                        message: 'Subscription does not have a price for tasks',
+                        message: 'Subscription does not have a recognized price type',
                     }
                 }
+                
                 const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId(subscription)
+                
                 if (subscription.status === ApSubscriptionStatus.CANCELED) {
-                    request.log.info(`Subscription canceled for project ${platformBilling.platformId}, downgrading to free plan`)
+                    request.log.info(`Subscription canceled for platform ${platformBilling.platformId}, downgrading to free plan`)
                     await platformPlanService(request.log).update({ platformId: platformBilling.platformId, tasksLimit: undefined })
+                }
+                else if (subscription.status === ApSubscriptionStatus.ACTIVE && isPlanBasedSubscription) {
+                    const planName = subscription.metadata?.plan as PlanName.PLUS | PlanName.BUSINESS
+
+                    if (planName) {
+                        request.log.info(`Plan-based subscription activated for platform ${platformBilling.platformId}, plan: ${planName}`)
+                        
+                        const addons = {
+                            extraUsers: 0,
+                            extraFlows: 0,
+                            extraAiCredits: 0,
+                        }
+                        
+                        const planLimits = platformPlanService(request.log).getPlanLimits(planName, addons)
+                        await platformPlanService(request.log).update({ 
+                            platformId: platformBilling.platformId, 
+                            ...planLimits, 
+                        })
+                    }
                 }
                 return await reply.status(StatusCodes.OK).send()
             }
