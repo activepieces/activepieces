@@ -12,6 +12,7 @@ export const McpPieceToolData = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionNames: Type.Array(Type.String()),
+    logoUrl: Type.String(),
     connectionExternalId: Type.Optional(Type.String()),
 })
 export type McpPieceToolData = Static<typeof McpPieceToolData>
