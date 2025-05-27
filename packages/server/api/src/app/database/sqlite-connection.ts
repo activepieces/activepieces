@@ -232,7 +232,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveFeatureFlagsFromSqlite1747824740845,
         UpgradePieceVersionsToLatest1748253670449,
         AddMcpToolEntitySQLITE1748365593414,
-        AddMcpRunEntitySQLITE1748365786218
+        AddMcpRunEntitySQLITE1748365786218,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
