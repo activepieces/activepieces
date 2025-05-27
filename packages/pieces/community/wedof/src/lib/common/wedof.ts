@@ -1,8 +1,59 @@
 import {Property} from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const wedofCommon = {
-    baseUrl: 'https://www.wedof.fr/api',
-    host: 'https://www.wedof.fr/api',
+    baseUrl: 'https://staging.wedof.fr/api',
+    host: 'https://staging.wedof.fr/api',
+
+    subscribeWebhook: async (
+        events: string[],
+        webhookUrl: string,
+        apiKey: string,
+        name: string
+    ) => {
+        const request = {
+            method: HttpMethod.POST,
+            url: `${wedofCommon.baseUrl}/webhooks`,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': apiKey,
+                'User-Agent': 'activepieces'
+            },
+            body: {
+                url: webhookUrl,
+                events: events,
+                name: name,
+                secret: null,
+                enabled: true,
+                ignoreSsl: false,
+            },
+        };
+
+        const response = await httpClient.sendRequest(request);
+
+        if (response.status !== 201) {
+            throw new Error(`Échec de la création du webhook. Code de statut reçu: ${response.status}. Réponse: ${JSON.stringify(response.body)}`);
+        }
+
+        return response.body.id;
+    },
+
+    unsubscribeWebhook: async (
+        webhookId: string,
+        apiKey: string
+    ) => {
+        const request = {
+            method: HttpMethod.DELETE,
+            url: `${wedofCommon.baseUrl}/webhooks/${webhookId}`,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': apiKey,
+                'User-Agent': 'activepieces'
+            },
+        };
+
+        return await httpClient.sendRequest(request);
+    },
 
     state: Property.StaticMultiSelectDropdown({
         displayName: 'Etat du dossier de formation',
