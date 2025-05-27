@@ -4,6 +4,7 @@ import { updateTask } from './lib/actions/update-task';
 import { createProject } from './lib/actions/create-project';
 import { getTask } from './lib/actions/get-task';
 import { taskCreated } from './lib/triggers/task-created';
+import { moveTask } from './lib/actions/move-task';
 
 export const motionAuth = PieceAuth.SecretText({
   displayName: 'Motion API Key',
@@ -16,6 +17,6 @@ export const motion = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/motion.png',
   auth: motionAuth,
   authors: ['Sanket6652'],
-  actions: [createTask, updateTask, createProject, getTask],
+  actions: [createTask, updateTask, createProject, getTask,moveTask],
   triggers: [taskCreated],
 });
