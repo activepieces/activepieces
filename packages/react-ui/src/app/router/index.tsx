@@ -81,6 +81,7 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { AgentsPage } from '../routes/agents';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -139,6 +140,16 @@ const routes = [
       </PageTitle>
     ),
   },
+  ...ProjectRouterWrapper({
+    path: '/agents',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Agents">
+          <AgentsPage />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
   {
     path: '/chats/:flowId',
     element: (
