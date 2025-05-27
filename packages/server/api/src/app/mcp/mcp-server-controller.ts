@@ -1,31 +1,18 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-const getProjectIdFromRequest = (req: FastifyRequest): ProjectId | null => {
-    if (req.principal.type === PrincipalType.SERVICE) {
-        if (!(req.query as { projectId?: ProjectId }).projectId) {
-            return null
-        }
-        return (req.query as { projectId: ProjectId }).projectId
-    }
-    return req.principal.projectId
-}
 
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.post('/', CreateMcpRequest, async (req) => {
-        const projectId = getProjectIdFromRequest(req)
-        if (!projectId) {
-            return null
-        }
+        const projectId = req.body.projectId
         return mcpService(req.log).create({
             projectId,
             name: req.body.name,
@@ -33,13 +20,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     })
     
     app.get('/', GetMcpsRequest, async (req) => {
-        const projectId = getProjectIdFromRequest(req)
-        if (!projectId) {
-            return {
-                data: [],
-                cursor: null,
-            }
-        }
+        const projectId = req.query.projectId
         
         const result = await mcpService(req.log).list({
             projectId,
@@ -60,12 +41,12 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
-        const { token, name } = req.body
+        const { name, tools } = req.body
 
         return mcpService(req.log).update({
             mcpId,
-            token,
             name,
+            tools,
         })
     })
 
@@ -79,15 +60,9 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.delete('/:id', DeleteMcpRequest, async (req, reply) => {
         const mcpId = req.params.id
-        const projectId = getProjectIdFromRequest(req)
-
-        if (!projectId) {
-            return reply.status(StatusCodes.BAD_REQUEST).send()
-        }
-
         await mcpService(req.log).delete({
             mcpId,
-            projectId,
+            projectId: req.principal.projectId,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -102,9 +77,6 @@ const CreateMcpRequest = {
         tags: ['mcp'],
         description: 'Create a new MCP server',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        querystring: Type.Object({
-            projectId: Type.Optional(Type.String({})),
-        }),
         body: CreateMcpRequestBody,
         response: {
             [StatusCodes.OK]: Nullable(McpWithTools),
@@ -192,9 +164,6 @@ const DeleteMcpRequest = {
         tags: ['mcp'],
         description: 'Delete an MCP server by ID',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        querystring: Type.Object({
-            projectId: Type.Optional(Type.String({})),
-        }),
         params: Type.Object({
             id: ApId,
         }),

@@ -1,13 +1,8 @@
-import { Mcp, McpTool } from '@activepieces/shared'
+import { McpWithTools } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-
-type McpSchema = Mcp & {
-    tools: McpTool[]
-}
-
-export const McpEntity = new EntitySchema<McpSchema>({
+export const McpEntity = new EntitySchema<McpWithTools>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
@@ -29,6 +24,7 @@ export const McpEntity = new EntitySchema<McpSchema>({
         tools: {
             type: 'one-to-many',
             target: 'mcp_tool',
+            inverseSide: 'mcp',
             cascade: true,
             onDelete: 'CASCADE',
         },

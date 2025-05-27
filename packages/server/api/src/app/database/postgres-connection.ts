@@ -206,8 +206,8 @@ import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgr
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
-import { AddMcpToolEntity1748199841100 } from './migration/postgres/1748199841100-AddMcpToolEntity'
-import { AddMcpToolHistory1748282988335 } from './migration/postgres/1748282988335-AddMcpToolHistory'
+import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
+import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -350,8 +350,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
-        AddMcpToolEntity1748199841100,
-        AddMcpToolHistory1748282988335,
+        AddMcpToolEntity1748352614033,
+        AddMcpRunEntity1748358415599,
     ]
 
     const edition = system.getEdition()

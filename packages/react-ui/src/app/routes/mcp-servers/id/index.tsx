@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
-import { McpHistoryPage } from '../../../mcp/history/mcp-history';
 import { McpConfigPage } from '../../../mcp/mcp-config';
 import { McpConnectPage } from '../../../mcp/mcp-connect';
+import { McpHistoryPage } from '../../../mcp/runs/mcp-runs';
 
 const tabs = [
   {

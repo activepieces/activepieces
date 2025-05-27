@@ -380,15 +380,6 @@ export const McpConnectPage = () => {
           <div className="flex-1">
             <TabsContent value="claude" className="mt-0">
               <div className="space-y-6">
-                <Alert variant="warning">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    {t(
-                      'Note: MCPs only work with Claude Desktop, not the web version.',
-                    )}
-                  </AlertDescription>
-                </Alert>
-
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">{t('Setup')}</h3>
                   <div className="space-y-3">

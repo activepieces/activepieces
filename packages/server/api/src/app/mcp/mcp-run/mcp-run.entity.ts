@@ -1,23 +1,28 @@
-import { Mcp, McpTool, McpToolHistory } from '@activepieces/shared'
+import { Mcp, McpRun, McpTool, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
-type McpToolHistorySchema = McpToolHistory & {
+type McpRunSchema = McpRun & {
     mcp: Mcp
     tool: McpTool
+    project: Project
 }
 
-export const McpToolHistoryEntity = new EntitySchema<McpToolHistorySchema>({
-    name: 'mcp_tool_history',
+export const McpRunEntity = new EntitySchema<McpRunSchema>({
+    name: 'mcp_run',
     columns: {
         ...BaseColumnSchemaPart,
         mcpId: {
             ...ApIdSchema,
             nullable: false,
         },
-        toolId: {
+        projectId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        toolId: {
+            ...ApIdSchema,
+            nullable: true,
         },
         metadata: {
             type: JSONB_COLUMN_TYPE,
@@ -38,12 +43,16 @@ export const McpToolHistoryEntity = new EntitySchema<McpToolHistorySchema>({
     },
     indices: [
         {
-            name: 'idx_mcp_tool_history_mcp_id',
+            name: 'idx_mcp_run_mcp_id',
             columns: ['mcpId'],
         },
         {
-            name: 'idx_mcp_tool_history_tool_id',
+            name: 'idx_mcp_run_tool_id',
             columns: ['toolId'],
+        },
+        {
+            name: 'idx_mcp_run_project_id',
+            columns: ['projectId'],
         },
     ],
     relations: {
@@ -53,7 +62,7 @@ export const McpToolHistoryEntity = new EntitySchema<McpToolHistorySchema>({
             joinColumn: {
                 name: 'mcpId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_mcp_tool_history_mcp_id',
+                foreignKeyConstraintName: 'fk_mcp_run_mcp_id',
             },
             onDelete: 'CASCADE',
             nullable: false,
@@ -61,10 +70,21 @@ export const McpToolHistoryEntity = new EntitySchema<McpToolHistorySchema>({
         tool: {
             type: 'many-to-one',
             target: 'mcp_tool',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'toolId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_mcp_tool_history_tool_id',
+                foreignKeyConstraintName: 'fk_mcp_run_tool_id',
+            },
+        },
+        project: {
+            type: 'many-to-one',
+            target: 'project',
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_mcp_run_project_id',
             },
         },
     },
