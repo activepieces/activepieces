@@ -67,9 +67,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   //   cell: ({ row }) => {
   //     return (
   //       <div className="text-left">
-  //         {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-  //         {row.original.plan.aiTokens
-  //           ? formatUtils.formatNumber(row.original.plan.aiTokens)
+  //         {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
+  //         {row.original.plan.aiCredits
+  //           ? formatUtils.formatNumber(row.original.plan.aiCredits)
   //           : '-'}
   //       </div>
   //     );
@@ -134,7 +134,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled || true;
+  const isEnabled = platform.plan.manageProjectsEnabled || true;
   const { data: currentProject } = projectHooks.useCurrentProject();
 
   const [searchParams] = useSearchParams();

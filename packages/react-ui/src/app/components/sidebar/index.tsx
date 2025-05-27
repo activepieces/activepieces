@@ -264,7 +264,7 @@ export function SidebarComponent({
         </div>
       </div>
       <ShowPoweredBy
-        show={platform?.showPoweredBy && isHomeDashboard}
+        show={platform?.plan.showPoweredBy && isHomeDashboard}
         position="absolute"
       />
     </div>

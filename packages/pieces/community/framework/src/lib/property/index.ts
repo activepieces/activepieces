@@ -29,7 +29,7 @@ export { BasicAuthPropertyValue } from './authentication/basic-auth-prop';
 export { StaticMultiSelectDropdownProperty } from './input/dropdown/static-dropdown';
 export { StaticDropdownProperty } from './input/dropdown/static-dropdown';
 export * from './authentication/custom-auth-prop';
-export { OAuth2Property, BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE } from './authentication/oauth2-prop';
+export { OAuth2Property } from './authentication/oauth2-prop';
 export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
@@ -37,7 +37,8 @@ export { CustomAuthProperty } from './authentication/custom-auth-prop';
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
-
+export {CustomProperty} from './input/custom-property'
+export type {CustomPropertyCodeFunctionParams} from './input/custom-property'
 export const PiecePropertyMap = Type.Record(Type.String(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;

@@ -123,7 +123,7 @@ function cleanSampleData(stepOutput: StepOutput) {
 }
 
 async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
-    if (!input.formatPayload) {
+    if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
     const newPayload = await triggerHelper.executeTrigger({
