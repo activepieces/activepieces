@@ -151,8 +151,8 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
-      "@activepieces/piece-circleso": [
-        "packages/pieces/community/circleso/src/index.ts"
+      "@activepieces/piece-circle-so": [
+        "packages/pieces/community/circle-so/src/index.ts"
       ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"

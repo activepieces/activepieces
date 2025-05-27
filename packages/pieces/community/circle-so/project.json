@@ -1,7 +1,7 @@
 {
-  "name": "pieces-circleso",
+  "name": "pieces-circle-so",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/circleso/src",
+  "sourceRoot": "packages/pieces/community/circle-so/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,14 +19,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/circleso",
-        "tsConfig": "packages/pieces/community/circleso/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/circleso/package.json",
-        "main": "packages/pieces/community/circleso/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/circle-so",
+        "tsConfig": "packages/pieces/community/circle-so/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/circle-so/package.json",
+        "main": "packages/pieces/community/circle-so/src/index.ts",
         "assets": [
-          "packages/pieces/community/circleso/*.md",
+          "packages/pieces/community/circle-so/*.md",
           {
-            "input": "packages/pieces/community/circleso/src/i18n",
+            "input": "packages/pieces/community/circle-so/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
