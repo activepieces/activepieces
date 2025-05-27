@@ -29,7 +29,6 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
@@ -150,7 +149,10 @@ export default function Billing() {
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             <span>
-              Resets {dayjs(platformSubscription.nextBillingDate).format('MMM D, YYYY')}
+              Resets{' '}
+              {dayjs(platformSubscription.nextBillingDate).format(
+                'MMM D, YYYY',
+              )}
             </span>
           </div>
         )}
