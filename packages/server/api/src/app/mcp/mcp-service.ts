@@ -15,8 +15,10 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { ILike, Raw } from 'typeorm'
+import { ILike } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { flowService } from '../flows/flow/flow.service'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
@@ -57,12 +59,16 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         }
 
         const { data, cursor } = await paginator.paginate(mcpRepo().createQueryBuilder('mcp').where(queryWhere))
-        const populatedMcps = await Promise.all(data.map(async (mcp) => await this.getOrThrow({ mcpId: mcp.id })))
+        const populatedMcps = await Promise.all(data.map(async (mcp) => this.getOrThrow({ mcpId: mcp.id })))
         return paginationHelper.createPage(populatedMcps, cursor)
     },
 
     async getOrThrow({ mcpId }: GetOrThrowParams): Promise<McpWithTools> {
-        const mcp = await mcpRepo().findOne({ where: { id: mcpId }, relations: { tools: true } })
+        const mcp = await mcpRepo().findOne({ 
+            where: { id: mcpId }, 
+            relations: { tools: true },
+            order: { tools: { created: 'DESC' } },
+        })
 
         if (isNil(mcp)) {
             throw new ActivepiecesError({
@@ -70,7 +76,50 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
                 params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
-        return mcp
+        const enrichedTools = await Promise.all(mcp.tools.map(async (tool) => {
+            switch (tool.type) {
+                case McpToolType.PIECE:{
+                    return {
+                        ...tool,
+                        pieceMetadata: tool.pieceMetadata,
+                        flowId: undefined,
+                    }
+                }
+                case McpToolType.FLOW:{
+                    assertNotNullOrUndefined(tool.flowId, 'flowId is required')
+                    const flow = await flowService(_log).getOneOrThrow({
+                        id: tool.flowId,
+                        projectId: mcp.projectId,
+                    })
+        
+                    if (flow.publishedVersionId === null) {
+                        throw new ActivepiecesError({
+                            code: ErrorCode.VALIDATION,
+                            params: {
+                                message: `Flow ${flow.id} has no published version`,
+                            },
+                        })
+                    }
+        
+                    const publishedVersion = await flowVersionService(_log).getFlowVersionOrThrow({
+                        flowId: flow.id,
+                        versionId: flow.publishedVersionId,
+                    })                        
+                    return {
+                        ...tool,
+                        pieceMetadata: undefined,
+                        flow: {
+                            ...flow,
+                            version: publishedVersion,
+                        }, 
+                    }
+                }
+            }           
+        }))
+        return {
+            ...mcp,
+            tools: enrichedTools,
+        }
     },
 
     async getByToken({ token }: { token: string }): Promise<McpWithTools> {
@@ -86,12 +135,20 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
     async update({ mcpId, token, name, tools }: UpdateParams): Promise<McpWithTools> {
         const enrichedTools = !isNil(tools) ? await Promise.all(tools.map(async (tool) => {
+            const existingToolId = await findToolId(mcpId, tool)
             return {
                 ...tool,
-                id: await findToolId(mcpId, tool),
+                id: existingToolId || apId(),
+                mcpId,
+                created: existingToolId ? undefined : dayjs().toISOString(),
+                updated: dayjs().toISOString(),
             }
         })) : undefined
-        await mcpRepo().update(mcpId, {
+
+        const mcp = await mcpRepo().findOneOrFail({ where: { id: mcpId } })
+
+        await mcpRepo().save({
+            ...mcp,
             ...spreadIfDefined('token', token),
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('tools', enrichedTools),
@@ -133,17 +190,17 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 })
 
-function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated' | 'id'>): Promise<ApId | undefined> {
+async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated' | 'id'>): Promise<ApId | undefined> {
     switch (tool.type) {
         case McpToolType.PIECE: {
             assertNotNullOrUndefined(tool.pieceMetadata, 'pieceMetadata is required')
-            return mcpToolRepo().findOne({
-                where: {
-                    mcpId,
-                    type: tool.type,
-                    pieceMetadata: Raw(alias => `${alias}->>'pieceName' = :pieceName`, { pieceName: tool.pieceMetadata?.pieceName })
-                }
-            }).then(tool => tool?.id)
+            const result = await mcpToolRepo()
+                .createQueryBuilder('mcp_tool')
+                .where('mcp_tool.mcpId = :mcpId', { mcpId })
+                .andWhere('mcp_tool.type = :type', { type: tool.type })
+                .andWhere('mcp_tool."pieceMetadata"->>\'pieceName\' = :pieceName', { pieceName: tool.pieceMetadata?.pieceName })
+                .getOne()
+            return result?.id
         }
         case McpToolType.FLOW: {
             assertNotNullOrUndefined(tool.flowId, 'flowId is required')

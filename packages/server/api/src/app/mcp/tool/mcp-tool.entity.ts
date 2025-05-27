@@ -11,7 +11,10 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
     name: 'mcp_tool',
     columns: {
         ...BaseColumnSchemaPart,
-        mcpId: ApIdSchema,
+        mcpId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
         type: {
             type: String,
             enum: McpToolType,
@@ -19,7 +22,7 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
         },
         pieceMetadata: {
             type: JSONB_COLUMN_TYPE,
-            nullable: false,
+            nullable: true,
         },
         flowId: {
             type: String,
@@ -31,8 +34,22 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
             name: 'idx_mcp_tool_mcp_id',
             columns: ['mcpId'],
         },
+        {
+            name: 'idx_mcp_tool_flow_id',
+            columns: ['flowId'],
+        },
     ],
     relations: {
+        mcp: {
+            type: 'many-to-one',
+            target: 'mcp',
+            joinColumn: {
+                name: 'mcpId',
+                referencedColumnName: 'id',
+            },
+            orphanedRowAction: 'delete',
+            onDelete: 'CASCADE',
+        },
         flow: {
             type: 'many-to-one',
             target: 'flow',

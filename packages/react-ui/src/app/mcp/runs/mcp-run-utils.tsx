@@ -18,11 +18,11 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { formatUtils } from '@/lib/utils';
-import { McpToolHistory, McpToolHistoryStatus } from '@activepieces/shared';
+import { McpRun, McpRunStatus } from '@activepieces/shared';
 
-type McpToolHistoryWithActions = RowDataWithActions<McpToolHistory>;
+type McpRunWithActions = RowDataWithActions<McpRun>;
 
-export const getToolIcon = (item: McpToolHistory, metadata?: any[]) => {
+export const getToolIcon = (item: McpRun, metadata?: any[]) => {
   if ('flowId' in item.metadata) {
     return (
       <div className="dark:bg-accent-foreground/25 rounded-full bg-accent/35 p-2 border border-solid size-[36px]">
@@ -51,21 +51,21 @@ export const getToolIcon = (item: McpToolHistory, metadata?: any[]) => {
   return null;
 };
 
-export const getToolDisplayName = (item: McpToolHistory) => {
+export const getToolDisplayName = (item: McpRun) => {
   if ('pieceName' in item.metadata) {
     return item.metadata.pieceName;
   }
   return 'Flow';
 };
 
-export const getActionName = (item: McpToolHistory) => {
+export const getActionName = (item: McpRun) => {
   if ('actionName' in item.metadata) {
     return item.metadata.actionName;
   }
   return 'Flow Action';
 };
 
-export const getTooltipContent = (item: McpToolHistory) => {
+export const getTooltipContent = (item: McpRun) => {
   if ('pieceName' in item.metadata && 'pieceVersion' in item.metadata) {
     return `Piece Version: ${item.metadata.pieceVersion}`;
   }
@@ -98,7 +98,7 @@ export const formatJsonData = (data: any) => {
 
 export const createColumns = (
   metadata?: any[],
-): ColumnDef<McpToolHistoryWithActions, unknown>[] => [
+): ColumnDef<McpRunWithActions, unknown>[] => [
   {
     accessorKey: 'metadata',
     header: ({ column }) => (
@@ -131,7 +131,7 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       const item = row.original;
-      return item.status === McpToolHistoryStatus.SUCCESS ? (
+      return item.status === McpRunStatus.SUCCESS ? (
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-green-700">
           <CheckCircle2 className="h-3 w-3" />
           <span className="text-xs font-medium">{t('Success')}</span>
@@ -161,7 +161,7 @@ export const createColumns = (
   },
 ];
 
-export const createFilters = (): DataTableFilter<keyof McpToolHistory>[] => [
+export const createFilters = (): DataTableFilter<keyof McpRun>[] => [
   {
     type: 'input',
     title: t('Action Name'),
@@ -177,24 +177,24 @@ export const createFilters = (): DataTableFilter<keyof McpToolHistory>[] => [
     options: [
       {
         label: t('Success'),
-        value: McpToolHistoryStatus.SUCCESS,
+        value: McpRunStatus.SUCCESS,
       },
       {
         label: t('Failed'),
-        value: McpToolHistoryStatus.FAILED,
+        value: McpRunStatus.FAILED,
       },
     ],
   },
 ];
 
-export const calculateStats = (historyItems?: { data: McpToolHistory[] }) => {
+export const calculateStats = (historyItems?: { data: McpRun[] }) => {
   if (!historyItems?.data) {
     return { total: 0, successful: 0, failed: 0 };
   }
 
   const total = historyItems.data.length;
   const successful = historyItems.data.filter(
-    (item) => item.status === McpToolHistoryStatus.SUCCESS,
+    (item) => item.status === McpRunStatus.SUCCESS,
   ).length;
   const failed = total - successful;
 

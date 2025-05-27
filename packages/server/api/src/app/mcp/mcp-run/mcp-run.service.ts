@@ -2,10 +2,10 @@ import {
     ApId, 
     apId, 
     Cursor, 
-    McpFlowToolHistoryMetadata,
-    McpPieceToolHistoryMetadata,
-    McpToolHistory,
-    McpToolHistoryStatus,
+    McpFlowRunMetadata,
+    McpPieceRunMetadata,
+    McpRun,
+    McpRunStatus,
     SeekPage, 
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -14,15 +14,16 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { McpToolHistoryEntity } from './mcp-tool-history.entity'
+import { McpRunEntity } from './mcp-run.entity'
 
-const mcpToolHistoryRepo = repoFactory(McpToolHistoryEntity)
+const mcpRunRepo = repoFactory(McpRunEntity)
 
-export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
-    async create({ mcpId, toolId, metadata, input, output, status }: CreateParams): Promise<void> {
-        await mcpToolHistoryRepo().save({
+export const mcpRunService = (_log: FastifyBaseLogger) => ({
+    async create({ mcpId, toolId, projectId, metadata, input, output, status }: CreateParams): Promise<void> {
+        await mcpRunRepo().save({
             id: apId(),
             mcpId,
+            projectId,
             toolId,
             metadata,
             input,
@@ -32,10 +33,10 @@ export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
             updated: dayjs().toISOString(),
         })
     },
-    async list({ mcpId, projectId, cursorRequest, limit, status, metadata }: ListParams): Promise<SeekPage<McpToolHistory>> {
+    async list({ mcpId, projectId, cursorRequest, limit, status, metadata }: ListParams): Promise<SeekPage<McpRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
-            entity: McpToolHistoryEntity,
+            entity: McpRunEntity,
             query: {
                 limit,
                 order: 'DESC',
@@ -43,8 +44,8 @@ export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = mcpToolHistoryRepo()
-            .createQueryBuilder('mcp_tool_history')
+        const queryBuilder = mcpRunRepo()
+            .createQueryBuilder('mcp_run')
             .where({ mcpId, projectId })
 
         if (status) {
@@ -53,23 +54,24 @@ export const mcpToolHistoryService = (_log: FastifyBaseLogger) => ({
 
         if (metadata) {
             queryBuilder.andWhere(
-                '"mcp_tool_history"."metadata"->>\'actionName\' LIKE :actionName',
+                '"mcp_run"."metadata"->>\'actionName\' LIKE :actionName',
                 { actionName: `%${metadata}%` },
             )
         }
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage<McpToolHistory>(data, cursor)
+        return paginationHelper.createPage<McpRun>(data, cursor)
     },
 })
 
 type CreateParams = {
     mcpId: ApId
     toolId: ApId
-    metadata: McpPieceToolHistoryMetadata | McpFlowToolHistoryMetadata
+    projectId: ApId
+    metadata: McpPieceRunMetadata | McpFlowRunMetadata
     input: Record<string, unknown>
     output: Record<string, unknown>
-    status: McpToolHistoryStatus
+    status: McpRunStatus
 }
 
 type ListParams = {
@@ -77,6 +79,6 @@ type ListParams = {
     projectId: ApId
     cursorRequest: Cursor | null
     limit: number
-    status?: McpToolHistoryStatus[]
+    status?: McpRunStatus[]
     metadata?: string
 }

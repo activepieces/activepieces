@@ -22,10 +22,10 @@ import {
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
+import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { mcpToolApi } from '@/features/mcp/lib/mcp-tool-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import type { McpToolWithPiece, McpToolWithFlow } from '@activepieces/shared';
+import type { McpTool } from '@activepieces/shared';
 import { McpToolType } from '@activepieces/shared';
 
 import McpToolDialog from './mcp-tool-dialog';
@@ -34,7 +34,7 @@ export const McpConfigPage = () => {
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
   const [showEditPieceDialog, setShowEditPieceDialog] = useState(false);
   const [selectedPieceToEdit, setSelectedPieceToEdit] =
-    useState<McpToolWithPiece | null>(null);
+    useState<McpTool | null>(null);
   const [activeTab, setActiveTab] = useState<'pieces' | 'flows'>('pieces');
   const { mcpId } = useParams<{ mcpId: string }>();
   const { toast } = useToast();
@@ -44,7 +44,20 @@ export const McpConfigPage = () => {
   const { pieces } = piecesHooks.usePieces({});
 
   const removePieceMutation = useMutation({
-    mutationFn: async (pieceId: string) => mcpToolApi.delete(pieceId),
+    mutationFn: async (toolId: string) => {
+      const currentMcp = await mcpApi.get(mcpId!);
+      const updatedTools =
+        currentMcp.tools
+          ?.filter((tool) => tool.id !== toolId)
+          .map((tool) => ({
+            type: tool.type,
+            mcpId: tool.mcpId,
+            pieceMetadata: tool.pieceMetadata,
+            flowId: tool.flowId,
+          })) || [];
+
+      return await mcpApi.update(mcpId!, { tools: updatedTools });
+    },
     onSuccess: () => {
       toast({
         description: t('Tool removed successfully'),
@@ -63,17 +76,22 @@ export const McpConfigPage = () => {
     },
   });
 
-  const removeTool = async (tool: McpToolWithPiece | McpToolWithFlow) => {
+  const removeTool = async (tool: McpTool) => {
     if (!mcp?.id || removePieceMutation.isPending) return;
     removePieceMutation.mutate(tool.id);
   };
 
-  const getPieceInfo = (mcpPiece: McpToolWithPiece) => {
+  const getPieceInfo = (mcpTool: McpTool) => {
+    if (mcpTool.type !== McpToolType.PIECE || !mcpTool.pieceMetadata) {
+      return { displayName: 'Unknown', logoUrl: undefined };
+    }
+
     const pieceMetadata = pieces?.find(
-      (p) => p.name === mcpPiece.piece.pieceName,
+      (p) => p.name === mcpTool.pieceMetadata?.pieceName,
     );
     return {
-      displayName: pieceMetadata?.displayName || mcpPiece.piece.pieceName,
+      displayName:
+        pieceMetadata?.displayName || mcpTool.pieceMetadata.pieceName,
       logoUrl: pieceMetadata?.logoUrl,
     };
   };
@@ -82,9 +100,9 @@ export const McpConfigPage = () => {
     string,
     { displayName: string; logoUrl?: string }
   > = {};
-  mcp?.tools?.forEach((mcpPiece) => {
-    if (mcpPiece.data.type === McpToolType.PIECE) {
-      pieceInfoMap[mcpPiece.id] = getPieceInfo(mcpPiece as McpToolWithPiece);
+  mcp?.tools?.forEach((mcpTool) => {
+    if (mcpTool.type === McpToolType.PIECE) {
+      pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
     }
   });
 
@@ -92,8 +110,10 @@ export const McpConfigPage = () => {
     return <LoadingScreen mode="container" />;
   }
 
-  const piecesCount = mcp?.tools?.length || 0;
-  const flowsCount = 0;
+  const piecesCount =
+    mcp?.tools?.filter((tool) => tool.type === McpToolType.PIECE).length || 0;
+  const flowsCount =
+    mcp?.tools?.filter((tool) => tool.type === McpToolType.FLOW).length || 0;
   const totalToolsCount = piecesCount + flowsCount;
   const hasTools = totalToolsCount > 0;
 
@@ -138,24 +158,20 @@ export const McpConfigPage = () => {
             <div className="space-y-2">
               {mcp?.tools &&
                 mcp.tools.map((tool) => {
-                  if (tool.data.type === McpToolType.PIECE) {
-                    const piece = tool as McpToolWithPiece;
-                    const actionNames =
-                      'actionNames' in piece.data
-                        ? piece.data.actionNames
-                        : undefined;
+                  if (tool.type === McpToolType.PIECE) {
+                    const actionNames = tool.pieceMetadata?.actionNames || [];
 
                     return (
                       <div
-                        key={`piece-${piece.id}`}
+                        key={`piece-${tool.id}`}
                         className="group flex items-start gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                            {pieceInfoMap[piece.id]?.logoUrl ? (
+                            {pieceInfoMap[tool.id]?.logoUrl ? (
                               <img
-                                src={pieceInfoMap[piece.id].logoUrl}
-                                alt={pieceInfoMap[piece.id].displayName}
+                                src={pieceInfoMap[tool.id].logoUrl}
+                                alt={pieceInfoMap[tool.id].displayName}
                                 className="h-5 w-5 object-contain"
                               />
                             ) : (
@@ -164,7 +180,8 @@ export const McpConfigPage = () => {
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-sm font-medium truncate">
-                              {pieceInfoMap[piece.id].displayName}
+                              {pieceInfoMap[tool.id]?.displayName ||
+                                'Unknown Piece'}
                             </h3>
                             {actionNames &&
                               actionNames
@@ -212,11 +229,11 @@ export const McpConfigPage = () => {
                             <DropdownMenuContent align="end">
                               <McpToolDialog
                                 mcpId={mcpId!}
-                                mcpPieceToUpdate={piece}
+                                mcpPieceToUpdate={tool}
                                 mode="edit"
                                 open={
                                   showEditPieceDialog &&
-                                  selectedPieceToEdit?.id === piece.id
+                                  selectedPieceToEdit?.id === tool.id
                                 }
                                 activeTab={activeTab}
                                 setActiveTab={setActiveTab}
@@ -234,7 +251,7 @@ export const McpConfigPage = () => {
                                   onSelect={(e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
-                                    setSelectedPieceToEdit(piece);
+                                    setSelectedPieceToEdit(tool);
                                     setShowEditPieceDialog(true);
                                   }}
                                   className="flex items-center gap-2"
@@ -247,7 +264,7 @@ export const McpConfigPage = () => {
                                 className="text-destructive flex items-center gap-2"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  removeTool(piece);
+                                  removeTool(tool);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -258,9 +275,7 @@ export const McpConfigPage = () => {
                         </div>
                       </div>
                     );
-                  } else if (tool.data.type === McpToolType.FLOW) {
-                    const flowTool = tool as McpToolWithFlow;
-
+                  } else if (tool.type === McpToolType.FLOW) {
                     return (
                       <div
                         key={`flow-${tool.id}`}
@@ -272,38 +287,21 @@ export const McpConfigPage = () => {
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-sm font-medium truncate">
-                              {t('Flow')}
+                              {tool.flow?.version?.displayName || t('Flow')}
                             </h3>
-                            {flowTool.flows.slice(0, 3).map((flow, idx) => (
-                              <span
-                                key={flow.id}
-                                className="text-xs text-muted-foreground"
-                              >
-                                {flow.version.displayName}
-                                {idx < Math.min(2, flowTool.flows.length - 1)
-                                  ? ', '
-                                  : ''}
-                              </span>
-                            ))}
-                            {flowTool.flows.length > 3 && (
-                              <span className="text-xs text-muted-foreground">
-                                {' '}
-                                {t('and')} {flowTool.flows.length - 3}{' '}
-                                {t('more')}
-                              </span>
-                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {tool.flow?.id || 'Unknown Flow'}
+                            </span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          {flowTool.flows.length > 0 && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
-                              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                              <span className="text-xs text-muted-foreground">
-                                {flowTool.flows.length}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                            <span className="text-xs text-muted-foreground">
+                              1
+                            </span>
+                          </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -329,7 +327,7 @@ export const McpConfigPage = () => {
                               <DropdownMenuItem
                                 className="text-destructive flex items-center gap-2"
                                 onClick={() => {
-                                  removeTool(flowTool);
+                                  removeTool(tool);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />

@@ -4,8 +4,8 @@ import {
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
+    McpRunStatus,
     McpTool,
-    McpToolHistoryStatus,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
@@ -13,19 +13,19 @@ import {
 } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
+import { flowService } from '../../flows/flow/flow.service'
+import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
+import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
-import { telemetry } from '../../helper/telemetry.utils'
-import { mcpToolHistoryService } from '../mcp-tool-history/mcp-tool-history.service'
-import { flowService } from '../../flows/flow/flow.service'
-import { StatusCodes } from 'http-status-codes'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
-import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
-import { webhookService } from '../../webhooks/webhook.service'
 
 export async function createMcpServer({
     mcpId,
@@ -98,22 +98,23 @@ async function addPiecesToServer(
                 }
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                        jobType: UserInteractionJobType.EXECUTE_TOOL,
-                        actionName: action,
-                        pieceName: toolPieceMetadata.pieceName,
-                        pieceVersion: toolPieceMetadata.pieceVersion,
-                        packageType: pieceMetadata.packageType,
-                        pieceType: pieceMetadata.pieceType,
-                        input: parsedInputs,
-                        projectId,
-                    })
+                    jobType: UserInteractionJobType.EXECUTE_TOOL,
+                    actionName: action,
+                    pieceName: toolPieceMetadata.pieceName,
+                    pieceVersion: toolPieceMetadata.pieceVersion,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    input: parsedInputs,
+                    projectId,
+                })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: actionName, projectId, logger })
                 const success = result.status === EngineResponseStatus.OK && result.result.success
 
-                await mcpToolHistoryService(logger).create({
+                await mcpRunService(logger).create({
                     mcpId: mcpTool.mcpId,
                     toolId: mcpTool.id,
+                    projectId,
                     metadata: {
                         pieceName: toolPieceMetadata.pieceName,
                         pieceVersion: toolPieceMetadata.pieceVersion,
@@ -121,7 +122,7 @@ async function addPiecesToServer(
                     },
                     input: params,
                     output: result.result.output as Record<string, unknown>,
-                    status: success ? McpToolHistoryStatus.SUCCESS : McpToolHistoryStatus.FAILED,
+                    status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
                 })
 
                 if (success) {
@@ -132,7 +133,8 @@ async function addPiecesToServer(
                                 `Output:\n\`\`\`json\n${JSON.stringify(result.result.output, null, 2)}\n\`\`\``,
                         }],
                     }
-                } else {
+                }
+                else {
                     return {
                         content: [{
                             type: 'text',
@@ -141,7 +143,7 @@ async function addPiecesToServer(
                         }],
                     }
                 }
-            }
+            },
         )
     }
 }
@@ -159,7 +161,7 @@ async function addFlowsToServer(
     }
     const populatedFlow = await flowService(logger).getOnePopulated({ id: flowId, projectId })
     if (isNil(populatedFlow)) {
-        return;
+        return
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
@@ -216,16 +218,17 @@ async function addFlowsToServer(
 
 
 
-            await mcpToolHistoryService(logger).create({
+            await mcpRunService(logger).create({
                 mcpId,
                 toolId: mcpTool.id,
+                projectId,
                 metadata: {
                     flowId: populatedFlow.id,
                     flowVersionId: populatedFlow.version.id,
                 },
                 input: params,
                 output: response,
-                status: response.status === StatusCodes.OK ? McpToolHistoryStatus.SUCCESS : McpToolHistoryStatus.FAILED,
+                status: response.status === StatusCodes.OK ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
             })
 
             if (success) {
@@ -236,7 +239,8 @@ async function addFlowsToServer(
                             `Output:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
                     }],
                 }
-            } else {
+            }
+            else {
                 return {
                     content: [{
                         type: 'text',

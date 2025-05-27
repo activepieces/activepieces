@@ -24,8 +24,8 @@ export const McpEntity = new EntitySchema<McpWithTools>({
         tools: {
             type: 'one-to-many',
             target: 'mcp_tool',
+            inverseSide: 'mcp',
             cascade: true,
-            orphanedRowAction: 'delete',
             onDelete: 'CASCADE',
         },
     },

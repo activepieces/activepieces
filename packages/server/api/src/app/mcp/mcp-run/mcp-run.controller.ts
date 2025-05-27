@@ -1,17 +1,17 @@
-import { ListMcpToolHistoryRequest, McpToolHistory, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ListMcpRunRequest, McpRun, Permission, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { mcpToolHistoryService } from './mcp-tool-history.service'
+import { mcpRunService } from './mcp-run.service'
 
 const DEFAULT_LIMIT = 10
 
-export const mcpToolHistoryController: FastifyPluginAsyncTypebox = async (app) => {
+export const mcpRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     
-    app.get('/', GetMcpToolHistoryRequest, async (req) => {
+    app.get('/', GetMcpRunRequest, async (req) => {
         const { mcpId, cursorRequest, limit, status, metadata } = req.query
-        return mcpToolHistoryService(req.log).list({
+        return mcpRunService(req.log).list({
             mcpId,
             projectId: req.principal.projectId,
             cursorRequest: cursorRequest ?? null,
@@ -22,17 +22,17 @@ export const mcpToolHistoryController: FastifyPluginAsyncTypebox = async (app) =
     })
 }
 
-const GetMcpToolHistoryRequest = {
+const GetMcpRunRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
         permissions: [Permission.READ_MCP],
     },
     schema: {
-        tags: ['mcp-tool-history'],
-        description: 'Get MCP tool history',
-        querystring: ListMcpToolHistoryRequest,
+        tags: ['mcp-run'],
+        description: 'Get MCP run',
+        querystring: ListMcpRunRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(McpToolHistory),
+            [StatusCodes.OK]: SeekPage(McpRun),
         },
     },
 }

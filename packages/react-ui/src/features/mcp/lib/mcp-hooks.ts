@@ -1,16 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  McpWithTools,
-  ListMcpsRequestQuery,
-  SeekPage,
-} from '@activepieces/shared';
+import { McpWithTools, ListMcpsRequest, SeekPage } from '@activepieces/shared';
 
 import { mcpApi } from './mcp-api';
 
 export const mcpHooks = {
-  useMcps: (request: Omit<ListMcpsRequestQuery, 'projectId'>) => {
+  useMcps: (request: Omit<ListMcpsRequest, 'projectId'>) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     if (projectId === '') {
       console.error(

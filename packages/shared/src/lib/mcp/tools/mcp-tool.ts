@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../../common'
 import { ApId } from '../../common/id-generator'
+import { PopulatedFlow } from '../../flows'
 
 export enum McpToolType {
     PIECE = 'PIECE',
@@ -8,7 +9,6 @@ export enum McpToolType {
 }
 
 export const McpPieceToolData = Type.Object({
-    type: Type.Literal(McpToolType.PIECE),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionNames: Type.Array(Type.String()),
@@ -22,6 +22,7 @@ export const McpTool = Type.Object({
     mcpId: ApId,
     pieceMetadata: Type.Optional(McpPieceToolData),
     flowId: Type.Optional(ApId),
+    flow: Type.Optional(PopulatedFlow),
 })
 
 export type McpTool = Static<typeof McpTool>

@@ -10,8 +10,9 @@ import {
 import { useState, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
+import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -26,30 +27,27 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { mcpToolHistoryApi } from '@/features/mcp/lib/mcp-tool-history-api';
+import { mcpRunApi } from '@/features/mcp/lib/mcp-run-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { formatUtils } from '@/lib/utils';
-import { McpToolHistory, McpToolHistoryStatus } from '@activepieces/shared';
+import { McpRun, McpRunStatus } from '@activepieces/shared';
 
 import {
   getToolIcon,
   getToolDisplayName,
   getActionName,
   getTooltipContent,
-  copyToClipboard,
-  formatJsonData,
   createColumns,
   createFilters,
   calculateStats,
-  renderCopyButton,
-} from './mcp-history-utils';
+} from './mcp-run-utils';
 
 type McpHistoryPageProps = {
   mcpId?: string;
 };
 
 export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
-  const { mcpId: paramMcpId } = useParams();
+  const { mcpId: paramMcpId, projectId } = useParams();
   const mcpId = propMcpId || paramMcpId;
   const [searchParams] = useSearchParams();
   const { metadata, isLoading: isPiecesLoading } =
@@ -58,27 +56,25 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
       type: 'action',
     });
 
-  const [selectedItem, setSelectedItem] = useState<McpToolHistory | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<McpRun | null>(null);
 
   const {
     data: historyItems,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['mcp-tool-history', mcpId, searchParams.toString()],
+    queryKey: ['mcp-runs', mcpId, searchParams.toString()],
     queryFn: () => {
       const metadata = searchParams.get('metadata');
-      const statusParams = searchParams.getAll(
-        'status',
-      ) as McpToolHistoryStatus[];
+      const statusParams = searchParams.getAll('status') as McpRunStatus[];
       const status = statusParams.length > 0 ? statusParams : undefined;
       const cursor = searchParams.get('cursorRequest');
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
 
-      return mcpToolHistoryApi.list({
+      return mcpRunApi.list({
+        projectId: projectId!,
         mcpId: mcpId!,
         cursorRequest: cursor ?? undefined,
         limit,
@@ -93,10 +89,6 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
   const stats = useMemo(() => calculateStats(historyItems), [historyItems]);
   const columns = useMemo(() => createColumns(metadata), [metadata]);
   const filters = useMemo(() => createFilters(), []);
-
-  const handleCopyToClipboard = (text: string, fieldName: string) => {
-    copyToClipboard(text, fieldName, setCopiedField);
-  };
 
   if (!mcpId) {
     return (
@@ -195,7 +187,10 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
       />
 
       <Sheet open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <SheetContent className="w-[600px] sm:w-[700px] sm:max-w-none">
+        <SheetContent
+          className="w-[600px] sm:w-[700px] sm:max-w-none"
+          hideCloseButton={true}
+        >
           {selectedItem && (
             <>
               <SheetHeader className="space-y-3">
@@ -226,7 +221,7 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
                     {formatUtils.formatDate(new Date(selectedItem.created))}
                   </span>
                   <span>•</span>
-                  {selectedItem.status === McpToolHistoryStatus.SUCCESS ? (
+                  {selectedItem.status === McpRunStatus.SUCCESS ? (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700">
                       <CheckCircle2 className="h-3 w-3" />
                       <span className="text-xs font-medium">
@@ -245,44 +240,10 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
               <ScrollArea className="h-[calc(100vh-120px)] mt-6">
                 <div className="space-y-6">
                   {/* Input */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center justify-between">
-                        {t('Input')}
-                        {renderCopyButton(
-                          formatJsonData(selectedItem.input),
-                          'input',
-                          copiedField,
-                          handleCopyToClipboard,
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                        {formatJsonData(selectedItem.input)}
-                      </pre>
-                    </CardContent>
-                  </Card>
+                  <JsonViewer json={selectedItem.input} title={t('Input')} />
 
                   {/* Output */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center justify-between">
-                        {t('Output')}
-                        {renderCopyButton(
-                          formatJsonData(selectedItem.output),
-                          'output',
-                          copiedField,
-                          handleCopyToClipboard,
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                        {formatJsonData(selectedItem.output)}
-                      </pre>
-                    </CardContent>
-                  </Card>
+                  <JsonViewer json={selectedItem.output} title={t('Output')} />
                 </div>
               </ScrollArea>
             </>

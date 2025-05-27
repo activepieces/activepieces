@@ -31,7 +31,7 @@ export const mcpToolNaming = {
     },
     fixProperty: (schemaName: string) => {
         return schemaName.replace(/[\s/@]+/g, '-')
-    }
+    },
 }
 
 
