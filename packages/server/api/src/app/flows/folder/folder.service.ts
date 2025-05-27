@@ -7,7 +7,6 @@ import {
     Folder,
     FolderDto,
     FolderId,
-    FolderOrderItem,
     isNil, ProjectId,
     UpdateFolderRequest,
 } from '@activepieces/shared'
@@ -61,43 +60,16 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             })
         }
         const folderId = apId()
-
-        const maxDisplayOrder = await this.getMaxDisplayOrder(projectId)
-        const displayOrder = maxDisplayOrder !== null ? maxDisplayOrder + 1 : 0
-
         await folderRepo().upsert({
             id: folderId,
             projectId,
             displayName: request.displayName,
-            displayOrder,
         }, ['projectId', 'displayName'])
         const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
         }
-    },
-    async getMaxDisplayOrder(projectId: ProjectId): Promise<number | null> {
-        const result = await folderRepo()
-            .createQueryBuilder('folder')
-            .select('MAX(folder.displayOrder)', 'maxOrder')
-            .where('folder.projectId = :projectId', { projectId })
-            .getRawOne()
-
-        return result?.maxOrder ?? null
-    },
-    async updateOrder(params: UpdateOrderParams): Promise<void> {
-        const { projectId, folderOrders } = params
-
-        await folderRepo().manager.transaction(async transactionalEntityManager => {
-            for (const folderOrder of folderOrders) {
-                await transactionalEntityManager.update(
-                    FolderEntity,
-                    { id: folderOrder.folderId, projectId },
-                    { displayOrder: folderOrder.order },
-                )
-            }
-        })
     },
     async list(params: ListParams) {
         const { projectId, cursorRequest, limit } = params
@@ -107,7 +79,6 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             query: {
                 limit,
                 order: 'ASC',
-                orderBy: 'displayOrder', // Sort by display order
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -186,9 +157,4 @@ type GetOneByDisplayNameParams = {
 type GetOneOrThrowParams = {
     projectId: ProjectId
     folderId: FolderId
-}
-
-type UpdateOrderParams = {
-    projectId: ProjectId
-    folderOrders: FolderOrderItem[]
 }

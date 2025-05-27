@@ -48,7 +48,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
     })
 
-    fastify.patch('/', UpdateLimitsRequest, async (request) => {
+    fastify.post('/', UpdateLimitsRequest, async (request) => {
         const platformId = request.principal.platform.id
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
         if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
