@@ -48,6 +48,7 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import McpPage from '../routes/mcp';
 import SettingsBilling from '../routes/platform/billing';
+import UpgradePage from '../routes/platform/billing/upgrade-plan';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -81,7 +82,6 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import UpgradePage from '../routes/platform/billing/upgrade-plan';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -560,7 +560,7 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-{
+  {
     path: '/platform/setup/billing/add-ons',
     element: (
       <PlatformAdminContainer>

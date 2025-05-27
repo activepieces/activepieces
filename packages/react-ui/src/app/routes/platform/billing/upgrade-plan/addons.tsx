@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { ArrowRightIcon, LockIcon } from 'lucide-react';
 import { FC, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,33 +12,109 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-
 import NumberInputWithButtons from '@/components/ui/number-input';
-import { planData } from '../data';
+import { Slider } from '@/components/ui/slider';
+import {
+  planData,
+  PlanName,
+  PRICE_PER_USER,
+  PRICE_PER_FLOW,
+  PRICE_PER_100_AI_CREDITS,
+  Addons,
+} from '@activepieces/ee-shared';
 
 interface AddonsCustomizerProps {
   selectedPlan: string;
   isMonthly: boolean;
+  handleAddonsChange: (addons: Addons) => void;
+  upgradePlan: () => void;
 }
 
 const AddonsCustomizer: FC<AddonsCustomizerProps> = ({
   selectedPlan,
   isMonthly,
+  handleAddonsChange,
+  upgradePlan,
 }) => {
-  const [extraUsers, setExtraUsers] = useState(0);
-  const [extraFlows, setExtraFlows] = useState(0);
-  const [extraAiCredits, setExtraAiCredits] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const getInitialExtraUsers = () => {
+    const users = searchParams.get('extraUsers');
+    return users ? parseInt(users, 10) : 0;
+  };
+
+  const getInitialExtraFlows = () => {
+    const flows = searchParams.get('extraFlows');
+    return flows ? parseInt(flows, 10) : 0;
+  };
+
+  const getInitialExtraAiCredits = () => {
+    const credits = searchParams.get('extraAiCredits');
+    return credits ? parseInt(credits, 10) : 0;
+  };
+
+  const [extraUsers, setExtraUsers] = useState(getInitialExtraUsers);
+  const [extraFlows, setExtraFlows] = useState(getInitialExtraFlows);
+  const [extraAiCredits, setExtraAiCredits] = useState(
+    getInitialExtraAiCredits,
+  );
   const [basePrice, setBasePrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
 
-  const PRICE_PER_USER = 10;
-  const PRICE_PER_FLOW = 5;
-  const PRICE_PER_100_AI_CREDITS = 10;
+  const plan = planData.plans.find((p) => p.name === selectedPlan);
+  const isFreePlan = selectedPlan === PlanName.FREE;
+  const isEnterprisePlan = selectedPlan === PlanName.ENTERPRISE;
 
-  const plan = planData.plans.find((p) => p.id === selectedPlan);
-  const isFreePlan = selectedPlan === 'free';
-  const isEnterprisePlan = selectedPlan === 'enterprise';
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+
+    if (extraUsers > 0) {
+      newParams.set('extraUsers', extraUsers.toString());
+    } else {
+      newParams.delete('extraUsers');
+    }
+
+    if (extraFlows > 0) {
+      newParams.set('extraFlows', extraFlows.toString());
+    } else {
+      newParams.delete('extraFlows');
+    }
+
+    if (extraAiCredits > 0) {
+      newParams.set('extraAiCredits', extraAiCredits.toString());
+    } else {
+      newParams.delete('extraAiCredits');
+    }
+
+    setSearchParams(newParams, { replace: true });
+  }, [extraUsers, extraFlows, extraAiCredits, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const usersParam = searchParams.get('extraUsers');
+    const flowsParam = searchParams.get('extraFlows');
+    const creditsParam = searchParams.get('extraAiCredits');
+
+    if (usersParam !== null) {
+      const users = parseInt(usersParam, 10);
+      if (!isNaN(users) && users !== extraUsers) {
+        setExtraUsers(users);
+      }
+    }
+
+    if (flowsParam !== null) {
+      const flows = parseInt(flowsParam, 10);
+      if (!isNaN(flows) && flows !== extraFlows) {
+        setExtraFlows(flows);
+      }
+    }
+
+    if (creditsParam !== null) {
+      const credits = parseInt(creditsParam, 10);
+      if (!isNaN(credits) && credits !== extraAiCredits) {
+        setExtraAiCredits(credits);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!plan || plan.isCustom) {
@@ -70,6 +147,24 @@ const AddonsCustomizer: FC<AddonsCustomizerProps> = ({
 
     setTotalPrice(basePrice + userCost + flowCost + aiCreditsCost);
   }, [basePrice, extraUsers, extraFlows, extraAiCredits]);
+
+  useEffect(() => {
+    const addons: Addons = {};
+
+    if (extraUsers > 0) {
+      addons.extraUsers = extraUsers;
+    }
+
+    if (extraFlows > 0) {
+      addons.extraFlows = extraFlows;
+    }
+
+    if (extraAiCredits > 0) {
+      addons.extraAiCredits = extraAiCredits;
+    }
+
+    handleAddonsChange(addons);
+  }, [extraUsers, extraFlows, extraAiCredits, handleAddonsChange]);
 
   const handleAiCreditsChange = (value: number[]) => {
     setExtraAiCredits(value[0]);
@@ -224,8 +319,11 @@ const AddonsCustomizer: FC<AddonsCustomizerProps> = ({
             </div>
           </div>
         </div>
-
-        <Button className="w-full" disabled={isFreePlan || isEnterprisePlan}>
+        <Button
+          className="w-full"
+          disabled={isFreePlan || isEnterprisePlan}
+          onClick={upgradePlan}
+        >
           {t('Continue to checkout')}
           <ArrowRightIcon className="w-4 h-4 ml-2" />
         </Button>

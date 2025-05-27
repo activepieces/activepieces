@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import { UpgradeSubscriptionParams } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
@@ -8,8 +9,11 @@ export const platformBillingApi = {
   portalLink() {
     return api.post<{ portalLink: string }>('/v1/platform-billing/portal');
   },
-  upgrade() {
-    return api.post<{ paymentLink: string }>('/v1/platform-billing/upgrade');
+  upgrade(data: UpgradeSubscriptionParams) {
+    return api.post<{ paymentLink: string }>(
+      '/v1/platform-billing/upgrade',
+      data,
+    );
   },
   update(tasksLimit: number | null | undefined) {
     return api.patch<PlatformPlan>('/v1/platform-billing', {

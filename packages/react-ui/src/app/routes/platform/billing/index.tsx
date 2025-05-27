@@ -14,6 +14,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -26,10 +27,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
@@ -66,8 +65,6 @@ export default function Billing() {
     Number(calculateTaskCost),
   );
 
-  const openNewWindow = useNewWindow();
-
   const updateLimitsMutation = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
       platformBillingApi.update(data.tasksLimit),
@@ -85,20 +82,6 @@ export default function Billing() {
         variant: 'destructive',
       });
     },
-  });
-
-  const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
-    mutationFn: async () => {
-      if (platformSubscription?.plan.stripeSubscriptionStatus === 'active') {
-        const { portalLink } = await platformBillingApi.portalLink();
-        openNewWindow(portalLink);
-        return;
-      }
-      const { paymentLink } = await platformBillingApi.upgrade();
-      openNewWindow(paymentLink);
-    },
-    onSuccess: () => {},
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   const tasksLimit = platformSubscription?.plan.tasksLimit ?? 0;
@@ -134,11 +117,18 @@ export default function Billing() {
           </p>
         </div>
 
-        <Button loading={isBillingPending} onClick={() => manageBilling()}>
-          {isSubscriptionActive
-            ? t('Manage Payment Details')
-            : t('Add Payment Details')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* TODO: add payment method or acess billing portal */}
+          <Button variant="outline">
+            {isSubscriptionActive
+              ? t('Access Billing Portal')
+              : t('Add Payment Details')}
+          </Button>
+
+          <Link to={`/platform/setup/billing/add-ons?plan=plus`}>
+            <Button variant="default">{t('Upgrade')}</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -150,7 +140,10 @@ export default function Billing() {
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             <span>
-              Resets {dayjs(platformSubscription.nextBillingDate).format('MMM D, YYYY')}
+              Resets{' '}
+              {dayjs(platformSubscription.nextBillingDate).format(
+                'MMM D, YYYY',
+              )}
             </span>
           </div>
         )}
