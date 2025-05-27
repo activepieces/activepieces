@@ -167,7 +167,7 @@ export default function McpToolDialog({
           pieceMetadata: {
             pieceName: selectedPiece.pieceName,
             actionNames: selectedActions,
-            pieceVersion: selectedPiece.pieceVersion || '',
+            pieceVersion: selectedPiece.pieceVersion,
             logoUrl: selectedPiece.logoUrl,
             connectionExternalId: selectedConnectionExternalId ?? undefined,
           },

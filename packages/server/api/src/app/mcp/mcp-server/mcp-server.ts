@@ -73,7 +73,7 @@ async function addPiecesToServer(
 
     const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of filteredAction) {
-        const actionName = mcpToolNaming.fixTool(`${toolPieceMetadata.pieceName}-${action}`)
+        const actionName = mcpToolNaming.fixTool(`${action}`)
         const actionMetadata = pieceMetadata.actions[action]
         const actionSchema = Object.fromEntries(
             Object.entries(actionMetadata.props)
@@ -165,7 +165,7 @@ async function addFlowsToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool('flow-' + triggerSettings.input?.toolName)
+    const toolName = mcpToolNaming.fixTool(triggerSettings.input?.toolName)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse
@@ -216,8 +216,6 @@ async function addFlowsToServer(
             trackToolCall({ mcpId, toolName, projectId, logger })
             const success = isOkSuccess(response.status)
 
-
-
             await mcpRunService(logger).create({
                 mcpId,
                 toolId: mcpTool.id,
@@ -225,6 +223,7 @@ async function addFlowsToServer(
                 metadata: {
                     flowId: populatedFlow.id,
                     flowVersionId: populatedFlow.version.id,
+                    name: populatedFlow.version.displayName,
                 },
                 input: params,
                 output: response,

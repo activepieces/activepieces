@@ -2,6 +2,7 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -20,7 +21,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId,
+    SeekPage, TelemetryEventName, TriggerType, UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
@@ -32,6 +33,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
+import { mcpToolRepo } from '../../mcp/mcp-service'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -370,18 +372,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
 
-            // assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'Published version id is not set')
-            // const populatedFlow = await this.getOnePopulatedOrThrow({
-            //     id,
-            //     projectId,
-            //     versionId: flowToUpdate.publishedVersionId,
-            //     entityManager,
-            // })
+            assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'Published version id is not set')
+            const populatedFlow = await this.getOnePopulatedOrThrow({
+                id,
+                projectId,
+                versionId: flowToUpdate.publishedVersionId,
+                entityManager,
+            })
 
-            // const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
-            // if (isDisableMcpFlow) {
-            //     await mcpFlowService(log).delete(id)
-            // }
+            const isDisableMcpFlow = newStatus === FlowStatus.DISABLED && isMcpTriggerPiece(populatedFlow.version)
+            if (isDisableMcpFlow) {
+                await mcpToolRepo().delete({ flowId: id })
+            }
         }
 
         return this.getOnePopulatedOrThrow({
@@ -615,10 +617,10 @@ const assertFlowIsNotNull: <T extends Flow>(
     }
 }
 
-// function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-//     return flowVersion.trigger.type === TriggerType.PIECE && 
-//            flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
-// }
+function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
+    return flowVersion.trigger.type === TriggerType.PIECE && 
+           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+}
 
 type CreateParams = {
     projectId: ProjectId

@@ -1,18 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { McpWithTools, ListMcpsRequest, SeekPage } from '@activepieces/shared';
+import {
+  McpWithTools,
+  ListMcpsRequest,
+  SeekPage,
+  assertNotNullOrUndefined,
+} from '@activepieces/shared';
 
 import { mcpApi } from './mcp-api';
 
 export const mcpHooks = {
   useMcps: (request: Omit<ListMcpsRequest, 'projectId'>) => {
-    const projectId = authenticationSession.getProjectId() ?? '';
-    if (projectId === '') {
-      console.error(
-        'trying to use projectId when the authentication session is not set',
-      );
-    }
+    const projectId = authenticationSession.getProjectId();
+    assertNotNullOrUndefined(projectId, 'projectId is not set');
     return useQuery<SeekPage<McpWithTools>, Error>({
       queryKey: ['mcp-servers', request, projectId],
       queryFn: () =>

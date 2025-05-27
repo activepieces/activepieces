@@ -100,7 +100,7 @@ export const McpConfigPage = () => {
     string,
     { displayName: string; logoUrl?: string }
   > = {};
-  mcp?.tools?.forEach((mcpTool) => {
+  mcp?.tools?.forEach((mcpTool: McpTool) => {
     if (mcpTool.type === McpToolType.PIECE) {
       pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
     }
@@ -111,9 +111,11 @@ export const McpConfigPage = () => {
   }
 
   const piecesCount =
-    mcp?.tools?.filter((tool) => tool.type === McpToolType.PIECE).length || 0;
+    mcp?.tools?.filter((tool: McpTool) => tool.type === McpToolType.PIECE)
+      .length || 0;
   const flowsCount =
-    mcp?.tools?.filter((tool) => tool.type === McpToolType.FLOW).length || 0;
+    mcp?.tools?.filter((tool: McpTool) => tool.type === McpToolType.FLOW)
+      .length || 0;
   const totalToolsCount = piecesCount + flowsCount;
   const hasTools = totalToolsCount > 0;
 

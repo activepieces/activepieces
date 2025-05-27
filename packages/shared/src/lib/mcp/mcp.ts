@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
-import { ApId } from '../common/id-generator'
+import { apId, ApId } from '../common/id-generator'
 import { McpTool } from './tools/mcp-tool'
 
 export type McpId = ApId
@@ -27,7 +27,7 @@ const MAX_TOOL_NAME_LENGTH = 47
 
 export const mcpToolNaming = {
     fixTool: (schemaName: string) => {
-        return schemaName.replace(/[\s/@]+/g, '-').slice(0, MAX_TOOL_NAME_LENGTH)
+        return schemaName.replace(/[\s/@]+/g, '-').slice(0, MAX_TOOL_NAME_LENGTH - 8) + '-' + apId().slice(0, 7)
     },
     fixProperty: (schemaName: string) => {
         return schemaName.replace(/[\s/@]+/g, '-')

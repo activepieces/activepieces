@@ -62,7 +62,10 @@ export const getActionName = (item: McpRun) => {
   if ('actionName' in item.metadata) {
     return item.metadata.actionName;
   }
-  return 'Flow Action';
+  if ('name' in item.metadata) {
+    return item.metadata.name as string;
+  }
+  return 'Tool Action';
 };
 
 export const getTooltipContent = (item: McpRun) => {

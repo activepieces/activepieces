@@ -18,6 +18,7 @@ export type McpPieceRunMetadata = Static<typeof McpPieceRunMetadata>
 export const McpFlowRunMetadata = Type.Object({
     flowId: ApId,
     flowVersionId: ApId,
+    name: Type.String(),
 })
 
 export type McpFlowRunMetadata = Static<typeof McpFlowRunMetadata>
