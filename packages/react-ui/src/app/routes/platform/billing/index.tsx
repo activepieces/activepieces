@@ -14,7 +14,6 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -27,19 +26,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useManagePlanDialogStore } from '@/lib/stores';
 import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
-import { TasksLimitDialog } from './dialogs/tasks';
 import {
   calculateTaskCostHelper,
   calculateTotalCostHelper,
 } from './helpers/platform-billing-helper';
+import { TasksLimitDialog } from './tasks';
+import { ManagePlanDialog } from './upgrade';
 
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
+  const { setIsOpen } = useManagePlanDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const {
@@ -64,6 +66,16 @@ export default function Billing() {
   const calculateTotalCost = calculateTotalCostHelper(
     Number(calculateTaskCost),
   );
+
+  const { mutate: manageBilling } = useMutation({
+    mutationFn: async () => {
+      const { portalLink } = await platformBillingApi.portalLink();
+      window.open(portalLink, '_blank');
+      return;
+    },
+    onSuccess: () => {},
+    onError: () => toast(INTERNAL_ERROR_TOAST),
+  });
 
   const updateLimitsMutation = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
@@ -119,15 +131,14 @@ export default function Billing() {
 
         <div className="flex items-center gap-2">
           {/* TODO: add payment method or acess billing portal */}
-          <Button variant="outline">
-            {isSubscriptionActive
-              ? t('Access Billing Portal')
-              : t('Add Payment Details')}
+          {isSubscriptionActive && (
+            <Button variant="outline" onClick={() => manageBilling()}>
+              {t('Access Billing Portal')}
+            </Button>
+          )}
+          <Button variant="default" onClick={() => setIsOpen(true)}>
+            {t('Upgrade')}
           </Button>
-
-          <Link to={`/platform/setup/billing/add-ons?plan=plus`}>
-            <Button variant="default">{t('Upgrade')}</Button>
-          </Link>
         </div>
       </div>
 
@@ -291,6 +302,7 @@ export default function Billing() {
         }}
         initialLimit={tasksLimit}
       />
+      <ManagePlanDialog />
     </article>
   );
 }
