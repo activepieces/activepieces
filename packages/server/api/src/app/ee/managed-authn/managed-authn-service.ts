@@ -96,7 +96,7 @@ type UpdateProjectLimitsParams =
     }
 
 const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, tasks=50000, aiCredits=1000, log, isNewProject }:
+    { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
     UpdateProjectLimitsParams,
 ): Promise<void> => {
     const pieces = await getPiecesList({
@@ -105,8 +105,8 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const tasksLimit = isNewProject ? tasks : undefined
-    const aiCreditsLimit = isNewProject ? aiCredits : undefined
+    const tasksLimit = isNewProject ? (tasks ?? 50000) : tasks
+    const aiCreditsLimit = isNewProject ? (aiCredits ?? 1000) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
         tasks: tasksLimit,
