@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox"
-import { ApId } from "@activepieces/shared"
+import { ApId } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export const ListTodoCommentsQueryParams = Type.Object({
     platformId: ApId,

@@ -1,5 +1,5 @@
-import { BaseModelSchema, UserWithMetaInformation } from "@activepieces/shared";
-import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema, UserWithMetaInformation } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export const TodoComment = Type.Object({
     ...BaseModelSchema,

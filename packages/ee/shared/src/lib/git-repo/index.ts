@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',
@@ -33,7 +33,7 @@ export const PushFlowsGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    flowIds: Type.Array(Type.String())
+    flowIds: Type.Array(Type.String()),
 })
 
 export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
@@ -43,7 +43,7 @@ export const PushTablesGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    tableIds: Type.Array(Type.String())
+    tableIds: Type.Array(Type.String()),
 })
 
 export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>

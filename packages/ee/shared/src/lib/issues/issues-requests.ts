@@ -1,6 +1,6 @@
 
-import { Type, Static } from '@sinclair/typebox'
 import { ApId } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 import { IssueStatus } from './issue-dto'
 
 export const ListIssuesParams = Type.Object({
