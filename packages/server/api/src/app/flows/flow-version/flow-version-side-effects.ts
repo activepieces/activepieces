@@ -13,9 +13,9 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { mcpService } from '../../mcp/mcp-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { sampleDataService } from '../step-run/sample-data.service'
-import { mcpService } from '../../mcp/mcp-service'
 
 type OnApplyOperationParams = {
     projectId: ProjectId

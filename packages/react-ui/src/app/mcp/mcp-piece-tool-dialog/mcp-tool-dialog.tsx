@@ -294,12 +294,7 @@ export default function McpToolDialog({
               {t('Close')}
             </Button>
           </DialogClose>
-          <Button
-            loading={isPending}
-            type="button"
-            onClick={() => saveTool()}
-            disabled={selectedActions.length === 0}
-          >
+          <Button loading={isPending} type="button" onClick={() => saveTool()}>
             {t('Save')}
           </Button>
         </DialogFooter>

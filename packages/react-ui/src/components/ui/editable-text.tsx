@@ -90,9 +90,9 @@ const EditableText = ({
           className={`${className} truncate `}
           title={
             editableTextRef.current &&
-              editableTextRef.current.scrollWidth >
+            editableTextRef.current.scrollWidth >
               editableTextRef.current.clientWidth &&
-              value
+            value
               ? value
               : ''
           }

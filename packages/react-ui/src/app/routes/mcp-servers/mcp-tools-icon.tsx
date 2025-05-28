@@ -1,9 +1,14 @@
 import { t } from 'i18next';
 import { WorkflowIcon } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { McpToolType, McpWithTools } from '@activepieces/shared';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { McpToolType, McpWithTools } from '@activepieces/shared';
 
 interface McpToolsIconProps {
   mcpTools: McpWithTools['tools'];
@@ -103,4 +108,4 @@ export const McpToolsIcon = ({
       </Tooltip>
     </div>
   );
-}; 
+};

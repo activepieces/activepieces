@@ -44,9 +44,7 @@ export const McpPiecesContent: React.FC<McpPiecesContentProps> = ({
             src={piece.logoUrl}
             alt={piece.displayName}
           />
-          <div className="mt-2 text-center text-md">
-            {piece.displayName}
-          </div>
+          <div className="mt-2 text-center text-md">{piece.displayName}</div>
         </div>
       ))}
     </div>

@@ -1,11 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Activity,
-  AlertCircle,
-  CheckCircle2,
-  X,
-} from 'lucide-react';
+import { Activity, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
@@ -37,7 +32,6 @@ import {
   getTooltipContent,
   createColumns,
   createFilters,
-  calculateStats,
 } from './mcp-run-utils';
 
 type McpHistoryPageProps = {
@@ -56,11 +50,7 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
 
   const [selectedItem, setSelectedItem] = useState<McpRun | null>(null);
 
-  const {
-    data: historyItems,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: historyItems, isLoading } = useQuery({
     queryKey: ['mcp-runs', mcpId, searchParams.toString()],
     queryFn: () => {
       const metadata = searchParams.get('metadata');
@@ -84,12 +74,11 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
   });
 
   const pageData = historyItems;
-  const stats = useMemo(() => calculateStats(historyItems), [historyItems]);
   const columns = useMemo(() => createColumns(metadata), [metadata]);
   const filters = useMemo(() => createFilters(), []);
 
   if (!mcpId) {
-    return (<></>);
+    return <></>;
   }
 
   return (

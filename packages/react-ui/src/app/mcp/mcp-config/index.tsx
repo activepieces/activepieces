@@ -1,16 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  MoreVertical,
-  Plus,
-  Trash2,
-  Edit2,
-  Workflow,
-  Puzzle,
-} from 'lucide-react';
+import { MoreVertical, Trash2, Edit2, Workflow, Puzzle } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,10 +22,12 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import type { McpTool } from '@activepieces/shared';
 import { McpToolType } from '@activepieces/shared';
 
+import { McpAddToolDropdown } from '../mcp-add-tool-actions';
 import McpToolDialog from '../mcp-piece-tool-dialog/mcp-tool-dialog';
 
 export const McpConfigPage = () => {
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
+  const [showAddFlowDialog, setShowAddFlowDialog] = useState(false);
   const [showEditPieceDialog, setShowEditPieceDialog] = useState(false);
   const [selectedPieceToEdit, setSelectedPieceToEdit] =
     useState<McpTool | null>(null);
@@ -133,24 +129,17 @@ export const McpConfigPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <McpToolDialog
+          <McpAddToolDropdown
             mcpId={mcpId!}
-            open={showAddPieceDialog}
-            mode="add"
-            onSuccess={() => {
-              refetchMcp();
-              setShowAddPieceDialog(false);
-            }}
-            onClose={() => setShowAddPieceDialog(false)}
-          >
-            <Button onClick={() => setShowAddPieceDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('Add Tool')}
-            </Button>
-          </McpToolDialog>
+            refetchMcp={refetchMcp}
+            showAddPieceDialog={showAddPieceDialog}
+            setShowAddPieceDialog={setShowAddPieceDialog}
+            showAddFlowDialog={showAddFlowDialog}
+            setShowAddFlowDialog={setShowAddFlowDialog}
+            tools={mcp?.tools || []}
+          />
         </div>
       </div>
-
 
       <div className="mt-4">
         {hasTools ? (
@@ -258,16 +247,27 @@ export const McpConfigPage = () => {
                                   {t('Edit')}
                                 </DropdownMenuItem>
                               </McpToolDialog>
-                              <DropdownMenuItem
-                                className="text-destructive flex items-center gap-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeTool(tool);
-                                }}
+                              <ConfirmationDeleteDialog
+                                title={`${t('Delete')} ${
+                                  pieceInfoMap[tool.id]?.displayName
+                                }`}
+                                message={t(
+                                  'Are you sure you want to delete this tool?',
+                                )}
+                                mutationFn={() => removeTool(tool)}
+                                showToast={true}
+                                entityName={t('Tool')}
                               >
-                                <Trash2 className="h-4 w-4" />
-                                {t('Delete')}
-                              </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive flex items-center gap-2"
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  {t('Delete')}
+                                </DropdownMenuItem>
+                              </ConfirmationDeleteDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -312,24 +312,27 @@ export const McpConfigPage = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setShowAddPieceDialog(true);
-                                }}
-                                className="flex items-center gap-2"
+                              <ConfirmationDeleteDialog
+                                title={`${t('Delete')} ${
+                                  tool.flow?.version?.displayName
+                                }`}
+                                message={t(
+                                  'Are you sure you want to delete this tool?',
+                                )}
+                                mutationFn={() => removeTool(tool)}
+                                showToast={true}
+                                entityName={t('Tool')}
                               >
-                                <Edit2 className="h-4 w-4" />
-                                {t('Edit')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive flex items-center gap-2"
-                                onClick={() => {
-                                  removeTool(tool);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                {t('Delete')}
-                              </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive flex items-center gap-2"
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  {t('Delete')}
+                                </DropdownMenuItem>
+                              </ConfirmationDeleteDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>

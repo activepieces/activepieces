@@ -1,5 +1,7 @@
 import { Pencil } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
+
 import EditableText from './editable-text';
 
 type EditableTextWithPenProps = {
@@ -45,4 +47,4 @@ const EditableTextWithPen = ({
 
 EditableTextWithPen.displayName = 'EditableTextWithPen';
 
-export default EditableTextWithPen; 
+export default EditableTextWithPen;

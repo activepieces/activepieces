@@ -98,12 +98,12 @@ type ButtonWithTooltipProps = {
   tooltip: string;
   onClick: (e?: React.MouseEvent) => void;
   variant?:
-  | 'ghost'
-  | 'outline'
-  | 'default'
-  | 'destructive'
-  | 'secondary'
-  | 'link';
+    | 'ghost'
+    | 'outline'
+    | 'default'
+    | 'destructive'
+    | 'secondary'
+    | 'link';
   icon: React.ReactNode;
   className?: string;
   disabled?: boolean;
@@ -233,12 +233,12 @@ const ConfigDisplay = ({
                   Activepieces:
                     type === 'npx'
                       ? {
-                        command: 'npx',
-                        args: ['-y', 'mcp-remote', mcpServerUrl],
-                      }
+                          command: 'npx',
+                          args: ['-y', 'mcp-remote', mcpServerUrl],
+                        }
                       : {
-                        url: mcpServerUrl,
-                      },
+                          url: mcpServerUrl,
+                        },
                 },
               };
               navigator.clipboard.writeText(JSON.stringify(config, null, 2));
@@ -261,12 +261,12 @@ const ConfigDisplay = ({
               Activepieces:
                 type === 'npx'
                   ? {
-                    command: 'npx',
-                    args: ['-y', 'mcp-remote', maskedUrl],
-                  }
+                      command: 'npx',
+                      args: ['-y', 'mcp-remote', maskedUrl],
+                    }
                   : {
-                    url: maskedUrl,
-                  },
+                      url: maskedUrl,
+                    },
             },
           }}
         />
@@ -467,16 +467,13 @@ export const McpConnectPage = () => {
                 <h3 className="text-lg font-semibold">{t('Setup')}</h3>
                 <div className="space-y-3">
                   <StepCard stepNumber={1} title={t('Configure Windsurf')}>
-                    {t('Open')}{' '}
-                    <Badge variant="outline">{t('Windsurf')}</Badge> →{' '}
-                    <Badge variant="outline">{t('Settings')}</Badge> →{' '}
+                    {t('Open')} <Badge variant="outline">{t('Windsurf')}</Badge>{' '}
+                    → <Badge variant="outline">{t('Settings')}</Badge> →{' '}
                     <Badge variant="outline">{t('Advanced')}</Badge> →{' '}
                     <Badge variant="outline">{t('Cascade')}</Badge> →{' '}
                     <Badge variant="outline">{t('Add Server')}</Badge> →{' '}
-                    <Badge variant="outline">
-                      {t('Add custom server +')}
-                    </Badge>
-                    . {t('Paste the configuration below and save.')}
+                    <Badge variant="outline">{t('Add custom server +')}</Badge>.{' '}
+                    {t('Paste the configuration below and save.')}
                     <div className="mt-3">
                       <ConfigDisplay
                         mcpServerUrl={mcpServerUrl}

@@ -6,10 +6,10 @@ import { getRedisConnection } from '../../database/redis-connection'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
+import { mcpRepo } from '../../mcp/mcp-service'
 import { projectRepo, projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
-import { mcpRepo } from '../../mcp/mcp-service'
 
 export enum BillingUsageType {
     TASKS = 'tasks',

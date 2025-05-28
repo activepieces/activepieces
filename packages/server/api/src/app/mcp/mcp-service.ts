@@ -169,7 +169,7 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
             assertNotNullOrUndefined(tool.flowId, 'flowId is required')
             const flow = await flowService(_log).getOneOrThrow({
                 id: tool.flowId,
-                projectId: projectId,
+                projectId,
             })
 
             if (flow.publishedVersionId === null) {

@@ -1,20 +1,20 @@
-import { Settings, History, Link2, ChevronLeft } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Settings, History, Link2, ChevronLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { McpConfigPage } from '../../../mcp/mcp-config';
 import { McpConnectPage } from '../../../mcp/mcp-connect';
 import { McpHistoryPage } from '../../../mcp/runs/mcp-runs';
-import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
-import { LoadingScreen } from '@/components/ui/loading-screen';
-import { isNil } from '@activepieces/shared';
 
 const tabs = [
   {
@@ -43,18 +43,18 @@ const McpServerPage = () => {
   });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [isEditingName, setIsEditingName] = useState(searchParams.get(NEW_MCP_QUERY_PARAM) === 'true');
+  const [isEditingName, setIsEditingName] = useState(
+    searchParams.get(NEW_MCP_QUERY_PARAM) === 'true',
+  );
   const [mcpName, setMcpName] = useState('');
 
   useEffect(() => {
-    if(isNil(mcp)) {
+    if (isNil(mcp)) {
       return;
     }
     setMcpName(mcp?.name || '');
   }, [mcp?.name]);
 
-
-  
   const handleNameChange = (newName: string) => {
     if (mcp && newName.trim() && newName !== mcp.name) {
       setMcpName(newName.trim());

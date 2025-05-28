@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash2, CheckIcon, Table2, WorkflowIcon } from 'lucide-react';
+import { Plus, Trash2, CheckIcon, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -27,11 +27,8 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import {
-  ApFlagId,
-  McpWithTools,
-  Permission,
-} from '@activepieces/shared';
+import { ApFlagId, McpWithTools, Permission } from '@activepieces/shared';
+
 import { McpToolsIcon } from './mcp-tools-icon';
 
 const McpServersPage = () => {
@@ -67,7 +64,9 @@ const McpServersPage = () => {
     },
     onSuccess: (newMcpServer) => {
       refetch();
-      navigate(`/projects/${project.id}/mcp/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`);
+      navigate(
+        `/projects/${project.id}/mcp/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`,
+      );
     },
     onError: (err: Error) => {
       if (
@@ -230,8 +229,8 @@ const McpServersPage = () => {
           {t('MCP Servers')}
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="flex items-center gap-2"
             onClick={() => createMcp('Untitled')}
             disabled={!userHasMcpWritePermission}
