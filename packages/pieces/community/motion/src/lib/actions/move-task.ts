@@ -1,48 +1,33 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { motionAuth } from '../../index';
+import { BASE_URL, taskId, workspaceId } from '../common/props';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const moveTask = createAction({
   auth: motionAuth,
   name: 'moveTask',
   displayName: 'Move Task',
-  description: 'Move a task to a different workspace',
+  description: 'Moves a task to a different workspace.',
   props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task to move',
-      required: true,
-    }),
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description: 'The ID of the workspace to move the task to',
-      required: true,
-    }),
-    assigneeId: Property.ShortText({
-      displayName: 'Assignee ID',
-      description: 'The user ID the task should be assigned to (optional)',
-      required: false,
-    }),
+    workspaceId:workspaceId('Current Workspace'),
+    taskId:taskId,
+    newWorkspaceId: workspaceId('Target Workspace')
   },
   async run({ auth, propsValue }) {
-    const { taskId, workspaceId, assigneeId } = propsValue;
+    const { taskId, newWorkspaceId } = propsValue;
     
-    const response = await fetch(`https://api.usemotion.com/v1/tasks/${taskId}/move`, {
-      method: 'PATCH',
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.PATCH,
+      url:`${BASE_URL}/tasks/${taskId}/move`,
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': auth,
       },
-      body: JSON.stringify({
-        workspaceId,
-        ...(assigneeId && { assigneeId }),
-      }),
+      body: {
+        workspaceId:newWorkspaceId
+      }
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to move task: ${error.message || response.statusText}`);
-    }
-
-    return await response.json();
+    return response.body;
   },
 });
