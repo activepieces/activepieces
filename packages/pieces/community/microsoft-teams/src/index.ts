@@ -26,6 +26,8 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Team.ReadBasic.All',
 		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
+    'User.ReadBasic.All',
+    'Presence.Read.All',
 	],
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
