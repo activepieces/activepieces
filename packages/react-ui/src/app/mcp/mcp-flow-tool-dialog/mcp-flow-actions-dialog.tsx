@@ -195,8 +195,7 @@ export const McpFlowActionsDialog = ({
                   />
 
                   <Workflow className="w-[40px] h-[40px] text-muted-foreground" />
-
-                  <div className="mt-2 text-center text-md px-2 line-clamp-2">
+                  <div className="w-full mt-2 text-center text-md px-2 text-ellipsis overflow-hidden">
                     {flow.version.displayName}
                   </div>
 
