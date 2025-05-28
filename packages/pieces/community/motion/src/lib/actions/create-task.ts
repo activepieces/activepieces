@@ -30,9 +30,9 @@ export const createTask = createAction({
       displayName: 'Due Date',
       required: false,
     }),
-    duration: Property.ShortText({
+    duration: Property.Number({
       displayName: 'Duration',
-      description: 'Duration in minutes or "NONE" or "REMINDER"',
+      description: 'Duration in minutes.',
       required: false,
     }),
     statusId: statusId,
