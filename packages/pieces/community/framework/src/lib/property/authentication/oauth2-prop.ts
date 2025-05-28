@@ -1,5 +1,4 @@
-
-import { OAuth2GrantType } from '@activepieces/shared';
+import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/shared';
 import { Type } from '@sinclair/typebox';
 import { ShortTextProperty } from '../input/text-property';
 import { SecretTextProperty } from './secret-text-property';
@@ -9,7 +8,6 @@ import { PropertyType } from '../input/property-type';
 import { StaticDropdownProperty } from '../input/dropdown/static-dropdown';
 import { StaticPropsValue } from '..';
 
-export const BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE = 'both_client_credentials_and_authorization_code' as const
 export enum OAuth2AuthorizationMethod {
   HEADER = 'HEADER',
   BODY = 'BODY',
@@ -56,7 +54,6 @@ type OAuth2ExtraProps = {
   authorizationMethod?: OAuth2AuthorizationMethod
   grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   extra?: Record<string, string>,
-  allowsSwitchingGrantType?: boolean
 }
 
 export const OAuth2PropertyValue = Type.Object({

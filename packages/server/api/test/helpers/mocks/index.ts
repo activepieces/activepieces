@@ -36,6 +36,7 @@ import {
     PiecesFilterType,
     PieceType,
     Platform,
+    PlatformPlan,
     PlatformRole,
     Project,
     ProjectPlan,
@@ -58,6 +59,7 @@ import dayjs from 'dayjs'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
@@ -138,7 +140,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         updated: plan?.updated ?? faker.date.recent().toISOString(),
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
-        aiTokens: plan?.aiTokens ?? 0,
+        aiCredits: plan?.aiCredits ?? 0,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         tasks: plan?.tasks ?? 0,
@@ -191,10 +193,43 @@ export const createMockProject = (project?: Partial<Project>): Project => {
 //     }
 // }
 
+export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
+    return {
+        id: platformPlan?.id ?? apId(),
+        created: platformPlan?.created ?? faker.date.recent().toISOString(),
+        updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
+        platformId: platformPlan?.platformId ?? apId(),
+        aiCreditsLimit: platformPlan?.aiCreditsLimit ?? 0,
+        licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
+        stripeCustomerId: undefined,
+        stripeSubscriptionId: undefined,
+        tasksLimit: platformPlan?.tasksLimit ?? 0,
+        ssoEnabled: platformPlan?.ssoEnabled ?? false,
+        includedTasks: platformPlan?.includedTasks ?? 0,
+        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
+        environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
+        analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
+        auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
+        globalConnectionsEnabled: platformPlan?.globalConnectionsEnabled ?? false,
+        customRolesEnabled: platformPlan?.customRolesEnabled ?? false,
+        managePiecesEnabled: platformPlan?.managePiecesEnabled ?? false,
+        manageTemplatesEnabled: platformPlan?.manageTemplatesEnabled ?? false,
+        customAppearanceEnabled: platformPlan?.customAppearanceEnabled ?? false,
+        apiKeysEnabled: platformPlan?.apiKeysEnabled ?? false,
+        stripeSubscriptionStatus: undefined,
+        showPoweredBy: platformPlan?.showPoweredBy ?? false,
+        embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        manageProjectsEnabled: platformPlan?.manageProjectsEnabled ?? false,
+        projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
+        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
+        tablesEnabled: platformPlan?.tablesEnabled ?? false,
+        todosEnabled: platformPlan?.todosEnabled ?? false,
+        alertsEnabled: platformPlan?.alertsEnabled ?? false,
+    }
+}
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
     return {
         id: platform?.id ?? apId(),
-        analyticsEnabled: platform?.analyticsEnabled ?? false,
         created: platform?.created ?? faker.date.recent().toISOString(),
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
@@ -202,35 +237,20 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         federatedAuthProviders: platform?.federatedAuthProviders ?? {},
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
         name: platform?.name ?? faker.lorem.word(),
-        auditLogEnabled: platform?.auditLogEnabled ?? false,
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
-        globalConnectionsEnabled: platform?.globalConnectionsEnabled ?? false,
-        customRolesEnabled: platform?.customRolesEnabled ?? false,
         pinnedPieces: platform?.pinnedPieces ?? [],
         defaultLocale: platform?.defaultLocale,
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
-        ssoEnabled: platform?.ssoEnabled ?? faker.datatype.boolean(),
         filteredPieceBehavior:
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
-        flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        environmentsEnabled: platform?.environmentsEnabled ?? faker.datatype.boolean(),
-        embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
-        showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
-        managePiecesEnabled: platform?.managePiecesEnabled ?? faker.datatype.boolean(),
-        manageProjectsEnabled: platform?.manageProjectsEnabled ?? faker.datatype.boolean(),
-        manageTemplatesEnabled: platform?.manageTemplatesEnabled ?? faker.datatype.boolean(),
-        customAppearanceEnabled: platform?.customAppearanceEnabled ?? faker.datatype.boolean(),
-        apiKeysEnabled: platform?.apiKeysEnabled ?? faker.datatype.boolean(),
-        customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
-        projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
-        alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+
         copilotSettings: platform?.copilotSettings ?? undefined,
     }
 }
@@ -519,13 +539,21 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        auditLogEnabled: true,
-        apiKeysEnabled: true,
-        customRolesEnabled: true,
-        manageProjectsEnabled: true,
-        customDomainsEnabled: true,
     })
     await databaseConnection().getRepository('platform').save(mockPlatform)
+    const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
+    if (hasPlanTable) {
+        const mockPlatformPlan = createMockPlatformPlan({
+            platformId: mockPlatform.id,
+            auditLogEnabled: true,
+            apiKeysEnabled: true,
+            customRolesEnabled: true,
+            manageProjectsEnabled: true,
+            customDomainsEnabled: true,
+            ...params?.plan,
+        })
+        await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
+    }
 
     mockOwner.platformId = mockPlatform.id
     await databaseConnection().getRepository('user').save(mockOwner)
@@ -623,6 +651,7 @@ type MockBasicSetup = {
 type MockBasicSetupParams = {
     userIdentity?: Partial<UserIdentity>
     user?: Partial<User>
+    plan?: Partial<PlatformPlan>
     platform?: Partial<Platform>
     project?: Partial<Project>
 }

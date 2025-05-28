@@ -5,7 +5,8 @@ import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
-import { ChangeExternalIdsForTables1747346473000 } from './migration/common/1747346473000-ChangeExternalIdsForTables'
+import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
+import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { AddPgLocaleCollation1740031341436 } from './migration/postgres/1740031341436-add-pg-locale-collation'
 import { InitialPg1740031656104 } from './migration/postgres/1740031656104-initial-pg'
 import { AddFlowTemplate1741587483735 } from './migration/postgres/1741587483735-add-flow-template'
@@ -29,6 +30,7 @@ import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746
 import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
+import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -42,7 +44,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
-        ChangeExternalIdsForTables1747346473000,
+        UpgradePieceVersionsToLatest1748253670449,
+        RenameProjectBillingToPlatformPLan1747819919988,
+        ChangeExternalIdsForTables1747346473001,
         AddI18nColumnToPieceMetadata1746714836833,
         AddOrderToFolder1747095861746,
         AddHandshakeConfigurationToFlow1746848208563,

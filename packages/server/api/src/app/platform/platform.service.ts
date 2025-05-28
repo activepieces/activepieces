@@ -1,5 +1,7 @@
+// import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     FilteredPieceBehavior,
@@ -7,19 +9,51 @@ import {
     LocalesEnum,
     Platform,
     PlatformId,
+    PlatformPlanLimits,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
 } from '@activepieces/shared'
-import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+// import { licenseKeysService } from '../ee/license-keys/license-keys-service'
+// import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
+import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
+const OPENSOURCE_PLAN = {
+    embeddingEnabled: false,
+    tablesEnabled: true,
+    todosEnabled: true,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    includedTasks: 0,
+    includedAiCredits: 0,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    tasksLimit: undefined,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    alertsEnabled: false,
+    ssoEnabled: false,
+    stripeCustomerId: undefined,
+    stripeSubscriptionId: undefined,
+    stripeSubscriptionStatus: undefined,
+}
+
 const repo = repoFactory<Platform>(PlatformEntity)
+
+
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
@@ -40,13 +74,8 @@ export const platformService = {
             return hasProjects ? user.platformId : null
         }))
 
-        const platformIds = platformsWithProjects.filter((platformId) => !isNil(platformId))
-
-        return repo().find({
-            where: {
-                id: In(platformIds),
-            },
-        })
+        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => platformService.getOneWithPlanOrThrow(platformId)))
+        return platforms
     },
     async create(params: AddParams): Promise<Platform> {
         const {
@@ -66,31 +95,14 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            embeddingEnabled: false,
-            globalConnectionsEnabled: false,
-            customRolesEnabled: false,
-            analyticsEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
-            auditLogEnabled: false,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-            showPoweredBy: false,
-            ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
-            flowIssuesEnabled: true,
-            environmentsEnabled: false,
-            managePiecesEnabled: false,
-            manageTemplatesEnabled: false,
-            manageProjectsEnabled: false,
-            projectRolesEnabled: false,
-            customDomainsEnabled: false,
-            apiKeysEnabled: false,
-            customAppearanceEnabled: false,
-            alertsEnabled: false,
             pinnedPieces: [],
         }
 
@@ -130,41 +142,29 @@ export const platformService = {
             copilotSettings,
             federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
-            ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
             ...spreadIfDefined('primaryColor', params.primaryColor),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
-            ...spreadIfDefined('defaultLocale', params.defaultLocale),
-            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('environmentsEnabled', params.environmentsEnabled),
-            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
-            ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
-            ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
-            ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+            ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
-            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
-            ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
-            ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
-            ...spreadIfDefined('manageTemplatesEnabled', params.manageTemplatesEnabled),
-            ...spreadIfDefined('apiKeysEnabled', params.apiKeysEnabled),
-            ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
-            ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
-            ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
-            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
-            ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             smtp: params.smtp,
         }
+        // if (!isNil(params.plan)) {
+        //     await platformPlanService(system.globalLogger()).update({
+        //         platformId: params.id,
+        //         ...params.plan,
+        //     })
+        // }
         return repo().save(updatedPlatform)
     },
 
@@ -186,11 +186,41 @@ export const platformService = {
 
         return platform
     },
+    async getOneWithPlan(id: PlatformId): Promise<PlatformWithoutSensitiveData | null> {
+        const platform = await this.getOne(id)
+        if (isNil(platform)) {
+            return null
+        }
+        return enrichPlatformWithPlan(platform)
+    },
+    async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+        const platform = await this.getOneOrThrow(id)
+        return enrichPlatformWithPlan(platform)
+    },
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
             id,
         })
     },
+}
+
+async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
+    const plan = await getPlan(platform)
+    // const licenseKey = await licenseKeysService(system.globalLogger()).getKey(plan.licenseKey)
+    return {
+        ...platform,
+        // licenseExpiresAt: licenseKey?.expiresAt,
+        // hasLicenseKey: !isNil(licenseKey),
+        plan,
+    }
+}
+async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return OPENSOURCE_PLAN
+    }
+    return OPENSOURCE_PLAN
+    // return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {
@@ -206,24 +236,7 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
-    auditLogEnabled?: boolean
-    showPoweredBy?: boolean
-    ssoEnabled?: boolean
-    environmentsEnabled?: boolean
-    embeddingEnabled?: boolean
-    globalConnectionsEnabled?: boolean
-    customRolesEnabled?: boolean
-    customDomainsEnabled?: boolean
-    customAppearanceEnabled?: boolean
-    manageProjectsEnabled?: boolean
-    flowIssuesEnabled?: boolean
-    managePiecesEnabled?: boolean
-    manageTemplatesEnabled?: boolean
-    apiKeysEnabled?: boolean
-    projectRolesEnabled?: boolean
-    alertsEnabled?: boolean
-    analyticsEnabled?: boolean
-    licenseKey?: string
+    plan?: Partial<PlatformPlanLimits>
 }
 
 

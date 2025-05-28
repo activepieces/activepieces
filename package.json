@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.56.0",
-  "rcVersion": "0.57.0-rc.0",
+  "version": "0.58.0",
+  "rcVersion": "0.59.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -271,6 +271,7 @@
     "tailwind-merge": "2.4.0",
     "tailwindcss-animate": "1.0.7",
     "tinycolor2": "1.6.0",
+    "tree-kill": "1.2.2",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
     "turndown": "7.2.0",

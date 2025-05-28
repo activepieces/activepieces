@@ -26,10 +26,6 @@ export enum AppSystemProp {
     JWT_SECRET = 'JWT_SECRET',
     INTERNAL_URL = 'INTERNAL_URL',
 
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    LICENSE_KEY = 'LICENSE_KEY',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     PERPLEXITY_BASE_URL = 'PERPLEXITY_BASE_URL',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',

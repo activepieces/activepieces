@@ -2,7 +2,7 @@ import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/ser
 import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
-import { engineRunner } from '../engine'
+import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
@@ -26,7 +26,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, a
                     steps: !isNil(flowRun) ? flowRun.steps : {},
                 },
                 tasks: flowRun?.tasks ?? 0,
-                formatPayload: !isNil(jobData.synchronousHandlerId),
+                executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
                 progressUpdateType: jobData.progressUpdateType,
@@ -154,13 +154,10 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 flowId: flow.id,
                 flowVersionId: flow.version.id,
             })
-            await engineApiService(engineToken, log).checkTaskLimit()
+            await engineApiService(engineToken, runLog).checkTaskLimit()
 
-            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, log)
-            const { result } = await engineRunner(runLog).executeFlow(
-                engineToken,
-                input,
-            )
+            const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, runLog)
+            const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
                 await handleInternalError(jobData, engineToken, new ActivepiecesError({

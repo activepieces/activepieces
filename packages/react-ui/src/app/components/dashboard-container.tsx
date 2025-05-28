@@ -66,7 +66,7 @@ export function DashboardContainer({
   };
 
   const filterAlerts = (item: SidebarItem) =>
-    platform.alertsEnabled || item.label !== t('Alerts');
+    platform.plan.alertsEnabled || item.label !== t('Alerts');
 
   const releasesLink: SidebarLink = {
     type: 'link',
