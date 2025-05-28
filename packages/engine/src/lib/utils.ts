@@ -69,4 +69,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
+type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
