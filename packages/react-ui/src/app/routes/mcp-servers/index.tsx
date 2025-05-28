@@ -17,31 +17,22 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { McpActionsMenu } from '@/features/mcp/components/mcp-actions-menu';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
-  McpToolType,
   McpWithTools,
   Permission,
 } from '@activepieces/shared';
-
-import { CreateMcpServerDialog } from './create-mcp-server-dialog';
+import { McpToolsIcon } from './mcp-tools-icon';
 
 const McpServersPage = () => {
   const navigate = useNavigate();
@@ -76,7 +67,7 @@ const McpServersPage = () => {
     },
     onSuccess: (newMcpServer) => {
       refetch();
-      navigate(`/projects/${project.id}/mcp/${newMcpServer.id}`);
+      navigate(`/projects/${project.id}/mcp/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`);
     },
     onError: (err: Error) => {
       if (
@@ -156,93 +147,12 @@ const McpServersPage = () => {
         <DataTableColumnHeader column={column} title={t('Tools')} />
       ),
       cell: ({ row }) => {
-        const mcpTools = row.original.tools || [];
-        if (isLoadingPiecesMetadata) {
-          return <div className="text-left">{t('Loading...')}</div>;
-        }
-        const MAX_ICONS_TO_SHOW = 3;
-        const visibleTools = mcpTools.slice(0, MAX_ICONS_TO_SHOW);
-        const extraToolsCount = mcpTools.length - visibleTools.length;
-
-        const allDisplayNames = mcpTools.map((tool) => {
-          if (tool.type === McpToolType.PIECE && tool.pieceMetadata) {
-            return (
-              pieceMetadataMap.get(tool.pieceMetadata.pieceName)?.displayName ||
-              tool.pieceMetadata.pieceName
-            );
-          } else {
-            return 'Flow';
-          }
-        });
-
-        let toolDisplayNamesTooltip = '';
-        if (allDisplayNames.length === 1) {
-          toolDisplayNamesTooltip = allDisplayNames[0];
-        } else if (allDisplayNames.length > 1) {
-          toolDisplayNamesTooltip =
-            allDisplayNames.slice(0, -1).join(', ') +
-            ` ${t('and')} ${allDisplayNames[allDisplayNames.length - 1]}`;
-        }
-
         return (
-          <div className="text-left flex items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2">
-                  {visibleTools.map((tool) => {
-                    const metadata =
-                      tool.type === McpToolType.PIECE && tool.pieceMetadata
-                        ? pieceMetadataMap.get(tool.pieceMetadata.pieceName)
-                        : undefined;
-                    if (metadata) {
-                      return (
-                        <PieceIcon
-                          key={tool.id}
-                          logoUrl={metadata?.logoUrl}
-                          displayName={
-                            metadata?.displayName ||
-                            (tool.type === McpToolType.PIECE &&
-                            tool.pieceMetadata
-                              ? tool.pieceMetadata.pieceName
-                              : 'Flow')
-                          }
-                          size="md"
-                          circle={true}
-                          border={true}
-                          showTooltip={false}
-                        />
-                      );
-                    } else {
-                      return (
-                        <div
-                          key={tool.id}
-                          className={
-                            'dark:bg-accent-foreground/25 rounded-full bg-accent/35 p-2 border border-solid size-[36px]'
-                          }
-                        >
-                          <WorkflowIcon
-                            size={16}
-                            className="w-full h-full"
-                            strokeWidth={1.5}
-                          />
-                        </div>
-                      );
-                    }
-                  })}
-                  {extraToolsCount > 0 && (
-                    <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none size-[36px] text-sm">
-                      +{extraToolsCount}
-                    </div>
-                  )}
-                </div>
-              </TooltipTrigger>
-              {mcpTools.length > 0 && (
-                <TooltipContent side="bottom">
-                  {toolDisplayNamesTooltip}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </div>
+          <McpToolsIcon
+            mcpTools={row.original.tools || []}
+            pieceMetadataMap={pieceMetadataMap}
+            isLoadingPiecesMetadata={isLoadingPiecesMetadata}
+          />
         );
       },
     },
@@ -256,32 +166,6 @@ const McpServersPage = () => {
           {formatUtils.formatDate(new Date(row.original.updated))}
         </div>
       ),
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        return (
-          <div
-            onAuxClick={(e) => {
-              e.stopPropagation();
-            }}
-            onContextMenu={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-            className="flex items-center justify-end -mr-8"
-          >
-            <McpActionsMenu
-              mcp={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
-          </div>
-        );
-      },
     },
   ];
 
@@ -337,7 +221,7 @@ const McpServersPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col h-full">
       <div className="flex items-center justify-between">
         <TableTitle
           beta={true}
@@ -346,15 +230,15 @@ const McpServersPage = () => {
           {t('MCP Servers')}
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-          <CreateMcpServerDialog
-            onCreateMcp={(name) => createMcp(name)}
+          <Button 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => createMcp('Untitled')}
             disabled={!userHasMcpWritePermission}
           >
-            <Button size="sm" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              {t('New MCP Server')}
-            </Button>
-          </CreateMcpServerDialog>
+            <Plus className="h-4 w-4" />
+            {t('New MCP Server')}
+          </Button>
         </PermissionNeededTooltip>
       </div>
 

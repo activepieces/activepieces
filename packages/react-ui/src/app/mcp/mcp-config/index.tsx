@@ -28,14 +28,13 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import type { McpTool } from '@activepieces/shared';
 import { McpToolType } from '@activepieces/shared';
 
-import McpToolDialog from './mcp-tool-dialog';
+import McpToolDialog from '../mcp-piece-tool-dialog/mcp-tool-dialog';
 
 export const McpConfigPage = () => {
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
   const [showEditPieceDialog, setShowEditPieceDialog] = useState(false);
   const [selectedPieceToEdit, setSelectedPieceToEdit] =
     useState<McpTool | null>(null);
-  const [activeTab, setActiveTab] = useState<'pieces' | 'flows'>('pieces');
   const { mcpId } = useParams<{ mcpId: string }>();
   const { toast } = useToast();
 
@@ -120,41 +119,40 @@ export const McpConfigPage = () => {
   const hasTools = totalToolsCount > 0;
 
   return (
-    <div className="max-w-[800px] py-6 space-y-6">
-      <div className="flex flex-col space-y-2">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
+    <div>
+      <div className="flex items-center justify-between">
+        <div className="space-y-0">
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
             <span>{t('Tools')}</span>
             {totalToolsCount > 0 && (
               <Badge variant="secondary">{totalToolsCount}</Badge>
             )}
-          </h2>
-          <div className="flex gap-2">
-            <McpToolDialog
-              mcpId={mcpId!}
-              open={showAddPieceDialog}
-              mode="add"
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onSuccess={() => {
-                refetchMcp();
-                setShowAddPieceDialog(false);
-              }}
-              onClose={() => setShowAddPieceDialog(false)}
-            >
-              <Button onClick={() => setShowAddPieceDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('Add Tool')}
-              </Button>
-            </McpToolDialog>
-          </div>
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('Manage your integration tools and automated workflows')}
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          {t('Manage your integration tools and automated workflows')}
-        </p>
+        <div className="flex gap-2">
+          <McpToolDialog
+            mcpId={mcpId!}
+            open={showAddPieceDialog}
+            mode="add"
+            onSuccess={() => {
+              refetchMcp();
+              setShowAddPieceDialog(false);
+            }}
+            onClose={() => setShowAddPieceDialog(false)}
+          >
+            <Button onClick={() => setShowAddPieceDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('Add Tool')}
+            </Button>
+          </McpToolDialog>
+        </div>
       </div>
 
-      <div className="space-y-6">
+
+      <div className="mt-4">
         {hasTools ? (
           <ScrollArea>
             <div className="space-y-2">
@@ -237,8 +235,6 @@ export const McpConfigPage = () => {
                                   showEditPieceDialog &&
                                   selectedPieceToEdit?.id === tool.id
                                 }
-                                activeTab={activeTab}
-                                setActiveTab={setActiveTab}
                                 onSuccess={() => {
                                   refetchMcp();
                                   setShowEditPieceDialog(false);
@@ -318,7 +314,6 @@ export const McpConfigPage = () => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 onClick={() => {
-                                  setActiveTab('flows');
                                   setShowAddPieceDialog(true);
                                 }}
                                 className="flex items-center gap-2"

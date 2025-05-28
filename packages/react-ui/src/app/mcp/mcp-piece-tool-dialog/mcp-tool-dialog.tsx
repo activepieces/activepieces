@@ -1,7 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, Puzzle, Workflow, Search } from 'lucide-react';
+import { ChevronLeft, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -31,9 +30,8 @@ import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { isNil, McpToolType } from '@activepieces/shared';
 import type { McpTool } from '@activepieces/shared';
 
-import { McpFlowsContent } from './flows/mcp-flows-content';
-import { McpPieceActionsDialog } from './pieces/mcp-piece-actions-dialog';
-import { McpPiecesContent } from './pieces/mcp-pieces-content';
+import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
+import { McpPiecesContent } from './mcp-pieces-content';
 
 type McpToolDialogProps = {
   children: React.ReactNode;
@@ -41,8 +39,6 @@ type McpToolDialogProps = {
   mcpId: string;
   mode: 'add' | 'edit';
   open: boolean;
-  activeTab: 'pieces' | 'flows';
-  setActiveTab: (value: 'pieces' | 'flows') => void;
   onSuccess: () => void;
   onClose: () => void;
 };
@@ -52,8 +48,6 @@ export default function McpToolDialog({
   mcpPieceToUpdate,
   mode,
   open,
-  activeTab,
-  setActiveTab,
   onSuccess,
   children,
   onClose,
@@ -152,53 +146,36 @@ export default function McpToolDialog({
           flowId: tool.flowId,
         })) || [];
 
-      if (activeTab === 'pieces') {
-        if (!selectedPiece || selectedActions.length === 0) return;
+      if (!selectedPiece || selectedActions.length === 0) return;
 
-        const existingToolIndex = currentTools.findIndex(
-          (tool) =>
-            tool.type === McpToolType.PIECE &&
-            tool.pieceMetadata?.pieceName === selectedPiece.pieceName,
-        );
+      const existingToolIndex = currentTools.findIndex(
+        (tool) =>
+          tool.type === McpToolType.PIECE &&
+          tool.pieceMetadata?.pieceName === selectedPiece.pieceName,
+      );
 
-        const newTool = {
-          type: McpToolType.PIECE,
-          mcpId: mcpId,
-          pieceMetadata: {
-            pieceName: selectedPiece.pieceName,
-            actionNames: selectedActions,
-            pieceVersion: selectedPiece.pieceVersion,
-            logoUrl: selectedPiece.logoUrl,
-            connectionExternalId: selectedConnectionExternalId ?? undefined,
-          },
-          flowId: undefined,
-        };
+      const newTool = {
+        type: McpToolType.PIECE,
+        mcpId: mcpId,
+        pieceMetadata: {
+          pieceName: selectedPiece.pieceName,
+          actionNames: selectedActions,
+          pieceVersion: selectedPiece.pieceVersion,
+          logoUrl: selectedPiece.logoUrl,
+          connectionExternalId: selectedConnectionExternalId ?? undefined,
+        },
+        flowId: undefined,
+      };
 
-        let updatedTools;
-        if (existingToolIndex >= 0) {
-          updatedTools = [...currentTools];
-          updatedTools[existingToolIndex] = newTool;
-        } else {
-          updatedTools = [...currentTools, newTool];
-        }
-
-        return await mcpApi.update(mcpId, { tools: updatedTools });
+      let updatedTools;
+      if (existingToolIndex >= 0) {
+        updatedTools = [...currentTools];
+        updatedTools[existingToolIndex] = newTool;
       } else {
-        if (!selectedFlows.length) return;
-
-        const nonFlowTools = currentTools.filter(
-          (tool) => tool.type !== McpToolType.FLOW,
-        );
-        const newFlowTools = selectedFlows.map((flowId) => ({
-          type: McpToolType.FLOW,
-          mcpId: mcpId,
-          flowId: flowId,
-          pieceMetadata: undefined,
-        }));
-
-        const updatedTools = [...nonFlowTools, ...newFlowTools];
-        return await mcpApi.update(mcpId, { tools: updatedTools });
+        updatedTools = [...currentTools, newTool];
       }
+
+      return await mcpApi.update(mcpId, { tools: updatedTools });
     },
     onSuccess: () => {
       toast({
@@ -227,40 +204,12 @@ export default function McpToolDialog({
 
   const { data: mcp } = mcpHooks.useMcp(mcpId);
 
-  const { addedPieces, otherPieces } = useMemo(() => {
-    const added = pieceMetadata.filter((piece) =>
-      mcp?.tools?.some(
-        (tool) =>
-          tool.type === McpToolType.PIECE &&
-          tool.pieceMetadata?.pieceName === piece.pieceName,
-      ),
-    );
-    const other = pieceMetadata.filter(
-      (piece) =>
-        !mcp?.tools?.some(
-          (tool) =>
-            tool.type === McpToolType.PIECE &&
-            tool.pieceMetadata?.pieceName === piece.pieceName,
-        ),
-    );
-    return { addedPieces: added, otherPieces: other };
-  }, [pieceMetadata, mcp?.tools]);
-
   const handleClose = () => {
     setSelectedPiece(null);
     setSearchQuery('');
     setSelectedActions([]);
-    setActiveTab('pieces');
     onClose();
   };
-
-  const [selectedFlows, setSelectedFlows] = useState<string[]>(
-    () =>
-      mcp?.tools
-        .filter((tool) => tool.type === McpToolType.FLOW)
-        .map((tool) => tool.flowId)
-        .filter((id): id is string => !!id) ?? [],
-  );
 
   return (
     <Dialog
@@ -329,51 +278,13 @@ export default function McpToolDialog({
                   className="pl-8"
                 />
               </div>
-              <Tabs
-                value={activeTab}
-                onValueChange={(value) =>
-                  setActiveTab(value as 'pieces' | 'flows')
-                }
-              >
-                <TabsList className="w-full p-0 bg-background justify-start border-b rounded-none">
-                  <TabsTrigger
-                    value="pieces"
-                    className="rounded-none bg-background h-full data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Puzzle className="w-4 h-4" />
-                      {t('Pieces')}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="flows"
-                    className="rounded-none bg-background h-full data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Workflow className="w-4 h-4" />
-                      {t('Flows')}
-                    </div>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
             </div>
             <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
-              {activeTab === 'pieces' && (
-                <McpPiecesContent
-                  isPiecesLoading={isPiecesLoading}
-                  pieceMetadata={pieceMetadata}
-                  addedPieces={addedPieces}
-                  otherPieces={otherPieces}
-                  onPieceSelect={handlePieceSelect}
-                />
-              )}
-              {activeTab === 'flows' && (
-                <McpFlowsContent
-                  searchQuery={searchQuery}
-                  selectedFlows={selectedFlows}
-                  setSelectedFlows={setSelectedFlows}
-                />
-              )}
+              <McpPiecesContent
+                isPiecesLoading={isPiecesLoading}
+                pieceMetadata={pieceMetadata}
+                onPieceSelect={handlePieceSelect}
+              />
             </ScrollArea>
           </>
         )}
@@ -387,17 +298,9 @@ export default function McpToolDialog({
             loading={isPending}
             type="button"
             onClick={() => saveTool()}
-            disabled={
-              activeTab === 'pieces'
-                ? selectedActions.length === 0
-                : selectedFlows.length === 0
-            }
+            disabled={selectedActions.length === 0}
           >
-            {mode === 'edit' ||
-            (selectedPiece &&
-              addedPieces.some((p) => p.pieceName === selectedPiece.pieceName))
-              ? t('Save')
-              : t('Add Tool')}
+            {t('Save')}
           </Button>
         </DialogFooter>
       </DialogContent>

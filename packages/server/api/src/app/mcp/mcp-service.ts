@@ -26,7 +26,7 @@ import { McpEntity } from './mcp-entity'
 import { McpToolEntity } from './tool/mcp-tool.entity'
 
 export const mcpRepo = repoFactory(McpEntity)
-export const mcpToolRepo = repoFactory(McpToolEntity)
+const mcpToolRepo = repoFactory(McpToolEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
     async create({ projectId, name }: CreateParams): Promise<McpWithTools> {
@@ -40,6 +40,10 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             updated: dayjs().toISOString(),
         })
         return this.getOrThrow({ mcpId: mcp.id })
+    },
+
+    async deleteFlowTools({ flowId }: DeleteFlowToolsParams): Promise<void> {
+        await mcpToolRepo().delete({ flowId })
     },
 
     async list({ projectId, cursorRequest, limit, name }: ListParams): Promise<SeekPage<McpWithTools>> {
@@ -76,46 +80,8 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
                 params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
-        const enrichedTools = await Promise.all(mcp.tools.map(async (tool) => {
-            switch (tool.type) {
-                case McpToolType.PIECE:{
-                    return {
-                        ...tool,
-                        pieceMetadata: tool.pieceMetadata,
-                        flowId: undefined,
-                    }
-                }
-                case McpToolType.FLOW:{
-                    assertNotNullOrUndefined(tool.flowId, 'flowId is required')
-                    const flow = await flowService(_log).getOneOrThrow({
-                        id: tool.flowId,
-                        projectId: mcp.projectId,
-                    })
         
-                    if (flow.publishedVersionId === null) {
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: `Flow ${flow.id} has no published version`,
-                            },
-                        })
-                    }
-        
-                    const publishedVersion = await flowVersionService(_log).getFlowVersionOrThrow({
-                        flowId: flow.id,
-                        versionId: flow.publishedVersionId,
-                    })                        
-                    return {
-                        ...tool,
-                        pieceMetadata: undefined,
-                        flow: {
-                            ...flow,
-                            version: publishedVersion,
-                        }, 
-                    }
-                }
-            }           
-        }))
+        const enrichedTools = await Promise.all(mcp.tools.map((tool) => enrichTool(tool, mcp.projectId, _log))).then(tools => tools.filter(tool => tool !== null))
         return {
             ...mcp,
             tools: enrichedTools,
@@ -190,6 +156,42 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 })
 
+async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<McpTool | null> {
+    switch (tool.type) {
+        case McpToolType.PIECE:{
+            return {
+                ...tool,
+                pieceMetadata: tool.pieceMetadata,
+                flowId: undefined,
+            }
+        }
+        case McpToolType.FLOW:{
+            assertNotNullOrUndefined(tool.flowId, 'flowId is required')
+            const flow = await flowService(_log).getOneOrThrow({
+                id: tool.flowId,
+                projectId: projectId,
+            })
+
+            if (flow.publishedVersionId === null) {
+                return null
+            }
+
+            const publishedVersion = await flowVersionService(_log).getFlowVersionOrThrow({
+                flowId: flow.id,
+                versionId: flow.publishedVersionId,
+            })                        
+            return {
+                ...tool,
+                pieceMetadata: undefined,
+                flow: {
+                    ...flow,
+                    version: publishedVersion,
+                }, 
+            }
+        }
+    }           
+}
+
 async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated' | 'id'>): Promise<ApId | undefined> {
     switch (tool.type) {
         case McpToolType.PIECE: {
@@ -234,4 +236,8 @@ type CountParams = {
 
 type GetOrThrowParams = {
     mcpId: ApId
+}
+
+type DeleteFlowToolsParams = {
+    flowId: ApId
 }

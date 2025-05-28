@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { ChevronDown, DownloadIcon, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,11 @@ import { PermissionNeededTooltip } from '@/components/ui/permission-needed-toolt
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
+import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';
 
-import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
 
@@ -58,6 +59,14 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     const exportedTable = await tablesApi.export(table.id);
     tablesUtils.exportTables([exportedTable]);
   };
+
+  const renameTable = useTableState((state) => state.renameTable);
+  const { mutate: updateTable } = useMutation({
+    mutationFn: (newName: string) =>
+      tablesApi.update(table.id, { name: newName }),
+    onSuccess: () => {},
+  });
+
   return (
     <div className="flex flex-col gap-4 flex-none px-4">
       <div className="flex items-center justify-between">
@@ -65,10 +74,16 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
           <div className="flex items-center gap-2">
             <HomeButton showBackButton={true} route={'/tables'}></HomeButton>
 
-            <ApTableName
-              tableName={table.name}
-              isEditingTableName={isEditingTableName}
-              setIsEditingTableName={setIsEditingTableName}
+            <EditableTextWithPen
+              value={table.name}
+              onValueChange={(newName) => {
+                renameTable(newName);
+                updateTable(newName);
+              }}
+              isEditing={isEditingTableName}
+              setIsEditing={setIsEditingTableName}
+              readonly={!userHasTableWritePermission}
+              textClassName="text-2xl font-bold"
             />
           </div>
 

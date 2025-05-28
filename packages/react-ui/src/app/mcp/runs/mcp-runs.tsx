@@ -4,7 +4,6 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
-  RefreshCw,
   X,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
@@ -12,7 +11,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -91,84 +89,20 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
   const filters = useMemo(() => createFilters(), []);
 
   if (!mcpId) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{t('No MCP server selected')}</p>
-        </div>
-      </div>
-    );
+    return (<></>);
   }
 
   return (
-    <div className="w-full space-y-6 p-6">
+    <div className="w-full ">
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+        <div className="space-y-0">
+          <h1 className="text-xl font-semibold tracking-tight">
             {t('Tool Usage History')}
           </h1>
           <p className="text-sm text-muted-foreground">
             {t('Track and monitor your MCP tool executions')}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading || isPiecesLoading}
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
-          />
-          {t('Refresh')}
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-2">
-              <Activity className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {t('Total Executions')}
-                </p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {t('Successful')}
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.successful}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {t('Failed')}
-                </p>
-                <p className="text-2xl font-bold text-red-600">
-                  {stats.failed}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <DataTable
@@ -239,10 +173,7 @@ export const McpHistoryPage = ({ mcpId: propMcpId }: McpHistoryPageProps) => {
 
               <ScrollArea className="h-[calc(100vh-120px)] mt-6">
                 <div className="space-y-6">
-                  {/* Input */}
                   <JsonViewer json={selectedItem.input} title={t('Input')} />
-
-                  {/* Output */}
                   <JsonViewer json={selectedItem.output} title={t('Output')} />
                 </div>
               </ScrollArea>

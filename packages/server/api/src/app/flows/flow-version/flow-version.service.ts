@@ -27,7 +27,6 @@ import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { mcpToolRepo } from '../../mcp/mcp-service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -126,6 +125,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 log,
             )
         }
+
+        await flowVersionSideEffects(log).postApplyOperation({
+            flowVersion: mutatedFlowVersion,
+            operation: userOperation,
+        })
 
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
@@ -281,10 +285,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
-}
+
 
 async function applySingleOperation(
     projectId: ProjectId,
@@ -300,11 +301,10 @@ async function applySingleOperation(
     })
     operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
     const updatedFlowVersion = flowOperations.apply(flowVersion, operation)
-
-    const isMcpTriggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && isMcpTriggerPiece(flowVersion) && !isMcpTriggerPiece(updatedFlowVersion)
-    if (isMcpTriggerChanged) {
-        await mcpToolRepo().delete({ flowId: flowVersion.flowId })
-    }
+    await flowVersionSideEffects(log).postApplyOperation({
+        flowVersion: updatedFlowVersion,
+        operation,
+    })
     return updatedFlowVersion   
 }
 
