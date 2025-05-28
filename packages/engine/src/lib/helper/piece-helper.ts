@@ -24,6 +24,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
+import { utils } from '../utils'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
@@ -57,6 +58,12 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                connections: utils.createConnectionManager({
+                    projectId: params.projectId,
+                    engineToken: params.engineToken,
+                    apiUrl: constants.internalApiUrl,
+                    target: 'properties'
+                }),
             }
 
             switch (property.type) {
