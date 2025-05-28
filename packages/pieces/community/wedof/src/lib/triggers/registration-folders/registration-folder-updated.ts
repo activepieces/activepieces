@@ -206,25 +206,12 @@ export const registrationFolderUpdated = createTrigger({
       .join('/')}/projects/${context.project.id}/flows/${
       context.flows.current.id
     }">${flow?.version.displayName}</a>`;
-    const id = await context.store.get('_webhookId');
-    if (id === null) {
-      try {
-        const webhookId = await wedofCommon.subscribeWebhook(
-          ['registrationFolder.updated'],
-          context.webhookUrl,
-          context.auth as string,
-          name
-        );
-        await context.store.put('_webhookId', webhookId);
-      } catch (error) {
-        console.error('Erreur lors de la création du webhook:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Erreur inconnue';
-        throw new Error(`Échec de la création du webhook: ${errorMessage}`);
-      }
-    } else {
-      console.log('/////////// webhook already exist ////');
-    }
+
+    await wedofCommon.handleWebhookSubscription(
+      ['registrationFolder.updated'],
+      context,
+      name
+    );
   },
 
   async onDisable(context) {
