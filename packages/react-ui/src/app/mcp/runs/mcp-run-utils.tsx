@@ -6,23 +6,22 @@ import {
   Search,
   WorkflowIcon,
   Calendar,
-  Copy,
-  Check,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   DataTableFilter,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { StepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { formatUtils } from '@/lib/utils';
 import { McpRun, McpRunStatus } from '@activepieces/shared';
 
-type McpRunWithActions = RowDataWithActions<McpRun>;
-
-export const getToolIcon = (item: McpRun, metadata?: any[]) => {
+const getToolIcon = (
+  item: McpRun,
+  metadata?: StepMetadataWithSuggestions[],
+) => {
   if ('flowId' in item.metadata) {
     return (
       <div className="dark:bg-accent-foreground/25 rounded-full bg-accent/35 p-2 border border-solid size-[36px]">
@@ -31,10 +30,11 @@ export const getToolIcon = (item: McpRun, metadata?: any[]) => {
     );
   }
   const piece = metadata?.find((m) => {
-    if ('pieceName' in m && 'pieceName' in item.metadata) {
-      return m.pieceName === item.metadata.pieceName;
-    }
-    return false;
+    return (
+      'pieceName' in m &&
+      'pieceName' in item.metadata &&
+      m.pieceName === item.metadata.pieceName
+    );
   });
   if (piece) {
     return (
@@ -51,57 +51,44 @@ export const getToolIcon = (item: McpRun, metadata?: any[]) => {
   return null;
 };
 
-export const getToolDisplayName = (item: McpRun) => {
+const getToolDisplayName = (item: McpRun) => {
   if ('pieceName' in item.metadata) {
     return item.metadata.pieceName;
   }
-  return 'Flow';
+  return t('Flow');
 };
 
-export const getActionName = (item: McpRun) => {
+const getActionName = (item: McpRun) => {
   if ('actionName' in item.metadata) {
     return item.metadata.actionName;
   }
   if ('name' in item.metadata) {
-    return item.metadata.name as string;
+    return item.metadata.name;
   }
-  return 'Tool Action';
+  return t('Tool Action');
 };
 
-export const getTooltipContent = (item: McpRun) => {
+const getTooltipContent = (item: McpRun) => {
   if ('pieceName' in item.metadata && 'pieceVersion' in item.metadata) {
-    return `Piece Version: ${item.metadata.pieceVersion}`;
+    return `${t('Piece Version')}: ${item.metadata.pieceVersion}`;
   }
   if ('flowId' in item.metadata)
-    return `Flow Id: ${item.metadata.flowId} --- Flow Version: ${item.metadata.flowVersionId}`;
+    return `${t('Flow Id')}: ${item.metadata.flowId} --- ${t(
+      'Flow Version',
+    )}: ${item.metadata.flowVersionId}`;
   return '';
 };
 
-export const copyToClipboard = async (
-  text: string,
-  fieldName: string,
-  setCopiedField: (field: string | null) => void,
-) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(fieldName);
-    setTimeout(() => setCopiedField(null), 2000);
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-  }
+export const mcpRunUtils = {
+  getToolIcon,
+  getToolDisplayName,
+  getActionName,
+  getTooltipContent,
 };
 
-export const formatJsonData = (data: any) => {
-  try {
-    return JSON.stringify(data, null, 2);
-  } catch {
-    return String(data);
-  }
-};
-
-export const createColumns = (
-  metadata?: any[],
-): ColumnDef<McpRunWithActions, unknown>[] => [
+export const mcpRunColumns = (
+  metadata: StepMetadataWithSuggestions[],
+): ColumnDef<RowDataWithActions<McpRun>>[] => [
   {
     accessorKey: 'metadata',
     header: ({ column }) => (
@@ -164,7 +151,7 @@ export const createColumns = (
   },
 ];
 
-export const createFilters = (): DataTableFilter<keyof McpRun>[] => [
+export const mcpRunFilters = (): DataTableFilter<keyof McpRun>[] => [
   {
     type: 'input',
     title: t('Action Name'),
@@ -189,32 +176,3 @@ export const createFilters = (): DataTableFilter<keyof McpRun>[] => [
     ],
   },
 ];
-
-export const calculateStats = (historyItems?: { data: McpRun[] }) => {
-  if (!historyItems?.data) {
-    return { total: 0, successful: 0, failed: 0 };
-  }
-
-  const total = historyItems.data.length;
-  const successful = historyItems.data.filter(
-    (item) => item.status === McpRunStatus.SUCCESS,
-  ).length;
-  const failed = total - successful;
-
-  return { total, successful, failed };
-};
-
-export const renderCopyButton = (
-  text: string,
-  fieldName: string,
-  copiedField: string | null,
-  onCopy: (text: string, fieldName: string) => void,
-) => (
-  <Button variant="ghost" size="sm" onClick={() => onCopy(text, fieldName)}>
-    {copiedField === fieldName ? (
-      <Check className="h-3 w-3" />
-    ) : (
-      <Copy className="h-3 w-3" />
-    )}
-  </Button>
-);

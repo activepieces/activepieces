@@ -24,34 +24,30 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
-import { isNil, McpToolType } from '@activepieces/shared';
-import type { McpTool } from '@activepieces/shared';
+import { McpToolType } from '@activepieces/shared';
+import type { McpWithTools } from '@activepieces/shared';
 
-import { McpPieceActionsDialog } from './mcp-piece-actions-dialog';
+import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
 
-type McpToolDialogProps = {
+type McpPieceDialogProps = {
   children: React.ReactNode;
-  mcpPieceToUpdate?: McpTool;
-  mcpId: string;
-  mode: 'add' | 'edit';
+  mcp: McpWithTools;
   open: boolean;
   onSuccess: () => void;
   onClose: () => void;
 };
 
-export default function McpToolDialog({
-  mcpId,
-  mcpPieceToUpdate,
-  mode,
+export function McpPieceDialog({
+  mcp,
   open,
   onSuccess,
   children,
   onClose,
-}: McpToolDialogProps) {
+}: McpPieceDialogProps) {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
@@ -63,32 +59,8 @@ export default function McpToolDialog({
     });
 
   const [selectedPiece, setSelectedPiece] =
-    useState<PieceStepMetadataWithSuggestions | null>(() => {
-      if (
-        !isNil(mcpPieceToUpdate) &&
-        mcpPieceToUpdate.type === McpToolType.PIECE
-      ) {
-        return metadata?.find((m) => {
-          if (
-            mcpPieceToUpdate.type === McpToolType.PIECE &&
-            (m as PieceStepMetadataWithSuggestions).pieceName ===
-              mcpPieceToUpdate.pieceMetadata?.pieceName
-          ) {
-            return true;
-          }
-          return false;
-        }) as PieceStepMetadataWithSuggestions | null;
-      }
-      return null;
-    });
-
-  const [selectedActions, setSelectedActions] = useState<string[]>(() =>
-    mcpPieceToUpdate?.type === McpToolType.PIECE
-      ? mcpPieceToUpdate.pieceMetadata?.actionNames || []
-      : [],
-  );
-
-  const { toast } = useToast();
+    useState<PieceStepMetadataWithSuggestions | null>(null);
+  const [selectedActions, setSelectedActions] = useState<string[]>([]);
 
   const pieceMetadata = useMemo(() => {
     return (
@@ -136,8 +108,6 @@ export default function McpToolDialog({
 
   const { isPending, mutate: saveTool } = useMutation({
     mutationFn: async () => {
-      if (!mcpId) return;
-
       const currentTools =
         mcp?.tools?.map((tool) => ({
           type: tool.type,
@@ -156,7 +126,7 @@ export default function McpToolDialog({
 
       const newTool = {
         type: McpToolType.PIECE,
-        mcpId: mcpId,
+        mcpId: mcp.id,
         pieceMetadata: {
           pieceName: selectedPiece.pieceName,
           actionNames: selectedActions,
@@ -175,14 +145,11 @@ export default function McpToolDialog({
         updatedTools = [...currentTools, newTool];
       }
 
-      return await mcpApi.update(mcpId, { tools: updatedTools });
+      return await mcpApi.update(mcp.id, { tools: updatedTools });
     },
     onSuccess: () => {
       toast({
-        description:
-          mode === 'edit'
-            ? t('Tool updated successfully')
-            : t('Tool added successfully'),
+        description: t('Tool updated successfully'),
         duration: 3000,
       });
       onSuccess?.();
@@ -193,16 +160,11 @@ export default function McpToolDialog({
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description:
-          mode === 'edit'
-            ? t('Failed to update tool')
-            : t('Failed to add tool'),
+        description: t('Failed to update tool'),
         duration: 5000,
       });
     },
   });
-
-  const { data: mcp } = mcpHooks.useMcp(mcpId);
 
   const handleClose = () => {
     setSelectedPiece(null);
@@ -226,23 +188,21 @@ export default function McpToolDialog({
           <DialogTitle className="text-2xl font-bold">
             {selectedPiece ? (
               <div className="flex items-center gap-2">
-                {mode === 'add' && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setSelectedPiece(null);
-                          setSearchQuery('');
-                        }}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t('Back')}</TooltipContent>
-                  </Tooltip>
-                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedPiece(null);
+                        setSearchQuery('');
+                      }}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Back')}</TooltipContent>
+                </Tooltip>
                 {selectedPiece.displayName}
               </div>
             ) : (
@@ -250,11 +210,7 @@ export default function McpToolDialog({
             )}
           </DialogTitle>
           <DialogDescription>
-            {selectedPiece
-              ? mode === 'edit'
-                ? t('Edit the selected actions for this tool')
-                : t('Select actions to add to your mcp tool')
-              : null}
+            {t('Select actions to add to your mcp tool')}
           </DialogDescription>
         </DialogHeader>
         {selectedPiece ? (

@@ -11,33 +11,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { McpTool, McpToolType, Permission } from '@activepieces/shared';
+import {
+  McpTool,
+  McpToolType,
+  Permission,
+  McpWithTools,
+} from '@activepieces/shared';
 
-import McpFlowDialog from './mcp-flow-tool-dialog/mcp-flow-dialog';
-import McpToolDialog from './mcp-piece-tool-dialog/mcp-tool-dialog';
+import { McpFlowDialog } from './mcp-flow-tool-dialog';
+import { McpPieceDialog } from './mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
-  mcpId: string;
+  mcp: McpWithTools;
   refetchMcp: () => void;
-  showAddPieceDialog: boolean;
-  setShowAddPieceDialog: (show: boolean) => void;
-  showAddFlowDialog: boolean;
-  setShowAddFlowDialog: (show: boolean) => void;
   tools: McpTool[];
 };
 
 export const McpAddToolDropdown = ({
-  mcpId,
+  mcp,
   refetchMcp,
-  showAddPieceDialog,
-  setShowAddPieceDialog,
-  showAddFlowDialog,
-  setShowAddFlowDialog,
   tools,
 }: McpAddToolDropdownProps) => {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
+  const [showAddFlowDialog, setShowAddFlowDialog] = useState(false);
+
   return (
     <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteMcp}>
       <DropdownMenu
@@ -58,15 +58,18 @@ export const McpAddToolDropdown = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <McpToolDialog
-            mcpId={mcpId!}
+          <McpPieceDialog
             open={showAddPieceDialog}
-            mode="add"
+            mcp={mcp}
             onSuccess={() => {
               refetchMcp();
               setShowAddPieceDialog(false);
+              setOpenDropdown(false);
             }}
-            onClose={() => setShowAddPieceDialog(false)}
+            onClose={() => {
+              setShowAddPieceDialog(false);
+              setOpenDropdown(false);
+            }}
           >
             <DropdownMenuItem
               disabled={!doesUserHavePermissionToWriteMcp}
@@ -78,11 +81,10 @@ export const McpAddToolDropdown = ({
               <Puzzle className="h-4 w-4 me-2" />
               <span>{t('From piece')}</span>
             </DropdownMenuItem>
-          </McpToolDialog>
+          </McpPieceDialog>
           <McpFlowDialog
-            mcpId={mcpId!}
+            mcp={mcp}
             open={showAddFlowDialog}
-            mode="add"
             selectedFlows={tools
               .filter((tool) => tool.type === McpToolType.FLOW)
               .map((tool) => tool.flowId!)}
