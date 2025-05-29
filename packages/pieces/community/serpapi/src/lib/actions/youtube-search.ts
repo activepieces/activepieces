@@ -65,7 +65,7 @@ export const youtubeSearch = createAction({
         const { query, country, language, num, start, sortBy, time } = propsValue;
 
         return await serpapiCommon.makeRequest(auth, {
-            q: query,
+            search_query: query,
             engine: 'youtube',
             gl: country,
             hl: language,

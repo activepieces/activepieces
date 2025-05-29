@@ -45,14 +45,18 @@ export const googleSearch = createAction({
   async run({ propsValue, auth }) {
     const { query, country, language, num, start, safe } = propsValue;
 
-    return await serpapiCommon.makeRequest(auth, {
+    const params: Record<string, any> = {
       q: query,
       engine: 'google',
-      gl: country,
-      hl: language,
-      num: num,
-      start: start,
-      safe: safe ? 'active' : 'off',
-    });
+    };
+
+    // Only add optional parameters if they have values
+    if (country) params['gl'] = country;
+    if (language) params['hl'] = language;
+    if (num) params['num'] = num;
+    if (start) params['start'] = start;
+    if (safe !== undefined) params['safe'] = safe ? 'active' : 'off';
+
+    return await serpapiCommon.makeRequest(auth, params);
   },
 });

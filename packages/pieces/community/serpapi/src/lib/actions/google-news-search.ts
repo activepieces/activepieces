@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpapiCommon } from '../common';
-
 import { serpapiAuth } from '../../index';
 
 export const googleNewsSearch = createAction({
@@ -52,15 +51,19 @@ export const googleNewsSearch = createAction({
     async run({ propsValue, auth }) {
         const { query, country, language, num, start, time } = propsValue;
 
-        return await serpapiCommon.makeRequest(auth, {
+        const params: Record<string, any> = {
             q: query,
             engine: 'google_news',
-            gl: country,
-            hl: language,
-            num: num,
-            start: start,
             tbm: 'nws',
-            tbs: time ? `qdr:${time}` : undefined,
-        });
+        };
+
+        // Only add optional parameters if they have values
+        if (country) params['gl'] = country;
+        if (language) params['hl'] = language;
+        if (num) params['num'] = num;
+        if (start) params['start'] = start;
+        if (time) params['tbs'] = `qdr:${time}`;
+
+        return await serpapiCommon.makeRequest(auth, params);
     },
 });
