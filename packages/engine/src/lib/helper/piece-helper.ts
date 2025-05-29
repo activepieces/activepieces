@@ -22,9 +22,9 @@ import {
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
+import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
-import { utils } from '../utils'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
@@ -62,7 +62,7 @@ export const pieceHelper = {
                     projectId: params.projectId,
                     engineToken: params.engineToken,
                     apiUrl: constants.internalApiUrl,
-                    target: 'properties'
+                    target: 'properties',
                 }),
             }
 
