@@ -155,11 +155,13 @@ const SSOPage = () => {
             providerDescription={t('Allow logins through email and password.')}
             providerIcon={<MailIcon className="w-[32px] h-[32px]" />}
             button={
-              <Switch
+              <div className='mr-7'>
+                 <Switch
                 checked={emailAuthEnabled}
                 onCheckedChange={() => toggleEmailAuthentication()}
                 disabled={isPending}
               />
+                </div>      
             }
           />
         </div>

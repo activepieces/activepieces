@@ -101,12 +101,12 @@ export const AppearanceSection = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="name">{t('Project Name')}</FormLabel>
+                    <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
                     <Input
                       {...field}
                       required
                       id="name"
-                      placeholder={t('Project Name')}
+                      placeholder={t('Platform Name')}
                       className="rounded-sm"
                     />
                     <FormMessage />
@@ -166,35 +166,6 @@ export const AppearanceSection = () => {
                 )}
               />
 
-              <FormField
-                name="language"
-                render={({ field }) => (
-                  <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="language">
-                      {t('Default Language')}
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select Language')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {locales.length === 0 && (
-                            <SelectItem value="NULL">
-                              {t('No Languages')}
-                            </SelectItem>
-                          )}
-                          {locales.map(([locale, name]) => (
-                            <SelectItem key={locale} value={locale}>
-                              {name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 name="color"
