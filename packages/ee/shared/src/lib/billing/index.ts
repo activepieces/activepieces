@@ -1,6 +1,6 @@
-import { PiecesFilterType, PlatformPlanLimits } from '@activepieces/shared'
+import { PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { t } from 'i18next'
+export * from './plan-limits'
 
 export type FlowPlanLimits = {
     nickname: string
@@ -10,26 +10,14 @@ export type FlowPlanLimits = {
     piecesFilterType: PiecesFilterType
 }
 
+export enum ApSubscriptionStatus {
+    ACTIVE = 'active',
+    CANCELED = 'canceled',
+}
+
 export const MAXIMUM_ALLOWED_TASKS = 1000_000
 
 export const PRICE_PER_USER = 10
-export const PRICE_PER_FLOW = 5
-export const PRICE_PER_100_AI_CREDITS = 10
-
-export enum PaymentTiming {
-    IMMEDIATE = 'immediate',
-    END_OF_MONTH = 'end_of_month',
-}
-
-export enum ProrationBehavior {
-    CREATE_PRORATIONS = 'create_prorations',
-    NONE = 'none',
-}
-
-export enum BilingCycle {
-    MONTHLY = 'monthly',
-    ANNUAL = 'annual',
-}
 
 export enum PlanName {
     FREE = 'free',
@@ -38,171 +26,19 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
 }
 
-export const DEFAULT_FREE_PLAN_LIMIT = {
-    nickname: 'free-pay-as-you-go',
-    tasks: 1000,
-    pieces: [],
-    aiCredits: 200,
-    piecesFilterType: PiecesFilterType.NONE,
-}
-
-export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
-    tasksLimit: 1000,
-    aiCreditsLimit: 200,
-    embeddingEnabled: false,
-    tablesEnabled: true,
-    todosEnabled: true,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    includedTasks: 1000,
-    includedAiCredits: 200,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    alertsEnabled: false,
-    ssoEnabled: false,
-}
-
-export const FREE_PLAN: PlatformPlanLimits = {
-    tasksLimit: 1000,
-    includedTasks: 1000,
-    aiCreditsLimit: 200,
-    includedAiCredits: 200,
-    activeFlowsLimit: 5,
-    projectsLimit: 1,
-    tablesLimit: 1,
-    mcpLimit: 1,
-    tablesEnabled: true,
-    embeddingEnabled: false,
-    todosEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    alertsEnabled: false,
-    ssoEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-}
-
-
-export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
-    includedTasks: 1000000,
-    aiCreditsLimit: 500,
-    includedAiCredits: 500,
-    activeFlowsLimit: 10,
-    projectsLimit: 1,
-    tablesLimit: 5,
-    mcpLimit: 5,
-    tablesEnabled: true,
-    embeddingEnabled: false,
-    todosEnabled: true,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    alertsEnabled: false,
-    ssoEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-}
-
-
-export const BUSINESS_CLOUD_PLAN: PlatformPlanLimits = {
-    includedTasks: 1000000,
-    aiCreditsLimit: 1000,
-    includedAiCredits: 1000,
-    activeFlowsLimit: 50,
-    projectsLimit: 15,
-    tablesLimit: 20,
-    mcpLimit: 5,
-    tablesEnabled: true,
-    embeddingEnabled: false,
-    todosEnabled: true,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    alertsEnabled: false,
-    ssoEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-
-}
-
-export const OPENSOURCE_PLAN: PlatformPlanLimits = {
-    embeddingEnabled: false,
-    tablesEnabled: true,
-    todosEnabled: true,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    includedTasks: 0,
-    includedAiCredits: 0,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    tasksLimit: undefined,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    alertsEnabled: false,
-    ssoEnabled: false,
-    stripeCustomerId: undefined,
-    stripeSubscriptionId: undefined,
-    stripeSubscriptionStatus: undefined,
-}
-
-
-const AddonsSchema = Type.Object({
+export const UpdateSubscriptionParamsSchema = Type.Object({
+    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS), Type.Literal(PlanName.FREE)]),
     extraUsers: Type.Optional(Type.Number()),
-    extraFlows: Type.Optional(Type.Number()),
-    extraAiCredits: Type.Optional(Type.Number()),
 })
-export type Addons = Static<typeof AddonsSchema>
+export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSchema>
 
-export const UpgradeSubscriptionParamsSchema = Type.Object({
-    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-    billing: Type.Union([Type.Literal(BilingCycle.MONTHLY), Type.Literal(BilingCycle.ANNUAL)]),
-    addons: AddonsSchema,
-    paymentTiming: Type.Union([Type.Literal(PaymentTiming.IMMEDIATE), Type.Literal(PaymentTiming.END_OF_MONTH)]),
-    prorationBehavior: Type.Union([Type.Literal(ProrationBehavior.CREATE_PRORATIONS), Type.Literal(ProrationBehavior.NONE)]),
-})
 
-export type UpgradeSubscriptionParams = Static<typeof UpgradeSubscriptionParamsSchema>
+export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
+    const testMode = stripeKey?.startsWith('sk_test')
+    return testMode
+        ? 'price_1RTRhOQN93Aoq4f8F6wt47v3'
+        : 'price_live_ai_credits_monthly'
+}
 
 export function getTasksPriceId(stripeKey: string | undefined) {
     const testMode = stripeKey?.startsWith('sk_test')
@@ -211,33 +47,18 @@ export function getTasksPriceId(stripeKey: string | undefined) {
         : 'price_1Qf7RiKZ0dZRqLEKAgP38l7w'
 }
 
-export function getPriceId(stripeKey: string | undefined) {
-    return (
-        {
-            [PlanName.PLUS]: {
-                [BilingCycle.MONTHLY]: stripeKey?.startsWith('sk_test') ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
-                [BilingCycle.ANNUAL]: stripeKey?.startsWith('sk_test') ? 'price_1RTRdmQN93Aoq4f8vjoImL62' : 'price_live_plus_annual',
-            },
-            [PlanName.BUSINESS]: {
-                [BilingCycle.MONTHLY]: stripeKey?.startsWith('sk_test') ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
-                [BilingCycle.ANNUAL]: stripeKey?.startsWith('sk_test') ? 'price_1RTRfEQN93Aoq4f8rawDRCTX' : 'price_live_business_annual',
-            },
-            ADDONS: {
-                EXTRA_USERS: stripeKey?.startsWith('sk_test') ? 'price_1RTRicQN93Aoq4f8S5dBx6TA' : 'price_live_users',
-                EXTRA_FLOWS: stripeKey?.startsWith('sk_test') ? 'price_1RTRgSQN93Aoq4f8b4LSm1hR' : 'price_live_flows',
-                EXTRA_AI_CREDITS: stripeKey?.startsWith('sk_test') ? 'price_1RTRhOQN93Aoq4f8F6wt47v3' : 'price_live_ai_credits',
-            },
-        }
-    )
+export function getUserPriceId(stripeKey: string | undefined) {
+    const testMode = stripeKey?.startsWith('sk_test')
+    return testMode
+        ? 'price_1RU2GkQN93Aoq4f8ogetgfUB'
+        : 'price_live_user_monthly'
 }
 
-export const PRICE_PER_1000_TASKS = 1
-
-export enum ApSubscriptionStatus {
-    ACTIVE = 'active',
-    INCOMPLETE = 'incomplete',
-    INCOMPLETE_EXPIRED = 'incomplete_expired',
-    PAST_DUE = 'past_due',
-    CANCELED = 'canceled',
-    UNAPID = 'unpaid',
+export function getPlanPriceId(stripeKey: string | undefined) {
+    const testMode = stripeKey?.startsWith('sk_test')
+    return {
+            [PlanName.FREE]:  testMode ? 'price_1RU2A3QN93Aoq4f8IMLseT2z' : 'price_live_free_monthly',
+            [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
+            [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
+        }
 }

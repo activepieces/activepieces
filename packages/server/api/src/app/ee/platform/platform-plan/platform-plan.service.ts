@@ -1,4 +1,4 @@
-import { Addons, ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -20,18 +20,16 @@ type UpdatePlatformBillingParams = {
 
 const edition = system.getEdition()
 
-function getPlanLimits(planName: PlanName.PLUS | PlanName.BUSINESS, addons: Addons = {}): Partial<PlatformPlanLimits> {
-    const baseLimits = planName === PlanName.PLUS ? PLUS_CLOUD_PLAN : BUSINESS_CLOUD_PLAN
-
-    const newActiveFlowsLimit = (baseLimits.activeFlowsLimit ?? 0) + (addons.extraFlows || 0)
-    const newUserSeatsLimit = (baseLimits.userSeatsLimit ?? 0) + (addons.extraUsers || 0)
-    const newAiCreditsLimit = (baseLimits.aiCreditsLimit ?? 0) + (addons.extraAiCredits || 0)
-
-    return {
-        ...baseLimits,
-        ...spreadIfDefined('activeFlowsLimit', newActiveFlowsLimit),
-        ...spreadIfDefined('userSeatsLimit', newUserSeatsLimit),
-        ...spreadIfDefined('aiCreditsLimit', newAiCreditsLimit),
+function getPlanLimits(planName: PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE): Partial<PlatformPlanLimits> {
+    switch (planName) {
+        case PlanName.FREE:
+            return FREE_CLOUD_PLAN
+        case PlanName.PLUS:
+            return PLUS_CLOUD_PLAN
+        case PlanName.BUSINESS:
+            return BUSINESS_CLOUD_PLAN
+        default:
+            throw new Error(`Invalid plan name: ${planName}`)
     }
 }
 
@@ -116,9 +114,10 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     const platformPlan: Omit<PlatformPlan, 'created' | 'updated'> = {
         id: apId(),
         platformId,
-        stripeCustomerId: stripeCustomerId ?? 'hello-louai',
+        stripeCustomerId: stripeCustomerId ?? undefined,
         ...plan,
     }
+
     return platformPlanRepo().save(platformPlan)
 }
 

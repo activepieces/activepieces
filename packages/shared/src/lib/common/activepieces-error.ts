@@ -77,6 +77,7 @@ export type ApErrorParams =
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
+    | ErrorUpdatingSubscriptionParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -366,6 +367,12 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
+export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
+ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
+{
+    message: string
+}>
+
 export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
 ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
 {
@@ -449,6 +456,7 @@ export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIE
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
+    ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',

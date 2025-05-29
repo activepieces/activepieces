@@ -1,5 +1,5 @@
-import { ApSubscriptionStatus, BilingCycle, PaymentTiming, PlanName, ProrationBehavior, UpgradeSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ApSubscriptionStatus, FREE_CLOUD_PLAN, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
@@ -32,92 +32,70 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/upgrade', UpgradeRequest, async (request, reply) => {
         const stripe = stripeHelper(request.log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-   
+
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const { plan, billing, addons, paymentTiming, prorationBehavior } = request.body
-
-        if (!plan || ![PlanName.PLUS, PlanName.BUSINESS].includes(plan)) {
+        if (platformBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
             await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Invalid plan selected. Choose PLUS or BUSINESS.',
+                message: 'Already subscribed',
             })
             return
         }
 
-        if (!billing || ![BilingCycle.MONTHLY, BilingCycle.ANNUAL].includes(billing)) {
-            await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Invalid billing period. Choose MONTHLY or ANNUAL.',
+        await platformPlanService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: FREE_CLOUD_PLAN.tasksLimit })
+        return {
+            paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
+        }
+    })
+
+
+    fastify.post('/create-subscription', UpgradeRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const customerId = platformBilling.stripeCustomerId
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+
+        const { plan, extraUsers } = request.body
+
+        if (plan !== PlanName.BUSINESS &&  !isNil(extraUsers) && extraUsers > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users are only available for business plan',
+                },
             })
-            return
         }
 
-        const upgradeParams = {
-            plan,
-            billing,
-            addons: addons || {},
-            paymentTiming: paymentTiming || PaymentTiming.IMMEDIATE,
-            prorationBehavior: prorationBehavior || ProrationBehavior.CREATE_PRORATIONS,
-        }
+        return stripeHelper(request.log).createSubscriptionCheckoutUrl(
+            customerId,
+            { plan, extraUsers },
+        )
 
-        try {
-            if (platformBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE && platformBilling.stripeSubscriptionId) {
-                request.log.info({ 
-                    platformId: request.principal.platform.id, 
-                    subscriptionId: platformBilling.stripeSubscriptionId,
-                    upgradeParams, 
-                }, 'Upgrading existing subscription')
+    })
 
-                const updatedSubscription = await stripeHelper(request.log).upgradeSubscription(
-                    platformBilling.stripeSubscriptionId,
-                    upgradeParams,
-                )
+    fastify.post('/update-subscription', UpgradeRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const customerId = platformBilling.stripeCustomerId
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-                const planLimits = platformPlanService(request.log).getPlanLimits(plan, addons)
+        const { plan, extraUsers } = request.body
 
-                await platformPlanService(request.log).update({ 
-                    platformId: request.principal.platform.id, 
-                    ...planLimits,
-                })
-
-                return {
-                    subscription: {
-                        id: updatedSubscription.id,
-                        status: updatedSubscription.status,
-                        current_period_end: updatedSubscription.current_period_end,
-                        plan,
-                        billing,
-                        addons,
-                    },
-                }
-            }
-            else {
-                request.log.info({ 
-                    platformId: request.principal.platform.id, 
-                    customerId,
-                    upgradeParams, 
-                }, 'Creating new subscription')
-
-                const checkoutUrl = await stripeHelper(request.log).createSubscriptionCheckoutUrl(
-                    customerId,
-                    upgradeParams,
-                )
-
-                return {
-                    paymentLink: checkoutUrl,
-                }
-            }
-        }
-        catch (error) {
-            request.log.error({ error, platformId: request.principal.platform.id }, 'Failed to upgrade subscription')
-            
-            await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                message: 'Failed to process subscription upgrade. Please try again.',
-                error: error instanceof Error ? error.message : 'Unknown error',
+        if (plan !== PlanName.BUSINESS &&  !isNil(extraUsers) && extraUsers > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users are only available for business plan',
+                },
             })
-            return
         }
+
+        assertNotNullOrUndefined(platformBilling.stripeSubscriptionId, 'Stripe subscription id is not set')
+
+        await stripeHelper(request.log).updateSubscription(
+            platformBilling.stripeSubscriptionId,
+            { plan, extraUsers },
+        )
     })
 
     fastify.patch('/', UpdateLimitsRequest, async (request) => {
@@ -157,7 +135,7 @@ const UpdateLimitsRequest = {
 
 const UpgradeRequest = {
     schema: {
-        body: UpgradeSubscriptionParamsSchema,
+        body: UpdateSubscriptionParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],

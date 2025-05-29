@@ -51,7 +51,7 @@ export default function Billing() {
     isError,
   } = useQuery({
     queryKey: ['platform-billing-subscription', platform.id],
-    queryFn: platformBillingApi.getSubscription,
+    queryFn: platformBillingApi.getSubscriptionInfo,
     enabled: !!platform,
   });
 
@@ -69,7 +69,7 @@ export default function Billing() {
 
   const { mutate: manageBilling } = useMutation({
     mutationFn: async () => {
-      const { portalLink } = await platformBillingApi.portalLink();
+      const { portalLink } = await platformBillingApi.getPortalLink();
       window.open(portalLink, '_blank');
       return;
     },
@@ -79,7 +79,7 @@ export default function Billing() {
 
   const updateLimitsMutation = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
-      platformBillingApi.update(data.tasksLimit),
+      platformBillingApi.updateTaskLimit(data.tasksLimit),
     onSuccess: () => {
       refetch();
       toast({

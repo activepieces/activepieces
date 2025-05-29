@@ -6,27 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
+import { PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared';
 
 import { planData } from '../data';
 
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
   selected: PlanName;
+  onUpgrade: (params: UpdateSubscriptionParams) => void;
 };
 
-export const PlanCard = ({ plan, selected }: PlanCardProps) => {
+export const PlanCard = ({ plan, selected, onUpgrade }: PlanCardProps) => {
   const openNewWindow = useNewWindow();
   const selectedPlan = selected === plan.name;
 
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
-  const [additionalUsers, setAdditionalUsers] = useState([5]);
+  const [additionalUsers, setAdditionalUsers] = useState(0);
 
   const isBusinessPlan = plan.name === PlanName.BUSINESS;
+  const isEnterprisePlan = plan.name === PlanName.ENTERPRISE;
+
   const baseUsers = 5;
   const maxUsers = 30;
   const additionalUserCost = 10;
-  const extraUsers = additionalUsers[0] - baseUsers;
+  const extraUsers = additionalUsers;
   const totalPrice =
     typeof plan.price === 'number'
       ? plan.price + extraUsers * additionalUserCost
@@ -35,11 +38,11 @@ export const PlanCard = ({ plan, selected }: PlanCardProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col rounded-lg p-4 transition border',
+        'flex flex-col rounded-lg p-4 transition border gap-4',
         selectedPlan && 'ring-2 ring-primary',
       )}
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start">
         <div>
           <h3 className="text-xl font-bold">
             {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
@@ -48,7 +51,7 @@ export const PlanCard = ({ plan, selected }: PlanCardProps) => {
         </div>
       </div>
 
-      <div className="mt-2 flex items-baseline gap-1">
+      <div className="flex items-baseline gap-1">
         <span className="text-xl font-semibold">
           {plan.price === 'Custom' ? (
             'Custom'
@@ -69,21 +72,33 @@ export const PlanCard = ({ plan, selected }: PlanCardProps) => {
 
       <Button
         size="sm"
-        className="mt-4"
+        className="font-semibold"
         variant={selectedPlan ? 'outline' : 'default'}
         disabled={selectedPlan}
-        onClick={() => openNewWindow('https://activepieces.com/sales')}
+        onClick={() => {
+          if (isEnterprisePlan) {
+            openNewWindow('https://activepieces.com/sales');
+          } else {
+            onUpgrade({
+              plan: plan.name as
+                | PlanName.FREE
+                | PlanName.PLUS
+                | PlanName.BUSINESS,
+              extraUsers: additionalUsers,
+            });
+          }
+        }}
       >
         {selectedPlan
-          ? t('Current Plan')
-          : plan.name === 'enterprise'
           ? t('Contact Sales')
+          : isEnterprisePlan
+          ? t('Current Plan')
           : t('Upgrade')}
       </Button>
 
-      <div className="mt-5">
+      <div>
         <p className="text-sm font-bold mb-3">{t('Includes')}</p>
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           {planData.features.map((feature) => (
             <li key={feature.key} className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between items-center gap-3">
@@ -135,13 +150,12 @@ export const PlanCard = ({ plan, selected }: PlanCardProps) => {
                 {isBusinessPlan && feature.key === 'users' && (
                   <div className="py-2 space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{additionalUsers[0]} users total</span>
+                      <span>{additionalUsers + baseUsers} users total</span>
                       <span>+{extraUsers} extra</span>
                     </div>
                     <Slider
-                      value={additionalUsers}
-                      onValueChange={setAdditionalUsers}
-                      min={baseUsers}
+                      value={[additionalUsers]}
+                      onValueChange={(value) => setAdditionalUsers(value[0])}
                       max={maxUsers}
                       step={1}
                       className="w-full"
