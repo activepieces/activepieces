@@ -1,0 +1,112 @@
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest, fetchForms } from '../common';
+import { cognitoFormsAuth } from '../../index';
+
+export interface StoredWebhookData {
+  webhookId: string;
+}
+
+export interface WebhookCreationResponse {
+  id: string;
+  [key: string]: any;
+}
+
+export const entryUpdatedTrigger = createTrigger({
+  name: 'entry_updated',
+  displayName: 'Entry Updated',
+  description: 'Triggers when an existing form entry is updated',
+  auth: cognitoFormsAuth,
+  props: {
+    formId: Property.Dropdown({
+      displayName: 'Form',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please connect your Cognito Forms account',
+            options: [],
+          };
+        }
+
+        const apiKey = auth as string;
+        const forms = await fetchForms(apiKey);
+
+        return {
+          options: forms.map((form: any) => ({
+            label: form.Name,
+            value: form.Id,
+          })),
+        };
+      },
+    }),
+  },
+  type: TriggerStrategy.WEBHOOK,
+  sampleData: {
+    Id: '1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p',
+    FormId: '7p8o9i0j-1k2l-3m4n-5o6p-7q8r9s0t1u2v',
+    Number: 123,
+    Status: 'Updated',
+    DateCreated: '2023-06-15T10:30:45Z',
+    DateSubmitted: '2023-06-15T10:35:22Z',
+    DateUpdated: '2023-06-15T11:20:15Z',
+    Entry: {
+      Name: 'John Doe',
+      Email: 'john.updated@example.com',
+      Phone: '555-987-6543',
+      Message: 'This is an updated form submission',
+    },
+  },
+
+  async onEnable(context) {
+    try {
+      const formId = context.propsValue.formId;
+      
+      const response = await makeRequest(
+        context.auth as string,
+        HttpMethod.POST,
+        '/webhooks',
+        {
+          url: context.webhookUrl,
+          events: ['EntryUpdated'],
+          formId: formId,
+        }
+      ) as WebhookCreationResponse;
+
+      if (!response?.id) {
+        throw new Error('Failed to create webhook: Invalid response format');
+      }
+
+      await context.store.put<StoredWebhookData>('webhookData', {
+        webhookId: response.id,
+      });
+    } catch (error) {
+      throw new Error(`Failed to enable entry updated trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  async onDisable(context) {
+    try {
+      const webhookData = await context.store.get<StoredWebhookData>('webhookData');
+      if (webhookData?.webhookId) {
+        await makeRequest(
+          context.auth as string,
+          HttpMethod.DELETE,
+          `/webhooks/${webhookData.webhookId}`,
+          undefined
+        );
+      }
+    } catch (error) {
+      throw new Error(`Failed to disable entry updated trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  async run(context) {
+    if (context.payload.body) {
+      return [context.payload.body];
+    }
+    return [];
+  },
+});
