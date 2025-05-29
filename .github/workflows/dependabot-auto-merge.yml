@@ -1,0 +1,106 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  dependabot-auto-merge:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Get PR details for workflow_run event
+        if: github.event_name == 'workflow_run'
+        id: get-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`,
+              state: 'open'
+            });
+            
+            if (pullRequests.length === 0) {
+              console.log('No open PR found for this branch');
+              return;
+            }
+            
+            const pr = pullRequests[0];
+            console.log(`Found PR #${pr.number}: ${pr.title}`);
+            
+            // Check if this is a Dependabot PR
+            if (pr.user.login !== 'dependabot[bot]') {
+              console.log('PR is not from Dependabot, skipping auto-merge');
+              return;
+            }
+            
+            core.setOutput('pr-number', pr.number);
+            core.setOutput('pr-url', pr.html_url);
+            core.setOutput('is-dependabot', 'true');
+
+      - name: Wait for CI to complete (for pull_request events)
+        if: github.event_name == 'pull_request'
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'main'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+          allowed-conclusions: success
+
+      - name: Enable auto-merge for Dependabot PRs
+        if: |
+          (github.event_name == 'pull_request' && success()) ||
+          (github.event_name == 'workflow_run' && steps.get-pr.outputs.is-dependabot == 'true')
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_URL="${{ github.event.pull_request.html_url }}"
+          else
+            PR_URL="${{ steps.get-pr.outputs.pr-url }}"
+          fi
+          
+          echo "Enabling auto-merge for PR: $PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR
+        if: |
+          (github.event_name == 'pull_request' && success()) ||
+          (github.event_name == 'workflow_run' && steps.get-pr.outputs.is-dependabot == 'true')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+            if (context.eventName === 'pull_request') {
+              prNumber = context.issue.number;
+            } else {
+              prNumber = ${{ steps.get-pr.outputs.pr-number || 'null' }};
+            }
+            
+            if (!prNumber) {
+              console.log('No PR number found, skipping comment');
+              return;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 Auto-merging this Dependabot PR since all checks have passed!'
+            })

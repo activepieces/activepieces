@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "tpsaint"
+    assignees:
+      - "tpsaint"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "tpsaint"
+    assignees:
+      - "tpsaint"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
