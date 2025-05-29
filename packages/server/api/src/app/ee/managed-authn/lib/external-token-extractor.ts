@@ -108,8 +108,7 @@ function extractPieces(payload: ExternalTokenPayload) {
 }
 
 function extractAiCredits(payload: ExternalTokenPayload) {
-    if ('version' in payload && payload.version === 'v3')
-    {
+    if ('version' in payload && payload.version === 'v3') {
         return payload.aiCredits
     }
     return undefined

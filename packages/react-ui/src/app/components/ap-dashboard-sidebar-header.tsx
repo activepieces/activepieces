@@ -27,9 +27,10 @@ const ApDashboardSidebarHeader = ({
   const { embedState } = useEmbedding();
   const isInPlatformAdmin = window.location.pathname.includes('platform');
   const showProjectSwitcher =
-    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded && !isInPlatformAdmin;
+    edition !== ApEdition.COMMUNITY &&
+    !embedState.isEmbedded &&
+    !isInPlatformAdmin;
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
-
 
   return (
     <SidebarHeader className="pb-0">
@@ -46,27 +47,26 @@ const ApDashboardSidebarHeader = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <>
-               {showProjectSwitcher && (<img
-                src={branding.logos.logoIconUrl}
-                alt={t('home')}
-                width={28}
-                height={28}
-                className="max-h-[22px] max-w-[22px] object-contain"
-              />)}
+                  {showProjectSwitcher && (
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('home')}
+                      width={28}
+                      height={28}
+                      className="max-h-[22px] max-w-[22px] object-contain"
+                    />
+                  )}
 
-
-              {
-                !showProjectSwitcher && (
-                  <img
-                  src={branding.logos.fullLogoUrl}
-                  alt={t('home')}
-                  width={160}
-                  height={51}
-                  className="max-h-[51px] max-w-[160px] object-contain"
-                />
-                )
-              }
-              </>
+                  {!showProjectSwitcher && (
+                    <img
+                      src={branding.logos.fullLogoUrl}
+                      alt={t('home')}
+                      width={160}
+                      height={51}
+                      className="max-h-[51px] max-w-[160px] object-contain"
+                    />
+                  )}
+                </>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Home')}</TooltipContent>
             </Tooltip>

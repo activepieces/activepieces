@@ -14,19 +14,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { localesMap } from '@/lib/utils';
 import { LocalesEnum } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
@@ -42,7 +33,6 @@ type FromSchema = Static<typeof FromSchema>;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const locales = Object.entries(localesMap);
   const form = useForm({
     defaultValues: {
       name: platform?.name,
@@ -165,7 +155,6 @@ export const AppearanceSection = () => {
                   </FormItem>
                 )}
               />
-
 
               <FormField
                 name="color"

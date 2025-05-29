@@ -1,4 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
@@ -31,17 +32,24 @@ import {
   PlatformRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
-
 
 const updateProjectFormSchema = Type.Object({
-  displayName: Type.String({minLength:1, errorMessage: t('This field is required')}),
+  displayName: Type.String({
+    minLength: 1,
+    errorMessage: t('This field is required'),
+  }),
   externalId: Type.Optional(Type.String()),
   plan: Type.Object({
-    tasks: Type.String({minLength: 1, errorMessage: t('This field is required')}),
-    aiCredits: Type.String({minLength: 1, errorMessage: t('This field is required')}),
+    tasks: Type.String({
+      minLength: 1,
+      errorMessage: t('This field is required'),
+    }),
+    aiCredits: Type.String({
+      minLength: 1,
+      errorMessage: t('This field is required'),
+    }),
   }),
-})
+});
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateCurrentProject } = projectHooks.useCurrentProject();
@@ -51,7 +59,6 @@ export default function GeneralPage() {
   const { toast } = useToast();
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
-  
   const form = useForm<Static<typeof updateProjectFormSchema>>({
     defaultValues: {
       displayName: project?.displayName,
@@ -126,7 +133,7 @@ export default function GeneralPage() {
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={form.handleSubmit(() =>{
+              onSubmit={form.handleSubmit(() => {
                 const values = form.getValues();
                 mutation.mutate({
                   displayName: values.displayName,
@@ -135,7 +142,7 @@ export default function GeneralPage() {
                     tasks: parseInt(values.plan.tasks),
                     aiCredits: parseInt(values.plan.aiCredits),
                   },
-                })
+                });
               })}
             >
               <FormField
@@ -218,17 +225,13 @@ export default function GeneralPage() {
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>
               )}
-               {checkAccess(Permission.WRITE_PROJECT) && (
-            <div className="flex gap-2 justify-end mt-4">
-              <Button
-              >
-                {t('Save')}
-              </Button>
-            </div>
-          )}
+              {checkAccess(Permission.WRITE_PROJECT) && (
+                <div className="flex gap-2 justify-end mt-4">
+                  <Button>{t('Save')}</Button>
+                </div>
+              )}
             </form>
           </Form>
-         
         </div>
       </div>
     </div>
