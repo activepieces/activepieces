@@ -22,6 +22,7 @@ import {
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
+import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
@@ -57,6 +58,12 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                connections: utils.createConnectionManager({
+                    projectId: params.projectId,
+                    engineToken: params.engineToken,
+                    apiUrl: constants.internalApiUrl,
+                    target: 'properties',
+                }),
             }
 
             switch (property.type) {

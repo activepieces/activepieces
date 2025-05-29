@@ -139,14 +139,14 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
           </TooltipTrigger>
           <TooltipContent>
             {isNil(oauth2App)
-              ? t('Configure OAuth2 APP')
-              : t('Delete OAuth2 APP')}
+              ? t('Configure OAuth2 App')
+              : t('Delete OAuth2 App')}
           </TooltipContent>
         </Tooltip>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Configure OAuth2 APP')}</DialogTitle>
+          <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>

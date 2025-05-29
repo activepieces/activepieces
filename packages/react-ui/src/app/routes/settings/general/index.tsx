@@ -1,4 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
@@ -32,6 +33,23 @@ import {
   ProjectWithLimits,
 } from '@activepieces/shared';
 
+const updateProjectFormSchema = Type.Object({
+  displayName: Type.String({
+    minLength: 1,
+    errorMessage: t('This field is required'),
+  }),
+  externalId: Type.Optional(Type.String()),
+  plan: Type.Object({
+    tasks: Type.String({
+      minLength: 1,
+      errorMessage: t('This field is required'),
+    }),
+    aiCredits: Type.String({
+      minLength: 1,
+      errorMessage: t('This field is required'),
+    }),
+  }),
+});
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateCurrentProject } = projectHooks.useCurrentProject();
@@ -41,17 +59,17 @@ export default function GeneralPage() {
   const { toast } = useToast();
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
-  const form = useForm({
+  const form = useForm<Static<typeof updateProjectFormSchema>>({
     defaultValues: {
       displayName: project?.displayName,
       externalId: project?.externalId,
       plan: {
-        tasks: project?.plan?.tasks ?? undefined,
-        aiCredits: project?.plan?.aiCredits ?? undefined,
+        tasks: project?.plan?.tasks?.toString() ?? '',
+        aiCredits: project?.plan?.aiCredits?.toString() ?? '',
       },
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
-    resolver: typeboxResolver(ProjectWithLimits),
+    resolver: typeboxResolver(updateProjectFormSchema),
   });
 
   const mutation = useMutation<
@@ -115,7 +133,17 @@ export default function GeneralPage() {
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={form.handleSubmit(() => {
+                const values = form.getValues();
+                mutation.mutate({
+                  displayName: values.displayName,
+                  externalId: values.externalId,
+                  plan: {
+                    tasks: parseInt(values.plan.tasks),
+                    aiCredits: parseInt(values.plan.aiCredits),
+                  },
+                });
+              })}
             >
               <FormField
                 name="displayName"
@@ -159,13 +187,7 @@ export default function GeneralPage() {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              ? parseInt(e.target.value)
-                              : undefined,
-                          )
-                        }
+                        required
                         id="plan.aiCredits"
                         placeholder={t('AI Credits')}
                         className="rounded-sm"
@@ -203,21 +225,13 @@ export default function GeneralPage() {
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>
               )}
+              {checkAccess(Permission.WRITE_PROJECT) && (
+                <div className="flex gap-2 justify-end mt-4">
+                  <Button>{t('Save')}</Button>
+                </div>
+              )}
             </form>
           </Form>
-          {checkAccess(Permission.WRITE_PROJECT) && (
-            <div className="flex gap-2 justify-end mt-4">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  mutation.mutate(form.getValues());
-                }}
-              >
-                {t('Save')}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

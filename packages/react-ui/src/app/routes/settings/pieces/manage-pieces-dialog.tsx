@@ -98,7 +98,7 @@ export const ManagePiecesDialog = React.memo(
           </DialogHeader>
           <Form {...form}>
             <form
-              className="grid space-y-4"
+              className="flex flex-col gap-4 mb-4"
               onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
             >
               <FormField

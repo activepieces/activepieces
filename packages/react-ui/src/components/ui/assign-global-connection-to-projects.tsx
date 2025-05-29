@@ -22,7 +22,7 @@ export const AssignConnectionToProjectsControl = ({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="grid space-y-2">
+        <FormItem className="flex flex-col gap-2">
           <Label>{t('Available for Projects')}</Label>
           <MultiSelectPieceProperty
             placeholder={t('Select projects')}
