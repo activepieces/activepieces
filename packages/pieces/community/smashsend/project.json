@@ -1,0 +1,37 @@
+{
+  "name": "pieces-smashsend",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/smashsend/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/smashsend",
+        "tsConfig": "packages/pieces/community/smashsend/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/smashsend/package.json",
+        "main": "packages/pieces/community/smashsend/src/index.ts",
+        "assets": ["packages/pieces/community/smashsend/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "npm publish dist/packages/pieces/community/smashsend --access=public --tag=latest",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/smashsend/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+} 

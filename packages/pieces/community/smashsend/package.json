@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-smashsend",
+  "version": "0.0.1",
+  "dependencies": {
+    "@smashsend/node": "^0.15.1"
+  }
+} 
