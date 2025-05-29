@@ -1,5 +1,6 @@
-import { createTrigger, TriggerStrategy, Property, PieceAuth, WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { FacebookWebhookPayload } from '../common/facebook-messenger-types';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 const markdown = `
 ## Facebook Messenger Setup Guide
 \n
@@ -64,9 +65,11 @@ export const newMessage = createTrigger({
         ]
     },
     type: TriggerStrategy.WEBHOOK,
-    async onEnable(context) {
+    async onEnable() {
+        console.log("facebook-messenger new-message action onEnable called")
     },
-    async onDisable(context) {
+    async onDisable() {
+        console.log("facebook-messenger new-message action onDisable called")
     },
     handshakeConfiguration: {
         strategy: WebhookHandshakeStrategy.QUERY_PRESENT,

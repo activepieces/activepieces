@@ -6,7 +6,7 @@
     import { facebookAuth } from "./lib/auth/facebook-auth";
 
     export const facebookMessenger = createPiece({
-      displayName: "Facebook-messenger",
+      displayName: "Facebook Messenger",
       description: 'Manage your Facebook Chat',
       auth: facebookAuth,
       minimumSupportedRelease: '0.36.1',
