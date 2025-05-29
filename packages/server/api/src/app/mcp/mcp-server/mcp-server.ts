@@ -41,10 +41,10 @@ export async function createMcpServer({
     const addedToolPromise = mcp.tools.map(tool => {
         switch (tool.type) {
             case McpToolType.PIECE: {
-                return addPiecesToServer(server, tool, mcp.projectId, platformId, logger)
+                return addPieceToServer(server, tool, mcp.projectId, platformId, logger)
             }
             case McpToolType.FLOW: {
-                return addFlowsToServer(server, tool, mcpId, mcp.projectId, logger)
+                return addFlowToServer(server, tool, mcpId, mcp.projectId, logger)
             }
         }
     })
@@ -52,7 +52,7 @@ export async function createMcpServer({
     return { server }
 }
 
-async function addPiecesToServer(
+async function addPieceToServer(
     server: McpServer,
     mcpTool: McpTool,
     projectId: string,
@@ -71,9 +71,12 @@ async function addPiecesToServer(
         platformId,
     })
 
+    const pieceName = pieceMetadata.name.split('piece-')[1].replace(/-/g, '_')
     const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of filteredAction) {
-        const actionName = mcpToolNaming.fixTool(`${action}`)
+        const actionName = mcpToolNaming.fixTool(action).startsWith(pieceName) 
+            ? mcpToolNaming.fixTool(action) 
+            : mcpToolNaming.fixTool(`${pieceName}_${action}`)
         const actionMetadata = pieceMetadata.actions[action]
         const actionSchema = Object.fromEntries(
             Object.entries(actionMetadata.props)
@@ -148,7 +151,7 @@ async function addPiecesToServer(
     }
 }
 
-async function addFlowsToServer(
+async function addFlowToServer(
     server: McpServer,
     mcpTool: McpTool,
     mcpId: string,

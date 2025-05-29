@@ -27,10 +27,10 @@ const MAX_TOOL_NAME_LENGTH = 47
 
 export const mcpToolNaming = {
     fixTool: (schemaName: string) => {
-        return schemaName.replace(/[\s/@]+/g, '-').slice(0, MAX_TOOL_NAME_LENGTH) 
+        return schemaName.replace(/[\s/@-]+/g, '_').slice(0, MAX_TOOL_NAME_LENGTH) 
     },
     fixProperty: (schemaName: string) => {
-        return schemaName.replace(/[\s/@]+/g, '-')
+        return schemaName.replace(/[\s/@-]+/g, '_')
     },
 }
 
