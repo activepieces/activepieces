@@ -881,6 +881,12 @@
       "@avalant/piece-knowledge-base": [
         "packages/pieces/community/knowledge-base/src/index.ts"
       ],
+      "@avalant/piece-microsoft-outlook-email": [
+        "packages/pieces/community/microsoft-outlook-email/src/index.ts"
+      ],
+      "@avalant/piece-facebook-messenger": [
+        "packages/pieces/community/facebook-messenger/src/index.ts"
+      ],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
