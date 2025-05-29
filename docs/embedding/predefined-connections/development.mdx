@@ -60,6 +60,7 @@ Follow the instructions [here](/developers/building-pieces/overview) to create y
     ![Project Settings](/resources/screenshots/project-settings.png)    
   </Step>
   <Step title="Create Global Connection">
+    <Tip>We recommend creating global connections because only platform admins can delete or edit them, so your user can never delete the connection. </Tip>
     Create a global connection by going to **Platform Admin -> Setup -> Global Connections** and set the external ID to something like `gelato_xyz`:
      ![Global Connections](/resources/screenshots/create-global-connection.png)    
   </Step>
@@ -73,21 +74,20 @@ Follow the instructions [here](/developers/building-pieces/overview) to create y
 import { PieceAuth, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger } from "@activepieces/pieces-framework";
 import { isNil } from "@activepieces/shared";
+//Your piece authentication property (if you placed it in piece definition file)
+import { auth } from '../../index';
 
 
-const auth = PieceAuth.CustomAuth({
-	required: true,
-	props: {
-	  apiUrl: Property.ShortText({
-		displayName: 'API URL',
-		required: true,
-	  }),
-	  apiKey: Property.ShortText({
-		displayName: 'API Key',
-		required: true,
-	  }),
-	},
-  });
+const fetchConnection = async (connections: ConnectionsManager, projectExternalId: string | undefined) => {
+  if (!projectExternalId) {
+    throw new Error('Project external ID is required');
+  }
+  const connection = await connections.get(`gelato-${projectExternalId}`);
+  if (!connection) {
+    throw new Error(`Connection not found for project ${projectExternalId}`);
+  }
+  return connection;
+}
 export const newFlavorCreated = createTrigger({
     requireAuth:false,
 	auth,
@@ -97,28 +97,24 @@ export const newFlavorCreated = createTrigger({
     props: {},
     sampleData: {},
     type: TriggerStrategy.POLLING,
-    async test(context) {
-		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
-	   if(isNil(connection)) throw new Error('No connection found')
-
+    async test({connections, project}) {
+	      const connection = await fetchConnection(connections, (await project.externalId()));
+    // use the connection with your own logic
 	   return []
     },
-    async onEnable(context) {
-		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
-		if(isNil(connection)) throw new Error('No connection found')
-       // your logic here...
+    async onEnable({connections, project}) {
+		   const connection = await fetchConnection(connections, (await project.externalId()));
+    // use the connection with your own logic
     },
 
-    async onDisable(context) {
-		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
-		if(isNil(connection)) throw new Error('No connection found')
-       // your logic here...
+    async onDisable({connections, project}) {
+		   const connection = await fetchConnection(connections, (await project.externalId()));
+    // use the connection with your own logic
     },
 
-    async run(context) {
-		const connection= (await context.connections.get(`gelato_${context.project.externalId}`)) as typeof context.auth | undefined
-		if(isNil(connection)) throw new Error('No connection found')
-       // your logic here...
+    async run({connections, project}) {
+        const connection = await fetchConnection(connections, (await project.externalId()));
+      // use the connection with your own logic
 	   return []
     },
     });

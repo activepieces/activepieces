@@ -27,7 +27,7 @@ Go to **Platform Admin -> Security -> API Keys**, create an API key and save it:
   body: JSON.stringify({"displayName":"PROJECT_NAME","externalId":"PROJECT_EXTERNAL_ID","metadata":{}})
 };
 
-fetch('https://YOUR_INSTANCE_URL/api/v1/projects', options)
+fetch('YOUR_INSTANCE_URL/api/v1/projects', options)
   .then(response => response.json())
   .then(response => console.log(response))
   .catch(err => console.error(err));
@@ -42,11 +42,16 @@ const options = {
   method: 'POST',
   headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json'},
   body: JSON.stringify({"displayName":"DISPLAY_NAME","pieceName":"PIECE_NAME","metadata":{},
-  "type":"CUSTOM_AUTH","value":{/*whatever props you have in your piece auth*/},
+  "type":"CUSTOM_AUTH","value":{
+    "type": "CUSTOM_AUTH",
+     "props": {
+      /*whatever props you have in your piece auth*/
+     }
+  },
   "scope":"PLATFORM","projectIds":["ID_OF_YOUR_CREATED_PROJECT"],"externalId":"CONNECTION_EXTERNAL_ID"})
 };
 
-fetch('https://YOUR_INSTANCE_URL/api/v1/global-connections', options)
+fetch('YOUR_INSTANCE_URL/api/v1/global-connections', options)
   .then(response => response.json())
   .then(response => console.log(response))
   .catch(err => console.error(err));
