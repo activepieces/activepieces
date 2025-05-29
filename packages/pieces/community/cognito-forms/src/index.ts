@@ -3,8 +3,7 @@ import { createEntry } from './lib/actions/create-entry';
 import { updateEntry } from './lib/actions/update-entry';
 import { deleteEntry } from './lib/actions/delete-entry';
 import { getEntryDetails } from './lib/actions/get-entry-details';
-import { newEntrySubmitted } from './lib/triggers/new-entry-submitted';
-import { entryUpdated } from './lib/triggers/entry-updated';
+
 
 export const cognitoFormsAuth = PieceAuth.SecretText({
   displayName: 'Cognito Forms API Key',
@@ -25,7 +24,6 @@ export const cognitoForms = createPiece({
     getEntryDetails,
   ],
   triggers: [
-    newEntrySubmitted,
-    entryUpdated,
+    
   ],
 });

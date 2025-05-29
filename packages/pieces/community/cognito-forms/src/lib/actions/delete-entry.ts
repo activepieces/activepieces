@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteEntry = createAction({
-
   name: 'deleteEntry',
   displayName: 'Delete Entry',
   description: 'Delete an existing entry from a Cognito Form',
@@ -20,12 +19,13 @@ export const deleteEntry = createAction({
   },
   async run(context) {
     const { formId, entryId } = context.propsValue;
-    
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.DELETE,
       url: `https://www.cognitoforms.com/api/forms/${formId}/entries/${entryId}`,
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${context.auth}`,
       },
     });
 
