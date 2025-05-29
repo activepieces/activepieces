@@ -94,7 +94,7 @@ export const pieceHelper = {
                         options,
                     }
                 }
-            }                 
+            }
         }
         catch (e) {
             console.error(e)
@@ -115,6 +115,10 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+        const server = {
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            publicUrl: params.publicApiUrl,
+        }
         if (piece.auth?.validate === undefined) {
             return {
                 valid: true,
@@ -129,24 +133,28 @@ export const pieceHelper = {
                         username: con.username,
                         password: con.password,
                     },
+                    server,
                 })
             }
             case PropertyType.SECRET_TEXT: {
                 const con = params.auth as SecretTextConnectionValue
                 return piece.auth.validate({
                     auth: con.secret_text,
+                    server,
                 })
             }
             case PropertyType.CUSTOM_AUTH: {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                    server,
                 })
             }
             case PropertyType.OAUTH2: {
                 const con = params.auth as OAuth2ConnectionValueWithApp
                 return piece.auth.validate({
                     auth: con,
+                    server,
                 })
             }
             default: {
