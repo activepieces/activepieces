@@ -24,7 +24,7 @@ Go to **Platform Admin -> Security -> API Keys**, create an API key and save it:
  const options = {
   method: 'POST',
   headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json'},
-  body: '{"displayName":"PROJECT_NAME","externalId":"PROJECT_EXTERNAL_ID","metadata":{}}'
+  body: JSON.stringify({"displayName":"PROJECT_NAME","externalId":"PROJECT_EXTERNAL_ID","metadata":{}})
 };
 
 fetch('https://YOUR_INSTANCE_URL/api/v1/projects', options)
@@ -41,9 +41,9 @@ fetch('https://YOUR_INSTANCE_URL/api/v1/projects', options)
 const options = {
   method: 'POST',
   headers: { 'Authorization': 'Bearer YOUR_API_KEY', 'Content-Type': 'application/json'},
-  body: '{"displayName":"DISPLAY_NAME","pieceName":"PIECE_NAME","metadata":{},
-  "type":"CUSTOM_AUTH","value":{//whatever props you have in your custom auth},
-  "scope":"PLATFORM","projectIds":["ID_OF_YOUR_CREATED_PROJECT"],"externalId":"CONNECTION_EXTERNAL_ID"}'
+  body: JSON.stringify({"displayName":"DISPLAY_NAME","pieceName":"PIECE_NAME","metadata":{},
+  "type":"CUSTOM_AUTH","value":{/*whatever props you have in your piece auth*/},
+  "scope":"PLATFORM","projectIds":["ID_OF_YOUR_CREATED_PROJECT"],"externalId":"CONNECTION_EXTERNAL_ID"})
 };
 
 fetch('https://YOUR_INSTANCE_URL/api/v1/global-connections', options)
