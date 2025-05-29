@@ -369,6 +369,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-heygen": [
+        "packages/pieces/community/heygen/src/index.ts"
+      ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
