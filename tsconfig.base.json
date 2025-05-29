@@ -675,6 +675,9 @@
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
+      "@activepieces/piece-serpapi": [
+        "packages/pieces/community/serpapi/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
