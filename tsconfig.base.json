@@ -233,6 +233,9 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
+      "@activepieces/piece-docusign": [
+        "packages/pieces/community/docusign/src/index.ts"
+      ],
       "@activepieces/piece-drip": [
         "packages/pieces/community/drip/src/index.ts"
       ],
