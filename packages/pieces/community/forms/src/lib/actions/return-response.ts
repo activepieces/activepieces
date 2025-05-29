@@ -44,12 +44,13 @@ export const returnResponse = createAction({
       value: propsValue.markdown ?? '',
       files: responseFiles,
     }
-    run.stop({
+    run.respond({
       response: {
         status: StatusCodes.OK,
         body: markdownResponseBody,
         headers: {},
       },
+      
     });
     return markdownResponseBody;
   },

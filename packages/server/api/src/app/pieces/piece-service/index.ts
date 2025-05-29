@@ -35,7 +35,10 @@ export const pieceService = (log: FastifyBaseLogger) => ({
         assertInstallProjectEnabled(params.scope)
         try {
             const piecePackage = await savePiecePackage(platformId, projectId, params, log)
-            const pieceInformation = await extractPieceInformation(piecePackage, projectId, platformId, log)
+            const pieceInformation = await extractPieceInformation({
+                ...piecePackage,
+                platformId,
+            }, projectId, log)
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
             const savedPiece = await pieceMetadataService(log).create({
                 pieceMetadata: {
@@ -118,12 +121,12 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
     }
 }
 
-const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, platformId: string, log: FastifyBaseLogger): Promise<PieceMetadata> => {
+const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, log: FastifyBaseLogger): Promise<PieceMetadata> => {
     const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperExtractPieceInformation>>({
         jobType: UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         piece: request,
         projectId,
-        platformId,
+        platformId: request.platformId,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {

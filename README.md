@@ -406,6 +406,10 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.snimesh.com"><img src="https://avatars.githubusercontent.com/u/12984120?v=4?s=100" width="100px;" alt="Nimesh Solanki"/><br /><sub><b>Nimesh Solanki</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=nish17" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rimjhimyadav"><img src="https://avatars.githubusercontent.com/u/187646079?v=4?s=100" width="100px;" alt="Rimjhim Yadav"/><br /><sub><b>Rimjhim Yadav</b></sub></a><br /><a href="#plugin-rimjhimyadav" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gs03-dev"><img src="https://avatars.githubusercontent.com/u/70076620?v=4?s=100" width="100px;" alt="gs03"/><br /><sub><b>gs03</b></sub></a><br /><a href="#plugin-gs03-dev" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kunal-Darekar"><img src="https://avatars.githubusercontent.com/u/150500530?v=4?s=100" width="100px;" alt="Kunal Darekar"/><br /><sub><b>Kunal Darekar</b></sub></a><br /><a href="#plugin-Kunal-Darekar" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Sanket6652"><img src="https://avatars.githubusercontent.com/u/119039046?v=4?s=100" width="100px;" alt="Sanket6652"/><br /><sub><b>Sanket6652</b></sub></a><br /><a href="#plugin-Sanket6652" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

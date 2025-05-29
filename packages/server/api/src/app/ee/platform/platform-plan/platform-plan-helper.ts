@@ -30,7 +30,7 @@ const edition = system.getEdition()
 
 export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void> {
     if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
-        return;
+        return
     }
     const { platformId, metric } = params
 

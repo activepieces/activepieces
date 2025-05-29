@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
-import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
+import { triggerHooks } from '../executors/trigger/hooks/trigger-consumer'
 export const webhookUtils = (log: FastifyBaseLogger) => ({
 
     async getAppWebhookUrl({
@@ -47,7 +47,7 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             simulate,
         }, '[WebhookUtils#extractPayload] extracting payloads')
-        return triggerConsumer.extractPayloads(
+        return triggerHooks.extractPayloads(
             engineToken,
             log,
             {
