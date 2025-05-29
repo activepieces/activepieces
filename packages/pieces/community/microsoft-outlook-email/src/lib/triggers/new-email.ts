@@ -45,7 +45,11 @@ export const newEmailTrigger = createTrigger({
 
   async run(context) {
     const { auth, store } = context;
-    const lastPollTime = (await store.get('lastPoll')) ?? 0; // Get last checked time
+    const lastPollRaw = await store.get('lastPoll');
+    const lastPollTime =
+      typeof lastPollRaw === 'number'
+        ? lastPollRaw
+        : new Date(`${lastPollRaw}`).getTime(); // Ensure it's a number
     const access_token = auth.access_token;
     // Fetch latest emails
     const response = await httpClient.sendRequest({
@@ -58,9 +62,15 @@ export const newEmailTrigger = createTrigger({
     });
 
     const emails = response.body.value;
+    const receivedDateTime = emails.map((email: any) => ({
+      dateTime: email.receivedDateTime,
+      subject: email.subject,
+    }));
+    console.log('Emails list in trigger...', receivedDateTime, lastPollTime);
     const newEmails = emails.filter(
-      (email: any) => email.receivedDateTime > lastPollTime
+      (email: any) => new Date(email.receivedDateTime).getTime() > lastPollTime
     );
+    console.log('Emails list After filtering .', newEmails.length);
     // Store latest email time if new emails are found
     if (newEmails.length > 0) {
       await store.put('lastPoll', newEmails[0].receivedDateTime);
