@@ -23,6 +23,7 @@ import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { todosHooks } from '@/features/todos/lib/todo-hook';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -57,10 +58,10 @@ const TestStepSectionImplementation = React.memo(
       undefined,
     );
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
+    const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] = useState(false);
     const socket = useSocket();
-    const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] =
-      useState(false);
-    const [todo, setTodo] = useState<TodoWithAssignee | null>(null);
+    const [todoId, setTodoId] = useState<string | null>(null);
+
     const [
       isReturnResponseAndWaitForWebhookDialogOpen,
       setIsReturnResponseAndWaitForWebhookDialogOpen,
@@ -78,6 +79,8 @@ const TestStepSectionImplementation = React.memo(
       onSuccess: undefined,
     });
 
+    const { data: todo, isLoading: isLoadingTodo } =  todosHooks.useTodo(todoId)
+
     const lastTestDate = currentStep.settings.inputUiInfo?.lastTestDate;
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
@@ -90,8 +93,7 @@ const TestStepSectionImplementation = React.memo(
       });
       const output = testStepResponse.output as TodoWithAssignee;
       if (testStepResponse.success && !isNil(output)) {
-        const task = await todosApi.get(output.id as string);
-        setTodo(task);
+        setTodoId(output.id as string);
       }
     };
 
@@ -121,7 +123,7 @@ const TestStepSectionImplementation = React.memo(
                     mutate(undefined);
                   }
                 }}
-                loading={isTesting || isTodoCreateTaskDialogOpen}
+                loading={isTesting || isTodoCreateTaskDialogOpen || isLoadingTodo}
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -133,7 +135,7 @@ const TestStepSectionImplementation = React.memo(
         {sampleDataExists && (
           <TestSampleDataViewer
             isValid={currentStep.valid}
-            isTesting={isTesting || isTodoCreateTaskDialogOpen}
+            isTesting={isTesting || isTodoCreateTaskDialogOpen || isLoadingTodo}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
@@ -150,7 +152,12 @@ const TestStepSectionImplementation = React.memo(
           todo && (
             <TodoTestingDialog
               open={isTodoCreateTaskDialogOpen}
-              onOpenChange={setIsTodoCreateTaskDialogOpen}
+              onOpenChange={(open) => {
+                setIsTodoCreateTaskDialogOpen(open);
+                if (!open) {
+                  setTodoId(null);
+                }
+              }}
               todo={todo}
               flowVersionId={flowVersionId}
               projectId={projectId}

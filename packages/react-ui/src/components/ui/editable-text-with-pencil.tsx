@@ -1,7 +1,9 @@
 import { Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import EditableText from './editable-text';
 import { useState } from 'react';
+
+import { cn } from '@/lib/utils';
+
+import EditableText from './editable-text';
 
 type EditableTextWithPencilProps = {
   value: string | undefined;

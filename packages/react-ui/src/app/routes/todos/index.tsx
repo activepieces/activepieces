@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckCircle, CheckIcon, Tag, User } from 'lucide-react';
+import { CheckCircle, CheckIcon, CircleDot, Tag, User, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -27,9 +27,10 @@ import {
   UNRESOLVED_STATUS,
   RESOLVED_STATUS,
   STATUS_COLORS,
+  STATUS_VARIANT,
 } from '@activepieces/shared';
 
-import { TodoDetails } from './todo-details';
+import { TodoDetailsDrawer } from './todos-details-drawer';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
@@ -37,7 +38,7 @@ function TodosPage() {
     null,
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [rowIndex, setRowIndex] = useState(0);
+  const [_rowIndex, setRowIndex] = useState(0);
 
   const location = useLocation();
   const projectId = authenticationSession.getProjectId()!;
@@ -47,9 +48,6 @@ function TodosPage() {
   useEffect(() => {
     if (!location.search.includes('assignee')) {
       setSearchParams((prev) => {
-        if (currentUser) {
-          prev.set('assignee', currentUser.email);
-        }
         prev.set('status', UNRESOLVED_STATUS.name);
         return prev;
       });
@@ -157,6 +155,15 @@ function TodosPage() {
     } as const,
   ];
 
+  const getStatusIcon = (statusVariant: string) => {
+    if (statusVariant === STATUS_VARIANT.NEGATIVE) {
+      return X;
+    }
+    if (statusVariant === STATUS_VARIANT.POSITIVE) {
+      return CheckCircle;
+    }
+    return CircleDot;
+  };
   const columns: ColumnDef<RowDataWithActions<TodoWithAssignee>, unknown>[] = [
     {
       id: 'select',
@@ -265,7 +272,7 @@ function TodosPage() {
         return (
           <div className="text-left">
             <StatusIconWithText
-              icon={CheckIcon}
+              icon={getStatusIcon(row.original.status.variant)}
               text={row.original.status.name}
               color={STATUS_COLORS[row.original.status.variant].color}
               textColor={STATUS_COLORS[row.original.status.variant].textColor}
@@ -318,7 +325,7 @@ function TodosPage() {
         }}
       />
       {selectedTask && (
-        <TodoDetails
+        <TodoDetailsDrawer
           key={selectedTask.id}
           currentTodo={selectedTask}
           open={drawerOpen}
@@ -326,20 +333,6 @@ function TodosPage() {
           onClose={() => {
             setSelectedTask(null);
             setDrawerOpen(false);
-          }}
-          onNext={() => {
-            if (!data || !data.data.length) return;
-            const length = data.data.length;
-            const nextIndex = (rowIndex + 1) % length;
-            setRowIndex(nextIndex);
-            setSelectedTask(data.data[nextIndex]);
-          }}
-          onPrevious={() => {
-            if (!data || !data.data.length) return;
-            const length = data.data.length;
-            const previousIndex = (rowIndex - 1 + length) % length;
-            setRowIndex(previousIndex);
-            setSelectedTask(data.data[previousIndex]);
           }}
         />
       )}

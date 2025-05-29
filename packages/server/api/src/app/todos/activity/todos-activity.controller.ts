@@ -1,14 +1,13 @@
-import { CreateTodoCommentRequestBody, ListTodoCommentsQueryParams } from '@activepieces/ee-shared'
-import { PrincipalType } from '@activepieces/shared'
+import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { todoCommentService } from './todos.service'
+import { todoActivitiesService as todoActivityService } from './todos-activity.service'
 
 const DEFAULT_LIMIT = 10
 const DEFAULT_CURSOR = null
 
-export const todoCommentController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/:todoId/comments', ListTodoCommentsRequest, async (request) => {
-        return todoCommentService(request.log).list({
+export const todoActivityController: FastifyPluginAsyncTypebox = async (app) => {
+    app.get('/:todoId/activities', ListTodoCommentsRequest, async (request) => {
+        return todoActivityService(request.log).list({
             todoId: request.params.todoId,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
@@ -17,14 +16,16 @@ export const todoCommentController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.post('/:todoId/comments', CreateTodoCommentRequest, async (request) => {
+    app.post('/:todoId/activities', CreateTodoCommentRequest, async (request) => {
         const { content } = request.body
-        return todoCommentService(request.log).create({
+        return todoActivityService(request.log).create({
             content,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             userId: request.principal.id,
             todoId: request.params.todoId,
+            socket: app.io,
+            agentId: null,
         })
     })
 }
@@ -35,7 +36,7 @@ const ListTodoCommentsRequest = {
         params: Type.Object({
             todoId: Type.String(),
         }),
-        querystring: ListTodoCommentsQueryParams,
+        querystring: ListTodoActivitiesQueryParams,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
@@ -47,7 +48,7 @@ const CreateTodoCommentRequest = {
         params: Type.Object({
             todoId: Type.String(),
         }),
-        body: CreateTodoCommentRequestBody,
+        body: CreateTodoActivityRequestBody,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],

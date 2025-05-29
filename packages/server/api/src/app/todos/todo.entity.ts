@@ -1,4 +1,4 @@
-import { Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
+import { Agent, Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -12,6 +12,7 @@ export type TodoSchema = Todo & {
     flow: Flow
     run: FlowRun
     assignee: User
+    agent: Agent    
 }
 
 export const TodoEntity = new EntitySchema<TodoSchema>({
@@ -46,9 +47,13 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        agentId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         flowId: {
             ...ApIdSchema,
-            nullable: false,
+            nullable: true,
         },
         runId: {
             ...ApIdSchema,
@@ -57,6 +62,11 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         resolveUrl: {
             type: String,
             nullable: true,
+        },
+        locked: {
+            type: Boolean,
+            nullable: false,
+            default: false,
         },
     },
     indices: [
@@ -72,6 +82,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             name: 'idx_todo_platform_id',
             columns: ['platformId'],
         },
+        {
+            name: 'idx_todo_agent_id',
+            columns: ['agentId'],
+        },
     ],
     relations: {
         platform: {
@@ -83,6 +97,12 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_todo_platform_id',
             },
+        },
+        agent: {
+            type: 'many-to-one',
+            target: 'agent',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
         project: {
             type: 'many-to-one',

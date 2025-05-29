@@ -1,6 +1,7 @@
 import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { Socket } from 'socket.io'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { userService } from '../user/user-service'
 import { todoService } from './todo.service'
@@ -59,6 +60,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             isTest,
+            socket: app.io,
         })
     })
     
@@ -69,6 +71,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             id,
             status,
             isTest,
+            socket: app.io,
         })
     })
 

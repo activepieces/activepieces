@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 import { UserWithMetaInformation } from '../user'
+import { Agent } from '../agents'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
@@ -60,7 +61,9 @@ export const Todo = Type.Object({
     flowId: Type.String(),
     runId: Type.String(),
     assigneeId: Nullable(Type.String()),
+    locked: Type.Boolean(),
     resolveUrl: Nullable(Type.String()),
+    agentId: Nullable(Type.String()),
 })
 
 export type Todo = Static<typeof Todo>
@@ -75,3 +78,21 @@ export enum TodoType {
     INTERNAL = 'internal',
     EXTERNAL = 'external',
 }
+
+export const TodoActivity = Type.Object({
+    ...BaseModelSchema,
+    todoId: Type.String(),
+    userId: Nullable(Type.String()),
+    agentId: Nullable(Type.String()),
+    content: Type.String(),
+})
+
+export type TodoActivity = Static<typeof TodoActivity>
+
+
+export const TodoActivityWithUser = Type.Composite([TodoActivity, Type.Object({
+    user: Nullable(UserWithMetaInformation),
+    agent: Nullable(Agent),
+})])
+
+export type TodoActivityWithUser = Static<typeof TodoActivityWithUser>

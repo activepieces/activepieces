@@ -206,6 +206,8 @@ import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgr
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -348,6 +350,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
+        AddAgentsModule1748456786940,
+        ChangeManualTasksCommentsToTodoComments1742433144687,
+        AddTodoActivity1748525529096,
     ]
 
     const edition = system.getEdition()
@@ -429,7 +434,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
                 AddManualTaskCommentTable1742305104390,
-                ChangeManualTasksCommentsToTodoComments1742433144687,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
               

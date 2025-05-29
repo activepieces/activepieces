@@ -36,6 +36,7 @@ import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
+import { AgentsPage } from '../routes/agents';
 import { ApTablesPage } from '../routes/ap-tables';
 import { ApTableEditorPage } from '../routes/ap-tables/id';
 import AuthenticatePage from '../routes/authenticate';
@@ -81,7 +82,6 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import { AgentsPage } from '../routes/agents';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

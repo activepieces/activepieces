@@ -11,6 +11,7 @@ import { MarkdownVariant } from '@activepieces/shared';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
+
 function applyVariables(markdown: string, variables: Record<string, string>) {
   return markdown
     .replaceAll('<br>', '\n')
@@ -40,7 +41,7 @@ const Container = ({
           variant === MarkdownVariant.WARNING,
         'bg-success-100 text-success-300 border-none':
           variant === MarkdownVariant.TIP,
-        'p-0 bg-background border-none': variant === MarkdownVariant.BORDERLESS,
+        'p-0 bg-transparent border-none': variant === MarkdownVariant.BORDERLESS,
       })}
     >
       {variant !== MarkdownVariant.BORDERLESS && (
@@ -129,13 +130,13 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node, ...props }) => (
               <h1
-                className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-5xl"
+                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
                 {...props}
               />
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 text-xl text-3xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
@@ -169,6 +170,18 @@ const ApMarkdown = React.memo(
             blockquote: ({ node, ...props }) => (
               <blockquote
                 className="mt-4 first:mt-0 border-l-2 pl-6 italic"
+                {...props}
+              />
+            ),
+            hr: ({ node, ...props }) => (
+              <hr
+                className="my-4 border-t border-border/50"
+                {...props}
+              />
+            ),
+            img: ({ node, ...props }) => (
+              <img
+                className="my-8"
                 {...props}
               />
             ),

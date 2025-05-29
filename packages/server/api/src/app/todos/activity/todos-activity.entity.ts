@@ -1,18 +1,18 @@
-import { TodoComment } from '@activepieces/ee-shared'
-import { Todo, User } from '@activepieces/shared'
+import { Agent, Todo, TodoActivity, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../../../database/database-common'
+} from '../../database/database-common'
 
-export type TodoCommentSchema = TodoComment & {
+export type TodoActivitySchema = TodoActivity & {
     todo: Todo
     user: User
+    agent: Agent    
 }
 
-export const TodoCommentEntity = new EntitySchema<TodoCommentSchema>({
-    name: 'todo_comment',
+export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
+    name: 'todo_activity',
     columns: {
         ...BaseColumnSchemaPart,
         todoId: {
@@ -21,7 +21,11 @@ export const TodoCommentEntity = new EntitySchema<TodoCommentSchema>({
         },
         userId: {
             ...ApIdSchema,
-            nullable: false,
+            nullable: true,
+        },
+        agentId: {
+            ...ApIdSchema,
+            nullable: true,
         },
         content: {
             type: String,
@@ -30,12 +34,16 @@ export const TodoCommentEntity = new EntitySchema<TodoCommentSchema>({
     },
     indices: [
         {
-            name: 'idx_todo_comment_todo_id',
+            name: 'idx_todo_activity_todo_id',
             columns: ['todoId'],
         },
         {
-            name: 'idx_todo_comment_user_id',
+            name: 'idx_todo_activity_user_id',
             columns: ['userId'],
+        },
+        {
+            name: 'idx_todo_activity_agent_id',
+            columns: ['agentId'],
         },
     ],
     relations: {
@@ -47,7 +55,7 @@ export const TodoCommentEntity = new EntitySchema<TodoCommentSchema>({
             nullable: true,
             joinColumn: {
                 name: 'todoId',
-                foreignKeyConstraintName: 'fk_todo_comment_todo_id',
+                foreignKeyConstraintName: 'fk_todo_activity_todo_id',
             },
         },
         user: {
@@ -57,8 +65,14 @@ export const TodoCommentEntity = new EntitySchema<TodoCommentSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'userId',
-                foreignKeyConstraintName: 'fk_todo_comment_user_id',
+                foreignKeyConstraintName: 'fk_todo_activity_user_id',
             },
+        },
+        agent: {
+            type: 'many-to-one',
+            target: 'agent',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
     },
 })

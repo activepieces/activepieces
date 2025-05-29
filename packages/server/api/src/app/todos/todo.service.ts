@@ -1,20 +1,23 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { IsNull, Like, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { userService } from '../user/user-service'
+import { todoSideEfffects } from './todo-side-effects'
 import { TodoEntity } from './todo.entity'
 
 const repo = repoFactory(TodoEntity)  
 
-export const todoService = (_log: FastifyBaseLogger) => ({
+export const todoService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Todo> {
         return repo().save({
             id: apId(),
             status: UNRESOLVED_STATUS,
+            locked: params.locked ?? false,
             ...params,
         })
     },
@@ -59,11 +62,15 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('assigneeId', params.assigneeId),
             ...(params.status && params.status.continueFlow !== false && !params.isTest ? { resolveUrl: null } : {}),
         })
+        todoSideEfffects(log).notify({
+            socket: params.socket,
+            todoId: params.id,
+            projectId: params.projectId,
+        })
         return this.getOneOrThrow(params)
     },
     async resolve(params: ResolveParams) {
         const todo = await this.getOneOrThrow({ id: params.id })
-        assertNotNullOrUndefined(todo.resolveUrl, 'Todo does not have an resolve url')
         const status = todo.statusOptions.find((option) => option.name === params.status)
         if (isNil(status)) {
             throw new ActivepiecesError({
@@ -77,13 +84,16 @@ export const todoService = (_log: FastifyBaseLogger) => ({
                 params: { message: `Todo cannot be resolved because the continueFlow is set to false for the status: ${status.name}` },
             })
         }
-        await sendResolveRequest(todo.resolveUrl, status)
+        if (!isNil(todo.resolveUrl)) {
+            await sendResolveRequest(todo.resolveUrl, status)
+        }
         await this.update({
             id: params.id,
             platformId: todo.platformId,
             projectId: todo.projectId,
             status,
             isTest: params.isTest,
+            socket: params.socket,
         })
         return {
             status: params.status,
@@ -173,6 +183,7 @@ type ResolveParams = {
     id: string
     status: string
     isTest?: boolean
+    socket: Socket
 }
 
 type GetParams = {
@@ -198,8 +209,10 @@ type CreateParams = {
     statusOptions: StatusOption[]
     platformId: string
     projectId: string
-    flowId: string
+    locked?: boolean
+    flowId?: string
     runId?: string
+    agentId?: string
     assigneeId?: string
     resolveUrl?: string
 }
@@ -214,4 +227,5 @@ type UpdateParams = {
     statusOptions?: StatusOption[]
     assigneeId?: string
     isTest?: boolean
+    socket: Socket
 }

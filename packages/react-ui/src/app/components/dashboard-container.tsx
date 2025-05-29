@@ -103,7 +103,6 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-
   const agentsLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/agents'),

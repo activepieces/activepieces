@@ -24,7 +24,9 @@ const RightDrawer = ({
   disableAutoFocus?: boolean;
   dismissible?: boolean;
 }) => (
-  <RightDrawerContext.Provider value={{ className, disableAutoFocus, dismissible }}>
+  <RightDrawerContext.Provider
+    value={{ className, disableAutoFocus, dismissible }}
+  >
     <DrawerPrimitive.Root
       direction="right"
       dismissible={dismissible}
@@ -55,7 +57,7 @@ const RightDrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className: contentClassName, children, ...props }, ref) => {
-  const { className: drawerClassName, dismissible } = React.useContext(RightDrawerContext);
+  const { className: drawerClassName } = React.useContext(RightDrawerContext);
 
   return (
     <RightDrawerPortal>
@@ -63,7 +65,7 @@ const RightDrawerContent = React.forwardRef<
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed inset-y-0 right-0 z-50 h-full flex flex-col border bg-background shadow-lg',
+          'fixed inset-y-0 right-0 z-50 h-full flex flex-col border bg-background shadow-lg outline-none',
           drawerClassName ?? 'w-3/4 max-w-md', // Apply drawer className or default width
           contentClassName, // Apply content className (has higher priority)
         )}

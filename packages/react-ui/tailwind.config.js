@@ -126,6 +126,14 @@ module.exports = {
             opacity: 1,
           },
         },
+        highlight: {
+          '0%': {
+            backgroundColor: 'hsl(var(--primary-100))',
+          },
+          '100%': {
+            backgroundColor: 'hsl(var(--secondary))',
+          },
+        },
         typing: {
           "0%": {
             width: "0%",
@@ -151,6 +159,7 @@ module.exports = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
+        highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
