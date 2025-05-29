@@ -13,18 +13,6 @@ export const utils = {
         }
     },
 
-    async writeToJsonFile(filePath: string, obj: unknown): Promise<void> {
-        const serializedObj = JSON.stringify(obj, (_key: string, value: unknown) => {
-            if (value instanceof Map) {
-                return Object.fromEntries(value)
-            }
-            else {
-                return value
-            }
-        })
-
-        await writeFile(filePath, serializedObj, 'utf-8')
-    },
 
     tryParseJson(value: string): unknown {
         try {
