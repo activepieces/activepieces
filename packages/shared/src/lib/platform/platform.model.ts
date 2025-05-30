@@ -85,6 +85,7 @@ export type PlatformUsage = Static<typeof PlatformUsage>
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    plan: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedTasks: Type.Number(),
     includedAiCredits: Type.Number(),

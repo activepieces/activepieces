@@ -17,23 +17,25 @@ import { platformBillingApi } from '../api/billing-api';
 import { planData } from '../data';
 
 import { PlanCard } from './plan-card';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export const ManagePlanDialog: FC = () => {
   const { isOpen, setIsOpen } = useManagePlanDialogStore();
-  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: platformSubscription } = useQuery({
-    queryKey: ['platform-billing-subscription'],
+  const { data: platformSubscription, refetch } = useQuery({
+    queryKey: ['platform-billing-subscription', platform.id],
     queryFn: platformBillingApi.getSubscriptionInfo,
   });
 
-  const { mutate: upgradePlan } = useMutation({
+
+  console.info('platformSubscription', platformSubscription);
+
+  const { mutate: updateSubscription } = useMutation({
     mutationFn: (params: UpdateSubscriptionParams) =>
       platformBillingApi.updateSubscription(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform-billing-subscription'],
-      });
+      refetch();
       setIsOpen(false);
       toast({
         title: t('Success'),
@@ -64,30 +66,30 @@ export const ManagePlanDialog: FC = () => {
     },
   });
 
-  const handleUpgrade = (params: UpdateSubscriptionParams) => {
+  const handleSelect = (params: UpdateSubscriptionParams) => {
     if (isNil(platformSubscription?.plan.stripeSubscriptionId)) {
       createSubscription(params);
     } else {
-      upgradePlan(params);
+      updateSubscription(params);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-7xl max-h-[90vh]">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             Manage Your Plan
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {planData.plans.map((plan) => (
             <PlanCard
               key={plan.name}
               plan={plan}
-              selected={PlanName.FREE}
-              onUpgrade={handleUpgrade}
+              selected={platformSubscription?.plan.plan as PlanName || PlanName.FREE}
+              onSelect={handleSelect}
             />
           ))}
         </div>

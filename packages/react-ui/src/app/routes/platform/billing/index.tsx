@@ -32,12 +32,18 @@ import { useManagePlanDialogStore } from '@/lib/stores';
 import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
-import {
-  calculateTaskCostHelper,
-  calculateTotalCostHelper,
-} from './helpers/platform-billing-helper';
 import { TasksLimitDialog } from './tasks';
 import { ManagePlanDialog } from './upgrade';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+
+export const calculateTotalCost = (tasksUsed: number, tasksLimit: number): string => {
+  const unitCost = 1 / 1000;
+  const totalTasks = tasksUsed || 0;
+  const excessTasks = Math.max(0, totalTasks - tasksLimit);
+  const cost = excessTasks * unitCost;
+  
+  return `$${cost.toFixed(2)}`;
+};
 
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
@@ -56,28 +62,23 @@ export default function Billing() {
   });
 
   const isSubscriptionActive =
-    platformSubscription?.plan.stripeSubscriptionStatus === 'active';
+    platformSubscription?.plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE;
 
-  const calculateTaskCost = calculateTaskCostHelper(
+  const calculatedTotalCost = calculateTotalCost(
     platformSubscription?.usage.tasks || 0,
     platformSubscription?.plan.tasksLimit || 0,
   );
 
-  const calculateTotalCost = calculateTotalCostHelper(
-    Number(calculateTaskCost),
-  );
-
-  const { mutate: manageBilling } = useMutation({
+  const { mutate: getPortalLink } = useMutation({
     mutationFn: async () => {
       const { portalLink } = await platformBillingApi.getPortalLink();
       window.open(portalLink, '_blank');
-      return;
     },
     onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const updateLimitsMutation = useMutation({
+  const { mutate: updateTasksLimit } = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
       platformBillingApi.updateTaskLimit(data.tasksLimit),
     onSuccess: () => {
@@ -132,7 +133,7 @@ export default function Billing() {
         <div className="flex items-center gap-2">
           {/* TODO: add payment method or acess billing portal */}
           {isSubscriptionActive && (
-            <Button variant="outline" onClick={() => manageBilling()}>
+            <Button variant="outline" onClick={() => getPortalLink()}>
               {t('Access Billing Portal')}
             </Button>
           )}
@@ -143,8 +144,14 @@ export default function Billing() {
       </div>
 
       <div className="space-y-2">
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <span>
+            {t('Current Plan')}
+          </span>
+          <span>{platformSubscription?.plan.plan || t('Free')}</span>
+        </div>
         <div className="flex items-baseline gap-2">
-          <div className="text-5xl font-semibold">{calculateTotalCost}</div>
+          <div className="text-5xl font-semibold">{calculatedTotalCost}</div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>
         {platformSubscription?.nextBillingDate && (
@@ -295,8 +302,7 @@ export default function Billing() {
         open={isTasksLimitDialogOpen}
         onOpenChange={setIsTasksLimitDialogOpen}
         onSubmit={(newLimit) => {
-          console.log('newLimit', newLimit);
-          updateLimitsMutation.mutateAsync({
+          updateTasksLimit({
             tasksLimit: isNil(newLimit) ? null : newLimit,
           });
         }}

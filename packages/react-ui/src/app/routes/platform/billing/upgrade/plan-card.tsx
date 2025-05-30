@@ -13,10 +13,10 @@ import { planData } from '../data';
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
   selected: PlanName;
-  onUpgrade: (params: UpdateSubscriptionParams) => void;
+  onSelect: (params: UpdateSubscriptionParams) => void;
 };
 
-export const PlanCard = ({ plan, selected, onUpgrade }: PlanCardProps) => {
+export const PlanCard = ({ plan, selected, onSelect }: PlanCardProps) => {
   const openNewWindow = useNewWindow();
   const selectedPlan = selected === plan.name;
 
@@ -79,20 +79,17 @@ export const PlanCard = ({ plan, selected, onUpgrade }: PlanCardProps) => {
           if (isEnterprisePlan) {
             openNewWindow('https://activepieces.com/sales');
           } else {
-            onUpgrade({
-              plan: plan.name as
-                | PlanName.FREE
-                | PlanName.PLUS
-                | PlanName.BUSINESS,
+            onSelect({
+              plan: plan.name as PlanName.FREE | PlanName.PLUS | PlanName.BUSINESS,
               extraUsers: additionalUsers,
             });
           }
         }}
       >
         {selectedPlan
-          ? t('Contact Sales')
-          : isEnterprisePlan
           ? t('Current Plan')
+          : isEnterprisePlan
+          ? t('Contact Sales')
           : t('Upgrade')}
       </Button>
 

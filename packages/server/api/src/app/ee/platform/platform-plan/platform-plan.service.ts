@@ -54,6 +54,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         const updatedPlatformPlan: PlatformPlan = {
             ...platformPlan,
+            ...spreadIfDefined('plan', update.plan),
             ...spreadIfDefined('tasksLimit', update.tasksLimit),
             ...spreadIfDefined('includedTasks', update.includedTasks),
             ...spreadIfDefined('aiCreditsLimit', update.aiCreditsLimit),

@@ -1,7 +1,7 @@
-import { PlanName } from "@activepieces/ee-shared"
-import { PiecesFilterType, PlatformPlanLimits } from "@activepieces/shared"
+import { PlatformPlanLimits } from "@activepieces/shared"
 
 export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
+    plan: 'free',
     tasksLimit: 1000,
     includedTasks: 1000,
     aiCreditsLimit: 100,
@@ -34,13 +34,14 @@ export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
 }
 
 export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
+    plan: 'plus',
     includedTasks: 1000000,
     aiCreditsLimit: 500,
     includedAiCredits: 500,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
-    mcpLimit: 5,
+    mcpLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -65,13 +66,14 @@ export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
 
 
 export const BUSINESS_CLOUD_PLAN: PlatformPlanLimits = {
+    plan: 'business',
     includedTasks: 1000000,
     aiCreditsLimit: 1000,
     includedAiCredits: 1000,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
-    mcpLimit: 5,
+    mcpLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,

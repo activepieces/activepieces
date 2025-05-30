@@ -14,6 +14,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
+        plan: {
+            type: String,
+            nullable: true,
+        },
         includedTasks: {
             type: Number,
         },
