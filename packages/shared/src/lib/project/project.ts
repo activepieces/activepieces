@@ -27,7 +27,7 @@ export enum NotificationStatus {
 
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
-    aiTokens: Type.Number(),
+    aiCredits: Type.Number(),
     nextLimitResetDate: Type.String(),
 })
 
@@ -48,7 +48,7 @@ export const ProjectPlan = Type.Object({
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
     tasks: Nullable(Type.Number()),
-    aiTokens: Nullable(Type.Number()),
+    aiCredits: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>

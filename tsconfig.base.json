@@ -174,6 +174,11 @@
       ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
+      "@activepieces/piece-comfyicu": [
+        "packages/pieces/community/comfyicu/src/index.ts"
+      ],
+      "@activepieces/piece-cognito-forms": [
+        "packages/pieces/community/cognito-forms/src/index.ts"
       ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
@@ -232,6 +237,9 @@
       ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-docusign": [
+        "packages/pieces/community/docusign/src/index.ts"
       ],
       "@activepieces/piece-drip": [
         "packages/pieces/community/drip/src/index.ts"
@@ -520,6 +528,9 @@
       "@activepieces/piece-mongodb": [
         "packages/pieces/community/mongodb/src/index.ts"
       ],
+      "@activepieces/piece-motion": [
+        "packages/pieces/community/motion/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
@@ -690,6 +701,9 @@
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
+      "@activepieces/piece-smartsuite": [
+        "packages/pieces/community/smartsuite/src/index.ts"
+      ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
@@ -846,6 +860,9 @@
       "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-zagomail": [
+        "packages/pieces/community/zagomail/src/index.ts"
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"

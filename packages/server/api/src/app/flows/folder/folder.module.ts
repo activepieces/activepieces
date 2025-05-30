@@ -105,18 +105,6 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             return reply.status(StatusCodes.OK).send()
         },
     )
-
-    fastify.patch(
-        '/order',
-        UpdateFolderOrderParams,
-        async (request, reply) => {
-            await folderService(request.log).updateOrder({
-                projectId: request.principal.projectId,
-                folderOrders: request.body.folderOrders,
-            })
-            return reply.status(StatusCodes.OK).send()
-        },
-    )
 }
 
 
@@ -187,25 +175,5 @@ const DeleteFolderParams = {
         tags: ['folders'],
         description: 'Delete a folder',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-    },
-}
-
-const UpdateFolderOrderParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_FOLDER,
-    },
-    schema: {
-        tags: ['folders'],
-        description: 'Update folder display order',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: Type.Object({
-            folderOrders: Type.Array(
-                Type.Object({
-                    folderId: Type.String(),
-                    order: Type.Number(),
-                }),
-            ),
-        }),
     },
 }

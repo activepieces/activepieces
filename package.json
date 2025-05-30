@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.56.0",
-  "rcVersion": "0.57.0-rc.0",
+  "version": "0.58.0",
+  "rcVersion": "0.59.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -103,6 +103,7 @@
     "@tiptap/suggestion": "2.5.4",
     "@tryfabric/martian": "1.2.0",
     "@types/amqplib": "0.10.5",
+    "@types/docusign-esign": "5.19.9",
     "@types/imapflow": "1.0.18",
     "@types/js-yaml": "4.0.9",
     "@types/pg-format": "1.0.5",
@@ -148,6 +149,7 @@
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "deepmerge-ts": "7.1.0",
+    "docusign-esign": "8.1.0",
     "drip-nodejs": "3.1.2",
     "elevenlabs": "0.2.2",
     "embla-carousel-react": "8.1.8",
@@ -269,6 +271,7 @@
     "tailwind-merge": "2.4.0",
     "tailwindcss-animate": "1.0.7",
     "tinycolor2": "1.6.0",
+    "tree-kill": "1.2.2",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
     "turndown": "7.2.0",
