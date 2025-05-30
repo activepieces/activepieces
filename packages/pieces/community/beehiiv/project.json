@@ -1,0 +1,27 @@
+{
+  "name": "pieces-beehiiv",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/beehiiv/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/beehiiv",
+        "tsConfig": "packages/pieces/community/beehiiv/tsconfig.json",
+        "packageJson": "packages/pieces/community/beehiiv/package.json",
+        "main": "packages/pieces/community/beehiiv/src/index.ts",
+        "assets": ["packages/pieces/community/beehiiv/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/beehiiv/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
