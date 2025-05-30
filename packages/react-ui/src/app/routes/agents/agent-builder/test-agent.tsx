@@ -1,9 +1,9 @@
 import { FlaskConical, Play, Info } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { agentsApi } from '../agents-api';
 import { Todo } from '@activepieces/shared';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { TodoDetails } from '../../todos/todo-details';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
     Tooltip,
@@ -19,6 +18,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDebouncedCallback } from 'use-debounce';
 
 interface TestAgentProps {
     agentId: string;
@@ -31,9 +31,20 @@ export const TestAgent = ({ agentId, onSuccess, disabled }: TestAgentProps) => {
     const [createdTodo, setCreatedTodo] = useState<Todo | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    const { data: agent } = useQuery({
+        queryKey: ['agent', agentId],
+        queryFn: () => agentsApi.get(agentId),
+    });
+
+    useEffect(() => {
+        if (agent?.testPrompt) {
+            setTestPrompt(agent.testPrompt);
+        }
+    }, [agent?.testPrompt]);
+
     const updateAgentMutation = useMutation({
-        mutationFn: (prompt: string) => {
-            return agentsApi.update(agentId, { systemPrompt: prompt });
+        mutationFn: (testPrompt: string) => {
+            return agentsApi.update(agentId, { testPrompt });
         },
         onSuccess: () => {
             onSuccess?.();
@@ -41,8 +52,8 @@ export const TestAgent = ({ agentId, onSuccess, disabled }: TestAgentProps) => {
     });
 
     const runAgentMutation = useMutation({
-        mutationFn: (prompt: string) => {
-            return agentsApi.run(agentId, { prompt });
+        mutationFn: (testPrompt: string) => {
+            return agentsApi.run(agentId, { prompt: testPrompt });
         },
         onSuccess: (todo: Todo) => {
             setCreatedTodo(todo);
@@ -51,9 +62,20 @@ export const TestAgent = ({ agentId, onSuccess, disabled }: TestAgentProps) => {
         },
     });
 
+    const debouncedUpdateTestPrompt = useDebouncedCallback((value: string) => {
+        if (value.trim()) {
+            updateAgentMutation.mutate(value);
+        }
+    }, 500);
+
+    const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newTestPrompt = e.target.value;
+        setTestPrompt(newTestPrompt);
+        debouncedUpdateTestPrompt(newTestPrompt);
+    };
+
     const handleRun = () => {
         if (!testPrompt.trim()) return;
-        updateAgentMutation.mutate(testPrompt);
         runAgentMutation.mutate(testPrompt);
     };
 
@@ -82,15 +104,15 @@ export const TestAgent = ({ agentId, onSuccess, disabled }: TestAgentProps) => {
                     size="sm"
                     className="flex items-center gap-2"
                     onClick={handleRun}
-                    disabled={runAgentMutation.isPending || updateAgentMutation.isPending || disabled || !testPrompt.trim()}
+                    disabled={runAgentMutation.isPending || disabled || !testPrompt.trim()}
                 >
                     <Play className="h-4 w-4" />
-                    {runAgentMutation.isPending || updateAgentMutation.isPending ? 'Running...' : 'Run Test'}
+                    {runAgentMutation.isPending ? 'Running...' : 'Run Test'}
                 </Button>
             </div>
             <Textarea
                 value={testPrompt}
-                onChange={(e) => setTestPrompt(e.target.value)}
+                onChange={handlePromptChange}
                 placeholder="Schedule a meeting with the marketing team for next Monday at 2 PM"
                 className="min-h-[100px] resize-none w-full"
             />

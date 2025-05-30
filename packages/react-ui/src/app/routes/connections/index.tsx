@@ -39,7 +39,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
-import { UserFullName } from '@/components/ui/user-fullname';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
@@ -58,6 +57,7 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { EntityAvatar } from '@/components/ui/todo-profile-picture';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
@@ -339,10 +339,10 @@ function AppConnectionsPage() {
         return (
           <div className="text-left">
             {row.original.owner && (
-              <UserFullName
-                firstName={row.original.owner.firstName}
-                lastName={row.original.owner.lastName}
-                email={row.original.owner.email}
+              <EntityAvatar
+                type="user"
+                includeName={true}
+                fullName={row.original.owner.firstName + ' ' + row.original.owner.lastName}
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}

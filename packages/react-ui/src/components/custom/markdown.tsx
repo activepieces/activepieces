@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 
@@ -25,6 +25,7 @@ type MarkdownProps = {
   variables?: Record<string, string>;
   variant?: MarkdownVariant;
   className?: string;
+  loading?: string;
 };
 
 const Container = ({
@@ -64,8 +65,9 @@ const Container = ({
   );
 };
 
+
 const ApMarkdown = React.memo(
-  ({ markdown, variables, variant, className }: MarkdownProps) => {
+  ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -84,9 +86,20 @@ const ApMarkdown = React.memo(
       },
     });
 
+    if (loading && loading.length > 0) {
+      return (
+        <Container variant={variant}>
+          <div className="flex items-center gap-2">
+            {loading}
+          </div>
+        </Container>
+      );
+    }
+
     if (!markdown) {
       return null;
     }
+
     const markdownProcessed = applyVariables(markdown, variables ?? {})
       .split('\n')
       .map((line) => line.trim())

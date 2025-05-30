@@ -10,7 +10,7 @@ import {
   ActionType,
   Step,
   TodoType,
-  TodoWithAssignee,
+  PopulatedTodo,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -91,7 +91,7 @@ const TestStepSectionImplementation = React.memo(
         flowVersionId,
         stepName: currentStep.name,
       });
-      const output = testStepResponse.output as TodoWithAssignee;
+      const output = testStepResponse.output as PopulatedTodo;
       if (testStepResponse.success && !isNil(output)) {
         setTodoId(output.id as string);
       }

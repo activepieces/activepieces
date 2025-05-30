@@ -208,6 +208,7 @@ import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/pos
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -353,6 +354,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgentsModule1748456786940,
         ChangeManualTasksCommentsToTodoComments1742433144687,
         AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553
     ]
 
     const edition = system.getEdition()

@@ -2,7 +2,7 @@ import { QueryClient, useQuery } from "@tanstack/react-query";
 import { todoActivityApi } from "./todos-activitiy-api";
 
 
-export const todosCommentsHook = {
+export const todoActivitiesHook = {
     useComments: (todoId: string) => {
         return useQuery({
             queryKey: ['todos', todoId, 'comments'],
@@ -14,11 +14,4 @@ export const todosCommentsHook = {
             }),
         });
     },
-}
-
-type UpdateCommentInCacheParams = {
-    todoId: string
-    activityId: string
-    content: string
-    queryClient: QueryClient
 }

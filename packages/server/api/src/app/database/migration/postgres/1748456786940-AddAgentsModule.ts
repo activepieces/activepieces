@@ -12,6 +12,7 @@ export class AddAgentsModule1748456786940 implements MigrationInterface {
                 "profilePictureUrl" character varying NOT NULL,
                 "displayName" character varying NOT NULL,
                 "description" character varying NOT NULL,
+                "testPrompt" character varying NOT NULL,
                 "systemPrompt" character varying NOT NULL,
                 "projectId" character varying NOT NULL,
                 "maxSteps" integer NOT NULL,

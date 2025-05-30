@@ -1,4 +1,4 @@
-import { Agent, RESOLVED_STATUS, STATUS_VARIANT } from '@activepieces/shared'
+import { Agent, RESOLVED_STATUS } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { todoService } from '../todos/todo.service'
 import { streamText } from 'ai';
@@ -20,6 +20,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                 variant: RESOLVED_STATUS.variant,
                 continueFlow: true,
             }],
+            createdByUserId: params.userId,
             platformId: agent.platformId,
             projectId: agent.projectId,
             flowId: undefined,
@@ -80,6 +81,7 @@ async function createEmptyComment(params: ExecuteAgent, todoId: string, log: Fas
 
 type ExecuteAgent = {
     agent: Agent
+    userId?: string
     prompt: string
     socket: Socket
 }

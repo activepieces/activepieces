@@ -50,6 +50,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
         return agentsService(request.log).run({
             id,
             prompt,
+            userId: request.principal.type === PrincipalType.USER ? request.principal.id : undefined,
             socket: app.io,
         })  
     })

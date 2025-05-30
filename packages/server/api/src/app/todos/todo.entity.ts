@@ -12,7 +12,8 @@ export type TodoSchema = Todo & {
     flow: Flow
     run: FlowRun
     assignee: User
-    agent: Agent    
+    agent: Agent
+    createdByUser: User
 }
 
 export const TodoEntity = new EntitySchema<TodoSchema>({
@@ -48,6 +49,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             nullable: false,
         },
         agentId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        createdByUserId: {
             ...ApIdSchema,
             nullable: true,
         },
@@ -97,6 +102,12 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_todo_platform_id',
             },
+        },
+        createdByUser: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
         agent: {
             type: 'many-to-one',

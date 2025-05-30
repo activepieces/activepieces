@@ -12,16 +12,18 @@ const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
-        const agent = await agentRepo().save({
-            ...params,      
+        const agentPayload: Omit<Agent, 'created' | 'updated'> = {
+            displayName: params.displayName,
+            id: apId(),
             description: params.description,
             platformId: params.platformId,
             profilePictureUrl: getAgentProfilePictureUrl(),
             systemPrompt: '',
+            testPrompt: '',
             maxSteps: 10,
-            id: apId(),
-        })
-        return agent
+            projectId: params.projectId,
+        }
+        return agentRepo().save(agentPayload)
     },
     async update(params: UpdateParams): Promise<Agent> {
         await agentRepo().update(params.id, {
@@ -31,11 +33,12 @@ export const agentsService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('testPrompt', params.testPrompt),
         })
         return agentRepo().findOneByOrFail({ id: params.id })
-    },  
+    },
     async run(params: RunParams): Promise<Todo> {
         const agent = await this.getOneOrThrow({ id: params.id })
         return agentExecutor(_log).execute({
             agent,
+            userId: params.userId,
             prompt: params.prompt,
             socket: params.socket,
         })
@@ -96,6 +99,7 @@ function getAgentProfilePictureUrl(): string {
 type RunParams = {
     id: string
     prompt: string
+    userId?: string
     socket: Socket
 }
 

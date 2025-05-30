@@ -1,7 +1,7 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, PopulatedTodo, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { IsNull, Like, Not } from 'typeorm'
+import { Like } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -9,6 +9,8 @@ import { Order } from '../helper/pagination/paginator'
 import { userService } from '../user/user-service'
 import { todoSideEfffects } from './todo-side-effects'
 import { TodoEntity } from './todo.entity'
+import { agentsService } from '../agents/agents-service'
+import { flowService } from '../flows/flow/flow.service'
 
 const repo = repoFactory(TodoEntity)  
 
@@ -24,17 +26,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
     async getOne(params: GetParams): Promise<Todo | null> {
         return repo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
     },
-    async getOneOrThrow(params: GetParams): Promise<Todo> {
-        const todo = await this.getOne(params)
-        if (isNil(todo)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
-            })
-        }
-        return todo
-    },
-    async getOnePopulatedOrThrow(params: GetParams): Promise<TodoWithAssignee> {
+    async getOnePopulatedOrThrow(params: GetParams): Promise<PopulatedTodo> {
         const todo = await this.getOne(params)
         if (!todo) {
             throw new ActivepiecesError({
@@ -42,11 +34,11 @@ export const todoService = (log: FastifyBaseLogger) => ({
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
             })
         }
-        const enrichedTask = await enrichTodoWithAssignee(todo)
+        const enrichedTask = await enrichTodoWithAssignee(todo, log)
         return enrichedTask
     },
-    async update(params: UpdateParams): Promise<Todo | null> {
-        const todo = await this.getOneOrThrow(params)
+    async update(params: UpdateParams): Promise<PopulatedTodo | null> {
+        const todo = await this.getOnePopulatedOrThrow(params)
         if (params.status && todo.resolveUrl && params.status.continueFlow !== false) {
             await sendResolveRequest(todo.resolveUrl, params.status)
         }
@@ -67,10 +59,10 @@ export const todoService = (log: FastifyBaseLogger) => ({
             todoId: params.id,
             projectId: params.projectId,
         })
-        return this.getOneOrThrow(params)
+        return this.getOnePopulatedOrThrow(params)
     },
     async resolve(params: ResolveParams) {
-        const todo = await this.getOneOrThrow({ id: params.id })
+        const todo = await this.getOnePopulatedOrThrow({ id: params.id })
         const status = todo.statusOptions.find((option) => option.name === params.status)
         if (isNil(status)) {
             throw new ActivepiecesError({
@@ -99,7 +91,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
             status: params.status,
         }
     },
-    async list(params: ListParams): Promise<SeekPage<TodoWithAssignee>> {
+    async list(params: ListParams): Promise<SeekPage<PopulatedTodo>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
         const paginator = buildPaginator<Todo>({
             entity: TodoEntity,
@@ -117,12 +109,12 @@ export const todoService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
             ...spreadIfDefined('flowId', params.flowId),
         })
-        if (params.assigneeId) {
+        if (!isNil(params.assigneeId)) {
             query = query.andWhere({
                 assigneeId: params.assigneeId,
             })
         }
-        if (params.statusOptions) {
+        if (!isNil(params.statusOptions)) {
             if (params.statusOptions[0] === UNRESOLVED_STATUS.name) {
                 query = query.andWhere('(status->>\'name\' = :statusName OR status->>\'continueFlow\' = :continueFlow)', {
                     statusName: UNRESOLVED_STATUS.name,
@@ -136,20 +128,16 @@ export const todoService = (log: FastifyBaseLogger) => ({
                 })
             }
         }
-        if (params.title) {
+        if (!isNil(params.title)) {
             query = query.andWhere({
                 title: Like(`%${params.title}%`),
             })
         }
 
-        // To avoid fetching tasks for testing purposes
-        query = query.andWhere({
-            runId: Not(IsNull()),
-        })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task)))
-        return paginationHelper.createPage<TodoWithAssignee>(enrichedData, newCursor)
+        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task, log)))
+        return paginationHelper.createPage<PopulatedTodo>(enrichedData, newCursor)
     },
 })
 
@@ -163,19 +151,23 @@ async function sendResolveRequest(resolveUrl: string, status: StatusOption) {
 
 async function enrichTodoWithAssignee(
     todo: Todo,
-): Promise<TodoWithAssignee> {
-    if (isNil(todo.assigneeId)) {
-        return {
-            ...todo,
-            assignee: null,
-        }
-    }
-    const assignee = await userService.getMetaInformation({
-        id: todo.assigneeId,
-    })
+    log: FastifyBaseLogger,
+): Promise<PopulatedTodo> {
     return {
         ...todo,
-        assignee,
+        assignee: isNil(todo.assigneeId) ? null : await userService.getMetaInformation({
+            id: todo.assigneeId,
+        }),
+        agent: isNil(todo.agentId) ? null : await agentsService(log).getOneOrThrow({
+            id: todo.agentId,
+        }),
+        createdByUser: isNil(todo.createdByUserId) ? null : await userService.getMetaInformation({
+            id: todo.createdByUserId,
+        }),
+        flow: isNil(todo.flowId) ? null : await flowService(log).getOnePopulated({
+            id: todo.flowId,
+            projectId: todo.projectId,
+        }),
     }
 }
 
@@ -208,6 +200,7 @@ type CreateParams = {
     description?: string
     statusOptions: StatusOption[]
     platformId: string
+    createdByUserId?: string
     projectId: string
     locked?: boolean
     flowId?: string

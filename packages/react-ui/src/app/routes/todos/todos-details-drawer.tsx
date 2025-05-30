@@ -3,15 +3,16 @@ import {
   RightDrawerContent,
 } from '@/components/right-drawer';
 import {
-  TodoWithAssignee,
+  PopulatedTodo,
+  Todo,
 } from '@activepieces/shared';
 
 import { TodoDetails } from './todo-details';
 
 type TodoDetailsProps = {
   open: boolean;
-  currentTodo: TodoWithAssignee;
-  isTesting?: boolean;
+  currentTodo: PopulatedTodo;
+  onStatusChange: (status: Todo['status']) => void;
   onOpenChange: (open: boolean) => void;
   onClose: () => void;
 };
@@ -19,6 +20,7 @@ type TodoDetailsProps = {
 function TodoDetailsDrawer({
   open,
   currentTodo,
+  onStatusChange,
   onOpenChange,
   onClose,
 }: TodoDetailsProps) {
@@ -33,7 +35,7 @@ function TodoDetailsDrawer({
       onClose={onClose}
     >
       <RightDrawerContent>
-          <TodoDetails todoId={currentTodo.id} onClose={onClose} />
+          <TodoDetails todoId={currentTodo.id} onClose={onClose} onStatusChange={onStatusChange} />
       </RightDrawerContent>
     </RightDrawer>
   );

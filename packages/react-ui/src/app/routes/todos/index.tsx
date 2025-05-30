@@ -15,7 +15,6 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
-import { UserFullName } from '@/components/ui/user-fullname';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
@@ -23,7 +22,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   Todo,
-  TodoWithAssignee,
+  PopulatedTodo,
   UNRESOLVED_STATUS,
   RESOLVED_STATUS,
   STATUS_COLORS,
@@ -31,10 +30,12 @@ import {
 } from '@activepieces/shared';
 
 import { TodoDetailsDrawer } from './todos-details-drawer';
+import { EntityAvatar } from '../../../components/ui/todo-profile-picture';
+import { todoUtils } from '@/features/todos/lib/todo-utils';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
-  const [selectedTask, setSelectedTask] = useState<TodoWithAssignee | null>(
+  const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(
     null,
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -54,7 +55,7 @@ function TodosPage() {
     }
   }, []);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['todos', location, projectId],
     queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
@@ -73,8 +74,8 @@ function TodosPage() {
       const statusOptions = isAllStatus
         ? undefined
         : isUnresolved
-        ? [UNRESOLVED_STATUS.name]
-        : [RESOLVED_STATUS.name];
+          ? [UNRESOLVED_STATUS.name]
+          : [RESOLVED_STATUS.name];
       return todosApi.list({
         projectId,
         cursor: cursor ?? undefined,
@@ -108,11 +109,11 @@ function TodosPage() {
   const assigneeOptions = [
     ...(currentUser
       ? [
-          {
-            label: t('Me Only'),
-            value: currentUser.email,
-          },
-        ]
+        {
+          label: t('Me Only'),
+          value: currentUser.email,
+        },
+      ]
       : []),
     ...(projectMembers
       ?.filter((member) => member.user.email !== currentUser?.email)
@@ -164,7 +165,7 @@ function TodosPage() {
     }
     return CircleDot;
   };
-  const columns: ColumnDef<RowDataWithActions<TodoWithAssignee>, unknown>[] = [
+  const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -244,18 +245,56 @@ function TodosPage() {
       },
     },
     {
+      accessorKey: 'createdBy',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created by')} />
+      ),
+      cell: ({ row }) => {
+        const authorName = todoUtils.getAuthorName(row.original);
+        return (
+          <div className="text-left flex items-center gap-2">
+            <EntityAvatar
+              size="w-6 h-6"
+              type={todoUtils.getAuthorType(row.original)}
+              fullName={authorName}
+              pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
+              profileUrl={todoUtils.getAuthorProfileUrl(row.original)} />
+            <div>
+              {authorName}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'assignee',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Assigned to')} />
       ),
       cell: ({ row }) => {
+        const hasAgent = row.original.agent;
+        if (hasAgent) {
+          return (
+            <div className="text-left">
+              <EntityAvatar
+                type="agent"
+                size="w-6 h-6"
+                includeName={true}
+                pictureUrl={row.original.agent?.profilePictureUrl}
+                profileUrl={row.original.agent?.id ? `/agents/${row.original.agent.id}` : undefined}
+                fullName={row.original.agent?.displayName ?? ''}
+              />
+            </div>
+          );
+        }
+
         return (
           <div className="text-left">
             {row.original.assignee && (
-              <UserFullName
-                firstName={row.original.assignee.firstName}
-                lastName={row.original.assignee.lastName}
-                email={row.original.assignee.email}
+              <EntityAvatar
+                type="user"
+                includeName={true}
+                fullName={row.original.assignee.firstName + ' ' + row.original.assignee.lastName}
               />
             )}
             {!row.original.assignee && <div className="text-left">-</div>}
@@ -281,6 +320,7 @@ function TodosPage() {
         );
       },
     },
+
     {
       accessorKey: 'created',
       header: ({ column }) => (
@@ -328,6 +368,11 @@ function TodosPage() {
         <TodoDetailsDrawer
           key={selectedTask.id}
           currentTodo={selectedTask}
+          onStatusChange={() => {
+            setSelectedTask(null);
+            refetch();
+            setDrawerOpen(false);
+          }}
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
           onClose={() => {

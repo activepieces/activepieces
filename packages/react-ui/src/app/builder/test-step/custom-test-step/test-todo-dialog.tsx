@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { TodoWithAssignee, TodoType, Action } from '@activepieces/shared';
+import { PopulatedTodo, TodoType, Action } from '@activepieces/shared';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { TodoDetails } from '@/app/routes/todos/todo-details';
 import { useMutation } from '@tanstack/react-query';
@@ -13,7 +13,7 @@ import { INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  todo: TodoWithAssignee;
+  todo: PopulatedTodo;
   flowVersionId: string;
   projectId: string;
   currentStep: Action;
@@ -42,7 +42,7 @@ function TodoTestingDialog({
     });
 
   const { mutate: resolveTodo } = useMutation({
-    mutationFn: async (status: TodoWithAssignee['status']) => {
+    mutationFn: async (status: PopulatedTodo['status']) => {
       const response = await todosApi.update(todo.id, {
         status: status,
         isTest: true,
@@ -91,7 +91,7 @@ function TodoTestingDialog({
           type: FlowOperationType.UPDATE_ACTION,
           request: currentStepCopy,
         });
-        const response = output as TodoWithAssignee;
+        const response = output as PopulatedTodo;
         const statusName = response['status'].name;
         const statusOptions = response['statusOptions'];
         const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
@@ -124,7 +124,7 @@ function TodoTestingDialog({
     },
   });
 
-  const handleStatusChange = (status: TodoWithAssignee['status']) => {
+  const handleStatusChange = (status: PopulatedTodo['status']) => {
     resolveTodo(status);
   };
 
