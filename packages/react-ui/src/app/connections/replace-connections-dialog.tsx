@@ -4,6 +4,8 @@ import { t } from 'i18next';
 import { GlobeIcon, WorkflowIcon } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,8 +27,6 @@ import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
-import { useNavigate } from 'react-router-dom';
-
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;
@@ -218,7 +218,6 @@ const ReplaceConnectionsDialog = ({
   };
   const navigate = useNavigate();
 
-
   return (
     <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -231,10 +230,14 @@ const ReplaceConnectionsDialog = ({
           </DialogTitle>
           <DialogDescription>
             {step === STEP.SELECT ? (
-              t('This will replace one connection with another connection, existing flows will be changed to use the new connection, and the old connection will be deleted.')
+              t(
+                'This will replace one connection with another connection, existing flows will be changed to use the new connection, and the old connection will be deleted.',
+              )
             ) : (
               <>
-                {t('Existing MCP servers will not be changed automatically, you have to reconnect them manually.')}
+                {t(
+                  'Existing MCP servers will not be changed automatically, you have to reconnect them manually.',
+                )}
               </>
             )}
           </DialogDescription>
@@ -380,8 +383,8 @@ const ReplaceConnectionsDialog = ({
                                   />
                                   {conn?.scope ===
                                     AppConnectionScope.PLATFORM && (
-                                      <GlobeIcon className="w-4 h-4" />
-                                    )}
+                                    <GlobeIcon className="w-4 h-4" />
+                                  )}
                                   <span>{conn!.displayName}</span>
                                 </div>
                               );
@@ -392,8 +395,6 @@ const ReplaceConnectionsDialog = ({
                       )}
                     />
                   )}
-
-
                 </>
               )}
 
@@ -424,13 +425,21 @@ const ReplaceConnectionsDialog = ({
                   </span>
                 ) : (
                   affectedFlows.map((flow) => (
-
-                    <div className="flex items-center justify-between">
+                    <div
+                      className="flex items-center justify-between"
+                      key={flow.id}
+                    >
                       <div className="flex items-center gap-2">
                         <WorkflowIcon className="w-5 h-5" />
-                        <Button variant="link" className="p-0 h-auto font-medium text-foreground truncate text-base" onClick={() => {
-                          navigate(`/projects/${flow.projectId}/flows/${flow.id}`);
-                        }}>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-foreground truncate text-base"
+                          onClick={() => {
+                            navigate(
+                              `/projects/${flow.projectId}/flows/${flow.id}`,
+                            );
+                          }}
+                        >
                           {flow.version.displayName}
                         </Button>
                       </div>

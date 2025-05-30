@@ -5,7 +5,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
-
 import { FormField, FormItem, FormMessage } from '../../../components/ui/form';
 import { Label } from '../../../components/ui/label';
 
