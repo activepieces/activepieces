@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeAcuityRequest } from '../common';
 import { acuityAuth } from '../../index';
-import { fetchCalendars } from '../common';
+import { calendarIdDropdown } from '../common/props';
 
 export const addBlockedTime = createAction({
   name: 'add_blocked_time',
@@ -20,19 +20,7 @@ export const addBlockedTime = createAction({
       required: true,
       description: 'End date and time of blocked off time (must be parsable by strtotime)',
     }),
-    calendarID: Property.Dropdown({
-      displayName: 'Calendar',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const calendars = await fetchCalendars(auth as { userId: string; apiKey: string });
-        return calendars.map((calendar: any) => ({
-          label: calendar.name,
-          value: calendar.id,
-        }));
-      },
-      description: 'Select the calendar to add this blocked time to.',
-    }),
+    calendarID: calendarIdDropdown,
     notes: Property.LongText({
       displayName: 'Notes',
       required: false,

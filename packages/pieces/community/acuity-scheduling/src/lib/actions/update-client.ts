@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeAcuityRequest, fetchClients } from '../common';
 import { acuityAuth } from '../../index';
+import { clientFirstNameDropdown, clientLastNameDropdown, clientPhoneDropdown } from '../common/props';
 
 export const updateClient = createAction({
   name: 'update_client',
@@ -9,45 +10,9 @@ export const updateClient = createAction({
   description: 'Update an existing client in Acuity Scheduling by specifying lookup info and new details.',
   auth: acuityAuth,
   props: {
-    queryFirstName: Property.Dropdown({
-      displayName: 'Current First Name',
-      required: true,
-      refreshers: ['queryLastName', 'queryEmail', 'queryPhone'],
-      options: async ({ auth }) => {
-        const clients = await fetchClients(auth as { userId: string; apiKey: string });
-        return clients.map((client: any) => ({
-          label: `${client.firstName} ${client.lastName} (${client.email || ''}, ${client.phone || ''})`,
-          value: client.firstName,
-        }));
-      },
-      description: 'Select the client first name to find for update.',
-    }),
-    queryLastName: Property.Dropdown({
-      displayName: 'Current Last Name',
-      required: true,
-      refreshers: ['queryFirstName', 'queryEmail', 'queryPhone'],
-      options: async ({ auth }) => {
-        const clients = await fetchClients(auth as { userId: string; apiKey: string });
-        return clients.map((client: any) => ({
-          label: `${client.lastName} ${client.firstName} (${client.email || ''}, ${client.phone || ''})`,
-          value: client.lastName,
-        }));
-      },
-      description: 'Select the client last name to find for update.',
-    }),
-    queryPhone: Property.Dropdown({
-      displayName: 'Current Phone',
-      required: false,
-      refreshers: ['queryFirstName', 'queryLastName', 'queryEmail'],
-      options: async ({ auth }) => {
-        const clients = await fetchClients(auth as { userId: string; apiKey: string });
-        return clients.map((client: any) => ({
-          label: `${client.phone} (${client.firstName} ${client.lastName}, ${client.email || ''})`,
-          value: client.phone,
-        }));
-      },
-      description: 'Select the client phone to find for update.',
-    }),
+    queryFirstName: clientFirstNameDropdown,
+    queryLastName: clientLastNameDropdown,
+    queryPhone: clientPhoneDropdown,
     firstName: Property.ShortText({
       displayName: 'New First Name',
       required: true,

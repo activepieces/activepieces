@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeAcuityRequest } from '../common';
 import { acuityAuth } from '../../index';
-import { fetchCalendars, fetchAppointmentTypes } from '../common';
+import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 
 export const createAppointment = createAction({
   name: 'create_appointment',
@@ -35,32 +35,8 @@ export const createAppointment = createAction({
       required: true,
       description: 'Date and time of the appointment.',
     }),
-    appointmentTypeID: Property.Dropdown({
-      displayName: 'Appointment Type',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const types = await fetchAppointmentTypes(auth as { userId: string; apiKey: string });
-        return types.map((type: any) => ({
-          label: type.name,
-          value: type.id,
-        }));
-      },
-      description: 'Select the appointment type to schedule.',
-    }),
-    calendarID: Property.Dropdown({
-      displayName: 'Calendar',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const calendars = await fetchCalendars(auth as { userId: string; apiKey: string });
-        return calendars.map((calendar: any) => ({
-          label: calendar.name,
-          value: calendar.id,
-        }));
-      },
-      description: 'Select the calendar to book on. If not provided, an available calendar will be selected automatically.',
-    }),
+    appointmentTypeID: appointmentTypeIdDropdown,
+    calendarID: calendarIdDropdown,
     timezone: Property.ShortText({
       displayName: 'Timezone',
       required: false,

@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAcuityRequest, fetchCalendars } from '../common';
+import { makeAcuityRequest } from '../common';
 import { acuityAuth } from '../../index';
+import { calendarIdDropdown } from '../common/props';
 
 export const rescheduleAppointment = createAction({
   name: 'reschedule_appointment',
@@ -19,19 +20,7 @@ export const rescheduleAppointment = createAction({
       required: true,
       description: 'Required date and time for the appointment.',
     }),
-    calendarID: Property.Dropdown({
-      displayName: 'New Calendar',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const calendars = await fetchCalendars(auth as { userId: string; apiKey: string });
-        return calendars.map((calendar: any) => ({
-          label: calendar.name,
-          value: calendar.id,
-        }));
-      },
-      description: 'Select the calendar to reschedule to. If not provided, the appointment stays on the same calendar.',
-    }),
+    calendarID: calendarIdDropdown,
     timezone: Property.ShortText({
       displayName: 'Timezone',
       required: false,
