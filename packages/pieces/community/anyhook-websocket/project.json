@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/anyhook-websocket/package.json",
         "main": "packages/pieces/community/anyhook-websocket/src/index.ts",
         "assets": [
-          "packages/pieces/community/anyhook-websocket/*.md"
+          "packages/pieces/community/anyhook-websocket/*.md",
+          {
+            "input": "packages/pieces/community/anyhook-websocket/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -2,7 +2,7 @@ import { UserInteractionJobData, UserInteractionJobType } from '@activepieces/se
 import { AppConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
-import { engineRunner } from '../engine'
+import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
@@ -11,7 +11,10 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
         let response: unknown
         switch (jobData.jobType) {
             case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-                response = await engineRunner(log).extractPieceMetadata(engineToken, jobData.piece)
+                response = await engineRunner(log).extractPieceMetadata(engineToken, {
+                    ...jobData.piece,
+                    platformId: jobData.platformId,
+                })
                 break
             case UserInteractionJobType.EXECUTE_VALIDATION:
                 response = await engineRunner(log).executeValidateAuth(engineToken, {
@@ -29,6 +32,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                         simulate: jobData.test,
                         publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
+                    triggerPayload: jobData.triggerPayload,
                     test: jobData.test,
                     projectId: jobData.projectId,
                 })
@@ -39,6 +43,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     flowVersion: jobData.flowVersion,
                     sampleData: jobData.sampleData,
                     projectId: jobData.projectId,
+                    runEnvironment: jobData.runEnvironment,
                 })
                 break
             case UserInteractionJobType.EXECUTE_TOOL:

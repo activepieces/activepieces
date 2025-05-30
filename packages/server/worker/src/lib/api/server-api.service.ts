@@ -1,13 +1,16 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, PlatformUsageMetric, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
-import { cacheHandler } from '../utils/cache-handler'
+import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
+
+const globalCacheFlowPath = path.resolve('cache', 'flows')
+const flowCache = cacheState(globalCacheFlowPath)
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -100,16 +103,10 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
     return batches
 }
 
-const globalCacheFlowPath = path.resolve('cache', 'flows')
-const flowCache = cacheHandler(globalCacheFlowPath)
-
-async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
     try {
-        if (flowVersionIdToRun) {
-            const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
-            return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
-        }
-        return null
+        const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
+        return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
     }
     catch (error) {
         return null
@@ -138,9 +135,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
         },
-        async removeStaleFlow(request: RemoveStableJobEngineRequest): Promise<void> {
-            await client.post('/v1/engine/remove-stale-job', request)
-        },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
@@ -155,19 +149,19 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                     throw new ActivepiecesError({
                         code: ErrorCode.QUOTA_EXCEEDED,
                         params: {
-                            metric: 'tasks',
+                            metric: PlatformUsageMetric.TASKS,
                         },
                     })
                 }
                 exceptionHandler.handle(e, log)
             }
         },
-        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest, flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
 
-            const cachedFlow = await readFlowFromCache(flowVersionIdToRun)
-            if (cachedFlow) {
+            const cachedFlow = await readFlowFromCache(request.versionId)
+            if (!isNil(cachedFlow)) {
                 log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
                 return cachedFlow
             }

@@ -27,6 +27,7 @@ export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
             return {
                 id: job.id!,
                 data: job.data,
+                attempsStarted: job.attemptsStarted,
             }
         }
         catch (e) {

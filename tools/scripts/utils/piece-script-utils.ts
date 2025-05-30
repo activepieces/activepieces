@@ -7,7 +7,9 @@ import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
-type Piece = {
+import { execSync } from 'child_process'
+import { pieceTranslation } from '../../../packages/pieces/community/framework/src'
+type SubPiece = {
     name: string;
     displayName: string;
     version: string;
@@ -147,22 +149,31 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
+        
+        const packageLockPath = join(folderPath, 'package.json');
+        const packageExists = await stat(packageLockPath).catch(() => null);
+        if (packageExists) {
+            console.info(`[loadPieceFromFolder] package.json exists, running npm install`)
+            execSync('npm install', { cwd: folderPath, stdio: 'inherit' });
+        }
 
         const module = await import(
             join(folderPath, 'src', 'index')
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
+        const piece = extractPieceFromModule<SubPiece>({
             module,
             pieceName,
             pieceVersion
         });
-
+        const originalMetadata = piece.metadata()
+        const i18n = await pieceTranslation.initializeI18n(packageJson.name)
         const metadata = {
-            ...piece.metadata(),
+            ...originalMetadata,
             name: packageJson.name,
-            version: packageJson.version
+            version: packageJson.version,
+            i18n
         };
         metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;

@@ -35,6 +35,38 @@ export type EngineOperation =
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
 
+export const enum EngineSocketEvent {
+    ENGINE_RESULT = 'engine-result',
+    ENGINE_ERROR = 'engine-error',
+    ENGINE_STDOUT = 'engine-stdout',
+    ENGINE_STDERR = 'engine-stderr',
+    ENGINE_READY = 'engine-ready',
+    ENGINE_OPERATION = 'engine-operation',
+}
+
+export const EngineResult = Type.Object({
+    result: Type.Unknown(),
+})
+
+export const EngineError = Type.Object({
+    error: Type.Unknown(),
+})
+
+export const EngineStdout = Type.Object({
+    message: Type.String(),
+})
+
+export const EngineStderr = Type.Object({
+    message: Type.String(),
+})
+
+
+export type EngineResult = Static<typeof EngineResult>
+export type EngineError = Static<typeof EngineError>
+export type EngineStdout = Static<typeof EngineStdout>
+export type EngineStderr = Static<typeof EngineStderr>
+
+
 export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
@@ -48,12 +80,13 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage
+export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation &  {
+export type ExecuteStepOperation = BaseEngineOperation & {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+    runEnvironment: RunEnvironment
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
@@ -79,7 +112,9 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
+    tasks: number
     runEnvironment: RunEnvironment
+    executionState: ExecutionState
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
@@ -93,13 +128,12 @@ export enum ProgressUpdateType {
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
-    formatPayload: boolean
+    executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    tasks: number
     resumePayload: ResumePayload
-} & ExecutionState
+}
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
@@ -114,6 +148,13 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookSecret?: string | Record<string, string>
 }
 
+
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
 
 export type TriggerPayload<T = unknown> = {
     body: T

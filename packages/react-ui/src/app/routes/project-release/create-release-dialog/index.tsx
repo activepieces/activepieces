@@ -75,7 +75,7 @@ const CreateReleaseDialogContent = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
 
   const { mutate: applyChanges, isPending } = useMutation({
@@ -235,7 +235,7 @@ const CreateReleaseDialogContent = ({
                     </span>
                   </div>
                 </div>
-                <ScrollArea viewPortClassName="max-h-[16vh]">
+                <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.connections.map((connection, index) => (
                     <div
                       key={connection.connectionState.externalId}
@@ -280,7 +280,7 @@ const CreateReleaseDialogContent = ({
                     {t('Tables Changes')} ({plan?.tables?.length || 0})
                   </Label>
                 </div>
-                <ScrollArea viewPortClassName="max-h-[16vh]">
+                <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.tables.map((table, index) => (
                     <div
                       key={table.tableState.id}
@@ -389,7 +389,7 @@ const CreateReleaseDialog = ({
         setOpen(newOpenState);
       }}
     >
-      <DialogContent className="min-h-[100px] max-h-[720px] flex flex-col">
+      <DialogContent className="min-h-[100px] max-h-[850px] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
