@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import semVer from 'semver';
 
 const contributors = [
@@ -421,8 +421,8 @@ function cleanAuthors(authors: string[]) {
 }
 
 function loadAuthors(directoryPath: string) {
-    const gitLogCommand = `git log --format="%aN" -- ${directoryPath}`;
-    const result = execSync(gitLogCommand, { cwd: '/workspace/', encoding: 'utf-8' });
+    const gitLogArgs = ['log', '--format=%aN', '--', directoryPath];
+    const result = execFileSync('git', gitLogArgs, { cwd: '/workspace/', encoding: 'utf-8' });
     if (result.length === 0) {
         return [];
     }
