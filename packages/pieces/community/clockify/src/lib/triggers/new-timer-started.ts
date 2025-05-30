@@ -1,6 +1,7 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const newTimerStartedTrigger = createTrigger({
@@ -10,28 +11,7 @@ export const newTimerStartedTrigger = createTrigger({
   description: 'Triggers when a new timer is started',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-
-        const workspaces = await fetchWorkspaces(auth as string);
-        return {
-          options: workspaces.map((workspace: { id: string; name: string }) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
   },
   sampleData: {
     id: 'timer_456',

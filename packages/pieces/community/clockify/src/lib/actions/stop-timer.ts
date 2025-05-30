@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces, fetchUsers } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown, userIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const stopTimerAction = createAction({
@@ -9,54 +10,8 @@ export const stopTimerAction = createAction({
   displayName: 'Stop Timer',
   description: 'Stop the currently running timer',
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Clockify account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const workspaces = await fetchWorkspaces(apiKey);
-
-        return {
-          options: workspaces.map((workspace: any) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
-    userId: Property.Dropdown({
-      displayName: 'User',
-      required: true,
-      refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
-        if (!auth || !workspaceId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a workspace first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const users = await fetchUsers(apiKey, workspaceId as string);
-
-        return {
-          options: users.map((user: any) => ({
-            label: user.name || user.email,
-            value: user.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
+    userId: userIdDropdown,
   },
   async run(context) {
     const apiKey = context.auth as string;

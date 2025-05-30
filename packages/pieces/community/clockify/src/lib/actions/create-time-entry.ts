@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces, fetchProjects, fetchTasks } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown, projectIdDropdown, taskIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const createTimeEntryAction = createAction({
@@ -9,78 +10,9 @@ export const createTimeEntryAction = createAction({
   displayName: 'Create Time Entry',
   description: 'Log time in Clockify',
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Clockify account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const workspaces = await fetchWorkspaces(apiKey);
-
-        return {
-          options: workspaces.map((workspace: any) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
-    projectId: Property.Dropdown({
-      displayName: 'Project',
-      required: false,
-      refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
-        if (!auth || !workspaceId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a workspace first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const projects = await fetchProjects(apiKey, workspaceId as string);
-
-        return {
-          options: projects.map((project: any) => ({
-            label: project.name,
-            value: project.id,
-          })),
-        };
-      },
-    }),
-    taskId: Property.Dropdown({
-      displayName: 'Task',
-      required: false,
-      refreshers: ['workspaceId', 'projectId'],
-      options: async ({ auth, workspaceId, projectId }) => {
-        if (!auth || !workspaceId || !projectId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a project first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const tasks = await fetchTasks(apiKey, workspaceId as string, projectId as string);
-
-        return {
-          options: tasks.map((task: any) => ({
-            label: task.name,
-            value: task.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
+    projectId: projectIdDropdown,
+    taskId: taskIdDropdown,
     description: Property.ShortText({
       displayName: 'Description',
       required: false,

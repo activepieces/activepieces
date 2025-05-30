@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const findRunningTimerAction = createAction({
@@ -9,30 +10,7 @@ export const findRunningTimerAction = createAction({
   displayName: 'Find Running Timer',
   description: 'Get all in-progress time entries in the workspace',
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Clockify account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const workspaces = await fetchWorkspaces(apiKey);
-
-        return {
-          options: workspaces.map((workspace: any) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
     page: Property.Number({
       displayName: 'Page',
       required: false,

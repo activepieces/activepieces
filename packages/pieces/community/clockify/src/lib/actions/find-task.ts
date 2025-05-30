@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces, fetchProjects } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown, projectIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const findTaskAction = createAction({
@@ -9,54 +10,8 @@ export const findTaskAction = createAction({
   displayName: 'Find Task',
   description: 'Find a task by name in a project',
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Clockify account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const workspaces = await fetchWorkspaces(apiKey);
-
-        return {
-          options: workspaces.map((workspace: any) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
-    projectId: Property.Dropdown({
-      displayName: 'Project',
-      required: true,
-      refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
-        if (!auth || !workspaceId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a workspace first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const projects = await fetchProjects(apiKey, workspaceId as string);
-
-        return {
-          options: projects.map((project: any) => ({
-            label: project.name,
-            value: project.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
+    projectId: projectIdDropdown,
     taskName: Property.ShortText({
       displayName: 'Task Name',
       required: true

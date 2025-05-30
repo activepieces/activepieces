@@ -1,10 +1,7 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchWorkspaces, fetchProjects } from '../common';
+import { makeRequest } from '../common';
+import { workspaceIdDropdown, projectIdDropdown } from '../common/props';
 import { clockifyAuth } from '../../index';
 
 export const newTaskTrigger = createTrigger({
@@ -14,52 +11,8 @@ export const newTaskTrigger = createTrigger({
   description: 'Triggers when a new task is created in Clockify',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    workspaceId: Property.Dropdown({
-      displayName: 'Workspace',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-
-        const workspaces = await fetchWorkspaces(auth as string);
-        return {
-          options: workspaces.map((workspace: { id: string; name: string }) => ({
-            label: workspace.name,
-            value: workspace.id,
-          })),
-        };
-      },
-    }),
-    projectId: Property.Dropdown({
-      displayName: 'Project',
-      required: true,
-      refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
-        if (!auth || !workspaceId) {
-          return {
-            disabled: true,
-            placeholder: 'Please select a workspace first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const projects = await fetchProjects(apiKey, workspaceId as string);
-
-        return {
-          options: projects.map((project: any) => ({
-            label: project.name,
-            value: project.id,
-          })),
-        };
-      },
-    }),
+    workspaceId: workspaceIdDropdown,
+    projectId: projectIdDropdown,
   },
   sampleData: {
     name: 'Example Task',
