@@ -21,6 +21,7 @@ import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migr
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -228,6 +229,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RemoveFeatureFlagsFromSqlite1747824740845,
         UpgradePieceVersionsToLatest1748253670449,
+        DeprecateApproval1748648340742,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

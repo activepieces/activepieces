@@ -4,10 +4,10 @@ import { Control } from 'react-hook-form';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
-import { MultiSelectPieceProperty } from '../custom/multi-select-piece-property';
+import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
-import { FormField, FormItem, FormMessage } from './form';
-import { Label } from './label';
+import { FormField, FormItem, FormMessage } from '../../../components/ui/form';
+import { Label } from '../../../components/ui/label';
 
 export const AssignConnectionToProjectsControl = ({
   control,

@@ -1,12 +1,10 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { GlobeIcon } from 'lucide-react';
+import { GlobeIcon, WorkflowIcon } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
-
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,8 +25,8 @@ import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
+import { useNavigate } from 'react-router-dom';
 
-import { ConnectionFlowCard } from './connection-flow-card';
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;
@@ -218,6 +216,8 @@ const ReplaceConnectionsDialog = ({
     setStep(STEP.SELECT);
     setAffectedFlows([]);
   };
+  const navigate = useNavigate();
+
 
   return (
     <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -231,14 +231,10 @@ const ReplaceConnectionsDialog = ({
           </DialogTitle>
           <DialogDescription>
             {step === STEP.SELECT ? (
-              t('Replace one connection with another.')
+              t('This will replace one connection with another connection, existing flows will be changed to use the new connection, and the old connection will be deleted.')
             ) : (
               <>
-                {t('This action requires ')}
-                <span className="font-bold text-black">
-                  {t('reconnecting')}
-                </span>
-                {t(' any associated MCP pieces.')}
+                {t('Existing MCP servers will not be changed automatically, you have to reconnect them manually.')}
               </>
             )}
           </DialogDescription>
@@ -300,7 +296,7 @@ const ReplaceConnectionsDialog = ({
                     name="sourceConnections"
                     render={({ field }) => (
                       <div className="flex flex-col gap-2">
-                        <Label>{t('Connection to Replace')}</Label>
+                        <Label>{t('Connection to replace')}</Label>
                         <SearchableSelect
                           value={field.value?.id}
                           loading={connectionsLoading}
@@ -384,8 +380,8 @@ const ReplaceConnectionsDialog = ({
                                   />
                                   {conn?.scope ===
                                     AppConnectionScope.PLATFORM && (
-                                    <GlobeIcon className="w-4 h-4" />
-                                  )}
+                                      <GlobeIcon className="w-4 h-4" />
+                                    )}
                                   <span>{conn!.displayName}</span>
                                 </div>
                               );
@@ -397,13 +393,7 @@ const ReplaceConnectionsDialog = ({
                     />
                   )}
 
-                  <Alert>
-                    <AlertDescription>
-                      {t(
-                        'All flows will be changed to use the replaced with connection',
-                      )}
-                    </AlertDescription>
-                  </Alert>
+
                 </>
               )}
 
@@ -433,8 +423,18 @@ const ReplaceConnectionsDialog = ({
                     {t('No flows will be affected by this change')}
                   </span>
                 ) : (
-                  affectedFlows.map((flow, index) => (
-                    <ConnectionFlowCard key={index} flow={flow} />
+                  affectedFlows.map((flow) => (
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <WorkflowIcon className="w-5 h-5" />
+                        <Button variant="link" className="p-0 h-auto font-medium text-foreground truncate text-base" onClick={() => {
+                          navigate(`/projects/${flow.projectId}/flows/${flow.id}`);
+                        }}>
+                          {flow.version.displayName}
+                        </Button>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
