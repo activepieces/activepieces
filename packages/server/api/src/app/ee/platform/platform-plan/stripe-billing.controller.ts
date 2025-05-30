@@ -1,5 +1,5 @@
 import { PlanName } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper  } from './stripe-helper'
+import { system } from '../../../helper/system/system'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -19,7 +20,8 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const stripe = stripeHelper(request.log).getStripe()
                 assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-                const webhookSecret = 'whsec_9ddb3abe20c8fd95a4c77874b03bc527155879ffea474d7153563b1b28c8914b'
+
+                const webhookSecret = system.getOrThrow(AppSystemProp.STRIPE_WEBHOOK_SECRET)
                 const webhook = stripe.webhooks.constructEvent(
                     payload,
                     signature,
