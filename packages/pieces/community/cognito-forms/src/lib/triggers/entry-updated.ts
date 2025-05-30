@@ -1,7 +1,8 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchForms } from '../common';
+import { makeRequest } from '../common';
 import { cognitoFormsAuth } from '../../index';
+import { formIdDropdown } from '../common/props';
 
 export interface StoredWebhookData {
   webhookId: string;
@@ -18,30 +19,7 @@ export const entryUpdatedTrigger = createTrigger({
   description: 'Triggers when an existing form entry is updated',
   auth: cognitoFormsAuth,
   props: {
-    formId: Property.Dropdown({
-      displayName: 'Form',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Cognito Forms account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const forms = await fetchForms(apiKey);
-
-        return {
-          options: forms.map((form: any) => ({
-            label: form.Name,
-            value: form.Id,
-          })),
-        };
-      },
-    }),
+    formId: formIdDropdown,
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
@@ -63,7 +41,7 @@ export const entryUpdatedTrigger = createTrigger({
   async onEnable(context) {
     try {
       const formId = context.propsValue.formId;
-      
+
       const response = await makeRequest(
         context.auth as string,
         HttpMethod.POST,
@@ -94,8 +72,7 @@ export const entryUpdatedTrigger = createTrigger({
         await makeRequest(
           context.auth as string,
           HttpMethod.DELETE,
-          `/webhooks/${webhookData.webhookId}`,
-          undefined
+          `/webhooks/${webhookData.webhookId}`
         );
       }
     } catch (error) {
@@ -104,9 +81,6 @@ export const entryUpdatedTrigger = createTrigger({
   },
 
   async run(context) {
-    if (context.payload.body) {
-      return [context.payload.body];
-    }
-    return [];
+    return context.payload.body ? [context.payload.body] : [];
   },
 });

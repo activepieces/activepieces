@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, fetchForms } from '../common';
+import { makeRequest } from '../common';
 import { cognitoFormsAuth } from '../../index';
+import { formIdDropdown } from '../common/props';
 
 export const deleteEntryAction = createAction({
   auth: cognitoFormsAuth,
@@ -9,30 +10,7 @@ export const deleteEntryAction = createAction({
   displayName: 'Delete Entry',
   description: 'Deletes an entry using the specified form ID and entry ID.',
   props: {
-    formId: Property.Dropdown({
-      displayName: 'Form',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Cognito Forms account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const forms = await fetchForms(apiKey);
-
-        return {
-          options: forms.map((form: any) => ({
-            label: form.Name,
-            value: form.Id,
-          })),
-        };
-      },
-    }),
+    formId: formIdDropdown,
     entryId: Property.ShortText({
       displayName: 'Entry ID',
       required: true,

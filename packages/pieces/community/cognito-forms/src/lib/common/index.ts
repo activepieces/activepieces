@@ -20,12 +20,3 @@ export async function makeRequest(
 
   return response.body;
 }
-
-export async function fetchForms(apiKey: string) {
-  return await makeRequest(apiKey, HttpMethod.GET, '/forms');
-}
-
-export async function fetchFormFields(apiKey: string, formId: string) {
-  const form = await makeRequest(apiKey, HttpMethod.GET, `/forms/${formId}`);
-  return form.Fields || [];
-}
