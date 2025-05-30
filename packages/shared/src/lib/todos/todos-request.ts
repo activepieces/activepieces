@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApId } from '../common/id-generator'
-import { StatusOption } from '.'
+import { StatusOption, TodoEnvironment } from '.'
 
 const StatusOptionsSchema = Type.Array(StatusOption, { minItems: 1 })
 
@@ -13,6 +13,7 @@ export const ListTodosQueryParams = Type.Object({
     assigneeId: Type.Optional(ApId),
     statusOptions: Type.Optional(Type.Array(Type.String())),
     title: Type.Optional(Type.String()),
+    environment: Type.Optional(Type.Enum(TodoEnvironment)),
 })
 export type ListTodosQueryParams = Static<typeof ListTodosQueryParams>
 
@@ -40,6 +41,7 @@ export const CreateTodoRequestBody = Type.Object({
     runId: Type.Optional(ApId),
     assigneeId: Type.Optional(ApId),
     resolveUrl: Type.Optional(Type.String()),
+    environment: Type.Optional(Type.Enum(TodoEnvironment)),
 })
 export type CreateTodoRequestBody = Static<typeof CreateTodoRequestBody>
 

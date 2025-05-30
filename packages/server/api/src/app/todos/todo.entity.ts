@@ -27,6 +27,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         description: {
             type: String,
             nullable: true,
+        },  
+        environment: {
+            type: String,
+            nullable: false,
         },
         status: {
             type: JSONB_COLUMN_TYPE,

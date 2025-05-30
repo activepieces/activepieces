@@ -15,9 +15,6 @@ export const todosApi = {
   async list(request: ListTodosQueryParams) {
     return await api.get<SeekPage<PopulatedTodo>>(`/v1/todos`, request);
   },
-  async create(requestBody: CreateTodoRequestBody) {
-    return await api.post<Todo>('/v1/todos', requestBody);
-  },
   async update(id: string, requestBody: UpdateTodoRequestBody) {
     return await api.post<Todo>(`/v1/todos/${id}`, requestBody);
   },

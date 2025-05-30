@@ -52,6 +52,11 @@ export const StatusOption = Type.Object({
 
 export type StatusOption = Static<typeof StatusOption>
 
+export enum TodoEnvironment {
+    TEST = 'test',
+    PRODUCTION = 'production',
+}
+
 export const Todo = Type.Object({
     ...BaseModelSchema,
     title: Type.String(),
@@ -67,6 +72,7 @@ export const Todo = Type.Object({
     locked: Type.Boolean(),
     resolveUrl: Nullable(Type.String()),
     agentId: Nullable(Type.String()),
+    environment: Type.Enum(TodoEnvironment),
 })
 
 export type Todo = Static<typeof Todo>

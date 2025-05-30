@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckCircle, CheckIcon, CircleDot, Tag, User, X } from 'lucide-react';
+import { CheckCircle, CheckIcon, CircleDot, Tag, User, X, ListTodo, AlertCircle, CheckCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -32,20 +32,21 @@ import {
 import { TodoDetailsDrawer } from './todos-details-drawer';
 import { EntityAvatar } from '../../../components/ui/todo-profile-picture';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
-  const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(
-    null,
-  );
+  const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [_rowIndex, setRowIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
 
   const location = useLocation();
   const projectId = authenticationSession.getProjectId()!;
   const platformId = authenticationSession.getPlatformId()!;
   const { data: currentUser } = userHooks.useCurrentUser();
   const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => {
     if (!location.search.includes('assignee')) {
       setSearchParams((prev) => {
@@ -56,7 +57,7 @@ function TodosPage() {
   }, []);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['todos', location, projectId],
+    queryKey: ['todos', location, projectId, activeTab],
     queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
@@ -65,17 +66,8 @@ function TodosPage() {
       const assigneeId = searchParams.get('assigneeId') ?? undefined;
       const flowId = searchParams.get('flowId') ?? undefined;
       const title = searchParams.get('title') ?? undefined;
-      const status = searchParams.getAll('status') ?? undefined;
-      const isUnresolved =
-        status.length === 1 && status[0] === UNRESOLVED_STATUS.name
-          ? true
-          : false;
-      const isAllStatus = status.length === 0 || status.length === 2;
-      const statusOptions = isAllStatus
-        ? undefined
-        : isUnresolved
-          ? [UNRESOLVED_STATUS.name]
-          : [RESOLVED_STATUS.name];
+      const statusOptions = activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
+      
       return todosApi.list({
         projectId,
         cursor: cursor ?? undefined,
@@ -130,22 +122,6 @@ function TodosPage() {
       accessorKey: 'assignee',
       icon: User,
       options: assigneeOptions ?? [],
-    } as const,
-    {
-      type: 'select',
-      title: t('Status'),
-      accessorKey: 'status',
-      options: [
-        {
-          label: t('Unresolved'),
-          value: UNRESOLVED_STATUS.name,
-        },
-        {
-          label: t('Resolved'),
-          value: RESOLVED_STATUS.name,
-        },
-      ],
-      icon: CheckIcon,
     } as const,
     {
       type: 'input',
@@ -348,6 +324,20 @@ function TodosPage() {
           {t('Todos')}
         </TableTitle>
       </div>
+      
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')} className="mb-4">
+        <TabsList variant="outline">
+          <TabsTrigger value="all" className="flex items-center gap-2" variant="outline">
+            <ListTodo className="h-4 w-4" />
+            {t('All Todos')}
+          </TabsTrigger>
+          <TabsTrigger value="needs-action" className="flex items-center gap-2" variant="outline">
+            <CheckCheck className="h-4 w-4" />
+            {t('Needs Action')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+            
       <DataTable
         emptyStateTextTitle={t('No todos found')}
         emptyStateTextDescription={t(

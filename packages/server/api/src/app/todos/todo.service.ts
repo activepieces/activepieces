@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, PopulatedTodo, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, PopulatedTodo, UNRESOLVED_STATUS, UserId, TodoEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { Like } from 'typeorm'
@@ -133,6 +133,11 @@ export const todoService = (log: FastifyBaseLogger) => ({
                 title: Like(`%${params.title}%`),
             })
         }
+        if (!isNil(params.environment)) {
+            query = query.andWhere({
+                environment: params.environment,
+            })
+        }
 
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -190,6 +195,7 @@ type ListParams = {
     flowId?: FlowId
     assigneeId?: UserId
     limit: number
+    environment?: TodoEnvironment
     cursor: Cursor | null
     statusOptions?: string[]
     title?: string
@@ -203,6 +209,7 @@ type CreateParams = {
     createdByUserId?: string
     projectId: string
     locked?: boolean
+    environment: TodoEnvironment
     flowId?: string
     runId?: string
     agentId?: string

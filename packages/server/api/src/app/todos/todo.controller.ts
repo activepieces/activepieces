@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { Socket } from 'socket.io'
@@ -33,7 +33,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateTodoRequest, async (request) => {
-        const { title, description, statusOptions, flowId, runId, assigneeId, resolveUrl } = request.body
+        const { title, description, statusOptions, flowId, runId, assigneeId, resolveUrl, environment } = request.body
         return todoService(request.log).create({
             title,
             description,
@@ -41,6 +41,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             flowId,
             runId,
             assigneeId,
+            environment: environment ?? TodoEnvironment.PRODUCTION,
             resolveUrl,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,

@@ -1,4 +1,4 @@
-import { Agent, RESOLVED_STATUS } from '@activepieces/shared'
+import { Agent, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { todoService } from '../todos/todo.service'
 import { streamText } from 'ai';
@@ -13,7 +13,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
         const { agent } = params
         const todo = await todoService(log).create({
             description: params.prompt,
-            title: 'Agent Todos',
+            title: 'Agent Test Todo',
             statusOptions: [{
                 name: RESOLVED_STATUS.name,
                 description: RESOLVED_STATUS.description,
@@ -27,6 +27,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             locked: true,
             runId: undefined,
             agentId: agent.id,
+            environment: TodoEnvironment.TEST,
         })
 
         rejectedPromiseHandler(executeAgent(params, todo.id, log), log)

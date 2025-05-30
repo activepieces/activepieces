@@ -209,6 +209,7 @@ import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/17479
 import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -354,7 +355,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgentsModule1748456786940,
         ChangeManualTasksCommentsToTodoComments1742433144687,
         AddTodoActivity1748525529096,
-        AddCreatedByUserIdInTodo1748565250553
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639
     ]
 
     const edition = system.getEdition()
