@@ -1,7 +1,7 @@
 {
-    "name": "pieces-CloseCRM",
+    "name": "pieces-close",
     "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "packages/pieces/community/CloseCRM/src",
+    "sourceRoot": "packages/pieces/community/close/src",
     "projectType": "library",
     "release": {
       "version": {
@@ -19,11 +19,11 @@
           "{options.outputPath}"
         ],
         "options": {
-          "outputPath": "dist/packages/pieces/community/CloseCRM",
-          "tsConfig": "packages/pieces/community/CloseCRM/tsconfig.lib.json",
-          "packageJson": "packages/pieces/community/CloseCRM/package.json",
-          "main": "packages/pieces/community/CloseCRM/src/index.ts",
-          "assets": ["packages/pieces/community/CloseCRM/*.md"],
+          "outputPath": "dist/packages/pieces/community/close",
+          "tsConfig": "packages/pieces/community/close/tsconfig.lib.json",
+          "packageJson": "packages/pieces/community/close/package.json",
+          "main": "packages/pieces/community/close/src/index.ts",
+          "assets": ["packages/pieces/community/close/*.md"],
           "buildableProjectDepsInPackageJsonType": "dependencies",
           "updateBuildableProjectDepsInPackageJson": true
         }
