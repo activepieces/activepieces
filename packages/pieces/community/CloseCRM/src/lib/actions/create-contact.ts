@@ -54,16 +54,6 @@ export const createContact = createAction({
         }
       }
     }),
-    contact_id: Property.StaticDropdown({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact',
-      required: true,
-      options: {
-        options: [
-          { label: 'Select Contact', value: '' },
-        ],
-      },
-    }),
     name: Property.ShortText({
       displayName: 'Full Name',
       required: true,
@@ -145,11 +135,10 @@ export const createContact = createAction({
     }),
   },
   async run(context) {
-    const { lead_id, contact_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
+    const { lead_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
 
     const contactData: Partial<CloseCRMContact> = { // Use Partial for creation
       lead_id: lead_id,
-      contact_id: contact_id,
       title: title,
       custom: customFields,
       name: name,
