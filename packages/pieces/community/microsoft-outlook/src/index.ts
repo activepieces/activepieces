@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
+import { newEmail } from './lib/triggers/new-email';
 
 export const outlookAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Outlook',
@@ -18,5 +19,5 @@ export const microsoftOutlook = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [],
   actions: [sendEmail],
-  triggers: [],
+  triggers: [newEmail],
 });
