@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { AssignConnectionToProjectsControl } from '@/components/ui/assign-global-connection-to-projects';
+import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
