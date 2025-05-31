@@ -1,279 +1,28 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Server,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-  Copy,
-  RefreshCw,
-} from 'lucide-react';
+import { Server, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
-import { SimpleJsonViewer } from '@/components/simple-json-viewer';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
 
+import { ConfigDisplay } from './config-display';
+import { ExposeMcpNote } from './expose-mcp-note';
+import { mcpConnectUtils } from './mcp-connect-utils';
+import { StepCard } from './step-card';
+
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
-
-// Utility function to mask token in URL
-const maskToken = (url: string) => {
-  return url.replace(/\/([^/]+)\/sse$/, '/•••••••••••••••••••••/sse');
-};
-
-export const replaceIpWithLocalhost = (url: string): string => {
-  try {
-    const parsed = new URL(url);
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)) {
-      parsed.hostname = 'localhost';
-    }
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-};
-
-const ExposeMcpNote = () => {
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const hasBeenReplacedWithLocalhost =
-    replaceIpWithLocalhost(publicUrl ?? '') !== publicUrl;
-  if (!hasBeenReplacedWithLocalhost) {
-    return null;
-  }
-
-  return (
-    <Alert className="mb-6">
-      <AlertTriangle className="h-4 w-4" />
-      <AlertDescription>
-        <strong>{t('Note')}: </strong>
-        {t(
-          'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your Activepieces instance.',
-        )}
-      </AlertDescription>
-    </Alert>
-  );
-};
-
-const SecurityNote = () => {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex cursor-default items-center gap-1 text-xs border border-warning/50 text-warning-300 dark:border-warning px-1.5 py-0.5 rounded-sm">
-          <AlertTriangle className="h-3 w-3" />
-          <span className="font-medium">{t('Security')}</span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs">
-        <p className="text-xs">
-          {t(
-            'This URL grants access to your tools and data. Only share with trusted applications.',
-          )}
-        </p>
-      </TooltipContent>
-    </Tooltip>
-  );
-};
-
-// Define type for ButtonWithTooltip props
-type ButtonWithTooltipProps = {
-  tooltip: string;
-  onClick: (e?: React.MouseEvent) => void;
-  variant?:
-    | 'ghost'
-    | 'outline'
-    | 'default'
-    | 'destructive'
-    | 'secondary'
-    | 'link';
-  icon: React.ReactNode;
-  className?: string;
-  disabled?: boolean;
-  hasPermission?: boolean;
-};
-
-// Reusable ButtonWithTooltip component
-const ButtonWithTooltip = ({
-  tooltip,
-  onClick,
-  variant = 'ghost',
-  icon,
-  className = 'h-7 w-7',
-  disabled = false,
-  hasPermission = true,
-}: ButtonWithTooltipProps) => (
-  <PermissionNeededTooltip hasPermission={hasPermission}>
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={variant}
-            size="icon"
-            className={className}
-            onClick={onClick}
-            disabled={disabled || !hasPermission}
-          >
-            {icon}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  </PermissionNeededTooltip>
-);
-
-const StepCard = ({
-  stepNumber,
-  title,
-  children,
-  icon,
-}: {
-  stepNumber: number;
-  title: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-}) => (
-  <div className="flex gap-3 p-4 rounded-lg bg-background">
-    <div className="flex-shrink-0">
-      <div className="h-6 w-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-semibold">
-        {stepNumber}
-      </div>
-    </div>
-    <div className="flex-1 space-y-2">
-      <h4 className="font-medium text-sm">{title}</h4>
-      <div className="text-sm text-muted-foreground leading-relaxed">
-        {children}
-      </div>
-    </div>
-  </div>
-);
-
-const ConfigDisplay = ({
-  mcpServerUrl,
-  type,
-  onRotateToken,
-  isRotating = false,
-  hasValidMcp = false,
-  hasPermissionToWriteMcp = true,
-}: {
-  mcpServerUrl: string;
-  type: 'npx' | 'url';
-  onRotateToken: () => void;
-  isRotating?: boolean;
-  hasValidMcp?: boolean;
-  hasPermissionToWriteMcp?: boolean;
-}) => {
-  const { toast } = useToast();
-  const [showToken, setShowToken] = useState(false);
-
-  const toggleTokenVisibility = () => setShowToken(!showToken);
-  const maskedUrl = showToken ? mcpServerUrl : maskToken(mcpServerUrl);
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SecurityNote />
-        </div>
-        <div className="flex gap-2">
-          <ButtonWithTooltip
-            tooltip={
-              showToken ? t('Hide sensitive data') : t('Show sensitive data')
-            }
-            onClick={toggleTokenVisibility}
-            variant="outline"
-            icon={
-              showToken ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )
-            }
-          />
-          <ButtonWithTooltip
-            tooltip={t('Create a new URL. The current one will stop working.')}
-            onClick={onRotateToken}
-            variant="outline"
-            disabled={isRotating || !hasValidMcp}
-            hasPermission={hasPermissionToWriteMcp}
-            icon={
-              isRotating ? (
-                <ReloadIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )
-            }
-          />
-          <ButtonWithTooltip
-            tooltip={t('Copy configuration')}
-            onClick={(e) => {
-              e?.stopPropagation();
-              const config = {
-                mcpServers: {
-                  Activepieces:
-                    type === 'npx'
-                      ? {
-                          command: 'npx',
-                          args: ['-y', 'mcp-remote', mcpServerUrl],
-                        }
-                      : {
-                          url: mcpServerUrl,
-                        },
-                },
-              };
-              navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-              toast({
-                description: t('Configuration copied to clipboard'),
-                duration: 3000,
-              });
-            }}
-            variant="outline"
-            icon={<Copy className="h-4 w-4" />}
-          />
-        </div>
-      </div>
-
-      <div className="rounded-lg border overflow-hidden">
-        <SimpleJsonViewer
-          hideCopyButton={true}
-          data={{
-            mcpServers: {
-              Activepieces:
-                type === 'npx'
-                  ? {
-                      command: 'npx',
-                      args: ['-y', 'mcp-remote', maskedUrl],
-                    }
-                  : {
-                      url: maskedUrl,
-                    },
-            },
-          }}
-        />
-      </div>
-    </div>
-  );
-};
 
 export const McpConnectPage = () => {
   const [showToken, setShowToken] = useState(false);
@@ -285,14 +34,16 @@ export const McpConnectPage = () => {
   const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp(mcpId!);
 
   const mcpServerUrl =
-    replaceIpWithLocalhost(publicUrl ?? '') +
+    mcpConnectUtils.replaceIpWithLocalhost(publicUrl ?? '') +
     'api/v1/mcp/' +
     (mcp?.token || '') +
     '/sse';
 
   const hasPermissionToWriteMcp = true;
   const hasValidMcp = !!mcp;
-  const maskedServerUrl = showToken ? mcpServerUrl : maskToken(mcpServerUrl);
+  const maskedServerUrl = showToken
+    ? mcpServerUrl
+    : mcpConnectUtils.maskToken(mcpServerUrl);
 
   const rotateMutation = useMutation({
     mutationFn: async (mcpId: string) => {
@@ -349,7 +100,6 @@ export const McpConnectPage = () => {
 
   return (
     <div className="w-full h-full">
-      {/* Main Content with Vertical Tabs */}
       <Tabs
         orientation="vertical"
         defaultValue="claude"
@@ -553,7 +303,3 @@ export const McpConnectPage = () => {
     </div>
   );
 };
-
-McpConnectPage.displayName = 'McpConnectPage';
-
-export default McpConnectPage;

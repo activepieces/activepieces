@@ -3,7 +3,6 @@ import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -81,25 +80,6 @@ export const McpFlowDialogContent = ({
                   <div className="w-full mt-2 text-center text-md px-2 text-ellipsis overflow-hidden">
                     {flow.version.displayName}
                   </div>
-
-                  {flow.status && (
-                    <span
-                      className={`absolute top-2 right-2 text-xs rounded-full`}
-                    >
-                      <Badge
-                        variant="outline"
-                        className={`${
-                          flow.status === 'ENABLED'
-                            ? 'bg-success/20 text-success'
-                            : 'bg-destructive/20 text-destructive'
-                        }`}
-                      >
-                        {flow.status === 'ENABLED'
-                          ? t('Enabled')
-                          : t('Disabled')}
-                      </Badge>
-                    </span>
-                  )}
                 </div>
               </TooltipTrigger>
               {tooltip && (

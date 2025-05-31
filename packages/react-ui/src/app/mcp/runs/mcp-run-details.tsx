@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
   TooltipTrigger,
@@ -67,17 +68,19 @@ const McpRunDetails = ({
               {formatUtils.formatDate(new Date(selectedItem.created))}
             </span>
             <span>•</span>
-            {selectedItem.status === McpRunStatus.SUCCESS ? (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700">
-                <CheckCircle2 className="h-3 w-3" />
-                <span className="text-xs font-medium">{t('Success')}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700">
-                <AlertCircle className="h-3 w-3" />
-                <span className="text-xs font-medium">{t('Failed')}</span>
-              </div>
-            )}
+            <div className="text-left">
+              <StatusIconWithText
+                icon={selectedItem.status === McpRunStatus.SUCCESS ? Check : X}
+                text={formatUtils.convertEnumToHumanReadable(
+                  selectedItem.status,
+                )}
+                variant={
+                  selectedItem.status === McpRunStatus.SUCCESS
+                    ? 'success'
+                    : 'error'
+                }
+              />
+            </div>
           </SheetDescription>
         </SheetHeader>
 

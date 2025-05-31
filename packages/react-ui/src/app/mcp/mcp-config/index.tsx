@@ -116,7 +116,6 @@ export const McpConfigPage = () => {
                     return (
                       <McpFlowTool
                         key={tool.id}
-                        mcp={mcp}
                         tool={tool}
                         removeTool={async () => removeTool(tool.id)}
                       />

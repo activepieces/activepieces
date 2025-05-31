@@ -17,6 +17,7 @@ type ConnectionDropdownProps = {
   placeholder?: string;
   showLabel?: boolean;
   required?: boolean;
+  showError?: boolean;
 };
 
 export const ConnectionDropdown = React.memo(
@@ -29,6 +30,7 @@ export const ConnectionDropdown = React.memo(
     placeholder = t('Select a connection'),
     showLabel = true,
     required = false,
+    showError = false,
   }: ConnectionDropdownProps) => {
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
 
@@ -45,6 +47,9 @@ export const ConnectionDropdown = React.memo(
 
     const pieceHasAuth = !isNil(piece?.auth);
 
+    const shouldShowError =
+      showError && required && pieceHasAuth && value === null;
+
     if (!piece || !pieceHasAuth) {
       return null;
     }
@@ -59,6 +64,14 @@ export const ConnectionDropdown = React.memo(
       { label: t('+ New Connection'), value: '' },
       ...connectionOptions,
     ];
+
+    const handleChange = (selectedValue: string | null) => {
+      if (selectedValue) {
+        onChange(selectedValue as string);
+      } else {
+        setConnectionDialogOpen(true);
+      }
+    };
 
     return (
       <>
@@ -80,19 +93,21 @@ export const ConnectionDropdown = React.memo(
           {showLabel && <Label>{label}</Label>}
           <SearchableSelect
             value={value ?? undefined}
-            onChange={(selectedValue) => {
-              if (selectedValue) {
-                onChange(selectedValue as string);
-              } else {
-                setConnectionDialogOpen(true);
-              }
-            }}
+            onChange={handleChange}
             options={connectionOptionsWithNewConnectionOption}
             placeholder={placeholder}
             loading={connectionsLoading || isRefetchingConnections}
             disabled={disabled}
             showDeselect={!required && !disabled && value !== null}
+            triggerClassName={
+              shouldShowError ? 'border-destructive' : undefined
+            }
           />
+          {shouldShowError && (
+            <p className="text-sm font-medium text-destructive break-words">
+              {t('Connection is required')}
+            </p>
+          )}
         </div>
       </>
     );

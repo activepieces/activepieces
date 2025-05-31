@@ -1,10 +1,23 @@
 import { t } from 'i18next';
-import { Puzzle, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Puzzle, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpTool, McpToolType, McpWithTools } from '@activepieces/shared';
+import {
+  McpTool,
+  McpToolType,
+  McpWithTools,
+  Permission,
+} from '@activepieces/shared';
 
 import { mcpConfigUtils } from './mcp-config-utils';
 
@@ -26,6 +39,10 @@ export const McpPieceTool = ({
   pieces,
   removeTool,
 }: McpPieceToolProps) => {
+  const [open, setOpen] = useState(false);
+  const { checkAccess } = useAuthorization();
+  const hasPermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
+
   const getPieceInfo = (mcpTool: McpTool) => {
     if (mcpTool.type !== McpToolType.PIECE || !mcpTool.pieceMetadata) {
       return { displayName: 'Unknown', logoUrl: undefined };
@@ -84,22 +101,37 @@ export const McpPieceTool = ({
             </span>
           </div>
         )}
-        <ConfirmationDeleteDialog
-          title={`${t('Delete')} ${pieceInfoMap[tool.id]?.displayName}`}
-          message={t('Are you sure you want to delete this tool?')}
-          mutationFn={() => removeTool(tool.id)}
-          showToast={true}
-          entityName={t('Tool')}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger
+            className="rounded-full p-2 hover:bg-muted cursor-pointer"
+            asChild
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </ConfirmationDeleteDialog>
+            <EllipsisVertical className="h-8 w-8" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            noAnimationOnOut={true}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <PermissionNeededTooltip hasPermission={hasPermissionToWriteMcp}>
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${pieceInfoMap[tool.id]?.displayName}`}
+                message={t('Are you sure you want to delete this tool?')}
+                mutationFn={() => removeTool(tool.id)}
+                entityName={t('Tool')}
+              >
+                <DropdownMenuItem
+                  disabled={!hasPermissionToWriteMcp}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

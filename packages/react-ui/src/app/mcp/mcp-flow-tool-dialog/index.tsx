@@ -119,7 +119,7 @@ export function McpFlowDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
+      <DialogContent className="min-w-[750px] max-w-[750px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             {t('Add Flow Tools')}

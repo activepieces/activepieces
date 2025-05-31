@@ -19,6 +19,7 @@ interface McpPieceActionsDialogProps {
   setSelectedConnectionExternalId: (
     connectionExternalId: string | null,
   ) => void;
+  showValidationErrors?: boolean;
 }
 
 export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
@@ -28,6 +29,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   onSelectAll,
   selectedConnectionExternalId,
   setSelectedConnectionExternalId,
+  showValidationErrors = false,
 }) => {
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
@@ -53,7 +55,8 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
                 onChange={setSelectedConnectionExternalId}
                 placeholder={t('Select a connection')}
                 showLabel={false}
-                required={false}
+                required={true}
+                showError={showValidationErrors}
               />
             </div>
           </div>

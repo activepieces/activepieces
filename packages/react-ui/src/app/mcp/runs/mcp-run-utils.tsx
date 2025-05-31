@@ -1,18 +1,13 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  AlertCircle,
-  CheckCircle2,
-  Search,
-  WorkflowIcon,
-  Calendar,
-} from 'lucide-react';
+import { CheckCircle2, Search, WorkflowIcon, X, Check } from 'lucide-react';
 
 import {
   DataTableFilter,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { StepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { formatUtils } from '@/lib/utils';
@@ -120,16 +115,14 @@ export const mcpRunColumns = (
       <DataTableColumnHeader column={column} title={t('Status')} />
     ),
     cell: ({ row }) => {
-      const item = row.original;
-      return item.status === McpRunStatus.SUCCESS ? (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-green-700">
-          <CheckCircle2 className="h-3 w-3" />
-          <span className="text-xs font-medium">{t('Success')}</span>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700">
-          <AlertCircle className="h-3 w-3" />
-          <span className="text-xs font-medium">{t('Failed')}</span>
+      const status = row.original.status;
+      return (
+        <div className="text-left">
+          <StatusIconWithText
+            icon={status === McpRunStatus.SUCCESS ? Check : X}
+            text={formatUtils.convertEnumToHumanReadable(status)}
+            variant={status === McpRunStatus.SUCCESS ? 'success' : 'error'}
+          />
         </div>
       );
     },
@@ -137,13 +130,12 @@ export const mcpRunColumns = (
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Date Created')} />
+      <DataTableColumnHeader column={column} title={t('Created At')} />
     ),
     cell: ({ row }) => {
       const item = row.original;
       return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-3 w-3" />
+        <div className="flex items-center gap-2 text-sm">
           <span>{formatUtils.formatDate(new Date(item.created))}</span>
         </div>
       );

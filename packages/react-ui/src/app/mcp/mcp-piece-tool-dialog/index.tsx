@@ -50,8 +50,12 @@ export function McpPieceDialog({
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
-    useState<string | null>(null);
+    useState<string | null>(
+      mcp.tools?.find((tool) => tool.type === McpToolType.PIECE)?.pieceMetadata
+        ?.connectionExternalId ?? null,
+    );
   const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { metadata, isLoading: isPiecesLoading } =
     piecesHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
@@ -166,10 +170,21 @@ export function McpPieceDialog({
     },
   });
 
+  const handleSave = () => {
+    if (selectedConnectionExternalId === null) {
+      setShowValidationErrors(true);
+      return;
+    }
+
+    setShowValidationErrors(false);
+    saveTool();
+  };
+
   const handleClose = () => {
     setSelectedPiece(null);
     setSearchQuery('');
     setSelectedActions([]);
+    setShowValidationErrors(false);
     onClose();
   };
 
@@ -209,7 +224,7 @@ export function McpPieceDialog({
               t('Add Tool')
             )}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="px-3">
             {t('Select actions to add to your mcp tool')}
           </DialogDescription>
         </DialogHeader>
@@ -221,6 +236,7 @@ export function McpPieceDialog({
             onSelectAll={handleSelectAll}
             selectedConnectionExternalId={selectedConnectionExternalId}
             setSelectedConnectionExternalId={setSelectedConnectionExternalId}
+            showValidationErrors={showValidationErrors}
           />
         ) : (
           <>
@@ -250,7 +266,7 @@ export function McpPieceDialog({
               {t('Close')}
             </Button>
           </DialogClose>
-          <Button loading={isPending} type="button" onClick={() => saveTool()}>
+          <Button loading={isPending} type="button" onClick={handleSave}>
             {t('Save')}
           </Button>
         </DialogFooter>
