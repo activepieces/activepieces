@@ -1,4 +1,4 @@
-import {  getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared'
+import {  getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -18,6 +18,7 @@ const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 export const TASKS_PRICE_ID = getTasksPriceId(stripeSecretKey)
 export const STRIPE_PLAN_PRICE_IDS = getPlanPriceId(stripeSecretKey)
 export const USER_PRICE_ID = getUserPriceId(stripeSecretKey)
+export const AI_CREDITS_PRICE_ID = getAiCreditsPriceId(stripeSecretKey)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
@@ -62,6 +63,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             quantity: 1,
         })
 
+        lineItems.push({
+            price: AI_CREDITS_PRICE_ID,
+        })
+
         if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
             lineItems.push({
                 price: USER_PRICE_ID,
@@ -73,8 +78,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'subscription',
-            success_url: `${frontendUrl}/platform/setup/billing?success=true`,
-            cancel_url: `${frontendUrl}/platform/setup/billing?canceled=true`,
+            success_url: `${frontendUrl}/platform/setup/billing`,
+            cancel_url: `${frontendUrl}/platform/setup/billing`,
             customer: customerId,
             subscription_data: {
                 metadata: {
@@ -146,8 +151,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             proration_behavior: 'create_prorations',
             metadata: {
                 plan: params.plan,
-                event: 'update_subscription',
-                extraUsers: params.extraUsers ?? 0,
             },
         }
         

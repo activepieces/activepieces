@@ -1,13 +1,13 @@
 import { PlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
+import { system } from '../../../helper/system/system'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper  } from './stripe-helper'
-import { system } from '../../../helper/system/system'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -20,7 +20,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const stripe = stripeHelper(request.log).getStripe()
                 assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-
                 const webhookSecret = system.getOrThrow(AppSystemProp.STRIPE_WEBHOOK_SECRET)
                 const webhook = stripe.webhooks.constructEvent(
                     payload,
@@ -28,26 +27,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     webhookSecret,
                 )
                 const subscription = webhook.data.object as Stripe.Subscription
-                const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(subscription.metadata?.platformId as string)
-
-                if (webhook.type === 'customer.subscription.updated' && subscription.metadata.event === 'update_subscription') {
-                    const planName = subscription.metadata?.plan as PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE
-
-                    request.log.info(`${planName} subscription upgraded for platform ${platformBilling.platformId}`)
-
-                    const planLimits = platformPlanService(request.log).getPlanLimits(planName)
-                    if (planName === PlanName.BUSINESS && !isNil(subscription.metadata.extraUsers) && Number(subscription.metadata.extraUsers) > 0) {
-                        planLimits.userSeatsLimit = (planLimits.userSeatsLimit ?? 0) + Number(subscription.metadata.extraUsers)
-                    }
-
-                    const platformId = subscription.metadata?.platformId as string
-                    const platformPlan = await platformPlanService(request.log).update({ 
-                        platformId,
-                        ...planLimits,
-                    })
-
-                    return platformPlan
-                }
 
                 if (webhook.type === 'customer.subscription.created' && subscription.metadata.event === 'create_subscription') {
                     const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId(subscription)

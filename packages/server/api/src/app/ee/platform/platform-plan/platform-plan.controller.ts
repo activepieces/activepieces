@@ -91,11 +91,24 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
 
         assertNotNullOrUndefined(platformBilling.stripeSubscriptionId, 'Stripe subscription id is not set')
-
         await stripeHelper(request.log).updateSubscription(
             platformBilling.stripeSubscriptionId,
             { plan, extraUsers },
         )
+
+        request.log.info(`${plan} subscription updated for platform ${platformBilling.platformId}`)
+        const planLimits = platformPlanService(request.log).getPlanLimits(plan)
+        if (plan === PlanName.BUSINESS && !isNil(extraUsers) && Number(extraUsers) > 0) {
+            planLimits.userSeatsLimit = (planLimits.userSeatsLimit ?? 0) + Number(extraUsers)
+        }
+
+        const platformId = platformBilling.platformId
+        const platformPlan = await platformPlanService(request.log).update({ 
+            platformId,
+            ...planLimits,
+        })
+
+        return platformPlan
     })
 
     fastify.patch('/', UpdateLimitsRequest, async (request) => {

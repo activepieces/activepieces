@@ -41,7 +41,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
-    mcpLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -73,7 +72,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanLimits = {
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
-    mcpLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,

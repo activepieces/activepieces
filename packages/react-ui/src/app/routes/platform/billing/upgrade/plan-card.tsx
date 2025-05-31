@@ -1,24 +1,41 @@
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckIcon, XIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  XIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Loader2Icon,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { useManagePlanDialogStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
+import { platformBillingApi } from '../api/billing-api';
 import { planData } from '../data';
 
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
-  selected: PlanName;
-  onSelect: (params: UpdateSubscriptionParams) => void;
+  billingInformation?: PlatformBillingInformation;
+  refetch: () => void;
 };
 
-export const PlanCard = ({ plan, selected, onSelect }: PlanCardProps) => {
+export const PlanCard = ({
+  plan,
+  billingInformation,
+  refetch,
+}: PlanCardProps) => {
   const openNewWindow = useNewWindow();
-  const selectedPlan = selected === plan.name;
+  const { setIsOpen } = useManagePlanDialogStore();
+  const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
+  const isSelected = currentPlan === plan.name;
 
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
   const [additionalUsers, setAdditionalUsers] = useState(0);
@@ -35,11 +52,55 @@ export const PlanCard = ({ plan, selected, onSelect }: PlanCardProps) => {
       ? plan.price + extraUsers * additionalUserCost
       : plan.price;
 
+  const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
+    useMutation({
+      mutationFn: (params: UpdateSubscriptionParams) =>
+        platformBillingApi.updateSubscription(params),
+      onSuccess: () => {
+        refetch();
+        setIsOpen(false);
+        toast({
+          title: t('Success'),
+          description: t('Plan upgraded successfully'),
+        });
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
+
+  const { mutate: createSubscription } = useMutation({
+    mutationFn: async (params: UpdateSubscriptionParams) => {
+      const checkoutSessionURl = await platformBillingApi.createSubscription(
+        params,
+      );
+      window.open(checkoutSessionURl, '_blank');
+    },
+    onSuccess: () => {
+      setIsOpen(false);
+      toast({
+        title: t('Success'),
+        description: t('Plan created successfully'),
+      });
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+
+  const handleSelect = (params: UpdateSubscriptionParams) => {
+    if (isNil(billingInformation?.plan.stripeSubscriptionId)) {
+      createSubscription(params);
+    } else {
+      updateSubscription(params);
+    }
+  };
+
   return (
     <div
       className={cn(
         'flex flex-col rounded-lg p-4 transition border gap-4',
-        selectedPlan && 'ring-2 ring-primary',
+        isSelected && 'ring-2 ring-primary',
       )}
     >
       <div className="flex justify-between items-start">
@@ -70,28 +131,41 @@ export const PlanCard = ({ plan, selected, onSelect }: PlanCardProps) => {
         </span>
       </div>
 
-      <Button
-        size="sm"
-        className="font-semibold"
-        variant={selectedPlan ? 'outline' : 'default'}
-        disabled={selectedPlan}
-        onClick={() => {
-          if (isEnterprisePlan) {
-            openNewWindow('https://activepieces.com/sales');
-          } else {
-            onSelect({
-              plan: plan.name as PlanName.FREE | PlanName.PLUS | PlanName.BUSINESS,
-              extraUsers: additionalUsers,
-            });
-          }
-        }}
-      >
-        {selectedPlan
-          ? t('Current Plan')
-          : isEnterprisePlan
-          ? t('Contact Sales')
-          : t('Upgrade')}
-      </Button>
+      {isSelected ? (
+        <Button size="sm" className="font-semibold" variant="outline" disabled>
+          {t('Current Plan')}
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          className="font-semibold"
+          onClick={() => {
+            if (isEnterprisePlan) {
+              openNewWindow('https://activepieces.com/sales');
+            } else {
+              handleSelect({
+                plan: plan.name as
+                  | PlanName.FREE
+                  | PlanName.PLUS
+                  | PlanName.BUSINESS,
+                extraUsers: additionalUsers,
+              });
+            }
+          }}
+          disabled={isUpdatingSubscription}
+        >
+          {isUpdatingSubscription ? (
+            <>
+              <Loader2Icon className="h-4 w-4 animate-spin mr-2" />{' '}
+              {t('Updating...')}
+            </>
+          ) : isEnterprisePlan ? (
+            t('Contact Sales')
+          ) : (
+            t('Upgrade')
+          )}
+        </Button>
+      )}
 
       <div>
         <p className="text-sm font-bold mb-3">{t('Includes')}</p>

@@ -29,19 +29,22 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useManagePlanDialogStore } from '@/lib/stores';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
 import { TasksLimitDialog } from './tasks';
 import { ManagePlanDialog } from './upgrade';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 
-export const calculateTotalCost = (tasksUsed: number, tasksLimit: number): string => {
+export const calculateTotalCost = (
+  tasksUsed: number,
+  tasksLimit: number,
+): string => {
   const unitCost = 1 / 1000;
   const totalTasks = tasksUsed || 0;
   const excessTasks = Math.max(0, totalTasks - tasksLimit);
   const cost = excessTasks * unitCost;
-  
+
   return `$${cost.toFixed(2)}`;
 };
 
@@ -62,7 +65,8 @@ export default function Billing() {
   });
 
   const isSubscriptionActive =
-    platformSubscription?.plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE;
+    platformSubscription?.plan.stripeSubscriptionStatus ===
+    ApSubscriptionStatus.ACTIVE;
 
   const calculatedTotalCost = calculateTotalCost(
     platformSubscription?.usage.tasks || 0,
@@ -145,9 +149,7 @@ export default function Billing() {
 
       <div className="space-y-2">
         <div className="text-sm text-muted-foreground flex items-center gap-2">
-          <span>
-            {t('Current Plan')}
-          </span>
+          <span>{t('Current Plan')}</span>
           <span>{platformSubscription?.plan.plan || t('Free')}</span>
         </div>
         <div className="flex items-baseline gap-2">
