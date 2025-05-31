@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { kommoAuth } from '../../index';
+import { pipelineDropdown, statusDropdown, userDropdown, lossReasonDropdown } from '../common/props';
 
 export const createLeadAction = createAction({
   auth: kommoAuth,
@@ -17,14 +18,10 @@ export const createLeadAction = createAction({
       displayName: 'Price',
       required: false,
     }),
-    status_id: Property.Number({
-      displayName: 'Status ID',
-      required: false,
-    }),
-    pipeline_id: Property.Number({
-      displayName: 'Pipeline ID',
-      required: false,
-    }),
+    pipeline_id: pipelineDropdown,
+    status_id: statusDropdown,
+    responsible_user_id: userDropdown,
+    loss_reason_id: lossReasonDropdown,
     created_by: Property.Number({
       displayName: 'Created By (User ID)',
       required: false,
@@ -43,14 +40,6 @@ export const createLeadAction = createAction({
     }),
     closed_at: Property.Number({
       displayName: 'Closed At (Unix Timestamp)',
-      required: false,
-    }),
-    loss_reason_id: Property.Number({
-      displayName: 'Loss Reason ID',
-      required: false,
-    }),
-    responsible_user_id: Property.Number({
-      displayName: 'Responsible User ID',
       required: false,
     }),
     custom_fields_values: Property.Json({

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { kommoAuth } from '../../index';
+import { userDropdown } from '../common/props';
 
 interface KommoCustomFieldValue {
   field_id?: number;
@@ -35,10 +36,7 @@ export const createContactAction = createAction({
       displayName: 'Phone',
       required: false,
     }),
-    responsible_user_id: Property.Number({
-      displayName: 'Responsible User ID',
-      required: false,
-    }),
+    responsible_user_id: userDropdown,
     created_by: Property.Number({
       displayName: 'Created By',
       required: false,

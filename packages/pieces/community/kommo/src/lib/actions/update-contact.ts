@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { kommoAuth } from '../../index';
 import { makeRequest } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { contactDropdown, userDropdown } from '../common/props';
 
 interface KommoCustomFieldValue {
   field_id?: number;
@@ -15,10 +16,7 @@ export const updateContactAction = createAction({
   displayName: 'Update Contact',
   description: 'Update existing contact info.',
   props: {
-    contactId: Property.Number({
-      displayName: 'Contact ID',
-      required: true,
-    }),
+    contactId: contactDropdown,
     name: Property.ShortText({
       displayName: 'Full Name',
       required: false,
@@ -39,18 +37,9 @@ export const updateContactAction = createAction({
       displayName: 'Phone',
       required: false,
     }),
-    responsible_user_id: Property.Number({
-      displayName: 'Responsible User ID',
-      required: false,
-    }),
-    created_by: Property.Number({
-      displayName: 'Created By',
-      required: false,
-    }),
-    updated_by: Property.Number({
-      displayName: 'Updated By',
-      required: false,
-    }),
+    responsible_user_id: userDropdown,
+    created_by: userDropdown,
+    updated_by: userDropdown,
     created_at: Property.Number({
       displayName: 'Created At (Unix Timestamp)',
       required: false,
@@ -126,13 +115,13 @@ export const updateContactAction = createAction({
 
     const embedded: Record<string, unknown> = {};
 
-    if (tags_to_add && tags_to_add.length > 0) {
+    if (tags_to_add?.length) {
       embedded['tags_to_add'] = tags_to_add.map((tag) =>
         typeof tag === 'number' ? { id: tag } : { name: tag }
       );
     }
 
-    if (tags_to_delete && tags_to_delete.length > 0) {
+    if (tags_to_delete?.length) {
       embedded['tags_to_delete'] = tags_to_delete.map((tag) =>
         typeof tag === 'number' ? { id: tag } : { name: tag }
       );
@@ -143,7 +132,6 @@ export const updateContactAction = createAction({
     }
 
     const updatePayload = {
-      id: contactId,
       name,
       first_name,
       last_name,
@@ -153,14 +141,14 @@ export const updateContactAction = createAction({
       created_at,
       updated_at,
       ...(customFields.length > 0 ? { custom_fields_values: customFields } : {}),
-      _embedded: Object.keys(embedded).length > 0 ? embedded : undefined,
+      ...(Object.keys(embedded).length > 0 ? { _embedded: embedded } : {}),
     };
 
     const result = await makeRequest(
-      { apiToken, subdomain },
+      { subdomain, apiToken },
       HttpMethod.PATCH,
-      `/contacts`,
-      [updatePayload]
+      `/contacts/${contactId}`,
+      updatePayload
     );
 
     return result;

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { kommoAuth } from '../../index';
+import { companyDropdown } from '../common/props';
 
 export const findCompanyAction = createAction({
   auth: kommoAuth,
@@ -9,10 +10,7 @@ export const findCompanyAction = createAction({
   displayName: 'Find Company',
   description: 'Find companies by name (full or partial).',
   props: {
-    companyName: Property.ShortText({
-      displayName: 'Company Name',
-      required: true,
-    }),
+    companyName: companyDropdown,
   },
   async run(context) {
     const { companyName } = context.propsValue;
@@ -24,7 +22,7 @@ export const findCompanyAction = createAction({
     const result = await makeRequest(
       { apiToken, subdomain },
       HttpMethod.GET,
-      `/companies?query=${encodeURIComponent(companyName)}`
+      `/companies?query=${encodeURIComponent(companyName || '')}`
     );
 
     return result._embedded?.companies || [];

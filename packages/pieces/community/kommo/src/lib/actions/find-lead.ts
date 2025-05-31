@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { kommoAuth } from '../../index';
+import { leadDropdown } from '../common/props';
 
 export const findLeadAction = createAction({
   auth: kommoAuth,
@@ -9,10 +10,7 @@ export const findLeadAction = createAction({
   displayName: 'Find Lead',
   description: "Retrieve a lead's details by ID",
   props: {
-    leadId: Property.ShortText({
-      displayName: 'Lead ID',
-      required: true,
-    }),
+    leadId: leadDropdown,
   },
   async run(context) {
     const { leadId } = context.propsValue;
