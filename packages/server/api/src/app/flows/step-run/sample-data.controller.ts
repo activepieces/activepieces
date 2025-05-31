@@ -1,4 +1,4 @@
-import { CreateStepRunRequestBody, FileType, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, SaveSampleDataResponse, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, FileType, GetSampleDataRequest, PrincipalType, RunEnvironment, SaveSampleDataRequest, SaveSampleDataResponse, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -16,6 +16,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
                 platformId: principal.platform.id,
                 flowVersionId: data.flowVersionId,
                 stepName: data.stepName,
+                runEnvironment: RunEnvironment.TESTING,
             })
 
             const response: StepRunResponse = {

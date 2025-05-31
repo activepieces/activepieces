@@ -67,6 +67,12 @@ const StepSettingsContainer = () => {
     currentValuesRef.current = defaultValues;
     form.reset(defaultValues);
     form.trigger();
+    if (defaultValues.type === ActionType.LOOP_ON_ITEMS) {
+      //TODO: fix this, for some reason if the form is not triggered, the items input error is not shown
+      setTimeout(() => {
+        form.trigger('settings.items');
+      }, 1);
+    }
   }, [defaultValues]);
 
   //Needed to show new code from Ask AI
@@ -109,19 +115,28 @@ const StepSettingsContainer = () => {
         context,
         options,
       );
-      if (values.type === TriggerType.EMPTY) {
+      const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
+      const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
+        currentValuesRef.current,
+      );
+      if (
+        cleanedNewValues.type === TriggerType.EMPTY ||
+        (isNil(pieceModel) &&
+          (cleanedNewValues.type === ActionType.PIECE ||
+            cleanedNewValues.type === TriggerType.PIECE))
+      ) {
         return result;
       }
-      if (deepEqual(values, currentValuesRef.current)) {
+      if (deepEqual(cleanedNewValues, cleanedCurrentValues)) {
         return result;
       }
       const valid = Object.keys(result.errors).length === 0;
-
-      currentValuesRef.current = JSON.parse(JSON.stringify(values));
-      if (values.type === TriggerType.PIECE) {
-        debouncedTrigger({ ...values, valid });
+      //We need to copy the object because the form is using the same object reference
+      currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
+      if (cleanedNewValues.type === TriggerType.PIECE) {
+        debouncedTrigger({ ...cleanedNewValues, valid });
       } else {
-        debouncedAction({ ...values, valid });
+        debouncedAction({ ...cleanedNewValues, valid });
       }
 
       return result;

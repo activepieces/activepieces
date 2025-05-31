@@ -64,7 +64,7 @@ export function DashboardContainer({
   };
 
   const filterAlerts = (item: SidebarItem) =>
-    platform.alertsEnabled || item.label !== t('Alerts');
+    platform.plan.alertsEnabled || item.label !== t('Alerts');
 
   const releasesLink: SidebarLink = {
     type: 'link',
@@ -87,6 +87,10 @@ export function DashboardContainer({
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    isActive: (pathname) =>
+      pathname.includes('/flows') ||
+      pathname.includes('/runs') ||
+      pathname.includes('/issues'),
   };
 
   const mcpLink: SidebarLink = {

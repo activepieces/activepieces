@@ -1,20 +1,24 @@
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { telemetry } from '../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpPieceService } from './mcp-piece-service'
 
-const repo = repoFactory(McpEntity)
+
+
+export const mcpRepo = repoFactory(McpEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
     async getOrCreate({ projectId }: { projectId: ApId }): Promise<McpWithPieces> {
-        const existingMcp = await repo().findOneBy({ projectId })
+        const existingMcp = await mcpRepo().findOneBy({ projectId })
         if (!isNil(existingMcp)) {
             return this.getOrThrow({ mcpId: existingMcp.id })
         }
-        const mcp = await repo().save({
+        const mcp = await mcpRepo().save({
             id: apId(),
             projectId,
             token: apId(),
@@ -25,7 +29,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async list({ projectId }: ListParams): Promise<SeekPage<McpWithPieces>> {
-        const existingMcp = await repo().findOneBy({ projectId })
+        const existingMcp = await mcpRepo().findOneBy({ projectId })
         
         if (isNil(existingMcp)) {
             const newMCP = await this.getOrCreate({ projectId })
@@ -38,7 +42,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async getOrThrow({ mcpId }: { mcpId: string }): Promise<McpWithPieces> {
-        const mcp = await repo().findOneBy({ id: mcpId })
+        const mcp = await mcpRepo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
             throw new ActivepiecesError({
@@ -53,7 +57,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async getByToken({ token }: { token: string }): Promise<McpWithPieces> {
-        const mcp = await repo().findOne({ where: { token } })
+        const mcp = await mcpRepo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -65,7 +69,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
     async update({ mcpId, token }: UpdateParams): Promise<McpWithPieces> {
 
-        await repo().update(mcpId, {
+        await mcpRepo().update(mcpId, {
             ...spreadIfDefined('token', token),
             updated: dayjs().toISOString(),
         })
@@ -74,13 +78,29 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     },
 
     async getByProjectId({ projectId }: { projectId: ApId }): Promise<McpWithPieces> {
-        const mcp = await repo().findOneBy({ projectId })
+        const mcp = await mcpRepo().findOneBy({ projectId })
         if (isNil(mcp)) {
             return this.getOrCreate({ projectId })
         }
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
+    async trackToolCall({ mcpId, toolName }: { mcpId: ApId, toolName: string }): Promise<void> {
+        const mcp = await mcpRepo().findOneBy({ id: mcpId })
+        if (isNil(mcp)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
+            })
+        }
+        rejectedPromiseHandler(telemetry(_log).trackProject(mcp.projectId, {
+            name: TelemetryEventName.MCP_TOOL_CALLED,
+            payload: {
+                mcpId,
+                toolName,
+            },
+        }), _log)
+    },
 })
 
 type ListParams = {

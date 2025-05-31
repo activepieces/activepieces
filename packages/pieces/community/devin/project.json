@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/devin/package.json",
         "main": "packages/pieces/community/devin/src/index.ts",
         "assets": [
-          "packages/pieces/community/devin/*.md"
+          "packages/pieces/community/devin/*.md",
+          {
+            "input": "packages/pieces/community/devin/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

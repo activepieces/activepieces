@@ -103,7 +103,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
-        const oldFlowRun = await flowRunService(log).getOneOrThrow({
+        const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
@@ -117,22 +117,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const newFlowRun = {
-                    ...oldFlowRun,
-                    id: apId(),
-                    status: FlowRunStatus.RUNNING,
-                    startTime: new Date().toISOString(),
-                    created: new Date().toISOString(),
-                }
-                await flowRunRepo().save(newFlowRun)
-
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
-                return flowRunService(log).addToQueue({
+                const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
+                    oldFlowRun.flowId,
+                )
+                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                return flowRunService(log).start({
                     payload,
-                    flowRunId: newFlowRun.id,
-                    executionType: ExecutionType.BEGIN,
+                    projectId: oldFlowRun.projectId,
+                    flowVersionId: latestFlowVersion.id,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
                     progressUpdateType: ProgressUpdateType.NONE,
-                    checkRequestId: false,
+                    executionType: ExecutionType.BEGIN,
+                    environment: RunEnvironment.PRODUCTION,
+                    executeTrigger: false,
                 })
             }
         }
@@ -170,12 +168,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (matchRequestId || !checkRequestId) {
             return flowRunService(log).start({
                 payload,
-                flowRunId: flowRunToResume.id,
+                existingFlowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
                 httpRequestId: requestId,
                 progressUpdateType,
+                executeTrigger: false,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
             })
@@ -212,9 +211,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async start({
         projectId,
         flowVersionId,
-        flowRunId,
+        existingFlowRunId,
         payload,
         environment,
+        executeTrigger,
         executionType,
         synchronousHandlerId,
         progressUpdateType,
@@ -228,7 +228,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         const flowRun = await getFlowRunOrCreate({
-            id: flowRunId,
+            id: existingFlowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
@@ -246,6 +246,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             payload,
             priority,
             synchronousHandlerId,
+            executeTrigger,
             executionType,
             progressUpdateType,
         })
@@ -268,8 +269,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: engineResponseWatcher(log).getServerId(),
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
+            executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
@@ -382,11 +384,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunService(log).start({
             payload,
-            flowRunId: flowRun.id,
+            existingFlowRunId: flowRun.id,
             projectId: flowRun.projectId,
             flowVersionId: flowRun.flowVersionId,
             synchronousHandlerId,
             httpRequestId: requestId,
+            executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
             environment: RunEnvironment.PRODUCTION,
@@ -482,22 +485,7 @@ const getFlowRunOrCreate = async (
     }
 }
 
-async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
-    flowRunId: FlowRunId,
-    log: FastifyBaseLogger,
-): Promise<unknown> {
-    const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-        id: flowRunId,
-        projectId: undefined,
-    })
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
-        flowRun.flowId,
-    )
-    await flowRunRepo().update(flowRunId, {
-        flowVersionId: flowVersion.id,
-    })
-    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
-}
+
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()
@@ -558,9 +546,10 @@ type GetOneParams = {
 type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    flowRunId?: FlowRunId
+    existingFlowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
+    executeTrigger: boolean
     synchronousHandlerId: string | undefined
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType

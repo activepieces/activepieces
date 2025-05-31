@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/whatsapp/package.json",
         "main": "packages/pieces/community/whatsapp/src/index.ts",
         "assets": [
-          "packages/pieces/community/whatsapp/*.md"
+          "packages/pieces/community/whatsapp/*.md",
+          {
+            "input": "packages/pieces/community/whatsapp/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
