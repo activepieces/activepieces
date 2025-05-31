@@ -105,6 +105,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beehiiv": [
+        "packages/pieces/community/beehiiv/src/index.ts"
+      ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
@@ -165,6 +168,9 @@
       ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
+      ],
+       "@activepieces/piece-close": [
+        "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
@@ -232,6 +238,9 @@
       ],
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
+      ],
+      "@activepieces/piece-docusign": [
+        "packages/pieces/community/docusign/src/index.ts"
       ],
       "@activepieces/piece-drip": [
         "packages/pieces/community/drip/src/index.ts"
@@ -520,6 +529,9 @@
       "@activepieces/piece-mongodb": [
         "packages/pieces/community/mongodb/src/index.ts"
       ],
+      "@activepieces/piece-motion": [
+        "packages/pieces/community/motion/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
@@ -690,9 +702,8 @@
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
       ],
-      "@activepieces/piece-smartsuite":[
+      "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
-
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
