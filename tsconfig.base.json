@@ -30,6 +30,9 @@
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
+      "@activepieces/piece-acuity-scheduling": [
+        "packages/pieces/community/acuity-scheduling/src/index.ts"
+      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
