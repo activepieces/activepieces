@@ -432,6 +432,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-kommo": [
+        "packages/pieces/community/kommo/src/index.ts"
+      ],
       "@activepieces/piece-krisp-call": [
         "packages/pieces/community/krisp-call/src/index.ts"
       ],
