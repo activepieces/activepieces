@@ -25,22 +25,48 @@ export const createAVideoFromTemplate = createAction({
     }),
     variables: Property.Json({
       displayName: 'Template Variables',
-      description: 'Dynamic variables used within the template. Must be a valid JSON object. Example: {"text": "Hello World", "image": "image_url"}',
+      description: `Dynamic variables used within the template. Each variable must include a 'type' discriminator. Example:
+      {
+        "heading": {
+          "type": "text",
+          "value": "Welcome to Our Platform"
+        },
+        "background_color": {
+          "type": "color",
+          "value": "#f6f6fc"
+        },
+        "logo": {
+          "type": "image",
+          "value": "https://example.com/logo.png"
+        },
+        "features": {
+          "type": "list",
+          "value": ["Feature 1", "Feature 2"]
+        }
+      }`,
       required: true,
       defaultValue: {
-        text: "Hello World",
-        image: "image_url"
+        heading: {
+          type: "text",
+          value: "Hello World"
+        },
+        background: {
+          type: "color",
+          value: "#f6f6fc"
+        }
       }
     }),
     width: Property.Number({
       displayName: 'Video Width',
       description: 'Width of the video in pixels',
       required: false,
+      defaultValue: 1280,
     }),
     height: Property.Number({
       displayName: 'Video Height',
       description: 'Height of the video in pixels',
       required: false,
+      defaultValue: 720,
     }),
     include_gif: Property.Checkbox({
       displayName: 'Include GIF Preview',
@@ -91,6 +117,16 @@ export const createAVideoFromTemplate = createAction({
         throw new Error('Template variables must be a valid JSON object');
       }
 
+      // Validate each variable has a type discriminator
+      for (const [key, variableValue] of Object.entries(variables)) {
+        if (variableValue === null || typeof variableValue !== 'object') {
+          throw new Error(`Variable '${key}' must be an object with 'type' and 'value' properties`);
+        }
+        if (!('type' in variableValue) || !('value' in variableValue)) {
+          throw new Error(`Variable '${key}' must include 'type' and 'value' properties`);
+        }
+      }
+
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `https://api.heygen.com/v2/template/${template_id}/generate`,
@@ -102,7 +138,7 @@ export const createAVideoFromTemplate = createAction({
           title,
           caption,
           variables,
-          dimension: width && height ? { width, height } : undefined,
+          dimension: { width, height },
           include_gif,
           enable_sharing,
           folder_id,
@@ -121,6 +157,9 @@ export const createAVideoFromTemplate = createAction({
       }
       if (error.response?.status === 404) {
         throw new Error(`Template with ID ${template_id} not found.`);
+      }
+      if (error.response?.status === 400) {
+        throw new Error(`Invalid request: ${error.response.body?.message || error.message}`);
       }
       throw new Error(`Failed to generate video: ${error.message}`);
     }

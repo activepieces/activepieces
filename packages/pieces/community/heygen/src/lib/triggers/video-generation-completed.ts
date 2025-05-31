@@ -43,7 +43,7 @@ export const videoGenerationCompleted = createTrigger({
       method: HttpMethod.GET,
       url: `https://api.heygen.com/v1/video_status.get`,
       queryParams: {
-        id: video_id
+        video_id: video_id
       },
       headers: {
         'X-Api-Key': context.auth,

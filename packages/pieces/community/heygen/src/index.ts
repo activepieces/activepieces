@@ -5,6 +5,9 @@ import { uploadAnAsset } from './lib/actions/upload-asset';
 import { createAVideoFromTemplate } from './lib/actions/create-video-from-template';
 import { videoGenerationCompleted } from './lib/triggers/video-generation-completed';
 import { videoGenerationFailed } from './lib/triggers/video-generation-failed';
+import { retrieveVideoStatus } from './lib/actions/retrieve-video-status';
+import { retrieveShareableVideoLink } from './lib/actions/retrieve-shareable-video-link';
+import { retrieveTranslatedVideoStatus } from './lib/actions/retrieve-translated-video-status';
 
 export const heygenAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -23,6 +26,9 @@ export const heygen = createPiece({
     translateAVideo,
     uploadAnAsset,
     createAVideoFromTemplate,
+    retrieveVideoStatus,
+    retrieveShareableVideoLink,
+    retrieveTranslatedVideoStatus
   ],
   triggers: [
     videoGenerationCompleted,

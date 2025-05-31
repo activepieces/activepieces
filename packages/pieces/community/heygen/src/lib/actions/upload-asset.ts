@@ -11,31 +11,46 @@ export const uploadAnAsset = createAction({
       description: 'The file to upload (JPEG, PNG, MP4, WEBM, or MPEG)',
       required: true,
     }),
-    file_type: Property.StaticDropdown({
-      displayName: 'File Type',
-      description: 'The type of file being uploaded',
-      required: true,
-      options: {
-        options: [
-          { label: 'Image (JPEG)', value: 'image/jpeg' },
-          { label: 'Image (PNG)', value: 'image/png' },
-          { label: 'Video (MP4)', value: 'video/mp4' },
-          { label: 'Video (WEBM)', value: 'video/webm' },
-          { label: 'Audio (MPEG)', value: 'audio/mpeg' },
-        ],
-      },
-    }),
   },
   async run(context) {
-    const { file, file_type } = context.propsValue;
+    const { file } = context.propsValue;
+
+    // Determine content type based on file extension
+    const getContentType = (filename: string): string => {
+      const extension = filename.toLowerCase().split('.').pop();
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'mp4':
+          return 'video/mp4';
+        case 'webm':
+          return 'video/webm';
+        case 'mpeg':
+        case 'mpg':
+          return 'video/mpeg';
+        default:
+          throw new Error(`Unsupported file type: ${extension}`);
+      }
+    };
 
     try {
+      // Write file to storage and get reference
+      const fileReference = await context.files.write({
+        fileName: file.filename,
+        data: file.data
+      });
+
+      const contentType = getContentType(file.filename);
+      
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://upload.heygen.com/v1/asset',
         headers: {
           'x-api-key': context.auth as string,
-          'Content-Type': file_type,
+          'Content-Type': contentType,
         },
         body: file.data,
       });
@@ -55,10 +70,17 @@ export const uploadAnAsset = createAction({
         folder_id: response.body.folder_id,
         meta: response.body.meta,
         image_key: response.body.image_key,
+        file_reference: fileReference,
       };
     } catch (error: any) {
       if (error.response?.status === 403) {
         throw new Error('Authentication failed. Please check your API key.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid file format or content type.');
+      }
+      if (error.response?.status === 413) {
+        throw new Error('File size too large. Please check HeyGen file size limits.');
       }
       throw new Error(`Failed to upload asset: ${error.message}`);
     }

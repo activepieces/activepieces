@@ -17,25 +17,52 @@ export const createAvatarVideo = createAction({
       required: false,
       defaultValue: false,
     }),
+    callback_id: Property.ShortText({
+      displayName: 'Callback ID',
+      description: 'A custom ID for callback purposes',
+      required: false,
+    }),
+    callback_url: Property.ShortText({
+      displayName: 'Callback URL',
+      description: 'URL to notify when video rendering is complete',
+      required: false,
+    }),
     folder_id: Property.ShortText({
       displayName: 'Folder ID',
       description: 'Specify the video output folder destination',
       required: false,
     }),
+    character_type: Property.StaticDropdown({
+      displayName: 'Character Type',
+      description: 'Type of character to use',
+      required: true,
+      options: {
+        options: [
+          { label: 'Avatar', value: 'avatar' },
+          { label: 'Talking Photo', value: 'talking_photo' },
+        ],
+      },
+      defaultValue: 'avatar',
+    }),
     avatar_id: Property.ShortText({
       displayName: 'Avatar ID',
-      description: 'The ID of the avatar to use',
-      required: true,
+      description: 'The ID of the avatar to use (for avatar type)',
+      required: false,
     }),
-    avatar_scale: Property.Number({
-      displayName: 'Avatar Scale',
-      description: 'Avatar scale, value between 0 and 5.0',
+    talking_photo_id: Property.ShortText({
+      displayName: 'Talking Photo ID',
+      description: 'The ID of the talking photo to use (for talking_photo type)',
+      required: false,
+    }),
+    scale: Property.Number({
+      displayName: 'Scale',
+      description: 'Character scale (0-5.0 for avatar, 0-2.0 for talking photo)',
       required: false,
       defaultValue: 1.0,
     }),
     avatar_style: Property.StaticDropdown({
       displayName: 'Avatar Style',
-      description: 'Avatar style',
+      description: 'Avatar style (only for avatar type)',
       required: false,
       options: {
         options: [
@@ -46,21 +73,62 @@ export const createAvatarVideo = createAction({
       },
       defaultValue: 'normal',
     }),
-    avatar_offset_x: Property.Number({
-      displayName: 'Avatar X Offset',
-      description: 'Avatar X position offset (-1.0 to 1.0)',
+    talking_photo_style: Property.StaticDropdown({
+      displayName: 'Talking Photo Style',
+      description: 'Talking photo style (only for talking_photo type)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Square', value: 'square' },
+          { label: 'Circle', value: 'circle' },
+        ],
+      },
+    }),
+    talking_style: Property.StaticDropdown({
+      displayName: 'Talking Style',
+      description: 'Talking photo talking style (only for talking_photo type)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Stable', value: 'stable' },
+          { label: 'Expressive', value: 'expressive' },
+        ],
+      },
+      defaultValue: 'stable',
+    }),
+    expression: Property.StaticDropdown({
+      displayName: 'Expression',
+      description: 'Talking photo expression style (only for talking_photo type)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Default', value: 'default' },
+          { label: 'Happy', value: 'happy' },
+        ],
+      },
+      defaultValue: 'default',
+    }),
+    super_resolution: Property.Checkbox({
+      displayName: 'Super Resolution',
+      description: 'Whether to enhance the photo image (only for talking_photo type)',
+      required: false,
+      defaultValue: false,
+    }),
+    offset_x: Property.Number({
+      displayName: 'X Offset',
+      description: 'Character X position offset (-1.0 to 1.0)',
       required: false,
       defaultValue: 0,
     }),
-    avatar_offset_y: Property.Number({
-      displayName: 'Avatar Y Offset',
-      description: 'Avatar Y position offset (-1.0 to 1.0)',
+    offset_y: Property.Number({
+      displayName: 'Y Offset',
+      description: 'Character Y position offset (-1.0 to 1.0)',
       required: false,
       defaultValue: 0,
     }),
-    avatar_matting: Property.Checkbox({
+    matting: Property.Checkbox({
       displayName: 'Enable Matting',
-      description: 'Whether to do matting for the avatar',
+      description: 'Whether to do matting for the character',
       required: false,
       defaultValue: false,
     }),
@@ -70,31 +138,60 @@ export const createAvatarVideo = createAction({
       required: false,
       defaultValue: '#f6f6fc',
     }),
+    voice_type: Property.StaticDropdown({
+      displayName: 'Voice Type',
+      description: 'Type of voice to use',
+      required: true,
+      options: {
+        options: [
+          { label: 'Text', value: 'text' },
+          { label: 'Audio', value: 'audio' },
+          { label: 'Silence', value: 'silence' },
+        ],
+      },
+      defaultValue: 'text',
+    }),
     voice_id: Property.ShortText({
       displayName: 'Voice ID',
-      description: 'The ID of the voice to use',
-      required: true,
+      description: 'The ID of the voice to use (for text type)',
+      required: false,
     }),
     input_text: Property.LongText({
       displayName: 'Input Text',
-      description: 'The text for the avatar to speak',
-      required: true,
+      description: 'The text for the character to speak (for text type)',
+      required: false,
+    }),
+    audio_url: Property.ShortText({
+      displayName: 'Audio URL',
+      description: 'URL of the audio file (for audio type)',
+      required: false,
+    }),
+    audio_asset_id: Property.ShortText({
+      displayName: 'Audio Asset ID',
+      description: 'ID of the audio asset (for audio type)',
+      required: false,
+    }),
+    silence_duration: Property.Number({
+      displayName: 'Silence Duration',
+      description: 'Duration of silence in seconds (1.0 to 100.0) (for silence type)',
+      required: false,
+      defaultValue: 1.0,
     }),
     voice_speed: Property.Number({
       displayName: 'Voice Speed',
-      description: 'Voice speed, value between 0.5 and 1.5',
+      description: 'Voice speed, value between 0.5 and 1.5 (for text type)',
       required: false,
       defaultValue: 1.0,
     }),
     voice_pitch: Property.Number({
       displayName: 'Voice Pitch',
-      description: 'Voice pitch, value between -50 and 50',
+      description: 'Voice pitch, value between -50 and 50 (for text type)',
       required: false,
       defaultValue: 0,
     }),
     voice_emotion: Property.StaticDropdown({
       displayName: 'Voice Emotion',
-      description: 'Voice emotion (if supported by the voice)',
+      description: 'Voice emotion (if supported by the voice) (for text type)',
       required: false,
       options: {
         options: [
@@ -108,8 +205,40 @@ export const createAvatarVideo = createAction({
     }),
     voice_locale: Property.ShortText({
       displayName: 'Voice Locale',
-      description: 'Voice locale (e.g., en-US, en-IN, pt-PT, pt-BR)',
+      description: 'Voice locale (e.g., en-US, en-IN, pt-PT, pt-BR) (for text type)',
       required: false,
+    }),
+    elevenlabs_model: Property.StaticDropdown({
+      displayName: 'ElevenLabs Model',
+      description: 'The ElevenLabs model to use (for text type)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Eleven Monolingual V1', value: 'eleven_monolingual_v1' },
+          { label: 'Eleven Multilingual V1', value: 'eleven_multilingual_v1' },
+          { label: 'Eleven Multilingual V2', value: 'eleven_multilingual_v2' },
+          { label: 'Eleven Turbo V2', value: 'eleven_turbo_v2' },
+          { label: 'Eleven Turbo V2.5', value: 'eleven_turbo_v2_5' },
+        ],
+      },
+    }),
+    elevenlabs_similarity_boost: Property.Number({
+      displayName: 'ElevenLabs Similarity Boost',
+      description: 'Controls how similar the generated speech should be to the original voice (0.0 to 1.0)',
+      required: false,
+      defaultValue: 0.75,
+    }),
+    elevenlabs_stability: Property.Number({
+      displayName: 'ElevenLabs Stability',
+      description: 'Controls the stability of the voice generation (0.0 to 1.0)',
+      required: false,
+      defaultValue: 0.75,
+    }),
+    elevenlabs_style: Property.Number({
+      displayName: 'ElevenLabs Style',
+      description: 'Controls the style intensity of the generated speech (0.0 to 1.0)',
+      required: false,
+      defaultValue: 0.75,
     }),
     background_type: Property.StaticDropdown({
       displayName: 'Background Type',
@@ -175,20 +304,36 @@ export const createAvatarVideo = createAction({
     const {
       title,
       caption,
+      callback_id,
+      callback_url,
       folder_id,
+      character_type,
       avatar_id,
-      avatar_scale,
+      talking_photo_id,
+      scale,
       avatar_style,
-      avatar_offset_x,
-      avatar_offset_y,
-      avatar_matting,
+      talking_photo_style,
+      talking_style,
+      expression,
+      super_resolution,
+      offset_x,
+      offset_y,
+      matting,
       circle_background_color,
+      voice_type,
       voice_id,
       input_text,
+      audio_url,
+      audio_asset_id,
+      silence_duration,
       voice_speed,
       voice_pitch,
       voice_emotion,
       voice_locale,
+      elevenlabs_model,
+      elevenlabs_similarity_boost,
+      elevenlabs_stability,
+      elevenlabs_style,
       background_type,
       background_value,
       background_fit,
@@ -208,34 +353,70 @@ export const createAvatarVideo = createAction({
     // Parse dimension string into width and height
     const [width, height] = dimension.split('x').map(Number);
 
-    const videoInput = {
-      character: {
-        type: 'avatar',
+    // Build character settings based on type
+    const character = {
+      type: character_type,
+      ...(character_type === 'avatar' ? {
         avatar_id,
-        scale: avatar_scale,
+        scale,
         avatar_style,
-        offset: {
-          x: avatar_offset_x || 0,
-          y: avatar_offset_y || 0,
-        },
-        matting: avatar_matting,
-        circle_background_color: formatColorValue(circle_background_color),
+      } : {
+        talking_photo_id,
+        scale,
+        talking_photo_style,
+        talking_style,
+        expression,
+        super_resolution,
+      }),
+      offset: {
+        x: offset_x || 0,
+        y: offset_y || 0,
       },
-      voice: {
-        type: 'text',
+      matting,
+      circle_background_color: formatColorValue(circle_background_color),
+    };
+
+    // Build voice settings based on type
+    const voice = {
+      type: voice_type,
+      ...(voice_type === 'text' ? {
         voice_id,
         input_text,
         speed: voice_speed,
         pitch: voice_pitch,
         emotion: voice_emotion,
         locale: voice_locale,
-      },
-      background: {
-        type: background_type,
-        value: background_type === 'color' ? formatColorValue(background_value) : background_value,
+        ...(elevenlabs_model && {
+          elevenlabs_settings: {
+            model: elevenlabs_model,
+            similarity_boost: elevenlabs_similarity_boost,
+            stability: elevenlabs_stability,
+            style: elevenlabs_style,
+          },
+        }),
+      } : voice_type === 'audio' ? {
+        ...(audio_url ? { audio_url } : { audio_asset_id }),
+      } : {
+        duration: silence_duration,
+      }),
+    };
+
+    // Build background settings
+    const background = {
+      type: background_type,
+      ...(background_type === 'color' ? {
+        value: formatColorValue(background_value),
+      } : {
+        value: background_value,
         fit: background_fit,
         ...(background_type === 'video' && { play_style: video_play_style }),
-      },
+      }),
+    };
+
+    const videoInput = {
+      character,
+      voice,
+      background,
     };
 
     const response = await httpClient.sendRequest({
@@ -248,6 +429,8 @@ export const createAvatarVideo = createAction({
       body: {
         title,
         caption,
+        callback_id,
+        callback_url,
         folder_id,
         video_inputs: [videoInput],
         dimension: {

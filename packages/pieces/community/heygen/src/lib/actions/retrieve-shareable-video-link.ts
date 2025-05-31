@@ -32,7 +32,7 @@ export const retrieveShareableVideoLink = createAction({
       return {
         success: true,
         video_id: video_id,
-        share_url: response.body.data.share_url,
+        share_url: response.body.data,
         note: 'This is a public URL that can be shared with anyone to access the video.',
       };
     } catch (error: any) {
