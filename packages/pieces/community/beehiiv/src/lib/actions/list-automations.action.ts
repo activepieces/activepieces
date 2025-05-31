@@ -1,51 +1,51 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { HttpMethod, HttpRequest, QueryParams, httpClient } from "@activepieces/pieces-common";
-import { BEEHIIV_API_URL } from "../common/constants";
-import { beehiivAuth } from "../../index";
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { publicationId } from '../common/props';
+import { beehiivAuth } from '../common/auth';
+import { beehiivApiCall, BeehiivPaginatedApiCall } from '../common/client';
+import { isNil } from '@activepieces/shared';
 
 export const listAutomationsAction = createAction({
-  auth: beehiivAuth,
-  name: 'list_automations',
-  displayName: 'List Automations',
-  description: 'Retrieve a list of automations for a publication.',
-  props: {
-    publicationId: Property.ShortText({
-      displayName: 'Publication ID',
-      description: 'The ID of the publication.',
-      required: true,
-    }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'A limit on the number of automations to be returned (1-100, default 10).',
-      required: false,
-    }),
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'The page number for pagination (default 1).',
-      required: false,
-    }),
-  },
-  async run(context) {
-    const { auth, propsValue } = context;
-    const publicationId = propsValue['publicationId'];
+	auth: beehiivAuth,
+	name: 'list_automations',
+	displayName: 'List Automations',
+	description: 'Retrieves a list of automations for a publication.',
+	props: {
+		publicationId: publicationId,
+		limit: Property.Number({
+			displayName: 'Limit',
+			description: 'A limit on the number of automations to be returned (1-100, default 10).',
+			required: false,
+		}),
+		page: Property.Number({
+			displayName: 'Page',
+			description: 'The page number for pagination (default 1).',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const { publicationId, page, limit } = context.propsValue;
 
-    const queryParams: QueryParams = {};
-    if (propsValue['limit'] !== undefined) {
-      queryParams['limit'] = (propsValue['limit'] as number).toString();
-    }
-    if (propsValue['page'] !== undefined) {
-      queryParams['page'] = (propsValue['page'] as number).toString();
-    }
+		if (isNil(page) && isNil(limit)) {
+			const response = await BeehiivPaginatedApiCall({
+				apiKey: context.auth,
+				method: HttpMethod.GET,
+				resourceUri: `/publications/${publicationId}/automations`,
+			});
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${BEEHIIV_API_URL}/publications/${publicationId}/automations`,
-      headers: {
-        'Authorization': `Bearer ${auth}`,
-      },
-      queryParams: queryParams,
-    };
+			return response;
+		}
 
-    return await httpClient.sendRequest(request);
-  },
+		const response = await beehiivApiCall<{ data: Record<string, any>[] }>({
+			apiKey: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/publications/${publicationId}/automations`,
+			query: {
+				page,
+				limit,
+			},
+		});
+
+		return response.data;
+	},
 });

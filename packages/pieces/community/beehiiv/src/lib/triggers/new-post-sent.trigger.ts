@@ -1,49 +1,66 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { beehiivAuth } from '../../index';
-import { subscribeWebhook, unsubscribeWebhook } from '../common/webhooks';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { publicationId } from '../common/props';
+import { beehiivAuth } from '../common/auth';
+import { beehiivApiCall, WebhookPayload } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
-const BEEHIIV_EVENT_TYPE = 'post.sent';
+const TRIGGER_KEY = 'new-post-sent-trigger';
 
-export const newPostSent = createTrigger({
-    auth: beehiivAuth,
-    name: 'beehiiv_new_post_sent',
-    displayName: 'New Post Sent',
-    description: 'Triggers when a new post is published and sent on Beehiiv.',
-    props: {
-        publicationId: Property.ShortText({
-            displayName: 'Publication ID',
-            description: 'The ID of your Beehiiv publication (e.g., pub_xxxxxxxx).',
-            required: true,
-        }),
-    },
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context) {
-        await subscribeWebhook(
-            context.propsValue.publicationId,
-            context.webhookUrl,
-            BEEHIIV_EVENT_TYPE, // Pass single event type
-            context.auth as string,
-            context.store
-        );
-    },
-    async onDisable(context) {
-        await unsubscribeWebhook(
-            context.propsValue.publicationId,
-            context.webhookUrl,
-            BEEHIIV_EVENT_TYPE, // Pass single event type
-            context.auth as string,
-            context.store
-        );
-    },
-    async run(context) {
-        return [context.payload.body];
-    },
-    sampleData: {
-        id: "post_sample_12345",
-        title: "Sample Post: Exciting News!",
-        status: "confirmed",
-        authors: ["Beehiiv Team"],
-        publish_date: 1678886400, // Example: March 15, 2023 12:00:00 PM GMT
-        web_url: "https://example.beehiiv.com/p/sample-post-exciting-news",
-    },
+export const newPostSentTrigger = createTrigger({
+	auth: beehiivAuth,
+	name: 'beehiiv_new_post_sent',
+	displayName: 'New Post Sent',
+	description: 'Triggers when a new post is sent.',
+	props: {
+		publicationId: publicationId,
+	},
+	type: TriggerStrategy.WEBHOOK,
+	async onEnable(context) {
+		const { publicationId } = context.propsValue;
+		const response = await beehiivApiCall<{ data: { id: string } }>({
+			apiKey: context.auth,
+			method: HttpMethod.POST,
+			resourceUri: `/publications/${publicationId}/webhooks`,
+			body: {
+				url: context.webhookUrl,
+				event_types: ['post.sent'],
+			},
+		});
+
+		await context.store.put<string>(TRIGGER_KEY, response.data.id);
+	},
+	async onDisable(context) {
+		const { publicationId } = context.propsValue;
+
+		const webhookId = await context.store.get<string>(TRIGGER_KEY);
+		if (!isNil(webhookId)) {
+			await beehiivApiCall({
+				apiKey: context.auth,
+				method: HttpMethod.DELETE,
+				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
+			});
+		}
+	},
+	async run(context) {
+		const payload = context.payload.body as WebhookPayload;
+		return [payload.data];
+	},
+	sampleData: {
+		audience: 'free',
+		authors: ['Clark Kent'],
+		content_tags: ['news'],
+		created: 1666800076,
+		id: 'post_00000000-0000-0000-0000-000000000000',
+		preview_text: 'More news on the horizon',
+		slug: 'more_news',
+		split_tested: true,
+		status: 'confirmed',
+		subject_line: 'Check this out',
+		subtitle: 'New post subtitle',
+		thumbnail_url: 'https://example.com/pictures/thumbnail.png',
+		title: 'New Post Title',
+		displayed_date: 1666800076,
+		web_url: 'https://example.com/more_news',
+	},
 });

@@ -1,47 +1,65 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { beehiivAuth } from '../../index';
-import { subscribeWebhook, unsubscribeWebhook } from '../common/webhooks';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { publicationId } from '../common/props';
+import { beehiivAuth } from '../common/auth';
+import { beehiivApiCall, WebhookPayload } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 
-const BEEHIIV_EVENT_TYPE = 'subscription.deleted';
+const TRIGGER_KEY = 'user-unsubscribes-trigger';
 
-export const userUnsubscribes = createTrigger({
-    auth: beehiivAuth,
-    name: 'beehiiv_user_unsubscribes',
-    displayName: 'User Unsubscribes',
-    description: 'Triggers when a user unsubscribes from a Beehiiv publication.',
-    props: {
-        publicationId: Property.ShortText({
-            displayName: 'Publication ID',
-            description: 'The ID of your Beehiiv publication (e.g., pub_xxxxxxxx).',
-            required: true,
-        }),
-    },
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context) {
-        await subscribeWebhook(
-            context.propsValue.publicationId,
-            context.webhookUrl,
-            BEEHIIV_EVENT_TYPE,
-            context.auth as string,
-            context.store
-        );
-    },
-    async onDisable(context) {
-        await unsubscribeWebhook(
-            context.propsValue.publicationId,
-            context.webhookUrl,
-            BEEHIIV_EVENT_TYPE,
-            context.auth as string,
-            context.store
-        );
-    },
-    async run(context) {
-        return [context.payload.body];
-    },
-    sampleData: {
-        id: "sub_sample_abcdef",
-        email: "subscriber@example.com",
-        status: "inactive",
-        created: 1678880000,
-    },
+export const userUnsubscribesTrigger = createTrigger({
+	auth: beehiivAuth,
+	name: 'beehiiv_user_unsubscribes',
+	displayName: 'User Unsubscribes',
+	description: 'Triggers when a user unsubscribes.',
+	props: {
+		publicationId: publicationId,
+	},
+	type: TriggerStrategy.WEBHOOK,
+	async onEnable(context) {
+		const { publicationId } = context.propsValue;
+
+		const response = await beehiivApiCall<{ data: { id: string } }>({
+			apiKey: context.auth,
+			method: HttpMethod.POST,
+			resourceUri: `/publications/${publicationId}/webhooks`,
+			body: {
+				url: context.webhookUrl,
+				event_types: ['subscription.deleted'],
+			},
+		});
+
+		await context.store.put<string>(TRIGGER_KEY, response.data.id);
+	},
+	async onDisable(context) {
+		const { publicationId } = context.propsValue;
+
+		const webhookId = await context.store.get<string>(TRIGGER_KEY);
+		if (!isNil(webhookId)) {
+			await beehiivApiCall({
+				apiKey: context.auth,
+				method: HttpMethod.DELETE,
+				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
+			});
+		}
+	},
+	async run(context) {
+		const payload = context.payload.body as WebhookPayload;
+		return [payload.data];
+	},
+	sampleData: {
+		created: 1666800076,
+		email: 'example@example.com',
+		id: 'sub_00000000-0000-0000-0000-000000000000',
+		referral_code: 'ABC123',
+		referring_site: 'https://www.blog.com',
+		status: 'active',
+		subscription_tier: 'premium',
+		subscription_premium_tier_names: ['Premium', 'Pro'],
+		stripe_customer_id: 'cus_00000000000000',
+		utm_campaign: 'Q1 Campaign',
+		utm_channel: 'website',
+		utm_medium: 'organic',
+		utm_source: 'Twitter',
+	},
 });
