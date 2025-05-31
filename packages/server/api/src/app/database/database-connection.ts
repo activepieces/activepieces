@@ -41,7 +41,8 @@ import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-entity'
-import { McpPieceEntity } from '../mcp/mcp-piece-entity'
+import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
+import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -60,6 +61,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
@@ -97,7 +99,8 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        McpPieceEntity,
+        McpToolEntity,
+        McpRunEntity,
     ]
 
     switch (edition) {

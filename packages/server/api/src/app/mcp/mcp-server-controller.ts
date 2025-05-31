@@ -1,45 +1,52 @@
-import { ApId, apId, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
 
+const DEFAULT_PAGE_SIZE = 10
+
+
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+
+    app.post('/', CreateMcpRequest, async (req) => {
+        const projectId = req.body.projectId
+        return mcpService(req.log).create({
+            projectId,
+            name: req.body.name,
+        })
+    })
     
     app.get('/', GetMcpsRequest, async (req) => {
-        let projectId: ProjectId
-        
-        if (req.principal.type === PrincipalType.SERVICE) {
-            if (!req.query.projectId) {
-                return {
-                    data: [],
-                    cursor: null,
-                }
-            }
-            projectId = req.query.projectId
-        }
-        else {
-            projectId = req.principal.projectId
-        }
+        const projectId = req.query.projectId
         
         const result = await mcpService(req.log).list({
             projectId,
             cursorRequest: req.query.cursor ?? null,
-            limit: req.query.limit ?? 10,
+            limit: req.query.limit ?? DEFAULT_PAGE_SIZE,
+            name: req.query.name ?? undefined,
         })
         
         return result
     })
 
+    app.get('/:id', GetMcpRequest, async (req) => {
+        const mcpId = req.params.id
+        return mcpService(req.log).getOrThrow({
+            mcpId,
+        })
+    })
+
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
-        const { token } = req.body
+        const { name, tools } = req.body
 
         return mcpService(req.log).update({
             mcpId,
-            token,
+            name,
+            tools,
         })
     })
 
@@ -50,6 +57,31 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
             token: apId(),
         })
     })
+
+    app.delete('/:id', DeleteMcpRequest, async (req, reply) => {
+        const mcpId = req.params.id
+        await mcpService(req.log).delete({
+            mcpId,
+            projectId: req.principal.projectId,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+}
+
+const CreateMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Create a new MCP server',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: CreateMcpRequestBody,
+        response: {
+            [StatusCodes.OK]: Nullable(McpWithTools),
+        },
+    },
 }
 
 const GetMcpsRequest = {
@@ -63,7 +95,7 @@ const GetMcpsRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListMcpsRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(McpWithPieces),
+            [StatusCodes.OK]: SeekPage(McpWithTools),
         },
     },
 }
@@ -80,11 +112,9 @@ export const UpdateMcpRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        body: Type.Object({
-            token: Type.Optional(Type.String()),
-        }),
+        body: UpdateMcpRequestBody,
         response: {
-            [StatusCodes.OK]: McpWithPieces,
+            [StatusCodes.OK]: McpWithTools,
         },
     },
 }
@@ -102,7 +132,43 @@ const RotateTokenRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: McpWithPieces,
+            [StatusCodes.OK]: McpWithTools,
+        },
+    },
+}
+
+const GetMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.READ_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Get an MCP server by ID',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: McpWithTools,
+        },
+    },
+}
+
+const DeleteMcpRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'Delete an MCP server by ID',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }
