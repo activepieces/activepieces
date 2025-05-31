@@ -5,7 +5,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { system } from '../helper/system/system'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
-S
+
 // TODO (@amrdb) handle isEnterpriseCustomerOnCloud
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
