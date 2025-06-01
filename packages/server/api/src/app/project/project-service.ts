@@ -168,29 +168,32 @@ export const projectService = {
 
 
 async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const [projectIds, user] = await Promise.all([
-        projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        }),
-        userService.getOneOrFail({ id: params.userId }),
-    ])
-
-    const adminFilter = user.platformRole === PlatformRole.ADMIN
-        ? [{
+    const user = await userService.getOneOrFail({ id: params.userId })
+    const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
+    
+    if (isPrivilegedUser) {
+        // Platform admins and operators can see all projects in their platform
+        return [{
             deleted: IsNull(),
             platformId: params.platformId,
+            ...displayNameFilter,
         }]
-        : []
-    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    const memberFilter = {
+    }
+    
+    // Only fetch project memberships for non-privileged users
+    const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+        platformId: params.platformId,
+        userId: params.userId,
+    })
+    
+    // Regular members can only see projects they're members of
+    return [{
         deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
         ...displayNameFilter,
-    }
-
-    return [...adminFilter, memberFilter]
+    }]
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {

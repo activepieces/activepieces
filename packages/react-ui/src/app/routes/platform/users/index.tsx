@@ -135,6 +135,8 @@ export default function UsersPage() {
                   <div className="text-left">
                     {row.original.platformRole === PlatformRole.ADMIN
                       ? t('Admin')
+                      : row.original.platformRole === PlatformRole.OPERATOR
+                      ? t('Operator')
                       : t('Member')}
                   </div>
                 );
