@@ -11,7 +11,7 @@ import { cacheState } from '../../cache/cache-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
-const globalCachePath = path.resolve('cache')
+const globalCachePath = path.resolve('cache', 'common')
 
 enum CacheState {
     READY = 'READY',
