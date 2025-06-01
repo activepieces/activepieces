@@ -41,6 +41,7 @@ import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migr
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -348,6 +349,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
+        DeprecateApproval1748648340742,
     ]
 
     const edition = system.getEdition()
