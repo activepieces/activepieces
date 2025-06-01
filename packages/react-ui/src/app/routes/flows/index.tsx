@@ -22,7 +22,7 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -99,15 +99,14 @@ const FlowsPage = () => {
     },
   });
 
-  const { data: connections, isLoading: isLoadingConnections } = useQuery({
-    queryKey: ['connections', projectId],
-    queryFn: () => {
-      return appConnectionsApi.list({
+  const { data: connections, isLoading: isLoadingConnections } =
+    appConnectionsQueries.useAppConnections({
+      request: {
         projectId,
         limit: 10000,
-      });
-    },
-  });
+      },
+      extraKeys: [projectId],
+    });
 
   const { embedState } = useEmbedding();
 

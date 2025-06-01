@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
 import { ApEdition, AppConnectionType } from '@activepieces/shared';
 
-import { oauthAppsApi } from './oauth2-apps-api';
+import { oauthAppsApi } from './api/oauth-apps';
 
 export type PieceToClientIdMap = {
   //key is set like this, to avoid issues reconnecting to a cloud oauth2 app after setting a platform oauth2 app
@@ -16,8 +19,55 @@ export type PieceToClientIdMap = {
   };
 };
 
-export const oauth2AppsHooks = {
-  useOAuth2AppConfigured(pieceId: string) {
+export const oauthAppsMutations = {
+  useDeleteOAuthApp: (refetch: () => void, setOpen: (open: boolean) => void) =>
+    useMutation({
+      mutationFn: async (credentialId: string) => {
+        await oauthAppsApi.delete(credentialId);
+        refetch();
+      },
+      onSuccess: () => {
+        toast({
+          title: t('Success'),
+          description: t('OAuth2 Credentials Deleted'),
+          duration: 3000,
+        });
+        setOpen(false);
+      },
+      onError: (error) => {
+        console.error(error);
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    }),
+
+  useUpsertOAuthApp: (
+    refetch: () => void,
+    setOpen: (open: boolean) => void,
+    onConfigurationDone: () => void,
+  ) =>
+    useMutation({
+      mutationFn: async (request: UpsertOAuth2AppRequest) => {
+        await oauthAppsApi.upsert(request);
+        refetch();
+      },
+      onSuccess: () => {
+        toast({
+          title: t('Success'),
+          description: t('OAuth2 Credentials Updated'),
+          duration: 3000,
+        });
+        onConfigurationDone();
+        setOpen(false);
+      },
+      onError: (error) => {
+        console.error(error);
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    }),
+};
+
+export const oauthAppsQueries = {
+  useOAuthAppConfigured(pieceId: string) {
     const query = useQuery({
       queryKey: ['oauth2-apps-configured'],
       queryFn: async () => {

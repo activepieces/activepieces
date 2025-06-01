@@ -1,7 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
@@ -23,15 +22,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-import { globalConnectionsApi } from '../lib/global-connections-api';
-import {
-  ConnectionNameAlreadyExists,
-  isConnectionNameUnique,
-  NoProjectSelected,
-} from '../lib/utils';
+import { globalConnectionsMutations } from '../lib/global-connections-hooks';
 
 import { AssignConnectionToProjectsControl } from './assign-global-connection-to-projects';
 
@@ -67,53 +59,14 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    AppConnectionWithoutSensitiveData,
-    Error,
-    {
-      connectionId: string;
-      displayName: string;
-      projectIds: string[];
-    }
-  >({
-    mutationFn: async ({ connectionId, displayName, projectIds }) => {
-      if (
-        !(await isConnectionNameUnique(true, displayName)) &&
-        displayName !== currentName
-      ) {
-        throw new ConnectionNameAlreadyExists();
-      }
-      if (projectIds.length === 0) {
-        throw new NoProjectSelected();
-      }
-      return globalConnectionsApi.update(connectionId, {
-        displayName,
-        projectIds,
-      });
-    },
-    onSuccess: () => {
-      onEdit();
-      toast({
-        title: t('Success'),
-        description: t('Connection has been updated.'),
-        duration: 3000,
-      });
-      setIsOpen(false);
-    },
-    onError: (error) => {
-      if (error instanceof ConnectionNameAlreadyExists) {
-        editConnectionForm.setError('displayName', {
-          message: error.message,
-        });
-      } else if (error instanceof NoProjectSelected) {
-        editConnectionForm.setError('projectIds', {
-          message: error.message,
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
-  });
+  const {
+    mutate: updateGlobalConnection,
+    isPending: isUpdatingGlobalConnection,
+  } = globalConnectionsMutations.useUpdateGlobalConnection(
+    onEdit,
+    setIsOpen,
+    editConnectionForm,
+  );
 
   return (
     <Tooltip>
@@ -146,10 +99,11 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
           <Form {...editConnectionForm}>
             <form
               onSubmit={editConnectionForm.handleSubmit((data) =>
-                mutate({
+                updateGlobalConnection({
                   connectionId,
                   displayName: data.displayName,
                   projectIds: data.projectIds,
+                  currentName: currentName,
                 }),
               )}
             >
@@ -187,7 +141,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={isPending}
+                  disabled={isUpdatingGlobalConnection}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -196,7 +150,9 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 >
                   {t('Cancel')}
                 </Button>
-                <Button loading={isPending}>{t('Save')}</Button>
+                <Button loading={isUpdatingGlobalConnection}>
+                  {t('Save')}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

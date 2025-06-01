@@ -134,7 +134,8 @@
         "handbook/engineering/playbooks/infrastructure",
         "handbook/engineering/playbooks/bullboard",
         "handbook/engineering/playbooks/database-migration",
-        "handbook/engineering/playbooks/product-announcement"
+        "handbook/engineering/playbooks/product-announcement",
+        "handbook/engineering/playbooks/frontend-best-practices"
       ]
     },
     {
