@@ -50,10 +50,7 @@ export function McpPieceDialog({
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
-    useState<string | null>(
-      mcp.tools?.find((tool) => tool.type === McpToolType.PIECE)?.pieceMetadata
-        ?.connectionExternalId ?? null,
-    );
+    useState<string | null>(null);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { metadata, isLoading: isPiecesLoading } =
@@ -84,8 +81,9 @@ export function McpPieceDialog({
 
     if (existingTool && existingTool.type === McpToolType.PIECE) {
       setSelectedActions(existingTool.pieceMetadata?.actionNames || []);
-    } else {
-      setSelectedActions([]);
+      setSelectedConnectionExternalId(
+        existingTool.pieceMetadata?.connectionExternalId || null,
+      );
     }
 
     setSelectedPiece(piece);
