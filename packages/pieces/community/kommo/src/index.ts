@@ -1,7 +1,7 @@
 import { createPiece, PieceAuth, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { leadStatusChangedTrigger, newContactAddedTrigger, newLeadCreatedTrigger, newTaskCreatedTrigger } from "./lib/triggers";
-import { findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction } from "./lib/actions";
+import { findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction, updateLeadAction } from "./lib/actions";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
@@ -30,9 +30,9 @@ export const kommo = createPiece({
   displayName: 'Kommo',
   auth: kommoAuth,
   logoUrl: 'https://cdn.activepieces.com/pieces/kommo.png',
-  categories: [PieceCategory.COMMUNICATION,PieceCategory.SALES_AND_CRM],
+  categories: [PieceCategory.COMMUNICATION, PieceCategory.SALES_AND_CRM],
   authors: ['krushnarout', 'kishanprmr'],
-  actions: [findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction,
+  actions: [findLeadAction, updateContactAction, createLeadAction, updateLeadAction, createContactAction, findContactAction, findCompanyAction,
     createCustomApiCallAction({
       auth: kommoAuth,
       baseUrl: (auth) => {

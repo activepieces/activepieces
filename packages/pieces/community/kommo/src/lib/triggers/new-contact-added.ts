@@ -19,7 +19,7 @@ export const newContactAddedTrigger = createTrigger({
       `/webhooks`,
       {
         destination: context.webhookUrl,
-        settings:['add_contact'] 
+        settings: ['add_contact']
       }
     );
 
@@ -34,13 +34,22 @@ export const newContactAddedTrigger = createTrigger({
       await makeRequest(
         { subdomain, apiToken },
         HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
+                `/webhooks`,
+        {destination:context.webhookUrl}
       );
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+      const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+
+    const payload = context.payload.body as { contacts: { add: { id: string }[] } }
+    const contactId = payload.contacts.add[0].id;
+    if (!contactId) return [];
+
+
+    const response = await makeRequest({ apiToken, subdomain }, HttpMethod.GET, `/contacts/${contactId}`)
+    return [response]
   },
   async test(context) {
     const { subdomain, apiToken } = context.auth;

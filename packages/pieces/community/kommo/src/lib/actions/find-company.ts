@@ -9,10 +9,10 @@ export const findCompanyAction = createAction({
   displayName: 'Find Company',
   description: 'Find an existing company.',
   props: {
-        query:Property.ShortText({
-      displayName:'Query',
-      required:true,
-      description:'Search query (Searches through the filled fields of the company).'
+    query: Property.ShortText({
+      displayName: 'Query',
+      required: true,
+      description: 'Search query (Searches through the filled fields of the company).'
     }),
   },
   async run(context) {
@@ -28,11 +28,11 @@ export const findCompanyAction = createAction({
       `/companies?query=${encodeURIComponent(query || '')}`
     );
 
-     const companies = result?._embedded?.companies ?? [];
+    const companies = result?._embedded?.companies ?? [];
 
     return {
-      found:companies.length>0,
-      result:companies
+      found: companies.length > 0,
+      result: companies
     };
   },
 });

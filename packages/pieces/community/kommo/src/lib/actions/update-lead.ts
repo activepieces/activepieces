@@ -19,7 +19,7 @@ export const updateLeadAction = createAction({
       displayName: 'Price',
       required: false,
     }),
-    pipelineId:pipelineDropdown(false),
+    pipelineId: pipelineDropdown(false),
     statusId: statusDropdown(false),
     responsible_user_id: userDropdown(false),
     loss_reason_id: lossReasonDropdown(false),
@@ -43,29 +43,27 @@ export const updateLeadAction = createAction({
       loss_reason_id,
     } = context.propsValue;
 
-        const tagsToAdd = context.propsValue.tags_to_add ?? [];
-        const tagsToDelete = context.propsValue.tags_to_delete ?? [];
+    const tagsToAdd = context.propsValue.tags_to_add ?? [];
+    const tagsToDelete = context.propsValue.tags_to_delete ?? [];
 
 
     const { subdomain, apiToken } = context.auth;
 
-    const updatePayload:Record<string,any> = {
-      name,
-      price,
-      status_id:statusId,
-      pipeline_id:pipelineId,
-      responsible_user_id,
-      loss_reason_id,
-    };
+    const updatePayload: Record<string, any> = {};
 
-    if(tagsToAdd.length>0)
-    {
-      updatePayload['tags_to_add'] = tagsToAdd.map((tag)=>({name:tag}))
+    if (name) updatePayload['name'] = name;
+    if (price) updatePayload['price'] = price;
+    if (statusId) updatePayload['status_id'] = statusId;
+    if (pipelineId) updatePayload['pipeline_id'] = pipelineId;
+    if (loss_reason_id) updatePayload['loss_reason_id'] = loss_reason_id;
+    if (responsible_user_id) updatePayload['responsible_user_id'] = responsible_user_id;
+
+    if (tagsToAdd.length > 0) {
+      updatePayload['tags_to_add'] = tagsToAdd.map((tag) => ({ name: tag }))
     }
 
-    if(tagsToDelete.length>0)
-    {
-      updatePayload['tags_to_delete'] = tagsToDelete.map((tag)=>({name:tag}))
+    if (tagsToDelete.length > 0) {
+      updatePayload['tags_to_delete'] = tagsToDelete.map((tag) => ({ name: tag }))
     }
 
     const result = await makeRequest(

@@ -7,7 +7,7 @@ interface KommoAuth {
   apiToken: string;
 }
 
-export const pipelineDropdown =(required=false)=> Property.Dropdown({
+export const pipelineDropdown = (required = false) => Property.Dropdown({
   displayName: 'Pipeline',
   required,
   refreshers: [],
@@ -37,7 +37,7 @@ export const pipelineDropdown =(required=false)=> Property.Dropdown({
   },
 });
 
-export const statusDropdown =(required=false)=> Property.Dropdown({
+export const statusDropdown = (required = false) => Property.Dropdown({
   displayName: 'Status',
   required,
   refreshers: ['pipelineId'],
@@ -71,7 +71,7 @@ export const statusDropdown =(required=false)=> Property.Dropdown({
   },
 });
 
-export const userDropdown =(required=false)=> Property.Dropdown({
+export const userDropdown = (required = false) => Property.Dropdown({
   displayName: 'Unique identified of a responsible user',
   required,
   refreshers: [],
@@ -99,7 +99,7 @@ export const userDropdown =(required=false)=> Property.Dropdown({
   },
 });
 
-export const lossReasonDropdown =(required=false)=> Property.Dropdown({
+export const lossReasonDropdown = (required = false) => Property.Dropdown({
   displayName: 'Loss Reason',
   required,
   refreshers: [],

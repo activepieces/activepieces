@@ -19,7 +19,7 @@ export const newLeadCreatedTrigger = createTrigger({
       `/webhooks`,
       {
         destination: context.webhookUrl,
-        settings: ['add_lead'] 
+        settings: ['add_lead']
       }
     );
 
@@ -34,13 +34,22 @@ export const newLeadCreatedTrigger = createTrigger({
       await makeRequest(
         { subdomain, apiToken },
         HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
+               `/webhooks`,
+        {destination:context.webhookUrl}
       );
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+
+    const payload = context.payload.body as { leads: { add: { id: string }[] } }
+    const leadId = payload.leads.add[0].id;
+    if (!leadId) return [];
+
+
+    const response = await makeRequest({ apiToken, subdomain }, HttpMethod.GET, `/leads/${leadId}`)
+    return [response]
   },
   async test(context) {
     const { subdomain, apiToken } = context.auth;

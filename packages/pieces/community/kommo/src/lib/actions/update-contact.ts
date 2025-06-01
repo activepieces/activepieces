@@ -82,12 +82,13 @@ export const updateContactAction = createAction({
     }
 
     const updatePayload: Record<string, any> = {
-      name,
-      first_name,
-      last_name,
-      responsible_user_id,
       ...(customFields.length > 0 ? { custom_fields_values: customFields } : {}),
     };
+
+    if (name) updatePayload['name'] = name;
+    if (first_name) updatePayload['first_name'] = first_name;
+    if (last_name) updatePayload['last_name'] = last_name;
+    if (responsible_user_id) updatePayload['responsible_user_id'] = responsible_user_id;
 
     if (tagsToAdd.length > 0) {
       updatePayload['tags_to_add'] = tagsToAdd.map((tag) => ({ name: tag }))

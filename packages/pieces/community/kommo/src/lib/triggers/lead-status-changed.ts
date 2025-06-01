@@ -3,12 +3,6 @@ import { kommoAuth } from '../../index';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-type KommoLead = {
-  id: number;
-  status_id: number;
-  [key: string]: unknown;
-};
-
 export const leadStatusChangedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'lead_status_changed',
@@ -25,7 +19,7 @@ export const leadStatusChangedTrigger = createTrigger({
       `/webhooks`,
       {
         destination: context.webhookUrl,
-        settings: ['status_lead'] 
+        settings: ['status_lead']
       }
     );
 
@@ -40,13 +34,21 @@ export const leadStatusChangedTrigger = createTrigger({
       await makeRequest(
         { subdomain, apiToken },
         HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
+        `/webhooks`,
+        {destination:context.webhookUrl}
       );
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+
+    const payload = context.payload.body as { leads: { status: { id: string }[] } }
+    const leadId = payload.leads.status[0].id;
+    if (!leadId) return [];
+
+    const response = await makeRequest({ apiToken, subdomain }, HttpMethod.GET, `/leads/${leadId}`)
+    return [response]
   },
   async test(context) {
     const { subdomain, apiToken } = context.auth;

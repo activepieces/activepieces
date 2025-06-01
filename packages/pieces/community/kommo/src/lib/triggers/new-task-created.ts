@@ -34,13 +34,22 @@ export const newTaskCreatedTrigger = createTrigger({
       await makeRequest(
         { subdomain, apiToken },
         HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
+                `/webhooks`,
+        {destination:context.webhookUrl}
       );
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+
+    const payload = context.payload.body as { task: { add: { id: number }[] } }
+    const taskId = payload.task.add[0].id;
+    if (!taskId) return [];
+
+
+    const response = await makeRequest({ apiToken, subdomain }, HttpMethod.GET, `/tasks/${taskId}`)
+    return [response]
   },
   sampleData: {
     "id": 12040,

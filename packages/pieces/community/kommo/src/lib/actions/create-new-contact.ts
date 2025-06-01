@@ -40,11 +40,7 @@ export const createContactAction = createAction({
     tags_to_add: Property.Array({
       displayName: 'Tags to Add',
       required: false,
-    }),
-    tags_to_delete: Property.Array({
-      displayName: 'Tags to Delete',
-      required: false,
-    }),
+    })
   },
   async run(context) {
     const {
@@ -55,7 +51,7 @@ export const createContactAction = createAction({
       phone,
       responsible_user_id,
     } = context.propsValue;
-        const tagsToAdd = context.propsValue.tags_to_add ?? [];
+    const tagsToAdd = context.propsValue.tags_to_add ?? [];
 
 
     const { subdomain, apiToken } = context.auth as {
@@ -80,16 +76,17 @@ export const createContactAction = createAction({
     }
 
 
-    const contactPayload:Record<string,any> = {
-      name,
-      first_name,
-      last_name,
-      responsible_user_id,
-
+    const contactPayload: Record<string, any> = {
       ...(customFields.length > 0 ? { custom_fields_values: customFields } : {}),
     };
 
-    
+
+    if (name) contactPayload['name'] = name;
+    if (first_name) contactPayload['first_name'] = first_name;
+    if (last_name) contactPayload['last_name'] = last_name;
+    if (responsible_user_id) contactPayload['responsible_user_id'] = responsible_user_id;
+
+
     if (tagsToAdd.length > 0) {
       contactPayload['tags_to_add'] = tagsToAdd.map((tag) => ({ name: tag }))
     }

@@ -9,10 +9,10 @@ export const findLeadAction = createAction({
   displayName: 'Find Lead',
   description: "Finds an existing lead.",
   props: {
-    query:Property.ShortText({
-      displayName:'Query',
-      required:true,
-      description:'Search query (Searches through the filled fields of the lead).'
+    query: Property.ShortText({
+      displayName: 'Query',
+      required: true,
+      description: 'Search query (Searches through the filled fields of the lead).'
     }),
   },
   async run(context) {
@@ -27,8 +27,8 @@ export const findLeadAction = createAction({
     const leads = result?._embedded?.leads ?? [];
 
     return {
-      found:leads.length>0,
-      result:leads
+      found: leads.length > 0,
+      result: leads
     };
   },
 });

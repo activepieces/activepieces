@@ -4,5 +4,6 @@ import { createLeadAction } from './create-new-lead';
 import { createContactAction } from './create-new-contact';
 import { findContactAction } from './find-contact';
 import { findCompanyAction } from './find-company';
+import { updateLeadAction } from './update-lead'
 
-export { findLeadAction, updateContactAction,  createLeadAction, createContactAction, findContactAction, findCompanyAction };
+export { findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction, updateLeadAction };
