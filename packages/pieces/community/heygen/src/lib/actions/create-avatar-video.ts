@@ -1,6 +1,26 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+// Function to fetch folders from HeyGen API
+async function fetchFolders(auth: string) {
+  const response = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: 'https://api.heygen.com/v1/folders',
+    headers: {
+      'x-api-key': auth,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (response.status === 200 && Array.isArray(response.body)) {
+    return response.body.map((folder: any) => ({
+      label: folder.name,
+      value: folder.id,
+    }));
+  }
+  return [];
+}
+
 export const createAvatarVideo = createAction({
   name: 'createAvatarVideo',
   displayName: 'Create Avatar Video',
@@ -27,10 +47,28 @@ export const createAvatarVideo = createAction({
       description: 'URL to notify when video rendering is complete',
       required: false,
     }),
-    folder_id: Property.ShortText({
-      displayName: 'Folder ID',
-      description: 'Specify the video output folder destination',
+    folder_id: Property.Dropdown({
+      displayName: 'Folder',
+      description: 'Select the folder to save the video in',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+        const folders = await fetchFolders(auth as string);
+        return {
+          disabled: false,
+          options: [
+            { label: 'Root Folder', value: '' },
+            ...folders
+          ]
+        };
+      }
     }),
     character_type: Property.StaticDropdown({
       displayName: 'Character Type',

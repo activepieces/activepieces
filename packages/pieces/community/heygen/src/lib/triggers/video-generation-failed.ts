@@ -1,6 +1,14 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { heygenAuth } from '../../index';
+
+interface HeyGenError extends Error {
+  status?: number;
+}
 
 export const videoGenerationFailed = createTrigger({
   auth: heygenAuth,
@@ -43,41 +51,56 @@ export const videoGenerationFailed = createTrigger({
   },
   run: async (context) => {
     const { video_id } = context.propsValue;
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.heygen.com/v1/video_status.get`,
-      queryParams: {
-        id: video_id
-      },
-      headers: {
-        'X-Api-Key': context.auth,
-      },
-    });
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://api.heygen.com/v1/video_status.get`,
+        queryParams: {
+          video_id: video_id,
+        },
+        headers: {
+          'X-Api-Key': context.auth,
+        },
+      });
+      // HeyGen returns code: 100 for success
+      if (response.status === 200 && response.body.code === 100) {
+        const videoData = response.body.data;
 
-    if (response.status === 200) {
-      const videoData = response.body.data;
-      
-      // Only trigger if the video generation failed
-      if (videoData.status === 'failed') {
-        return [{
-          code: response.body.code,
-          data: {
-            callback_id: videoData.callback_id,
-            caption_url: videoData.caption_url,
-            duration: videoData.duration,
-            error: videoData.error,
-            gif_url: videoData.gif_url,
-            id: videoData.id,
-            status: videoData.status,
-            thumbnail_url: videoData.thumbnail_url,
-            video_url: videoData.video_url,
-            video_url_caption: videoData.video_url_caption
-          },
-          message: response.body.message
-        }];
+        // Only trigger if the video is completed
+        if (videoData.status === 'failed') {
+          return [
+            {
+              code: response.body.code,
+              data: {
+                callback_id: videoData.callback_id,
+                caption_url: videoData.caption_url,
+                created_at: videoData.created_at,
+                duration: videoData.duration,
+                error: videoData.error,
+                gif_url: videoData.gif_url,
+                id: videoData.id,
+                status: videoData.status,
+                thumbnail_url: videoData.thumbnail_url,
+                video_url: videoData.video_url,
+                video_url_caption: videoData.video_url_caption,
+              },
+              message: response.body.message,
+            },
+          ];
+        }
+      }
+    } catch (error) {
+      console.error('Error checking video status:', error);
+      // Handle specific error cases
+      const heygenError = error as HeyGenError;
+      if (heygenError.status === 404) {
+        console.error('Video not found or access denied');
+      } else if (heygenError.status === 400) {
+        console.error('Request limit exceeded or invalid request');
+      } else if (heygenError.status === 424) {
+        console.error('Invalid parameters');
       }
     }
-    
     return [];
   },
   test: async (context) => {
@@ -96,22 +119,24 @@ export const videoGenerationFailed = createTrigger({
     if (response.status === 200) {
       const videoData = response.body.data;
       if (videoData.status === 'failed') {
-        return [{
-          code: response.body.code,
-          data: {
-            callback_id: videoData.callback_id,
-            caption_url: videoData.caption_url,
-            duration: videoData.duration,
-            error: videoData.error,
-            gif_url: videoData.gif_url,
-            id: videoData.id,
-            status: videoData.status,
-            thumbnail_url: videoData.thumbnail_url,
-            video_url: videoData.video_url,
-            video_url_caption: videoData.video_url_caption
+        return [
+          {
+            code: response.body.code,
+            data: {
+              callback_id: videoData.callback_id,
+              caption_url: videoData.caption_url,
+              duration: videoData.duration,
+              error: videoData.error,
+              gif_url: videoData.gif_url,
+              id: videoData.id,
+              status: videoData.status,
+              thumbnail_url: videoData.thumbnail_url,
+              video_url: videoData.video_url,
+              video_url_caption: videoData.video_url_caption,
+            },
+            message: response.body.message,
           },
-          message: response.body.message
-        }];
+        ];
       }
     }
     
