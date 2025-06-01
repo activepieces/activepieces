@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { FC } from 'react';
 
 import {
@@ -7,25 +6,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PlanCard } from '@/features/billing/components/plan-card';
+import { billingQueries } from '@/features/billing/lib/billing-hooks';
+import { planData } from '@/features/billing/lib/data';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useManagePlanDialogStore } from '@/lib/stores';
-
-import { platformBillingApi } from '../api/billing-api';
-import { planData } from '../data';
-
-import { PlanCard } from './plan-card';
+import { useDialogStore } from '@/lib/dialogs-store';
 
 export const ManagePlanDialog: FC = () => {
-  const { isOpen, setIsOpen } = useManagePlanDialogStore();
+  const { dialogs, setDialog } = useDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: platformBillingInformation, refetch } = useQuery({
-    queryKey: ['platform-billing-subscription', platform.id],
-    queryFn: platformBillingApi.getSubscriptionInfo,
-  });
+  const { data: platformBillingInformation } =
+    billingQueries.usePlatformSubscription(platform.id);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={dialogs.managePlan}
+      onOpenChange={(isOpen) => setDialog('managePlan', isOpen)}
+    >
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
@@ -39,7 +37,6 @@ export const ManagePlanDialog: FC = () => {
               key={plan.name}
               plan={plan}
               billingInformation={platformBillingInformation}
-              refetch={refetch}
             />
           ))}
         </div>

@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   CheckIcon,
@@ -11,34 +10,35 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
+import { billingMutations } from '@/features/billing/lib/billing-hooks';
+import { planData } from '@/features/billing/lib/data';
+import { useDialogStore } from '@/lib/dialogs-store';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { useManagePlanDialogStore } from '@/lib/stores';
 import { cn } from '@/lib/utils';
 import { PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
-import { platformBillingApi } from '../api/billing-api';
-import { planData } from '../data';
-
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
   billingInformation?: PlatformBillingInformation;
-  refetch: () => void;
 };
 
-export const PlanCard = ({
-  plan,
-  billingInformation,
-  refetch,
-}: PlanCardProps) => {
+export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
   const openNewWindow = useNewWindow();
-  const { setIsOpen } = useManagePlanDialogStore();
+  const { setDialog } = useDialogStore();
   const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
   const isSelected = currentPlan === plan.name;
 
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
   const [additionalUsers, setAdditionalUsers] = useState(0);
+
+  const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
+    billingMutations.useUpdateSubscription(() =>
+      setDialog('managePlan', false),
+    );
+  const { mutate: createSubscription } = billingMutations.useCreateSubscription(
+    () => setDialog('managePlan', false),
+  );
 
   const isBusinessPlan = plan.name === PlanName.BUSINESS;
   const isEnterprisePlan = plan.name === PlanName.ENTERPRISE;
@@ -51,42 +51,6 @@ export const PlanCard = ({
     typeof plan.price === 'number'
       ? plan.price + extraUsers * additionalUserCost
       : plan.price;
-
-  const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
-    useMutation({
-      mutationFn: (params: UpdateSubscriptionParams) =>
-        platformBillingApi.updateSubscription(params),
-      onSuccess: () => {
-        refetch();
-        setIsOpen(false);
-        toast({
-          title: t('Success'),
-          description: t('Plan upgraded successfully'),
-        });
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
-      },
-    });
-
-  const { mutate: createSubscription } = useMutation({
-    mutationFn: async (params: UpdateSubscriptionParams) => {
-      const checkoutSessionURl = await platformBillingApi.createSubscription(
-        params,
-      );
-      window.open(checkoutSessionURl, '_blank');
-    },
-    onSuccess: () => {
-      setIsOpen(false);
-      toast({
-        title: t('Success'),
-        description: t('Plan created successfully'),
-      });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
 
   const handleSelect = (params: UpdateSubscriptionParams) => {
     if (isNil(billingInformation?.plan.stripeSubscriptionId)) {

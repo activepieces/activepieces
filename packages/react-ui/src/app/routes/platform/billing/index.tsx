@@ -1,19 +1,11 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
   ClipboardCheck,
   Sparkles,
-  Users,
-  LayoutGrid,
-  Package,
-  Database,
-  Server,
-  LucideIcon,
   CircleHelp,
   CalendarDays,
 } from 'lucide-react';
-import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -26,43 +18,30 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { EditTasksLimitDialog } from '@/features/billing/components/edit-task-limit-dialog';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { UsageCards } from '@/features/billing/components/usage-cards';
+import {
+  billingMutations,
+  billingQueries,
+} from '@/features/billing/lib/billing-hooks';
+import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useManagePlanDialogStore } from '@/lib/stores';
+import { useDialogStore } from '@/lib/dialogs-store';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 
-import { platformBillingApi } from './api/billing-api';
-import { TasksLimitDialog } from './tasks';
-import { ManagePlanDialog } from './upgrade';
-
-export const calculateTotalCost = (
-  tasksUsed: number,
-  tasksLimit: number,
-): string => {
-  const unitCost = 1 / 1000;
-  const totalTasks = tasksUsed || 0;
-  const excessTasks = Math.max(0, totalTasks - tasksLimit);
-  const cost = excessTasks * unitCost;
-
-  return `$${cost.toFixed(2)}`;
-};
-
 export default function Billing() {
-  const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
-  const { setIsOpen } = useManagePlanDialogStore();
+  const { setDialog } = useDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const {
     data: platformSubscription,
-    isLoading,
-    refetch,
+    isLoading: isPlatformSubscriptionLoading,
     isError,
-  } = useQuery({
-    queryKey: ['platform-billing-subscription', platform.id],
-    queryFn: platformBillingApi.getSubscriptionInfo,
-    enabled: !!platform,
-  });
+  } = billingQueries.usePlatformSubscription(platform.id);
+  const { mutate: getPortalLink } = billingMutations.usePortalLink();
+  const { mutate: updateTasksLimit } = billingMutations.useUpdateTasksLimit();
 
   const isSubscriptionActive =
     platformSubscription?.plan.stripeSubscriptionStatus ===
@@ -73,38 +52,10 @@ export default function Billing() {
     platformSubscription?.plan.tasksLimit || 0,
   );
 
-  const { mutate: getPortalLink } = useMutation({
-    mutationFn: async () => {
-      const { portalLink } = await platformBillingApi.getPortalLink();
-      window.open(portalLink, '_blank');
-    },
-    onSuccess: () => {},
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
-
-  const { mutate: updateTasksLimit } = useMutation({
-    mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
-      platformBillingApi.updateTaskLimit(data.tasksLimit),
-    onSuccess: () => {
-      refetch();
-      toast({
-        title: t('Success'),
-        description: t('Limits updated successfully'),
-      });
-    },
-    onError: () => {
-      toast({
-        title: t('Error'),
-        description: t('Failed to update limits'),
-        variant: 'destructive',
-      });
-    },
-  });
-
   const tasksLimit = platformSubscription?.plan.tasksLimit ?? 0;
   const aiLimit = platformSubscription?.plan.aiCreditsLimit ?? 0;
 
-  if (isLoading) {
+  if (isPlatformSubscriptionLoading || isNil(platformSubscription)) {
     return (
       <article className="flex flex-col w-full gap-8">
         <TableTitle>Billing</TableTitle>
@@ -141,7 +92,10 @@ export default function Billing() {
               {t('Access Billing Portal')}
             </Button>
           )}
-          <Button variant="default" onClick={() => setIsOpen(true)}>
+          <Button
+            variant="default"
+            onClick={() => setDialog('managePlan', true)}
+          >
             {t('Upgrade')}
           </Button>
         </div>
@@ -169,39 +123,7 @@ export default function Billing() {
         )}
       </div>
 
-      <div className="grid grid-cols-3 xl:grid-cols-5 gap-6">
-        <UsageCard
-          icon={Users}
-          title={t('Member seats')}
-          used={platformSubscription?.usage.seats || 0}
-          total={platformSubscription?.plan.userSeatsLimit || 'Unlimited'}
-        />
-        <UsageCard
-          icon={LayoutGrid}
-          title={t('Projects')}
-          used={platformSubscription?.usage.projects || 0}
-          total={platformSubscription?.plan.projectsLimit || 'Unlimited'}
-        />
-        <UsageCard
-          icon={Package}
-          title={t('MCP Servers')}
-          used={platformSubscription?.usage.mcp || 0}
-          total={platformSubscription?.plan.mcpLimit || 'Unlimited'}
-        />
-
-        <UsageCard
-          icon={Database}
-          title={t('Tables')}
-          used={platformSubscription?.usage.tables || 0}
-          total={platformSubscription?.plan.tablesLimit || 'Unlimited'}
-        />
-        <UsageCard
-          icon={Server}
-          title={t('Active flows')}
-          used={platformSubscription?.usage.activeFlows || 0}
-          total={platformSubscription?.plan.activeFlowsLimit || 'Unlimited'}
-        />
-      </div>
+      <UsageCards platformSubscription={platformSubscription} />
 
       <Card>
         <CardHeader className="border-b border-gray-300">
@@ -251,7 +173,7 @@ export default function Billing() {
             {isSubscriptionActive ? (
               <Button
                 variant="link"
-                onClick={() => setIsTasksLimitDialogOpen(true)}
+                onClick={() => setDialog('editTasksLimit', true)}
                 size="sm"
               >
                 {tasksLimit ? t('Edit') : t('Add Limit')}
@@ -300,9 +222,7 @@ export default function Billing() {
         </CardContent>
       </Card>
 
-      <TasksLimitDialog
-        open={isTasksLimitDialogOpen}
-        onOpenChange={setIsTasksLimitDialogOpen}
+      <EditTasksLimitDialog
         onSubmit={(newLimit) => {
           updateTasksLimit({
             tasksLimit: isNil(newLimit) ? null : newLimit,
@@ -312,28 +232,5 @@ export default function Billing() {
       />
       <ManagePlanDialog />
     </article>
-  );
-}
-
-interface UsageCardProps {
-  icon: LucideIcon;
-  title: string;
-  used: number;
-  total: number | string;
-}
-
-function UsageCard({ icon: Icon, title, used, total }: UsageCardProps) {
-  return (
-    <Card>
-      <CardContent className="px-6 py-4  gap-4 flex flex-col">
-        <div className="flex items-center  gap-2 ">
-          <Icon className="w-4 h-4" />
-          <span>{title}</span>
-        </div>
-        <p className="text-base text-muted-foreground">
-          Used {used} of {total}
-        </p>
-      </CardContent>
-    </Card>
   );
 }

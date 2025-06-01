@@ -15,10 +15,9 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useDialogStore } from '@/lib/dialogs-store';
 
 type TasksLimitDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onSubmit: (limit: number | undefined) => void;
   initialLimit?: number;
 };
@@ -33,12 +32,11 @@ const TasksSchema = Type.Object({
 
 type TasksSchema = Static<typeof TasksSchema>;
 
-export const TasksLimitDialog = ({
-  open,
-  onOpenChange,
+export const EditTasksLimitDialog = ({
   onSubmit,
   initialLimit,
 }: TasksLimitDialogProps) => {
+  const { setDialog, dialogs } = useDialogStore();
   const form = useForm<TasksSchema>({
     resolver: typeboxResolver(TasksSchema),
     defaultValues: {
@@ -51,11 +49,14 @@ export const TasksLimitDialog = ({
   }> = (data) => {
     const value = data.tasks === '' ? undefined : Number(data.tasks);
     onSubmit(value);
-    onOpenChange(false);
+    setDialog('editTasksLimit', false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={dialogs.editTasksLimit}
+      onOpenChange={(isOpen) => setDialog('editTasksLimit', isOpen)}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Tasks Usage Limit')}</DialogTitle>
