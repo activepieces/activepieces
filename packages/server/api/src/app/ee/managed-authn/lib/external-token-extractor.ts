@@ -3,7 +3,7 @@ import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterTy
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { projectRoleService } from '../../project-role/project-role.service'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
@@ -161,7 +161,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    aiTokens?: number
+    aiCredits?: number
     tasks?: number
 }
 

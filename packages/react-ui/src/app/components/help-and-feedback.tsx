@@ -60,24 +60,25 @@ export const HelpAndFeedback = () => {
           </Link>
         </DropdownMenuItem>
 
-        <div className="flex text-xs text-muted-foreground items-center gap-2 px-2 py-1">
-          <span>Need Help?</span>
-        </div>
-
         {showCommunity && (
-          <DropdownMenuItem asChild>
-            <Link
-              to={supportUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex justify-between w-full"
-            >
-              <div className="flex items-center gap-2">
-                <QuestionMarkCircledIcon className="size-4" />
-                <span>{t('Community Support')}</span>
-              </div>
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <div className="flex text-xs text-muted-foreground items-center gap-2 px-2 py-1">
+              <span>Need Help?</span>
+            </div>
+            <DropdownMenuItem asChild>
+              <Link
+                to={supportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex justify-between w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <QuestionMarkCircledIcon className="size-4" />
+                  <span>{t('Community Support')}</span>
+                </div>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

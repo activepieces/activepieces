@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -8,14 +8,9 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheHandler } from '../utils/cache-handler'
-import { PackageInfo, packageManager } from '../utils/package-manager'
+import { cacheState } from '../cache/cache-state'
+import { PackageInfo, packageManager } from '../cache/package-manager'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-
-enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({
@@ -31,7 +26,7 @@ export class RegistryPieceManager extends PieceManager {
         }
         const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
 
-        const cache = cacheHandler(projectPath)
+        const cache = cacheState(projectPath)
 
         try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
@@ -100,7 +95,7 @@ export class RegistryPieceManager extends PieceManager {
     }
 
     private async filterExistingPieces(projectPath: string, pieces: PiecePackage[]): Promise<PackageInfo[]> {
-        const cache = cacheHandler(projectPath)
+        const cache = cacheState(projectPath)
         const enrichedDependencies = await Promise.all(
             pieces.map(async (piece) => {
                 const pkg = this.pieceToDependency(piece)

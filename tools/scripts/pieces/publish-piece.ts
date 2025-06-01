@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { exec } from '../utils/exec'
 import { readPackageJson, readProjectJson } from '../utils/files'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { isNil } from '../../../packages/shared/src'
+import { isNil } from '@activepieces/shared'
 import chalk from 'chalk'
 
 export const publishPiece = async (name: string): Promise<void> => {

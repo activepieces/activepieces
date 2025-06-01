@@ -5,6 +5,7 @@ import {
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
+    pieceTranslation,
     PropertyType,
     StaticPropsValue,
 } from '@activepieces/pieces-framework'
@@ -86,7 +87,7 @@ export const pieceHelper = {
                         options,
                     }
                 }
-            }                 
+            }
         }
         catch (e) {
             console.error(e)
@@ -107,6 +108,10 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+        const server = {
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            publicUrl: params.publicApiUrl,
+        }
         if (piece.auth?.validate === undefined) {
             return {
                 valid: true,
@@ -121,24 +126,28 @@ export const pieceHelper = {
                         username: con.username,
                         password: con.password,
                     },
+                    server,
                 })
             }
             case PropertyType.SECRET_TEXT: {
                 const con = params.auth as SecretTextConnectionValue
                 return piece.auth.validate({
                     auth: con.secret_text,
+                    server,
                 })
             }
             case PropertyType.CUSTOM_AUTH: {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                    server,
                 })
             }
             case PropertyType.OAUTH2: {
                 const con = params.auth as OAuth2ConnectionValueWithApp
                 return piece.auth.validate({
                     auth: con,
+                    server,
                 })
             }
             default: {
@@ -150,12 +159,15 @@ export const pieceHelper = {
     async extractPieceMetadata({ piecesSource, params }: { piecesSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
-
+        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, piecesSource })
+        const i18n = await pieceTranslation.initializeI18n(pieceAlias)
+        const fullMetadata = piece.metadata()
         return {
-            ...piece.metadata(),
+            ...fullMetadata,
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,
+            i18n,
         }
     },
 }

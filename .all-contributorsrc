@@ -1733,6 +1733,78 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Daniel-Klippa",
+      "name": "Daniel-Klippa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/207180643?v=4",
+      "profile": "https://github.com/Daniel-Klippa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "krushnarout",
+      "name": "Krushna Kanta Rout",
+      "avatar_url": "https://avatars.githubusercontent.com/u/129386740?v=4",
+      "profile": "https://github.com/krushnarout",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nish17",
+      "name": "Nimesh Solanki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12984120?v=4",
+      "profile": "https://www.snimesh.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rimjhimyadav",
+      "name": "Rimjhim Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187646079?v=4",
+      "profile": "https://github.com/rimjhimyadav",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "gs03-dev",
+      "name": "gs03",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70076620?v=4",
+      "profile": "https://github.com/gs03-dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Kunal-Darekar",
+      "name": "Kunal Darekar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/150500530?v=4",
+      "profile": "https://github.com/Kunal-Darekar",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Sanket6652",
+      "name": "Sanket6652",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119039046?v=4",
+      "profile": "https://github.com/Sanket6652",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Ani-4x",
+      "name": "Animesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/174266491?v=4",
+      "profile": "https://github.com/Ani-4x",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

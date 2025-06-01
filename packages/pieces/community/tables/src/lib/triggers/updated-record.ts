@@ -14,10 +14,11 @@ export const updatedRecordTrigger = createTrigger({
     sampleData: {},
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        const tableId = context.propsValue.table_id;
-        if ((tableId ?? '').toString().length === 0) {
+        const tableExternalId = context.propsValue.table_id;
+        if ((tableExternalId ?? '').toString().length === 0) {
             return;
         }
+        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
         const { id: webhookId } = await tablesCommon.createWebhook({
             tableId,
@@ -33,10 +34,11 @@ export const updatedRecordTrigger = createTrigger({
         context.store.put('webhookId', webhookId);
     },
     async onDisable(context) {
-        const tableId = context.propsValue.table_id;
-        if ((tableId ?? '').toString().length === 0) {
+        const tableExternalId = context.propsValue.table_id;
+        if ((tableExternalId ?? '').toString().length === 0) {
             return;
         }
+        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
         const webhookId = await context.store.get<string>('webhookId');
         if (!webhookId) {
@@ -56,8 +58,9 @@ export const updatedRecordTrigger = createTrigger({
         return [tablesCommon.formatRecord(context.payload.body as PopulatedRecord)]
     },
     async test(context) {
+        const tableId = await tablesCommon.convertTableExternalIdToId(context.propsValue.table_id, context);
         return tablesCommon.getRecentRecords({
-            tableId: context.propsValue.table_id,
+            tableId,
             context
         });
     }

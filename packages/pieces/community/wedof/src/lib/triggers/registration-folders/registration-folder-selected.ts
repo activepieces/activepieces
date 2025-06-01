@@ -1,6 +1,5 @@
 import { wedofAuth } from '../../..';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { wedofCommon } from '../../common/wedof';
 
 export const registrationFolderSelected = createTrigger({
@@ -14,45 +13,45 @@ export const registrationFolderSelected = createTrigger({
   },
   sampleData: {
     withPoleEmploi: false,
-    attendeeLink: "https://test.wedof.fr/apprenant-12345678901234",
+    attendeeLink: 'https://test.wedof.fr/apprenant-12345678901234',
     dataProviderId: null,
-    permalink: "https://test.wedof.fr/dossier-formation-12345678901234",
+    permalink: 'https://test.wedof.fr/dossier-formation-12345678901234',
     isAllowActions: true,
-    type: "individual",
-    lastUpdate: "2024-03-15T14:26:51.842Z",
+    type: 'individual',
+    lastUpdate: '2024-03-15T14:26:51.842Z',
     attendee: {
       id: 2024,
-      lastName: "john",
-      firstName: "Doe",
-      email: "john.doe@gmail.com",
-      phoneNumber: "(323) 853-2456",
-      phoneFixed: "0666666666",
+      lastName: 'john',
+      firstName: 'Doe',
+      email: 'john.doe@gmail.com',
+      phoneNumber: '(323) 853-2456',
+      phoneFixed: '0666666666',
       degree: 7,
-      degreeTitle: "BAC+5 : grade master, DEA, DESS, ingénieur... (NIVEAU 7)",
+      degreeTitle: 'BAC+5 : grade master, DEA, DESS, ingénieur... (NIVEAU 7)',
       address: {
         id: null,
-        city: "string",
+        city: 'string',
         line4: null,
-        number: "01",
+        number: '01',
         country: null,
         postBox: null,
-        zipCode: "string",
-        roadName: "string",
-        roadType: "string",
+        zipCode: 'string',
+        roadName: 'string',
+        roadType: 'string',
         idAddress: null,
         residence: null,
         countryCode: null,
         fullAddress: null,
         trainingSite: null,
-        corporateName: "M JOHN DOE",
-        roadTypeLabel: "string",
+        corporateName: 'M JOHN DOE',
+        roadTypeLabel: 'string',
         informationSite: null,
         repetitionIndex: null,
         subscriptionSite: null,
         additionalAddress: null,
         repetitionIndexLabel: null,
         reducedMobilityAccessCompliant: null,
-        reducedMobilityAccessModalities: null
+        reducedMobilityAccessModalities: null,
       },
       dateOfBirth: null,
       nameCityOfBirth: null,
@@ -67,12 +66,12 @@ export const registrationFolderSelected = createTrigger({
       nameCountryOfBirth: null,
       poleEmploiRegionCode: null,
       readOnly: false,
-      cdcCompliant: false
+      cdcCompliant: false,
     },
-    state: "accepted",
-    attendeeState: "serviceDoneNotDeclared",
-    billingState: "notBillable",
-    externalId: "12345678901234",
+    state: 'accepted',
+    attendeeState: 'serviceDoneNotDeclared',
+    billingState: 'notBillable',
+    externalId: '12345678901234',
     billId: null,
     billNumber: null,
     amountHtNet: null,
@@ -88,12 +87,12 @@ export const registrationFolderSelected = createTrigger({
       serviceDoneDeclaredAttendeeDate: null,
       billedDate: null,
       paidDate: null,
-      acceptedDate: "2024-06-16T14:26:51.000Z",
+      acceptedDate: '2024-06-16T14:26:51.000Z',
       rejectedWithoutTitulaireSuiteDate: null,
       validatedDate: null,
       inTrainingDate: null,
       terminatedDate: null,
-      notProcessedDate: "2024-06-16T14:26:51.000Z",
+      notProcessedDate: '2024-06-16T14:26:51.000Z',
       refusedByAttendeeDate: null,
       refusedByOrganismDate: null,
       refusedByFinancerDate: null,
@@ -105,151 +104,130 @@ export const registrationFolderSelected = createTrigger({
       canceledByFinancerDate: null,
       inControlDate: null,
       releasedDate: null,
-      completionRateLastUpdate: null
+      completionRateLastUpdate: null,
     },
     files: [],
-    notes: "",
-    description: "",
+    notes: '',
+    description: '',
     completionRate: null,
-    controlState: "notInControl",
-    createdOn: "2024-03-15T14:26:51.000Z",
-    updatedOn: "2024-06-26T09:42:40.642Z",
+    controlState: 'notInControl',
+    createdOn: '2024-03-15T14:26:51.000Z',
+    updatedOn: '2024-06-26T09:42:40.642Z',
     _links: {
       self: {
-        href: "/api/registrationFolders/12345678901234"
+        href: '/api/registrationFolders/12345678901234',
       },
       validate: {
-        href: "/api/registrationFolders/12345678901234/validate"
+        href: '/api/registrationFolders/12345678901234/validate',
       },
       inTraining: {
-        href: "/api/registrationFolders/12345678901234/inTraining"
+        href: '/api/registrationFolders/12345678901234/inTraining',
       },
       terminate: {
-        href: "/api/registrationFolders/12345678901234/terminate"
+        href: '/api/registrationFolders/12345678901234/terminate',
       },
       serviceDone: {
-        href: "/api/registrationFolders/12345678901234/serviceDone"
+        href: '/api/registrationFolders/12345678901234/serviceDone',
       },
       refuse: {
-        href: "/api/registrationFolders/12345678901234/refuse"
+        href: '/api/registrationFolders/12345678901234/refuse',
       },
       cancel: {
-        href: "/api/registrationFolders/12345678901234/cancel"
+        href: '/api/registrationFolders/12345678901234/cancel',
       },
       billing: {
-        href: "/api/registrationFolders/12345678901234/billing"
+        href: '/api/registrationFolders/12345678901234/billing',
       },
       session: {
-        href: "/api/sessions/titre_action"
+        href: '/api/sessions/titre_action',
       },
       organism: {
-        href: "/api/organisms/12345678901234",
-        name: "Organism",
-        siret: "12345678901234"
+        href: '/api/organisms/12345678901234',
+        name: 'Organism',
+        siret: '12345678901234',
       },
       payments: {
-        href: "/api/payments?registrationFolderId=12345678901234"
+        href: '/api/payments?registrationFolderId=12345678901234',
       },
       trainingAction: {
-        href: "/api/trainingActions/titre_action"
+        href: '/api/trainingActions/titre_action',
       },
       certification: {
-        href: "/api/certifications/112713",
-        name: "Gérer des projets avec la méthode Agile",
-        certifInfo: "112713",
-        externalId: "RS5695",
+        href: '/api/certifications/112713',
+        name: 'Gérer des projets avec la méthode Agile',
+        certifInfo: '112713',
+        externalId: 'RS5695',
         id: 2,
-        enabled: true
+        enabled: true,
       },
       activities: {
-        href: "/api/activities/RegistrationFolder/12345678901234"
-      }
+        href: '/api/activities/RegistrationFolder/12345678901234',
+      },
     },
     tags: [],
     trainingActionInfo: {
       vat: null,
-      title: "Titre formation",
+      title: 'Titre formation',
       address: {
-        id: null
+        id: null,
       },
-      content: "string",
-      sessionId: "Titre session",
+      content: 'string',
+      sessionId: 'Titre session',
       totalExcl: 1075,
       totalIncl: 1290,
       quitReason: null,
       vatExclTax5: null,
       vatInclTax5: null,
-      externalLink: "",
-      trainingGoal: "string",
+      externalLink: '',
+      trainingGoal: 'string',
       vatExclTax20: 1075,
       vatInclTax20: 1290,
-      trainingPaces: [
-        "3",
-        "1",
-        "5"
-      ],
+      trainingPaces: ['3', '1', '5'],
       additionalFees: 0,
-      expectedResult: "string",
-      sessionEndDate: "2024-03-29T00:00:00.000Z",
+      expectedResult: 'string',
+      sessionEndDate: '2024-03-29T00:00:00.000Z',
       weeklyDuration: 14,
-      sessionStartDate: "2024-03-28T00:00:00.000Z",
+      sessionStartDate: '2024-03-28T00:00:00.000Z',
       indicativeDuration: 14,
-      teachingModalities: "2",
+      teachingModalities: '2',
       trainingCompletionRate: null,
-      externalId: "53222292400039_scrum-online-action-v2",
-      trainingActionId: "53222292400039_scrum-online-v2/titre_action"
+      externalId: '53222292400039_scrum-online-action-v2',
+      trainingActionId: '53222292400039_scrum-online-v2/titre_action',
     },
-    externalLink: ""
+    externalLink: '',
   },
   type: TriggerStrategy.WEBHOOK,
+
   async onEnable(context) {
     const flows = await context.flows.list();
-    const flow = flows.data.find((flow) => flow.id === context.flows.current.id);
-    const name = `<a href="${context.webhookUrl.split('/').slice(0, 3).join('/')}/projects/${context.project.id}/flows/${context.flows.current.id}">${flow?.version.displayName}</a>`;
+    const flow = flows.data.find(
+      (flow) => flow.id === context.flows.current.id
+    );
+    const name = `<a href="${context.webhookUrl
+      .split('/')
+      .slice(0, 3)
+      .join('/')}/projects/${context.project.id}/flows/${
+      context.flows.current.id
+    }">${flow?.version.displayName}</a>`;
 
-    const message = {
-      url: context.webhookUrl,
-      events: context.propsValue.scope,
-      name: name,
-      secret: null,
-      enabled: true,
-      ignoreSsl: false,
-    };
-
-    const id = await context.store.get('_webhookId');
-
-    if (id === null) {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: wedofCommon.baseUrl + '/webhooks',
-        body: message,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
-          'User-Agent': 'activepieces'
-        },
-      });
-
-      await context.store.put('_webhookId', response.body.id);
-    } else {
-      console.log('/////////// webhook already exist ////');
-    }
+    await wedofCommon.handleWebhookSubscription(
+      context.propsValue.scope,
+      context,
+      name
+    );
   },
 
   async onDisable(context) {
     const id = await context.store.get('_webhookId');
-
-    await httpClient.sendRequest({
-      method: HttpMethod.DELETE,
-      url: wedofCommon.baseUrl + '/webhooks/' + id,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': context.auth as string,
-        'User-Agent': 'activepieces'
-      },
-    });
-    await context.store.delete('_webhookId');
+    if (id !== null && id !== undefined) {
+      await wedofCommon.unsubscribeWebhook(
+        id as string,
+        context.auth as string
+      );
+      await context.store.delete('_webhookId');
+    }
   },
+
   async run(context) {
     return [context.payload.body];
   },

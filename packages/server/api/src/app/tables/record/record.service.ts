@@ -10,8 +10,6 @@ import {
     Field,
     Filter,
     FilterOperator,
-    GetFlowVersionForWorkerRequestType,
-
     isNil,
     PopulatedRecord,
     SeekPage,
@@ -23,6 +21,7 @@ import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
+import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
@@ -108,8 +107,8 @@ export const recordService = {
         tableId,
         projectId,
         filters,
+        limit,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-       
         const fields = await fieldService.getAll({
             tableId,
             projectId,
@@ -135,13 +134,24 @@ export const recordService = {
             record.cells = cells.filter((cell) => cell.recordId === record.id)
         })
         const filteredOutRecords = records.filter((record) => {
-            return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
+            if (!filters || filters.length === 0) {
+                return true
+            }
+
+            const relevantCells = record.cells.filter(cell => 
+                filters.some(filter => filter.fieldId === cell.fieldId),
+            )
+
+            if (relevantCells.length === 0) {
+                return false
+            }
+            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
         })
        
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
     
         return {
-            data: populatedRecords,
+            data: populatedRecords.slice(0, limit),
             next: null,
             previous: null,
         }
@@ -299,7 +309,7 @@ export const recordService = {
             return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                 saveSampleData: false,
                 data: async (_projectId: string) => ({
                     method: 'POST',
@@ -411,11 +421,10 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
     if (filters.length === 0) {
         return true
     }
-    const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
-    if (filtersForCellFields.length === 0) {
-        return true
-    }
-    return filtersForCellFields.every((filter) => {
+    return filters.every((filter) => {
+        if (filter.fieldId !== cell.fieldId) {
+            return true
+        }
         if (filter.operator === undefined) {
             return true
         }

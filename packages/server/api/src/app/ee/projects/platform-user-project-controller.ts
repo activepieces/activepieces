@@ -58,7 +58,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 }
 
 async function getPlatformsForUser(identityId: string, platformId: string) {
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
     if (platformUtils.isEnterpriseCustomerOnCloud(platform)) {
         return [platform]
     }
