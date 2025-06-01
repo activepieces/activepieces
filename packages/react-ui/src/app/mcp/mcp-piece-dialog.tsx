@@ -18,8 +18,9 @@ import {
 import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   isNil,
   McpPieceStatus,
@@ -142,23 +143,31 @@ export const McpPieceDialog = React.memo(
         };
       },
     });
+
     const selectedPiece = pieces?.find(
       (piece) => piece.name === form.watch('pieceName'),
     );
+
     const {
       data: connections,
-      isLoading: connectionsLoading,
+      isLoading: isLoadingConnections,
       refetch: refetchConnections,
       isRefetching: isRefetchingConnections,
-    } = appConnectionsHooks.useConnections({
-      pieceName: selectedPiece?.name || '',
-      cursor: undefined,
-      limit: 1000,
+    } = appConnectionsQueries.useAppConnections({
+      request: {
+        projectId: authenticationSession.getProjectId()!,
+        limit: 1000,
+      },
+      extraKeys: [
+        selectedPiece?.name || '',
+        authenticationSession.getProjectId()!,
+      ],
+      staleTime: 0,
     });
 
     const pieceHasAuth = !isNil(selectedPiece?.auth);
     const connectionOptions =
-      connections?.map((connection) => ({
+      connections?.data?.map((connection) => ({
         label: connection.displayName,
         value: connection.id,
       })) ?? [];
@@ -275,7 +284,7 @@ export const McpPieceDialog = React.memo(
                               options={connectionOptionsWithNewConnectionOption}
                               placeholder={t('Select a connection')}
                               loading={
-                                connectionsLoading || isRefetchingConnections
+                                isLoadingConnections || isRefetchingConnections
                               }
                             ></SearchableSelect>
                             <FormMessage />

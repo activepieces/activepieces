@@ -15,8 +15,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useDeleteAlert } from '@/features/alerts/lib/mutations';
-import { useAlertsEmailList } from '@/features/alerts/lib/queries';
+import {
+  alertQueries,
+  alertMutations,
+} from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Alert } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
@@ -24,12 +26,12 @@ import { Permission } from '@activepieces/shared';
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
 export default function AlertsEmailsCard() {
-  const { data, isLoading, isError, isSuccess } = useAlertsEmailList();
+  const { data, isLoading, isError, isSuccess } =
+    alertQueries.useAlertsEmailList();
+  const { mutate: deleteAlert } = alertMutations.useDeleteAlert();
 
   const { checkAccess } = useAuthorization();
   const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
-
-  const { mutate: deleteAlert } = useDeleteAlert();
 
   return (
     <Card className="w-full">

@@ -36,9 +36,9 @@ import {
 } from '@activepieces/shared';
 
 import {
-  oauth2AppsHooks,
+  oauthAppsQueries,
   PieceToClientIdMap,
-} from '../../features/connections/lib/oauth2-apps-hooks';
+} from '../../features/connections/lib/oauth-apps-hooks';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 import { formUtils } from '../builder/piece-properties/form-utils';
 
@@ -107,7 +107,7 @@ const OAuth2ConnectionSettings = (props: OAuth2ConnectionSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
-    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
 
   if (loadingPieceToClientIdMap || isNil(pieceToClientIdMap)) {
     return <SkeletonList numberOfItems={2} className="h-7"></SkeletonList>;

@@ -1,4 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -38,13 +37,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
-import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
+import {
+  appConnectionsMutations,
+  appConnectionsQueries,
+} from '@/features/connections/lib/app-connections-hooks';
+import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -66,7 +66,6 @@ function AppConnectionsPage() {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
-  const { toast } = useToast();
   const { checkAccess } = useAuthorization();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
   const location = useLocation();
@@ -76,65 +75,59 @@ function AppConnectionsPage() {
     value: piece.name,
   }));
   const projectId = authenticationSession.getProjectId()!;
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections', location.search, projectId],
-    queryFn: () => {
-      const searchParams = new URLSearchParams(location.search);
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      const status =
-        (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
-      const pieceName = searchParams.get('pieceName') ?? undefined;
-      const displayName = searchParams.get('displayName') ?? undefined;
-      return appConnectionsApi.list({
-        projectId,
-        cursor: cursor ?? undefined,
-        limit,
-        status,
-        pieceName,
-        displayName,
-      });
+
+  const searchParams = new URLSearchParams(location.search);
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limit = searchParams.get(LIMIT_QUERY_PARAM)
+    ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+    : 10;
+  const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
+  const pieceName = searchParams.get('pieceName') ?? undefined;
+  const displayName = searchParams.get('displayName') ?? undefined;
+
+  console.info(location.search);
+
+  const {
+    data: connections,
+    isLoading: connectionsLoading,
+    refetch,
+  } = appConnectionsQueries.useAppConnections({
+    request: {
+      projectId,
+      cursor,
+      limit,
+      status,
+      pieceName,
+      displayName,
     },
+    extraKeys: [location.search, projectId],
   });
 
   const filteredData = useMemo(() => {
-    if (!data?.data) return undefined;
+    if (!connections?.data) return undefined;
     const searchParams = new URLSearchParams(location.search);
     const ownerEmails = searchParams.getAll('owner');
 
-    if (ownerEmails.length === 0) return data;
+    if (ownerEmails.length === 0) return connections;
 
     return {
-      data: data.data.filter(
+      data: connections.data.filter(
         (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
       ),
-      next: data.next,
-      previous: data.previous,
+      next: connections.next,
+      previous: connections.previous,
     };
-  }, [data, location.search]);
+  }, [connections, location.search]);
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const bulkDeleteConnections =
+    appConnectionsMutations.useBulkDeleteAppConnections(refetch);
 
-  const { data: owners } = appConnectionsHooks.useConnectionsOwners();
+  const { data: owners } = appConnectionsQueries.useConnectionsOwners();
+
   const ownersOptions = owners?.map((owner) => ({
     label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
     value: owner.email,
@@ -455,7 +448,7 @@ function AppConnectionsPage() {
                   entityName="connections"
                   mutationFn={async () => {
                     try {
-                      await bulkDeleteMutation.mutateAsync(
+                      await bulkDeleteConnections.mutateAsync(
                         selectedRows.map((row) => row.id),
                       );
                       resetSelection();
@@ -531,7 +524,7 @@ function AppConnectionsPage() {
       },
     ],
     [
-      bulkDeleteMutation,
+      bulkDeleteConnections,
       userHasPermissionToWriteAppConnection,
       isDialogOpen,
       selectedRows,
@@ -552,7 +545,7 @@ function AppConnectionsPage() {
         emptyStateIcon={<Globe className="size-14" />}
         columns={columns}
         page={filteredData}
-        isLoading={isLoading}
+        isLoading={connectionsLoading}
         filters={filters}
         bulkActions={bulkActions}
       />

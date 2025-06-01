@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { useCreateAlert } from '@/features/alerts/lib/mutations';
+import { alertMutations } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
@@ -47,7 +47,7 @@ const AddAlertEmailDialog = React.memo(() => {
   const { checkAccess } = useAuthorization();
   const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
 
-  const { mutate, isPending } = useCreateAlert({
+  const { mutate, isPending } = alertMutations.useCreateAlert({
     setOpen,
     form,
   });
