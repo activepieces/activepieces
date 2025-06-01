@@ -14,7 +14,7 @@ export const updateContactAction = createAction({
   auth: kommoAuth,
   name: 'update_contact',
   displayName: 'Update Contact',
-  description: 'Update existing contact info.',
+  description: 'Updates an existing contact.',
   props: {
     contactId: contactDropdown,
     name: Property.ShortText({
@@ -37,22 +37,7 @@ export const updateContactAction = createAction({
       displayName: 'Phone',
       required: false,
     }),
-    responsible_user_id: userDropdown,
-    created_by: userDropdown,
-    updated_by: userDropdown,
-    created_at: Property.Number({
-      displayName: 'Created At (Unix Timestamp)',
-      required: false,
-    }),
-    updated_at: Property.Number({
-      displayName: 'Updated At (Unix Timestamp)',
-      required: false,
-    }),
-    custom_fields_values: Property.Json({
-      displayName: 'Custom Fields Values',
-      description: 'Additional custom fields (array format).',
-      required: false,
-    }),
+    responsible_user_id: userDropdown(),
     tags_to_add: Property.Array({
       displayName: 'Tags to Add',
       description: 'List of tag names or IDs to add.',
@@ -62,12 +47,7 @@ export const updateContactAction = createAction({
       displayName: 'Tags to Delete',
       description: 'List of tag names or IDs to remove.',
       required: false,
-    }),
-    request_id: Property.ShortText({
-      displayName: 'Request ID',
-      description: 'Optional request ID to be echoed in the response.',
-      required: false,
-    }),
+    })
   },
   async run(context) {
     const {
@@ -78,26 +58,14 @@ export const updateContactAction = createAction({
       email,
       phone,
       responsible_user_id,
-      created_by,
-      updated_by,
-      created_at,
-      updated_at,
-      custom_fields_values,
-      tags_to_add,
-      tags_to_delete,
-      request_id,
     } = context.propsValue;
 
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const tagsToAdd = context.propsValue.tags_to_add ?? [];
+    const tagsToDelete = context.propsValue.tags_to_delete ?? [];
+
+    const { subdomain, apiToken } = context.auth;
 
     const customFields: KommoCustomFieldValue[] = [];
-
-    if (Array.isArray(custom_fields_values)) {
-      customFields.push(...(custom_fields_values as KommoCustomFieldValue[]));
-    }
 
     if (email) {
       customFields.push({
@@ -113,36 +81,21 @@ export const updateContactAction = createAction({
       });
     }
 
-    const embedded: Record<string, unknown> = {};
-
-    if (tags_to_add?.length) {
-      embedded['tags_to_add'] = tags_to_add.map((tag) =>
-        typeof tag === 'number' ? { id: tag } : { name: tag }
-      );
-    }
-
-    if (tags_to_delete?.length) {
-      embedded['tags_to_delete'] = tags_to_delete.map((tag) =>
-        typeof tag === 'number' ? { id: tag } : { name: tag }
-      );
-    }
-
-    if (request_id) {
-      embedded['request_id'] = request_id;
-    }
-
-    const updatePayload = {
+    const updatePayload: Record<string, any> = {
       name,
       first_name,
       last_name,
       responsible_user_id,
-      created_by,
-      updated_by,
-      created_at,
-      updated_at,
       ...(customFields.length > 0 ? { custom_fields_values: customFields } : {}),
-      ...(Object.keys(embedded).length > 0 ? { _embedded: embedded } : {}),
     };
+
+    if (tagsToAdd.length > 0) {
+      updatePayload['tags_to_add'] = tagsToAdd.map((tag) => ({ name: tag }))
+    }
+
+    if (tagsToDelete.length > 0) {
+      updatePayload['tags_to_delete'] = tagsToDelete.map((tag) => ({ name: tag }))
+    }
 
     const result = await makeRequest(
       { subdomain, apiToken },

@@ -3,18 +3,13 @@ import { kommoAuth } from '../../index';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const taskCompletedTrigger = createTrigger({
+export const newTaskCreatedTrigger = createTrigger({
   auth: kommoAuth,
-  name: 'task_completed',
-  displayName: 'Task Completed',
-  description: 'Triggered when a task is marked as completed.',
+  name: 'new_task_created',
+  displayName: 'New Task Created',
+  description: 'Triggered when a new task is created.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
-  sampleData: {
-    id: 555555,
-    text: 'Follow-up Call',
-    is_completed: true,
-  },
   async onEnable(context) {
     const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
 
@@ -24,7 +19,7 @@ export const taskCompletedTrigger = createTrigger({
       `/webhooks`,
       {
         destination: context.webhookUrl,
-        settings: { events: ['task_completed'] }
+        settings: ['add_task']
       }
     );
 
@@ -45,9 +40,29 @@ export const taskCompletedTrigger = createTrigger({
   },
 
   async run(context) {
-    return [{
-      id: Date.now().toString(),
-      data: context.payload.body,
-    }];
+    return [context.payload.body];
   },
+  sampleData: {
+    "id": 12040,
+    "created_by": 13290567,
+    "updated_by": 13290567,
+    "created_at": 1748805952,
+    "updated_at": 1748805952,
+    "responsible_user_id": 13290567,
+    "group_id": 0,
+    "entity_id": 722830,
+    "entity_type": "contacts",
+    "duration": 0,
+    "is_completed": false,
+    "task_type_id": 1,
+    "text": "Test",
+    "result": [],
+    "complete_till": 1748975340,
+    "account_id": 34678947,
+    "_links": {
+      "self": {
+        "href": ""
+      }
+    }
+  }
 });

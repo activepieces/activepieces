@@ -13,13 +13,9 @@ export const leadStatusChangedTrigger = createTrigger({
   auth: kommoAuth,
   name: 'lead_status_changed',
   displayName: 'Lead Status Changed',
-  description: 'Triggered when a lead changes its pipeline stage/status.',
+  description: 'Triggers when a lead status is changed.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
-  sampleData: {
-    id: 123456,
-    status_id: 321,
-  },
   async onEnable(context) {
     const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
 
@@ -29,7 +25,7 @@ export const leadStatusChangedTrigger = createTrigger({
       `/webhooks`,
       {
         destination: context.webhookUrl,
-        settings: { events: ['lead_status_changed'] }
+        settings: ['status_lead'] 
       }
     );
 
@@ -50,9 +46,55 @@ export const leadStatusChangedTrigger = createTrigger({
   },
 
   async run(context) {
-    return [{
-      id: Date.now().toString(),
-      data: context.payload.body,
-    }];
+    return [context.payload.body];
   },
+  async test(context) {
+    const { subdomain, apiToken } = context.auth;
+
+    const response = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/leads?limit=5&order[updated_at]=desc');
+
+    const leads = response?._embedded?.leads ?? [];
+
+    return leads;
+  },
+  sampleData: {
+    "id": 256988,
+    "name": "John Doe",
+    "price": 100,
+    "responsible_user_id": 13290567,
+    "group_id": 0,
+    "status_id": 86521115,
+    "pipeline_id": 11273979,
+    "loss_reason_id": null,
+    "created_by": 13290567,
+    "updated_by": 13290567,
+    "created_at": 1748800059,
+    "updated_at": 1748800060,
+    "closed_at": null,
+    "closest_task_at": null,
+    "is_deleted": false,
+    "custom_fields_values": null,
+    "score": null,
+    "account_id": 34678947,
+    "labor_cost": null,
+    "is_price_computed": false,
+    "_links": {
+      "self": {
+        "href": ""
+      }
+    },
+    "_embedded": {
+      "tags": [],
+      "companies": [
+        {
+          "id": 722828,
+          "_links": {
+            "self": {
+              "href": ""
+            }
+          }
+        }
+      ]
+    }
+  }
 });

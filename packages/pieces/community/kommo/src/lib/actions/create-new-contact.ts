@@ -36,36 +36,13 @@ export const createContactAction = createAction({
       displayName: 'Phone',
       required: false,
     }),
-    responsible_user_id: userDropdown,
-    created_by: Property.Number({
-      displayName: 'Created By',
-      required: false,
-    }),
-    updated_by: Property.Number({
-      displayName: 'Updated By',
-      required: false,
-    }),
-    created_at: Property.Number({
-      displayName: 'Created At (Unix Timestamp)',
-      required: false,
-    }),
-    updated_at: Property.Number({
-      displayName: 'Updated At (Unix Timestamp)',
-      required: false,
-    }),
-    custom_fields_values: Property.Json({
-      displayName: 'Custom Fields Values',
-      description: 'Additional custom fields (array format).',
-      required: false,
-    }),
+    responsible_user_id: userDropdown(),
     tags_to_add: Property.Array({
       displayName: 'Tags to Add',
-      description: 'List of tag names or IDs to add.',
       required: false,
     }),
     tags_to_delete: Property.Array({
       displayName: 'Tags to Delete',
-      description: 'List of tag names or IDs to remove.',
       required: false,
     }),
   },
@@ -77,14 +54,9 @@ export const createContactAction = createAction({
       email,
       phone,
       responsible_user_id,
-      created_by,
-      updated_by,
-      created_at,
-      updated_at,
-      custom_fields_values,
-      tags_to_add,
-      tags_to_delete,
     } = context.propsValue;
+        const tagsToAdd = context.propsValue.tags_to_add ?? [];
+
 
     const { subdomain, apiToken } = context.auth as {
       subdomain: string;
@@ -92,10 +64,6 @@ export const createContactAction = createAction({
     };
 
     const customFields: KommoCustomFieldValue[] = [];
-
-    if (Array.isArray(custom_fields_values)) {
-      customFields.push(...(custom_fields_values as KommoCustomFieldValue[]));
-    }
 
     if (email) {
       customFields.push({
@@ -111,32 +79,20 @@ export const createContactAction = createAction({
       });
     }
 
-    const embedded: Record<string, unknown> = {};
 
-    if (tags_to_add && tags_to_add.length > 0) {
-      embedded['tags_to_add'] = tags_to_add.map((tag) => {
-        return typeof tag === 'number' ? { id: tag } : { name: tag };
-      });
-    }
-
-    if (tags_to_delete && tags_to_delete.length > 0) {
-      embedded['tags_to_delete'] = tags_to_delete.map((tag) => {
-        return typeof tag === 'number' ? { id: tag } : { name: tag };
-      });
-    }
-
-    const contactPayload = {
+    const contactPayload:Record<string,any> = {
       name,
       first_name,
       last_name,
       responsible_user_id,
-      created_by,
-      updated_by,
-      created_at,
-      updated_at,
+
       ...(customFields.length > 0 ? { custom_fields_values: customFields } : {}),
-      _embedded: Object.keys(embedded).length > 0 ? embedded : undefined,
     };
+
+    
+    if (tagsToAdd.length > 0) {
+      contactPayload['tags_to_add'] = tagsToAdd.map((tag) => ({ name: tag }))
+    }
 
     const result = await makeRequest(
       { apiToken, subdomain },

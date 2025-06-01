@@ -7,26 +7,29 @@ export const findContactAction = createAction({
   auth: kommoAuth,
   name: 'find_contact',
   displayName: 'Find Contact',
-  description: 'Look up contacts by email address.',
+  description: 'Finds an existing contact.',
   props: {
-    email: Property.ShortText({
-      displayName: 'Email',
+    query: Property.ShortText({
+      displayName: 'Query',
       required: true,
+      description: 'Search query (Searches through the filled fields of the contact).'
     }),
   },
   async run(context) {
-    const { email } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const { query } = context.propsValue;
+    const { subdomain, apiToken } = context.auth
 
     const result = await makeRequest(
       { apiToken, subdomain },
       HttpMethod.GET,
-      `/contacts?query=${encodeURIComponent(email)}`
+      `/contacts?query=${encodeURIComponent(query)}`
     );
 
-    return result._embedded?.contacts || [];
+    const contacts = result?._embedded?.contacts ?? [];
+
+    return {
+      found: contacts.length > 0,
+      result: contacts
+    };
   },
 });

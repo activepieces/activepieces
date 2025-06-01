@@ -1,30 +1,34 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { kommoAuth } from '../../index';
-import { leadDropdown } from '../common/props';
 
 export const findLeadAction = createAction({
   auth: kommoAuth,
   name: 'find_lead',
   displayName: 'Find Lead',
-  description: "Retrieve a lead's details by ID",
+  description: "Finds an existing lead.",
   props: {
-    leadId: leadDropdown,
+    query:Property.ShortText({
+      displayName:'Query',
+      required:true,
+      description:'Search query (Searches through the filled fields of the lead).'
+    }),
   },
   async run(context) {
-    const { leadId } = context.propsValue;
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const { subdomain, apiToken } = context.auth
 
     const result = await makeRequest(
       { apiToken, subdomain },
       HttpMethod.GET,
-      `/leads/${leadId}`
+      `/leads?query=${encodeURIComponent(context.propsValue.query)}`
     );
 
-    return result;
+    const leads = result?._embedded?.leads ?? [];
+
+    return {
+      found:leads.length>0,
+      result:leads
+    };
   },
 });
