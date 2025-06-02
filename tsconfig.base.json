@@ -169,7 +169,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -704,6 +704,9 @@
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
+      ],
+      "@activepieces/piece-smartsheet": [
+        "packages/pieces/community/smartsheet/src/index.ts"
       ],
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
