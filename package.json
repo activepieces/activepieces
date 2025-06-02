@@ -18,7 +18,7 @@
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
     "build-piece": "npx ts-node packages/cli/src/index.ts pieces build",
     "publish-piece-to-api": "npx ts-node packages/cli/src/index.ts pieces publish piece",
-    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
+    "publish-piece": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/publish-piece.ts",
     "workers": "npx ts-node packages/cli/src/index.ts workers",
     "pull-i18n": "crowdin pull --config crowdin.yml",
     "push-i18n": "crowdin upload sources",
