@@ -2,7 +2,6 @@ import { create } from 'zustand';
 
 interface DialogState {
   managePlan: boolean;
-  editTasksLimit: boolean;
 }
 
 interface DialogStore {
@@ -10,9 +9,7 @@ interface DialogStore {
   setDialog: (dialog: keyof DialogState, isOpen: boolean) => void;
 }
 
-export const useDialogStore = create<DialogStore>((
-  set,
-) => ({
+export const useDialogStore = create<DialogStore>((set) => ({
   dialogs: {
     managePlan: false,
     editTasksLimit: false,

@@ -1,22 +1,20 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  XIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  Loader2Icon,
-} from 'lucide-react';
-import { useState } from 'react';
+import { CheckIcon, XIcon, Loader2Icon, StarIcon } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { useDialogStore } from '@/lib/dialogs-store';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  ApSubscriptionStatus,
+  PlanName,
+  UpdateSubscriptionParams,
+} from '@activepieces/ee-shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
@@ -24,182 +22,152 @@ type PlanCardProps = {
 };
 
 export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
+  const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { setDialog } = useDialogStore();
   const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
   const isSelected = currentPlan === plan.name;
-
-  const [isUsersExpanded, setIsUsersExpanded] = useState(false);
-  const [additionalUsers, setAdditionalUsers] = useState(0);
+  const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
-    billingMutations.useUpdateSubscription(() =>
-      setDialog('managePlan', false),
+    billingMutations.useUpdateSubscription(
+      () => setDialog('managePlan', false),
+      queryClient,
     );
   const { mutate: createSubscription } = billingMutations.useCreateSubscription(
     () => setDialog('managePlan', false),
   );
 
-  const isBusinessPlan = plan.name === PlanName.BUSINESS;
+  const hasActiveSubscription =
+    billingInformation?.plan.stripeSubscriptionStatus ===
+    ApSubscriptionStatus.ACTIVE;
   const isEnterprisePlan = plan.name === PlanName.ENTERPRISE;
 
-  const baseUsers = 5;
-  const maxUsers = 30;
-  const additionalUserCost = 10;
-  const extraUsers = additionalUsers;
-  const totalPrice =
-    typeof plan.price === 'number'
-      ? plan.price + extraUsers * additionalUserCost
-      : plan.price;
-
   const handleSelect = (params: UpdateSubscriptionParams) => {
-    if (isNil(billingInformation?.plan.stripeSubscriptionId)) {
+    if (!hasActiveSubscription) {
       createSubscription(params);
     } else {
       updateSubscription(params);
     }
   };
 
+  const getButtonText = () => {
+    if (isUpdatingSubscription) return t('Updating...');
+    if (isSelected) return t('Current Plan');
+    if (isEnterprisePlan) return t('Contact Sales');
+    return t('Select');
+  };
+
+  const getButtonVariant = () => {
+    if (isSelected) return 'outline' as const;
+    if (isEnterprisePlan) return 'default' as const;
+    return 'outline' as const;
+  };
+
   return (
     <div
       className={cn(
-        'flex flex-col rounded-lg p-4 transition border gap-4',
-        isSelected && 'ring-2 ring-primary',
+        'relative flex flex-col rounded-xl border bg-card p-6',
+        isSelected && 'ring-2 ring-primary border-transparent ring-offset-2',
       )}
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-xl font-bold">
-            {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
-          </h3>
-          <p className="text-sm text-muted-foreground">{plan.description}</p>
+      {isPopular && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
+            <StarIcon className="mr-1 h-3 w-3 fill-current" />
+            {t('Most Popular')}
+          </Badge>
         </div>
-      </div>
-
-      <div className="flex items-baseline gap-1">
-        <span className="text-xl font-semibold">
-          {plan.price === 'Custom' ? (
-            'Custom'
-          ) : (
-            <>
-              ${isBusinessPlan && extraUsers > 0 ? totalPrice : plan.price}
-              <span className="text-sm text-muted-foreground ml-1">/mo</span>
-              {isBusinessPlan && extraUsers > 0 && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  (+${extraUsers * additionalUserCost} for {extraUsers} extra
-                  users)
-                </span>
-              )}
-            </>
-          )}
-        </span>
-      </div>
-
-      {isSelected ? (
-        <Button size="sm" className="font-semibold" variant="outline" disabled>
-          {t('Current Plan')}
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          className="font-semibold"
-          onClick={() => {
-            if (isEnterprisePlan) {
-              openNewWindow('https://activepieces.com/sales');
-            } else {
-              handleSelect({
-                plan: plan.name as
-                  | PlanName.FREE
-                  | PlanName.PLUS
-                  | PlanName.BUSINESS,
-                extraUsers: additionalUsers,
-              });
-            }
-          }}
-          disabled={isUpdatingSubscription}
-        >
-          {isUpdatingSubscription ? (
-            <>
-              <Loader2Icon className="h-4 w-4 animate-spin mr-2" />{' '}
-              {t('Updating...')}
-            </>
-          ) : isEnterprisePlan ? (
-            t('Contact Sales')
-          ) : (
-            t('Upgrade')
-          )}
-        </Button>
       )}
 
-      <div>
-        <p className="text-sm font-bold mb-3">{t('Includes')}</p>
-        <ul className="space-y-1">
-          {planData.features.map((feature) => (
-            <li key={feature.key} className="flex flex-col gap-3 text-sm">
-              <div className="flex justify-between items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {typeof feature.values[plan.name] === 'boolean' ? (
-                    <XIcon className="h-4 w-4 text-red-500" strokeWidth={3} />
-                  ) : (
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold tracking-tight">
+          {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
+        </h3>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          {plan.description}
+        </p>
+      </div>
+
+      <div className="py-4">
+        {plan.price === 'Custom' ? (
+          <div className="text-3xl font-bold tracking-tight">{t('Custom')}</div>
+        ) : (
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-bold tracking-tight">
+              ${plan.price}
+            </span>
+            <span className="text-muted-foreground text-sm font-medium">
+              /month
+            </span>
+          </div>
+        )}
+      </div>
+
+      <Button
+        variant={getButtonVariant()}
+        className="w-full font-semibold transition-all"
+        onClick={() => {
+          if (isEnterprisePlan) {
+            openNewWindow('https://activepieces.com/sales');
+          } else if (!isSelected) {
+            handleSelect({
+              plan: plan.name as
+                | PlanName.FREE
+                | PlanName.PLUS
+                | PlanName.BUSINESS,
+            });
+          }
+        }}
+        disabled={isUpdatingSubscription || isSelected}
+      >
+        {isUpdatingSubscription && (
+          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+        )}
+        {getButtonText()}
+      </Button>
+
+      <div className="mt-6 space-y-4">
+        <h4 className="text-sm font-semibold text-foreground">
+          {t("What's included")}
+        </h4>
+        <ul className="space-y-3">
+          {planData.features.map((feature) => {
+            const featureValue = feature.values[plan.name];
+            const isIncluded =
+              typeof featureValue !== 'boolean' || featureValue === true;
+
+            return (
+              <li key={feature.key} className="flex items-start gap-3 text-sm">
+                <div className="mt-0.5 flex-shrink-0">
+                  {isIncluded ? (
                     <CheckIcon
-                      className="h-4 w-4 text-green-600"
-                      strokeWidth={3}
+                      className="h-4 w-4 text-emerald-600"
+                      strokeWidth={2.5}
+                    />
+                  ) : (
+                    <XIcon
+                      className="h-4 w-4 text-muted-foreground/60"
+                      strokeWidth={2.5}
                     />
                   )}
-
-                  <div className="flex items-center gap-2">
-                    {typeof feature.values[plan.name] !== 'boolean' && (
-                      <span>{feature.values[plan.name]}</span>
-                    )}
-                    <span>{feature.label}</span>
-                  </div>
                 </div>
-                {isBusinessPlan && feature.key === 'users' && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsUsersExpanded(!isUsersExpanded);
-                    }}
-                    className="text-primary hover:text-primary/80  text-xs ml-2 flex items-center gap-1 transition-colors"
-                  >
-                    Need more?
-                    <div className="transition-transform duration-200">
-                      {isUsersExpanded ? (
-                        <ChevronUpIcon className="h-3 w-3" />
-                      ) : (
-                        <ChevronDownIcon className="h-3 w-3" />
-                      )}
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              <div
-                className={cn(
-                  'overflow-hidden transition-all duration-300 ease-in-out',
-                  isBusinessPlan && feature.key === 'users' && isUsersExpanded
-                    ? 'max-h-20 opacity-100'
-                    : 'max-h-0 opacity-0',
-                )}
-              >
-                {isBusinessPlan && feature.key === 'users' && (
-                  <div className="py-2 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{additionalUsers + baseUsers} users total</span>
-                      <span>+{extraUsers} extra</span>
-                    </div>
-                    <Slider
-                      value={[additionalUsers]}
-                      onValueChange={(value) => setAdditionalUsers(value[0])}
-                      max={maxUsers}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
+                <div
+                  className={cn(
+                    'flex-1 leading-relaxed',
+                    !isIncluded && 'text-muted-foreground',
+                  )}
+                >
+                  {isIncluded && typeof featureValue !== 'boolean' && (
+                    <span className="font-medium text-foreground mr-2">
+                      {featureValue}
+                    </span>
+                  )}
+                  <span>{feature.label}</span>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

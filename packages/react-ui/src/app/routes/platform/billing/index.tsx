@@ -1,24 +1,14 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import {
-  ClipboardCheck,
-  Sparkles,
-  CircleHelp,
-  CalendarDays,
-} from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress-bar';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
   billingMutations,
@@ -27,8 +17,8 @@ import {
 import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useDialogStore } from '@/lib/dialogs-store';
-import { isNil } from '@activepieces/shared';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 
 export default function Billing() {
   const { setDialog } = useDialogStore();
@@ -39,17 +29,16 @@ export default function Billing() {
     isLoading: isPlatformSubscriptionLoading,
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
+
   const { mutate: getPortalLink } = billingMutations.usePortalLink();
 
-  const isSubscriptionActive = platformSubscription?.plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
-
+  const isSubscriptionActive =
+    platformSubscription?.plan.stripeSubscriptionStatus ===
+    ApSubscriptionStatus.ACTIVE;
   const calculatedTotalCost = calculateTotalCost(
     platformSubscription?.usage.tasks || 0,
     platformSubscription?.plan.tasksLimit || 0,
   );
-
-  const tasksLimit = platformSubscription?.plan.tasksLimit ?? 0;
-  const aiLimit = platformSubscription?.plan.aiCreditsLimit ?? 0;
 
   if (isPlatformSubscriptionLoading || isNil(platformSubscription)) {
     return (
@@ -98,9 +87,14 @@ export default function Billing() {
       </div>
 
       <div className="space-y-2">
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
+        <div className="text-sm flex items-center gap-1">
           <span>{t('Current Plan')}</span>
-          <span>{platformSubscription?.plan.plan || t('Free')}</span>
+          <Badge variant="secondary">
+            {isNil(platformSubscription.plan.plan)
+              ? t('Free')
+              : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
+                platformSubscription?.plan.plan.slice(1)}
+          </Badge>
         </div>
         <div className="flex items-baseline gap-2">
           <div className="text-5xl font-semibold">{calculatedTotalCost}</div>
@@ -121,102 +115,9 @@ export default function Billing() {
 
       <UsageCards platformSubscription={platformSubscription} />
 
-      <Card>
-        <CardHeader className="border-b border-gray-300">
-          <div className="text-md font-sm flex items-center gap-2">
-            <ClipboardCheck className="w-4 h-4" />
-            {t('Tasks')}
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 mt-5">
-          <div className="flex gap-2 items-center">
-            <div className="text-sm font-sm mt-1 flex items-center gap-2 basis-1/3 flex-wrap">
-              <div className="flex items-center gap-1 w-full">
-                {t('Current Task Usage')}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <CircleHelp className="w-4 h-4" />
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {t('Count of executed steps')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="text-sm font-sm text-gray-500">
-                {t(
-                  `First ${
-                    platformSubscription?.plan?.includedTasks || 1000
-                  } tasks free`,
-                )}
-              </div>
-            </div>
-            <div className="basis-2/3">
-              <Progress
-                value={platformSubscription?.usage.tasks || 0}
-                limit={tasksLimit ?? 0}
-                label={t('Billing Limit')}
-              />
-            </div>
-          </div>
-          <div className="text-sm mt-5 flex items-center gap-1">
-            {(tasksLimit || 0) > 0 ? (
-              <div className="flex items-center gap-1">
-                {t(`Your tasks limit is set to ${tasksLimit}`)}
-              </div>
-            ) : null}
-            {isSubscriptionActive ? (
-              <Button
-                variant="link"
-                onClick={() => setDialog('editTasksLimit', true)}
-                size="sm"
-              >
-                {tasksLimit ? t('Edit') : t('Add Limit')}
-              </Button>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+      <TasksUsage platformSubscription={platformSubscription} />
 
-      <Card>
-        <CardHeader className="border-b border-gray-300">
-          <div className="text-md font-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            {t('AI Credits')}
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 mt-5">
-          <div className="flex gap-2 items-center">
-            <div className="text-sm font-sm mt-1 flex items-center gap-2 basis-1/3 flex-wrap">
-              <div className="flex items-center gap-1 w-full">
-                {t('Current Credit Usage')}
-              </div>
-              <div className="text-sm font-sm text-gray-500">
-                {t(
-                  `First ${
-                    platformSubscription?.plan?.includedAiCredits || 200
-                  } credits free`,
-                )}
-              </div>
-            </div>
-            <div className="basis-2/3">
-              <Progress
-                value={platformSubscription?.usage.aiCredits || 0}
-                limit={aiLimit ?? 0}
-                label={t('Billing Limit')}
-              />
-            </div>
-          </div>
-          <div className="text-sm mt-5 flex items-center gap-1">
-            {(aiLimit || 0) > 0 ? (
-              <div className="flex items-center gap-1">
-                {t(`Your AI credits limit is set to ${aiLimit}`)}
-              </div>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+      <AICreditUsage platformSubscription={platformSubscription} />
 
       <ManagePlanDialog />
     </article>

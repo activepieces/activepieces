@@ -1,7 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { queryClient } from '@/app/app';
 import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { UpdateSubscriptionParams } from '@activepieces/ee-shared';
 
@@ -22,7 +21,10 @@ export const billingMutations = {
       onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
-  useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+  useUpdateSubscription: (
+    setIsOpen: (isOpen: boolean) => void,
+    queryClient: QueryClient,
+  ) => {
     return useMutation({
       mutationFn: (params: UpdateSubscriptionParams) =>
         platformBillingApi.updateSubscription(params),
@@ -66,9 +68,8 @@ export const billingMutations = {
 export const billingQueries = {
   usePlatformSubscription: (platformId: string) => {
     return useQuery({
-      queryKey: ['platform-billing-subscription', platformId],
+      queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
-      enabled: !!platformId,
     });
   },
 };

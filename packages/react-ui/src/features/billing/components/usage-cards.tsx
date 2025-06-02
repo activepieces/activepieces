@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 
 import { CardContent, Card } from '@/components/ui/card';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { Progress } from '@/components/ui/progress';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 export const UsageCards = ({
   platformSubscription,
@@ -23,56 +24,85 @@ export const UsageCards = ({
       <UsageCard
         icon={Users}
         title={t('Member seats')}
-        used={usage.seats || 0}
-        total={plan.userSeatsLimit || 'Unlimited'}
+        used={usage.seats}
+        total={plan.userSeatsLimit}
       />
       <UsageCard
         icon={LayoutGrid}
         title={t('Projects')}
-        used={usage.projects || 0}
-        total={plan.projectsLimit || 'Unlimited'}
+        used={usage.projects}
+        total={plan.projectsLimit}
       />
       <UsageCard
         icon={Package}
         title={t('MCP Servers')}
-        used={usage.mcp || 0}
-        total={plan.mcpLimit || 'Unlimited'}
+        used={usage.mcp}
+        total={plan.mcpLimit}
       />
 
       <UsageCard
         icon={Database}
         title={t('Tables')}
-        used={usage.tables || 0}
-        total={plan.tablesLimit || 'Unlimited'}
+        used={usage.tables}
+        total={plan.tablesLimit}
       />
       <UsageCard
         icon={Server}
         title={t('Active flows')}
-        used={usage.activeFlows || 0}
-        total={plan.activeFlowsLimit || 'Unlimited'}
+        used={usage.activeFlows}
+        total={plan.activeFlowsLimit}
       />
     </div>
   );
 };
 
-export interface UsageCardProps {
+interface UsageCardProps {
   icon: LucideIcon;
   title: string;
   used: number;
-  total: number | string;
+  total?: number;
+  showProgress?: boolean;
 }
 
-export function UsageCard({ icon: Icon, title, used, total }: UsageCardProps) {
+export default function UsageCard({
+  icon: Icon,
+  title,
+  used,
+  total,
+  showProgress = true,
+}: UsageCardProps) {
+  const isUnlimited = isNil(total);
+  const usagePercentage = isUnlimited ? 100 : (used / total) * 100;
+
   return (
-    <Card>
-      <CardContent className="px-6 py-4  gap-4 flex flex-col">
-        <div className="flex items-center  gap-2 ">
-          <Icon className="w-4 h-4" />
-          <span>{title}</span>
+    <Card className="w-full">
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-md border">
+              <Icon className="w-4 h-4" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold">{title}</h3>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">
+                {used.toLocaleString()} /{' '}
+                {isUnlimited ? 'Unlimited' : total?.toLocaleString()}
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {isUnlimited ? 'Unlimited' : 'Usage'}
+              </span>
+            </div>
+
+            {showProgress && (
+              <Progress value={usagePercentage} className="w-full" />
+            )}
+          </div>
         </div>
-        <p className="text-base text-muted-foreground">
-          Used {used} of {total}
-        </p>
       </CardContent>
     </Card>
   );
