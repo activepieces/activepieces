@@ -30,7 +30,7 @@ export const newContact = createTrigger({
   },
   onEnable: async (context) => {
     const contacts = await crispClient.listContacts(
-      context.auth.access_token,
+      context.auth.token,
       context.propsValue.websiteId,
       1
     );
@@ -40,7 +40,7 @@ export const newContact = createTrigger({
   run: async (context) => {
     const lastEmail = (await context.store.get('lastContactEmail')) as string || '';
     const contacts = await crispClient.listContacts(
-      context.auth.access_token,
+      context.auth.token,
       context.propsValue.websiteId,
       50
     );
@@ -56,7 +56,7 @@ export const newContact = createTrigger({
       
       if (context.propsValue.includeMetadata) {
         const fullProfile = await crispClient.getContact(
-          context.auth.access_token,
+          context.auth.token,
           context.propsValue.websiteId,
           contact.email
         );

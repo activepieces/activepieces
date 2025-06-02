@@ -48,7 +48,7 @@ export const addNote = createAction({
     };
 
     return await crispClient.makeRequest(
-      context.auth.access_token,
+      context.auth.token,
       HttpMethod.POST,
       `/website/${context.propsValue.websiteId}/conversation/${context.propsValue.sessionId}/note`,
       payload

@@ -36,7 +36,7 @@ export const conversationStatusChanged = createTrigger({
   },
   onEnable: async (context) => {
     const conversations = await crispClient.getConversations(
-      context.auth.access_token, 
+      context.auth.token, 
       context.propsValue.websiteId,
     );
     await context.store.put('lastStatusCheck', {
@@ -48,7 +48,7 @@ export const conversationStatusChanged = createTrigger({
   run: async (context) => {
     const lastCheck = (await context.store.get('lastStatusCheck')) as { id: string, status: string } || { id: '', status: '' };
     const conversations = await crispClient.getConversations(
-      context.auth.access_token,
+      context.auth.token,
       context.propsValue.websiteId,
     );
 

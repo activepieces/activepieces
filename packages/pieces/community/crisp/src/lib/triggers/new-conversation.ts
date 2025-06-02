@@ -33,7 +33,7 @@ export const newConversation = createTrigger({
   },
   onEnable: async (context) => {
     const conversations = await crispClient.getConversations(
-      context.auth.access_token, 
+      context.auth.token, 
       context.propsValue.websiteId,
     );
     await context.store.put('lastConversationId', conversations[0]?.id || '');
@@ -42,7 +42,7 @@ export const newConversation = createTrigger({
   run: async (context) => {
     const lastId = (await context.store.get('lastConversationId')) as string || '';
     const conversations = await crispClient.getConversations(
-      context.auth.access_token,
+      context.auth.token,
       context.propsValue.websiteId,
     );
 
@@ -56,7 +56,7 @@ export const newConversation = createTrigger({
       }
       if (context.propsValue.includeMetadata) {
         const fullData = await crispClient.getConversation(
-          context.auth.access_token,
+          context.auth.token,
           context.propsValue.websiteId,
           conversation.id
         );

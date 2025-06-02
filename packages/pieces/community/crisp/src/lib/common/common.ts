@@ -1,15 +1,19 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+// src/lib/common.ts
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-
-export const crispAuth = PieceAuth.OAuth2({
-  description: 'Authentication for Crisp API',
-  authUrl: 'https://api.crisp.chat/v1/oauth/authorize',
-  tokenUrl: 'https://api.crisp.chat/v1/oauth/token',
+export const crispAuth = PieceAuth.CustomAuth({
+  description: 'Authenticate with your Crisp API token',
   required: true,
-  scope: [
-    'conversation:read',
-    'conversation:write',
-    'people:read',
-    'people:write'
-  ]
+  props: {
+    token: PieceAuth.SecretText({
+      displayName: 'API Key',
+      description: 'Your Crisp API Key (found in your Crisp dashboard under Settings > API)',
+      required: true
+    }),
+    identifier: Property.ShortText({
+      displayName: 'API Identifier',
+      description: 'Your Crisp API identifier (found alongside your Key)',
+      required: true
+    })
+  }
 });

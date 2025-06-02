@@ -1,24 +1,25 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const crispClient = {
-  baseUrl: 'https://api.crisp.chat/v1/',
+  baseUrl: 'https://api.crisp.chat/v1',
 
   async makeRequest(auth: string, method: HttpMethod, endpoint: string, body?: any) {
     const response = await httpClient.sendRequest({
       method,
       url: `${this.baseUrl}${endpoint}`,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `${auth}`,
+        'X-Crisp-Tier': 'plugin',
         'Content-Type': 'application/json'
       },
       body
     });
+
     return response.body;
   },
-
   // Conversation methods
-  async getConversations(auth: string, websiteId: string) {
-    return this.makeRequest(auth, HttpMethod.GET, `/website/${websiteId}/conversations`);
+  async getConversations(key: string, websiteId: string) {
+    return this.makeRequest(key ,HttpMethod.GET, `/website/${websiteId}/conversations`);
   },
 
   // Contact methods

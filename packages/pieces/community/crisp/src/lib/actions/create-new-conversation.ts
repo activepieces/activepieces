@@ -44,7 +44,7 @@ export const createConversation = createAction({
 
     // first ensure contact exists
     await crispClient.makeRequest(
-      context.auth.access_token,
+      context.auth.token,
       HttpMethod.PATCH,
       `/website/${context.propsValue.websiteId}/people/profile/${context.propsValue.email}`,
       { email: context.propsValue.email }
@@ -52,7 +52,7 @@ export const createConversation = createAction({
 
     // create conversation
     return await crispClient.makeRequest(
-      context.auth.access_token,
+      context.auth.token,
       HttpMethod.POST,
       `/website/${context.propsValue.websiteId}/conversation/${context.propsValue.email}/message`,
       payload
