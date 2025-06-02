@@ -15,6 +15,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { mcpService } from '../../mcp/mcp-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
 type OnApplyOperationParams = {
@@ -60,6 +61,7 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
         try {
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
+            await handleUpdateFlowLastModified(projectId, flowVersion, log)
         }
         catch (e) {
             // Ignore error and continue the operation peacefully
@@ -158,4 +160,8 @@ async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVe
             flowId: flowVersion.flowId,
         }, log)
     }
+}
+
+async function handleUpdateFlowLastModified(projectId: ProjectId, flowVersion: FlowVersion, log: FastifyBaseLogger): Promise<void> {
+    await flowService(log).updateLastModified(flowVersion.flowId, projectId)
 }
