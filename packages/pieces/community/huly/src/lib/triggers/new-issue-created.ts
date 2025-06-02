@@ -90,7 +90,13 @@ export const newIssueCreated = createTrigger({
   },
 
   async test(context) {
-    const auth = context.auth as HulyAuthConfig;
+    const auth: HulyAuthConfig = {
+      url: context.auth.url,
+      workspace: context.auth.workspace,
+      email: context.auth.email,
+      password: context.auth.password,
+      token: context.auth.token,
+    };
     const { project, includeDescription = false } = context.propsValue;
 
     try {
@@ -213,7 +219,13 @@ export const newIssueCreated = createTrigger({
   },
 
   async run(context) {
-    const auth = context.auth as HulyAuthConfig;
+    const auth: HulyAuthConfig = {
+      url: context.auth.url,
+      workspace: context.auth.workspace,
+      email: context.auth.email,
+      password: context.auth.password,
+      token: context.auth.token,
+    };
     const { project, includeDescription = false } = context.propsValue;
 
     try {

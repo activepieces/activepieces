@@ -86,7 +86,6 @@ export const findPerson = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth as HulyAuthConfig;
     const {
       nameSearch,
       citySearch,
@@ -94,6 +93,8 @@ export const findPerson = createAction({
       includeChannels = true,
       limit = 20
     } = context.propsValue;
+
+    const auth = context.auth as HulyAuthConfig;
 
     try {
       const client = await createHulyClient(auth);

@@ -1,4 +1,12 @@
 {
   "name": "@activepieces/piece-huly",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "dependencies": {
+    "@hcengineering/api-client": "0.6.500",
+    "@hcengineering/core": "^0.6.466",
+    "@hcengineering/contact": "^0.6.466",
+    "@hcengineering/document": "^0.6.466",
+    "@hcengineering/tracker": "^0.6.466",
+    "@hcengineering/rank": "^0.6.466"
+  }
 }

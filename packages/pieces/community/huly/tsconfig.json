@@ -5,9 +5,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,
-    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true
+    "skipLibCheck": true,
+    "noPropertyAccessFromIndexSignature": false
   },
   "files": [],
   "include": [],

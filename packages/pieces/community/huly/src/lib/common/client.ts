@@ -4,17 +4,14 @@ import type { ConnectOptions, PlatformClient } from '@hcengineering/api-client';
 export interface HulyAuthConfig {
   url: string;
   workspace: string;
-  authMethod: 'emailPassword' | 'token';
   email?: string;
   password?: string;
   token?: string;
 }
 
 function createConnectOptions(auth: HulyAuthConfig): ConnectOptions {
-  if (auth.authMethod === 'emailPassword') {
-    if (!auth.email || !auth.password) {
-      throw new Error('Email and password are required when using email/password authentication');
-    }
+  // Check if using email/password authentication (Method 1)
+  if (auth.email && auth.password) {
     return {
       email: auth.email,
       password: auth.password,
@@ -22,10 +19,10 @@ function createConnectOptions(auth: HulyAuthConfig): ConnectOptions {
       socketFactory: NodeWebSocketFactory,
       connectionTimeout: 30000,
     };
-  } else if (auth.authMethod === 'token') {
-    if (!auth.token) {
-      throw new Error('Token is required when using token authentication');
-    }
+  }
+
+  // Check if using token authentication (Method 2)
+  if (auth.token) {
     return {
       token: auth.token,
       workspace: auth.workspace,
@@ -34,7 +31,16 @@ function createConnectOptions(auth: HulyAuthConfig): ConnectOptions {
     };
   }
 
-  throw new Error('Invalid authentication method');
+  // Smart error messages based on what's provided
+  if (auth.email && !auth.password) {
+    throw new Error('Password is required when email is provided. Use Method 1: Email + Password authentication.');
+  }
+
+  if (auth.password && !auth.email) {
+    throw new Error('Email is required when password is provided. Use Method 1: Email + Password authentication.');
+  }
+
+  throw new Error('Please choose ONE authentication method:\n• Method 1: Fill in Email + Password\n• Method 2: Fill in Token');
 }
 
 export async function createHulyClient(auth: HulyAuthConfig): Promise<PlatformClient> {

@@ -18,7 +18,7 @@ import { createMilestone } from "./lib/actions/create-milestone";
 import { newPersonCreated } from "./lib/triggers/new-person-created";
 
 export const hulyAuth = PieceAuth.CustomAuth({
-  description: "Huly Connection",
+  description: "Choose ONE authentication method below:",
   required: true,
   props: {
     url: Property.ShortText({
@@ -28,33 +28,24 @@ export const hulyAuth = PieceAuth.CustomAuth({
     }),
     workspace: Property.ShortText({
       displayName: "Workspace",
-      description: "Name of the workspace to connect to",
+      description: "Name of the workspace to connect to (found in your Huly URL)",
       required: true,
     }),
-    authMethod: Property.StaticDropdown({
-      displayName: "Authentication Method",
-      description: "Choose how to authenticate with Huly",
-      required: true,
-      options: {
-        options: [
-          { label: "Email & Password", value: "emailPassword" },
-          { label: "Token", value: "token" },
-        ],
-      },
-    }),
+    // Method 1: Email + Password
     email: Property.ShortText({
-      displayName: "Email",
-      description: "Your Huly email address",
+      displayName: "📧 Email (Method 1)",
+      description: "For Email/Password auth: Enter your email address",
       required: false,
     }),
-    password: PieceAuth.SecretText({
-      displayName: "Password",
-      description: "Your Huly password",
+    password: Property.ShortText({
+      displayName: "📧 Password (Method 1)",
+      description: "For Email/Password auth: Enter your password",
       required: false,
     }),
-    token: PieceAuth.SecretText({
-      displayName: "Token",
-      description: "Your Huly authentication token",
+    // Method 2: Token
+    token: Property.ShortText({
+      displayName: "🔑 Token (Method 2)",
+      description: "For Token auth: Enter your authentication token",
       required: false,
     }),
   },
