@@ -2,13 +2,12 @@
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
-import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { extractPieceFromModule } from '../../../packages/shared/src'
+import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
 import { execSync } from 'child_process'
-import { pieceTranslation } from '../../../packages/pieces/community/framework/src'
+import { pieceTranslation,PieceMetadata } from '@activepieces/pieces-framework'
 type SubPiece = {
     name: string;
     displayName: string;

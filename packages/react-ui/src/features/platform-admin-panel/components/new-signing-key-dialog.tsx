@@ -67,9 +67,7 @@ export const NewSigningKeyDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {signingKey
-              ? t('Signing Key Created')
-              : t('Create New Signing Key')}
+            {signingKey ? t('Signing Key Created') : t('Create Signing Key')}
           </DialogTitle>
         </DialogHeader>
         {signingKey && (
@@ -103,7 +101,7 @@ export const NewSigningKeyDialog = ({
                 name="displayName"
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
-                    <Label htmlFor="displayName">{t('Signing Key Name')}</Label>
+                    <Label htmlFor="displayName">{t('Name')}</Label>
                     <Input
                       {...field}
                       required
