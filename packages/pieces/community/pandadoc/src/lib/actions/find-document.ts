@@ -42,12 +42,7 @@ export const findDocument = createAction({
       description: 'Filter documents created until this date',
       required: false,
     }),
-    limit: Property.Number({
-      displayName: 'Limit',
-      description: 'Maximum number of documents to return (default: 50)',
-      required: false,
-      defaultValue: 50,
-    }),
+
     offset: Property.Number({
       displayName: 'Offset',
       description: 'Number of documents to skip (for pagination)',
@@ -75,7 +70,8 @@ export const findDocument = createAction({
     }),
   },
   async run(context) {
-    const { query, status, dateFrom, dateTo, limit, offset, orderBy } = context.propsValue;
+    const { query, status, dateFrom, dateTo, offset, orderBy } =
+      context.propsValue;
 
     const queryParams: Record<string, string> = {};
 
@@ -83,7 +79,7 @@ export const findDocument = createAction({
     if (status) queryParams['status'] = status;
     if (dateFrom) queryParams['date_from'] = dateFrom;
     if (dateTo) queryParams['date_to'] = dateTo;
-    if (limit) queryParams['limit'] = limit.toString();
+
     if (offset) queryParams['offset'] = offset.toString();
     if (orderBy) queryParams['order_by'] = orderBy;
 
@@ -91,7 +87,7 @@ export const findDocument = createAction({
       method: HttpMethod.GET,
       url: 'https://api.pandadoc.com/public/v1/documents',
       headers: {
-        'Authorization': `API-Key ${context.auth.apiKey}`,
+        Authorization: `API-Key ${context.auth.apiKey}`,
         'Content-Type': 'application/json',
       },
       queryParams,
