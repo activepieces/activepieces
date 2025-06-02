@@ -435,7 +435,6 @@
    
     {
       "group": "Predefined Connections",
-      "icon": "link",
       "pages": [
         "embedding/predefined-connections/overview",
         "embedding/predefined-connections/development",
