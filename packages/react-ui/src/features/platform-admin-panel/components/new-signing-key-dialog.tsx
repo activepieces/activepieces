@@ -67,9 +67,7 @@ export const NewSigningKeyDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {signingKey
-              ? t('Signing Key Created')
-              : t('Create Signing Key')}
+            {signingKey ? t('Signing Key Created') : t('Create Signing Key')}
           </DialogTitle>
         </DialogHeader>
         {signingKey && (

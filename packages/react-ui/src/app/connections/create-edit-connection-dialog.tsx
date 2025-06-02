@@ -266,21 +266,20 @@ const CreateOrEditConnectionDialogContent = React.memo(
                     control={form.control}
                     name="request.projectIds"
                   />
-                  {
-                      isGlobalConnection && isNil(reconnectConnection) && ( <div>
-                        <FormField
-                          control={form.control}
-                          name="request.externalId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('External ID')}</FormLabel>
-                              <Input {...field} />
-                            </FormItem>
-                          )}
-                        ></FormField>
-                      </div>)
-                  }
-                 
+                  {isGlobalConnection && isNil(reconnectConnection) && (
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="request.externalId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('External ID')}</FormLabel>
+                            <Input {...field} />
+                          </FormItem>
+                        )}
+                      ></FormField>
+                    </div>
+                  )}
                 </div>
               )}
               {auth?.type === PropertyType.SECRET_TEXT && (
