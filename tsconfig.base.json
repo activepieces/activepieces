@@ -154,6 +154,9 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
+      "@activepieces/piece-chatbase": [
+        "packages/pieces/community/chatbase/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
@@ -169,7 +172,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
