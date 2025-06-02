@@ -48,7 +48,7 @@ After signing in, activate the license key by going to **Platform Admin -> Setup
 
 <Step title="Create Your Piece">
 
-Follow the instructions [here](/developers/building-pieces/overview) to create your piece
+Follow the instructions [here](/developers/building-pieces/overview) to create your piece, after that come back here to customize the piece logic to use predefined connections.
 </Step>
 </Steps>
 ## Implementation
@@ -63,6 +63,7 @@ Follow the instructions [here](/developers/building-pieces/overview) to create y
     <Tip>We recommend creating global connections because only platform admins can delete or edit them, so your user can never delete the connection. </Tip>
     Create a global connection by going to **Platform Admin -> Setup -> Global Connections** and set the external ID to something like `gelato_xyz`:
      ![Global Connections](/resources/screenshots/create-global-connection.png)    
+     <Tip>You can only edit the external ID when creating the connection, and to view the external id of the connection, just hover its name in the table.</Tip> 
   </Step>
    <Step title="Don't Ask for Authentication in Your Actions/Triggers">
     After you have created your [piece definition](../developers/building-pieces/piece-definition) and added [its authentication](../developers/building-pieces/piece-authentication).
@@ -71,53 +72,68 @@ Follow the instructions [here](/developers/building-pieces/overview) to create y
   <Step title="Fetch Connections to Use in Actions/Triggers">
     Let's suppose the predefined connection externalId you want to store is **gelato_projectExternalId**, now in **run/test** method of your action or trigger, or the **onEnable/onDisable/onRenew** methods in your trigger, you can fetch the connection like this:
    ```ts
-import { PieceAuth, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+import { ConnectionsManager, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger } from "@activepieces/pieces-framework";
-import { isNil } from "@activepieces/shared";
-//Your piece authentication property (if you placed it in piece definition file)
-import { auth } from '../../index';
+import { AppConnectionType, AppConnectionValue, isNil } from "@activepieces/shared";
 
 
-const fetchConnection = async (connections: ConnectionsManager, projectExternalId: string | undefined) => {
-  if (!projectExternalId) {
-    throw new Error('Project external ID is required');
-  }
-  const connection = await connections.get(`gelato-${projectExternalId}`);
-  if (!connection) {
-    throw new Error(`Connection not found for project ${projectExternalId}`);
-  }
-  return connection;
+
+const fetchConnection = async<T extends AppConnectionType> (connections: ConnectionsManager, projectExternalId: string | undefined): Promise<AppConnectionValue<T>> => {
+if (isNil(projectExternalId)) {
+ throw new Error('Project external ID is required');
 }
+const connection = await connections.get(`gelato_${projectExternalId}`);
+if (isNil(connection)) {
+ throw new Error(`Connection not found for project ${projectExternalId}`);
+}
+return connection as AppConnectionValue<T>;
+}
+
 export const newFlavorCreated = createTrigger({
-    requireAuth:false,
-	auth,
-    name: 'newFlavorCreated',
-    displayName: 'new flavor created',
-    description: 'triggers when a new icecream flavor is created.',
-    props: {},
-    sampleData: {},
-    type: TriggerStrategy.POLLING,
-    async test({connections, project}) {
-	      const connection = await fetchConnection(connections, (await project.externalId()));
-    // use the connection with your own logic
-	   return []
-    },
-    async onEnable({connections, project}) {
-		   const connection = await fetchConnection(connections, (await project.externalId()));
-    // use the connection with your own logic
-    },
+ requireAuth:false,
+ name: 'newFlavorCreated',
+ displayName: 'new flavor created',
+ description: 'triggers when a new icecream flavor is created.',
+ props: {
+    dropdown: Property.Dropdown({
+        displayName: 'Dropdown',
+        required: true,
+        refreshers: [],
+        options: async (_, {connections,project}) => {
+            const connection = await fetchConnection<AppConnectionType.CUSTOM_AUTH>(connections, (await project.externalId()));
+            // your logic
+            return {
+                options: [{
+                    label: 'test',
+                    value: 'test'
+                }]
+            }
+        }
+    })
+ },
+ sampleData: {},
+ type: TriggerStrategy.POLLING,
+ async test({connections, project}) {
+       const connection = await fetchConnection<AppConnectionType.CUSTOM_AUTH>(connections, (await project.externalId()));
+ // use the connection with your own logic
+    return []
+ },
+ async onEnable({connections, project}) {
+ 	   const connection = await fetchConnection<AppConnectionType.CUSTOM_AUTH>(connections, (await project.externalId()));
+ // use the connection with your own logic
+ },
 
-    async onDisable({connections, project}) {
-		   const connection = await fetchConnection(connections, (await project.externalId()));
-    // use the connection with your own logic
-    },
+ async onDisable({connections, project}) {
+ 	   const connection = await fetchConnection<AppConnectionType.CUSTOM_AUTH>(connections, (await project.externalId()));
+ // use the connection with your own logic
+ },
 
-    async run({connections, project}) {
-        const connection = await fetchConnection(connections, (await project.externalId()));
-      // use the connection with your own logic
-	   return []
-    },
-    });
+ async run({connections, project}) {
+     const connection = await fetchConnection<AppConnectionType.CUSTOM_AUTH>(connections, (await project.externalId()));
+   // use the connection with your own logic
+    return []
+ },
+ });
   ```
   </Step>
   <Step title="Test Your Piece"> 
