@@ -57,7 +57,7 @@ fetch('YOUR_INSTANCE_URL/api/v1/global-connections', options)
   .catch(err => console.error(err));
   ```
   You can check the [global connections API](/endpoints/global-connections/upsert) for more info. <br></br>
-  Make sure the connection external ID matches the pattern expected in your piece when fetching it. 
+  <Warning>Make sure the connection external ID matches the pattern expected in your piece when fetching it. i.e `gelato_{projectExternalId}` </Warning>
 </Step>
 
 <Step title="Provision User">
