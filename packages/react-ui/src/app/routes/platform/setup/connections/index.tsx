@@ -40,6 +40,7 @@ import {
   AppConnectionWithoutSensitiveData,
   Permission,
 } from '@activepieces/shared';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters = [
@@ -152,22 +153,16 @@ const GlobalConnectionsTable = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {t('External ID')}: {row.original.externalId || '-'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  <CopyTextTooltip
+                  title={t('External ID')}
+                  text={row.original.externalId || ''}
+                >
+                  <div className="text-left">{row.original.displayName}</div>
+                </CopyTextTooltip>
         );
       },
     },
