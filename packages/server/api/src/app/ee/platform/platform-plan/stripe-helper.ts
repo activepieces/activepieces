@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
-import { platformPlanRepo, platformPlanService } from './platform-plan.service'
+import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
@@ -114,45 +114,45 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     updateSubscription: async (
-    subscriptionId: string,
-    params: UpdateSubscriptionParams,
-): Promise<Stripe.Subscription> => {
-    const stripe = stripeHelper(log).getStripe()
-    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+        subscriptionId: string,
+        params: UpdateSubscriptionParams,
+    ): Promise<Stripe.Subscription> => {
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-    const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ['items.data.price'],
-    })
-
-    const items: Stripe.SubscriptionUpdateParams.Item[] = []
-
-    currentSubscription.items.data.forEach(item => {
-        items.push({ id: item.id, deleted: true })
-    })
-
-    items.push({
-        price: STRIPE_PLAN_PRICE_IDS[params.plan],
-        quantity: 1,
-    })
-
-    if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
-        items.push({
-            price: USER_PRICE_ID,
-            quantity: params.extraUsers,
+        const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
+            expand: ['items.data.price'],
         })
-    }
 
-    const updateParams: Stripe.SubscriptionUpdateParams = {
-        items,
-        proration_behavior: 'create_prorations',
-        billing_cycle_anchor: 'now',
-        metadata: {
-            plan: params.plan,
-        },
-    }
+        const items: Stripe.SubscriptionUpdateParams.Item[] = []
 
-    return stripe.subscriptions.update(subscriptionId, updateParams)
-},
+        currentSubscription.items.data.forEach(item => {
+            items.push({ id: item.id, deleted: true })
+        })
+
+        items.push({
+            price: STRIPE_PLAN_PRICE_IDS[params.plan],
+            quantity: 1,
+        })
+
+        if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
+            items.push({
+                price: USER_PRICE_ID,
+                quantity: params.extraUsers,
+            })
+        }
+
+        const updateParams: Stripe.SubscriptionUpdateParams = {
+            items,
+            proration_behavior: 'create_prorations',
+            billing_cycle_anchor: 'now',
+            metadata: {
+                plan: params.plan,
+            },
+        }
+
+        return stripe.subscriptions.update(subscriptionId, updateParams)
+    },
 
 
     createPortalSessionUrl: async ({ platformId }: { platformId: string }): Promise<string> => {

@@ -1,7 +1,6 @@
 import { PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
@@ -96,17 +95,6 @@ const InfoRequest = {
     },
     resposne: {
         [StatusCodes.OK]: PlatformBillingInformation,
-    },
-}
-
-const UpdateLimitsRequest = {
-    schema: {
-        body: Type.Object({
-            tasksLimit: Type.Optional(Type.Number()),
-        }),
-    },
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
     },
 }
 

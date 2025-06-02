@@ -31,7 +31,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 if (webhook.type === 'customer.subscription.created' && subscription.metadata.event === 'create_subscription') {
                     const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId({
                         ...subscription,
-                        status: ApSubscriptionStatus.ACTIVE
+                        status: ApSubscriptionStatus.ACTIVE,
                     })
                     const planName = subscription.metadata?.plan as PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE
 

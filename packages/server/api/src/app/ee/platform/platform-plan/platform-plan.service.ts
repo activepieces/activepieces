@@ -1,6 +1,6 @@
 import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, assertNotNullOrUndefined, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
@@ -52,39 +52,11 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             platformId,
         })
 
-        const updatedPlatformPlan: PlatformPlan = {
-            ...platformPlan,
-            ...spreadIfDefined('plan', update.plan),
-            ...spreadIfDefined('tasksLimit', update.tasksLimit),
-            ...spreadIfDefined('includedTasks', update.includedTasks),
-            ...spreadIfDefined('aiCreditsLimit', update.aiCreditsLimit),
-            ...spreadIfDefined('includedAiCredits', update.includedAiCredits),
-            ...spreadIfDefined('activeFlowsLimit', update.activeFlowsLimit),
-            ...spreadIfDefined('projectsLimit', update.projectsLimit),
-            ...spreadIfDefined('tablesLimit', update.tablesLimit),
-            ...spreadIfDefined('mcpLimit', update.mcpLimit),
-            ...spreadIfDefined('userSeatsLimit', update.userSeatsLimit),
-            ...spreadIfDefined('environmentsEnabled', update.environmentsEnabled),
-            ...spreadIfDefined('analyticsEnabled', update.analyticsEnabled),
-            ...spreadIfDefined('showPoweredBy', update.showPoweredBy),
-            ...spreadIfDefined('auditLogEnabled', update.auditLogEnabled),
-            ...spreadIfDefined('embeddingEnabled', update.embeddingEnabled),
-            ...spreadIfDefined('managePiecesEnabled', update.managePiecesEnabled),
-            ...spreadIfDefined('manageTemplatesEnabled', update.manageTemplatesEnabled),
-            ...spreadIfDefined('customAppearanceEnabled', update.customAppearanceEnabled),
-            ...spreadIfDefined('manageProjectsEnabled', update.manageProjectsEnabled),
-            ...spreadIfDefined('projectRolesEnabled', update.projectRolesEnabled),
-            ...spreadIfDefined('customDomainsEnabled', update.customDomainsEnabled),
-            ...spreadIfDefined('globalConnectionsEnabled', update.globalConnectionsEnabled),
-            ...spreadIfDefined('customRolesEnabled', update.customRolesEnabled),
-            ...spreadIfDefined('apiKeysEnabled', update.apiKeysEnabled),
-            ...spreadIfDefined('alertsEnabled', update.alertsEnabled),
-            ...spreadIfDefined('ssoEnabled', update.ssoEnabled),
-            ...spreadIfDefined('tablesEnabled', update.tablesEnabled),
-            ...spreadIfDefined('todosEnabled', update.todosEnabled),
-        }
+        const normalizedUpdate = Object.fromEntries(
+            Object.entries(update).map(([key, value]) => [key, value === undefined ? null : value]),
+        )
 
-        await platformPlanRepo().save(updatedPlatformPlan)
+        const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
         return updatedPlatformPlan
     },
 
