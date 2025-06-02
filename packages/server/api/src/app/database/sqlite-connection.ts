@@ -8,6 +8,7 @@ import { commonProperties } from './database-connection'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
@@ -52,6 +53,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        DeprecateApproval1748648340742,
         UpgradePieceVersionsToLatest1748253670449,
         RemoveFeatureFlagsFromSqlite1747824740845,
         ChangeExternalIdsForTables1747346473001,
