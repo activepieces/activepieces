@@ -22,6 +22,7 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
@@ -563,6 +564,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
+    },
+
+    async updateLastModified(flowId: FlowId, projectId: ProjectId): Promise<void> {
+        const flow = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+        })
+        
+        flow.updated = dayjs().toISOString()
+        await flowRepo().save(flow)
     },
 })
 
