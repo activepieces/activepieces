@@ -221,6 +221,9 @@
       "@activepieces/piece-datocms": [
         "packages/pieces/community/datocms/src/index.ts"
       ],
+       "@activepieces/piece-deepgram": [
+        "packages/pieces/community/deepgram/src/index.ts"
+      ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
