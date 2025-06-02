@@ -142,7 +142,7 @@ function AppConnectionsPage() {
     } as const,
     {
       type: 'input',
-      title: t('Display Name'),
+      title: t('Name'),
       accessorKey: 'displayName',
       icon: Tag,
       options: [],
@@ -247,7 +247,7 @@ function AppConnectionsPage() {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
