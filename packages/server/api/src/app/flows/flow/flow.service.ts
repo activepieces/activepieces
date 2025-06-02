@@ -113,6 +113,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             query: {
                 limit,
                 order: 'DESC',
+                orderBy: 'updated',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
