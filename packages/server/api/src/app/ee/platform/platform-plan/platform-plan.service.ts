@@ -1,6 +1,6 @@
 import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, assertNotNullOrUndefined, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
@@ -11,7 +11,7 @@ import { userService } from '../../../user/user-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
 
-const platformPlanRepo = repoFactory(PlatformPlanEntity)
+export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 
 type UpdatePlatformBillingParams = {
     platformId: string
@@ -37,7 +37,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
 
-        if (isNil(platformPlan) || isNil(platformPlan.stripeCustomerId)) {
+        if (isNil(platformPlan)) {
             return createInitialBilling(platformId, log)
         }
 
@@ -88,14 +88,16 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return updatedPlatformPlan
     },
 
-    async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<PlatformPlan> {
+    async updateSubscriptionIdByCustomerId(subscription: Partial<Stripe.Subscription>): Promise<PlatformPlan> {
         const stripeCustomerId = subscription.customer as string
         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId })
+
         log.info({
             platformPlanId: platformPlan.id,
             subscriptionId: subscription.id,
             subscriptionStatus: subscription.status,
         }, 'Updating subscription id for platform plan')
+
         await platformPlanRepo().update(platformPlan.id, {
             stripeSubscriptionId: subscription.id,
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,

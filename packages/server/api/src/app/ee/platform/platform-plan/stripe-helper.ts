@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
-import { platformPlanService } from './platform-plan.service'
+import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
@@ -36,16 +36,16 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const customer = await stripe.customers.create({
+        const newCustomer = await stripe.customers.create({
             email: user.email,
-            name: `${user.firstName} ${user.lastName}`,
+            name: `${user.firstName} ${user.lastName}`, 
             description: `Platform ID: ${platformId}, user ${user.id}`,
             metadata: {
                 platformId,
             },
         })
 
-        return customer.id
+        return newCustomer.id
     },
     
     createSubscriptionCheckoutUrl: async (
@@ -61,10 +61,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         lineItems.push({
             price: basePriceId,
             quantity: 1,
-        })
-
-        lineItems.push({
-            price: AI_CREDITS_PRICE_ID,
         })
 
         if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
@@ -118,47 +114,46 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     updateSubscription: async (
-        subscriptionId: string,
-        params: UpdateSubscriptionParams,
-    ): Promise<Stripe.Subscription> => {
-        const stripe = stripeHelper(log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        
-        const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
-            expand: ['items.data.price'],
-        })
-        
-        const items: Stripe.SubscriptionUpdateParams.Item[] = []
-        
-        currentSubscription.items.data.forEach(item => {
-            items.push({ id: item.id, deleted: true })
-        })
-        
-        items.push({
-            price: STRIPE_PLAN_PRICE_IDS[params.plan],
-            quantity: 1,
-        })
+    subscriptionId: string,
+    params: UpdateSubscriptionParams,
+): Promise<Stripe.Subscription> => {
+    const stripe = stripeHelper(log).getStripe()
+    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
-            items.push({
-                price: USER_PRICE_ID,
-                quantity: params.extraUsers,
-            })
-        }
-        
-        const updateParams: Stripe.SubscriptionUpdateParams = {
-            items,
-            proration_behavior: 'create_prorations',
-            metadata: {
-                plan: params.plan,
-            },
-        }
-        
-        const currentPeriodEnd = platformUsageService(log).getCurrentBillingPeriodEnd()
-        updateParams.trial_end = dayjs(currentPeriodEnd).unix()
-        
-        return stripe.subscriptions.update(subscriptionId, updateParams)
-    },
+    const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['items.data.price'],
+    })
+
+    const items: Stripe.SubscriptionUpdateParams.Item[] = []
+
+    currentSubscription.items.data.forEach(item => {
+        items.push({ id: item.id, deleted: true })
+    })
+
+    items.push({
+        price: STRIPE_PLAN_PRICE_IDS[params.plan],
+        quantity: 1,
+    })
+
+    if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
+        items.push({
+            price: USER_PRICE_ID,
+            quantity: params.extraUsers,
+        })
+    }
+
+    const updateParams: Stripe.SubscriptionUpdateParams = {
+        items,
+        proration_behavior: 'create_prorations',
+        billing_cycle_anchor: 'now',
+        metadata: {
+            plan: params.plan,
+        },
+    }
+
+    return stripe.subscriptions.update(subscriptionId, updateParams)
+},
+
 
     createPortalSessionUrl: async ({ platformId }: { platformId: string }): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()

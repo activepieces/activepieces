@@ -1,4 +1,4 @@
-import { PlanName } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -29,7 +29,10 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const subscription = webhook.data.object as Stripe.Subscription
 
                 if (webhook.type === 'customer.subscription.created' && subscription.metadata.event === 'create_subscription') {
-                    const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId(subscription)
+                    const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId({
+                        ...subscription,
+                        status: ApSubscriptionStatus.ACTIVE
+                    })
                     const planName = subscription.metadata?.plan as PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE
 
                     request.log.info(`${planName} subscription activated for platform ${platformBilling.platformId}`)

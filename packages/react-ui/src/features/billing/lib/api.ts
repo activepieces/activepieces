@@ -9,9 +9,6 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<{ portalLink: string }>('/v1/platform-billing/portal');
   },
-  upgradePAYG() {
-    return api.post<{ paymentLink: string }>('/v1/platform-billing/upgrade');
-  },
   updateSubscription(params: UpdateSubscriptionParams) {
     return api.post<PlatformPlan>(
       '/v1/platform-billing/update-subscription',
@@ -20,10 +17,5 @@ export const platformBillingApi = {
   },
   createSubscription(params: UpdateSubscriptionParams) {
     return api.post<string>('/v1/platform-billing/create-subscription', params);
-  },
-  updateTaskLimit(tasksLimit: number | null | undefined) {
-    return api.patch<PlatformPlan>('/v1/platform-billing', {
-      tasksLimit,
-    });
   },
 };

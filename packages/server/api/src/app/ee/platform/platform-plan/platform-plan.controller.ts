@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, FREE_CLOUD_PLAN, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -28,28 +28,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
         }
     })
-
-    fastify.post('/upgrade', UpgradeRequest, async (request, reply) => {
-        const stripe = stripeHelper(request.log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = platformBilling.stripeCustomerId
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-
-        if (platformBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
-            await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Already subscribed',
-            })
-            return
-        }
-
-        await platformPlanService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: FREE_CLOUD_PLAN.tasksLimit })
-        return {
-            paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
-        }
-    })
-
 
     fastify.post('/create-subscription', UpgradeRequest, async (request) => {
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
@@ -109,20 +87,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
 
         return platformPlan
-    })
-
-    fastify.patch('/', UpdateLimitsRequest, async (request) => {
-        const platformId = request.principal.platform.id
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
-        if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Platform does not have an active subscription',
-                },
-            })
-        }
-        return platformPlanService(request.log).update({ platformId, tasksLimit: request.body.tasksLimit })
     })
 }
 

@@ -18,7 +18,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EditTasksLimitDialog } from '@/features/billing/components/edit-task-limit-dialog';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
@@ -28,8 +27,8 @@ import {
 import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useDialogStore } from '@/lib/dialogs-store';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 
 export default function Billing() {
   const { setDialog } = useDialogStore();
@@ -41,11 +40,8 @@ export default function Billing() {
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
   const { mutate: getPortalLink } = billingMutations.usePortalLink();
-  const { mutate: updateTasksLimit } = billingMutations.useUpdateTasksLimit();
 
-  const isSubscriptionActive =
-    platformSubscription?.plan.stripeSubscriptionStatus ===
-    ApSubscriptionStatus.ACTIVE;
+  const isSubscriptionActive = platformSubscription?.plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
 
   const calculatedTotalCost = calculateTotalCost(
     platformSubscription?.usage.tasks || 0,
@@ -222,14 +218,6 @@ export default function Billing() {
         </CardContent>
       </Card>
 
-      <EditTasksLimitDialog
-        onSubmit={(newLimit) => {
-          updateTasksLimit({
-            tasksLimit: isNil(newLimit) ? null : newLimit,
-          });
-        }}
-        initialLimit={tasksLimit}
-      />
       <ManagePlanDialog />
     </article>
   );

@@ -61,29 +61,6 @@ export const billingMutations = {
       },
     });
   },
-
-  useUpdateTasksLimit: () => {
-    return useMutation({
-      mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
-        platformBillingApi.updateTaskLimit(data.tasksLimit),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
-        });
-        toast({
-          title: t('Success'),
-          description: t('Limits updated successfully'),
-        });
-      },
-      onError: () => {
-        toast({
-          title: t('Error'),
-          description: t('Failed to update limits'),
-          variant: 'destructive',
-        });
-      },
-    });
-  },
 };
 
 export const billingQueries = {
