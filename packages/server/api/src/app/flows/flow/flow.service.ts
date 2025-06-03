@@ -170,14 +170,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             return null
         }
-        const projectExists = await projectService.exists(flow.projectId)
+        const projectExists = await projectService.exists({
+            projectId: flow.projectId,
+        })
         if (!projectExists) {
             return null
         }
         return flow
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
-        const projectExists = await projectService.exists(projectId)
+        const projectExists = await projectService.exists({
+            projectId,
+        })
         if (!projectExists) {
             return null
         }
@@ -206,7 +210,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const projectExists = await projectService.exists(projectId)
+        const projectExists = await projectService.exists({
+            projectId,
+        })
         if (isNil(flow) || !projectExists) {
             return null
         }
