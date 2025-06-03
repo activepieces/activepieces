@@ -44,7 +44,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 token,
                 message: 'Flow removed',
             })
-            await removeScheduledJob(job.data as ScheduledJobData, request.log)
+            await removeScheduledJob(job.data as ScheduledJobData, false, request.log)
             return null
         }
         return enrichEngineToken(token, queueName, job)
@@ -158,13 +158,14 @@ async function isStaleFlow(job: JobData, queueName: QueueName, log: FastifyBaseL
 }
 
 
-async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger) {
+async function removeScheduledJob(job: ScheduledJobData, throwError: boolean, log: FastifyBaseLogger) {
     log.info({
         message: '[WorkerController#removeScheduledJob]',
         flowVersionId: job.flowVersionId,
     }, 'removing stale scheduled job')
     await jobQueue(log).removeRepeatingJob({
-        flowVersionId: job.flowVersionId,
+        flowVersionId: job.flowVersionId,   
+        throwError,
     })
     const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
     if (isNil(flowVersion)) {
