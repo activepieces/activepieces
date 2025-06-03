@@ -40,7 +40,7 @@ export const contactOpenedTrigger = createTrigger({
         ],
       },
     }),
-    campaignScope: tarventCommon.campaignScope(false),
+    campaignScope: tarventCommon.campaignScope,
     campaignId: tarventCommon.campaignId(false, 'Only used if campaign type is set to "Specific"', false, true),
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),

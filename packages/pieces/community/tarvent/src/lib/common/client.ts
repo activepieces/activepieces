@@ -871,12 +871,13 @@ export class TarventClient {
                 }
                 return [{ entityType, eventType: 'CLICK' }];
             }
-            case 'contactReplied':
+            case 'contactReplied': {
                 let entityType = null;
                 if (parameters.entity !== 'BOTH') {
                     entityType = parameters.entity;
                 }
                 return [{ entityType, eventType: 'REPLIED' }];
+            }
             case 'contactGroupUpdated':
                 return [{
                     entityType: null,

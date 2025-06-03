@@ -119,7 +119,7 @@ export const tarventCommon = {
                 };
             },
         }),
-    campaignScope: (isClick = false) => Property.DynamicProperties({
+    campaignScope: Property.DynamicProperties({
         displayName: 'Campaign scope',
         refreshers: ['campaignType'],
         required: false,
@@ -469,7 +469,7 @@ export const tarventCommon = {
             description,
             required,
             refreshers: [],
-            options: async ({ auth, searchField }) => {
+            options: async ({ auth }) => {
                 if (!auth) {
                     return {
                         disabled: true,
