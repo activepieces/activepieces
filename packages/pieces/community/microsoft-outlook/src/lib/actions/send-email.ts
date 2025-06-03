@@ -1,11 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { outlookAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { BASE_URL, outlookAuth } from '../common/common';
 
 export const sendEmail = createAction({
   auth: outlookAuth,
@@ -50,7 +50,7 @@ export const sendEmail = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'https://graph.microsoft.com/v1.0/me/sendMail',
+      url: `${BASE_URL}/me/sendMail`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],

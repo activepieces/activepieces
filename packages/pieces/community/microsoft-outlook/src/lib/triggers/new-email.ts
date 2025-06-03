@@ -1,4 +1,5 @@
-import { outlookAuth } from '../..';
+import { BASE_URL, outlookAuth } from '../common/common';
+import dayjs from 'dayjs';
 import {
   PiecePropValueSchema,
   TriggerStrategy,
@@ -13,8 +14,6 @@ import {
   httpClient,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-const BASE_URL = 'https://graph.microsoft.com/v1.0';
 
 const polling: Polling<
   PiecePropValueSchema<typeof outlookAuth>,

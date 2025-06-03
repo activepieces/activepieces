@@ -1,15 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { outlookAuth } from './lib/common/common';
 import { sendEmail } from './lib/actions/send-email';
+import { downloadEmailAttachment } from './lib/actions/download-email-attachment';
 import { newEmail } from './lib/triggers/new-email';
 
-export const outlookAuth = PieceAuth.OAuth2({
-  description: 'Authentication for Microsoft Outlook',
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: ['Mail.Read', 'Mail.Send', 'Calendars.Read', 'offline_access'],
-});
+
 
 export const microsoftOutlook = createPiece({
   displayName: 'Microsoft Outlook',
@@ -17,7 +13,8 @@ export const microsoftOutlook = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [],
-  actions: [sendEmail],
+  authors: ["lucaslimasouza"],
+  actions: [sendEmail, downloadEmailAttachment],
   triggers: [newEmail],
 });
+
