@@ -45,7 +45,7 @@ export const tarvent = createPiece({
   displayName: "Tarvent",
   auth: tarventAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.trvt.io/resource/graphics/logo/favicon-256x256.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
   authors: ["derekjohnson"],
   actions: [createContact, updateContactTags, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, createAudienceGroup, updateJourneyStatus, createTransaction, sendCampaign, generateCustomEvent, getAudiences, getAudienceGroups, createSuppressionFilter, getCampaigns, getContact, getCustomEvent, getJourney],
