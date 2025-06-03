@@ -1,4 +1,3 @@
-import { useEffect, useMemo } from 'react';
 import {
   Navigate,
   RouterProvider,
@@ -22,14 +21,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { authenticationSession } from '@/lib/authentication-session';
-import { combinePaths, parentWindow } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { DashboardContainer } from '../components/dashboard-container';
@@ -671,75 +663,12 @@ const routes = [
   },
 ];
 
+export const memoryRouter = createMemoryRouter(routes);
+const browserRouter = createBrowserRouter(routes);
+
 const ApRouter = () => {
   const { embedState } = useEmbedding();
-  const projectId = authenticationSession.getProjectId();
-  const router = useMemo(() => {
-    return embedState.isEmbedded
-      ? createMemoryRouter(routes, {
-          initialEntries: [window.location.pathname],
-        })
-      : createBrowserRouter(routes);
-  }, [embedState.isEmbedded]);
-
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
-
-    const handleVendorRouteChange = (
-      event: MessageEvent<ActivepiecesVendorRouteChanged>,
-    ) => {
-      if (
-        event.source === parentWindow &&
-        event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
-      ) {
-        const targetRoute = event.data.data.vendorRoute;
-        const targetRouteRequiresProjectId =
-          targetRoute.includes('/runs') ||
-          targetRoute.includes('/flows') ||
-          targetRoute.includes('/connections');
-        if (!targetRouteRequiresProjectId) {
-          router.navigate(targetRoute);
-        } else {
-          router.navigate(
-            combinePaths({
-              secondPath: targetRoute,
-              firstPath: `/projects/${projectId}`,
-            }),
-          );
-        }
-      }
-    };
-
-    window.addEventListener('message', handleVendorRouteChange);
-
-    return () => {
-      window.removeEventListener('message', handleVendorRouteChange);
-    };
-  }, [embedState.isEmbedded, router.navigate]);
-
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
-    router.subscribe((state) => {
-      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
-        /\/projects\/[^/]+/,
-        '',
-      );
-      parentWindow.postMessage(
-        {
-          type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
-          data: {
-            route: pathNameWithoutProjectOrProjectId + state.location.search,
-          },
-        },
-        '*',
-      );
-    });
-  }, [router, embedState.isEmbedded]);
-
+  const router = embedState.isEmbedded ? memoryRouter : browserRouter;
   return <RouterProvider router={router}></RouterProvider>;
 };
 
