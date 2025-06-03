@@ -17,7 +17,7 @@ export enum ApSubscriptionStatus {
 
 export const MAXIMUM_ALLOWED_TASKS = 1000_000
 
-export const PRICE_PER_USER = 10
+export const PRICE_PER_EXTRA_USER = 10
 
 export enum PlanName {
     FREE = 'free',

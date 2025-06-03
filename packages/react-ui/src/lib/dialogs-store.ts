@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 interface DialogState {
   managePlan: boolean;
+  addUserSeats: boolean;
 }
 
 interface DialogStore {
@@ -12,7 +13,7 @@ interface DialogStore {
 export const useDialogStore = create<DialogStore>((set) => ({
   dialogs: {
     managePlan: false,
-    editTasksLimit: false,
+    addUserSeats: false,
   },
   setDialog: (dialog, isOpen) => {
     set((state) => ({

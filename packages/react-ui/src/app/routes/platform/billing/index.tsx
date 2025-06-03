@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
+import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
+import { ExtraSeatsDialog } from '@/features/billing/components/extra-user-seats-dialog';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { UsageCards } from '@/features/billing/components/usage-cards';
@@ -17,7 +19,7 @@ import {
 import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useDialogStore } from '@/lib/dialogs-store';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 
 export default function Billing() {
@@ -35,6 +37,7 @@ export default function Billing() {
   const isSubscriptionActive =
     platformSubscription?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.ACTIVE;
+  const isBusinessPlan = platformSubscription?.plan.plan === PlanName.BUSINESS;
   const calculatedTotalCost = calculateTotalCost(
     platformSubscription?.usage.tasks || 0,
     platformSubscription?.plan.tasksLimit || 0,
@@ -71,7 +74,6 @@ export default function Billing() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* TODO: add payment method or acess billing portal */}
           {isSubscriptionActive && (
             <Button variant="outline" onClick={() => getPortalLink()}>
               {t('Access Billing Portal')}
@@ -114,12 +116,14 @@ export default function Billing() {
       </div>
 
       <UsageCards platformSubscription={platformSubscription} />
-
+      {isBusinessPlan && (
+        <BusinessUserSeats platformSubscription={platformSubscription} />
+      )}
+      <AICreditUsage platformSubscription={platformSubscription} />
       <TasksUsage platformSubscription={platformSubscription} />
 
-      <AICreditUsage platformSubscription={platformSubscription} />
-
       <ManagePlanDialog />
+      <ExtraSeatsDialog />
     </article>
   );
 }

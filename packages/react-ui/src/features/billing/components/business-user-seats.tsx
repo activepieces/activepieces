@@ -1,6 +1,7 @@
 import { t } from 'i18next';
-import { ClipboardCheck, CircleHelp } from 'lucide-react';
+import { CircleHelp, Users } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -9,23 +10,20 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
+import { useDialogStore } from '@/lib/dialogs-store';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
-export function TasksUsage({
+export function BusinessUserSeats({
   platformSubscription,
 }: {
   platformSubscription: PlatformBillingInformation;
 }) {
+  const { setDialog } = useDialogStore();
   const { plan, usage } = platformSubscription;
-  const isFreePlan = plan.plan === PlanName.FREE;
-  const currentTasks = usage.tasks || 0;
-  const tasksLimit = plan.tasksLimit ?? 100;
+  const currentSeats = usage.seats || 0;
+  const seatsLimit = plan.userSeatsLimit ?? 100;
   const usagePercentage =
-    isFreePlan && tasksLimit > 0
-      ? Math.round((currentTasks / tasksLimit) * 100)
-      : 0;
+    seatsLimit > 0 ? Math.round((currentSeats / seatsLimit) * 100) : 0;
 
   return (
     <Card className="w-full">
@@ -33,29 +31,36 @@ export function TasksUsage({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-              <ClipboardCheck className="w-5 h-5" />
+              <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">{t('Tasks')}</h3>
+              <h3 className="text-lg font-semibold">{t('User Seats')}</h3>
               <p className="text-sm text-muted-foreground">
-                Monitor your task execution usage
+                Monitor your user seats usage
               </p>
             </div>
           </div>
+
+          <Button
+            variant="link"
+            onClick={() => setDialog('addUserSeats', true)}
+          >
+            {t('Extra Seats?')}
+          </Button>
         </div>
       </CardHeader>
 
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h4 className="text-base font-medium">{t('Current Task Usage')}</h4>
+            <h4 className="text-base font-medium">{t('User Seats Usage')}</h4>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <CircleHelp className="w-4 h-4 text-muted-foreground cursor-help" />
+                  <CircleHelp className="w-4 h-4 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  {t('Count of executed steps')}
+                  {t('Count of user seats 10$ for extra 1 user seat')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -64,41 +69,26 @@ export function TasksUsage({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {currentTasks.toLocaleString()}{' '}
-                {!isFreePlan
-                  ? '/ Unlimited'
-                  : `/ ${tasksLimit.toLocaleString()}`}
+                {currentSeats.toLocaleString()}{' '}
+                {`/ ${seatsLimit.toLocaleString()}`}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
-                {isFreePlan ? t('Plan Limit') : t('Fair Usage')}
+                {t('Plan Limit')}
               </span>
             </div>
 
-            <Progress
-              value={isFreePlan ? usagePercentage : 0}
-              className={cn('w-full', !isFreePlan && 'bg-primary/40')}
-            />
+            <Progress value={usagePercentage} className="w-full" />
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {isFreePlan
-                  ? `${usagePercentage}% of plan allocation used`
-                  : 'Unlimited usage under fair usage policy'}
+                {`${usagePercentage}% of plan allocation used`}
               </span>
-              {isFreePlan && usagePercentage > 80 && (
+              {usagePercentage > 80 && (
                 <span className="text-destructive font-medium">
                   Approaching limit
                 </span>
               )}
             </div>
-          </div>
-
-          <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
-            {isFreePlan
-              ? `Includes ${(
-                  plan?.includedTasks || 1000
-                ).toLocaleString()} tasks free with your plan`
-              : 'Unlimited tasks under fair usage policy - no hard limits applied'}
           </div>
         </div>
       </CardContent>

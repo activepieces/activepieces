@@ -10,6 +10,8 @@ import {
 
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 export const UsageCards = ({
@@ -18,15 +20,24 @@ export const UsageCards = ({
   platformSubscription: PlatformBillingInformation;
 }) => {
   const { usage, plan } = platformSubscription;
+  const isBusinessPlan = plan.plan === PlanName.BUSINESS;
 
   return (
-    <div className="grid grid-cols-3 xl:grid-cols-5 gap-6">
-      <UsageCard
-        icon={Users}
-        title={t('Member seats')}
-        used={usage.seats}
-        total={plan.userSeatsLimit}
-      />
+    <div
+      className={cn(
+        'grid grid-cols-3 gap-6',
+        isBusinessPlan ? 'xl:grid-cols-4' : '2xl:grid-cols-5',
+      )}
+    >
+      {!isBusinessPlan && (
+        <UsageCard
+          icon={Users}
+          title={t('Member seats')}
+          used={usage.seats}
+          total={plan.userSeatsLimit}
+        />
+      )}
+
       <UsageCard
         icon={LayoutGrid}
         title={t('Projects')}
@@ -72,7 +83,7 @@ export default function UsageCard({
   showProgress = true,
 }: UsageCardProps) {
   const isUnlimited = isNil(total);
-  const usagePercentage = isUnlimited ? 100 : (used / total) * 100;
+  const usagePercentage = isUnlimited ? 0 : (used / total) * 100;
 
   return (
     <Card className="w-full">
@@ -99,7 +110,10 @@ export default function UsageCard({
             </div>
 
             {showProgress && (
-              <Progress value={usagePercentage} className="w-full" />
+              <Progress
+                value={usagePercentage}
+                className={cn('w-full', isUnlimited && 'bg-primary/40')}
+              />
             )}
           </div>
         </div>
