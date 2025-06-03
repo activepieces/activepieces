@@ -1,33 +1,89 @@
 import { ActionBase } from '@activepieces/pieces-framework'
-import { ApId, apId, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, BaseModelSchema, Flow, FlowVersion, isNil, McpPieceToolData, McpTool, McpToolType, TriggerType } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
 import { gt } from 'semver'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { apId } from '@activepieces/shared'
+
+type ApId = string
+
+interface BaseModel {
+    id: ApId
+    created: string
+    updated: string
+}
+
+enum McpToolType {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW'
+}
+
+enum TriggerType {
+    PIECE = 'PIECE'
+}
+
+interface McpPieceToolData {
+    pieceName: string
+    pieceVersion: string
+    actionNames: string[]
+    logoUrl: string
+    connectionExternalId?: string
+}
+
+interface McpTool {
+    id: ApId
+    created: string
+    updated: string
+    mcpId: ApId
+    type: McpToolType
+    pieceMetadata?: McpPieceToolData
+    flowId?: string
+}
+
+interface FlowVersion {
+    id: string
+    trigger: {
+        type: TriggerType
+        settings: {
+            pieceName: string
+        }
+    }
+}
+
+interface Flow {
+    id: string
+    publishedVersionId: string
+}
+
+interface AppConnectionWithoutSensitiveData {
+    id: string
+    externalId: string
+}
 
 enum McpPieceStatus {
     ENABLED = 'ENABLED',
     DISABLED = 'DISABLED',
 }
 
-const McpPiece = Type.Object({
-    ...BaseModelSchema,
-    pieceName: Type.String(),
-    connectionId: Type.Optional(ApId),
-    mcpId: ApId,
-    status: Type.Optional(Type.Enum(McpPieceStatus)),
-})
+interface McpPiece extends BaseModel {
+    pieceName: string
+    connectionId?: ApId
+    mcpId: ApId
+    status?: McpPieceStatus
+}
 
-type McpPiece = Static<typeof McpPiece>
+interface McpPieceWithConnection extends McpPiece {
+    connection?: AppConnectionWithoutSensitiveData
+}
 
-const McpPieceWithConnection = Type.Composite([
-    McpPiece,
-    Type.Object({
-        connection: Type.Optional(AppConnectionWithoutSensitiveData),
-    }),
-])
+function assertNotNullOrUndefined<T>(value: T | null | undefined, message: string): asserts value is T {
+    if (value === null || value === undefined) {
+        throw new Error(message)
+    }
+}
 
-type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
+function isNil(value: unknown): value is null | undefined {
+    return value === null || value === undefined
+}
 
 function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
     return flowVersion.trigger.type === TriggerType.PIECE && 
