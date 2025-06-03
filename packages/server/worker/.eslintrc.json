@@ -20,6 +20,18 @@
       "rules": {
         "@nx/dependency-checks": "error"
       }
+    },
+    {
+      "files": ["package.json"],
+      "parser": "jsonc-eslint-parser",
+      "rules": {
+        "@nx/dependency-checks": [
+          "error",
+          {
+            "ignoredDependencies": ["write-file-atomic"]
+          }
+        ]
+      }
     }
   ]
 }
