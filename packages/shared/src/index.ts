@@ -83,6 +83,7 @@ export * from './lib/todos'
 export * from './lib/todos/todos-request'
 export * from './lib/changelog'
 export * from './lib/mcp'
+export * from './lib/ai-providers'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/license-keys'

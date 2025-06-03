@@ -18,11 +18,11 @@ import { proxyController } from './ai-provider-proxy'
 import { aiProviderService } from './ai-provider.service'
 
 export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(proxyController, { prefix: '/v1/ai-providers/proxy' })
-    await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
-    await app.register(engineAiProviderController, {
-        prefix: '/v1/ai-providers',
-    })
+    // await app.register(proxyController, { prefix: '/v1/ai-providers/proxy' })
+    // await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
+    // await app.register(engineAiProviderController, {
+    //     prefix: '/v1/ai-providers',
+    // })
 }
 
 const engineAiProviderController: FastifyPluginCallbackTypebox = (
