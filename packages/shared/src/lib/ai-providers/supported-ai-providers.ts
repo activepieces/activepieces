@@ -15,7 +15,7 @@ export type SupportedAIProvider = {
     }[]
 }
 
-export const SupportedAIProviders: SupportedAIProvider[] = [
+export const SUPPORTED_AI_PROVIDERS: SupportedAIProvider[] = [
     {
         provider: 'openai',
         baseUrl: 'https://api.openai.com',

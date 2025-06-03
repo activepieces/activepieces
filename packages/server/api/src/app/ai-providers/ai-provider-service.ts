@@ -1,21 +1,32 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
+    AIProvider,
+    AIProviderWithoutSensitiveData,
+    ApEdition,
     apId,
-    ConfiguredAIProvider,
-    ConfiguredAIProviderWithoutSensitiveData,
     CreateAIProviderRequest,
+    ErrorCode,
     PlatformId,
     SeekPage,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-import { ConfiguredAIProviderEntity } from './ai-provider-entity'
+import { encryptUtils } from '../helper/encryption'
+import { system } from '../helper/system/system'
+import { platformService } from '../platform/platform.service'
+import { platformUtils } from '../platform/platform.utils'
+import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 
-const configuredAIProviderRepo = repoFactory<ConfiguredAIProvider>(ConfiguredAIProviderEntity)
+const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
-    async list(platformId: PlatformId): Promise<SeekPage<ConfiguredAIProviderWithoutSensitiveData>> {
-        const providers = await configuredAIProviderRepo().findBy({ platformId })
+    async list(userPlatformId: PlatformId): Promise<SeekPage<AIProviderWithoutSensitiveData>> {
+        const platformId = await this.getAIProviderPlatformId(userPlatformId)
 
-        const configuredProviders = providers.map((provider): ConfiguredAIProviderWithoutSensitiveData => ({
+        const providers = await aiProviderRepo().findBy({ platformId })
+
+        const aiProviders = providers.map((provider): AIProviderWithoutSensitiveData => ({
             id: provider.id,
             created: provider.created,
             updated: provider.updated,
@@ -23,42 +34,78 @@ export const aiProviderService = {
             platformId: provider.platformId,
         }))
 
-        // TODO (@amrdb) add pagination
         return {
-            data: configuredProviders,
+            data: aiProviders,
             next: null,
             previous: null,
         }
     },
 
-    async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<ConfiguredAIProvider> {
-        const newProvider = {
-            id: apId(),
-            platformId,
-            provider: request.provider,
-            apiKey: undefined,
-        }
+    async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        cloudAdminGuard(platformId)
 
-        const savedProvider = await configuredAIProviderRepo().save(newProvider)
-        return savedProvider
+        await aiProviderRepo().upsert({
+            id: apId(),
+            config: encryptUtils.encryptObject({
+                apiKey: request.apiKey,
+            }),
+            provider: request.provider,
+            platformId,
+        }, ['provider', 'platformId'])
     },
 
-    async delete(platformId: PlatformId, id: string): Promise<void> {
-        await configuredAIProviderRepo().delete({
-            id,
+    async delete(platformId: PlatformId, provider: string): Promise<void> {
+        cloudAdminGuard(platformId)
+
+        await aiProviderRepo().delete({
             platformId,
+            provider,
         })
     },
 
-    async getApiKey(platformId: PlatformId, provider: string): Promise<string> {
-        const configuredProvider = await configuredAIProviderRepo().findOneOrFail({
+    async getApiKey(provider: string, platformId: PlatformId): Promise<string> {
+        const aiProvider = await aiProviderRepo().findOneOrFail({
             where: {
-                platformId,
                 provider,
+                platformId,
+            },
+            select: {
+                config: {
+                    iv: true,
+                    data: true,
+                },
             },
         })
 
-        return configuredProvider.apiKey
+        return encryptUtils.decryptObject<AIProvider['config']>(aiProvider.config).apiKey
     },
+
+    async getAIProviderPlatformId(userPlatformId: string): Promise<string> {
+        if (!isCloudEdition) return userPlatformId
+
+        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        if (cloudPlatformId === userPlatformId) return cloudPlatformId
+
+        const platform = await platformService.getOneWithPlanOrThrow(userPlatformId)
+        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
+    },
+    
 }
+
+// TODO (@amrdb) cleanup this guard, eeAdmin
+function cloudAdminGuard(platformId: PlatformId): void {
+    if (isCloudEdition) {
+        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        if (platformId !== cloudPlatformId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'invalid route for principal type',
+                },
+            })
+        }
+    }
+}
+
 

@@ -21,7 +21,7 @@ export const flagService = {
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
         return flagRepo().findOneBy({ id: flagId })
     },
-    async getAll(): Promise<Flag[]> {
+    async getAll(platformId: string | null): Promise<Flag[]> {
         const flags = await flagRepo().findBy({
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
@@ -29,6 +29,7 @@ export const flagService = {
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -102,6 +103,12 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: system.getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: this.isCloudPlatform(platformId),
                 created,
                 updated,
             },
@@ -273,6 +280,8 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
+        console.log('platformId', platformId)
+        console.log('cloudPlatformId', cloudPlatformId)
         return platformId === cloudPlatformId
     },
 }

@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/shared';
 import axios, {
   AxiosError,
   AxiosRequestConfig,
@@ -8,7 +9,6 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { ErrorCode } from '@activepieces/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
@@ -16,19 +16,6 @@ export const API_BASE_URL =
     : window.location.origin;
 export const API_URL = `${API_BASE_URL}/api`;
 
-const disallowedRoutes = [
-  '/v1/managed-authn/external-token',
-  '/v1/authentication/sign-in',
-  '/v1/authentication/sign-up',
-  '/v1/authn/local/verify-email',
-  '/v1/flags',
-  '/v1/authn/federated/login',
-  '/v1/authn/federated/claim',
-  '/v1/otp',
-  '/v1/human-input',
-  '/v1/authn/local/reset-password',
-  '/v1/user-invitations/accept',
-];
 //This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios
 const ignroedGlobalErrorHandlerRoutes = ['/v1/users/me'];
 function isUrlRelative(url: string) {
@@ -57,18 +44,14 @@ function request<TResponse>(
 ): Promise<TResponse> {
   const resolvedUrl = !isUrlRelative(url) ? url : `${API_URL}${url}`;
   const isApWebsite = resolvedUrl.startsWith(API_URL);
-  const unAuthenticated = disallowedRoutes.some((route) =>
-    url.startsWith(route),
-  );
+  const authToken = authenticationSession.getToken();
   return axios({
     url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
       Authorization:
-        unAuthenticated || !isApWebsite
-          ? undefined
-          : `Bearer ${authenticationSession.getToken()}`,
+        !isApWebsite || !authToken ? undefined : `Bearer ${authToken}`,
     },
   })
     .then((response) =>

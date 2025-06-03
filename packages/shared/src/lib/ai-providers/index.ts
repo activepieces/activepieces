@@ -1,21 +1,23 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 
-export const ConfiguredAIProvider = Type.Object({
+export const AIProvider = Type.Object({
     ...BaseModelSchema,
-    apiKey: Type.String(),
+    config: Type.Object({
+        apiKey: Type.String(),
+    }),
     provider: Type.String({ minLength: 1 }),
     platformId: Type.String(),
 })
 
-export type ConfiguredAIProvider = Static<typeof ConfiguredAIProvider>
+export type AIProvider = Static<typeof AIProvider>
 
-export const ConfiguredAIProviderWithoutSensitiveData = Type.Omit(ConfiguredAIProvider, ['apiKey'])
-export type ConfiguredAIProviderWithoutSensitiveData = Static<typeof ConfiguredAIProviderWithoutSensitiveData>
+export const AIProviderWithoutSensitiveData = Type.Omit(AIProvider, ['config'])
+export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
 
 export const CreateAIProviderRequest = Type.Object({
     provider: Type.String({ minLength: 1 }),
-    apiKey: Type.Optional(Type.String()),
+    apiKey: Type.String(),
 })
 
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>

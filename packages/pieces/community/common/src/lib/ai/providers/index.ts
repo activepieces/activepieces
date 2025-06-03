@@ -1,8 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
 import {
-  AiProviderWithoutSensitiveData,
+  AIProviderWithoutSensitiveData,
   isNil,
   SeekPage,
+  SUPPORTED_AI_PROVIDERS,
 } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import { httpClient, HttpMethod } from '../../http';
@@ -98,14 +99,14 @@ export const AI_PROVIDERS = [
 export const aiProps = (
   supported: 'text' | 'image' | 'function' | 'moderation'
 ) => ({
-  provider: Property.Dropdown<AiProvider, true>({
+  provider: Property.Dropdown<string, true>({
     displayName: 'Provider',
     required: true,
     defaultValue: 'openai',
     refreshers: [],
     options: async (_, ctx) => {
-      const providers = await httpClient.sendRequest<
-        SeekPage<AiProviderWithoutSensitiveData>
+      const { body: { data: providers }} = await httpClient.sendRequest<
+        SeekPage<AIProviderWithoutSensitiveData>
       >({
         method: HttpMethod.GET,
         url: `${ctx.server.apiUrl}v1/ai-providers`,
@@ -113,7 +114,7 @@ export const aiProps = (
           Authorization: `Bearer ${ctx.server.token}`,
         },
       });
-      if (providers.body.data.length === 0) {
+      if (providers.length === 0) {
         return {
           disabled: true,
           options: [],
@@ -121,20 +122,19 @@ export const aiProps = (
         };
       }
 
-      const providersWithMetadata = providers.body.data.flatMap((p) => {
-        const providerMetadata = AI_PROVIDERS.find(
-          (meta) =>
-            meta.value === p.provider &&
-            meta.models.some((m) => m.supported.includes(supported))
+      const providersWithMetadata = providers.flatMap((p) => {
+        const providerMetadata = SUPPORTED_AI_PROVIDERS.find(
+          (provider) =>
+            provider.provider === p.provider &&
+            provider.models.some((model) => model.supported.includes(supported))
         );
         if (isNil(providerMetadata)) {
           return [];
         }
         return [
           {
-            value: providerMetadata.value,
-
-            label: providerMetadata.label,
+            value: providerMetadata.provider,
+            label: providerMetadata.displayName,
             models: providerMetadata.models,
           },
         ];
@@ -156,14 +156,13 @@ export const aiProps = (
       if (isNil(provider)) {
         return {
           disabled: true,
-
           options: [],
           placeholder: 'Select AI Provider',
         };
       }
-      const models = AI_PROVIDERS.find(
-        (p) => p.value === provider
-      )?.models.filter((m) => m.supported.includes(supported));
+      const models = SUPPORTED_AI_PROVIDERS.find(
+        (p) => p.provider === provider
+      )?.models.filter((model) => model.supported.includes(supported));
       return {
         disabled: isNil(models),
         options: models ?? [],

@@ -1,31 +1,39 @@
-import { ConfiguredAIProvider, Platform } from '@activepieces/shared'
+import { AIProvider, Platform } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSON_COLUMN_TYPE } from '../database/database-common'
+import { EncryptedObject } from '../helper/encryption'
 
-export type ConfiguredAIProviderSchema = ConfiguredAIProvider & {
+const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['config']), Type.Object({
+    config: EncryptedObject,
+})])
+
+type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
+
+export type AIProviderSchema = AIProviderEncrypted & {
     platform: Platform
 }
 
-export const ConfiguredAIProviderEntity = new EntitySchema<ConfiguredAIProviderSchema>({
-    name: 'configured_ai_provider',
+export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
+    name: 'ai_provider',
     columns: {
         ...BaseColumnSchemaPart,
-        apiKey: {
-            type: String,
-            nullable: true,
+        config: {
+            type: JSON_COLUMN_TYPE,
+            nullable: false,
         },
         provider: {
             type: String,
             nullable: false,
         },
         platformId: {
-            type: String,
+            ...ApIdSchema,
             nullable: false,
         },
     },
     indices: [
         {
-            name: 'idx_configured_ai_provider_platform_id_provider',
+            name: 'idx_ai_provider_platform_id_provider',
             columns: ['platformId', 'provider'],
             unique: true,
         },
@@ -38,7 +46,7 @@ export const ConfiguredAIProviderEntity = new EntitySchema<ConfiguredAIProviderS
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_configured_ai_provider_platform_id',
+                foreignKeyConstraintName: 'fk_ai_provider_platform_id',
             },
         },
     },
