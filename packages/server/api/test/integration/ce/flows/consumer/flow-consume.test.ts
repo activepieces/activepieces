@@ -156,13 +156,13 @@ describe('flow execution', () => {
                 id: mockFlowRun.id,
             })
       
+        expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
             .getRepository('file')
             .findOneByOrFail({
                 id: flowRun.logsFileId,
             })
-            expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const decompressedData = await fileCompressor.decompress({
             data: file.data,
