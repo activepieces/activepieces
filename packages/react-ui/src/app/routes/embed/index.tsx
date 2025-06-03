@@ -3,11 +3,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
+import { memoryRouter } from '@/app/router';
 import { useEmbedding } from '@/components/embed-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
-import { parentWindow } from '@/lib/utils';
+import { combinePaths, parentWindow } from '@/lib/utils';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
@@ -17,6 +18,7 @@ import {
   ActivepiecesClientInit,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
+  ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
 const notifyVendorPostAuthentication = () => {
@@ -30,6 +32,52 @@ const notifyVendorPostAuthentication = () => {
     data: {},
   };
   parentWindow.postMessage(configurationFinishedEvent, '*');
+};
+
+const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
+  const handleVendorRouteChange = (
+    event: MessageEvent<ActivepiecesVendorRouteChanged>,
+  ) => {
+    if (
+      event.source === parentWindow &&
+      event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
+    ) {
+      const targetRoute = event.data.data.vendorRoute;
+      const targetRouteRequiresProjectId =
+        targetRoute.includes('/runs') ||
+        targetRoute.includes('/flows') ||
+        targetRoute.includes('/connections');
+      if (!targetRouteRequiresProjectId) {
+        memoryRouter.navigate(targetRoute);
+      } else {
+        memoryRouter.navigate(
+          combinePaths({
+            secondPath: targetRoute,
+            firstPath: `/projects/${projectId}`,
+          }),
+        );
+      }
+    }
+  };
+  window.addEventListener('message', handleVendorRouteChange);
+};
+
+const handleClientNavigation = () => {
+  memoryRouter.subscribe((state) => {
+    const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
+      /\/projects\/[^/]+/,
+      '',
+    );
+    parentWindow.postMessage(
+      {
+        type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+        data: {
+          route: pathNameWithoutProjectOrProjectId + state.location.search,
+        },
+      },
+      '*',
+    );
+  });
 };
 
 const EmbedPage = React.memo(() => {
@@ -79,9 +127,10 @@ const EmbedPage = React.memo(() => {
                 emitHomeButtonClickedEvent:
                   event.data.data.emitHomeButtonClickedEvent ?? false,
               });
-
               //previously initialRoute was optional
               navigate(initialRoute);
+              handleVendorNavigation({ projectId: data.projectId });
+              handleClientNavigation();
               notifyVendorPostAuthentication();
             },
             onError: (error) => {
