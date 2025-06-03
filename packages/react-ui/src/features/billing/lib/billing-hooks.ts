@@ -2,7 +2,12 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
-import { UpdateSubscriptionParams } from '@activepieces/ee-shared';
+import { api } from '@/lib/api';
+import {
+  CreateSubscriptionParams,
+  UpdateSubscriptionParams,
+} from '@activepieces/ee-shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
@@ -35,17 +40,33 @@ export const billingMutations = {
         setIsOpen(false);
         toast({
           title: t('Success'),
-          description: t('Plan upgraded successfully'),
+          description: t('Plan updated successfully'),
         });
       },
-      onError: () => {
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.QUOTA_EXCEEDED_DOWNGRADE) {
+            toast({
+              title: t('Plan Change Not Possible'),
+              description: t(
+                `Cannot downgrade because you exceed the limits for: ${apError.params.metrics.join(
+                  ', ',
+                )}`,
+              ),
+              variant: 'default',
+              duration: 5000,
+            });
+            return;
+          }
+        }
         toast(INTERNAL_ERROR_TOAST);
       },
     });
   },
   useCreateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
     return useMutation({
-      mutationFn: async (params: UpdateSubscriptionParams) => {
+      mutationFn: async (params: CreateSubscriptionParams) => {
         const checkoutSessionURl = await platformBillingApi.createSubscription(
           params,
         );

@@ -1,5 +1,5 @@
-import { PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { CreateSubscriptionParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +8,7 @@ import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-author
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
+
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -28,25 +29,16 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
     })
 
-    fastify.post('/create-subscription', UpgradeRequest, async (request) => {
+    fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const { plan, extraUsers } = request.body
-
-        if (plan !== PlanName.BUSINESS &&  !isNil(extraUsers) && extraUsers > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Extra users are only available for business plan',
-                },
-            })
-        }
+        const { plan } = request.body
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
             customerId,
-            { plan, extraUsers },
+            { plan },
         )
 
     })
@@ -58,34 +50,14 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         const { plan, extraUsers } = request.body
 
-        if (plan !== PlanName.BUSINESS &&  !isNil(extraUsers) && extraUsers > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Extra users are only available for business plan',
-                },
-            })
+        const currentPlan = platformBilling.plan as PlanName ?? PlanName.FREE
+        const upgradeExperience = isUpgradeExperience(currentPlan, plan)
+
+        if (!upgradeExperience) {
+            return platformPlanService(request.log).handleDowngrade(platformBilling, { plan })
         }
 
-        assertNotNullOrUndefined(platformBilling.stripeSubscriptionId, 'Stripe subscription id is not set')
-        await stripeHelper(request.log).updateSubscription(
-            platformBilling.stripeSubscriptionId,
-            { plan, extraUsers },
-        )
-
-        request.log.info(`${plan} subscription updated for platform ${platformBilling.platformId}`)
-        const planLimits = platformPlanService(request.log).getPlanLimits(plan)
-        if (plan === PlanName.BUSINESS && !isNil(extraUsers) && Number(extraUsers) > 0) {
-            planLimits.userSeatsLimit = (planLimits.userSeatsLimit ?? 0) + Number(extraUsers)
-        }
-
-        const platformId = platformBilling.platformId
-        const platformPlan = await platformPlanService(request.log).update({ 
-            platformId,
-            ...planLimits,
-        })
-
-        return platformPlan
+        return platformPlanService(request.log).handleUpgrade(platformBilling, { plan, extraUsers })
     })
 }
 
@@ -101,6 +73,16 @@ const InfoRequest = {
 const UpgradeRequest = {
     schema: {
         body: UpdateSubscriptionParamsSchema,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+
+const CreateSubscriptionRequest = {
+    schema: {
+        body: CreateSubscriptionParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],

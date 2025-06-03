@@ -11,8 +11,8 @@ import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 import {
   ApSubscriptionStatus,
+  CreateSubscriptionParams,
   PlanName,
-  UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
@@ -43,11 +43,11 @@ export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
     ApSubscriptionStatus.ACTIVE;
   const isEnterprisePlan = plan.name === PlanName.ENTERPRISE;
 
-  const handleSelect = (params: UpdateSubscriptionParams) => {
+  const handleSelect = (params: CreateSubscriptionParams) => {
     if (!hasActiveSubscription) {
       createSubscription(params);
     } else {
-      updateSubscription(params);
+      updateSubscription({ plan: params.plan });
     }
   };
 

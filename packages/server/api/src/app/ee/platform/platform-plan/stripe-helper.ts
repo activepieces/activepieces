@@ -1,4 +1,4 @@
-import {  getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared'
+import {  CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -50,7 +50,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     
     createSubscriptionCheckoutUrl: async (
         customerId: string,
-        params: UpdateSubscriptionParams,
+        params: CreateSubscriptionParams,
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
@@ -62,13 +62,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             price: basePriceId,
             quantity: 1,
         })
-
-        if (params.plan === PlanName.BUSINESS && !isNil(params.extraUsers) && params.extraUsers > 0) {
-            lineItems.push({
-                price: USER_PRICE_ID,
-                quantity: params.extraUsers!,
-            })
-        }
         
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],

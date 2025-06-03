@@ -1,5 +1,8 @@
 import { api } from '@/lib/api';
-import { UpdateSubscriptionParams } from '@activepieces/ee-shared';
+import {
+  CreateSubscriptionParams,
+  UpdateSubscriptionParams,
+} from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
@@ -15,7 +18,7 @@ export const platformBillingApi = {
       params,
     );
   },
-  createSubscription(params: UpdateSubscriptionParams) {
+  createSubscription(params: CreateSubscriptionParams) {
     return api.post<string>('/v1/platform-billing/create-subscription', params);
   },
 };

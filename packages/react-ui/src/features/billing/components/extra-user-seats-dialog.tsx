@@ -1,4 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +14,9 @@ import {
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { useDialogStore } from '@/lib/dialogs-store';
-import { PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
+import { PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
+
+import { billingMutations } from '../lib/billing-hooks';
 
 export const ExtraSeatsDialog = () => {
   const { setDialog, dialogs } = useDialogStore();
@@ -20,6 +24,13 @@ export const ExtraSeatsDialog = () => {
   const [extraSeats, setExtraSeats] = useState([1]);
   const seatCount = extraSeats[0];
   const totalMonthlyCost = seatCount * PRICE_PER_EXTRA_USER;
+
+  const queryClient = useQueryClient();
+  const { mutate: addUserSeats, isPending } =
+    billingMutations.useUpdateSubscription(
+      () => setDialog('addUserSeats', false),
+      queryClient,
+    );
 
   return (
     <Dialog
@@ -86,8 +97,20 @@ export const ExtraSeatsDialog = () => {
           >
             Cancel
           </Button>
-          <Button onClick={() => setDialog('addUserSeats', false)}>
-            Save Changes
+          <Button
+            onClick={() =>
+              addUserSeats({ extraUsers: seatCount, plan: PlanName.BUSINESS })
+            }
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Adding Seats
+              </>
+            ) : (
+              'Add Seats'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,4 @@
-import { PiecesFilterType } from '@activepieces/shared'
+import { PiecesFilterType, PlatformPlanLimits, PlatformUsage, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 
@@ -25,6 +25,13 @@ export enum PlanName {
     BUSINESS = 'business',
     ENTERPRISE = 'enterprise',
 }
+
+export const CreateSubscriptionParamsSchema = Type.Object({
+    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS), Type.Literal(PlanName.FREE)]),
+})
+export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
+
+
 
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS), Type.Literal(PlanName.FREE)]),
@@ -61,4 +68,37 @@ export function getPlanPriceId(stripeKey: string | undefined) {
             [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
             [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
         }
+}
+
+export const isUpgradeExperience = (currentPlan: PlanName, newPlan: PlanName) => {
+    if (currentPlan === newPlan) {
+        return true;
+    }
+
+    return currentPlan === PlanName.FREE && newPlan === PlanName.PLUS || currentPlan === PlanName.PLUS && newPlan === PlanName.BUSINESS
+}
+
+export const checkCanDowngrade = (newPlanLimits: Partial<PlatformPlanLimits>, currentPlatformUsage: PlatformUsage): {canDowngrade: boolean, metrics: PlatformUsageMetric[]} => {
+    const exceededMetrics: PlatformUsageMetric[] = []
+
+    if (newPlanLimits.userSeatsLimit && currentPlatformUsage.seats > newPlanLimits.userSeatsLimit) {
+        exceededMetrics.push(PlatformUsageMetric.USER_SEATS)
+    }
+
+    if (newPlanLimits.projectsLimit && currentPlatformUsage.projects > newPlanLimits.projectsLimit) {
+        exceededMetrics.push(PlatformUsageMetric.PROJECTS)
+    }
+
+    if (newPlanLimits.activeFlowsLimit && currentPlatformUsage.activeFlows > newPlanLimits.activeFlowsLimit) {
+        exceededMetrics.push(PlatformUsageMetric.ACTIVE_FLOWS)
+    }
+
+    if (newPlanLimits.tablesLimit && currentPlatformUsage.tables > newPlanLimits.tablesLimit) {
+        exceededMetrics.push(PlatformUsageMetric.TABLES)
+    }
+
+    return {
+        canDowngrade: exceededMetrics.length === 0,
+        metrics: exceededMetrics,
+    }
 }
