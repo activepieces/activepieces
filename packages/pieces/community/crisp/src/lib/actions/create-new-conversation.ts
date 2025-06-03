@@ -28,6 +28,7 @@ export const createNewConversation = createAction({
       url: `https://api.crisp.chat/v1/website/${website_id}/conversation`,
       headers: {
         'X-Crisp-Tier': 'plugin',
+        'Content-Type': 'application/json',
         'Authorization': `Basic ${Buffer.from(
           `${auth.identifier}:${auth.key}`
         ).toString('base64')}`,
