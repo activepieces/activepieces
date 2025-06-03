@@ -10,17 +10,9 @@ export const updateRow = createAction({
   props: {
     sheet_id: smartsheetCommon.sheet_id,
 
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      description: 'The ID of the row to update (required)',
-      required: true,
-    }),
+    row_id: smartsheetCommon.row_id,
 
-    cells_data: Property.LongText({
-      displayName: 'Cells Data (JSON)',
-      description: 'JSON array of cell objects to update. Format: [{"columnId": 123, "value": "new value"}, {"columnId": 456, "formula": "=SUM(A1:A10)"}]',
-      required: false,
-    }),
+    cells: smartsheetCommon.cells,
 
     position_type: Property.StaticDropdown({
       displayName: 'Change Position',
@@ -40,11 +32,12 @@ export const updateRow = createAction({
       },
     }),
 
-    reference_row_id: Property.Number({
-      displayName: 'Reference Row ID',
-      description: 'Row ID to use as reference for positioning (required for above/below/child positioning)',
+    reference_row_id: {
+      ...smartsheetCommon.row_id,
+      displayName: 'Reference Row',
+      description: 'Row to use as reference for positioning (required for above/below/child positioning)',
       required: false,
-    }),
+    },
 
     expanded: Property.Checkbox({
       displayName: 'Expanded',
@@ -96,7 +89,7 @@ export const updateRow = createAction({
     const {
       sheet_id,
       row_id,
-      cells_data,
+      cells,
       position_type,
       reference_row_id,
       expanded,
@@ -115,57 +108,96 @@ export const updateRow = createAction({
       id: row_id,
     };
 
-    if (cells_data) {
-      try {
-        const cellsArray = JSON.parse(cells_data as string);
-        if (!Array.isArray(cellsArray)) {
-          throw new Error('Cells data must be a JSON array');
-        }
+    // Transform dynamic cells data into proper Smartsheet format
+    const cellsData = cells as Record<string, any>;
+    const transformedCells: any[] = [];
 
-        rowObj.cells = cellsArray.map((cell: any) => {
-          if (!cell.columnId) {
-            throw new Error('Each cell must have a columnId');
-          }
-
-          const cellObj: any = {
-            columnId: cell.columnId,
-          };
-
-          if (cell.formula) {
-            cellObj.formula = cell.formula;
-          } else if (cell.value !== undefined && cell.value !== '') {
-            cellObj.value = cell.value;
-          }
-
-          if (cell.strict !== undefined) {
-            cellObj.strict = cell.strict;
-          }
-          if (cell.overrideValidation) {
-            cellObj.overrideValidation = cell.overrideValidation;
-          }
-
-          if (cell.hyperlink) {
-            cellObj.hyperlink = cell.hyperlink;
-          }
-
-          if (cell.linkInFromCell) {
-            cellObj.linkInFromCell = cell.linkInFromCell;
-            cellObj.value = null;
-          }
-
-          if (cell.image) {
-            cellObj.image = cell.image;
-          }
-
-          if (cell.format) {
-            cellObj.format = cell.format;
-          }
-
-          return cellObj;
-        });
-      } catch (error: any) {
-        throw new Error(`Invalid cells data JSON: ${error.message}`);
+    for (const [key, value] of Object.entries(cellsData)) {
+      if (value === undefined || value === null || value === '') {
+        continue; // Skip empty values
       }
+
+      let columnId: number;
+      const cellObj: any = {};
+
+      if (key.startsWith('column_')) {
+        // Regular column value
+        columnId = parseInt(key.replace('column_', ''));
+        cellObj.columnId = columnId;
+        cellObj.value = value;
+      } else if (key.startsWith('formula_')) {
+        // Formula value
+        columnId = parseInt(key.replace('formula_', ''));
+        cellObj.columnId = columnId;
+        cellObj.formula = value;
+      } else if (key.startsWith('hyperlink_url_')) {
+        // Hyperlink URL
+        columnId = parseInt(key.replace('hyperlink_url_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.url = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('hyperlink_sheet_')) {
+        // Hyperlink to sheet
+        columnId = parseInt(key.replace('hyperlink_sheet_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.sheetId = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('hyperlink_report_')) {
+        // Hyperlink to report
+        columnId = parseInt(key.replace('hyperlink_report_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.reportId = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('strict_')) {
+        // Strict parsing setting
+        columnId = parseInt(key.replace('strict_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId };
+          transformedCells.push(existingCell);
+        }
+        existingCell.strict = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('override_validation_')) {
+        // Override validation setting
+        columnId = parseInt(key.replace('override_validation_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId };
+          transformedCells.push(existingCell);
+        }
+        existingCell.overrideValidation = value;
+        continue; // Don't add as separate cell
+      } else {
+        continue; // Skip unknown keys
+      }
+
+      transformedCells.push(cellObj);
+    }
+
+    // Only add cells array if we have cells to update
+    if (transformedCells.length > 0) {
+      rowObj.cells = transformedCells;
     }
 
     if (position_type && position_type !== 'none') {
@@ -228,6 +260,7 @@ export const updateRow = createAction({
         success: true,
         row: result,
         message: 'Row updated successfully',
+        cells_processed: transformedCells.length,
       };
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -243,5 +276,5 @@ export const updateRow = createAction({
 
       throw new Error(`Failed to update row: ${error.message}`);
     }
-  },
+  }
 });

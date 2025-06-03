@@ -10,11 +10,7 @@ export const findAttachmentByRowId = createAction({
   description: 'Get all attachments for a specific row in a Smartsheet, including row and discussion-level attachments with comprehensive pagination and filtering options',
   props: {
     sheet_id: smartsheetCommon.sheet_id,
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      description: 'The ID of the row to get attachments for',
-      required: true,
-    }),
+    row_id: smartsheetCommon.row_id,
 
     // Pagination options
     include_all: Property.Checkbox({

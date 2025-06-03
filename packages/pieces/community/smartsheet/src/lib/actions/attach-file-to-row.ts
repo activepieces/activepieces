@@ -10,11 +10,7 @@ export const attachFileToRow = createAction({
   description: 'Attach a file or URL to a specific row in a Smartsheet with support for various attachment types',
   props: {
     sheet_id: smartsheetCommon.sheet_id,
-    row_id: Property.Number({
-      displayName: 'Row ID',
-      description: 'The ID of the row to attach the file to',
-      required: true,
-    }),
+    row_id: smartsheetCommon.row_id,
 
     attachment_type: Property.StaticDropdown({
       displayName: 'Attachment Type',

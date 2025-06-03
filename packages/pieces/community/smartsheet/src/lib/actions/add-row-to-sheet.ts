@@ -9,55 +9,7 @@ export const addRowToSheet = createAction({
   description: 'Add one or more rows to a Smartsheet with comprehensive options for positioning, formatting, and validation',
   props: {
     sheet_id: smartsheetCommon.sheet_id,
-    cells: Property.Array({
-      displayName: 'Cells',
-      description: 'Array of cell objects with columnId and value. Each cell must have a columnId and either a value or formula.',
-      required: true,
-      properties: {
-        columnId: Property.Number({
-          displayName: 'Column ID',
-          description: 'The ID of the column this cell belongs to',
-          required: true,
-        }),
-        value: Property.ShortText({
-          displayName: 'Value',
-          description: 'The cell value (use either value or formula, not both)',
-          required: false,
-        }),
-        formula: Property.ShortText({
-          displayName: 'Formula',
-          description: 'The formula for the cell (use either value or formula, not both)',
-          required: false,
-        }),
-        strict: Property.Checkbox({
-          displayName: 'Strict Validation',
-          description: 'Set to false to enable lenient parsing of cell values',
-          required: false,
-          defaultValue: true,
-        }),
-        overrideValidation: Property.Checkbox({
-          displayName: 'Override Validation',
-          description: 'Allow cell value outside of validation limits (requires strict=false)',
-          required: false,
-          defaultValue: false,
-        }),
-        hyperlink_url: Property.ShortText({
-          displayName: 'Hyperlink URL',
-          description: 'Optional URL to make this cell a hyperlink',
-          required: false,
-        }),
-        hyperlink_sheet_id: Property.Number({
-          displayName: 'Hyperlink Sheet ID',
-          description: 'Optional Sheet ID to link to another sheet',
-          required: false,
-        }),
-        hyperlink_report_id: Property.Number({
-          displayName: 'Hyperlink Report ID',
-          description: 'Optional Report ID to link to a report',
-          required: false,
-        }),
-      },
-    }),
+    cells: smartsheetCommon.cells,
 
     // Location specifiers (one is required)
     location_type: Property.StaticDropdown({
@@ -76,11 +28,12 @@ export const addRowToSheet = createAction({
       },
     }),
 
-    sibling_id: Property.Number({
-      displayName: 'Reference Row ID',
-      description: 'Row ID to use as reference for positioning (required for above/below/child positioning)',
+    sibling_id: {
+      ...smartsheetCommon.row_id,
+      displayName: 'Reference Row',
+      description: 'Row to use as reference for positioning (required for above/below/child positioning)',
       required: false,
-    }),
+    },
 
     // Additional row properties
     expanded: Property.Checkbox({
@@ -144,37 +97,96 @@ export const addRowToSheet = createAction({
       throw new Error(`Reference Row ID is required when using '${location_type}' positioning`);
     }
 
-    // Transform cells array into proper Smartsheet format
-    const transformedCells = (cells as any[]).map((cell: any) => {
-      const cellObj: any = {
-        columnId: cell.columnId,
-      };
+    // Transform dynamic cells data into proper Smartsheet format
+    const cellsData = cells as Record<string, any>;
+    const transformedCells: any[] = [];
 
-      // Add value or formula (not both)
-      if (cell.formula) {
-        cellObj.formula = cell.formula;
-      } else if (cell.value !== undefined && cell.value !== '') {
-        cellObj.value = cell.value;
+    for (const [key, value] of Object.entries(cellsData)) {
+      if (value === undefined || value === null || value === '') {
+        continue; // Skip empty values
       }
 
-      // Add validation settings
-      if (cell.strict !== undefined) {
-        cellObj.strict = cell.strict;
-      }
-      if (cell.overrideValidation) {
-        cellObj.overrideValidation = cell.overrideValidation;
+      let columnId: number;
+      const cellObj: any = {};
+
+      if (key.startsWith('column_')) {
+        // Regular column value
+        columnId = parseInt(key.replace('column_', ''));
+        cellObj.columnId = columnId;
+        cellObj.value = value;
+      } else if (key.startsWith('formula_')) {
+        // Formula value
+        columnId = parseInt(key.replace('formula_', ''));
+        cellObj.columnId = columnId;
+        cellObj.formula = value;
+      } else if (key.startsWith('hyperlink_url_')) {
+        // Hyperlink URL
+        columnId = parseInt(key.replace('hyperlink_url_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.url = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('hyperlink_sheet_')) {
+        // Hyperlink to sheet
+        columnId = parseInt(key.replace('hyperlink_sheet_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.sheetId = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('hyperlink_report_')) {
+        // Hyperlink to report
+        columnId = parseInt(key.replace('hyperlink_report_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId, hyperlink: {} };
+          transformedCells.push(existingCell);
+        }
+        if (!existingCell.hyperlink) existingCell.hyperlink = {};
+        existingCell.hyperlink.reportId = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('strict_')) {
+        // Strict parsing setting
+        columnId = parseInt(key.replace('strict_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId };
+          transformedCells.push(existingCell);
+        }
+        existingCell.strict = value;
+        continue; // Don't add as separate cell
+      } else if (key.startsWith('override_validation_')) {
+        // Override validation setting
+        columnId = parseInt(key.replace('override_validation_', ''));
+        // Find existing cell or create new one
+        let existingCell = transformedCells.find(cell => cell.columnId === columnId);
+        if (!existingCell) {
+          existingCell = { columnId };
+          transformedCells.push(existingCell);
+        }
+        existingCell.overrideValidation = value;
+        continue; // Don't add as separate cell
+      } else {
+        continue; // Skip unknown keys
       }
 
-      // Add hyperlink if specified
-      if (cell.hyperlink_url || cell.hyperlink_sheet_id || cell.hyperlink_report_id) {
-        cellObj.hyperlink = {};
-        if (cell.hyperlink_url) cellObj.hyperlink.url = cell.hyperlink_url;
-        if (cell.hyperlink_sheet_id) cellObj.hyperlink.sheetId = cell.hyperlink_sheet_id;
-        if (cell.hyperlink_report_id) cellObj.hyperlink.reportId = cell.hyperlink_report_id;
-      }
+      transformedCells.push(cellObj);
+    }
 
-      return cellObj;
-    });
+    if (transformedCells.length === 0) {
+      throw new Error('At least one cell value must be provided');
+    }
 
     // Build the row object with location specifiers
     const rowObj: any = {
@@ -235,6 +247,7 @@ export const addRowToSheet = createAction({
         success: true,
         row: result,
         message: 'Row added successfully',
+        cells_processed: transformedCells.length,
       };
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -250,5 +263,5 @@ export const addRowToSheet = createAction({
 
       throw new Error(`Failed to add row: ${error.message}`);
     }
-  },
+  }
 });
