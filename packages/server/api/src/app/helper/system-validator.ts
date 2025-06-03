@@ -159,6 +159,7 @@ const systemPropValidators: {
 
     // MCP
     [AppSystemProp.MAX_MCPS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
 }
 
 

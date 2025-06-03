@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.59.0",
-  "rcVersion": "0.60.0-rc.0",
+  "version": "0.60.1",
+  "rcVersion": "0.61.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -130,7 +130,7 @@
     "cli-table3": "0.6.3",
     "clipboard": "2.0.11",
     "clsx": "2.1.1",
-    "cmdk": "^0.2.1",
+    "cmdk": "^1.1.1",
     "codemirror": "5.65.14",
     "color": "4.2.3",
     "commander": "11.1.0",
