@@ -1,12 +1,12 @@
 import { ActionBase } from '@activepieces/pieces-framework'
+import { apId } from '@activepieces/shared'
 import { gt } from 'semver'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { apId } from '@activepieces/shared'
 
 type ApId = string
 
-interface BaseModel {
+type BaseModel = {
     id: ApId
     created: string
     updated: string
@@ -14,14 +14,14 @@ interface BaseModel {
 
 enum McpToolType {
     PIECE = 'PIECE',
-    FLOW = 'FLOW'
+    FLOW = 'FLOW',
 }
 
 enum TriggerType {
-    PIECE = 'PIECE'
+    PIECE = 'PIECE',
 }
 
-interface McpPieceToolData {
+type McpPieceToolData = {
     pieceName: string
     pieceVersion: string
     actionNames: string[]
@@ -29,7 +29,7 @@ interface McpPieceToolData {
     connectionExternalId?: string
 }
 
-interface McpTool {
+type McpTool = {
     id: ApId
     created: string
     updated: string
@@ -39,7 +39,7 @@ interface McpTool {
     flowId?: string
 }
 
-interface FlowVersion {
+type FlowVersion = {
     id: string
     trigger: {
         type: TriggerType
@@ -49,12 +49,12 @@ interface FlowVersion {
     }
 }
 
-interface Flow {
+type Flow = {
     id: string
     publishedVersionId: string
 }
 
-interface AppConnectionWithoutSensitiveData {
+type AppConnectionWithoutSensitiveData = {
     id: string
     externalId: string
 }
@@ -64,16 +64,16 @@ enum McpPieceStatus {
     DISABLED = 'DISABLED',
 }
 
-interface McpPiece extends BaseModel {
+type McpPiece = {
     pieceName: string
     connectionId?: ApId
     mcpId: ApId
     status?: McpPieceStatus
-}
+} & BaseModel
 
-interface McpPieceWithConnection extends McpPiece {
+type McpPieceWithConnection = {
     connection?: AppConnectionWithoutSensitiveData
-}
+} & McpPiece
 
 function assertNotNullOrUndefined<T>(value: T | null | undefined, message: string): asserts value is T {
     if (value === null || value === undefined) {

@@ -198,7 +198,7 @@ export function McpPieceDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
-          <DialogTitle className="text-2xl font-bold">
+          <DialogTitle>
             {selectedPiece ? (
               <div className="flex items-center gap-2">
                 <Tooltip>
@@ -222,9 +222,6 @@ export function McpPieceDialog({
               t('Add Tool')
             )}
           </DialogTitle>
-          <DialogDescription className="px-3">
-            {t('Select actions to add to your mcp tool')}
-          </DialogDescription>
         </DialogHeader>
         {selectedPiece ? (
           <McpPieceActionsDialog

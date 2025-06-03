@@ -60,7 +60,6 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
               />
             </div>
           </div>
-          <Separator className="mb-4" />
         </>
       )}
 
