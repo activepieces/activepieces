@@ -46,7 +46,8 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import McpPage from '../routes/mcp';
+import McpServersPage from '../routes/mcp-servers';
+import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -398,6 +399,18 @@ const routes = [
 
   ...ProjectRouterWrapper({
     path: '/mcp',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_MCP}>
+          <PageTitle title="MCP">
+            <McpServersPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/mcp/:mcpId',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>

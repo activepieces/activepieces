@@ -105,6 +105,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beehiiv": [
+        "packages/pieces/community/beehiiv/src/index.ts"
+      ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
@@ -165,6 +168,9 @@
       ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
+      ],
+       "@activepieces/piece-close": [
+        "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
@@ -425,6 +431,9 @@
       ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
+      ],
+      "@activepieces/piece-kommo": [
+        "packages/pieces/community/kommo/src/index.ts"
       ],
       "@activepieces/piece-krisp-call": [
         "packages/pieces/community/krisp-call/src/index.ts"
