@@ -47,9 +47,9 @@ afterAll(async () => {
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
         const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
-            plan:{
-                tasksLimit:1000
-            }
+            plan: {
+                tasksLimit: 1000,
+            },
         })
 
         const mockFlow = createMockFlow({
