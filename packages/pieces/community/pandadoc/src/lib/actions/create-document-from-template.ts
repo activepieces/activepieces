@@ -1,20 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { pandadocAuth } from '../../index';
 
-interface PandaDocTemplate {
-  id: string;
-  name: string;
-  date_created: string;
-  date_modified: string;
-  version: string;
-  status: string;
-}
-
-interface PandaDocTemplateResponse {
-  results: PandaDocTemplate[];
-  count: number;
-}
+import {
+  customRecipientRoleInput,
+  recipientRoleDropdown,
+  templateDropdown,
+} from '../common/utils';
+import { pandadocAuth } from '../common/auth';
 
 export const createDocumentFromTemplate = createAction({
   auth: pandadocAuth,
@@ -22,56 +14,7 @@ export const createDocumentFromTemplate = createAction({
   displayName: 'Create Document from Template',
   description: 'Create a new document from a template',
   props: {
-    templateId: Property.Dropdown({
-      displayName: 'Template',
-      description: 'Select a template to use',
-      required: true,
-      refreshers: [],
-      options: async (propsValue) => {
-        const auth = propsValue['auth'] as { apiKey: string };
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first'
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest<PandaDocTemplateResponse>({
-            method: HttpMethod.GET,
-            url: 'https://api.pandadoc.com/public/v1/templates',
-            headers: {
-              'Authorization': `API-Key ${auth.apiKey}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!response.body.results) {
-            return {
-              disabled: true,
-              options: [],
-              placeholder: 'No templates found'
-            };
-          }
-
-          return {
-            disabled: false,
-            options: response.body.results.map((template) => ({
-              label: template.name,
-              value: template.id,
-            })),
-          };
-        } catch (error) {
-          console.error('Error fetching templates:', error);
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Error loading templates'
-          };
-        }
-      },
-    }),
+    templateId: templateDropdown,
     name: Property.ShortText({
       displayName: 'Document Name',
       description: 'The name of the document',
@@ -87,19 +30,21 @@ export const createDocumentFromTemplate = createAction({
           description: 'Email address of the recipient',
           required: true,
         }),
-        firstName: Property.ShortText({
+        first_name: Property.ShortText({
           displayName: 'First Name',
           description: 'First name of the recipient',
           required: false,
         }),
-        lastName: Property.ShortText({
+        last_name: Property.ShortText({
           displayName: 'Last Name',
           description: 'Last name of the recipient',
           required: false,
         }),
-        role: Property.ShortText({
-          displayName: 'Role',
-          description: 'Role of the recipient (e.g., "Signer", "Viewer")',
+        role: recipientRoleDropdown,
+        custom_role: customRecipientRoleInput,
+        signing_order: Property.Number({
+          displayName: 'Signing Order',
+          description: 'Set a signing order for recipient',
           required: false,
         }),
       },

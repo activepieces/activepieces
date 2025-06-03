@@ -1,128 +1,191 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { pandadocAuth } from '../../index';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import {
+  countryDropdown,
+  customCountryInput,
+  stateDropdown,
+  customStateInput,
+  jobTitleDropdown,
+  customJobTitleInput,
+  industryDropdown,
+  customIndustryInput,
+} from '../common/utils';
 
 export const createOrUpdateContact = createAction({
-  auth: pandadocAuth,
   name: 'createOrUpdateContact',
   displayName: 'Create or Update Contact',
-  description: 'Create a new contact or update an existing one in PandaDoc',
+  description:
+    'Manage contact information within PandaDoc for streamlined communication',
+  auth: pandadocAuth,
   props: {
+    contact_id: Property.Dropdown({
+      displayName: 'Contact ID (for Update)',
+      description:
+        'Select a contact to update. Leave empty to create a new contact.',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await pandadocClient.makeRequest<{
+            results: Array<{
+              id: string;
+              first_name: string | null;
+              last_name: string | null;
+              email: string | null;
+            }>;
+          }>(auth as PandaDocAuthType, HttpMethod.GET, '/contacts?count=100');
+
+          const options = response.results.map((contact) => {
+            const name =
+              [contact.first_name, contact.last_name]
+                .filter(Boolean)
+                .join(' ') || 'Unnamed';
+            const email = contact.email ? ` <${contact.email}>` : '';
+            return {
+              label: `${name}${email} - ${contact.id.substring(0, 8)}...`,
+              value: contact.id,
+            };
+          });
+
+          return {
+            disabled: false,
+            options,
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Failed to load contacts',
+            options: [],
+          };
+        }
+      },
+    }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Email address of the contact',
-      required: true,
+      description: 'An email address of the contact',
+      required: false,
     }),
-    firstName: Property.ShortText({
+    first_name: Property.ShortText({
       displayName: 'First Name',
-      description: 'First name of the contact',
+      description: "Contact's first name",
       required: false,
     }),
-    lastName: Property.ShortText({
+    last_name: Property.ShortText({
       displayName: 'Last Name',
-      description: 'Last name of the contact',
-      required: false,
-    }),
-    phone: Property.ShortText({
-      displayName: 'Phone',
-      description: 'Phone number of the contact',
+      description: "Contact's last name",
       required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
-      description: 'Company name of the contact',
+      description: "Contact's company name",
       required: false,
     }),
-    jobTitle: Property.ShortText({
-      displayName: 'Job Title',
-      description: 'Job title of the contact',
+    job_title: jobTitleDropdown,
+    custom_job_title: customJobTitleInput,
+    industry: industryDropdown,
+    custom_industry: customIndustryInput,
+    phone: Property.ShortText({
+      displayName: 'Phone',
+      description: 'A phone number',
       required: false,
     }),
-    state: Property.ShortText({
-      displayName: 'State',
-      description: 'State/Province of the contact',
-      required: false,
-    }),
-    country: Property.ShortText({
-      displayName: 'Country',
-      description: 'Country of the contact',
+    country: countryDropdown,
+    custom_country: customCountryInput,
+    state: stateDropdown,
+    custom_state: customStateInput,
+    street_address: Property.ShortText({
+      displayName: 'Street Address',
+      description: 'A street address',
       required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
-      description: 'City of the contact',
+      description: 'A city name',
       required: false,
     }),
-    street: Property.ShortText({
-      displayName: 'Street',
-      description: 'Street address of the contact',
-      required: false,
-    }),
-    zip: Property.ShortText({
-      displayName: 'ZIP/Postal Code',
-      description: 'ZIP or postal code of the contact',
+    postal_code: Property.ShortText({
+      displayName: 'Postal Code',
+      description: 'A postal code',
       required: false,
     }),
   },
-  async run(context) {
-    const {
-      email,
-      firstName,
-      lastName,
-      phone,
-      company,
-      jobTitle,
-      state,
-      country,
-      city,
-      street,
-      zip,
-    } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const body: any = {};
 
-    // First, try to find the contact by email
-    const searchResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.pandadoc.com/public/v1/contacts',
-      headers: {
-        'Authorization': `API-Key ${context.auth.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      queryParams: {
-        email,
-      },
-    });
+    if (propsValue.email !== undefined) body.email = propsValue.email;
+    if (propsValue.first_name !== undefined)
+      body.first_name = propsValue.first_name;
+    if (propsValue.last_name !== undefined)
+      body.last_name = propsValue.last_name;
+    if (propsValue.company !== undefined) body.company = propsValue.company;
 
-    const existingContact = searchResponse.body.results?.find(
-      (contact: any) => contact.email === email
-    );
+    // Handle job title with custom support
+    if (propsValue.job_title !== undefined) {
+      if (propsValue.job_title === 'custom' && propsValue.custom_job_title) {
+        body.job_title = propsValue.custom_job_title;
+      } else if (propsValue.job_title !== 'custom') {
+        body.job_title = propsValue.job_title;
+      }
+    }
 
-    const contactData = {
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-      company,
-      job_title: jobTitle,
-      state,
-      country,
-      city,
-      street,
-      zip,
-    };
+    // Handle industry with custom support
+    if (propsValue.industry !== undefined) {
+      if (propsValue.industry === 'custom' && propsValue.custom_industry) {
+        body.industry = propsValue.custom_industry;
+      } else if (propsValue.industry !== 'custom') {
+        body.industry = propsValue.industry;
+      }
+    }
 
-    // If contact exists, update it; otherwise create new
-    const response = await httpClient.sendRequest({
-      method: existingContact ? HttpMethod.PATCH : HttpMethod.POST,
-      url: existingContact
-        ? `https://api.pandadoc.com/public/v1/contacts/${existingContact.id}`
-        : 'https://api.pandadoc.com/public/v1/contacts',
-      headers: {
-        'Authorization': `API-Key ${context.auth.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: contactData,
-    });
+    if (propsValue.phone !== undefined) body.phone = propsValue.phone;
 
-    return response.body;
+    // Handle country with custom support
+    if (propsValue.country !== undefined) {
+      if (propsValue.country === 'custom' && propsValue.custom_country) {
+        body.country = propsValue.custom_country;
+      } else if (propsValue.country !== 'custom') {
+        body.country = propsValue.country;
+      }
+    }
+
+    // Handle state with custom support
+    if (propsValue.state !== undefined) {
+      if (propsValue.state === 'custom' && propsValue.custom_state) {
+        body.state = propsValue.custom_state;
+      } else if (propsValue.state !== 'custom') {
+        body.state = propsValue.state;
+      }
+    }
+
+    if (propsValue.street_address !== undefined)
+      body.street_address = propsValue.street_address;
+    if (propsValue.city !== undefined) body.city = propsValue.city;
+    if (propsValue.postal_code !== undefined)
+      body.postal_code = propsValue.postal_code;
+
+    if (propsValue.contact_id) {
+      return await pandadocClient.makeRequest(
+        auth as PandaDocAuthType,
+        HttpMethod.PATCH,
+        `/contacts/${propsValue.contact_id}`,
+        body
+      );
+    } else {
+      return await pandadocClient.makeRequest(
+        auth as PandaDocAuthType,
+        HttpMethod.POST,
+        '/contacts',
+        body
+      );
+    }
   },
 });

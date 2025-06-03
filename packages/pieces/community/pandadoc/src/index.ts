@@ -6,23 +6,9 @@ import { findDocument } from './lib/actions/find-document';
 import { getDocumentAttachments } from './lib/actions/get-document-attachments';
 import { getDocumentDetails } from './lib/actions/get-document-details';
 import { downloadDocument } from './lib/actions/download-document';
+import { pandadocAuth } from './lib/common/auth';
 
-export const pandadocAuth = PieceAuth.CustomAuth({
-  required: true,
-  props: {
-    apiKey: Property.ShortText({
-      displayName: 'API Key',
-      description: 'The API key for PandaDoc. You can generate this in your PandaDoc Developer Dashboard.',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    // TODO: Implement validation by making a test API call
-    return {
-      valid: true,
-    };
-  },
-});
+
 
 export const pandadoc = createPiece({
   displayName: 'Pandadoc',

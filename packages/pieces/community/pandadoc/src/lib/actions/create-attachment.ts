@@ -1,23 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { pandadocAuth } from '../../index';
+
 import { documentDropdown } from '../common/utils';
-
-interface PandaDocDocument {
-  id: string;
-  name: string;
-  status: string;
-  date_created: string;
-  date_modified: string;
-}
-
-interface PandaDocDocumentResponse {
-  results: PandaDocDocument[];
-  count: number;
-}
+import { pandadocAuth } from '../common/auth';
 
 export const createAttachment = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   auth: pandadocAuth,
   name: 'createAttachment',
   displayName: 'Create Attachment',
@@ -36,8 +23,10 @@ export const createAttachment = createAction({
     }),
   },
   async run(context) {
-    const { documentId, source, name } = context.propsValue;
-
+    const { documentId } = context.propsValue;
+    const body: any = {
+      source: context.propsValue.source,
+    };
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.pandadoc.com/public/v1/documents/${documentId}/attachments`,
@@ -45,10 +34,7 @@ export const createAttachment = createAction({
         Authorization: `API-Key ${context.auth.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: {
-        source,
-        name,
-      },
+      body,
     });
 
     return response.body;

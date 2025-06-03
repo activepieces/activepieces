@@ -1,9 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { pandadocAuth } from '../../index';
 import { documentDropdown } from '../common/utils';
-
-
+import { pandadocAuth } from '../common';
 
 export const getDocumentAttachments = createAction({
   auth: pandadocAuth,
@@ -20,7 +18,7 @@ export const getDocumentAttachments = createAction({
       method: HttpMethod.GET,
       url: `https://api.pandadoc.com/public/v1/documents/${documentId}/attachments`,
       headers: {
-        'Authorization': `API-Key ${context.auth.apiKey}`,
+        Authorization: `API-Key ${context.auth.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
