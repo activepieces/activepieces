@@ -36,7 +36,7 @@ export const findUserProfile = createAction({
     
     // First get the basic profile
     const profile = await crispClient.makeRequest(
-      context.auth.token,
+      context.auth,
       HttpMethod.GET,
       `/website/${websiteId}/people/profile/${email}`
     );
@@ -52,7 +52,7 @@ export const findUserProfile = createAction({
 
     if (includeEvents) {
       profile.events = await crispClient.makeRequest(
-        context.auth.token,
+        context.auth,
         HttpMethod.GET,
         `/website/${websiteId}/people/events/${email}`
       );

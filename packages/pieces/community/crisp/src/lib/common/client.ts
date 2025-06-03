@@ -3,31 +3,40 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const crispClient = {
   baseUrl: 'https://api.crisp.chat/v1',
 
-  async makeRequest(auth: string, method: HttpMethod, endpoint: string, body?: any) {
-    const response = await httpClient.sendRequest({
-      method,
-      url: `${this.baseUrl}${endpoint}`,
-      headers: {
-        'Authorization': `${auth}`,
-        'X-Crisp-Tier': 'plugin',
-        'Content-Type': 'application/json'
-      },
-      body
-    });
+  async makeRequest(
+  auth: { token: string, identifier: string } | string,
+  method: HttpMethod,
+  endpoint: string,
+  body?: any
+) {
+  const authHeader = typeof auth === 'string'
+    ? `Basic ${Buffer.from(auth).toString('base64')}`
+    : `Basic ${Buffer.from(`${auth.identifier}:${auth.token}`).toString('base64')}`;
+
+  const response = await httpClient.sendRequest({
+    method,
+    url: `${this.baseUrl}${endpoint}`,
+    headers: {
+      'Authorization': authHeader,
+      'X-Crisp-Tier': 'plugin',
+      'Content-Type': 'application/json'
+    },
+    body
+  });
 
     return response.body;
   },
   // Conversation methods
-  async getConversations(key: string, websiteId: string) {
-    return this.makeRequest(key ,HttpMethod.GET, `/website/${websiteId}/conversations`);
+  async getConversations(auth:any, websiteId: string) {
+    return this.makeRequest(auth ,HttpMethod.GET, `${websiteId}`);
   },
 
   // Contact methods
-  async getContact(auth: string, websiteId: string, contactId: string) {
+  async getContact(auth:any, websiteId: string, contactId: string) {
     return this.makeRequest(auth, HttpMethod.GET, `/website/${websiteId}/people/profile/${contactId}`);
   },
 
-async getConversation(auth: string, websiteId: string, sessionId: string) {
+async getConversation(auth:any, websiteId: string, sessionId: string) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,
@@ -35,7 +44,7 @@ async getConversation(auth: string, websiteId: string, sessionId: string) {
   );
 },
 
-async listContacts(auth: string, websiteId: string, limit: number = 50) {
+async listContacts(auth:any, websiteId: string, limit: number = 50) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,
@@ -43,7 +52,7 @@ async listContacts(auth: string, websiteId: string, limit: number = 50) {
   );
 },
 
-async searchConversations(auth: string, websiteId: string, params: URLSearchParams) {
+async searchConversations(auth:any, websiteId: string, params: URLSearchParams) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,
@@ -51,7 +60,7 @@ async searchConversations(auth: string, websiteId: string, params: URLSearchPara
   );
 },
 
-async getProfile(auth: string, websiteId: string, email: string) {
+async getProfile(auth:any, websiteId: string, email: string) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,
@@ -59,7 +68,7 @@ async getProfile(auth: string, websiteId: string, email: string) {
   );
 },
 
-async getProfileConversations(auth: string, websiteId: string, email: string) {
+async getProfileConversations(auth:any, websiteId: string, email: string) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,
@@ -67,7 +76,7 @@ async getProfileConversations(auth: string, websiteId: string, email: string) {
   );
 },
 
-async getProfileEvents(auth: string, websiteId: string, email: string) {
+async getProfileEvents(auth:any, websiteId: string, email: string) {
   return this.makeRequest(
     auth,
     HttpMethod.GET,

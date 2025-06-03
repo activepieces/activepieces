@@ -48,7 +48,7 @@ export const findConversation = createAction({
     params.append('limit', (limit || 10).toString());
 
     return await crispClient.makeRequest(
-      context.auth.token,
+      context.auth,
       HttpMethod.GET,
       `/website/${websiteId}/conversations/search?${params.toString()}`
     );

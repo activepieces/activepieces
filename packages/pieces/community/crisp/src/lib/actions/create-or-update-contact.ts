@@ -31,7 +31,7 @@ export const createUpdateContact = createAction({
   },
   async run(context) {
     return await crispClient.makeRequest(
-      context.auth.token,
+      context.auth,
       HttpMethod.PATCH,
       `/website/${context.propsValue.websiteId}/people/profile/${context.propsValue.email}`,
       context.propsValue.person

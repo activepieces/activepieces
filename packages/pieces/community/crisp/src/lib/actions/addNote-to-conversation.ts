@@ -43,12 +43,13 @@ export const addNote = createAction({
       content: context.propsValue.content,
       color: context.propsValue.color,
       user: {
-        type: 'participant'
+        identifier: context.auth.identifier,
+        token: context.auth.token
       }
     };
 
     return await crispClient.makeRequest(
-      context.auth.token,
+      context.auth,
       HttpMethod.POST,
       `/website/${context.propsValue.websiteId}/conversation/${context.propsValue.sessionId}/note`,
       payload

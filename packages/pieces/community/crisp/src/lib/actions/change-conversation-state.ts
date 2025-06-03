@@ -32,7 +32,7 @@ export const changeState = createAction({
   },
   async run(context) {
     return await crispClient.makeRequest(
-      context.auth.token,
+      context.auth,
       HttpMethod.PATCH,
       `/website/${context.propsValue.websiteId}/conversation/${context.propsValue.sessionId}/state`,
       { state: context.propsValue.state }
