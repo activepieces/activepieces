@@ -42,6 +42,7 @@ import { flowRepo } from './flow.repo'
 
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
+const ENABLE_FLOW_ON_PUBLISH = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
 
 const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
@@ -458,7 +459,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.ENABLED
+            if (ENABLE_FLOW_ON_PUBLISH) {
+                flowToUpdate.status = FlowStatus.ENABLED
+            }
             flowToUpdate.schedule = scheduleOptions
             flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
