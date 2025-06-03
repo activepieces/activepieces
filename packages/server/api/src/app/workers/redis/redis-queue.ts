@@ -81,11 +81,15 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
         }
     },
-    async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
+    async removeRepeatingJob({ flowVersionId, skipIfExists }: { flowVersionId: ApId, skipIfExists: boolean }): Promise<void> {
         const queue = await ensureQueueExists(QueueName.SCHEDULED)
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
+        const hasScheduledJob = await queue.getJobScheduler(flowVersionId)
+        if (isNil(hasScheduledJob) && skipIfExists) {
+            return
+        }
         const result = await queue.removeJobScheduler(flowVersionId)
         if (!result) {
             exceptionHandler.handle(new ActivepiecesError({

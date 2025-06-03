@@ -78,7 +78,7 @@ async function sideeffect(
             if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
                 await jobQueue(log).removeRepeatingJob({
                     flowVersionId: flowVersion.id,
-                    throwError: true,
+                    skipIfExists: true,
                 })
             }
             break
@@ -86,7 +86,7 @@ async function sideeffect(
         case TriggerStrategy.POLLING:
             await jobQueue(log).removeRepeatingJob({
                 flowVersionId: flowVersion.id,
-                throwError: true,
+                skipIfExists: true,
             })
             break
     }

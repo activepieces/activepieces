@@ -158,14 +158,14 @@ async function isStaleFlow(job: JobData, queueName: QueueName, log: FastifyBaseL
 }
 
 
-async function removeScheduledJob(job: ScheduledJobData, throwError: boolean, log: FastifyBaseLogger) {
+async function removeScheduledJob(job: ScheduledJobData, skipIfExists: boolean, log: FastifyBaseLogger) {
     log.info({
         message: '[WorkerController#removeScheduledJob]',
         flowVersionId: job.flowVersionId,
     }, 'removing stale scheduled job')
     await jobQueue(log).removeRepeatingJob({
         flowVersionId: job.flowVersionId,   
-        throwError,
+        skipIfExists,
     })
     const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
     if (isNil(flowVersion)) {
