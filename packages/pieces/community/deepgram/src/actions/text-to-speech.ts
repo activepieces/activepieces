@@ -115,18 +115,10 @@ export const textToSpeech = createAction({
 
       // Save the audio file
       const fileName = `speech.${fileExtension}`;
-      const fileUrl = await files.write({
+      return await files.write({
         fileName: fileName,
         data: Buffer.isBuffer(audioData) ? audioData : Buffer.from(audioData as ArrayBuffer),
       });
-
-      return {
-        file_url: fileUrl,
-        file_name: fileName,
-        text: propsValue.text,
-        model: propsValue.model,
-        encoding: propsValue.encoding,
-      };
     } catch (error) {
       throw new Error(`Failed to convert text to speech: ${error}`);
     }

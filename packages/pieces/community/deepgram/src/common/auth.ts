@@ -27,11 +27,17 @@ export const deepgramAuth = PieceAuth.SecretText({
 
     try {
       const client = createDeepgramClient(auth);
-      await client.get('/projects');
+      const response = await client.get('/projects');
+      if (response.status !== 200) {
+        return {
+          valid: false,
+          error: 'The Deepgram API key is invalid.',
+        };
+      }
       return {
         valid: true,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         valid: false,
         error: 'The Deepgram API key is invalid or there was an error connecting to Deepgram.',

@@ -191,6 +191,9 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/community/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-deepgram": [
+        "packages/pieces/community/deepgram/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
