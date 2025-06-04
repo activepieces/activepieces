@@ -51,17 +51,11 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         }
     },
 
-    async upsertFlowToGit({ fileName, flow, flowFolderPath, connections, connectionsFolderPath }: UpsertFlowIntoProjectParams): Promise<void> {
+    async upsertFlowToGit({ fileName, flow, flowFolderPath }: UpsertFlowIntoProjectParams): Promise<void> {
         try {
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
             await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
-
-            for (const connection of connections) {
-                const connectionJsonPath = path.join(connectionsFolderPath, `${connection.externalId}.json`)
-                await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
-                await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
-            }
         }
         catch (error) {
             _log.error(`Failed to write flow file ${fileName}: ${error}`)
@@ -74,6 +68,13 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
         await fs.writeFile(tableJsonPath, JSON.stringify(table, null, 2))
     },
+
+    async upsertConnectionToGit({ fileName, connection, folderPath }: UpsertConnectionIntoProjectParams): Promise<void> {
+        const connectionJsonPath = path.join(folderPath, `${fileName}.json`)
+        await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
+        await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
+    },
+
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
         const jsonPath = path.join(folderPath, `${fileName}.json`)
         const exists = await fileExists(jsonPath)
@@ -94,8 +95,12 @@ type UpsertFlowIntoProjectParams = {
     fileName: string
     flow: Flow
     flowFolderPath: string
-    connections: ConnectionState[]
-    connectionsFolderPath: string
+}
+
+type UpsertConnectionIntoProjectParams = {
+    fileName: string
+    connection: ConnectionState
+    folderPath: string
 }
 
 type UpsertTableIntoProjectParams = {

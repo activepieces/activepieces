@@ -14,8 +14,7 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js",
-        "{workspaceRoot}/karma.conf.js"
+        "{workspaceRoot}/jest.preset.js"
       ],
       "cache": true
     },
@@ -36,11 +35,6 @@
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true
     },
-    "@nx/angular:ng-packagr-lite": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
-    },
     "@nx/js:tsc": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -56,7 +50,6 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
       "!{projectRoot}/**/*.spec.[jt]s",
-      "!{projectRoot}/karma.conf.js",
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
     "sharedGlobals": []
@@ -66,19 +59,6 @@
     "libsDir": "packages"
   },
   "generators": {
-    "@nx/angular:application": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "none"
-    },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    },
-    "@nx/angular:component": {
-      "style": "scss"
-    },
     "@nx/workspace:move": {
       "projectNameAndRootFormat": "as-provided"
     },

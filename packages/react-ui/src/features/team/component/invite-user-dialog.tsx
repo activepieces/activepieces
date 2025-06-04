@@ -131,7 +131,8 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
     enabled:
-      !isNil(platform.projectRolesEnabled) && platform.projectRolesEnabled,
+      !isNil(platform.plan.projectRolesEnabled) &&
+      platform.plan.projectRolesEnabled,
   });
 
   const roles = rolesData?.data ?? [];
@@ -140,7 +141,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.projectRolesEnabled
+      type: platform.plan.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
@@ -248,7 +249,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
                                 {t('Entire Platform')}
                               </SelectItem>
                             )}
-                            {platform.projectRolesEnabled && (
+                            {platform.plan.projectRolesEnabled && (
                               <SelectItem value={InvitationType.PROJECT}>
                                 {project.displayName} (Current)
                               </SelectItem>

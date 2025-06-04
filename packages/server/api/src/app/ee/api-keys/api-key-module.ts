@@ -12,7 +12,7 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from
 import { apiKeyService } from './api-key-service'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.apiKeysEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.apiKeysEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(apiKeyController, { prefix: '/v1/api-keys' })
 }

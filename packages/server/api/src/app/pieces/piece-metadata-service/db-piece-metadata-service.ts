@@ -69,7 +69,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        message: `piece_metadata_not_found projectId=${projectId}`,
+                        message: `piece_metadata_not_found projectId=${projectId} pieceName=${name}`,
                     },
                 })
             }
@@ -98,7 +98,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 created: existingMetadata.created,
             })
         },
-        async getExactPieceVersion({ name, version, projectId, platformId }): Promise<string> {
+        async resolveExactVersion({ name, version, projectId, platformId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {

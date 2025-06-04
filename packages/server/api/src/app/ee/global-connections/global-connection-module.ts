@@ -20,7 +20,7 @@ import { securityHelper } from '../../helper/security-helper'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.globalConnectionsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
@@ -74,6 +74,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
+            externalIds: undefined,
         })
 
         return {
@@ -94,6 +95,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
+            userId: request.principal.id,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,

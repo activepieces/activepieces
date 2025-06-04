@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlatformPlanLimits } from '@activepieces/shared';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
@@ -169,7 +169,7 @@ const LicenseKeyPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
           {Object.entries(LICENSE_PROPS_MAP).map(
             ([key, label]) =>
-              platform?.[key as keyof typeof platform] && (
+              platform?.plan?.[key as keyof PlatformPlanLimits] && (
                 <div className="flex items-center p-2 rounded-md" key={key}>
                   <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
                   <span className={`text-sm`}>{t(label)}</span>

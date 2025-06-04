@@ -43,47 +43,10 @@ export const addFollowerAction = createAction({
 				],
 			},
 		}),
-		entityId: Property.Dropdown({
+		entityId: Property.ShortText({
 			displayName: 'Target Object ID',
 			description: 'ID of the object to add the follower to.',
-			refreshers: ['entity'],
-			required: true,
-			options: async ({ auth, entity }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account.',
-					};
-				}
-				if (!entity)
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please select entity type.',
-					};
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				let options;
-				switch (entity) {
-					case 'deal':
-						options = await fetchDealsOptions(authValue);
-						break;
-					case 'person':
-						options = await fetchPersonsOptions(authValue);
-						break;
-					case 'organization':
-						options = await fetchOrganizationsOptions(authValue);
-						break;
-					case 'product':
-						options = await fetchProductsOptions(authValue);
-						break;
-				}
-
-				return {
-					disabled: false,
-					options: options ?? [],
-				};
-			},
+			required:true
 		}),
 	},
 	async run(context) {

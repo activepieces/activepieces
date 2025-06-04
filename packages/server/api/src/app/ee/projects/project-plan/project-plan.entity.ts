@@ -31,7 +31,7 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
             type: Number,
             nullable: true,
         },
-        aiTokens: {
+        aiCredits: {
             type: Number,
             nullable: true,
         },

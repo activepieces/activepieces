@@ -67,8 +67,8 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     const { projectId, projectRoleId } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
-                    const platform = await platformService.getOneOrThrow(invitation.platformId)
-                    assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+                    const platform = await platformService.getOneWithPlanOrThrow(invitation.platformId)
+                    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
 
                     const projectRole = await projectRoleService.getOneOrThrowById({
                         id: projectRoleId,

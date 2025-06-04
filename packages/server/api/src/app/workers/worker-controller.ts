@@ -110,6 +110,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 httpRequestId,
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
+                executeTrigger: false,
             }),
         )
         return Promise.all(createFlowRuns)
@@ -127,6 +128,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         await flowRunService(request.log).start({
             payload: null,
             existingFlowRunId: data.runId,
+            executeTrigger: false,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
             projectId: data.projectId,
             flowVersionId: data.flowVersionId,
@@ -162,7 +164,7 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
         flowVersionId: job.flowVersionId,
     }, 'removing stale scheduled job')
     await jobQueue(log).removeRepeatingJob({
-        flowVersionId: job.flowVersionId,
+        flowVersionId: job.flowVersionId,   
     })
     const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
     if (isNil(flowVersion)) {

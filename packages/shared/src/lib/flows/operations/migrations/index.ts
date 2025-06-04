@@ -1,5 +1,6 @@
 import { FlowVersion } from '../../flow-version'
-import { migrateBranchToRouter } from './migrate-branch-to-router'
+import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
+import { migrateConnectionIds } from './migrate-v1-connection-ids'
 
 export type Migration = {
     migrate: (flowVersion: FlowVersion) => FlowVersion
@@ -7,6 +8,7 @@ export type Migration = {
 
 const migrations: Migration[] = [
     migrateBranchToRouter,
+    migrateConnectionIds,
 ]
 
 const apply = (flowVersion: FlowVersion) => {

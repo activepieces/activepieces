@@ -75,7 +75,7 @@ const CreateReleaseDialogContent = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
 
   const { mutate: applyChanges, isPending } = useMutation({

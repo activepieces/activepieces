@@ -7,7 +7,7 @@ tmp
 /out-tsc
 firebase-admin-sdk.json
 dev
-cache
+/cache
 .env
 
 # SDK Build
@@ -24,7 +24,7 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
-cache
+/cache
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
