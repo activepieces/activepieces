@@ -69,42 +69,6 @@ It is strongly recommended that you add your credit card information to your Ope
         ],
     },
     {
-        provider: 'gemini',
-        baseUrl: 'https://generativelanguage.googleapis.com',
-        displayName: 'Google Gemini',
-        markdown: `Follow these instructions to get your Google Gemini API Key:
-
-1. Visit the following website: https://ai.google.dev/gemini-api/docs/api-key.
-2. Once on the website, locate and click on the option to obtain your Gemini API Key.
-3. Sign in with your Google account if prompted.
-4. Click "Create API Key" to generate your key.
-
-Note: You may need to enable billing on your Google Cloud project for higher rate limits.
-`,
-        logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
-        auth: {
-            headerName: 'x-goog-api-key',
-            bearer: false,
-        },
-        models: [
-            {
-                label: 'Gemini 2.0 Flash',
-                value: 'gemini-2.0-flash',
-                supported: ['text', 'image', 'function'],
-            },
-            {
-                label: 'Gemini 1.5 Flash',
-                value: 'gemini-1.5-flash',
-                supported: ['text', 'image', 'function'],
-            },
-            {
-                label: 'Gemini 1.5 Pro',
-                value: 'gemini-1.5-pro',
-                supported: ['text', 'image', 'function'],
-            },
-        ],
-    },
-    {
         provider: 'replicate',
         baseUrl: 'https://api.replicate.com',
         displayName: 'Replicate',
