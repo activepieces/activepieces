@@ -185,6 +185,11 @@ export const system = {
             this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
         )
     },
+    isStandaloneVersion(): boolean {
+        const zeroUrl = this.get(AppSystemProp.ZERO_SERVICE_URL)
+        const loginUrl = this.get(AppSystemProp.LOGIN_URL)
+        return !(zeroUrl || loginUrl)
+    }
 }
 
 const getEnvVarOrReturnDefaultValue = (prop: SystemProp): string | undefined => {

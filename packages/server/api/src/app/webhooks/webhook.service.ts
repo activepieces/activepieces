@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 // import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowService } from '../flows/flow/flow.service'
+import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
@@ -36,7 +37,7 @@ export const webhookService = {
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
         // const exceededLimit = await projectLimitsService(pinoLogger).tasksExceededLimit(flow.projectId)
-        const exceededLimit = 0
+        const exceededLimit = await platformPlanService(pinoLogger).flowRunsExceeded(flow.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,

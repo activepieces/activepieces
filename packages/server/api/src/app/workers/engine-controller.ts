@@ -10,6 +10,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 
@@ -147,7 +148,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             return {}
         }
         // const exceededLimit = await projectLimitsService(request.log).tasksExceededLimit(request.principal.projectId)
-        const exceededLimit = 0
+        const exceededLimit = await platformPlanService(request.log).flowRunsExceeded(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,

@@ -83,6 +83,48 @@ export const authenticationUtils = {
         }
     },
 
+    async getProjectOwnerAndToken(projectId: string): Promise<AuthenticationResponse> {
+        const project = await projectService.getOneOrThrow(projectId)
+        const user = await userService.getOrThrow({ id: project.ownerId })
+        const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
+        if (!identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                params: {
+                    email: identity.email,
+                },
+            })
+        }
+        if (user.status === UserStatus.INACTIVE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.USER_IS_INACTIVE,
+                params: {
+                    email: identity.email,
+                },
+            })
+        }
+        const token = await accessTokenManager.generateToken({
+            id: user.id,
+            type: PrincipalType.USER,
+            projectId: project.id,
+            platform: {
+                id: project.platformId,
+            },
+            tokenVersion: identity.tokenVersion,
+        })
+        return {
+            ...user,
+            firstName: identity.firstName,
+            lastName: identity.lastName,
+            email: identity.email,
+            trackEvents: identity.trackEvents,
+            newsLetter: identity.newsLetter,
+            verified: identity.verified,
+            token,
+            projectId: project.id,
+        }
+    },
+
     async assertDomainIsAllowed({
         email,
         platformId,
