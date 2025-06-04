@@ -76,7 +76,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
         log.info('Starting migration AddMcpToolEntity1748352614033')
 
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id"
+            DROP INDEX IF EXISTS "mcp_project_id"
         `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
@@ -111,7 +111,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             ALTER TABLE "mcp_tool"
             ADD CONSTRAINT "FK_3f26c7b876fba48b9e90efb3d79" FOREIGN KEY ("flowId") REFERENCES "flow"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
-        
+
         const mcps = await queryRunner.query(`
             SELECT * FROM "mcp"
         `)
@@ -196,7 +196,7 @@ async function AddMcpPieceTools(queryRunner: QueryRunner, mcpId: string, pieceNa
             pieceVersion: pieceMetadataInfo.version,
             actionNames: Array.from(Object.keys(pieceMetadataInfo.actions)),
             logoUrl: pieceMetadataInfo.logoUrl,
-            connectionExternalId,   
+            connectionExternalId,
         }
 
         const mcpTool: McpTool = {
