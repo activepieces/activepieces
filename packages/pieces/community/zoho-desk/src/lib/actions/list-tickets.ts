@@ -1,44 +1,46 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { zohoDeskAuth } from '../..';
-import { zohoDeskCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { zohoDeskAuth } from '../common/auth';
+import { zohoDeskApiCall } from '../common';
+import { organizationId } from '../common/props';
 
 export const listTicketsAction = createAction({
-  auth: zohoDeskAuth,
-  name: 'list_tickets',
-  description: 'List tickets',
-  displayName: 'List tickets',
-  props: {
-    orgId: Property.ShortText({
-      displayName: 'orgId',
-      required: true,
-      description:
-        'ID of the organization to access. All API endpoints except /organizations mandatorily require the orgId.',
-    }),
-    include: Property.Array({
-      displayName: 'include',
-      required: false,
-      description: 'Additional information related to the tickets. Values allowed are: contacts, products, departments, team, isRead and assignee. You can pass multiple values'
-    })
-  },
-  async run({ propsValue, auth }) {
-    const queryParams: Record<string, string> = {};
+	auth: zohoDeskAuth,
+	name: 'list_tickets',
+	description: 'List tickets',
+	displayName: 'List tickets.',
+	props: {
+		orgId: organizationId({ displayName: 'Organization', required: true }),
+		include: Property.StaticMultiSelectDropdown({
+			displayName: 'include',
+			required: false,
+			description: 'Additional information related to the tickets.',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'contacts', value: 'contacts' },
+					{ label: 'products', value: 'products' },
+					{ label: 'departments', value: 'departments' },
+					{ label: 'team', value: 'team' },
+					{ label: 'isRead', value: 'isRead' },
+					{ label: 'assignee', value: 'assignee' },
+				],
+			},
+		}),
+	},
+	async run({ propsValue, auth }) {
+		const queryParams: Record<string, string> = {};
 
-    if (propsValue.include) queryParams['include'] = propsValue.include.join(',');
+		if (propsValue.include) queryParams['include'] = propsValue.include.join(',');
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${zohoDeskCommon.baseUrl}/tickets`,
-      queryParams,
-      headers: zohoDeskCommon.authHeaders(auth.access_token, propsValue.orgId),
-    };
+		const response = await zohoDeskApiCall({
+			auth,
+			method: HttpMethod.GET,
+			resourceUri: '/tickets',
+			orgId: propsValue.orgId,
+			query: queryParams,
+		});
 
-    const response = await httpClient.sendRequest(request);
-
-    return response.body;
-  },
+		return response;
+	},
 });
