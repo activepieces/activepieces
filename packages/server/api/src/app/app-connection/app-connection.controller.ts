@@ -75,6 +75,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             projectId: request.principal.projectId,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
+            externalIds: undefined,
         })
 
         const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
@@ -126,6 +127,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,
             projectId: request.principal.projectId,
+            userId: request.principal.id,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
