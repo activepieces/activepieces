@@ -25,6 +25,19 @@ export const duplicateFileAction = createAction({
       description: 'The ID of the folder where the file will be duplicated',
       required: true,
     }),
+    mimeType: Property.StaticDropdown({
+      displayName: 'Convert to Google Workspace Format',
+      description: 'Optionally convert the file to a Google Workspace format',
+      required: false,
+      options: {
+        options: [
+          {
+            label: 'CSV to Google Spreadsheet',
+            value: 'application/vnd.google-apps.spreadsheet',
+          }
+        ],
+      },
+    }),
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
@@ -34,13 +47,23 @@ export const duplicateFileAction = createAction({
     const fileId = context.propsValue.fileId;
     const nameForNewFile = context.propsValue.name;
     const parentFolderId = context.propsValue.folderId;
+    const mimeType = context.propsValue.mimeType;
 
     const drive = google.drive({ version: 'v3', auth: authClient });
+
+    const requestBody: any = {
+      name: nameForNewFile,
+      parents: [parentFolderId],
+    };
+
+    if (mimeType) {
+      requestBody.mimeType = mimeType;
+    }
 
     const response = await drive.files.copy({
       fileId,
       auth: authClient,
-      requestBody: { name: nameForNewFile, parents: [parentFolderId] },
+      requestBody,
       supportsAllDrives: context.propsValue.include_team_drives,
     });
 
