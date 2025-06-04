@@ -22,7 +22,7 @@ export const gauzyWebhookCommon = {
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${baseUrl}/api/webhooks`,
+      url: `${baseUrl}/api/integration/activepieces/webhooks`,
       headers,
       body: {
         name: `ActivePieces ${events[0]} Webhook`,
@@ -44,7 +44,7 @@ export const gauzyWebhookCommon = {
     
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
-      url: `${baseUrl}/api/webhooks/${webhookId}`,
+      url: `${baseUrl}/api/integration/activepieces/webhooks/${webhookId}`,
       headers,
     });
   }
