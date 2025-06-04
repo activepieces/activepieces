@@ -6,68 +6,119 @@ export const sendEmail = createAction({
   auth: outlookEmailAuth,
   name: 'send-email',
   displayName: 'Send Email',
-  description: 'Action when sending email',
+  description: 'Send an outlook email with advanced options (attachments, draft, etc.)',
   props: {
     to: Property.ShortText({
-      displayName: 'To',
+      displayName: 'Receiver Email (To)',
       required: true,
-      description: 'Recipient email address',
+      description: 'Recipient email address(es), comma-separated',
+    }),
+    cc: Property.ShortText({
+      displayName: 'CC',
+      required: false,
+    }),
+    bcc: Property.ShortText({
+      displayName: 'BCC',
+      required: false,
+    }),
+    sender_name: Property.ShortText({
+      displayName: 'Sender Name',
+      required: false,
+    }),
+    from: Property.ShortText({
+      displayName: 'Sender Email',
+      description: 'Used for delegated/shared mailboxes only',
+      required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
       required: true,
-      description: 'Email subject',
     }),
     body: Property.LongText({
       displayName: 'Body',
       required: true,
-      description: 'Email body content',
     }),
-    attachments: Property.Array({
-      displayName: 'Attachments',
-      description: 'Files to attach to the email you want to send',
+    attachment: Property.File({
+      displayName: 'Attachment',
       required: false,
     }),
+    attachment_name: Property.ShortText({
+      displayName: 'Attachment Name',
+      required: false,
+    }),
+    draft: Property.Checkbox({
+      displayName: 'Create Draft',
+      description: 'If true, creates draft without sending',
+      required: true,
+      defaultValue: false,
+    }),
   },
+
   async run(context) {
     const { propsValue, auth } = context;
 
-    // Format attachments if available
-    const formattedAttachments =
-      propsValue.attachments?.map((file: any) => ({
-        '@odata.type': '#microsoft.graph.fileAttachment',
-        name: file.name,
-        contentType: file.mimeType,
-        contentBytes: file.data.toString('base64'), // Convert file data to Base64
-      })) || [];
-
-    // Construct email payload
-    const emailData = {
-      message: {
-        subject: propsValue.subject,
-        body: {
-          contentType: 'HTML',
-          content: propsValue.body,
-        },
-        toRecipients: [
-          {
-            emailAddress: { address: propsValue.to },
-          },
-        ],
-        attachments: formattedAttachments, // Attach files if any
-      },
+    const formatEmails = (input: string | string[] | undefined) => {
+      if (!input) return [];
+      if (Array.isArray(input)) {
+        return input.map((email) => ({
+          emailAddress: { address: email.trim() },
+        }));
+      }
+      return input
+        .split(',')
+        .map((email) => ({ emailAddress: { address: email.trim() } }));
     };
 
-    // Send email request
+    const {
+      to,
+      cc,
+      bcc,
+      from,
+      sender_name,
+      subject,
+      body,
+      attachment,
+      attachment_name,
+      draft,
+    } = propsValue;
+
+    const message: any = {
+      subject,
+      body: {
+        contentType: 'HTML',
+        content: body,
+      },
+      toRecipients: formatEmails(to),
+      attachment,
+    };
+
+    if (cc) message.ccRecipients = formatEmails(cc);
+    if (bcc) message.bccRecipients = formatEmails(bcc);
+    if (from) {
+      message.from = {
+        emailAddress: {
+          name: sender_name || undefined,
+          address: from,
+        },
+      };
+    }
+
+    const url = draft
+      ? 'https://graph.microsoft.com/v1.0/me/messages'
+      : 'https://graph.microsoft.com/v1.0/me/sendMail';
+
+    const bodyData = draft ? message : { message };
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://graph.microsoft.com/v1.0/me/sendMail',
+      url,
       headers: {
         Authorization: `Bearer ${auth.access_token}`,
         'Content-Type': 'application/json',
       },
-      body: emailData,
+      body: bodyData,
     });
+
     return response.body;
   },
 });

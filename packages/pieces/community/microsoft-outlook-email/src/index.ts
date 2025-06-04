@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { newEmailTrigger } from './lib/triggers/new-email';
 import { sendEmail } from './lib/actions/send-email';
+import { replyEmail } from './lib/actions/reply-email';
 
 export const outlookEmailAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Outlook Email',
@@ -8,9 +9,9 @@ export const outlookEmailAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
   scope: [
-    'https://graph.microsoft.com/Mail.Read',
-    'https://graph.microsoft.com/Mail.Send',
-    'offline_access',
+    'https://graph.microsoft.com/Mail.ReadWrite', // Needed for modifying emails (createReply)
+    'https://graph.microsoft.com/Mail.Send', // Needed for sending emails
+    'offline_access', // Needed for refresh tokens
   ],
 });
 export const microsoftOutlookEmail = createPiece({
@@ -20,6 +21,6 @@ export const microsoftOutlookEmail = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
   authors: [],
-  actions: [sendEmail],
+  actions: [sendEmail, replyEmail],
   triggers: [newEmailTrigger],
 });
