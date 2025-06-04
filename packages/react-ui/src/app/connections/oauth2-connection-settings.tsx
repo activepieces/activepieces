@@ -16,7 +16,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { oauth2Utils } from '@/lib/oauth2-utils';
 import {
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -28,6 +27,7 @@ import {
   ApFlagId,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
@@ -66,22 +66,41 @@ const replaceVariables = (
     scope: newScope,
   };
 };
-const getOAuth2Type = (
+const getOAuth2TypeAndApp = (
   pieceToClientIdMap: PieceToClientIdMap,
   reconnectConnection: AppConnectionWithoutSensitiveData | null,
   pieceName: string,
 ) => {
+  const platformApp =
+    pieceToClientIdMap[`${pieceName}-${AppConnectionType.PLATFORM_OAUTH2}`] ??
+    null;
+  const cloudApp =
+    pieceToClientIdMap[`${pieceName}-${AppConnectionType.CLOUD_OAUTH2}`];
   if (
-    reconnectConnection?.type === AppConnectionType.CLOUD_OAUTH2 ||
-    reconnectConnection?.type === AppConnectionType.OAUTH2 ||
-    reconnectConnection?.type === AppConnectionType.PLATFORM_OAUTH2
+    reconnectConnection &&
+    reconnectConnection.type === AppConnectionType.OAUTH2
   ) {
-    return reconnectConnection?.type;
+    return {
+      type: AppConnectionType.OAUTH2 as OAuth2Type,
+      app: null,
+    };
   }
-  return (
-    pieceToClientIdMap[`${pieceName}-${AppConnectionType.CLOUD_OAUTH2}`]
-      ?.type ?? AppConnectionType.OAUTH2
-  );
+  if (platformApp) {
+    return {
+      type: AppConnectionType.PLATFORM_OAUTH2 as OAuth2Type,
+      app: platformApp,
+    };
+  }
+  if (cloudApp) {
+    return {
+      type: AppConnectionType.CLOUD_OAUTH2 as OAuth2Type,
+      app: cloudApp,
+    };
+  }
+  return {
+    type: AppConnectionType.OAUTH2 as OAuth2Type,
+    app: null,
+  };
 };
 
 const OAuth2ConnectionSettings = (props: OAuth2ConnectionSettingsProps) => {
@@ -116,20 +135,21 @@ const OAuth2ConnectionSettingsImplementation = ({
   pieceToClientIdMap: PieceToClientIdMap;
 }) => {
   const [currentOAuth2Type, setOAuth2Type] = useState<OAuth2Type>(
-    getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name),
+    getOAuth2TypeAndApp(pieceToClientIdMap, reconnectConnection, piece.name)
+      .type,
   );
   const [grantType, setGrantType] = useState<OAuth2GrantType>(
     authProperty.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
       ? OAuth2GrantType.AUTHORIZATION_CODE
       : authProperty.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE,
   );
+
   return (
     <OAuth2ConnectionSettingsForm
       key={`${currentOAuth2Type}-${grantType}`}
       predefinedApp={
-        currentOAuth2Type !== AppConnectionType.OAUTH2
-          ? pieceToClientIdMap?.[`${piece.name}-${currentOAuth2Type}`] ?? null
-          : null
+        getOAuth2TypeAndApp(pieceToClientIdMap, reconnectConnection, piece.name)
+          .app
       }
       authProperty={authProperty}
       currentOAuth2Type={currentOAuth2Type}
@@ -140,7 +160,11 @@ const OAuth2ConnectionSettingsImplementation = ({
       setGrantType={setGrantType}
       resetOAuth2Type={() =>
         setOAuth2Type(
-          getOAuth2Type(pieceToClientIdMap, reconnectConnection, piece.name),
+          getOAuth2TypeAndApp(
+            pieceToClientIdMap,
+            reconnectConnection,
+            piece.name,
+          ).type,
         )
       }
     />

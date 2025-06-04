@@ -5,7 +5,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { BillingUsageType, usageService } from '../ee/platform/platform-usage-service'
+import { BillingUsageType, platformUsageService } from '../ee/platform/platform-usage-service'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
@@ -25,7 +25,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
             platformId,
             provider,
         })
-        const exceededLimit = await projectLimitsService(request.log).aiTokensExceededLimit(projectId, 0)
+        const exceededLimit = await projectLimitsService(request.log).aiCreditsExceededLimit(projectId, 0)
         if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(
@@ -52,7 +52,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await usageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_TOKENS })
+            await platformUsageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_CREDITS })
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,

@@ -330,6 +330,12 @@
                         "enum": [
                           "CUSTOM_AUTH"
                         ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NO_AUTH"
+                        ]
                       }
                     ]
                   },
@@ -500,6 +506,12 @@
                         "type": "string",
                         "enum": [
                           "CUSTOM_AUTH"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NO_AUTH"
                         ]
                       }
                     ]
@@ -2114,12 +2126,19 @@
               "schemaVersion": {
                 "type": "string",
                 "nullable": true
+              },
+              "connectionIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
               "displayName",
               "trigger",
-              "valid"
+              "valid",
+              "connectionIds"
             ]
           },
           "projectId": {
@@ -2164,6 +2183,9 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "displayOrder": {
+            "type": "number"
           }
         },
         "required": [
@@ -2171,7 +2193,8 @@
           "created",
           "updated",
           "projectId",
-          "displayName"
+          "displayName",
+          "displayOrder"
         ]
       },
       "user-invitation": {
@@ -2392,10 +2415,7 @@
               "tasks": {
                 "type": "number"
               },
-              "teamMembers": {
-                "type": "number"
-              },
-              "aiTokens": {
+              "aiCredits": {
                 "type": "number"
               },
               "nextLimitResetDate": {
@@ -2404,8 +2424,7 @@
             },
             "required": [
               "tasks",
-              "teamMembers",
-              "aiTokens",
+              "aiCredits",
               "nextLimitResetDate"
             ]
           },
@@ -2453,7 +2472,7 @@
                 "type": "number",
                 "nullable": true
               },
-              "aiTokens": {
+              "aiCredits": {
                 "type": "number",
                 "nullable": true
               }
@@ -2522,8 +2541,7 @@
             "type": "string"
           },
           "externalId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "folderId": {
             "type": "string",
@@ -2571,6 +2589,46 @@
             ],
             "nullable": true
           },
+          "handshakeConfiguration": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "NONE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "HEADER_PRESENT"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "QUERY_PRESENT"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "BODY_PARAM_PRESENT"
+                    ]
+                  }
+                ]
+              },
+              "paramName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "strategy"
+            ],
+            "nullable": true
+          },
           "publishedVersionId": {
             "type": "string",
             "nullable": true
@@ -2586,6 +2644,7 @@
           "created",
           "updated",
           "projectId",
+          "externalId",
           "status"
         ]
       },
@@ -2893,6 +2952,12 @@
                 "enum": [
                   "CUSTOM_AUTH"
                 ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "NO_AUTH"
+                ]
               }
             ]
           },
@@ -3034,6 +3099,14 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": {}
+          },
+          "flowIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "required": [
@@ -3494,15 +3567,25 @@
                   "grantType": {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "enum": [
-                          "authorization_code"
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "authorization_code"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "client_credentials"
+                            ]
+                          }
                         ]
                       },
                       {
                         "type": "string",
                         "enum": [
-                          "client_credentials"
+                          "both_client_credentials_and_authorization_code"
                         ]
                       }
                     ]
@@ -3678,6 +3761,95 @@
           },
           "maximumSupportedRelease": {
             "type": "string"
+          },
+          "i18n": {
+            "type": "object",
+            "properties": {
+              "nl": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "en": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "de": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "it": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "fr": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "bg": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "uk": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "hu": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "es": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "ja": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "id": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "vi": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "zh": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "pt": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "actions": {
             "type": "object",
@@ -4897,15 +5069,25 @@
                               "grantType": {
                                 "anyOf": [
                                   {
-                                    "type": "string",
-                                    "enum": [
-                                      "authorization_code"
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "authorization_code"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "client_credentials"
+                                        ]
+                                      }
                                     ]
                                   },
                                   {
                                     "type": "string",
                                     "enum": [
-                                      "client_credentials"
+                                      "both_client_credentials_and_authorization_code"
                                     ]
                                   }
                                 ]
@@ -6229,15 +6411,25 @@
                               "grantType": {
                                 "anyOf": [
                                   {
-                                    "type": "string",
-                                    "enum": [
-                                      "authorization_code"
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "authorization_code"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "client_credentials"
+                                        ]
+                                      }
                                     ]
                                   },
                                   {
                                     "type": "string",
                                     "enum": [
-                                      "client_credentials"
+                                      "both_client_credentials_and_authorization_code"
                                     ]
                                   }
                                 ]
@@ -6715,6 +6907,12 @@
                 "enum": [
                   "CUSTOM_AUTH"
                 ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "NO_AUTH"
+                ]
               }
             ]
           },
@@ -6856,6 +7054,14 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": {}
+          },
+          "flowIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "required": [
@@ -6987,6 +7193,12 @@
                           "type": "string",
                           "enum": [
                             "CUSTOM_AUTH"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NO_AUTH"
                           ]
                         }
                       ]
@@ -7129,6 +7341,14 @@
                       "type": "object",
                       "nullable": true,
                       "additionalProperties": {}
+                    },
+                    "flowIds": {
+                      "type": "array",
+                      "items": {
+                        "pattern": "^[0-9a-zA-Z]{21}$",
+                        "type": "string"
+                      },
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -7258,6 +7478,12 @@
                     "type": "string",
                     "enum": [
                       "CUSTOM_AUTH"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "NO_AUTH"
                     ]
                   }
                 ]
@@ -7400,6 +7626,14 @@
                 "type": "object",
                 "nullable": true,
                 "additionalProperties": {}
+              },
+              "flowIds": {
+                "type": "array",
+                "items": {
+                  "pattern": "^[0-9a-zA-Z]{21}$",
+                  "type": "string"
+                },
+                "nullable": true
               }
             },
             "required": [
@@ -7671,8 +7905,7 @@
                       "type": "string"
                     },
                     "externalId": {
-                      "type": "string",
-                      "nullable": true
+                      "type": "string"
                     },
                     "folderId": {
                       "type": "string",
@@ -7717,6 +7950,46 @@
                         "type",
                         "cronExpression",
                         "timezone"
+                      ],
+                      "nullable": true
+                    },
+                    "handshakeConfiguration": {
+                      "type": "object",
+                      "properties": {
+                        "strategy": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "HEADER_PRESENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "QUERY_PRESENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BODY_PARAM_PRESENT"
+                              ]
+                            }
+                          ]
+                        },
+                        "paramName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "strategy"
                       ],
                       "nullable": true
                     },
@@ -7917,6 +8190,12 @@
                               ]
                             }
                           ]
+                        },
+                        "connectionIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -7927,7 +8206,8 @@
                         "displayName",
                         "trigger",
                         "valid",
-                        "state"
+                        "state",
+                        "connectionIds"
                       ]
                     }
                   },
@@ -7936,6 +8216,7 @@
                     "created",
                     "updated",
                     "projectId",
+                    "externalId",
                     "status",
                     "version"
                   ]
@@ -8035,6 +8316,17 @@
             "in": "query",
             "name": "versionState",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "connectionExternalIds",
+            "required": false
           }
         ],
         "security": [
@@ -8068,8 +8360,7 @@
                             "type": "string"
                           },
                           "externalId": {
-                            "type": "string",
-                            "nullable": true
+                            "type": "string"
                           },
                           "folderId": {
                             "type": "string",
@@ -8114,6 +8405,46 @@
                               "type",
                               "cronExpression",
                               "timezone"
+                            ],
+                            "nullable": true
+                          },
+                          "handshakeConfiguration": {
+                            "type": "object",
+                            "properties": {
+                              "strategy": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "HEADER_PRESENT"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "QUERY_PRESENT"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "BODY_PARAM_PRESENT"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "paramName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "strategy"
                             ],
                             "nullable": true
                           },
@@ -8314,6 +8645,12 @@
                                     ]
                                   }
                                 ]
+                              },
+                              "connectionIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
                               }
                             },
                             "required": [
@@ -8324,7 +8661,8 @@
                               "displayName",
                               "trigger",
                               "valid",
-                              "state"
+                              "state",
+                              "connectionIds"
                             ]
                           }
                         },
@@ -8333,6 +8671,7 @@
                           "created",
                           "updated",
                           "projectId",
+                          "externalId",
                           "status",
                           "version"
                         ]
@@ -10738,6 +11077,66 @@
                       "type",
                       "request"
                     ]
+                  },
+                  {
+                    "title": "Update Metadata",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "UPDATE_METADATA"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "metadata": {
+                            "type": "object",
+                            "nullable": true,
+                            "additionalProperties": {}
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "MOVE_BRANCH"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "sourceBranchIndex": {
+                            "type": "number"
+                          },
+                          "targetBranchIndex": {
+                            "type": "number"
+                          },
+                          "stepName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "sourceBranchIndex",
+                          "targetBranchIndex",
+                          "stepName"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
                   }
                 ]
               }
@@ -10816,8 +11215,7 @@
                       "type": "string"
                     },
                     "externalId": {
-                      "type": "string",
-                      "nullable": true
+                      "type": "string"
                     },
                     "folderId": {
                       "type": "string",
@@ -10862,6 +11260,46 @@
                         "type",
                         "cronExpression",
                         "timezone"
+                      ],
+                      "nullable": true
+                    },
+                    "handshakeConfiguration": {
+                      "type": "object",
+                      "properties": {
+                        "strategy": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "HEADER_PRESENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "QUERY_PRESENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BODY_PARAM_PRESENT"
+                              ]
+                            }
+                          ]
+                        },
+                        "paramName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "strategy"
                       ],
                       "nullable": true
                     },
@@ -11062,6 +11500,12 @@
                               ]
                             }
                           ]
+                        },
+                        "connectionIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -11072,7 +11516,8 @@
                         "displayName",
                         "trigger",
                         "valid",
-                        "state"
+                        "state",
+                        "connectionIds"
                       ]
                     }
                   },
@@ -11081,6 +11526,7 @@
                     "created",
                     "updated",
                     "projectId",
+                    "externalId",
                     "status",
                     "version"
                   ]
@@ -11353,12 +11799,19 @@
                         "schemaVersion": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "connectionIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
                         "displayName",
                         "trigger",
-                        "valid"
+                        "valid",
+                        "connectionIds"
                       ]
                     },
                     "metadata": {
@@ -12620,6 +13073,57 @@
                       "type",
                       "value"
                     ]
+                  },
+                  {
+                    "title": "No Auth",
+                    "description": "No Auth",
+                    "type": "object",
+                    "properties": {
+                      "externalId": {
+                        "type": "string"
+                      },
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "NO_AUTH"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "NO_AUTH"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "externalId",
+                      "displayName",
+                      "pieceName",
+                      "projectId",
+                      "type",
+                      "value"
+                    ]
                   }
                 ]
               }
@@ -12806,6 +13310,12 @@
                                 "enum": [
                                   "CUSTOM_AUTH"
                                 ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NO_AUTH"
+                                ]
                               }
                             ]
                           },
@@ -12947,6 +13457,14 @@
                             "type": "object",
                             "nullable": true,
                             "additionalProperties": {}
+                          },
+                          "flowIds": {
+                            "type": "array",
+                            "items": {
+                              "pattern": "^[0-9a-zA-Z]{21}$",
+                              "type": "string"
+                            },
+                            "nullable": true
                           }
                         },
                         "required": [
@@ -13145,6 +13663,60 @@
         }
       }
     },
+    "/v1/app-connections/replace": {
+      "post": {
+        "tags": [
+          "app-connections"
+        ],
+        "description": "Replace app connections",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourceAppConnectionId": {
+                    "type": "string"
+                  },
+                  "targetAppConnectionId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sourceAppConnectionId",
+                  "targetAppConnectionId",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "not": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/platforms/{id}": {
       "get": {
         "tags": [
@@ -13240,6 +13812,126 @@
                       "properties": {},
                       "nullable": true
                     },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "includedTasks": {
+                          "type": "number"
+                        },
+                        "includedAiCredits": {
+                          "type": "number"
+                        },
+                        "tasksLimit": {
+                          "type": "number"
+                        },
+                        "aiCreditsLimit": {
+                          "type": "number"
+                        },
+                        "environmentsEnabled": {
+                          "type": "boolean"
+                        },
+                        "analyticsEnabled": {
+                          "type": "boolean"
+                        },
+                        "showPoweredBy": {
+                          "type": "boolean"
+                        },
+                        "auditLogEnabled": {
+                          "type": "boolean"
+                        },
+                        "embeddingEnabled": {
+                          "type": "boolean"
+                        },
+                        "managePiecesEnabled": {
+                          "type": "boolean"
+                        },
+                        "manageTemplatesEnabled": {
+                          "type": "boolean"
+                        },
+                        "customAppearanceEnabled": {
+                          "type": "boolean"
+                        },
+                        "manageProjectsEnabled": {
+                          "type": "boolean"
+                        },
+                        "projectRolesEnabled": {
+                          "type": "boolean"
+                        },
+                        "customDomainsEnabled": {
+                          "type": "boolean"
+                        },
+                        "globalConnectionsEnabled": {
+                          "type": "boolean"
+                        },
+                        "customRolesEnabled": {
+                          "type": "boolean"
+                        },
+                        "apiKeysEnabled": {
+                          "type": "boolean"
+                        },
+                        "tablesEnabled": {
+                          "type": "boolean"
+                        },
+                        "todosEnabled": {
+                          "type": "boolean"
+                        },
+                        "alertsEnabled": {
+                          "type": "boolean"
+                        },
+                        "ssoEnabled": {
+                          "type": "boolean"
+                        },
+                        "licenseKey": {
+                          "type": "string"
+                        },
+                        "stripeCustomerId": {
+                          "type": "string"
+                        },
+                        "stripeSubscriptionId": {
+                          "type": "string"
+                        },
+                        "stripeSubscriptionStatus": {
+                          "type": "string"
+                        },
+                        "userSeatsLimit": {
+                          "type": "number"
+                        },
+                        "projectsLimit": {
+                          "type": "number"
+                        },
+                        "tablesLimit": {
+                          "type": "number"
+                        },
+                        "mcpLimit": {
+                          "type": "number"
+                        },
+                        "activeFlowsLimit": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "includedTasks",
+                        "includedAiCredits",
+                        "environmentsEnabled",
+                        "analyticsEnabled",
+                        "showPoweredBy",
+                        "auditLogEnabled",
+                        "embeddingEnabled",
+                        "managePiecesEnabled",
+                        "manageTemplatesEnabled",
+                        "customAppearanceEnabled",
+                        "manageProjectsEnabled",
+                        "projectRolesEnabled",
+                        "customDomainsEnabled",
+                        "globalConnectionsEnabled",
+                        "customRolesEnabled",
+                        "apiKeysEnabled",
+                        "tablesEnabled",
+                        "todosEnabled",
+                        "alertsEnabled",
+                        "ssoEnabled"
+                      ]
+                    },
                     "hasLicenseKey": {
                       "type": "boolean"
                     },
@@ -13299,57 +13991,6 @@
                     "cloudAuthEnabled": {
                       "type": "boolean"
                     },
-                    "analyticsEnabled": {
-                      "type": "boolean"
-                    },
-                    "showPoweredBy": {
-                      "type": "boolean"
-                    },
-                    "environmentsEnabled": {
-                      "type": "boolean"
-                    },
-                    "auditLogEnabled": {
-                      "type": "boolean"
-                    },
-                    "embeddingEnabled": {
-                      "type": "boolean"
-                    },
-                    "managePiecesEnabled": {
-                      "type": "boolean"
-                    },
-                    "manageTemplatesEnabled": {
-                      "type": "boolean"
-                    },
-                    "customAppearanceEnabled": {
-                      "type": "boolean"
-                    },
-                    "manageProjectsEnabled": {
-                      "type": "boolean"
-                    },
-                    "projectRolesEnabled": {
-                      "type": "boolean"
-                    },
-                    "customDomainsEnabled": {
-                      "type": "boolean"
-                    },
-                    "globalConnectionsEnabled": {
-                      "type": "boolean"
-                    },
-                    "customRolesEnabled": {
-                      "type": "boolean"
-                    },
-                    "apiKeysEnabled": {
-                      "type": "boolean"
-                    },
-                    "flowIssuesEnabled": {
-                      "type": "boolean"
-                    },
-                    "alertsEnabled": {
-                      "type": "boolean"
-                    },
-                    "ssoEnabled": {
-                      "type": "boolean"
-                    },
                     "enforceAllowedAuthDomains": {
                       "type": "boolean"
                     },
@@ -13370,6 +14011,7 @@
                     }
                   },
                   "required": [
+                    "plan",
                     "id",
                     "created",
                     "updated",
@@ -13382,23 +14024,6 @@
                     "filteredPieceNames",
                     "filteredPieceBehavior",
                     "cloudAuthEnabled",
-                    "analyticsEnabled",
-                    "showPoweredBy",
-                    "environmentsEnabled",
-                    "auditLogEnabled",
-                    "embeddingEnabled",
-                    "managePiecesEnabled",
-                    "manageTemplatesEnabled",
-                    "customAppearanceEnabled",
-                    "manageProjectsEnabled",
-                    "projectRolesEnabled",
-                    "customDomainsEnabled",
-                    "globalConnectionsEnabled",
-                    "customRolesEnabled",
-                    "apiKeysEnabled",
-                    "flowIssuesEnabled",
-                    "alertsEnabled",
-                    "ssoEnabled",
                     "enforceAllowedAuthDomains",
                     "allowedAuthDomains",
                     "emailAuthEnabled",
@@ -13575,6 +14200,12 @@
                                           "enum": [
                                             "CUSTOM_AUTH"
                                           ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "NO_AUTH"
+                                          ]
                                         }
                                       ]
                                     },
@@ -13716,6 +14347,14 @@
                                       "type": "object",
                                       "nullable": true,
                                       "additionalProperties": {}
+                                    },
+                                    "flowIds": {
+                                      "type": "array",
+                                      "items": {
+                                        "pattern": "^[0-9a-zA-Z]{21}$",
+                                        "type": "string"
+                                      },
+                                      "nullable": true
                                     }
                                   },
                                   "required": [
@@ -13931,6 +14570,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -14072,6 +14717,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -14257,6 +14910,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -14398,6 +15057,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -14555,6 +15222,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -14696,6 +15369,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -14906,6 +15587,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -15047,6 +15734,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -15263,6 +15958,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -15404,6 +16105,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -15587,6 +16296,12 @@
                                     "enum": [
                                       "CUSTOM_AUTH"
                                     ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NO_AUTH"
+                                    ]
                                   }
                                 ]
                               },
@@ -15728,6 +16443,14 @@
                                 "type": "object",
                                 "nullable": true,
                                 "additionalProperties": {}
+                              },
+                              "flowIds": {
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-zA-Z]{21}$",
+                                  "type": "string"
+                                },
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -16372,6 +17095,9 @@
                     },
                     "projectId": {
                       "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -16379,7 +17105,8 @@
                     "created",
                     "updated",
                     "name",
-                    "projectId"
+                    "projectId",
+                    "externalId"
                   ]
                 }
               }
@@ -16418,6 +17145,17 @@
             "in": "query",
             "name": "name",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "externalIds",
+            "required": false
           }
         ],
         "security": [
@@ -16452,6 +17190,9 @@
                           },
                           "projectId": {
                             "type": "string"
+                          },
+                          "externalId": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -16459,7 +17200,8 @@
                           "created",
                           "updated",
                           "name",
-                          "projectId"
+                          "projectId",
+                          "externalId"
                         ]
                       }
                     },
@@ -16884,102 +17626,107 @@
             }
           }
         }
-      }
-    },
-    "/v1/records/list": {
-      "post": {
+      },
+      "get": {
         "tags": [
           "records"
         ],
         "description": "List records",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tableId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
                 "type": "object",
                 "properties": {
-                  "tableId": {
+                  "fieldId": {
                     "type": "string"
                   },
-                  "limit": {
-                    "type": "number"
-                  },
-                  "cursor": {
+                  "value": {
                     "type": "string"
                   },
-                  "filters": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "fieldId": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "string"
-                        },
-                        "operator": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "eq"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "neq"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "gt"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "gte"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "lt"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "lte"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "co"
-                              ]
-                            }
-                          ]
-                        }
+                  "operator": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "eq"
+                        ]
                       },
-                      "required": [
-                        "fieldId",
-                        "value"
-                      ]
-                    }
+                      {
+                        "type": "string",
+                        "enum": [
+                          "neq"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "gt"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "gte"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "lt"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "lte"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "co"
+                        ]
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "tableId"
+                  "fieldId",
+                  "value"
                 ]
               }
-            }
-          },
-          "required": true
-        },
+            },
+            "in": "query",
+            "name": "filters",
+            "required": false
+          }
+        ],
         "security": [
           {
             "apiKey": []
@@ -17173,10 +17920,7 @@
                         "tasks": {
                           "type": "number"
                         },
-                        "teamMembers": {
-                          "type": "number"
-                        },
-                        "aiTokens": {
+                        "aiCredits": {
                           "type": "number"
                         },
                         "nextLimitResetDate": {
@@ -17185,8 +17929,7 @@
                       },
                       "required": [
                         "tasks",
-                        "teamMembers",
-                        "aiTokens",
+                        "aiCredits",
                         "nextLimitResetDate"
                       ]
                     },
@@ -17234,7 +17977,7 @@
                           "type": "number",
                           "nullable": true
                         },
-                        "aiTokens": {
+                        "aiCredits": {
                           "type": "number",
                           "nullable": true
                         }
@@ -17398,10 +18141,7 @@
                               "tasks": {
                                 "type": "number"
                               },
-                              "teamMembers": {
-                                "type": "number"
-                              },
-                              "aiTokens": {
+                              "aiCredits": {
                                 "type": "number"
                               },
                               "nextLimitResetDate": {
@@ -17410,8 +18150,7 @@
                             },
                             "required": [
                               "tasks",
-                              "teamMembers",
-                              "aiTokens",
+                              "aiCredits",
                               "nextLimitResetDate"
                             ]
                           },
@@ -17459,7 +18198,7 @@
                                 "type": "number",
                                 "nullable": true
                               },
-                              "aiTokens": {
+                              "aiCredits": {
                                 "type": "number",
                                 "nullable": true
                               }
@@ -17609,7 +18348,7 @@
                           }
                         ]
                       },
-                      "aiTokens": {
+                      "aiCredits": {
                         "type": "number"
                       }
                     }
@@ -17700,10 +18439,7 @@
                         "tasks": {
                           "type": "number"
                         },
-                        "teamMembers": {
-                          "type": "number"
-                        },
-                        "aiTokens": {
+                        "aiCredits": {
                           "type": "number"
                         },
                         "nextLimitResetDate": {
@@ -17712,8 +18448,7 @@
                       },
                       "required": [
                         "tasks",
-                        "teamMembers",
-                        "aiTokens",
+                        "aiCredits",
                         "nextLimitResetDate"
                       ]
                     },
@@ -17761,7 +18496,7 @@
                           "type": "number",
                           "nullable": true
                         },
-                        "aiTokens": {
+                        "aiCredits": {
                           "type": "number",
                           "nullable": true
                         }
@@ -18526,12 +19261,19 @@
                       "schemaVersion": {
                         "type": "string",
                         "nullable": true
+                      },
+                      "connectionIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
                       "displayName",
                       "trigger",
-                      "valid"
+                      "valid",
+                      "connectionIds"
                     ]
                   },
                   "blogUrl": {
@@ -19807,6 +20549,72 @@
                       "scope",
                       "projectIds"
                     ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "NO_AUTH"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "NO_AUTH"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
                   }
                 ]
               }
@@ -19878,6 +20686,12 @@
                           "type": "string",
                           "enum": [
                             "CUSTOM_AUTH"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NO_AUTH"
                           ]
                         }
                       ]
@@ -20020,6 +20834,14 @@
                       "type": "object",
                       "nullable": true,
                       "additionalProperties": {}
+                    },
+                    "flowIds": {
+                      "type": "array",
+                      "items": {
+                        "pattern": "^[0-9a-zA-Z]{21}$",
+                        "type": "string"
+                      },
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -20200,6 +21022,12 @@
                                 "enum": [
                                   "CUSTOM_AUTH"
                                 ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NO_AUTH"
+                                ]
                               }
                             ]
                           },
@@ -20341,6 +21169,14 @@
                             "type": "object",
                             "nullable": true,
                             "additionalProperties": {}
+                          },
+                          "flowIds": {
+                            "type": "array",
+                            "items": {
+                              "pattern": "^[0-9a-zA-Z]{21}$",
+                              "type": "string"
+                            },
+                            "nullable": true
                           }
                         },
                         "required": [

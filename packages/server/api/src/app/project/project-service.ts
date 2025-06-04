@@ -8,6 +8,7 @@ import {
     Metadata,
     NotificationStatus,
     PlatformRole,
+    PlatformUsageMetric,
     Project,
     ProjectId,
     spreadIfDefined,
@@ -15,15 +16,23 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
+
+        await checkQuotaOrThrow({
+            platformId: params.platformId,
+            metric: PlatformUsageMetric.PROJECTS,
+        })
+
         const newProject: NewProject = {
             id: apId(),
             ...params,
@@ -98,11 +107,15 @@ export const projectService = {
 
         return project
     },
-    async exists(projectId: ProjectId): Promise<boolean> {
-        return projectRepo().existsBy({
-            id: projectId,
-            deleted: IsNull(),
+    async exists({ projectId, isSoftDeleted }: ExistsParams): Promise<boolean> {
+        const project = await projectRepo().findOne({
+            where: {
+                id: projectId,
+                deleted: isSoftDeleted ? Not(IsNull()) : IsNull(),
+            },
+            withDeleted: true,
         })
+        return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
@@ -211,6 +224,11 @@ type GetAllForUserParams = {
 type GetOneByOwnerAndPlatformParams = {
     ownerId: UserId
     platformId: string
+}
+
+type ExistsParams = {
+    projectId: ProjectId
+    isSoftDeleted?: boolean
 }
 
 
