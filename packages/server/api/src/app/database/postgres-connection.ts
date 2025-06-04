@@ -32,6 +32,9 @@ import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/
 import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
+import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
+import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -45,6 +48,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddMcpToolEntity1748352614033,
+        AddMcpRunEntity1748358415599,
+        MigrateMcpFlowsToBeTools1748996336492,
         DeprecateApproval1748648340742,
         UpgradePieceVersionsToLatest1748253670449,
         RenameProjectBillingToPlatformPLan1747819919988,

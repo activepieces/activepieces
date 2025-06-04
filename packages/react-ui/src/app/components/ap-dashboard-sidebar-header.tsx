@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarHeader } from '@/components/ui/sidebar-shadcn';
 import {
@@ -16,54 +17,22 @@ import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import SettingsDropdownMenu from './settings-dropdown-menu';
-import { useTheme } from '@/components/theme-provider';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
 }: {
   isHomeDashboard: boolean;
 }) => {
+  const { theme } = useTheme();
   const branding = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
-  const { theme } = useTheme();
+  const isInPlatformAdmin = window.location.pathname.includes('platform');
   const showProjectSwitcher =
-    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
+    edition !== ApEdition.COMMUNITY &&
+    !embedState.isEmbedded &&
+    !isInPlatformAdmin;
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
-
-  const renderLogo = () => {
-    if (showProjectSwitcher) {
-      return (
-        <img
-          src={branding.logos.logoIconUrl}
-          alt={t('home')}
-          width={28}
-          height={28}
-          className="max-h-[22px] max-w-[22px] object-contain"
-        />
-      );
-    }
-
-    // return (
-    //   <img
-    //     src={branding.logos.fullLogoUrl}
-    //     alt={t('home')}
-    //     width={160}
-    //     height={51}
-    //     className="max-h-[51px] max-w-[160px] object-contain"
-    //   />
-    // );
-
-    return (
-      <h1
-        className={`text-xl font-semibold ${
-          theme === 'light' ? 'text-gray-900' : ''
-        }`}
-      >
-        {branding.websiteName}
-      </h1>
-    );
-  };
 
   return (
     <SidebarHeader className="pb-0">
@@ -78,7 +47,36 @@ const ApDashboardSidebarHeader = ({
         >
           <Link to={isHomeDashboard ? defaultRoute : '/platform'}>
             <Tooltip>
-              <TooltipTrigger asChild>{renderLogo()}</TooltipTrigger>
+              <TooltipTrigger asChild>
+                <>
+                  {showProjectSwitcher && (
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('home')}
+                      width={28}
+                      height={28}
+                      className="max-h-[22px] max-w-[22px] object-contain"
+                    />
+                  )}
+
+                  {!showProjectSwitcher && (
+                    // <img
+                    //   src={branding.logos.fullLogoUrl}
+                    //   alt={t('home')}
+                    //   width={160}
+                    //   height={51}
+                    //   className="max-h-[51px] max-w-[160px] object-contain"
+                    // />
+                    <h1
+                      className={`text-xl font-semibold ${
+                        theme === 'light' ? 'text-gray-900' : ''
+                      }`}
+                    >
+                      {branding.websiteName}
+                    </h1>
+                  )}
+                </>
+              </TooltipTrigger>
               <TooltipContent side="bottom">{t('Home')}</TooltipContent>
             </Tooltip>
           </Link>

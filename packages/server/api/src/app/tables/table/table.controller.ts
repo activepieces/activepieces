@@ -41,9 +41,10 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.delete('/:id', DeleteRequest, async (request, reply) => {
         // await gitRepoService(request.log).onDeleted({
         //     type: GitPushOperationType.DELETE_TABLE,
-        //     id: request.params.id,
+        //     idOrExternalId: request.params.id,
         //     userId: request.principal.id,
         //     projectId: request.principal.projectId,
+        //     platformId: request.principal.platform.id,
         //     log: request.log,
         // })
         await tableService.delete({
