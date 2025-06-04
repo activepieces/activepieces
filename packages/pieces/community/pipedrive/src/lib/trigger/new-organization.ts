@@ -36,12 +36,18 @@ const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string
 				organizations.push(org);
 			}
 		} else {
+			// API does not support filtering by add_time, provide custom filter that can short circuit pagination
+			const customFilter = (elem: Record<string, any>) => {
+				return dayjs(elem.add_time).valueOf() > lastFetchEpochMS;
+			}
+			
 			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
 				accessToken: auth.access_token,
 				apiDomain: auth.data['api_domain'],
 				method: HttpMethod.GET,
 				resourceUri: '/organizations',
 				query: { sort: 'add_time DESC' },
+				customFilter: customFilter,
 			});
 			if (isNil(response)) {
 				return [];
