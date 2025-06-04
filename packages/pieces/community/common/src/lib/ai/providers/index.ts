@@ -123,18 +123,18 @@ export const aiProps = (
       }
 
       const providersWithMetadata = providers.flatMap((p) => {
-        const providerMetadata = SUPPORTED_AI_PROVIDERS.find(
-          (provider) =>
-            provider.provider === p.provider &&
-            provider.models.some((model) => model.supported.includes(supported))
+        const providerMetadata = AI_PROVIDERS.find(
+          (meta) =>
+            meta.value === p.provider &&
+            meta.models.some((m) => m.supported.includes(supported))
         );
         if (isNil(providerMetadata)) {
           return [];
         }
         return [
           {
-            value: providerMetadata.provider,
-            label: providerMetadata.displayName,
+            value: providerMetadata.value,
+            label: providerMetadata.label,
             models: providerMetadata.models,
           },
         ];
@@ -160,8 +160,8 @@ export const aiProps = (
           placeholder: 'Select AI Provider',
         };
       }
-      const models = SUPPORTED_AI_PROVIDERS.find(
-        (p) => p.provider === provider
+      const models = AI_PROVIDERS.find(
+        (p) => p.value === provider
       )?.models.filter((model) => model.supported.includes(supported));
       return {
         disabled: isNil(models),

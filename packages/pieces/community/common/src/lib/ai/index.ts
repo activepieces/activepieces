@@ -1,5 +1,5 @@
 import { ApFile, ServerContext } from '@activepieces/pieces-framework';
-import { AI_PROVIDERS, AiProvider } from './providers';
+import { AI_PROVIDERS } from './providers';
 
 export type AI = {
 	provider: string;
@@ -100,7 +100,7 @@ export enum AIChatRole {
 
 export type AIFactory = (params: { proxyUrl: string; engineToken: string }) => AI;
 
-export const AI = ({ provider, server }: { provider: AiProvider; server: ServerContext }): AI => {
+export const AI = ({ provider, server }: { provider: string; server: ServerContext }): AI => {
 	const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}`;
 	const factory = AI_PROVIDERS.find((p) => p.value === provider)?.factory;
 	const impl = factory?.({ proxyUrl, engineToken: server.token });
