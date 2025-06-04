@@ -1,7 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, PrincipalType, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
 import { BillingUsageType, platformUsageService } from '../ee/platform/platform-usage-service'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
@@ -18,12 +17,22 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             getUpstream(request, _base) {
                 const params = request.params as Record<string, string>
                 if (isNil(params) || !params['provider']) {
-                    throw new Error('Provider not found')
+                    throw new ActivepiecesError({
+                        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+                        params: {
+                            provider: params['provider'],
+                        },
+                    })
                 }
                 const provider = params['provider'] as string
                 const providerConfig = SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
                 if (!providerConfig) {
-                    throw new Error('Provider not found')
+                    throw new ActivepiecesError({
+                        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+                        params: {
+                            provider: params['provider'],
+                        },
+                    })
                 }
 
                 return providerConfig.baseUrl
@@ -36,7 +45,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        preHandler: async (request, reply) => {
+        preHandler: async (request, _reply) => {
             if (![PrincipalType.ENGINE].includes(request.principal.type)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
@@ -49,10 +58,10 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const projectId = request.principal.projectId
             const exceededLimit = await projectLimitsService(request.log).aiCreditsExceededLimit(projectId, 0)
             if (exceededLimit) {
-                return reply.code(StatusCodes.PAYMENT_REQUIRED).send({
-                    error: {
-                        message: 'You have exceeded your AI tokens limit for this project.',
-                        code: 'ai_tokens_limit_exceeded',
+                throw new ActivepiecesError({
+                    code: ErrorCode.QUOTA_EXCEEDED,
+                    params: {
+                        metric: PlatformUsageMetric.AI_TOKENS,
                     },
                 })
             }
@@ -62,7 +71,12 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const provider = params['provider'] as string
             const providerConfig = SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
             if (!providerConfig) {
-                throw new Error('Provider not found')
+                throw new ActivepiecesError({
+                    code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+                    params: {
+                        provider: params['provider'],
+                    },
+                })
             }
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
