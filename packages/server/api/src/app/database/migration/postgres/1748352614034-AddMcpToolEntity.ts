@@ -18,7 +18,7 @@ enum McpToolType {
 }
 
 enum TriggerType {
-    PIECE = 'PIECE',
+    PIECE = 'PIECE_TRIGGER',
 }
 
 type McpPieceToolData = {
@@ -94,12 +94,19 @@ const log = system.globalLogger()
 let totalPieces = 0
 let totalFlows = 0
 
-export class AddMcpToolEntity1748352614033 implements MigrationInterface {
-    name = 'AddMcpToolEntity1748352614033'
+export class AddMcpToolEntity1748352614034 implements MigrationInterface {
+    name = 'AddMcpToolEntity1748352614034'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const migrationAlreadyRan = await queryRunner.query(
+            'SELECT * FROM "migrations" WHERE "name" = \'AddMcpToolEntity1748352614033\'',
+        )
+        if (migrationAlreadyRan.length > 0) {
+            log.info('AddMcpToolEntity1748352614033: migration already ran')
+            return
+        }
 
-        log.info('Starting migration AddMcpToolEntity1748352614033')
+        log.info('Starting migration AddMcpToolEntity1748352614034')
 
         await queryRunner.query(`
             DROP INDEX "public"."mcp_project_id"
@@ -162,7 +169,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             DROP TABLE "mcp_piece"
         `)
 
-        log.info(`Migration AddMcpToolEntity1748352614033 completed successfully. Added ${totalPieces} MCP piece tools and ${totalFlows} MCP flow tools`)
+        log.info(`Migration AddMcpToolEntity1748352614034 completed successfully. Added ${totalPieces} MCP piece tools and ${totalFlows} MCP flow tools`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
