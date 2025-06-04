@@ -78,6 +78,7 @@ it will produce these values. </Tip>
 | `AP_MAX_TABLES_PER_PROJECT` | The maximum allowed number of tables per project | `20` | `20`
 | `AP_MAX_MCPS_PER_PROJECT` | The maximum allowed number of mcp per project | `20` | `20`
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Whether publishing a new flow version should automatically enable the flow | `true` | `false`  
+| `AP_ISSUE_ARCHIVE_DAYS`            | Controls the automatic archival of issues in the system. Issues that have not been updated for this many days will be automatically moved to an archived state.| `14` | `1` 
 
 <Warning>
   The frontend URL is essential for webhooks and app triggers to work. It must
