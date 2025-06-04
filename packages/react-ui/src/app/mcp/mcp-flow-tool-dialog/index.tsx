@@ -121,9 +121,7 @@ export function McpFlowDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="min-w-[750px] max-w-[750px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle>
-            {t('Add Flow Tools')}
-          </DialogTitle>
+          <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
           <DialogDescription>
             {t('Select flows to add as MCP tools')}
           </DialogDescription>

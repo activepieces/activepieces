@@ -1,9 +1,9 @@
 import { t } from 'i18next';
 import { Workflow, Trash2, EllipsisVertical } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +13,6 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { McpTool, Permission } from '@activepieces/shared';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 type McpFlowToolProps = {
   tool: McpTool;
@@ -33,7 +31,10 @@ export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
   return (
     <Card key={`flow-${tool.id}`}>
       <CardContent className="flex items-center justify-between p-3 h-[70px]">
-        <div className="flex items-center gap-3 min-w-0 group cursor-pointer" onClick={openFlow}>
+        <div
+          className="flex items-center gap-3 min-w-0 group cursor-pointer"
+          onClick={openFlow}
+        >
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             <Workflow className="h-5 w-5 text-muted-foreground" />
           </div>
