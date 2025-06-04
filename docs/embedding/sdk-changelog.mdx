@@ -7,7 +7,7 @@ icon: "code-commit"
 
 
 <Warning>
-**Breaking Change**: <br/> If your Activepieces image version is < 0.45.0 and (you are using the connect method from the embed SDk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your Activepieces image to >= 0.45.0
+**Breaking Change:** <br></br> <br></br> If your Activepieces image version is < 0.45.0 and (you are using the connect method from the embed SDk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your Activepieces image to >= 0.45.0
 </Warning>
 
 <Warning> 
@@ -18,9 +18,6 @@ Change log format: DD/MM/YYYY (version)
 
 ### 04/12/2024 (0.3.0)
 
-<Warning>
-**Breaking Change**: Automatic URL sync has been removed. Instead, Activepieces now provides a callback handler method. Please read [Embedding Navigation](./navigation) for more information.
-</Warning>
 
 - add custom navigation handler ([#4500](https://github.com/activepieces/activepieces/pull/4500))
 - allow passing a predefined name for connection in connect method ([#4485](https://github.com/activepieces/activepieces/pull/4485))
@@ -51,3 +48,15 @@ Change log format: DD/MM/YYYY (version)
 ### 17/04/2025 (0.3.7)
 - Added [MCP methods](./mcps) to update MCP configurations.
 
+
+### 20/05/2025 (0.4.0)
+
+-- Note: we didn't consider adding optional new parameters as a breaking change so we were bumping the patch version, but that was wrong and we will begin bumping the minor version for those changes from now on, and patch version will only get bumped for bug fixes.
+- This version requires you to update Activepieces to 0.56.0
+- Added `embedding.hideExportAndImportFlow` parameter to the [configure](./embed-builder) method.
+- Added new possible value to the configure method param `embed.builder.disableNavigation` which is "keep_home_button_only" that keeps only the home button and hides the folder name with the delete flow action. 
+- Added new param to the configure method `embed.builder.homeButtonClickedHandler`, that overrides the navigation behaviour on clicking the home button. 
+
+
+### 26/05/2025 (0.4.1)
+- Fixed an issue where sometimes the embed HTML file was getting cached.

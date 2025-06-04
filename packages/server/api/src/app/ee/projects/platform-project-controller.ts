@@ -1,6 +1,5 @@
 import {
     CreatePlatformProjectRequest,
-    DEFAULT_PLATFORM_LIMIT,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
@@ -9,6 +8,7 @@ import {
     EndpointScope,
     ErrorCode,
     Permission,
+    PiecesFilterType,
     PlatformRole,
     Principal,
     PrincipalType,
@@ -29,7 +29,7 @@ const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
-        await platformMustHaveFeatureEnabled(platform => platform.manageProjectsEnabled).call(app, request, reply)
+        await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const platform = await platformService.getOneOrThrow(platformId)
@@ -41,7 +41,13 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
         })
-        await projectLimitsService(request.log).upsert(DEFAULT_PLATFORM_LIMIT, project.id)
+        await projectLimitsService(request.log).upsert({
+            nickname: 'platform',
+            tasks: null,
+            pieces: [],
+            aiCredits: null,
+            piecesFilterType: PiecesFilterType.NONE,
+        }, project.id)
         const projectWithUsage =
             await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)

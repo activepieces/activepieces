@@ -226,7 +226,10 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-            <ShowPoweredBy position="absolute" show={platform?.showPoweredBy} />
+            <ShowPoweredBy
+              position="absolute"
+              show={platform?.plan.showPoweredBy}
+            />
             <DataSelector
               parentHeight={middlePanelSize.height}
               parentWidth={middlePanelSize.width}

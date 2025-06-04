@@ -41,7 +41,9 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
         await platformService.update({
             id: platform.id,
-            customDomainsEnabled: true,
+            plan: {
+                customDomainsEnabled: true,
+            },
         })
 
         const customDomain = await customDomainService.create({

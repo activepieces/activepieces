@@ -16,7 +16,7 @@ import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.environmentsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.environmentsEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
@@ -41,6 +41,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     app.post('/:id/push', PushRepoRequestSchema, async (request) => {
         return gitRepoService(request.log).push({
             id: request.params.id,
+            platformId: request.principal.platform.id,
             userId: request.principal.id,
             request: request.body,
             log: request.log,

@@ -26,13 +26,14 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-import { AssignConnectionToProjectsControl } from '../../../components/ui/assign-global-connection-to-projects';
 import { globalConnectionsApi } from '../lib/global-connections-api';
 import {
   ConnectionNameAlreadyExists,
   isConnectionNameUnique,
   NoProjectSelected,
 } from '../lib/utils';
+
+import { AssignConnectionToProjectsControl } from './assign-global-connection-to-projects';
 
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
