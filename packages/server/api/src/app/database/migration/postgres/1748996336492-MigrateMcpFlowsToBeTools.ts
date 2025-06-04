@@ -62,14 +62,6 @@ export class MigrateMcpFlowsToBeTools1748996336492 implements MigrationInterface
     name = 'MigrateMcpFlowsToBeTools1748996336492'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const migrationAlreadyRan = await queryRunner.query(
-            'SELECT * FROM "migrations" WHERE "name" = \'AddMcpToolEntity1748352614033\'',
-        )
-        if (migrationAlreadyRan.length === 0) {
-            log.info('AddMcpToolEntity1748352614034: migration already ran')
-            return
-        }
-
         log.info('Starting migration MigrateMcpFlowsToBeTools1748996336492')
 
         const mcps = await queryRunner.query(`

@@ -17,10 +17,6 @@ enum McpToolType {
     FLOW = 'FLOW',
 }
 
-enum TriggerType {
-    PIECE = 'PIECE_TRIGGER',
-}
-
 type McpPieceToolData = {
     pieceName: string
     pieceVersion: string
@@ -37,21 +33,6 @@ type McpTool = {
     type: McpToolType
     pieceMetadata?: McpPieceToolData
     flowId?: string
-}
-
-type FlowVersion = {
-    id: string
-    trigger: {
-        type: TriggerType
-        settings: {
-            pieceName: string
-        }
-    }
-}
-
-type Flow = {
-    id: string
-    publishedVersionId: string
 }
 
 type AppConnectionWithoutSensitiveData = {
@@ -85,28 +66,14 @@ function isNil(value: unknown): value is null | undefined {
     return value === null || value === undefined
 }
 
-function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
-}
-
 const log = system.globalLogger()
 let totalPieces = 0
-let totalFlows = 0
 
-export class AddMcpToolEntity1748352614034 implements MigrationInterface {
-    name = 'AddMcpToolEntity1748352614034'
+export class AddMcpToolEntity1748352614033 implements MigrationInterface {
+    name = 'AddMcpToolEntity1748352614033'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const migrationAlreadyRan = await queryRunner.query(
-            'SELECT * FROM "migrations" WHERE "name" = \'AddMcpToolEntity1748352614033\'',
-        )
-        if (migrationAlreadyRan.length > 0) {
-            log.info('AddMcpToolEntity1748352614033: migration already ran')
-            return
-        }
-
-        log.info('Starting migration AddMcpToolEntity1748352614034')
+        log.info('Starting migration AddMcpToolEntity1748352614033')
 
         await queryRunner.query(`
             DROP INDEX "public"."mcp_project_id"
@@ -162,14 +129,13 @@ export class AddMcpToolEntity1748352614034 implements MigrationInterface {
 
         for (const mcp of mcps) {
             await AddMcpPieceTools(queryRunner, mcp.id, pieceNameToLatestVersion)
-            await AddMcpFlowTools(queryRunner, mcp.id, mcp.projectId)
         }
 
         await queryRunner.query(`
             DROP TABLE "mcp_piece"
         `)
 
-        log.info(`Migration AddMcpToolEntity1748352614034 completed successfully. Added ${totalPieces} MCP piece tools and ${totalFlows} MCP flow tools`)
+        log.info(`Migration AddMcpToolEntity1748352614033 completed successfully. Added ${totalPieces} MCP piece tools`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -246,51 +212,5 @@ async function AddMcpPieceTools(queryRunner: QueryRunner, mcpId: string, pieceNa
         await queryRunner.query(`
             INSERT INTO "mcp_tool" ("id", "mcpId", "type", "pieceMetadata", "created", "updated") VALUES ($1, $2, $3, $4, $5, $6)
         `, [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.pieceMetadata, mcpTool.created, mcpTool.updated])
-    }))
-}
-
-async function AddMcpFlowTools(queryRunner: QueryRunner, mcpId: string, projectId: string) {
-    const flows = await queryRunner.query(`
-        SELECT * FROM "flow" WHERE "projectId" = $1 AND "status" = 'ENABLED' AND "publishedVersionId" IS NOT NULL
-    `, [projectId])
-
-
-
-    const populatedFlows = await Promise.all(flows.map(async (flow: Flow) => {
-        const version = await queryRunner.query(`
-            SELECT * FROM "flow_version" WHERE "id" = $1
-        `, [flow.publishedVersionId])
-
-        if (isNil(version) || version.length === 0 || !isMcpTriggerPiece(version[0])) {
-            return null
-        }
-
-        return {
-            ...flow,
-            version,
-        }
-    }))
-
-    const populatedFlowsCount = populatedFlows.filter((flow) => flow !== null).length
-    totalFlows += populatedFlowsCount
-    log.info(`Adding ${populatedFlowsCount} MCP flow tools out of ${flows.length} flows for MCP ${mcpId} and project ${projectId}`)
-
-    await Promise.all(populatedFlows.map(async (flow: Flow | null) => {
-        if (isNil(flow)) {
-            return
-        }
-
-        const mcpTool: McpTool = {
-            id: apId(),
-            mcpId,
-            type: McpToolType.FLOW,
-            flowId: flow.id,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-        }
-
-        await queryRunner.query(`
-            INSERT INTO "mcp_tool" ("id", "mcpId", "type", "flowId", "created", "updated") VALUES ($1, $2, $3, $4, $5, $6)
-        `, [mcpTool.id, mcpTool.mcpId, mcpTool.type, mcpTool.flowId, mcpTool.created, mcpTool.updated])
     }))
 }
