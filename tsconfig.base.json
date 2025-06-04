@@ -587,6 +587,9 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],

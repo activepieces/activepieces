@@ -1814,6 +1814,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "mamiefurax",
+      "name": "MamieFurax",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3955802?v=4",
+      "profile": "https://github.com/mamiefurax",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
