@@ -765,6 +765,9 @@
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
       ],
+      "@activepieces/piece-tarvent": [
+        "packages/pieces/community/tarvent/src/index.ts"
+      ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"
       ],
