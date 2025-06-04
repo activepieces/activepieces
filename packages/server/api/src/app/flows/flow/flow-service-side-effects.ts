@@ -8,6 +8,7 @@ import {
     isNil,
     ScheduleOptions,
     ScheduleType,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
@@ -35,7 +36,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         )
 
         let scheduleOptions: ScheduleOptions | undefined
-
+        let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
         switch (newStatus) {
             case FlowStatus.ENABLED: {
                 const response = await triggerHooks.enable({
@@ -43,7 +44,8 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     projectId: flowToUpdate.projectId,
                     simulate: false,
                 }, log)
-                scheduleOptions = response?.result.scheduleOptions
+                scheduleOptions = response?.result.scheduleOptions  
+                webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
                 break
             }
             case FlowStatus.DISABLED: {
@@ -59,6 +61,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         if (isNil(scheduleOptions)) {
             return {
                 scheduleOptions: null,
+                webhookHandshakeConfiguration,
             }
         }
 
@@ -68,6 +71,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 type: ScheduleType.CRON_EXPRESSION,
                 failureCount: flowToUpdate.schedule?.failureCount ?? 0,
             },
+            webhookHandshakeConfiguration,
         }
     },
 
@@ -95,10 +99,11 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         }, log)
 
         const scheduleOptions = enableResult?.result.scheduleOptions
-
+        const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
         if (isNil(scheduleOptions)) {
             return {
                 scheduleOptions: null,
+                webhookHandshakeConfiguration,
             }
         }
 
@@ -108,6 +113,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 type: ScheduleType.CRON_EXPRESSION,
                 failureCount: 0,
             },
+            webhookHandshakeConfiguration,
         }
     },
 
@@ -161,6 +167,7 @@ type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
 
 type PreUpdateReturn = {
     scheduleOptions: FlowScheduleOptions | null
+    webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null
 }
 
 type PreDeleteParams = {

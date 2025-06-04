@@ -19,12 +19,13 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
             )
         `)
         await queryRunner.query(`
-            INSERT INTO "temporary_table"("id", "created", "updated", "name", "projectId")
+            INSERT INTO "temporary_table"("id", "created", "updated", "name", "projectId", "externalId")
             SELECT "id",
                 "created",
                 "updated",
                 "name",
-                "projectId"
+                "projectId",
+                "id"
             FROM "table"
         `)
         await queryRunner.query(`
@@ -66,7 +67,8 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                     "type",
                     "tableId",
                     "projectId",
-                    "data"
+                    "data",
+                    "externalId"
                 )
             SELECT "id",
                 "created",
@@ -75,7 +77,8 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                 "type",
                 "tableId",
                 "projectId",
-                "data"
+                "data",
+                "id"
             FROM "field"
         `)
         await queryRunner.query(`

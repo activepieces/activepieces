@@ -32,7 +32,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { projectMemberService } from '../../ee/project-members/project-member.service'
+import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -49,6 +49,7 @@ import {
     AppConnectionEntity,
     AppConnectionSchema,
 } from '../app-connection.entity'
+import { appConnectionSideEffects } from './app-connection-side-effects'
 import { appConnectionHandler } from './app-connection.handler'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
@@ -234,10 +235,24 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
             scope: sourceAppConnection.scope,
             projectId,
+            userId,
         })
     },
 
     async delete(params: DeleteParams): Promise<void> {
+        const appConnection = await this.getOneOrThrowWithoutValue({
+            id: params.id,
+            platformId: params.platformId,
+            projectId: params.projectId,
+        })
+        if (!isNil(params.projectId)) {
+            await appConnectionSideEffects(log).onDeleted({
+                externalId: appConnection.externalId,
+                userId: params.userId,
+                projectId: params.projectId,
+                platformId: params.platformId,
+            })
+        }
         await appConnectionsRepo().delete({
             id: params.id,
             platformId: params.platformId,
@@ -255,9 +270,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         limit,
         scope,
         platformId,
+        externalIds,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
             query: {
@@ -282,12 +297,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(status)) {
             querySelector.status = In(status)
         }
+        if (!isNil(externalIds)) {
+            querySelector.externalId = In(externalIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
-
 
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = appConnectionHandler(log).decryptConnection(encryptedConnection)
@@ -447,6 +463,7 @@ const validateConnectionValue = async (
                 platformId,
                 props: value.props,
             })
+            
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
@@ -461,6 +478,7 @@ const validateConnectionValue = async (
                     clientSecret: value.client_secret,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    scope: value.scope,
                 },
             })
             await engineValidateAuth({
@@ -579,6 +597,7 @@ type DeleteParams = {
     scope: AppConnectionScope
     id: AppConnectionId
     platformId: string
+    userId: UserId
 }
 
 type ValidateConnectionValueParams = {
@@ -597,6 +616,7 @@ type ListParams = {
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     limit: number
+    externalIds: string[] | undefined
 }
 
 type UpdateParams = {

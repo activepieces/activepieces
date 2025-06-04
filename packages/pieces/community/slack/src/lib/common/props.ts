@@ -98,7 +98,7 @@ export const userId = Property.Dropdown<string>({
     }
     return {
       disabled: false,
-      placeholder: 'Select channel',
+      placeholder: 'Select User',
       options: users,
     };
   },

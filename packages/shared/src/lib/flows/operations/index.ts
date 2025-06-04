@@ -16,6 +16,7 @@ import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
@@ -41,6 +42,7 @@ export enum FlowOperationType {
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
+    MOVE_BRANCH = 'MOVE_BRANCH',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -53,6 +55,12 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
+export const MoveBranchRequest = Type.Object({
+    sourceBranchIndex: Type.Number(),
+    targetBranchIndex: Type.Number(),
+    stepName: Type.String(),
+})
+export type MoveBranchRequest = Static<typeof MoveBranchRequest>
 
 export const SkipActionRequest = Type.Object({
     names: Type.Array(Type.String()),
@@ -327,6 +335,12 @@ export const FlowOperationRequest = Type.Union([
             title: 'Update Metadata',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.MOVE_BRANCH),
+            request: MoveBranchRequest,
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
@@ -410,6 +424,11 @@ export const flowOperations = {
             }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
+                break
+            }
+            case FlowOperationType.MOVE_BRANCH: {
+                clonedVersion = _moveBranch(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }

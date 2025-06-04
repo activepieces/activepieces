@@ -6,7 +6,6 @@ import { t } from 'i18next';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -22,10 +21,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { flagsHooks } from '../../../hooks/flags-hooks';
 import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
@@ -33,8 +30,6 @@ function ProjectSwitcher() {
   const queryClient = useQueryClient();
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const [open, setOpen] = React.useState(false);
-  const { embedState } = useEmbedding();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
   const filterProjects = React.useCallback(
@@ -56,9 +51,6 @@ function ProjectSwitcher() {
     },
     [allProjects],
   );
-  if (embedState.isEmbedded || edition === ApEdition.COMMUNITY) {
-    return null;
-  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,7 +64,7 @@ function ProjectSwitcher() {
           className="gap-2 w-full justify-start px-2 enabled:hover:bg-gray-200"
         >
           <div className="flex grow flex-col justify-start items-start">
-            <span className="flex-grow truncate overflow-hidden text-sm">
+            <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
               {currentProject?.displayName}
             </span>
           </div>

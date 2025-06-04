@@ -4,7 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
-import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
 import {
@@ -15,19 +14,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { localesMap } from '@/lib/utils';
+import { LocalesEnum } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),
@@ -42,7 +33,6 @@ type FromSchema = Static<typeof FromSchema>;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const locales = Object.entries(localesMap);
   const form = useForm({
     defaultValues: {
       name: platform?.name,
@@ -101,12 +91,12 @@ export const AppearanceSection = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="name">{t('Project Name')}</FormLabel>
+                    <FormLabel htmlFor="name">{t('Platform Name')}</FormLabel>
                     <Input
                       {...field}
                       required
                       id="name"
-                      placeholder={t('Project Name')}
+                      placeholder={t('Platform Name')}
                       className="rounded-sm"
                     />
                     <FormMessage />
@@ -162,36 +152,6 @@ export const AppearanceSection = () => {
                       className="rounded-sm"
                     />
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="language"
-                render={({ field }) => (
-                  <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="language">
-                      {t('Default Language')}
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select Language')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {locales.length === 0 && (
-                            <SelectItem value="NULL">
-                              {t('No Languages')}
-                            </SelectItem>
-                          )}
-                          {locales.map(([locale, name]) => (
-                            <SelectItem key={locale} value={locale}>
-                              {name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
                   </FormItem>
                 )}
               />

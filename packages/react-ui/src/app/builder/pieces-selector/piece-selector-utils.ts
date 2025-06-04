@@ -162,13 +162,11 @@ const getDefaultStep = ({
   actionOrTrigger: PieceSelectorItem;
   settings?: Record<string, unknown>;
 }): Action | Trigger => {
-  const errorHandlingOptions = {
+  const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
-      hide: true,
       value: false,
     },
     retryOnFailure: {
-      hide: true,
       value: false,
     },
   };

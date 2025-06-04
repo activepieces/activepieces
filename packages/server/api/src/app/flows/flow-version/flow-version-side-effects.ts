@@ -10,9 +10,12 @@ import {
     FlowVersion,
     isNil,
     ProjectId,
+    TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { mcpService } from '../../mcp/mcp-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
 type OnApplyOperationParams = {
@@ -58,13 +61,32 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
         try {
             await handleSampleDataDeletion(projectId, flowVersion, operation, log)
             await handleUpdateTriggerWebhookSimulation(projectId, flowVersion, operation, log)
+            await handleUpdateFlowLastModified(projectId, flowVersion, log)
         }
         catch (e) {
             // Ignore error and continue the operation peacefully
             exceptionHandler.handle(e, log)
         }
     },
+    async postApplyOperation({
+        flowVersion,
+        operation,
+    }: PostApplyOperation): Promise<void> {
+        const isNotMcpTrigger =  !isMcpTriggerPiece(flowVersion) && [FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.LOCK_FLOW].includes(operation.type)
+        if (isNotMcpTrigger) {
+            await mcpService(log).deleteFlowTools({ flowId: flowVersion.flowId })
+        }
+    },
 })
+
+type PostApplyOperation = {
+    flowVersion: FlowVersion
+    operation: FlowOperationRequest
+}
+function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
+    return flowVersion.trigger.type === TriggerType.PIECE && 
+           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+}
 
 async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {
@@ -138,4 +160,8 @@ async function handleUpdateTriggerWebhookSimulation(projectId: ProjectId, flowVe
             flowId: flowVersion.flowId,
         }, log)
     }
+}
+
+async function handleUpdateFlowLastModified(projectId: ProjectId, flowVersion: FlowVersion, log: FastifyBaseLogger): Promise<void> {
+    await flowService(log).updateLastModified(flowVersion.flowId, projectId)
 }

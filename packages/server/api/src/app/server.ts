@@ -30,6 +30,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
     const fileSizeLimit =  Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
     const app = fastify({
+        querystringParser: qs.parse,
         logger: system.globalLogger() as FastifyBaseLogger,
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,

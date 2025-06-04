@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
@@ -27,6 +27,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         params?.serverHandlerId ?? null,
         params?.httpRequestId ?? null,
         params?.resumePayload,
+        params?.runEnvironment ?? RunEnvironment.TESTING,
     )
 }
 

@@ -80,13 +80,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     })
 
-    fastify.post('/list', ListRequest, async (request) => {
+    fastify.get('/', ListRequest, async (request) => {
         return recordService.list({
-            tableId: request.body.tableId,
+            tableId: request.query.tableId,
             projectId: request.principal.projectId,
-            cursorRequest: request.body.cursor ?? null,
-            limit: request.body.limit ?? DEFAULT_PAGE_SIZE,
-            filters: request.body.filters ?? null,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
+            filters: request.query.filters ?? null,
         })
     })
 }
@@ -160,7 +160,7 @@ const ListRequest = {
         permission: Permission.READ_TABLE,
     },
     schema: {
-        body: ListRecordsRequest,
+        querystring: ListRecordsRequest,
         tags: ['records'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List records',

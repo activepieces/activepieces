@@ -1,11 +1,10 @@
 import {
   Property,
   TriggerStrategy,
-  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../';
-
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 const markdown = `
 - Go to the **Settings->API and Webhooks** section.
 - In the webhook settings, paste this URL: 

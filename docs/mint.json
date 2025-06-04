@@ -44,6 +44,10 @@
       "url": "developers"
     },
     {
+      "name": "Embedding",
+      "url": "embedding"
+    },
+    {
       "name": "API Reference",
       "url": "endpoints"
     },
@@ -119,13 +123,14 @@
       "icon": "code",
       "pages": [
         "handbook/engineering/overview",
+        "handbook/engineering/onboarding/onboarding-check-list",
         "handbook/engineering/onboarding/how-we-work",
         "handbook/engineering/onboarding/on-call",
         "handbook/engineering/onboarding/downtime-incident"
       ]
     },
     {
-      "group": "Engineering Playbooks", 
+      "group": "Engineering Playbooks",
       "icon": "code",
       "pages": [
         "handbook/engineering/playbooks/setup-incident-io",
@@ -286,9 +291,6 @@
             "endpoints/mcp-pieces/list"
           ]
         }
-
-        
-      
       ]
     },
     {
@@ -399,11 +401,12 @@
         "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
-        "developers/piece-reference/custom-api-calls"
+        "developers/piece-reference/custom-api-calls",
+        "developers/piece-reference/i18n"
       ]
     },
     {
-      "group": "Unified AI",
+      "group": "Universal AI",
       "pages": [
         "developers/unified-ai/overview",
         "developers/unified-ai/chat",
@@ -422,21 +425,35 @@
       ]
     },
     {
-      "group": "Embedding",
+      "group": "Essentials",
       "pages": [
         "embedding/overview",
         "embedding/provision-users",
-        "embedding/embed-builder",
-        "embedding/mcps",
+        "embedding/embed-builder"
+      ]
+    },
+   
+    {
+      "group": "Predefined Connections",
+      "pages": [
+        "embedding/predefined-connections/overview",
+        "embedding/predefined-connections/development",
+        "embedding/predefined-connections/production"
+      ]
+    },
+    {
+      "group": "Misc",
+      "pages": [
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
+        "embedding/mcps",
         "embedding/sdk-server-requests",
         "embedding/sdk-changelog"
       ]
     },
     {
-      "group": "Admin Console",
+      "group": "Platform Admin",
       "pages": [
         "admin-console/overview",
         "admin-console/appearance",

@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/firecrawl/package.json",
         "main": "packages/pieces/community/firecrawl/src/index.ts",
         "assets": [
-          "packages/pieces/community/firecrawl/*.md"
+          "packages/pieces/community/firecrawl/*.md",
+          {
+            "input": "packages/pieces/community/firecrawl/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

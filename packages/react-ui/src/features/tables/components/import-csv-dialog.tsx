@@ -98,6 +98,7 @@ const ImportCsvDialog = () => {
       });
       const records = await recordsApi.list({
         tableId,
+        limit: 99999999, // TODO: we should implement pagination in ui.
         cursor: undefined,
       });
       setRecords(records.data);

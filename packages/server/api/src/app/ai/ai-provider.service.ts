@@ -63,7 +63,7 @@ export const aiProviderService = {
 async function fallbackToCloudPlatform(params: GetParams): Promise<AiProviderConfig> {
     const isCloudEdition = system.getEdition() === ApEdition.CLOUD
     if (isCloudEdition) {
-        const platform = await platformService.getOneOrThrow(params.platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(params.platformId)
         const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
         if (!isEnterpriseCustomer && cloudPlatformId !== params.platformId) {
@@ -85,7 +85,7 @@ async function fallbackToCloudPlatform(params: GetParams): Promise<AiProviderCon
 async function fallbackToCloudPlatformList(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData> | null> {
     const isCloudEdition = system.getEdition() === ApEdition.CLOUD
     if (isCloudEdition) {
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
         if (!isEnterpriseCustomer && cloudPlatformId !== platformId) {

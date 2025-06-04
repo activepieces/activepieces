@@ -126,6 +126,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        await flowVersionSideEffects(log).postApplyOperation({
+            flowVersion: mutatedFlowVersion,
+            operation: userOperation,
+        })
+
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
@@ -280,6 +285,8 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+
 async function applySingleOperation(
     projectId: ProjectId,
     flowVersion: FlowVersion,
@@ -293,7 +300,12 @@ async function applySingleOperation(
         operation,
     })
     operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
-    return flowOperations.apply(flowVersion, operation)
+    const updatedFlowVersion = flowOperations.apply(flowVersion, operation)
+    await flowVersionSideEffects(log).postApplyOperation({
+        flowVersion: updatedFlowVersion,
+        operation,
+    })
+    return updatedFlowVersion   
 }
 
 async function removeSecretsFromFlow(
