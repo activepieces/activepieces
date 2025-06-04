@@ -3,6 +3,7 @@ import { EllipsisVertical, Puzzle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +19,6 @@ import {
   McpWithTools,
   Permission,
 } from '@activepieces/shared';
-import { Card, CardContent } from '@/components/ui/card';
 
 import { mcpConfigUtils } from './mcp-config-utils';
 
@@ -67,7 +67,7 @@ export const McpPieceTool = ({
   const actionNames = tool.pieceMetadata?.actionNames || [];
 
   return (
-    <Card key={`piece-${tool.id}`} >
+    <Card key={`piece-${tool.id}`}>
       <CardContent className="flex items-center justify-between p-3 h-[70px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">

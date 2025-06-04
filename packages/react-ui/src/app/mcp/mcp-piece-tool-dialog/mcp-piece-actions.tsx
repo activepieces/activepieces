@@ -3,7 +3,6 @@ import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { isNil } from '@activepieces/shared';
@@ -45,22 +44,20 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   return (
     <>
       {pieceHasAuth && (
-        <>
-          <div className="px-3 mb-4">
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold">{t('Connection')}</h4>
-              <ConnectionDropdown
-                piece={selectedPiece}
-                value={selectedConnectionExternalId}
-                onChange={setSelectedConnectionExternalId}
-                placeholder={t('Select a connection')}
-                showLabel={false}
-                required={true}
-                showError={showValidationErrors}
-              />
-            </div>
+        <div className="px-3 mb-4">
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">{t('Connection')}</h4>
+            <ConnectionDropdown
+              piece={selectedPiece}
+              value={selectedConnectionExternalId}
+              onChange={setSelectedConnectionExternalId}
+              placeholder={t('Select a connection')}
+              showLabel={false}
+              required={true}
+              showError={showValidationErrors}
+            />
           </div>
-        </>
+        </div>
       )}
 
       <div className="flex items-center mb-2 gap-4 px-3">
