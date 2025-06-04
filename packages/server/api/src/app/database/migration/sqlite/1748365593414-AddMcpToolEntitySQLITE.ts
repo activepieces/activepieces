@@ -18,7 +18,7 @@ enum McpToolType {
 }
 
 enum TriggerType {
-    PIECE = 'PIECE',
+    PIECE = 'PIECE_TRIGGER',
 }
 
 type McpPieceToolData = {
