@@ -35,7 +35,7 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { BillingEntityType, usageService } from '../platform/platform-usage-service'
+import { BillingEntityType, platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
@@ -74,7 +74,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
                         ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiTokens', request.plan.aiTokens),
+                        ...spreadIfDefined('aiCredits', request.plan.aiCredits),
                     },
                     projectId,
                 )
@@ -226,7 +226,7 @@ async function enrichProject(
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),
-        usage: await usageService(log).getUsageForBillingPeriod(
+        usage: await platformUsageService(log).getTaskAndCreditUsage(
             project.id,
             BillingEntityType.PROJECT,
         ),

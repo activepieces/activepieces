@@ -122,6 +122,7 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',

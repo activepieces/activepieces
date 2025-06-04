@@ -100,6 +100,7 @@ export const webhookHandler = {
             payload,
             synchronousHandlerId,
             projectId,
+            executeTrigger: true,
             httpRequestId: webhookRequestId,
             executionType: ExecutionType.BEGIN,
             progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,

@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Cursor } from '../../common/seek-page'
-import { FolderId } from './folder'
 
 export const CreateFolderRequest = Type.Object({
     displayName: Type.String(),
@@ -29,12 +28,3 @@ export const ListFolderRequest = Type.Object({
 })
 
 export type ListFolderRequest = Omit<Static<typeof ListFolderRequest>, 'cursor'> & { cursor: Cursor | undefined }
-
-export type FolderOrderItem = {
-    folderId: FolderId
-    order: number
-}
-
-export type UpdateFoldersOrderRequest = {
-    folderOrders: FolderOrderItem[]
-}

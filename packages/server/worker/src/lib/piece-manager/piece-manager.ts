@@ -8,7 +8,7 @@ import {
     PiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { PackageInfo, packageManager } from '../utils/package-manager'
+import { PackageInfo, packageManager } from '../cache/package-manager'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
