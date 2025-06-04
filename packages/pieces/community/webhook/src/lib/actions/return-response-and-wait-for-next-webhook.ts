@@ -110,7 +110,7 @@ import {
         status: status ?? StatusCodes.OK,
         headers,
       };
-  
+      
       switch (responseType) {
         case ResponseType.JSON:
           response.body = praseToJson(bodyInput);
@@ -121,9 +121,10 @@ import {
         case ResponseType.REDIRECT:
           response.status = StatusCodes.MOVED_PERMANENTLY;
           response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
+          response.body = bodyInput;
           break;
       }
-      
+
       
       if(context.executionType === ExecutionType.BEGIN){
         context.run.pause({

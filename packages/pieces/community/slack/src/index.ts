@@ -135,6 +135,7 @@ export const slack = createPiece({
     searchMessages,
     findUserByEmailAction,
     findUserByHandleAction,
+    findUserByIdAction,
     updateMessage,
     createChannelAction,
     updateProfileAction,
@@ -142,6 +143,9 @@ export const slack = createPiece({
     setUserStatusAction,
     markdownToSlackFormat,
     retrieveThreadMessages,
+    setChannelTopicAction,
+    getMessageAction,
+    inviteUserToChannelAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
@@ -182,6 +186,9 @@ export const slack = createPiece({
     channelCreated,
     newCommand,
     newCommandInDirectMessageTrigger,
+    newUserTrigger,
+    newSavedMessageTrigger,
+    newTeamCustomEmojiTrigger,
   ],
 });
 
