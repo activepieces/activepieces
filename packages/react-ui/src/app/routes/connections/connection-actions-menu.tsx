@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { InfoIcon, Trash2, UploadCloud } from 'lucide-react';
+import { InfoIcon, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -14,13 +14,7 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { GitBranchType } from '@activepieces/ee-shared';
 import {
   AppConnectionWithoutSensitiveData,
   Permission,
@@ -39,20 +33,10 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
   refetch,
   onDelete,
 }) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.plan.environmentsEnabled,
-  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
-  const userHasPermissionToPushToGit = checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
-  );
-  const isDevelopmentBranch =
-    gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const [open, setOpen] = useState(false);
 
   const bulkDeleteMutation = useMutation({
@@ -83,21 +67,6 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
         noAnimationOnOut={true}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PublishedNeededTooltip allowPush={true}>
-            <PushToGitDialog type="connection" connections={connections}>
-              <DropdownMenuItem
-                disabled={!userHasPermissionToPushToGit}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <UploadCloud className="h-4 w-4" />
-                  <span>{t('Push to Git')}</span>
-                </div>
-              </DropdownMenuItem>
-            </PushToGitDialog>
-          </PublishedNeededTooltip>
-        </PermissionNeededTooltip>
         <PermissionNeededTooltip
           hasPermission={userHasPermissionToUpdateConnection}
         >
@@ -136,13 +105,6 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
                     )}
                   </span>
                 </Alert>
-                {isDevelopmentBranch && (
-                  <div className="mt-4">
-                    {t(
-                      'You are on a development branch, this will also delete the connections from the remote repository.',
-                    )}
-                  </div>
-                )}
               </div>
             }
             mutationFn={() =>
