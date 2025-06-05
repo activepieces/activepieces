@@ -214,13 +214,13 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 })
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowIds[0]} from user interface`)
-                    await gitSyncHelper(log).clearUnusedConnectionsFromGit({
-                        flowFolderPath,
-                        connectionsFolderPath,
-                        git,
-                        gitRepo,
-                    })
                 }
+                await gitSyncHelper(log).clearUnusedConnectionsFromGit({
+                    flowFolderPath,
+                    connectionsFolderPath,
+                    git,
+                    gitRepo,
+                })
                 break
             }
             case GitPushOperationType.PUSH_TABLE: {
