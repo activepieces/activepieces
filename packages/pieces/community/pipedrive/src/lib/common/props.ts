@@ -633,7 +633,7 @@ export const visibleToProp = Property.StaticDropdown({
 });
 
 export const leadIdProp = (required = false) =>
-	Property.Number({
+	Property.ShortText({
 		displayName: 'Lead ID',
 		required,
 	});
