@@ -134,7 +134,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
             case GitPushOperationType.PUSH_FLOW: {
                 const flows: PopulatedFlow[] = []
                 const notPublishedFlowsNames: string[] = []
-                const uniqueConnectionIds = new Set<string>()
                 await Promise.all(request.flowIds.map(async (flowId) => {
                     const flow = await flowService(log).getOnePopulatedOrThrow({
                         id: flowId,
@@ -143,9 +142,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                         removeSampleData: true,
                     })
                     flows.push(flow)
-                    flow.version.connectionIds.forEach((connectionId) => {
-                        uniqueConnectionIds.add(connectionId)
-                    })
                     if (isNil(flow.publishedVersionId) || flow.version.state === FlowVersionState.DRAFT) {
                         notPublishedFlowsNames.push(flow.version.displayName)
                     }
@@ -168,7 +164,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
 
-                await gitSyncHelper(log).clearUnusedConnectionsFromGit({
+                await gitSyncHelper(log).updateConectionStateOnGit({
                     flowFolderPath,
                     connectionsFolderPath,
                     git,
@@ -191,7 +187,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowIds[0]} from user interface`)
                 }
-                await gitSyncHelper(log).clearUnusedConnectionsFromGit({
+                await gitSyncHelper(log).updateConectionStateOnGit({
                     flowFolderPath,
                     connectionsFolderPath,
                     git,

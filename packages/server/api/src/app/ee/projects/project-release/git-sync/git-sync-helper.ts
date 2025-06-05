@@ -59,7 +59,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         return exists
     },
 
-    async clearUnusedConnectionsFromGit({ flowFolderPath, connectionsFolderPath, git, gitRepo, platformId, log }: ClearUnusedConnectionsFromGitParams): Promise<void> {
+    async updateConectionStateOnGit({ flowFolderPath, connectionsFolderPath, git, gitRepo, platformId, log }: ClearUnusedConnectionsFromGitParams): Promise<void> {
         const oldConnections = await readConnectionsFromGit(connectionsFolderPath)
         await Promise.all(oldConnections.map((connection) => this.deleteFromGit({ fileName: connection.externalId, folderPath: connectionsFolderPath })))
 
