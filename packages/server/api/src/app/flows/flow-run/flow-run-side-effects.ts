@@ -21,6 +21,7 @@ type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
+    executeTrigger: boolean
     priority: keyof typeof JOB_PRIORITY
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
@@ -67,6 +68,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         httpRequestId,
         priority,
         progressUpdateType,
+        executeTrigger,
     }: StartParams): Promise<void> {
         log.info(
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
@@ -83,6 +85,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                executeTrigger,
                 httpRequestId,
                 executionType,
                 progressUpdateType,

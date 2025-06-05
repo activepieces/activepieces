@@ -74,6 +74,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
+            externalIds: undefined,
         })
 
         return {
@@ -94,6 +95,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
+            userId: request.principal.id,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,

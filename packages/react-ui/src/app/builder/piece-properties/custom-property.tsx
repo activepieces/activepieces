@@ -1,58 +1,59 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
-
+import { CustomProperty as CustomPropertyType } from '@activepieces/pieces-framework';
 const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
 
+type CustomPropertyParams = {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  code: string;
+  disabled: boolean;
+  property: CustomPropertyType<boolean>;
+};
+
+const parseFunctionString = (code: string) => {
+  return new Function(
+    'params',
+    `
+    return (${code})(params);
+  `,
+  );
+};
 const CustomProperty = ({
   value,
   onChange,
   code,
   disabled,
-}: {
-  value: unknown;
-  onChange: (value: unknown) => void;
-  code: string;
-  disabled: boolean;
-}) => {
+  property,
+}: CustomPropertyParams) => {
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
-  const alreadyRendered = useRef(false);
   const id = useId();
   const containerId = CUSTOM_PROPERTY_CONTAINER_ID + '-' + id;
   useEffect(() => {
-    if (alreadyRendered.current) return;
-    alreadyRendered.current = true;
     try {
-      // Create function that takes a params object
-      const fn = new Function(
-        'params',
-        `
-        return (${code})(params);
-      `,
-      );
-      // Execute the function with args as the params object
-      const result = fn({
+      const params = {
         containerId,
         value,
         onChange,
         isEmbedded: embedState.isEmbedded,
         projectId: project.id,
         disabled,
-      });
-
-      // If the result is a Promise, handle it
-      if (result instanceof Promise) {
-        result.then(onChange).catch(console.error);
-      } else {
-        onChange(result);
+        property,
+      };
+      // Create function that takes a params object
+      const fn = parseFunctionString(code);
+      // Execute the function with args as the params object
+      const cleanUpFunction = fn(params);
+      if (cleanUpFunction && typeof cleanUpFunction === 'function') {
+        return cleanUpFunction;
       }
     } catch (error) {
       console.error('Error executing custom code:', error);
     }
   }, []);
-
   return <div id={containerId}></div>;
 };
 

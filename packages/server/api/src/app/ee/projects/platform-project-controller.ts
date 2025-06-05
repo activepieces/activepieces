@@ -45,7 +45,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             nickname: 'platform',
             tasks: null,
             pieces: [],
-            aiTokens: null,
+            aiCredits: null,
             piecesFilterType: PiecesFilterType.NONE,
         }, project.id)
         const projectWithUsage =

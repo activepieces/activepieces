@@ -5,7 +5,7 @@ export type FlowPlanLimits = {
   nickname: string;
   tasks: number | null;
   pieces: string[];
-  aiTokens: number | null;
+  aiCredits: number | null;
   piecesFilterType: PiecesFilterType;
 };
 
@@ -15,7 +15,7 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
   nickname: 'free-pay-as-you-go',
   tasks: 1000,
   pieces: [],
-  aiTokens: 200,
+  aiCredits: 200,
   piecesFilterType: PiecesFilterType.NONE,
 };
 
