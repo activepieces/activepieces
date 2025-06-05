@@ -9,7 +9,6 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
-    AppConnectionScope,
     ErrorCode,
     FieldType,
     FlowVersionState,
@@ -20,7 +19,6 @@ import {
     TableState,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
@@ -170,35 +168,13 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
 
-                const connections = await appConnectionService(log).list({
-                    projectId: gitRepo.projectId,
-                    externalIds: Array.from(uniqueConnectionIds),
-                    platformId,
-                    scope: AppConnectionScope.PROJECT,
-                    cursorRequest: null,
-                    limit: 10000,
-                    pieceName: undefined,
-                    displayName: undefined,
-                    status: undefined,
-                })
-                await Promise.all(connections.data.map(async (connection) => {
-                    await gitSyncHelper(log).upsertConnectionToGit({
-                        fileName: connection.externalId,
-                        connection: {
-                            externalId: connection.externalId,
-                            displayName: connection.displayName,
-                            pieceName: connection.pieceName,
-                        },
-                        folderPath: connectionsFolderPath,
-                    })
-                }))
-                await gitHelper.commitAndPush(git, gitRepo, `chore: updated connections ${Array.from(uniqueConnectionIds).join(', ')}`)
-
                 await gitSyncHelper(log).clearUnusedConnectionsFromGit({
                     flowFolderPath,
                     connectionsFolderPath,
                     git,
                     gitRepo,
+                    platformId,
+                    log,
                 })
                 break
             }
@@ -220,6 +196,8 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     connectionsFolderPath,
                     git,
                     gitRepo,
+                    platformId,
+                    log,
                 })
                 break
             }

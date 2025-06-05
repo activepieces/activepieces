@@ -2,9 +2,10 @@ import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
+import { AppConnectionScope, ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
+import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { gitHelper } from './git-helper'
 
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
@@ -58,13 +59,36 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         return exists
     },
 
-    async clearUnusedConnectionsFromGit({ flowFolderPath, connectionsFolderPath, git, gitRepo }: ClearUnusedConnectionsFromGitParams): Promise<void> {
+    async clearUnusedConnectionsFromGit({ flowFolderPath, connectionsFolderPath, git, gitRepo, platformId, log }: ClearUnusedConnectionsFromGitParams): Promise<void> {
+        const oldConnections = await readConnectionsFromGit(connectionsFolderPath)
+        await Promise.all(oldConnections.map((connection) => this.deleteFromGit({ fileName: connection.externalId, folderPath: connectionsFolderPath })))
+
         const flows = await readFlowsFromGit(flowFolderPath)
-        const connections = await readConnectionsFromGit(connectionsFolderPath)
         const connectionsInFlows = flows.flatMap((flow) => flow.version.connectionIds)
-        const connectionsToDelete = connections.filter((connection) => !connectionsInFlows.includes(connection.externalId))
-        await Promise.all(connectionsToDelete.map((connection) => fs.unlink(path.join(connectionsFolderPath, `${connection.externalId}.json`))))
-        await gitHelper.commitAndPush(git, gitRepo, `chore: deleted unused connections ${connectionsToDelete.map((connection) => connection.externalId).join(', ')}`)
+        const currentConnections = await appConnectionService(log).list({
+            projectId: gitRepo.projectId,
+            externalIds: connectionsInFlows,
+            platformId,
+            scope: AppConnectionScope.PROJECT,
+            cursorRequest: null,
+            limit: 10000,
+            pieceName: undefined,
+            displayName: undefined,
+            status: undefined,
+        })
+        await Promise.all(currentConnections.data.map(async (connection) => {
+            await this.upsertConnectionToGit({
+                fileName: connection.externalId,
+                connection: {
+                    externalId: connection.externalId,
+                    displayName: connection.displayName,
+                    pieceName: connection.pieceName,
+                },
+                folderPath: connectionsFolderPath,
+            })
+        }))
+        
+        await gitHelper.commitAndPush(git, gitRepo, 'chore: update and remove unused connections')
     },
     
 })
@@ -156,6 +180,8 @@ export type FlowSyncOperation =
 type ClearUnusedConnectionsFromGitParams = {
     flowFolderPath: string
     connectionsFolderPath: string
+    platformId: string
     git: SimpleGit
     gitRepo: GitRepo
+    log: FastifyBaseLogger
 }
