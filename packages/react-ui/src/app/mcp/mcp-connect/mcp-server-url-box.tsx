@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { useToast } from '@/components/ui/use-toast';
+
 import { mcpConnectUtils } from './mcp-connect-utils';
 
 interface McpServerUrlBoxProps {
@@ -32,7 +33,9 @@ export const McpServerUrlBox = ({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-lg text-foreground font-semibold">{t('Server URL')}</h3>
+      <h3 className="text-lg text-foreground font-semibold">
+        {t('Server URL')}
+      </h3>
 
       <div className="flex items-center gap-2">
         <div className="font-mono bg-muted/50 border rounded-lg px-3 py-2 text-sm flex-1 overflow-x-auto">
@@ -84,4 +87,4 @@ export const McpServerUrlBox = ({
       </div>
     </div>
   );
-}; 
+};
