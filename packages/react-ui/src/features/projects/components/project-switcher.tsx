@@ -34,13 +34,15 @@ function ProjectSwitcher() {
     projectHooks.useCurrentProject();
   const filterProjects = React.useCallback(
     (value: string, search: string) => {
-      const project = allProjects?.flatMap(p => p.projects).find(
-        p => p.id.toLowerCase() === value.toLowerCase()
-      );
+      const project = allProjects
+        ?.flatMap((p) => p.projects)
+        .find((p) => p.id.toLowerCase() === value.toLowerCase());
 
       if (!project) return 0;
 
-      return project.displayName.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+      return project.displayName.toLowerCase().includes(search.toLowerCase())
+        ? 1
+        : 0;
     },
     [allProjects],
   );

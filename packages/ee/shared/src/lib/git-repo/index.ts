@@ -26,8 +26,6 @@ export enum GitPushOperationType {
     DELETE_FLOW = 'DELETE_FLOW',
     PUSH_TABLE = 'PUSH_TABLE',
     DELETE_TABLE = 'DELETE_TABLE',
-    PUSH_CONNECTION = 'PUSH_CONNECTION',
-    DELETE_CONNECTION = 'DELETE_CONNECTION',
 }
 
 export const PushFlowsGitRepoRequest = Type.Object({
@@ -50,17 +48,7 @@ export const PushTablesGitRepoRequest = Type.Object({
 
 export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
 
-export const PushConnectionsGitRepoRequest = Type.Object({
-    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_CONNECTION), Type.Literal(GitPushOperationType.DELETE_CONNECTION)]),
-    commitMessage: Type.String({
-        minLength: 1,
-    }),
-    connectionExternalIds: Type.Array(Type.String())
-})
-
-export type PushConnectionsGitRepoRequest = Static<typeof PushConnectionsGitRepoRequest>
-
-export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushConnectionsGitRepoRequest])
+export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 

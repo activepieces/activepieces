@@ -1,8 +1,6 @@
-import { ReloadIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Server } from 'lucide-react';
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import claude from '@/assets/img/custom/claude.svg';
@@ -22,14 +20,10 @@ import { mcpConnectUtils } from './mcp-connect-utils';
 import { McpServerUrlBox } from './mcp-server-url-box';
 import { StepCard } from './step-card';
 
-const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
-
 export const McpConnectPage = () => {
-  const [showToken, setShowToken] = useState(false);
   const { toast } = useToast();
   const { mcpId } = useParams<{ mcpId: string }>();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const toggleTokenVisibility = () => setShowToken(!showToken);
 
   const { data: mcp, refetch: refetchMcp } = mcpHooks.useMcp(mcpId!);
 
@@ -131,18 +125,19 @@ export const McpConnectPage = () => {
                 <div className="space-y-3">
                   <StepCard stepNumber={1} title={t('Add MCP Server')}>
                     {t('Go to')}{' '}
-                    <a 
-                      href="https://claude.ai/settings/integrations" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href="https://claude.ai/settings/integrations"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
                       claude.ai/settings/integrations
-                    </a>
-                    {' '}→{' '}
-                    <Badge variant="outline">{t('Add More')}</Badge>
+                    </a>{' '}
+                    → <Badge variant="outline">{t('Add More')}</Badge>
                     <p className="mt-3">
-                      {t('This feature is only available with a Claude Pro subscription. Alternatively, you can use the Claude desktop application to connect to the MCP server.')}
+                      {t(
+                        'This feature is only available with a Claude Pro subscription. Alternatively, you can use the Claude desktop application to connect to the MCP server.',
+                      )}
                     </p>
                   </StepCard>
 
@@ -150,9 +145,7 @@ export const McpConnectPage = () => {
                     stepNumber={2}
                     title={t('Configure Claude Integration')}
                   >
-                    {t(
-                      'Provide a name and paste the configuration below.',
-                    )}
+                    {t('Provide a name and paste the configuration below.')}
                     <div className="mt-3">
                       <McpServerUrlBox
                         mcpServerUrl={mcpServerUrl}
