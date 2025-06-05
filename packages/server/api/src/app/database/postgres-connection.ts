@@ -360,7 +360,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksCommentsToTodoComments1742433144687,
         AddTodoActivity1748525529096,
         AddCreatedByUserIdInTodo1748565250553,
-        AddTodoEnvironment1748573003639
+        AddTodoEnvironment1748573003639,
         DeprecateApproval1748648340742,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
