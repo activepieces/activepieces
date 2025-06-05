@@ -1,14 +1,13 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Server, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import { Server } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
-import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,6 +19,7 @@ import { ApFlagId } from '@activepieces/shared';
 import { ConfigDisplay } from './config-display';
 import { ExposeMcpNote } from './expose-mcp-note';
 import { mcpConnectUtils } from './mcp-connect-utils';
+import { McpServerUrlBox } from './mcp-server-url-box';
 import { StepCard } from './step-card';
 
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
@@ -41,9 +41,6 @@ export const McpConnectPage = () => {
 
   const hasPermissionToWriteMcp = true;
   const hasValidMcp = !!mcp;
-  const maskedServerUrl = showToken
-    ? mcpServerUrl
-    : mcpConnectUtils.maskToken(mcpServerUrl);
 
   const rotateMutation = useMutation({
     mutationFn: async (mcpId: string) => {
@@ -132,46 +129,36 @@ export const McpConnectPage = () => {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold">{t('Setup')}</h3>
                 <div className="space-y-3">
-                  <StepCard stepNumber={1} title={t('Install Prerequisites')}>
-                    {t('Download and install')}{' '}
-                    <a
-                      href={NODE_JS_DOWNLOAD_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  <StepCard stepNumber={1} title={t('Add MCP Server')}>
+                    {t('Go to')}{' '}
+                    <a 
+                      href="https://claude.ai/settings/integrations" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
                       className="text-primary hover:underline"
                     >
-                      Node.js
-                    </a>{' '}
-                    {t('and')}{' '}
-                    <a
-                      href="https://claude.ai/download"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Claude Desktop
+                      claude.ai/settings/integrations
                     </a>
-                    .
+                    {' '}→{' '}
+                    <Badge variant="outline">{t('Add More')}</Badge>
+                    <p className="mt-3">
+                      {t('This feature is only available with a Claude Pro subscription. Alternatively, you can use the Claude desktop application to connect to the MCP server.')}
+                    </p>
                   </StepCard>
 
                   <StepCard
                     stepNumber={2}
-                    title={t('Configure Claude Desktop')}
+                    title={t('Configure Claude Integration')}
                   >
-                    {t('Open Claude Desktop')} → {t('Menu')} →{' '}
-                    <Badge variant="outline">{t('Settings')}</Badge> →{' '}
-                    <Badge variant="outline">{t('Developer')}</Badge> →{' '}
-                    <Badge variant="outline">{t('Edit Config')}</Badge>.{' '}
                     {t(
-                      'Paste the configuration below, save, and restart Claude Desktop.',
+                      'Provide a name and paste the configuration below.',
                     )}
                     <div className="mt-3">
-                      <ConfigDisplay
+                      <McpServerUrlBox
                         mcpServerUrl={mcpServerUrl}
-                        type="npx"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
-                        hasValidMcp={!!mcp}
+                        hasValidMcp={hasValidMcp}
                         hasPermissionToWriteMcp={hasPermissionToWriteMcp}
                       />
                     </div>
@@ -201,7 +188,7 @@ export const McpConnectPage = () => {
                         type="url"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
-                        hasValidMcp={!!mcp}
+                        hasValidMcp={hasValidMcp}
                         hasPermissionToWriteMcp={hasPermissionToWriteMcp}
                       />
                     </div>
@@ -230,7 +217,7 @@ export const McpConnectPage = () => {
                         type="url"
                         onRotateToken={handleRotateToken}
                         isRotating={rotateMutation.isPending}
-                        hasValidMcp={!!mcp}
+                        hasValidMcp={hasValidMcp}
                         hasPermissionToWriteMcp={hasPermissionToWriteMcp}
                       />
                     </div>
@@ -243,59 +230,13 @@ export const McpConnectPage = () => {
           <TabsContent value="server" className="mt-0">
             <div className="space-y-4">
               <ExposeMcpNote />
-
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">{t('Server URL')}</h3>
-
-                <div className="flex items-center gap-2">
-                  <div className="font-mono bg-muted/50 border rounded-lg px-3 py-2 text-sm flex-1 overflow-x-auto">
-                    {maskedServerUrl}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ButtonWithTooltip
-                      tooltip={showToken ? t('Hide') : t('Show')}
-                      onClick={toggleTokenVisibility}
-                      variant="outline"
-                      className="h-8 w-8"
-                      icon={
-                        showToken ? (
-                          <EyeOff className="h-3 w-3" />
-                        ) : (
-                          <Eye className="h-3 w-3" />
-                        )
-                      }
-                    />
-                    <ButtonWithTooltip
-                      tooltip={t('Rotate')}
-                      onClick={handleRotateToken}
-                      variant="outline"
-                      className="h-8 w-8"
-                      disabled={rotateMutation.isPending || !hasValidMcp}
-                      hasPermission={hasPermissionToWriteMcp}
-                      icon={
-                        rotateMutation.isPending ? (
-                          <ReloadIcon className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3 w-3" />
-                        )
-                      }
-                    />
-                    <ButtonWithTooltip
-                      tooltip={t('Copy')}
-                      onClick={() => {
-                        navigator.clipboard.writeText(mcpServerUrl);
-                        toast({
-                          description: t('Copied'),
-                          duration: 2000,
-                        });
-                      }}
-                      variant="outline"
-                      className="h-8 w-8"
-                      icon={<Copy className="h-3 w-3" />}
-                    />
-                  </div>
-                </div>
-              </div>
+              <McpServerUrlBox
+                mcpServerUrl={mcpServerUrl}
+                onRotateToken={handleRotateToken}
+                isRotating={rotateMutation.isPending}
+                hasValidMcp={hasValidMcp}
+                hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+              />
             </div>
           </TabsContent>
         </div>
