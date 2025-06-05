@@ -41,6 +41,7 @@ import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migr
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -210,6 +211,9 @@ import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
 import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
+import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
+import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -357,6 +361,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTodoActivity1748525529096,
         AddCreatedByUserIdInTodo1748565250553,
         AddTodoEnvironment1748573003639
+        DeprecateApproval1748648340742,
+        AddMcpToolEntity1748352614033,
+        AddMcpRunEntity1748358415599,
+        MigrateMcpFlowsToBeTools1748996336492,
     ]
 
     const edition = system.getEdition()
@@ -440,7 +448,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddManualTaskCommentTable1742305104390,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
-              
+       
             )
             break
         case ApEdition.COMMUNITY:

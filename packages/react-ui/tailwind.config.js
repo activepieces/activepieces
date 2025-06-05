@@ -102,7 +102,7 @@ module.exports = {
         xss: 'calc(var(--radius) - 10px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
+        inter: ['Inter', 'sans-serif'],
       },
       fontSize: {
         'xss': '0.65rem',

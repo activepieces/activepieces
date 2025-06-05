@@ -21,6 +21,7 @@ import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migr
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -107,6 +108,9 @@ import { AddHandshakeConfigurationToFlowSqlite1746845932780 } from './migration/
 import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/1747062679388-AddFolderDisplayOrder'
 import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/1747824740845-RemoveFeatureFlagsFromSqlite'
 import { AddAgentsSqlite1748573768714 } from './migration/sqlite/1748573768714-AddAgentsSqlite'
+import { AddMcpToolEntitySQLITE1748365593414 } from './migration/sqlite/1748365593414-AddMcpToolEntitySQLITE'
+import { AddMcpRunEntitySQLITE1748365786218 } from './migration/sqlite/1748365786218-AddMcpRunEntitySQLITE'
+
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -229,7 +233,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RemoveFeatureFlagsFromSqlite1747824740845,
         UpgradePieceVersionsToLatest1748253670449,
-        AddAgentsSqlite1748573768714
+        AddAgentsSqlite1748573768714,
+        DeprecateApproval1748648340742,
+        AddMcpToolEntitySQLITE1748365593414,
+        AddMcpRunEntitySQLITE1748365786218,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
