@@ -33,18 +33,13 @@ function ProjectSwitcher() {
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
   const filterProjects = React.useCallback(
-    (projectId: string, search: string) => {
-      //Radix UI lowercases the value string (projectId)
+    (value: string, search: string) => {
       const project = allProjects
-        ?.find((platform) =>
-          platform.projects.find(
-            (project) => project.id.toLowerCase() === projectId,
-          ),
-        )
-        ?.projects.find((project) => project.id.toLowerCase() === projectId);
-      if (!project) {
-        return 0;
-      }
+        ?.flatMap((p) => p.projects)
+        .find((p) => p.id.toLowerCase() === value.toLowerCase());
+
+      if (!project) return 0;
+
       return project.displayName.toLowerCase().includes(search.toLowerCase())
         ? 1
         : 0;
