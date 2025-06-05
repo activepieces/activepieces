@@ -9,8 +9,8 @@ import {
 import { volubileAuth } from '../auth';
 
 type AgentListResponse = {
-  page_count: number;
-  total_items: number;
+  totalPages: number;
+  totalElements: number;
   content: {
     id: string;
     name: string;
@@ -64,6 +64,7 @@ export const agentsDropdown = Property.Dropdown<string>({
     const options: DropdownOption<string>[] = [];
     let hasMore = true;
     let page = 1;
+    const pageSize= '100';
 
     do {
       const request: HttpRequest = {
@@ -72,6 +73,12 @@ export const agentsDropdown = Property.Dropdown<string>({
         headers: {
           'X-Api-Key': authValue.apiKey as string,
         },
+        queryParams : {
+          'size': pageSize,
+          'page': page.toString(),
+
+
+        }
       };
 
       const response = await httpClient.sendRequest<AgentListResponse>(request);
@@ -81,8 +88,8 @@ export const agentsDropdown = Property.Dropdown<string>({
       }
 
       hasMore =
-        response.body.page_count != undefined &&
-        page < response.body.page_count;
+        response.body.totalPages != undefined &&
+        page < response.body.totalPages;
 
       page++;
     } while (hasMore);
