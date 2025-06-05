@@ -587,6 +587,9 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -764,6 +767,9 @@
       ],
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
+      ],
+      "@activepieces/piece-tarvent": [
+        "packages/pieces/community/tarvent/src/index.ts"
       ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"

@@ -17,6 +17,7 @@ import { listIssueCommentsAction } from './lib/actions/list-issue-comments';
 import { findUserAction } from './lib/actions/find-user';
 import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
+import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -34,6 +35,7 @@ export const jiraCloud = createPiece({
 		searchIssues,
 		assignIssueAction,
 		addAttachmentToIssueAction,
+		getIssueAttachmentAction,
 		addWatcherToIssueAction,
 		addCommentToIssueAction,
 		updateIssueCommentAction,
