@@ -7,13 +7,19 @@ export async function makeRequest(
   body?: unknown
 ) {
   const url = `https://api.airparser.com${path}`;
+  const isFormData =
+    typeof body === 'object' &&
+    body !== null &&
+    typeof (body as any).getHeaders === 'function';
 
   const response = await httpClient.sendRequest({
     method,
     url,
     headers: {
       'X-API-Key': apiKey,
-      'Content-Type': 'application/json',
+      ...(isFormData
+        ? (body as any).getHeaders()
+        : { 'Content-Type': 'application/json' }),
     },
     body,
   });

@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { documentIdDropdown } from '../common/props';
+import { documentIdDropdown, inboxIdDropdown } from '../common/props';
 import { airparserAuth } from '../../index';
 
 export const extractDataFromDocumentAction = createAction({
@@ -10,6 +10,7 @@ export const extractDataFromDocumentAction = createAction({
   displayName: 'Extract Data from Document',
   description: 'Retrieve parsed JSON data from a specific document in Airparser.',
   props: {
+    inboxId: inboxIdDropdown,
     documentId: documentIdDropdown,
   },
   async run(context) {

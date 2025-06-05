@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { inboxIdDropdown } from '../common/props';
 import { airparserAuth } from '../../index';
 import { makeRequest } from '../common';
+import FormData from 'form-data';
 
 export const uploadDocumentAction = createAction({
   auth: airparserAuth,
@@ -22,13 +23,12 @@ export const uploadDocumentAction = createAction({
       required: false,
     }),
   },
-  async run(context) {
-    const apiKey = context.auth as string;
-    const { inboxId, meta, file } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { inboxId, file, meta } = propsValue;
+    const apiKey = auth as string;
 
     const formData = new FormData();
-
-    formData.append('file', new Blob([file.data]), file.filename);
+    formData.append('file', Buffer.from(file.base64, 'base64'), file.filename);
 
     if (meta) {
       formData.append('meta', JSON.stringify(meta));
@@ -40,6 +40,7 @@ export const uploadDocumentAction = createAction({
       `/inboxes/${inboxId}/upload`,
       formData
     );
+
     return response;
   },
 });

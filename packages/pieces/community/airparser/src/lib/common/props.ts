@@ -16,9 +16,9 @@ export const inboxIdDropdown = Property.Dropdown({
     }
     const apiKey = auth as string;
     const inboxes = await makeRequest(apiKey, HttpMethod.GET, '/inboxes');
-    const options: DropdownOption<string>[] = inboxes.map((inbox: { name: string; id: string }) => ({
+    const options: DropdownOption<string>[] = inboxes.map((inbox: { _id: string; name: string }) => ({
       label: inbox.name,
-      value: inbox.id,
+      value: inbox._id,
     }));
 
     return {
@@ -40,11 +40,15 @@ export const documentIdDropdown = Property.Dropdown({
         options: [],
       };
     }
+
     const apiKey = auth as string;
-    const docs = await makeRequest(apiKey, HttpMethod.GET, `/inboxes/${inboxId}/docs`);
-    const options: DropdownOption<string>[] = docs.map((doc: { id: string; name?: string }) => ({
-      label: doc.name || doc.id,
-      value: doc.id,
+    const response = await makeRequest(apiKey, HttpMethod.GET, `/inboxes/${inboxId}/docs`);
+    
+    const docs = response.docs ?? [];
+
+    const options: DropdownOption<string>[] = docs.map((doc: { _id: string; name?: string }) => ({
+      label: doc.name || doc._id,
+      value: doc._id,
     }));
 
     return {
