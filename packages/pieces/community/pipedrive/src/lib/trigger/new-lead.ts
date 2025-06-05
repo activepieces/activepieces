@@ -1,17 +1,6 @@
 import { pipedriveAuth } from '../../';
-import {
-	createTrigger,
-	PiecePropValueSchema,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import {
-	AuthenticationType,
-	DedupeStrategy,
-	httpClient,
-	HttpMethod,
-	Polling,
-	pollingHelper,
-} from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
@@ -19,74 +8,6 @@ import {
 } from '../common';
 import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
-
-const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const leads = [];
-
-		if (lastFetchEpochMS === 0) {
-			const response = await pipedriveApiCall<LeadListResponse>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/leads',
-				query: { limit: 10, sort: 'update_time DESC' },
-			});
-
-			if (isNil(response.data)) {
-				return [];
-			}
-
-			for (const lead of response.data) {
-				leads.push(lead);
-			}
-		} else {
-			// API does not support filtering by add_time, provide custom filter that can short circuit pagination
-			const customFilter = (elem: Record<string, any>) => {
-				return dayjs(elem.add_time).valueOf() > lastFetchEpochMS;
-			};
-
-			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/leads',
-				query: { sort: 'add_time DESC' },
-				customFilter: customFilter,
-			});
-			if (isNil(response)) {
-				return [];
-			}
-
-			for (const lead of response) {
-				leads.push(lead);
-			}
-		}
-
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: auth.access_token,
-			apiDomain: auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
-		});
-
-		const items = [];
-
-		for (const lead of leads) {
-			const updatedLeadProperties = pipedriveTransformCustomFields(customFieldsResponse, lead);
-			items.push(updatedLeadProperties);
-		}
-
-		return items.map((lead) => {
-			return {
-				epochMilliSeconds: dayjs(lead.add_time).valueOf(),
-				data: lead,
-			};
-		});
-	},
-};
 
 export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -172,7 +93,7 @@ export const newLeadTrigger = createTrigger({
 			method: HttpMethod.GET,
 			resourceUri: `/leads/${payloadBody.data.id}`,
 		});
-		
+
 		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],

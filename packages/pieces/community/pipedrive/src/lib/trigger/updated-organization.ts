@@ -1,10 +1,6 @@
 import { pipedriveAuth } from '../../';
-import {
-	createTrigger,
-	PiecePropValueSchema,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
 	pipedriveApiCall,
 	pipedriveCommon,
@@ -13,74 +9,6 @@ import {
 } from '../common';
 import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
-
-const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const organizations = [];
-
-		if (lastFetchEpochMS === 0) {
-			const response = await pipedriveApiCall<LeadListResponse>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/organizations',
-				query: { limit: 10, sort: 'update_time DESC' },
-			});
-
-			if (isNil(response.data)) {
-				return [];
-			}
-
-			for (const org of response.data) {
-				organizations.push(org);
-			}
-		} else {
-			// API does not support filtering by update_time, provide custom filter that can short circuit pagination
-			const customFilter = (elem: Record<string, any>) => {
-				return dayjs(elem.update_time).valueOf() > lastFetchEpochMS;
-			};
-
-			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/organizations',
-				query: { sort: 'update_time DESC' },
-				customFilter: customFilter,
-			});
-			if (isNil(response)) {
-				return [];
-			}
-
-			for (const org of response) {
-				organizations.push(org);
-			}
-		}
-
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: auth.access_token,
-			apiDomain: auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
-		});
-
-		const items = [];
-
-		for (const org of organizations) {
-			const updatedOrgProperties = pipedriveTransformCustomFields(customFieldsResponse, org);
-			items.push(updatedOrgProperties);
-		}
-
-		return items.map((org) => {
-			return {
-				epochMilliSeconds: dayjs(org.add_time).valueOf(),
-				data: org,
-			};
-		});
-	},
-};
 
 export const updatedOrganizationTrigger = createTrigger({
 	auth: pipedriveAuth,

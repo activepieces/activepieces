@@ -5,59 +5,6 @@ import { pipedriveApiCall, pipedriveCommon } from '../common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
-// const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
-// 	strategy: DedupeStrategy.TIMEBASED,
-// 	async items({ auth, lastFetchEpochMS }) {
-// 		const notes = [];
-
-// 		if (lastFetchEpochMS === 0) {
-// 			const response = await pipedriveApiCall<LeadListResponse>({
-// 				accessToken: auth.access_token,
-// 				apiDomain: auth.data['api_domain'],
-// 				method: HttpMethod.GET,
-// 				resourceUri: '/notes',
-// 				query: { limit: 10, sort: 'update_time DESC' },
-// 			});
-
-// 			if (isNil(response.data)) {
-// 				return [];
-// 			}
-
-// 			for (const note of response.data) {
-// 				notes.push(note);
-// 			}
-// 		} else {
-// 			// API does not support filtering by add_time, provide custom filter that can short circuit pagination
-// 			const customFilter = (elem: Record<string, any>) => {
-// 				return dayjs(elem.add_time).valueOf() > lastFetchEpochMS;
-// 			};
-
-// 			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
-// 				accessToken: auth.access_token,
-// 				apiDomain: auth.data['api_domain'],
-// 				method: HttpMethod.GET,
-// 				resourceUri: '/notes',
-// 				query: { sort: 'add_time DESC' },
-// 				customFilter: customFilter,
-// 			});
-// 			if (isNil(response)) {
-// 				return [];
-// 			}
-
-// 			for (const note of response) {
-// 				notes.push(note);
-// 			}
-// 		}
-
-// 		return notes.map((note) => {
-// 			return {
-// 				epochMilliSeconds: dayjs(note.add_time).valueOf(),
-// 				data: note,
-// 			};
-// 		});
-// 	},
-// };
-
 export const newNoteTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new-note',
