@@ -10,6 +10,7 @@ export enum SystemJobName {
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     ISSUES_REMINDER = 'issue-reminder',
     RUN_TELEMETRY = 'run-telemetry',
+    ISSUE_AUTO_ARCHIVE = 'archive-old-issues',
 }
 
 type HardDeleteProjectSystemJobData = {

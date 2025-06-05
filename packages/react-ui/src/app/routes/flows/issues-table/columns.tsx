@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/ee-shared';
+import { PopulatedIssue } from '@activepieces/shared';
 
 export const issuesTableColumns: ColumnDef<
   RowDataWithActions<PopulatedIssue>
@@ -35,6 +35,15 @@ export const issuesTableColumns: ColumnDef<
     ),
     cell: ({ row }) => {
       return <div className="text-left"> {row.original.flowDisplayName} </div>;
+    },
+  },
+  {
+    accessorKey: 'step',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Step')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left"> {row.original.step?.name} </div>;
     },
   },
   {

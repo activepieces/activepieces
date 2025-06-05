@@ -2,6 +2,7 @@ import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreated
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, McpWithTools, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { fastifySchedule } from '@fastify/schedule'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -66,6 +67,7 @@ import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { issuesModule } from './flows/issues/issues-module'
+import { issuesService } from './flows/issues/issues-service'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -93,6 +95,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -233,6 +236,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoModule)
     await app.register(adminPlatformModule)
     await app.register(changelogModule)
+    await app.register(fastifySchedule)
     
     app.get(
         '/redirect',
@@ -257,6 +261,30 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             }
         },
     )
+
+    // Setup archive task using system jobs
+    const archiveDays = parseInt(system.getOrThrow(AppSystemProp.ISSUE_ARCHIVE_DAYS))
+    systemJobHandlers.registerJobHandler(SystemJobName.ISSUE_AUTO_ARCHIVE, async () => {
+        try {
+            await issuesService(app.log).archiveOldIssues(archiveDays)
+        }
+        catch (error) {
+            app.log.error('Error in archive task:', error)
+        }
+    })
+    
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.ISSUE_AUTO_ARCHIVE,
+            data: {},
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '0 0 * * *', // Run at midnight every day
+        },
+    })
+
+    app.log.info('Archive job registered')
 
     await validateEnvPropsOnStartup(app.log)
 
@@ -339,6 +367,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
+        if (app.scheduler) {
+            app.scheduler.stop()
+        }
         await flowConsumer(app.log).close()
         await systemJobsSchedule(app.log).close()
         await engineResponseWatcher(app.log).shutdown()
