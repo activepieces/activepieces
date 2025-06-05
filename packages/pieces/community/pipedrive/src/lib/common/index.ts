@@ -61,18 +61,6 @@ export type PipedriveApiCallParams = {
 	body?: any;
 };
 
-export type PipedriveApiCustomFilter<T> = (element: T) => boolean
-
-export type PipedrivePaginatedApiCallParams = {
-	accessToken: string;
-	apiDomain: string;
-	method: HttpMethod;
-	resourceUri: string;
-	query?: RequestParams;
-	body?: any;
-	customFilter?: PipedriveApiCustomFilter<any>;
-};
-
 export async function pipedriveApiCall<T extends HttpMessageBody>({
 	accessToken,
 	apiDomain,
@@ -131,8 +119,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 	resourceUri,
 	query,
 	body,
-	customFilter,
-}: PipedrivePaginatedApiCallParams): Promise<T[]> {
+}: PipedriveApiCallParams): Promise<T[]> {
 	const qs = query ? query : {};
 
 	qs.start = 0;
@@ -153,20 +140,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 		if (isNil(response.data)) {
 			break;
 		}
-
-		// performs custom filtering on response data, assumes sorting is applied through the query for consistency
-		if (isNil(customFilter)) {
-			resultData.push(...response.data);
-		} else {
-			const filteredData = response.data.filter(customFilter);
-			resultData.push(...filteredData);
-
-			// if the filter returns false on any element in the response, return elements that pass the filter and stop pagination
-			if (filteredData.length != response.data.length) {
-				break;
-			}
-		}
-
+		resultData.push(...response.data);
 		qs.start = response.additional_data.pagination.next_start;
 		hasMoreItems = response.additional_data.pagination.more_items_in_collection;
 	} while (hasMoreItems);
