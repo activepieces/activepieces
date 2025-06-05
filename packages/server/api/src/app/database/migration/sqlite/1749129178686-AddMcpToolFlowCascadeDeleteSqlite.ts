@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements MigrationInterface {
     name = 'AddMcpToolFlowCascadeDeleteSqlite1749129178686'
@@ -6,10 +6,10 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -21,7 +21,7 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "flowId" varchar,
                 CONSTRAINT "FK_ff5eb8d6e2b6375d0d98569d5fb" FOREIGN KEY ("mcpId") REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_mcp_tool"(
                     "id",
@@ -40,26 +40,26 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "pieceMetadata",
                 "flowId"
             FROM "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_mcp_tool"
                 RENAME TO "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_flow_id" ON "mcp_tool" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -72,7 +72,7 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 CONSTRAINT "FK_ff5eb8d6e2b6375d0d98569d5fb" FOREIGN KEY ("mcpId") REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_3f26c7b876fba48b9e90efb3d79" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_mcp_tool"(
                     "id",
@@ -91,33 +91,33 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "pieceMetadata",
                 "flowId"
             FROM "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_mcp_tool"
                 RENAME TO "mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_flow_id" ON "mcp_tool" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "mcp_tool"
                 RENAME TO "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -129,7 +129,7 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "flowId" varchar,
                 CONSTRAINT "FK_ff5eb8d6e2b6375d0d98569d5fb" FOREIGN KEY ("mcpId") REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "mcp_tool"(
                     "id",
@@ -148,26 +148,26 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "pieceMetadata",
                 "flowId"
             FROM "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_flow_id" ON "mcp_tool" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_mcp_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_mcp_tool_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "mcp_tool"
                 RENAME TO "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -180,7 +180,7 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 CONSTRAINT "FK_3f26c7b876fba48b9e90efb3d79" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
                 CONSTRAINT "FK_ff5eb8d6e2b6375d0d98569d5fb" FOREIGN KEY ("mcpId") REFERENCES "mcp" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "mcp_tool"(
                     "id",
@@ -199,16 +199,16 @@ export class AddMcpToolFlowCascadeDeleteSqlite1749129178686 implements Migration
                 "pieceMetadata",
                 "flowId"
             FROM "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_mcp_tool"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_mcp_id" ON "mcp_tool" ("mcpId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_mcp_tool_flow_id" ON "mcp_tool" ("flowId")
-        `);
+        `)
     }
 
 }

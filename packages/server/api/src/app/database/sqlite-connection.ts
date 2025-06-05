@@ -236,7 +236,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateApproval1748648340742,
         AddMcpToolEntitySQLITE1748365593414,
         AddMcpRunEntitySQLITE1748365786218,
-        AddMcpToolFlowCascadeDeleteSqlite1749129178686
+        AddMcpToolFlowCascadeDeleteSqlite1749129178686,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

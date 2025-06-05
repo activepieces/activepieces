@@ -357,7 +357,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
         MigrateMcpFlowsToBeTools1748996336492,
-        AddMcpToolFlowCascadeDelete1749128866314
+        AddMcpToolFlowCascadeDelete1749128866314,
     ]
 
     const edition = system.getEdition()
