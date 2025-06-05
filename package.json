@@ -216,6 +216,7 @@
     "openai": "4.67.1",
     "p-limit": "2.3.0",
     "pako": "2.1.0",
+    "papaparse": "5.5.3",
     "pg": "8.11.3",
     "pg-format": "1.0.4",
     "pickleparser": "0.1.0",
