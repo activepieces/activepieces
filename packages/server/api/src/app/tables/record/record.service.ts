@@ -17,12 +17,10 @@ import {
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { from as copyFrom } from 'pg-copy-streams'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { databaseConnection, getDatabaseType } from '../../database/database-connection'
-import { DatabaseType, system } from '../../helper/system/system'
+import { system } from '../../helper/system/system'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
@@ -40,7 +38,6 @@ export const recordService = {
     async create({
         request,
         projectId,
-        logger,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         const existingFields = await fieldService.getAll({
@@ -55,14 +52,24 @@ export const recordService = {
         )
 
         let insertedRecordIds: string[] = []
-        if (validRecords.length > MAX_BATCH_SIZE && getDatabaseType() == DatabaseType.POSTGRES) {
-            insertedRecordIds = await pgCopyInsert({ validRecords, tableId: request.tableId, projectId, logger })
-            if (insertedRecordIds.length === 0) {
-                insertedRecordIds = await batchInsert({ validRecords, tableId: request.tableId, projectId })
+        insertedRecordIds = await transaction(async (entityManager: EntityManager) => {
+            const batches = chunk(validRecords, MAX_BATCH_SIZE)
+            const records: RecordSchema[] = []
+            const insertedRecordIds: string[] = []
+
+            for (const batch of batches) {
+                const now = new Date(new Date().getTime() + records.length)
+                const recordInsertions = prepareRecordInsertions(batch, request.tableId, projectId, now)
+                await entityManager.getRepository(RecordEntity).insert(recordInsertions)
+
+                const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
+                await entityManager.getRepository(CellEntity).insert(cellInsertions)
+
+                insertedRecordIds.push(...recordInsertions.map((r) => r.id))
             }
-        } else {
-            insertedRecordIds = await batchInsert({ validRecords, tableId: request.tableId, projectId })
-        }
+
+            return insertedRecordIds
+        })
 
         const insertedRecords = await recordRepo().find({
             where: { id: In(insertedRecordIds), tableId: request.tableId, projectId },
@@ -490,82 +497,4 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
     return false
 }
 
-async function pgCopyInsert({ validRecords, tableId, projectId, logger }: PgCopyInsertParams): Promise<string[]> {
-    const queryRunner = databaseConnection().createQueryRunner()
-    const txn = await queryRunner.connect()
-    try {
-        const now = new Date()
-        const recordInsertions = prepareRecordInsertions(validRecords, tableId, projectId, now)
 
-        await txn.query('START TRANSACTION')
-        const recordStream = txn.query(copyFrom('COPY record (id, "tableId", "projectId", created) FROM STDIN WITH (FORMAT text)'))
-        for (const record of recordInsertions) {
-            recordStream.write(`${record.id}\t${record.tableId}\t${record.projectId}\t${record.created}\n`)
-        }
-        recordStream.end()
-        await new Promise((resolve, reject) => {
-            recordStream.on('finish', resolve)
-            recordStream.on('error', (error: Error) => {
-                reject({ error, entity: 'record' })
-            })
-        })
-
-        const cellStream = txn.query(copyFrom('COPY cell (id, "recordId", "fieldId", "projectId", value) FROM STDIN WITH (FORMAT text)'))
-        const cellInsertions = prepareCellInsertions(validRecords, recordInsertions, projectId)
-
-        for (const cell of cellInsertions) {
-            cellStream.write(`${cell.id}\t${cell.recordId}\t${cell.fieldId}\t${cell.projectId}\t${cell.value}\n`)
-        }
-        cellStream.end()
-        await new Promise((resolve, reject) => {
-            cellStream.on('finish', () => {
-                txn.query('COMMIT')
-                resolve(true)
-            })
-            cellStream.on('error', (error: Error) => {
-                reject({ error, entity: 'cell' })
-            })
-        })
-
-        const insertedRecordIds = recordInsertions.map((r) => r.id)
-        return insertedRecordIds
-    }
-    catch (error) {
-        await txn.query("ROLLBACK")
-        logger.error({ error, validRecords }, 'COPY operation failed, falling back to batch insert:')
-        return []
-    } finally {
-        await queryRunner.release()
-    }
-}
-
-async function batchInsert({ validRecords, tableId, projectId }: BatchInsertParams): Promise<string[]> {
-    return transaction(async (entityManager: EntityManager) => {
-        const batches = chunk(validRecords, MAX_BATCH_SIZE)
-        const records: RecordSchema[] = []
-        const insertedRecordIds: string[] = []
-
-        for (const batch of batches) {
-            const now = new Date(new Date().getTime() + records.length)
-            const recordInsertions = prepareRecordInsertions(batch, tableId, projectId, now)
-            await entityManager.getRepository(RecordEntity).insert(recordInsertions)
-
-            const cellInsertions = prepareCellInsertions(batch, recordInsertions, projectId)
-            await entityManager.getRepository(CellEntity).insert(cellInsertions)
-
-            insertedRecordIds.push(...recordInsertions.map((r) => r.id))
-        }
-
-        return insertedRecordIds
-    })
-}
-
-type BatchInsertParams = {
-    validRecords: { fieldId: string, value: string }[][]
-    tableId: string
-    projectId: string
-}
-
-type PgCopyInsertParams = BatchInsertParams & {
-    logger: FastifyBaseLogger
-}
