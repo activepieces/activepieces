@@ -574,6 +574,9 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
+      "@activepieces/piece-pcloud": [
+        "packages/pieces/community/pcloud/src/index.ts"
+      ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
