@@ -32,7 +32,7 @@ export default function TeamPage() {
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       cloudOnlyFeature={true}
       lockTitle={t('Unlock Team Permissions')}
       lockDescription={t(

@@ -105,6 +105,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beehiiv": [
+        "packages/pieces/community/beehiiv/src/index.ts"
+      ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
@@ -132,6 +135,9 @@
       ],
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
+      ],
+      "@activepieces/piece-campaign-monitor": [
+        "packages/pieces/community/campaign-monitor/src/index.ts"
       ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
@@ -163,14 +169,20 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+       "@activepieces/piece-close": [
+        "packages/pieces/community/close/src/index.ts"
+      ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
       ],
+      "@activepieces/piece-coda": [
+        "packages/pieces/community/coda/src/index.ts"
+      ],
+      "@activepieces/piece-comfyicu": [
+        "packages/pieces/community/comfyicu/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
-      ],
-      "@activepieces/piece-copy-ai": [
-        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
@@ -186,6 +198,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
@@ -224,6 +239,9 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
+      "@activepieces/piece-docusign": [
+        "packages/pieces/community/docusign/src/index.ts"
+      ],
       "@activepieces/piece-drip": [
         "packages/pieces/community/drip/src/index.ts"
       ],
@@ -239,6 +257,7 @@
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
+      "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -253,6 +272,9 @@
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
+      ],
+      "@activepieces/piece-fireflies-ai": [
+        "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
@@ -410,6 +432,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-kommo": [
+        "packages/pieces/community/kommo/src/index.ts"
+      ],
       "@activepieces/piece-krisp-call": [
         "packages/pieces/community/krisp-call/src/index.ts"
       ],
@@ -448,6 +473,9 @@
       ],
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
+      ],
+      "@activepieces/piece-manychat": [
+        "packages/pieces/community/manychat/src/index.ts"
       ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
@@ -504,6 +532,9 @@
       "@activepieces/piece-mongodb": [
         "packages/pieces/community/mongodb/src/index.ts"
       ],
+      "@activepieces/piece-motion": [
+        "packages/pieces/community/motion/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
@@ -544,6 +575,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf-co": [
+        "packages/pieces/community/pdf-co/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
@@ -552,6 +586,9 @@
       ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
       ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
@@ -620,6 +657,9 @@
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
+      "@activepieces/piece-saleor": [
+        "packages/pieces/community/saleor/src/index.ts"
+      ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
@@ -670,6 +710,9 @@
       ],
       "@activepieces/piece-smartsheet": [
         "packages/pieces/community/smartsheet/src/index.ts"
+      ],
+      "@activepieces/piece-smartsuite": [
+        "packages/pieces/community/smartsuite/src/index.ts"
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
@@ -727,6 +770,9 @@
       ],
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
+      ],
+      "@activepieces/piece-tarvent": [
+        "packages/pieces/community/tarvent/src/index.ts"
       ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"
@@ -827,6 +873,9 @@
       "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-zagomail": [
+        "packages/pieces/community/zagomail/src/index.ts"
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"

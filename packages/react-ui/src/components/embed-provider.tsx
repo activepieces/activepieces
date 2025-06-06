@@ -11,11 +11,14 @@ type EmbeddingState = {
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
+  hideExportAndImportFlow: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
   fontUrl?: string;
   fontFamily?: string;
   useDarkBackground: boolean;
+  hideHomeButtonInBuilder: boolean;
+  emitHomeButtonClickedEvent: boolean;
 };
 
 const defaultState: EmbeddingState = {
@@ -26,7 +29,10 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
+  hideExportAndImportFlow: false,
   useDarkBackground: window.opener !== null,
+  hideHomeButtonInBuilder: false,
+  emitHomeButtonClickedEvent: false,
 };
 
 const EmbeddingContext = createContext<{

@@ -32,7 +32,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { projectMemberService } from '../../ee/project-members/project-member.service'
+import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -255,9 +255,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         limit,
         scope,
         platformId,
+        externalIds,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
             query: {
@@ -282,12 +282,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(status)) {
             querySelector.status = In(status)
         }
+        if (!isNil(externalIds)) {
+            querySelector.externalId = In(externalIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
-
 
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = appConnectionHandler(log).decryptConnection(encryptedConnection)
@@ -447,6 +448,7 @@ const validateConnectionValue = async (
                 platformId,
                 props: value.props,
             })
+            
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
@@ -461,6 +463,7 @@ const validateConnectionValue = async (
                     clientSecret: value.client_secret,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    scope: value.scope,
                 },
             })
             await engineValidateAuth({
@@ -597,6 +600,7 @@ type ListParams = {
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     limit: number
+    externalIds: string[] | undefined
 }
 
 type UpdateParams = {

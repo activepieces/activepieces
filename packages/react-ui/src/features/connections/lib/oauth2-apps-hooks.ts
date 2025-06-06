@@ -4,8 +4,13 @@ import { ApEdition, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './oauth2-apps-api';
 
-type PieceToClientIdMap = {
-  [pieceName: string]: {
+export type PieceToClientIdMap = {
+  //key is set like this, to avoid issues reconnecting to a cloud oauth2 app after setting a platform oauth2 app
+  [
+    pieceName: `${string}-${
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2}`
+  ]: {
     type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
     clientId: string;
   };
@@ -49,13 +54,13 @@ export const oauth2AppsHooks = {
           : await oauthAppsApi.listCloudOAuthApps(edition);
         const appsMap: PieceToClientIdMap = {};
         Object.keys(cloudApps).forEach((key) => {
-          appsMap[key] = {
+          appsMap[`${key}-${AppConnectionType.CLOUD_OAUTH2}`] = {
             type: AppConnectionType.CLOUD_OAUTH2,
             clientId: cloudApps[key].clientId,
           };
         });
         apps.data.forEach((app) => {
-          appsMap[app.pieceName] = {
+          appsMap[`${app.pieceName}-${AppConnectionType.PLATFORM_OAUTH2}`] = {
             type: AppConnectionType.PLATFORM_OAUTH2,
             clientId: app.clientId,
           };

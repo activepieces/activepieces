@@ -44,52 +44,8 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: JSONB_COLUMN_TYPE,    
             nullable: true,
         },
-        showPoweredBy: {
-            type: Boolean,
-            nullable: false,
-        },
-        flowIssuesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
+
         cloudAuthEnabled: {
-            type: Boolean,
-            nullable: false,
-            default: true,
-        },
-        customDomainsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        customAppearanceEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        manageProjectsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        managePiecesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        manageTemplatesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        analyticsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        apiKeysEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        projectRolesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        embeddingEnabled: {
             type: Boolean,
             nullable: false,
             default: true,
@@ -104,10 +60,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
-        environmentsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
         defaultLocale: {
             type: String,
             nullable: true,
@@ -120,36 +72,12 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
-        ssoEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        globalConnectionsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        customRolesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
         emailAuthEnabled: {
             type: Boolean,
             nullable: false,
         },
         federatedAuthProviders: {
             type: JSONB_COLUMN_TYPE,
-        },
-        auditLogEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        alertsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        licenseKey: {
-            type: String,
-            nullable: true,
         },
         pinnedPieces: {
             type: ARRAY_COLUMN_TYPE,

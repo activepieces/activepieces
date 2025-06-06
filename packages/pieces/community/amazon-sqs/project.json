@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/amazon-sqs/package.json",
         "main": "packages/pieces/community/amazon-sqs/src/index.ts",
         "assets": [
-          "packages/pieces/community/amazon-sqs/*.md"
+          "packages/pieces/community/amazon-sqs/*.md",
+          {
+            "input": "packages/pieces/community/amazon-sqs/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

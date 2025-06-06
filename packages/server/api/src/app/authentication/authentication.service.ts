@@ -148,7 +148,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
         const project = await projectService.getOneOrThrow(params.projectId)
-        const projectPlatform = await platformService.getOneOrThrow(project.platformId)
+        const projectPlatform = await platformService.getOneWithPlanOrThrow(project.platformId)
         await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
         const user = await getUserForPlatform(params.identityId, projectPlatform)
         return authenticationUtils.getProjectAndToken({

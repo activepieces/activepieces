@@ -54,6 +54,7 @@ export const ListPiecesRequestQuery = Type.Object({
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
     suggestionType: Type.Optional(Type.Enum(SuggestionType)),
+    locale: Type.Optional(Type.String()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -69,6 +70,7 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
     projectId: Type.Optional(Type.String()),
+    locale: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))

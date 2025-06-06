@@ -89,7 +89,9 @@ const ApMarkdown = React.memo(
     const markdownProcessed = applyVariables(markdown, variables ?? {})
       .split('\n')
       .map((line) => line.trim())
-      .join('\n');
+      .join('\n')
+      .replaceAll('\n', '\n\n');
+
     return (
       <Container variant={variant}>
         <ReactMarkdown

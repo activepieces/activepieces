@@ -75,7 +75,6 @@ const systemPropValidators: {
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
-    [AppSystemProp.LICENSE_KEY]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
@@ -157,6 +156,10 @@ const systemPropValidators: {
     [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
     [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
+
+    // MCP
+    [AppSystemProp.MAX_MCPS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
 }
 
 

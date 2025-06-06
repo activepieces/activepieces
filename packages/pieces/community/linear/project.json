@@ -6,13 +6,22 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/linear",
         "tsConfig": "packages/pieces/community/linear/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/linear/package.json",
         "main": "packages/pieces/community/linear/src/index.ts",
-        "assets": ["packages/pieces/community/linear/*.md"],
+        "assets": [
+          "packages/pieces/community/linear/*.md",
+          {
+            "input": "packages/pieces/community/linear/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
@@ -45,11 +54,15 @@
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-linear {args.ver} {args.tag}",
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []

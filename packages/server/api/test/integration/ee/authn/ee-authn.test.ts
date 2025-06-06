@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
@@ -76,8 +76,10 @@ describe('Authentication API', () => {
         const { mockPlatform } = await mockAndSaveBasicSetup({
             platform: {
                 emailAuthEnabled: true,
-                ssoEnabled: false,
                 enforceAllowedAuthDomains: false,
+            },
+            plan: {
+                ssoEnabled: false,
             },
         })
         const mockCustomDomain = createMockCustomDomain({

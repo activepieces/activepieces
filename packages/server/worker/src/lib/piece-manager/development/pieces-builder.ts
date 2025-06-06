@@ -1,22 +1,15 @@
 import { spawn } from 'child_process'
 import fs from 'fs/promises'
 import { Server } from 'http'
-import path, { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
+import { resolve } from 'path'
+import { ApLock, CacheState, filePiecesUtils, GLOBAL_CACHE_COMMON_PATH, memoryLock, PiecesSource } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { cacheHandler } from '../../utils/cache-handler'
+import { cacheState } from '../../cache/cache-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
-
-const globalCachePath = path.resolve('cache')
-
-enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
 
 async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
     try {
@@ -43,7 +36,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const buildTarget = await checkBuildTarget(nxProjectFilePath)
         log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
-        
+
         if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
@@ -52,14 +45,23 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
+        log.info(
+            chalk.blueBright.bold(
+                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
+            ),
+        )
+        // TODO disable until we have a way to build with shared version bumped
+        // const postBuildCommand = `npm run cli pieces generate-translation-file ${pieceProjectName.replace('pieces-', '')}`
+        //  await runCommandWithLiveOutput(postBuildCommand)
+        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
-        
+
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
-        
+
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
-        const cache = cacheHandler(globalCachePath)
+        const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
         await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.setCache('@activepieces/shared', CacheState.PENDING)

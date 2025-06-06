@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/gameball/package.json",
         "main": "packages/pieces/community/gameball/src/index.ts",
         "assets": [
-          "packages/pieces/community/gameball/*.md"
+          "packages/pieces/community/gameball/*.md",
+          {
+            "input": "packages/pieces/community/gameball/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
