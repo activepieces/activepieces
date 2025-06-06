@@ -101,7 +101,7 @@ export function DashboardContainer({
     label: t('MCP'),
     icon: Server,
     showInEmbed: true,
-    hasPermission: false && checkAccess(Permission.READ_MCP),
+    hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
   };
 

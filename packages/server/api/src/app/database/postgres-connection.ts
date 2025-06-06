@@ -36,6 +36,7 @@ import { AddMcpToolEntity1748352614033 } from './migration/postgres/174835261403
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
+import { DefaultMCPServer1749183083485 } from './migration/postgres/1749183083485-DefaultMCPServer'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -49,6 +50,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        DefaultMCPServer1749183083485,
         AddMcpToolFlowCascadeDelete1749128866314,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,

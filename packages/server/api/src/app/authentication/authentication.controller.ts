@@ -16,6 +16,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { distributedStore } from '../helper/keyvalue'
 import { system } from '../helper/system/system'
+import { mcpService } from '../mcp/mcp-service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
@@ -43,6 +44,17 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         //         source: 'credentials',
         //     },
         // })
+
+        // Onboarding
+        const { projectId } = signUpResponse
+        if (projectId) {
+            const mcpCount = await mcpService(request.log).count({ projectId })
+            if (mcpCount <= 0)
+                await mcpService(request.log).create({
+                    projectId,
+                    name: 'Default Server',
+                })
+        }
 
         return signUpResponse
     })
