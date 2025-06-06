@@ -35,7 +35,9 @@ function TodoDetailsDrawer({
       onClose={onClose}
     >
       <RightDrawerContent>
+        <div className="px-6">
           <TodoDetails todoId={currentTodo.id} onClose={onClose} onStatusChange={onStatusChange} />
+        </div>
       </RightDrawerContent>
     </RightDrawer>
   );

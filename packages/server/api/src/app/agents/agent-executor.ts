@@ -54,23 +54,19 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
         },
     });
     const tools = await mcpClient.tools();
-    /* const baseUrl =  await domainHelper.getPublicApiUrl({
-         path: '/v1/ai-providers/proxy/openai/v1/',
-         platformId: params.agent.platformId,
-     })*/
+    const baseUrl = await domainHelper.getPublicApiUrl({
+        path: '/v1/ai-providers/proxy/openai/v1/',
+        platformId: params.agent.platformId,
+    })
     const { fullStream } = await streamText({
-        /*  
-        TODO: renable once ai provider is revamped
         model: createOpenAI({
-               baseURL: baseUrl,
-               apiKey: await accessTokenManager.generateEngineToken({
-                   platformId: params.agent.platformId,
-                   projectId: params.agent.projectId,
-               }),
-           }).completion('gpt-4o'),
-   
-           */
-        model: openai('gpt-4o'),
+            baseURL: baseUrl,
+            apiKey: await accessTokenManager.generateEngineToken({
+                platformId: params.agent.platformId,
+                projectId: params.agent.projectId,
+            }),
+        }).chat('gpt-4o'),
+
         system: params.agent.systemPrompt,
         prompt: params.prompt,
         maxSteps: params.agent.maxSteps,
