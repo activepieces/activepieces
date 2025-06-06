@@ -53,6 +53,7 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
         flow: {
             type: 'many-to-one',
             target: 'flow',
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'flowId',
                 referencedColumnName: 'id',
