@@ -12,7 +12,7 @@ export const githubRegisterTrigger = ({
 	name: string;
 	displayName: string;
 	description: string;
-	sampleData: object;
+	sampleData?: object;
 }) =>
 	createTrigger({
 		auth: githubAuth,
