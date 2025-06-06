@@ -11,6 +11,7 @@ export const Agent = Type.Object({
     testPrompt: Type.Optional(Type.String()),
     projectId: Type.String(),
     maxSteps: Type.Number(),
+    mcpId: Type.String(),
     platformId: Type.String(),
 })
 

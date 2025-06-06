@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { McpToolsSection } from '@/app/mcp/mcp-config/mcp-tools-section';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -187,6 +188,7 @@ export const AgentBuilder = ({
                     readonly={false}
                     onValueChange={handleNameChange}
                   />
+                  {agent && <TestAgent agentId={agent.id} onSuccess={refetch} disabled={isDirty} />}
                 </div>
                 <EditableTextWithPencil
                   value={description}
@@ -224,8 +226,14 @@ export const AgentBuilder = ({
                 className="min-h-[100px] resize-none w-full"
               />
             </div>
+
+            {agent?.mcpId && (
+              <div className="space-y-6">
+                <McpToolsSection mcpId={agent.mcpId} />
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
-              {agent && <TestAgent agentId={agent.id} onSuccess={refetch} disabled={isDirty} />}
             </div>
           </div>
 

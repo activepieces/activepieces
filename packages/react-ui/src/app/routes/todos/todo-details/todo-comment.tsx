@@ -1,7 +1,7 @@
-import { ApMarkdown } from "@/components/custom/markdown";
 import { MarkdownVariant } from "@activepieces/shared";
 import { formatUtils } from "@/lib/utils";
 import { EntityAvatar } from "../../../../components/ui/todo-profile-picture";
+import { TodoMarkdown } from "./todo-markdown";
 
 export type ActivityItem = {
     type: 'comment';
@@ -35,7 +35,7 @@ export const TodoComment = ({ comment, showConnector }: TodoCommentProps) => {
                 <div className="relative">
                     {showConnector && <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />}
                     <div className="pl-12">
-                        <ApMarkdown markdown={comment.text} variant={MarkdownVariant.BORDERLESS} loading={comment.text.length > 0 ? undefined : 'Thinking...'} />
+                        <TodoMarkdown content={comment.text} />
                     </div>
                     {showConnector && (
                         <div className="mb-8"></div>

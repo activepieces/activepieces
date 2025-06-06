@@ -11,6 +11,7 @@ import { useSocket } from "@/components/socket-provider";
 import { cn } from "@/lib/utils";
 import { TodoTimeline } from "./todo-timeline";
 import { TodoCreateComment } from "./todo-create-comment";
+import { todosHooks } from "@/features/todos/lib/todo-hook";
 
 type TodoDetailsProps = {
   todoId: string;
@@ -22,10 +23,7 @@ type TodoDetailsProps = {
 export const TodoDetails = ({ todoId, onClose, onStatusChange, className }: TodoDetailsProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const socket = useSocket();
-  const { data: todo, isLoading, refetch } = useQuery({
-    queryKey: ['todo', todoId],
-    queryFn: () => todosApi.get(todoId),
-  });
+  const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
 
 
   useEffect(() => {
@@ -56,9 +54,9 @@ export const TodoDetails = ({ todoId, onClose, onStatusChange, className }: Todo
 
 
   return <div className={cn("flex flex-col w-full h-[100vh]", className)}>
-    {isLoading && <LoadingScreen mode="fullscreen"></LoadingScreen>}
+    {isLoading && <LoadingScreen mode="container"></LoadingScreen>}
     {!isLoading && todo && (
-    <ScrollArea className="flex-1 px-6">
+    <ScrollArea className="flex-1 px-0">
       <div className="flex flex-col py-5 gap-2">
         <div className="flex items-center gap-2">
           {onClose && (

@@ -7,11 +7,16 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { AgentEntity } from './agent-entity'
 import { agentExecutor } from './agent-executor'
 import { Socket } from 'socket.io'
+import { mcpService } from '../mcp/mcp-service'
 
 const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
+        const mcp = await mcpService(_log).create({
+            name: params.displayName,
+            projectId: params.projectId,
+        })
         const agentPayload: Omit<Agent, 'created' | 'updated'> = {
             displayName: params.displayName,
             id: apId(),
@@ -22,8 +27,14 @@ export const agentsService = (_log: FastifyBaseLogger) => ({
             testPrompt: '',
             maxSteps: 10,
             projectId: params.projectId,
+            mcpId: mcp.id,
         }
-        return agentRepo().save(agentPayload)
+        const agent = await agentRepo().save(agentPayload)
+        await mcpService(_log).update({
+            mcpId: mcp.id,
+            agentId: agent.id,
+        })
+        return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
         await agentRepo().update(params.id, {

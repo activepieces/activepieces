@@ -214,6 +214,7 @@ import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
+import { AddMcpToAgent1749143534558 } from './migration/postgres/1749143534558-AddMcpToAgent'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -365,6 +366,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
         MigrateMcpFlowsToBeTools1748996336492,
+        AddMcpToAgent1749143534558
     ]
 
     const edition = system.getEdition()
