@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 
 import { Badge } from '@/components/ui/badge';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
@@ -14,6 +13,7 @@ import { EmptyTools } from './empty-tools';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 import { Hammer } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface McpToolsSectionProps {
   mcpId: string;
@@ -32,12 +32,24 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
     refetchMcp();
   });
 
-  if (isLoading) {
-    return <LoadingScreen mode="container" />;
-  }
 
-  if (isNil(mcp)) {
-    return <LoadingScreen mode="container" />;
+  if (isNil(mcp) || isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    );
   }
 
   const piecesCount =
@@ -105,4 +117,4 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
       </div>
     </div>
   );
-}; 
+};

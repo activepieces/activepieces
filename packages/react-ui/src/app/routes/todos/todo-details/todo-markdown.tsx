@@ -34,7 +34,7 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
                 const isDone = block.status === 'done';
 
                 return (
-                    <div key={index} className="rounded-lg border border-border  overflow-hidden">
+                    <div key={index} className="rounded-lg border border-border overflow-hidden">
                         <button
                             className="w-full px-4 py-3 flex items-center gap-3 transition-colors"
                             onClick={() => toggleBlock(index)}
@@ -54,10 +54,10 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
                         </button>
 
                         {isExpanded && (
-                            <div className=" border-border p-4 space-y-3">
+                            <div className="border-border p-4 space-y-3">
                                 <div className="space-y-1">
                                     <div className="text-xs font-medium text-muted-foreground">Arguments</div>
-                                    <pre className="text-xs bg-muted/50 p-3 rounded-md overflow-x-auto">
+                                    <pre className="text-xs bg-muted/50 p-3 rounded-md whitespace-pre-wrap break-all">
                                         {JSON.stringify(block.args, null, 2)}
                                     </pre>
                                 </div>
