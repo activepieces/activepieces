@@ -15,6 +15,7 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
+    WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -31,12 +32,15 @@ import { triggerUtils } from './trigger-utils'
 const POLLING_FREQUENCY_CRON_EXPRESSION = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
 
 
+type EnableTriggerResponse = EngineHelperResponse<
+EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
+> & {
+    webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null
+}
 export const enablePieceTrigger = async (
     params: EnableParams,
     log: FastifyBaseLogger,
-): Promise<EngineHelperResponse<
-EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
-> | null> => {
+): Promise<EnableTriggerResponse | null> => {
     const { flowVersion, projectId, simulate } = params
     if (flowVersion.trigger.type !== TriggerType.PIECE) {
         return null
@@ -54,9 +58,13 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
         test: simulate,
     })
+    let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = null
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return engineHelperResponse
+        return {
+            ...engineHelperResponse,
+            webhookHandshakeConfiguration: null,
+        }
     }
 
     switch (pieceTrigger.type) {
@@ -75,6 +83,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         }
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
+            webhookHandshakeConfiguration = pieceTrigger.handshakeConfiguration ?? null
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
                     await jobQueue(log).add({
@@ -126,7 +135,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         }
     }
 
-    return engineHelperResponse
+    return {
+        ...engineHelperResponse,
+        webhookHandshakeConfiguration,
+    }
 }
 
 type EnableParams = {

@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/groq/package.json",
         "main": "packages/pieces/community/groq/src/index.ts",
         "assets": [
-          "packages/pieces/community/groq/*.md"
+          "packages/pieces/community/groq/*.md",
+          {
+            "input": "packages/pieces/community/groq/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

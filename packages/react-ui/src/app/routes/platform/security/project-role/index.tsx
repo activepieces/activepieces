@@ -22,13 +22,13 @@ const ProjectRolePage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
-    enabled: platform.projectRolesEnabled,
+    enabled: platform.plan.projectRolesEnabled,
   });
 
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       lockTitle={t('Project Role Management')}
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',
@@ -45,7 +45,7 @@ const ProjectRolePage = () => {
             {t('Project Role Management')}
           </TableTitle>
 
-          {!platform.customRolesEnabled && (
+          {!platform.plan.customRolesEnabled && (
             <Tooltip>
               <TooltipTrigger>
                 <Button size="sm" className="flex items-center gap-2" disabled>
@@ -58,7 +58,7 @@ const ProjectRolePage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          {platform.customRolesEnabled && (
+          {platform.plan.customRolesEnabled && (
             <ProjectRoleDialog
               mode="create"
               onSave={() => refetch()}

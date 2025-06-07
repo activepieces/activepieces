@@ -9,7 +9,7 @@ import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -49,6 +49,8 @@ describe('Project Member API', () => {
         it('should update a project role for a member', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     projectRolesEnabled: true,
                 },
             })
@@ -427,7 +429,7 @@ async function createBasicEnvironment(): Promise<{
     mockMember: User
 }> {
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
-        platform: {
+        plan: {
             projectRolesEnabled: true,
         },
     })

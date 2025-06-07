@@ -81,6 +81,7 @@ export function ApTableStateProvider({
     queryFn: () =>
       recordsApi.list({
         tableId: tableId!,
+        limit: 99999999, // TODO: we should implement pagination in ui.
         cursor: undefined,
       }),
     refetchOnWindowFocus: true,

@@ -20,6 +20,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
+        const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(
@@ -30,12 +31,12 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             ),
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
-        modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platform.showPoweredBy
+        modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
             platformId,
         })
-        modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platform.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_CHANGELOG] = platform.showPoweredBy
+        modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
+        modifiedFlags[ApFlagId.SHOW_CHANGELOG] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.SHOW_BILLING] = false
         modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled

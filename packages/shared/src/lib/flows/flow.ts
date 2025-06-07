@@ -15,6 +15,22 @@ export enum FlowStatus {
     DISABLED = 'DISABLED',
 }
 
+
+
+export enum WebhookHandshakeStrategy {
+    NONE = 'NONE',
+    HEADER_PRESENT = 'HEADER_PRESENT',
+    QUERY_PRESENT = 'QUERY_PRESENT',
+    BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
+}
+  
+export const WebhookHandshakeConfiguration = Type.Object({
+    strategy: Type.Enum(WebhookHandshakeStrategy),
+    paramName: Type.Optional(Type.String()),
+})
+export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
+  
+
 export const FlowScheduleOptions = Type.Object({
     type: Type.Literal(ScheduleType.CRON_EXPRESSION),
     cronExpression: Type.String(),
@@ -31,6 +47,7 @@ export const Flow = Type.Object({
     folderId: Nullable(Type.String()),
     status: Type.Enum(FlowStatus),
     schedule: Nullable(FlowScheduleOptions),
+    handshakeConfiguration: Nullable(WebhookHandshakeConfiguration),
     publishedVersionId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
 })

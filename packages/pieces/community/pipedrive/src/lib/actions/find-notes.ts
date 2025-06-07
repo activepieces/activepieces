@@ -35,7 +35,7 @@ export const findNotesAction = createAction({
 				],
 			},
 		}),
-		objectId: Property.Number({
+		objectId: Property.ShortText({
 			displayName: 'ID',
 			required: true,
 		}),
@@ -48,10 +48,11 @@ export const findNotesAction = createAction({
 			resourceUri: `/notes`,
 			query: {
 				sort: 'update_time DESC',
+				[context.propsValue.objectType]:context.propsValue.objectId
 			},
 		});
 
-		if (isNil(response)) {
+		if (isNil(response) || response.length === 0) {
 			return {
 				found: false,
 				data: [],
@@ -59,7 +60,7 @@ export const findNotesAction = createAction({
 		}
 
 		return {
-			found: true,
+			found: response.length > 0,
 			data: response,
 		};
 	},

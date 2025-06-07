@@ -1,11 +1,11 @@
-import { PiecesFilterType } from '@activepieces/shared';
+import { PiecesFilterType, PlatformPlanLimits } from '@activepieces/shared';
 
 
 export type FlowPlanLimits = {
   nickname: string;
-  tasks: number;
+  tasks: number | null;
   pieces: string[];
-  aiTokens: number;
+  aiCredits: number | null;
   piecesFilterType: PiecesFilterType;
 };
 
@@ -15,17 +15,61 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
   nickname: 'free-pay-as-you-go',
   tasks: 1000,
   pieces: [],
-  aiTokens: 200,
+  aiCredits: 200,
   piecesFilterType: PiecesFilterType.NONE,
 };
 
-export const DEFAULT_PLATFORM_LIMIT = {
-  nickname: 'platform',
-  tasks: 50000,
-  pieces: [],
-  aiTokens: undefined,
-  piecesFilterType: PiecesFilterType.NONE,
-};
+export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
+  tasksLimit: 1000,
+  aiCreditsLimit: 200,
+  embeddingEnabled: false,
+  tablesEnabled: true,
+  todosEnabled: true,
+  globalConnectionsEnabled: false,
+  customRolesEnabled: false,
+  includedTasks: 1000,
+  includedAiCredits: 200,
+  environmentsEnabled: false,
+  analyticsEnabled: false,
+  showPoweredBy: false,
+  auditLogEnabled: false,
+  managePiecesEnabled: false,
+  manageTemplatesEnabled: false,
+  customAppearanceEnabled: false,
+  manageProjectsEnabled: false,
+  projectRolesEnabled: false,
+  customDomainsEnabled: false,
+  apiKeysEnabled: false,
+  alertsEnabled: false,
+  ssoEnabled: false,
+}
+
+export const OPENSOURCE_PLAN: PlatformPlanLimits = {
+  embeddingEnabled: false,
+  tablesEnabled: true,
+  todosEnabled: true,
+  globalConnectionsEnabled: false,
+  customRolesEnabled: false,
+  includedTasks: 0,
+  includedAiCredits: 0,
+  environmentsEnabled: false,
+  analyticsEnabled: false,
+  showPoweredBy: false,
+  auditLogEnabled: false,
+  managePiecesEnabled: false,
+  manageTemplatesEnabled: false,
+  customAppearanceEnabled: false,
+  tasksLimit: undefined,
+  manageProjectsEnabled: false,
+  projectRolesEnabled: false,
+  customDomainsEnabled: false,
+  apiKeysEnabled: false,
+  alertsEnabled: false,
+  ssoEnabled: false,
+  stripeCustomerId: undefined,
+  stripeSubscriptionId: undefined,
+  stripeSubscriptionStatus: undefined,
+}
 
 export function getTasksPriceId(stripeKey: string | undefined) {
   const testMode = stripeKey?.startsWith('sk_test');

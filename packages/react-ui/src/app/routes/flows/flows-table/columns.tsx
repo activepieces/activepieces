@@ -141,15 +141,15 @@ export const flowsTableColumns = ({
     },
   },
   {
-    accessorKey: 'created',
+    accessorKey: 'updated',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
+      <DataTableColumnHeader column={column} title={t('Last modified')} />
     ),
     cell: ({ row }) => {
-      const created = row.original.created;
+      const updated = row.original.updated;
       return (
         <div className="text-left font-medium min-w-[150px]">
-          {formatUtils.formatDate(new Date(created))}
+          {formatUtils.formatDate(new Date(updated))}
         </div>
       );
     },
@@ -207,5 +207,9 @@ export const flowsTableColumns = ({
         </div>
       );
     },
+  },
+  {
+    accessorKey: 'connectionExternalId',
+    enableHiding: true,
   },
 ];

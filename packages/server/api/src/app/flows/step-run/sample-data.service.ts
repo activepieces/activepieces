@@ -11,6 +11,7 @@ import {
     isNil,
     PlatformId,
     ProjectId,
+    RunEnvironment,
     SaveSampleDataResponse,
     StepRunResponse,
     Trigger,
@@ -26,6 +27,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersionId,
         stepName,
+        runEnvironment,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
@@ -35,6 +37,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             flowVersion,
             jobType: UserInteractionJobType.EXECUTE_ACTION,
             stepName: step.name,
+            runEnvironment,
             sampleData: await this.getSampleDataForFlow(projectId, flowVersion, FileType.SAMPLE_DATA),
         })
 
@@ -176,4 +179,5 @@ type RunActionParams = {
     flowVersionId: FlowVersionId
     stepName: string
     platformId: PlatformId
+    runEnvironment: RunEnvironment
 }

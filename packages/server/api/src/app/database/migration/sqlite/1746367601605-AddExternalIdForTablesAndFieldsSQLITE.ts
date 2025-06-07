@@ -67,7 +67,8 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                     "type",
                     "tableId",
                     "projectId",
-                    "data"
+                    "data",
+                    "externalId"
                 )
             SELECT "id",
                 "created",
@@ -76,7 +77,8 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                 "type",
                 "tableId",
                 "projectId",
-                "data"
+                "data",
+                "id"
             FROM "field"
         `)
         await queryRunner.query(`
