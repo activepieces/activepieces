@@ -6,7 +6,7 @@ import semver from 'semver';
 import { useSocket } from '@/components/socket-provider';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
+import { TableTitle } from '@/components/custom/table-title';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId } from '@activepieces/shared';

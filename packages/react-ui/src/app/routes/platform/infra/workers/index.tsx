@@ -7,8 +7,8 @@ import { CircularIcon } from '@/components/custom/circular-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
-import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
+import { TableTitle } from '@/components/custom/table-title';
+import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
 import {

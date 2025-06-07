@@ -207,9 +207,14 @@ import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgr
 import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
+import { AddMcpToAgent1749143534558 } from './migration/postgres/1749143534558-AddMcpToAgent'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -353,10 +358,16 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
+        AddAgentsModule1748456786940,
+        ChangeManualTasksCommentsToTodoComments1742433144687,
+        AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639,
         DeprecateApproval1748648340742,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
         MigrateMcpFlowsToBeTools1748996336492,
+        AddMcpToAgent1749143534558,
         AddMcpToolFlowCascadeDelete1749128866314,
     ]
 
@@ -439,7 +450,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
                 AddManualTaskCommentTable1742305104390,
-                ChangeManualTasksCommentsToTodoComments1742433144687,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
        

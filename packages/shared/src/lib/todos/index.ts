@@ -1,6 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 import { UserWithMetaInformation } from '../user'
+import { Agent } from '../agents'
+import { FlowVersionMetadata } from '../flows/flow-version'
+import { PopulatedFlow } from '../flows'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
@@ -40,6 +43,22 @@ export type StatusColor = {
     textColor: string
 }
 
+export const CreateAndWaitTodoResult = Type.Object({
+    status: Type.String(),
+})
+
+export type CreateAndWaitTodoResult = Static<typeof CreateAndWaitTodoResult>
+
+export const CreateTodoResult = Type.Object({
+    id: Type.String(),
+    links: Type.Array(Type.Object({
+        name: Type.String(),
+        url: Type.String(),
+    })),
+})
+
+export type CreateTodoResult = Static<typeof CreateTodoResult>
+
 export const StatusOption = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
@@ -49,29 +68,59 @@ export const StatusOption = Type.Object({
 
 export type StatusOption = Static<typeof StatusOption>
 
+export enum TodoEnvironment {
+    TEST = 'test',
+    PRODUCTION = 'production',
+}
+
 export const Todo = Type.Object({
     ...BaseModelSchema,
     title: Type.String(),
     description: Nullable(Type.String()),
     status: StatusOption,
+    createdByUserId: Nullable(Type.String()),
     statusOptions: Type.Array(StatusOption),
     platformId: Type.String(),
     projectId: Type.String(),
     flowId: Type.String(),
     runId: Type.String(),
     assigneeId: Nullable(Type.String()),
+    locked: Type.Boolean(),
     resolveUrl: Nullable(Type.String()),
+    agentId: Nullable(Type.String()),
+    environment: Type.Enum(TodoEnvironment),
 })
 
 export type Todo = Static<typeof Todo>
 
-export const TodoWithAssignee = Type.Composite([Todo, Type.Object({
+export const PopulatedTodo = Type.Composite([Todo, Type.Object({
     assignee: Nullable(UserWithMetaInformation),
+    createdByUser: Nullable(UserWithMetaInformation),
+    agent: Nullable(Agent),
+    flow: Nullable(PopulatedFlow),
 })])
 
-export type TodoWithAssignee = Static<typeof TodoWithAssignee>
+export type PopulatedTodo = Static<typeof PopulatedTodo>
 
 export enum TodoType {
     INTERNAL = 'internal',
     EXTERNAL = 'external',
 }
+
+export const TodoActivity = Type.Object({
+    ...BaseModelSchema,
+    todoId: Type.String(),
+    userId: Nullable(Type.String()),
+    agentId: Nullable(Type.String()),
+    content: Type.String(),
+})
+
+export type TodoActivity = Static<typeof TodoActivity>
+
+
+export const TodoActivityWithUser = Type.Composite([TodoActivity, Type.Object({
+    user: Nullable(UserWithMetaInformation),
+    agent: Nullable(Agent),
+})])
+
+export type TodoActivityWithUser = Static<typeof TodoActivityWithUser>

@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
+import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
 import { Tag } from '@activepieces/shared';
 
 type CreateTagDialogProps = {

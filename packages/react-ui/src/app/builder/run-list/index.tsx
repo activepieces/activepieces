@@ -10,7 +10,7 @@ import {
   CardList,
   CardListEmpty,
   CardListItemSkeleton,
-} from '@/components/ui/card-list';
+} from '@/components/custom/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';

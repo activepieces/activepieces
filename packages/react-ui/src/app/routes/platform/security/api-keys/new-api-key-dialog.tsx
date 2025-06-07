@@ -5,7 +5,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { CopyToClipboardInput } from '@/components/custom/copy-to-clipboard';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
 
 type NewApiKeyDialogProps = {

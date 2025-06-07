@@ -18,7 +18,7 @@ import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { UpdateUserDialog } from './update-user-dialog';
 

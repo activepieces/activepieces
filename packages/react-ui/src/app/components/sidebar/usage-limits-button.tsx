@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
+import { Separator } from '@/components/ui/separator';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
@@ -39,43 +40,47 @@ const UsageLimitsButton = React.memo(() => {
 
   const usageCardComponent = () => {
     return (
-      <div className="flex flex-col gap-2 w-full px-2">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col gap-3">
-              <UsageProgress
-                name={t('Tasks')}
-                value={project.usage.tasks}
-                max={project.plan.tasks}
-              />
-              <UsageProgress
-                name={t('AI Credits')}
-                value={project.usage.aiCredits}
-                max={project.plan.aiCredits}
-              />
+      <>
+        <Separator />
+        <div className="flex flex-col gap-2 w-full px-2">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
+                <UsageProgress
+                  name={t('Tasks')}
+                  value={project.usage.tasks}
+                  max={project.plan.tasks}
+                />
+                <UsageProgress
+                  name={t('AI Credits')}
+                  value={project.usage.aiCredits}
+                  max={project.plan.aiCredits}
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              {project.usage.nextLimitResetDate && (
-                <div className="text-xs text-muted-foreground flex justify-between w-full">
-                  <span>
-                    {t('Usage resets in')}{' '}
-                    {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
-                  </span>
-                  <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-                    <Link to={'/platform/setup/billing'} className="w-fit">
-                      <span className="text-xs text-primary underline">
-                        {t('Manage')}
-                      </span>
-                    </Link>
-                  </FlagGuard>
-                </div>
-              )}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                {project.usage.nextLimitResetDate && (
+                  <div className="text-xs text-muted-foreground flex justify-between w-full">
+                    <span>
+                      {t('Usage resets in')}{' '}
+                      {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+                    </span>
+                    <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+                      <Link to={'/platform/setup/billing'} className="w-fit">
+                        <span className="text-xs text-primary underline">
+                          {t('Manage')}
+                        </span>
+                      </Link>
+                    </FlagGuard>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        <Separator />
+      </>
     );
   };
   return <>{usageCardComponent()}</>;
