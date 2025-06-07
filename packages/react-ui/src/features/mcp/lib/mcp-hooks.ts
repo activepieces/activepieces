@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -29,6 +29,25 @@ export const mcpHooks = {
       queryKey: ['mcp', id],
       queryFn: () => mcpApi.get(id),
       enabled: !!id,
+    });
+  },
+  useCreateMcp: () => {
+    const projectId = authenticationSession.getProjectId();
+    assertNotNullOrUndefined(projectId, 'projectId is not set');
+    return useMutation({
+      mutationFn: async (name: string) => {
+        return mcpApi.create({
+          name,
+          projectId,
+        });
+      },
+    });
+  },
+  useDeleteMcp: () => {
+    return useMutation({
+      mutationFn: async (id: string) => {
+        await mcpApi.delete(id);
+      },
     });
   },
 };
