@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionService } from './services/connections.service'
 
@@ -57,4 +57,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
+type CreateConnectionManagerParams =  { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
