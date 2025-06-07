@@ -889,6 +889,9 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/community/zoho-invoice/src/index.ts"
       ],
+      "@activepieces/piece-zoho-mail": [
+        "packages/pieces/community/zoho-mail/src/index.ts"
+      ],
       "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
