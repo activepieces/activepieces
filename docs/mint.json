@@ -133,6 +133,7 @@
       "group": "Engineering Playbooks",
       "icon": "code",
       "pages": [
+        "handbook/engineering/playbooks/run-ee",
         "handbook/engineering/playbooks/setup-incident-io",
         "handbook/engineering/playbooks/releases",
         "handbook/engineering/playbooks/infrastructure",
@@ -434,22 +435,15 @@
     },
    
     {
-      "group": "Predefined Connections",
-      "pages": [
-        "embedding/predefined-connections/overview",
-        "embedding/predefined-connections/development",
-        "embedding/predefined-connections/production"
-      ]
-    },
-    {
       "group": "Misc",
       "pages": [
-        "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
         "embedding/mcps",
-        "embedding/sdk-server-requests",
-        "embedding/sdk-changelog"
+        "embedding/navigation",
+        "embedding/predefined-connection",
+        "embedding/sdk-changelog",
+        "embedding/sdk-server-requests"
       ]
     },
     {
