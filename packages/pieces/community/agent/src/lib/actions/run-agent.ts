@@ -1,11 +1,19 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { Agent, apId, ExecutionType, PauseType, RunAgentRequest, SeekPage, Todo } from '@activepieces/shared';
+import { Agent, AgentTestResult, apId, ExecutionType, PauseType, RunAgentRequest, SeekPage, Todo } from '@activepieces/shared';
 
 export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
   description: 'Run the AI assistant to complete your task.',
   auth: PieceAuth.None(),
+  errorHandlingOptions: {
+    retryOnFailure: {
+      hide: true,
+    },
+    continueOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     agents: Property.Dropdown({
       displayName: 'Agent',
@@ -74,11 +82,12 @@ export const runAgent = createAction({
         todoId: todo.id,
       }
     } else {
-      const todoId = await context.store.get(context.resumePayload.queryParams['stateId'])
-      return {
-        todoId,
+      const todoId = await context.store.get<string>(context.resumePayload.queryParams['stateId'])
+      const output: AgentTestResult = {
+        todoId: todoId!,
         output: (context.resumePayload.body as { output: string })['output'],
       }
+      return output
     }
   },
 });

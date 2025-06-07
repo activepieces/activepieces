@@ -2,9 +2,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
+import { TableTitle } from '@/components/custom/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 import { PlatformRole } from '@activepieces/shared';

@@ -16,9 +16,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { ApAvatar } from '@/components/custom/ap-avatar';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -27,10 +29,8 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
-import { EntityAvatar } from '@/components/ui/todo-profile-picture';
+import { TableTitle } from '@/components/custom/table-title';
 import {
   Tooltip,
   TooltipContent,
@@ -320,7 +320,7 @@ function AppConnectionsPage() {
         return (
           <div className="text-left">
             {row.original.owner && (
-              <EntityAvatar
+              <ApAvatar
                 type="user"
                 includeName={true}
                 fullName={

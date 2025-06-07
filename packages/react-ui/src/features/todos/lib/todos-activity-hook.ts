@@ -10,7 +10,6 @@ export const todoActivitiesHook = {
         todoActivityApi.list(todoId, {
           cursor: undefined,
           limit: 100,
-          todoId: todoId,
           type: undefined,
         }),
     });

@@ -5,9 +5,12 @@ import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
-
-import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;

@@ -33,7 +33,7 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/ui/table-title';
+import { TableTitle } from '../../../../../components/custom/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;

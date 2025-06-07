@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
+import { TableTitle } from '@/components/custom/table-title';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
@@ -38,7 +38,7 @@ import {
   STATUS_VARIANT,
 } from '@activepieces/shared';
 
-import { EntityAvatar } from '../../../components/ui/todo-profile-picture';
+import { ApAvatar } from '../../../components/custom/ap-avatar';
 
 import { TodoDetailsDrawer } from './todos-details-drawer';
 
@@ -237,7 +237,7 @@ function TodosPage() {
         const authorName = todoUtils.getAuthorName(row.original);
         return (
           <div className="text-left flex items-center gap-2">
-            <EntityAvatar
+            <ApAvatar
               size="w-6 h-6"
               type={todoUtils.getAuthorType(row.original)}
               fullName={authorName}
@@ -259,7 +259,7 @@ function TodosPage() {
         if (hasAgent) {
           return (
             <div className="text-left">
-              <EntityAvatar
+              <ApAvatar
                 type="agent"
                 size="w-6 h-6"
                 includeName={true}
@@ -278,7 +278,7 @@ function TodosPage() {
         return (
           <div className="text-left">
             {row.original.assignee && (
-              <EntityAvatar
+              <ApAvatar
                 type="user"
                 includeName={true}
                 fullName={

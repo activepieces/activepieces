@@ -1,5 +1,6 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
+
 import { CopyButton } from './copy-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const CopyTextTooltip = ({
   text,

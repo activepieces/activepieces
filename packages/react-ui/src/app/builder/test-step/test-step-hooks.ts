@@ -24,6 +24,7 @@ import {
   FileType,
   isNil,
   FlowOperationType,
+  TriggerType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -31,7 +32,10 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { testStepUtils } from './test-step-utils';
 
 export const testStepHooks = {
-  useUpdateSampleData: (stepName: string) => {
+  useUpdateSampleData: (
+    stepName: string,
+    onSuccess?: (step: Trigger | Action) => void,
+  ) => {
     const projectId = authenticationSession.getProjectId()!;
     const queryClient = useQueryClient();
     const { setSampleData, setSampleDataInput, applyOperation, flowVersionId } =
@@ -73,7 +77,8 @@ export const testStepHooks = {
           fileType: FileType.SAMPLE_DATA_INPUT,
         });
 
-        const newInputUiInfo: Action['settings']['inputUiInfo'] = {
+        const stepCopy: Action | Trigger = JSON.parse(JSON.stringify(step));
+        stepCopy.settings.inputUiInfo = {
           ...step.settings.inputUiInfo,
           sampleDataFileId,
           sampleDataInputFileId: sampleDataInputFile.id,
@@ -81,24 +86,30 @@ export const testStepHooks = {
           lastTestDate: dayjs().toISOString(),
         };
 
-        const stepCopy: Action = JSON.parse(JSON.stringify(step));
-        stepCopy.settings.inputUiInfo = newInputUiInfo;
-
-        applyOperation({
-          type: FlowOperationType.UPDATE_ACTION,
-          request: stepCopy,
-        });
+        const type =
+          step.type === TriggerType.PIECE
+            ? FlowOperationType.UPDATE_TRIGGER
+            : FlowOperationType.UPDATE_ACTION;
+        if (type === FlowOperationType.UPDATE_TRIGGER) {
+          applyOperation({
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: stepCopy as Trigger,
+          });
+        } else {
+          applyOperation({
+            type: FlowOperationType.UPDATE_ACTION,
+            request: stepCopy as Action,
+          });
+        }
 
         setSampleData(step.name, response.output);
         setSampleDataInput(step.name, step.settings);
 
-        return {
-          sampleDataFileId,
-          sampleDataInputFileId: sampleDataInputFile.id,
-        };
+        return stepCopy;
       },
-      onSuccess: () => {
+      onSuccess: (step) => {
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
+        onSuccess?.(step);
       },
     });
   },

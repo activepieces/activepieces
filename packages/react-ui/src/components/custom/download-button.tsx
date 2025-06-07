@@ -4,7 +4,7 @@ import { Download } from 'lucide-react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 
-import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 
 interface DownloadButtonProps extends ButtonProps {
   fileName: string;

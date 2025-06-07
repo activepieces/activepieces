@@ -5,7 +5,7 @@ import React, { forwardRef } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { Skeleton } from './skeleton';
+import { Skeleton } from '../ui/skeleton';
 
 const CardList = forwardRef<
   HTMLDivElement,

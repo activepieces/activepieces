@@ -1,7 +1,9 @@
-import { CopyButton } from '../ui/copy-button';
-import { DownloadButton } from '../ui/download-button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
+import { DownloadButton } from '../download-button';
+
+import { CopyButton } from './copy-button';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;

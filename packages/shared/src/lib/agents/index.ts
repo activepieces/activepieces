@@ -2,6 +2,12 @@ import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema } from "../common";
 
 
+export const AgentTestResult = Type.Object({
+    todoId: Type.String(),
+    output: Type.String(),
+})
+export type AgentTestResult = Static<typeof AgentTestResult>
+
 export const Agent = Type.Object({
     ...BaseModelSchema,
     displayName: Type.String(),

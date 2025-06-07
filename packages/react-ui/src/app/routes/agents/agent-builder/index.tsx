@@ -3,15 +3,15 @@ import { ArrowLeft, Wand, Info } from 'lucide-react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { McpToolsSection } from '@/app/mcp/mcp-config/mcp-tools-section';
+import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 import {
-  RightDrawer,
-  RightDrawerContent,
-  RightDrawerHeader,
-  RightDrawerTitle,
-} from '@/components/right-drawer';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { EditableTextWithPencil } from '@/components/ui/editable-text-with-pencil';
+import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -146,16 +146,19 @@ export const AgentBuilder = ({
     await updateDescriptionMutation.mutateAsync(value);
   };
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+
   return (
-    <RightDrawer
+    <Drawer
       open={isOpen}
       onOpenChange={onOpenChange}
       className="w-full"
       dismissible={false}
     >
       {trigger}
-      <RightDrawerContent>
-        <RightDrawerHeader>
+      <DrawerContent>
+        <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1">
               <Button
@@ -166,12 +169,12 @@ export const AgentBuilder = ({
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <RightDrawerTitle>
+              <DrawerTitle>
                 {agent ? 'Edit Agent' : 'Agent Builder'}
-              </RightDrawerTitle>
+              </DrawerTitle>
             </div>
           </div>
-        </RightDrawerHeader>
+        </DrawerHeader>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -191,11 +194,13 @@ export const AgentBuilder = ({
               </div>
               <div className="flex flex-col flex-1">
                 <div className="flex items-center gap-2 justify-between">
-                  <EditableTextWithPencil
+                  <EditableTextWithPen
                     value={displayName}
                     className="text-2xl font-semibold"
                     readonly={false}
                     onValueChange={handleNameChange}
+                    isEditing={isEditingName}
+                    setIsEditing={setIsEditingName}
                   />
                   {agent && (
                     <TestAgent
@@ -205,11 +210,13 @@ export const AgentBuilder = ({
                     />
                   )}
                 </div>
-                <EditableTextWithPencil
+                <EditableTextWithPen
                   value={description}
                   className="text-sm text-muted-foreground mt-1"
                   readonly={false}
                   onValueChange={handleDescriptionChange}
+                  isEditing={isEditingDescription}
+                  setIsEditing={setIsEditingDescription}
                 />
               </div>
             </div>
@@ -263,7 +270,7 @@ export const AgentBuilder = ({
             />
           )}
         </form>
-      </RightDrawerContent>
-    </RightDrawer>
+      </DrawerContent>
+    </Drawer>
   );
 };

@@ -1,4 +1,9 @@
 export const todoMarkdownParser = {
+  stripToolCalls: (markdown: string): string => {
+    return markdown
+      .replace(/<tool-call[^>]*>.*?<\/tool-call>/g, '')
+      .replace(/<tool-result[^>]*>.*?<\/tool-result>/g, '');
+  },
   parse: (markdown: string): Block[] => {
     const blocks: Block[] = [];
     let currentText = '';

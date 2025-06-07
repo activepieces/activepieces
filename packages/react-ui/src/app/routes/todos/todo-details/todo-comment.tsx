@@ -1,6 +1,6 @@
 import { formatUtils } from '@/lib/utils';
 
-import { EntityAvatar } from '../../../../components/ui/todo-profile-picture';
+import { ApAvatar } from '../../../../components/custom/ap-avatar';
 
 import { TodoMarkdown } from './todo-markdown';
 
@@ -27,7 +27,7 @@ export const TodoComment = ({ comment, showConnector }: TodoCommentProps) => {
     <div className="relative">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-4">
-          <EntityAvatar
+          <ApAvatar
             type={comment.authorType}
             fullName={comment.authorName}
             pictureUrl={comment.pictureUrl}

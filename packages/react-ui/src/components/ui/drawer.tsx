@@ -5,22 +5,42 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 
 import { cn } from '@/lib/utils';
 
+const DrawerContext = React.createContext<{
+  className?: string;
+  disableAutoFocus?: boolean;
+  dismissible?: boolean;
+}>({
+  className: undefined,
+  disableAutoFocus: false,
+  dismissible: true,
+});
+
 const Drawer = ({
   shouldScaleBackground = true,
+  className,
+  disableAutoFocus = false,
+  dismissible = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root
-    shouldScaleBackground={shouldScaleBackground}
-    {...props}
-  />
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
+  className?: string;
+  disableAutoFocus?: boolean;
+  dismissible?: boolean;
+}) => (
+  <DrawerContext.Provider
+    value={{ className, disableAutoFocus, dismissible }}
+  >
+    <DrawerPrimitive.Root
+      dismissible={dismissible}
+      shouldScaleBackground={shouldScaleBackground}
+      {...props}
+    />
+  </DrawerContext.Provider>
 );
 Drawer.displayName = 'Drawer';
 
 const DrawerTrigger = DrawerPrimitive.Trigger;
-
-const DrawerPortal = DrawerPrimitive.Portal;
-
 const DrawerClose = DrawerPrimitive.Close;
+const DrawerPortal = DrawerPrimitive.Portal;
 
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
@@ -37,21 +57,27 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-));
+>(({ className: contentClassName, children, ...props }, ref) => {
+  const { className: drawerClassName } = React.useContext(DrawerContext);
+
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          'fixed inset-y-0 right-0 z-50 h-full flex flex-col border bg-background shadow-lg outline-none',
+          drawerClassName ?? 'w-3/4 max-w-md', // Apply drawer className or default width
+          contentClassName, // Apply content className (has higher priority)
+        )}
+        style={{ userSelect: 'text', ...props.style }}
+        {...props}
+      >
+        {children}
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+});
 DrawerContent.displayName = 'DrawerContent';
 
 const DrawerHeader = ({

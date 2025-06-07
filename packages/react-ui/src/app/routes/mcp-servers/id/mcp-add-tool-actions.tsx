@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { ChevronDown, Puzzle, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   McpTool,

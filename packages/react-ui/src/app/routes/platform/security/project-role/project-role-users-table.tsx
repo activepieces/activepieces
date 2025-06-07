@@ -16,8 +16,8 @@ import {
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { TableTitle } from '@/components/custom/table-title';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';

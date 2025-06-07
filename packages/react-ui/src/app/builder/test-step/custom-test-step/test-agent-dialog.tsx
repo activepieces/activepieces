@@ -1,6 +1,9 @@
 import { TodoDetails } from '@/app/routes/todos/todo-details';
+import { todoMarkdownParser } from '@/app/routes/todos/todo-details/todo-markdown-parser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Action } from '@activepieces/shared';
+import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
+import { Action, AgentTestResult } from '@activepieces/shared';
+
 import { testStepHooks } from '../test-step-hooks';
 
 type AgentTestingDialogProps = {
@@ -20,10 +23,19 @@ function AgentTestingDialog({
     currentStep.name,
   );
 
-  const handleStatusChange = (output: unknown) => {
+  const handleStatusChange = async () => {
+    const activities = await todoActivityApi.list(todoId, {
+      limit: 100,
+    });
+    const agentResult: AgentTestResult = {
+      todoId,
+      output: todoMarkdownParser.stripToolCalls(
+        activities.data[activities.data.length - 1].content,
+      ),
+    };
     updateSampleData({
       response: {
-        output: output,
+        output: agentResult,
         success: true,
       },
       step: currentStep,
@@ -36,7 +48,7 @@ function AgentTestingDialog({
       <DialogContent className="w-full max-w-3xl p-0 overflow-hidden">
         <TodoDetails
           todoId={todoId}
-          className="h-[90vh] p-3"
+          className="h-[90vh] py-3 px-6"
           onStatusChange={handleStatusChange}
         />
       </DialogContent>

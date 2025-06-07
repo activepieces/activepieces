@@ -43,6 +43,22 @@ export type StatusColor = {
     textColor: string
 }
 
+export const CreateAndWaitTodoResult = Type.Object({
+    status: Type.String(),
+})
+
+export type CreateAndWaitTodoResult = Static<typeof CreateAndWaitTodoResult>
+
+export const CreateTodoResult = Type.Object({
+    id: Type.String(),
+    links: Type.Array(Type.Object({
+        name: Type.String(),
+        url: Type.String(),
+    })),
+})
+
+export type CreateTodoResult = Static<typeof CreateTodoResult>
+
 export const StatusOption = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),

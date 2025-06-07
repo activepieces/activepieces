@@ -9,7 +9,7 @@ const getInitials = (name?: string) => {
   return isNil(name) ? '?' : name[0]?.toUpperCase();
 };
 
-interface TodoProfilePictureProps {
+interface ApAvatarProps {
   type: 'agent' | 'user' | 'flow';
   fullName: string;
   pictureUrl?: string;
@@ -18,14 +18,14 @@ interface TodoProfilePictureProps {
   includeName?: boolean;
 }
 
-export const EntityAvatar = ({
+export const ApAvatar = ({
   type,
   fullName,
   pictureUrl,
   profileUrl,
   size = 'w-8 h-8',
   includeName = false,
-}: TodoProfilePictureProps) => {
+}: ApAvatarProps) => {
   const renderAvatar = () => {
     if (type === 'agent') {
       return (

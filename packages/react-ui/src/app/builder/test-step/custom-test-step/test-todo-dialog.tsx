@@ -4,7 +4,13 @@ import { TodoDetails } from '@/app/routes/todos/todo-details';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { todosApi } from '@/features/todos/lib/todos-api';
-import { PopulatedTodo, TodoType, Action } from '@activepieces/shared';
+import {
+  PopulatedTodo,
+  TodoType,
+  Action,
+  CreateTodoResult,
+  CreateAndWaitTodoResult,
+} from '@activepieces/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 
@@ -29,6 +35,25 @@ function TodoTestingDialog({
     currentStep.name,
   );
 
+  const formatTodoResult = (
+    response: PopulatedTodo,
+  ): CreateTodoResult | CreateAndWaitTodoResult => {
+    if (type === TodoType.INTERNAL) {
+      return {
+        status: response.status.name,
+      };
+    }
+    const publicUrl = response.resolveUrl?.split('/flow-runs/')[0];
+    const links = response.statusOptions.map((option) => ({
+      name: option.name,
+      url: `${publicUrl}/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
+    }));
+    return {
+      id: response.id,
+      links,
+    };
+  };
+
   const { mutate: resolveTodo } = useMutation({
     mutationFn: async (status: PopulatedTodo['status']) => {
       return await todosApi.update(todo.id, {
@@ -38,21 +63,7 @@ function TodoTestingDialog({
     },
     onSuccess: (response) => {
       setErrorMessage(undefined);
-      const statusName = response.status.name;
-      const statusOptions = response.statusOptions;
-      const publicUrl = response.resolveUrl?.split('/flow-runs/')[0];
-      const links = statusOptions.map((option) => ({
-        status: option.name,
-        url:
-          publicUrl +
-          `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
-      }));
-
-      const output =
-        type === TodoType.INTERNAL
-          ? { status: statusName }
-          : { id: response.id, links };
-
+      const output = formatTodoResult(response);
       updateSampleData({
         response: { output, success: true },
         step: currentStep,
@@ -74,7 +85,7 @@ function TodoTestingDialog({
       <DialogContent className="w-full max-w-3xl  p-0 overflow-hidden">
         <TodoDetails
           todoId={todo.id}
-          className="h-[90vh] p-3"
+          className="h-[90vh] py-3 px-6"
           onStatusChange={handleStatusChange}
         />
       </DialogContent>

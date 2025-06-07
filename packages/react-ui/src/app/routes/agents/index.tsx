@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { TableTitle } from '@/components/ui/table-title';
+import { TableTitle } from '@/components/custom/table-title';
 import { Agent } from '@activepieces/shared';
 
 import { AgentBuilder } from './agent-builder';

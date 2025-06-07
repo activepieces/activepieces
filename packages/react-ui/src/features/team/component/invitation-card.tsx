@@ -2,7 +2,7 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
