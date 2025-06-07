@@ -1,84 +1,46 @@
-import { PieceAuth, Property, createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { zohoMailActions } from './lib/actions';
-import { zohoMailTriggers } from './lib/triggers';
-import { getZohoMailApiUrl } from './lib/common';
+import {
+	createPiece,
+	OAuth2PropertyValue,
+	PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-
-const zohoDataCenterDomains = {
-  US: 'com',
-  EU: 'eu',
-  IN: 'in',
-  AU: 'com.au',
-  JP: 'jp',
-  CN: 'com.cn', // Note: China region often has special considerations
-  CA: 'ca',
-};
-
-// This type alias can represent the keys for user-friendly labels
-type ZohoDataCenterKey = keyof typeof zohoDataCenterDomains;
-// The actual prop value will be the domain string like 'com', 'eu'
-
-export const zohoMailAuth = PieceAuth.OAuth2({
-  description: 'Zoho Mail Connection. Select your account data center.',
-  props: {
-    data_center: Property.StaticDropdown<string, true>({
-      displayName: 'Data Center',
-      required: true,
-      options: {
-        disabled: false,
-        options: Object.entries(zohoDataCenterDomains).map(([key, domain]) => ({
-          label: key as ZohoDataCenterKey, // e.g., US, EU
-          value: domain,                 // e.g., com, eu
-        })),
-      },
-      defaultValue: zohoDataCenterDomains.US, // Default to 'com'
-    }),
-  },
-  authUrl: 'https://accounts.zoho.{data_center}/oauth/v2/auth',
-  tokenUrl: 'https://accounts.zoho.{data_center}/oauth/v2/token',
-  required: true,
-  scope: [
-    'ZohoMail.accounts.READ',
-    'ZohoMail.messages.ALL',
-    'ZohoMail.folders.ALL',
-    'ZohoMail.organization.accounts.READ',
-  ],
-  extra: {
-    access_type: 'offline',
-  },
-});
-
-// Define an interface for auth properties that includes data_center
-interface ZohoAuthProps extends OAuth2PropertyValue {
-  data_center: string; // This will hold the domain suffix, e.g., 'com', 'eu'
-}
+import { getEmailDetailsAction } from './lib/actions/get-email-details';
+import { markEmailAsReadAction } from './lib/actions/mark-email-as-read';
+import { markEmailAsUnreadAction } from './lib/actions/mark-email-as-unread';
+import { moveEmailAction } from './lib/actions/move-email';
+import { sendEmailAction } from './lib/actions/send-email';
+import { zohoMailAuth } from './lib/common/auth';
+import { newEmailReceivedTrigger } from './lib/triggers/new-email-received-trigger';
 
 export const zohoMail = createPiece({
-  displayName: 'Zoho Mail',
-  logoUrl: 'https://cdn.activepieces.com/pieces/zoho-mail.png',
-  auth: zohoMailAuth,
-  authors: ['onyedikachi-david'],
-  description: 'Zoho Mail is a powerful email service that allows you to manage your email, contacts, and calendars efficiently.',
-  minimumSupportedRelease: '0.36.1',
-  categories: [PieceCategory.COMMUNICATION],
-  actions: [
-    ...zohoMailActions,
-    createCustomApiCallAction({
-      auth: zohoMailAuth,
-      baseUrl: (auth) => {
-        const authProps = auth as ZohoAuthProps;
-        const selectedKey = (Object.keys(zohoDataCenterDomains) as ZohoDataCenterKey[]).find(
-          key => zohoDataCenterDomains[key] === authProps.data_center
-        );
-        return getZohoMailApiUrl(selectedKey || 'US'); // Default to 'US' key if lookup fails
-      },
-      authMapping: async (auth) => {
-        return {
-          'Authorization': `Zoho-oauthtoken ${(auth as { access_token: string }).access_token}`,
-        };
-      },
-    })
-  ],
-  triggers: zohoMailTriggers,
+	displayName: 'Zoho Mail',
+	logoUrl: 'https://cdn.activepieces.com/pieces/zoho-mail.png',
+	auth: zohoMailAuth,
+	authors: ['onyedikachi-david', 'kishanprmr'],
+	description:
+		'Zoho Mail is a powerful email service that allows you to manage your email, contacts, and calendars efficiently.',
+	minimumSupportedRelease: '0.36.1',
+	categories: [PieceCategory.COMMUNICATION],
+	actions: [
+		getEmailDetailsAction,
+		markEmailAsReadAction,
+		markEmailAsUnreadAction,
+		moveEmailAction,
+		sendEmailAction,
+		createCustomApiCallAction({
+			auth: zohoMailAuth,
+			baseUrl: (auth) => {
+				const authValue = auth as PiecePropValueSchema<typeof zohoMailAuth>;
+				const location = authValue.props?.['location'] ?? 'zoho.com';
+				return `https://mail.${location}/api`;
+			},
+			authMapping: async (auth) => {
+				return {
+					Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
+				};
+			},
+		}),
+	],
+	triggers: [newEmailReceivedTrigger],
 });

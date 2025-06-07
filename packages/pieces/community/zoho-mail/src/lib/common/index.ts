@@ -1,76 +1,85 @@
-import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import {
+	HttpMessageBody,
+	HttpMethod,
+	HttpRequest,
+	QueryParams,
+	httpClient,
+} from '@activepieces/pieces-common';
+import { FilesService, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { Attachment, ParsedMail, simpleParser } from 'mailparser';
+import { zohoMailAuth } from './auth';
 
-export function getZohoMailApiUrl(domainSuffix: string): string {
-    // Ensure a default like 'com' if domainSuffix is unexpectedly empty or undefined
-    return `https://mail.zoho.${domainSuffix || 'com'}/api`;
+export type ZohoMailApiCallParams = {
+	auth: PiecePropValueSchema<typeof zohoMailAuth>;
+	method: HttpMethod;
+	resourceUri: string;
+	query?: Record<string, string | number | string[] | undefined>;
+	body?: any;
+};
+
+export async function zohoMailApiCall<T extends HttpMessageBody>({
+	auth,
+	method,
+	resourceUri,
+	query,
+	body,
+}: ZohoMailApiCallParams): Promise<T> {
+	const location = auth.props?.['location'] ?? 'zoho.com';
+	const baseUrl = `https://mail.${location}/api`;
+	const qs: QueryParams = {};
+
+	if (query) {
+		for (const [key, value] of Object.entries(query)) {
+			if (value !== null && value !== undefined) {
+				qs[key] = String(value);
+			}
+		}
+	}
+
+	const request: HttpRequest = {
+		method,
+		url: baseUrl + resourceUri,
+		headers: {
+			Authorization: `Zoho-oauthtoken ${auth.access_token}`,
+		},
+		queryParams: qs,
+		body,
+	};
+
+	const response = await httpClient.sendRequest<T>(request);
+	return response.body;
 }
 
-interface ZohoAccount {
-    accountId: string;
-    primaryEmailAddress: string;
-    displayName?: string;
+export async function parseStream(stream: string | Buffer): Promise<ParsedMail> {
+	return new Promise<ParsedMail>((resolve, reject) => {
+		simpleParser(stream, (err, parsed) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(parsed);
+			}
+		});
+	});
 }
 
-interface ZohoAccountsResponse {
-    status: {
-        code: number;
-        description: string;
-    };
-    data: ZohoAccount[];
+export async function convertAttachment(attachments: Attachment[], files: FilesService) {
+	const promises = attachments.map(async (attachment) => {
+		try {
+			const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+			return {
+				fileName,
+				mimeType: attachment.contentType,
+				size: attachment.size,
+				data: await files.write({
+					fileName: fileName,
+					data: attachment.content,
+				}),
+			};
+		} catch (error) {
+			console.error(`Failed to process attachment: ${attachment.filename}`, error);
+			return null;
+		}
+	});
+	const results = await Promise.all(promises);
+	return results.filter((result) => result !== null);
 }
-
-interface ZohoFolder {
-    folderId: string;
-    folderName: string;
-}
-
-interface ZohoFoldersResponse {
-    status: { code: number; description: string; };
-    data: ZohoFolder[];
-}
-
-// Modify auth type to include data_center from props, which holds the domain suffix
-interface AuthWithDataCenter extends OAuth2PropertyValue {
-    data_center: string; // e.g., 'com', 'eu'
-}
-
-export async function fetchAccounts(auth: AuthWithDataCenter): Promise<{ label: string; value: string; }[]> {
-    const apiUrl = getZohoMailApiUrl(auth.data_center);
-    const response = await httpClient.sendRequest<ZohoAccountsResponse>({
-        method: HttpMethod.GET,
-        url: `${apiUrl}/accounts`,
-        headers: {
-            'Authorization': `Zoho-oauthtoken ${auth.access_token}`,
-        },
-    });
-
-    if (response.status === 200 && response.body.data) {
-        return response.body.data.map(account => ({
-            label: `${account.displayName || account.primaryEmailAddress} (${account.accountId})`,
-            value: account.accountId,
-        }));
-    }
-    return [];
-}
-
-export async function fetchFolders(auth: AuthWithDataCenter, accountId: string): Promise<{ label: string; value: string; }[]> {
-    if (!accountId) return [];
-    const apiUrl = getZohoMailApiUrl(auth.data_center);
-    const response = await httpClient.sendRequest<ZohoFoldersResponse>({
-        method: HttpMethod.GET,
-        url: `${apiUrl}/accounts/${accountId}/folders`,
-        headers: {
-            'Authorization': `Zoho-oauthtoken ${auth.access_token}`,
-        },
-    });
-
-    if (response.status === 200 && response.body.data) {
-        return response.body.data.map(folder => ({
-            label: folder.folderName,
-            value: folder.folderId,
-        }));
-    }
-    return [];
-}
-
