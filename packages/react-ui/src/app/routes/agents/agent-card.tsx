@@ -1,10 +1,11 @@
+import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { AgentCardMenu } from './agent-card-menu';
-import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+
+import { AgentCardMenu } from './agent-card-menu';
 
 interface AgentCardProps {
   picture: string;
@@ -61,7 +62,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                       <Pencil className="h-4 w-4" />
                     </Button>
                   )}
-                  {onDelete && <AgentCardMenu onDelete={onDelete} agentName={title} />}
+                  {onDelete && (
+                    <AgentCardMenu onDelete={onDelete} agentName={title} />
+                  )}
                 </div>
               </div>
               {isEditing ? (

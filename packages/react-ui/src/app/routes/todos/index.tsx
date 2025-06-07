@@ -1,7 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckCircle, CheckIcon, CircleDot, Tag, User, X, ListTodo, AlertCircle, CheckCheck } from 'lucide-react';
+import {
+  CheckCircle,
+  CircleDot,
+  Tag,
+  User,
+  X,
+  ListTodo,
+  CheckCheck,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -15,7 +23,9 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -24,21 +34,18 @@ import {
   Todo,
   PopulatedTodo,
   UNRESOLVED_STATUS,
-  RESOLVED_STATUS,
   STATUS_COLORS,
   STATUS_VARIANT,
 } from '@activepieces/shared';
 
-import { TodoDetailsDrawer } from './todos-details-drawer';
 import { EntityAvatar } from '../../../components/ui/todo-profile-picture';
-import { todoUtils } from '@/features/todos/lib/todo-utils';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { TodoDetailsDrawer } from './todos-details-drawer';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
   const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [_rowIndex, setRowIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
 
   const location = useLocation();
@@ -66,8 +73,9 @@ function TodosPage() {
       const assigneeId = searchParams.get('assigneeId') ?? undefined;
       const flowId = searchParams.get('flowId') ?? undefined;
       const title = searchParams.get('title') ?? undefined;
-      const statusOptions = activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
-      
+      const statusOptions =
+        activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
+
       return todosApi.list({
         projectId,
         cursor: cursor ?? undefined,
@@ -101,11 +109,11 @@ function TodosPage() {
   const assigneeOptions = [
     ...(currentUser
       ? [
-        {
-          label: t('Me Only'),
-          value: currentUser.email,
-        },
-      ]
+          {
+            label: t('Me Only'),
+            value: currentUser.email,
+          },
+        ]
       : []),
     ...(projectMembers
       ?.filter((member) => member.user.email !== currentUser?.email)
@@ -234,10 +242,9 @@ function TodosPage() {
               type={todoUtils.getAuthorType(row.original)}
               fullName={authorName}
               pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
-              profileUrl={todoUtils.getAuthorProfileUrl(row.original)} />
-            <div>
-              {authorName}
-            </div>
+              profileUrl={todoUtils.getAuthorProfileUrl(row.original)}
+            />
+            <div>{authorName}</div>
           </div>
         );
       },
@@ -257,7 +264,11 @@ function TodosPage() {
                 size="w-6 h-6"
                 includeName={true}
                 pictureUrl={row.original.agent?.profilePictureUrl}
-                profileUrl={row.original.agent?.id ? `/agents/${row.original.agent.id}` : undefined}
+                profileUrl={
+                  row.original.agent?.id
+                    ? `/agents/${row.original.agent.id}`
+                    : undefined
+                }
                 fullName={row.original.agent?.displayName ?? ''}
               />
             </div>
@@ -270,7 +281,11 @@ function TodosPage() {
               <EntityAvatar
                 type="user"
                 includeName={true}
-                fullName={row.original.assignee.firstName + ' ' + row.original.assignee.lastName}
+                fullName={
+                  row.original.assignee.firstName +
+                  ' ' +
+                  row.original.assignee.lastName
+                }
               />
             )}
             {!row.original.assignee && <div className="text-left">-</div>}
@@ -324,20 +339,32 @@ function TodosPage() {
           {t('Todos')}
         </TableTitle>
       </div>
-      
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')} className="mb-4">
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')}
+        className="mb-4"
+      >
         <TabsList variant="outline">
-          <TabsTrigger value="all" className="flex items-center gap-2" variant="outline">
+          <TabsTrigger
+            value="all"
+            className="flex items-center gap-2"
+            variant="outline"
+          >
             <ListTodo className="h-4 w-4" />
             {t('All Todos')}
           </TabsTrigger>
-          <TabsTrigger value="needs-action" className="flex items-center gap-2" variant="outline">
+          <TabsTrigger
+            value="needs-action"
+            className="flex items-center gap-2"
+            variant="outline"
+          >
             <CheckCheck className="h-4 w-4" />
             {t('Needs Action')}
           </TabsTrigger>
         </TabsList>
       </Tabs>
-            
+
       <DataTable
         emptyStateTextTitle={t('No todos found')}
         emptyStateTextDescription={t(
@@ -351,7 +378,6 @@ function TodosPage() {
         onRowClick={(row) => {
           setSelectedTask(row);
           setDrawerOpen(true);
-          setRowIndex(data?.data.findIndex((task) => task.id === row.id) ?? 0);
         }}
       />
       {selectedTask && (

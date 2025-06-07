@@ -1,16 +1,25 @@
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, X, CircleDot, Loader, Tag, CheckIcon, CheckCircleIcon } from "lucide-react";
-import { Todo, UNRESOLVED_STATUS, STATUS_VARIANT, STATUS_COLORS } from "@activepieces/shared";
-import { Button } from "@/components/ui/button";
-import { StatusIconWithText } from "@/components/ui/status-icon-with-text";
+import { CheckCircle, X, CircleDot, Loader } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Todo,
+  UNRESOLVED_STATUS,
+  STATUS_VARIANT,
+  STATUS_COLORS,
+} from '@activepieces/shared';
 
 type TodoDetailsStatusProps = {
   todo: Todo;
   isUpdatingStatus: boolean;
-  onStatusChange: (status: Todo['status']) => void;
+  onStatusChange: (status: Todo['status'], source: 'agent' | 'manual') => void;
 };
 
-export const TodoDetailsStatus = ({ todo, isUpdatingStatus, onStatusChange }: TodoDetailsStatusProps) => {
+export const TodoDetailsStatus = ({
+  todo,
+  isUpdatingStatus,
+  onStatusChange,
+}: TodoDetailsStatusProps) => {
   const getStatusIcon = (statusVariant: string) => {
     if (statusVariant === STATUS_VARIANT.NEGATIVE) {
       return X;
@@ -31,7 +40,9 @@ export const TodoDetailsStatus = ({ todo, isUpdatingStatus, onStatusChange }: To
     return <CheckCircle className="h-4 w-4 text-success-300" />;
   };
 
-  const isResolved = todo.status.name !== UNRESOLVED_STATUS.name && todo.status.continueFlow !== false;
+  const isResolved =
+    todo.status.name !== UNRESOLVED_STATUS.name &&
+    todo.status.continueFlow !== false;
 
   return (
     <div className="flex items-center gap-2">
@@ -49,7 +60,7 @@ export const TodoDetailsStatus = ({ todo, isUpdatingStatus, onStatusChange }: To
               variant="ghost"
               size="sm"
               className="h-8 px-2 flex gap-2 items-center"
-              onClick={() => onStatusChange(status)}
+              onClick={() => onStatusChange(status, 'manual')}
               disabled={isUpdatingStatus || status.name === todo.status.name}
             >
               {isUpdatingStatus && status.name === todo.status.name ? (
@@ -57,9 +68,7 @@ export const TodoDetailsStatus = ({ todo, isUpdatingStatus, onStatusChange }: To
               ) : (
                 <>
                   {getStatusButtonIcon(status.name, status.variant)}
-                  <span className={`text-sm`}>
-                    Mark as {status.name}
-                  </span>
+                  <span className={`text-sm`}>Mark as {status.name}</span>
                 </>
               )}
             </Button>

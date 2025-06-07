@@ -1,6 +1,7 @@
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 
 interface ChangeSaveBarProps {
   isDirty: boolean;
@@ -18,14 +19,14 @@ export const ChangeSaveBar = ({
   return (
     <AnimatePresence>
       {isDirty && (
-        <motion.div 
+        <motion.div
           className="fixed bottom-6 left-0 right-0 z-50 flex justify-center"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <motion.div 
+          <motion.div
             className="flex items-center bg-white border border-gray-200 rounded-full shadow-lg px-8 py-2 gap-6"
             initial={{ scale: 0.95 }}
             animate={{ scale: 1 }}

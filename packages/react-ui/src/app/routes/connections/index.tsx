@@ -30,12 +30,12 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
+import { EntityAvatar } from '@/components/ui/todo-profile-picture';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
@@ -54,7 +54,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { EntityAvatar } from '@/components/ui/todo-profile-picture';
 
 import { ConnectionActionMenu } from './connection-actions-menu';
 
@@ -324,7 +323,11 @@ function AppConnectionsPage() {
               <EntityAvatar
                 type="user"
                 includeName={true}
-                fullName={row.original.owner.firstName + ' ' + row.original.owner.lastName}
+                fullName={
+                  row.original.owner.firstName +
+                  ' ' +
+                  row.original.owner.lastName
+                }
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}

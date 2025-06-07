@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 
@@ -42,7 +42,8 @@ const Container = ({
           variant === MarkdownVariant.WARNING,
         'bg-success-100 text-success-300 border-none':
           variant === MarkdownVariant.TIP,
-        'p-0 bg-transparent border-none': variant === MarkdownVariant.BORDERLESS,
+        'p-0 bg-transparent border-none':
+          variant === MarkdownVariant.BORDERLESS,
       })}
     >
       {variant !== MarkdownVariant.BORDERLESS && (
@@ -64,7 +65,6 @@ const Container = ({
     </Alert>
   );
 };
-
 
 const ApMarkdown = React.memo(
   ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
@@ -89,9 +89,7 @@ const ApMarkdown = React.memo(
     if (loading && loading.length > 0) {
       return (
         <Container variant={variant}>
-          <div className="flex items-center gap-2">
-            {loading}
-          </div>
+          <div className="flex items-center gap-2">{loading}</div>
         </Container>
       );
     }
@@ -187,17 +185,9 @@ const ApMarkdown = React.memo(
               />
             ),
             hr: ({ node, ...props }) => (
-              <hr
-                className="my-4 border-t border-border/50"
-                {...props}
-              />
+              <hr className="my-4 border-t border-border/50" {...props} />
             ),
-            img: ({ node, ...props }) => (
-              <img
-                className="my-8"
-                {...props}
-              />
-            ),
+            img: ({ node, ...props }) => <img className="my-8" {...props} />,
             b: ({ node, ...props }) => <b {...props} />,
             em: ({ node, ...props }) => <em {...props} />,
           }}

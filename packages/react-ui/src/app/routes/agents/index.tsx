@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus, Bot } from 'lucide-react';
 import { useState } from 'react';
@@ -16,16 +16,22 @@ export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | undefined>();
 
-  const { data: agentsPage, isLoading, refetch } = useQuery({
+  const {
+    data: agentsPage,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['agents'],
     queryFn: () => agentsApi.list(),
   });
 
   const createAgentMutation = useMutation({
-    mutationFn: () => agentsApi.create({
-      displayName: 'Fresh Agent',
-      description: 'I am a fresh agent, Jack of all trades, master of none (yet)',
-    }),
+    mutationFn: () =>
+      agentsApi.create({
+        displayName: 'Fresh Agent',
+        description:
+          'I am a fresh agent, Jack of all trades, master of none (yet)',
+      }),
     onSuccess: (newAgent) => {
       refetch();
       setSelectedAgent(newAgent);
@@ -73,12 +79,14 @@ export const AgentsPage = () => {
           }}
           agent={selectedAgent}
           trigger={
-            <Button 
-              onClick={() => handleOpenBuilder()} 
+            <Button
+              onClick={() => handleOpenBuilder()}
               disabled={createAgentMutation.isPending}
             >
               <Plus className="h-4 w-4 mr-2" />
-              {createAgentMutation.isPending ? t('Creating...') : t('Create Agent')}
+              {createAgentMutation.isPending
+                ? t('Creating...')
+                : t('Create Agent')}
             </Button>
           }
         />

@@ -5,7 +5,7 @@ import { LoadingSpinner } from './spinner';
 type LoadingScreenProps = {
   brightSpinner?: boolean;
   mode?: 'fullscreen' | 'container';
-}
+};
 export const LoadingScreen = ({
   brightSpinner = false,
   mode = 'fullscreen',

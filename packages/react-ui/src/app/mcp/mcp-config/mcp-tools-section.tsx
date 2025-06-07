@@ -1,7 +1,8 @@
 import { t } from 'i18next';
+import { Hammer } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -9,11 +10,10 @@ import type { McpTool } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
+
 import { EmptyTools } from './empty-tools';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
-import { Hammer } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface McpToolsSectionProps {
   mcpId: string;
@@ -31,7 +31,6 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
     });
     refetchMcp();
   });
-
 
   if (isNil(mcp) || isLoading) {
     return (

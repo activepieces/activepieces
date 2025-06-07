@@ -1,11 +1,5 @@
-import {
-  RightDrawer,
-  RightDrawerContent,
-} from '@/components/right-drawer';
-import {
-  PopulatedTodo,
-  Todo,
-} from '@activepieces/shared';
+import { RightDrawer, RightDrawerContent } from '@/components/right-drawer';
+import { PopulatedTodo, Todo } from '@activepieces/shared';
 
 import { TodoDetails } from './todo-details';
 
@@ -24,8 +18,6 @@ function TodoDetailsDrawer({
   onOpenChange,
   onClose,
 }: TodoDetailsProps) {
-
-
   return (
     <RightDrawer
       dismissible={false}
@@ -36,7 +28,11 @@ function TodoDetailsDrawer({
     >
       <RightDrawerContent>
         <div className="px-6">
-          <TodoDetails todoId={currentTodo.id} onClose={onClose} onStatusChange={onStatusChange} />
+          <TodoDetails
+            todoId={currentTodo.id}
+            onClose={onClose}
+            onStatusChange={onStatusChange}
+          />
         </div>
       </RightDrawerContent>
     </RightDrawer>

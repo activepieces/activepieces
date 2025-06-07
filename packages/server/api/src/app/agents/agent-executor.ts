@@ -1,4 +1,4 @@
-import { Agent, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
+import { Agent, isNil, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { todoService } from '../todos/todo.service'
 import { streamText, ToolExecutionOptions, ToolSet } from 'ai';
@@ -54,6 +54,8 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
         },
     });
     const tools = await mcpClient.tools();
+    const currentDate = new Date().toISOString().split('T')[0];
+    let textResult = ''
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId: params.agent.platformId,
@@ -67,13 +69,22 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             }),
         }).chat('gpt-4o'),
 
-        system: params.agent.systemPrompt,
+        system: `
+        You are an autonomous assistant designed to efficiently achieve the user's single-shot goal using tools. Prioritize accuracy, minimal steps, and user-friendly clarity.
+        
+        **Today's Date**: ${currentDate}  
+        Use this to interpret time-based queries like "this week" or "due tomorrow."
+
+        ---
+        ${params.agent.systemPrompt}
+        `,
         prompt: params.prompt,
         maxSteps: params.agent.maxSteps,
         tools,
     })
     for await (const chunk of fullStream) {
         if (chunk.type === 'text-delta') {
+            textResult += chunk.textDelta
             currentComment += chunk.textDelta
         }
 
@@ -83,7 +94,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 result: chunk.args,
             })}</tool-call>`
         } else if (chunk.type === 'tool-result') {
-            const textResult = 'Hello'
+            const textResult = chunk.result
             currentComment += `<tool-result id="${chunk.toolCallId}">${JSON.stringify({
                 result: textResult,
             })}</tool-result>`
@@ -108,6 +119,13 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
         status: RESOLVED_STATUS.name,
         socket: params.socket,
     })
+
+    if (!isNil(params.callbackUrl)) {
+        await fetch(params.callbackUrl, {
+            method: 'POST',
+            body: JSON.stringify({ output: textResult }),
+        })
+    }
     log.info({
         agentId: params.agent.id,
         mcpId: params.agent.mcpId,
@@ -129,6 +147,7 @@ async function createEmptyComment(params: ExecuteAgent, todoId: string, log: Fas
 
 type ExecuteAgent = {
     agent: Agent
+    callbackUrl?: string
     userId?: string
     prompt: string
     socket: Socket

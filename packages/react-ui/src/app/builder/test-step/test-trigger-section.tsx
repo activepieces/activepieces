@@ -31,7 +31,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import testStepHooks from './test-step-hooks';
+import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestTriggerSectionProps = {
@@ -102,6 +102,11 @@ const TestTriggerSection = React.memo(
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
+    const { flowVersion } = useBuilderStateContext((state) => {
+      return {
+        flowVersion: state.flowVersion,
+      };
+    });
     const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
       useState(false);
 
@@ -155,8 +160,9 @@ const TestTriggerSection = React.memo(
         },
       });
 
-    const { mutate: updateTriggerSampleData } =
-      testStepHooks.useUpdateTriggerSampleData();
+    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+      formValues.name,
+    );
     const { data: pollResults, refetch } = useQuery<
       SeekPage<TriggerEventWithPayload>
     >({
@@ -234,7 +240,13 @@ const TestTriggerSection = React.memo(
                       (triggerEvent) => triggerEvent.id === value,
                     );
                     if (triggerEvent) {
-                      updateTriggerSampleData(triggerEvent);
+                      updateSampleData({
+                        response: {
+                          output: triggerEvent.payload,
+                          success: true,
+                        },
+                        step: flowVersion!.trigger,
+                      });
                     }
                   }}
                 >

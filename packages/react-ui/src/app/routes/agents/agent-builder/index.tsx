@@ -1,7 +1,9 @@
-import { ArrowLeft, Play, Save, Star, Wand, Info } from 'lucide-react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { ArrowLeft, Wand, Info } from 'lucide-react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { McpToolsSection } from '@/app/mcp/mcp-config/mcp-tools-section';
 import {
   RightDrawer,
   RightDrawerContent,
@@ -10,20 +12,20 @@ import {
 } from '@/components/right-drawer';
 import { Button } from '@/components/ui/button';
 import { EditableTextWithPencil } from '@/components/ui/editable-text-with-pencil';
-import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Agent } from '@activepieces/shared';
-import { agentsApi } from '../agents-api';
-import { ChangeSaveBar } from './change-save-bar';
-import { TestAgent } from './test-agent';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { McpToolsSection } from '@/app/mcp/mcp-config/mcp-tools-section';
+} from '@/components/ui/tooltip';
+import { Agent } from '@activepieces/shared';
+
+import { agentsApi } from '../agents-api';
+
+import { ChangeSaveBar } from './change-save-bar';
+import { TestAgent } from './test-agent';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -46,11 +48,12 @@ export const AgentBuilder = ({
 }: AgentBuilderProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
-  const { register, handleSubmit, reset, setValue, formState, watch } = useForm<AgentFormValues>({
-    defaultValues: {
-      systemPrompt: '',
-    },
-  });
+  const { register, handleSubmit, reset, setValue, formState } =
+    useForm<AgentFormValues>({
+      defaultValues: {
+        systemPrompt: '',
+      },
+    });
 
   const isDirty = formState.isDirty;
   const hasUnsavedChanges = useRef(false);
@@ -105,9 +108,12 @@ export const AgentBuilder = ({
     onSuccess: (values) => {
       hasUnsavedChanges.current = false;
       setShowSaveBar(false);
-      reset({
-        systemPrompt: values.systemPrompt,
-      }, { keepDirty: false });
+      reset(
+        {
+          systemPrompt: values.systemPrompt,
+        },
+        { keepDirty: false },
+      );
       refetch();
     },
   });
@@ -167,7 +173,10 @@ export const AgentBuilder = ({
           </div>
         </RightDrawerHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 h-full justify-center">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-1 h-full justify-center"
+        >
           <div className="w-[800px] overflow-y-auto px-6 pb-6 space-y-6">
             <div className="flex flex-col md:flex-row items-start gap-6">
               <div className="flex-shrink-0">
@@ -188,7 +197,13 @@ export const AgentBuilder = ({
                     readonly={false}
                     onValueChange={handleNameChange}
                   />
-                  {agent && <TestAgent agentId={agent.id} onSuccess={refetch} disabled={isDirty} />}
+                  {agent && (
+                    <TestAgent
+                      agentId={agent.id}
+                      onSuccess={refetch}
+                      disabled={isDirty}
+                    />
+                  )}
                 </div>
                 <EditableTextWithPencil
                   value={description}
@@ -202,7 +217,7 @@ export const AgentBuilder = ({
             <div className="space-y-6">
               <Separator className="my-2" />
               <div className="flex items-center justify-between">
-                <div className='flex flex-col'>
+                <div className="flex flex-col">
                   <div className="flex items-center gap-2 text-lg">
                     <Wand className="w-4 h-4" />
                     <span>Instructions</span>
@@ -212,7 +227,10 @@ export const AgentBuilder = ({
                           <Info className="w-4 h-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Define how your agent should behave and respond to tasks.</p>
+                          <p>
+                            Define how your agent should behave and respond to
+                            tasks.
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -233,8 +251,7 @@ export const AgentBuilder = ({
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-            </div>
+            <div className="flex items-center gap-2"></div>
           </div>
 
           {showSaveBar && (

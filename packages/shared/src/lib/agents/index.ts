@@ -42,6 +42,7 @@ export type ListAgentsQueryParams = Static<typeof ListAgentsQueryParams>
 
 export const RunAgentRequest = Type.Object({
     prompt: Type.String(),
+    callbackUrl: Type.Optional(Type.String()),
 })
 
 export type RunAgentRequest = Static<typeof RunAgentRequest>

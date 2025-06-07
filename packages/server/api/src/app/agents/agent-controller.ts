@@ -46,12 +46,13 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id/todos', RunAgentRequestParams, async (request) => {
         const { id } = request.params
-        const { prompt } = request.body
+        const { prompt, callbackUrl } = request.body
         return agentsService(request.log).run({
             id,
             prompt,
             userId: request.principal.type === PrincipalType.USER ? request.principal.id : undefined,
             socket: app.io,
+            callbackUrl,
         })  
     })
 
@@ -80,7 +81,7 @@ const ListAgentsRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
     },
 }
 

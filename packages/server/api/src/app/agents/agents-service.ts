@@ -11,9 +11,9 @@ import { mcpService } from '../mcp/mcp-service'
 
 const agentRepo = repoFactory(AgentEntity)
 
-export const agentsService = (_log: FastifyBaseLogger) => ({
+export const agentsService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
-        const mcp = await mcpService(_log).create({
+        const mcp = await mcpService(log).create({
             name: params.displayName,
             projectId: params.projectId,
         })
@@ -30,7 +30,7 @@ export const agentsService = (_log: FastifyBaseLogger) => ({
             mcpId: mcp.id,
         }
         const agent = await agentRepo().save(agentPayload)
-        await mcpService(_log).update({
+        await mcpService(log).update({
             mcpId: mcp.id,
             agentId: agent.id,
         })
@@ -47,11 +47,12 @@ export const agentsService = (_log: FastifyBaseLogger) => ({
     },
     async run(params: RunParams): Promise<Todo> {
         const agent = await this.getOneOrThrow({ id: params.id })
-        return agentExecutor(_log).execute({
+        return agentExecutor(log).execute({
             agent,
             userId: params.userId,
             prompt: params.prompt,
             socket: params.socket,
+            callbackUrl: params.callbackUrl,
         })
     },
     async getOne(params: GetOneParams): Promise<Agent | null> {
@@ -112,6 +113,7 @@ type RunParams = {
     prompt: string
     userId?: string
     socket: Socket
+    callbackUrl?: string
 }
 
 

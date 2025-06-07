@@ -33,10 +33,7 @@ export const agentsApi = {
     return await api.post<Agent>(`/v1/agents`, request);
   },
 
-  async update(
-    id: string,
-    request: UpdateAgentRequest,
-  ): Promise<Agent> {
+  async update(id: string, request: UpdateAgentRequest): Promise<Agent> {
     return await api.post<Agent>(`/v1/agents/${id}`, request);
   },
 
