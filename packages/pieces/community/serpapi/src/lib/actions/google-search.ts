@@ -1,10 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpapiCommon } from '../common';
+import { serpapiCommon } from '../common/common';
 import { serpapiAuth } from '../../index';
-
+import { countryDropdown, languageDropdown } from '../common/utils';
 
 export const googleSearch = createAction({
-  
   auth: serpapiAuth,
   name: 'google_search',
   displayName: 'Google Search',
@@ -15,16 +14,8 @@ export const googleSearch = createAction({
       description: 'The search query to look up',
       required: true,
     }),
-    country: Property.ShortText({
-      displayName: 'Country',
-      description: 'Country to use for the search (e.g., us, uk, ca)',
-      required: false,
-    }),
-    language: Property.ShortText({
-      displayName: 'Language',
-      description: 'Language to use for the search (e.g., en, es, fr)',
-      required: false,
-    }),
+    country: countryDropdown,
+    language: languageDropdown,
     num: Property.Number({
       displayName: 'Number of Results',
       description: 'Number of results to return (default: 10)',
