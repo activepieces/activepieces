@@ -8,7 +8,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
-
+import mcp from '@/assets/img/custom/mcp.svg';
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
@@ -96,7 +96,7 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: <img src={'src/assets/img/custom/mcp.svg'} alt="MCP" />,
+    icon: <img src={mcp} alt="MCP" />,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
