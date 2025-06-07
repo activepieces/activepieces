@@ -183,17 +183,22 @@ import {
 // Add this import from the index.ts file, where it contains the definition of the auth object.
 import { auth } from '../..';
 
-const fetchConnection = async (connections: ConnectionsManager, projectExternalId: string | undefined): Promise<typeof auth> => {
-   if (isNil(projectExternalId)) {
-      throw new Error('This project is missing an external id');
-   }
-   // This is the naming convention we have chosen earlier for the connections.
-   const connection = await connections.get(`gelato_${projectExternalId}`);
-   if (isNil(connection)) {
-      throw new Error(`Connection not found for project ${projectExternalId}`);
-   }
-   return connection as typeof auth;
-}
+const fetchConnection = async (
+	connections: ConnectionsManager,
+	projectExternalId: string | undefined,
+): Promise<PiecePropValueSchema<typeof googleSheetsAuth>> => {
+	if (!projectExternalId) {
+		throw new Error('This project is missing an external id');
+	}
+	
+	const connection = await connections.get(`gelato_${projectExternalId}`);
+	if (!connection) {
+		throw new Error(`Connection not found for project ${projectExternalId}`);
+	}
+
+	return connection as PiecePropValueSchema<typeof googleSheetsAuth>;
+};
+
 
 export const newFlavorCreated = createTrigger({
    requireAuth: false,
