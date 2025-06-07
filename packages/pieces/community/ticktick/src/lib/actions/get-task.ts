@@ -4,11 +4,11 @@ import { ticktickAuth } from '../../index';
 import { tickTickApiCall } from '../common/client';
 import { projectId, taskId } from '../common/props';
 
-export const deleteTaskAction = createAction({
+export const getTaskAction = createAction({
 	auth: ticktickAuth,
-	name: 'delete_task',
-	displayName: 'Delete Task',
-	description: 'Deletes an existing task.',
+	name: 'get_task',
+	displayName: 'Get Task',
+	description: 'Retrieves the details of a specific task.',
 	props: {
 		projectId: projectId({
 			displayName: 'List',
@@ -17,7 +17,7 @@ export const deleteTaskAction = createAction({
 		}),
 		taskId: taskId({
 			displayName: 'Task ID',
-			description: 'The ID of the task to delete.',
+			description: 'The ID of the task to retrieve.',
 			required: true,
 		}),
 	},
@@ -26,7 +26,7 @@ export const deleteTaskAction = createAction({
 
 		const response = await tickTickApiCall({
 			accessToken: context.auth.access_token,
-			method: HttpMethod.DELETE,
+			method: HttpMethod.GET,
 			resourceUri: `/project/${projectId}/task/${taskId}`,
 		});
 

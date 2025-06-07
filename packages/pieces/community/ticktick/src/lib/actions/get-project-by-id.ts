@@ -1,46 +1,29 @@
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
-import { fetchAllProjects } from "../common";
-import { ticktickAuth } from "../../index";
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ticktickAuth } from '../../index';
+import { tickTickApiCall } from '../common/client';
 
-export const getProjectById = createAction({
-    auth: ticktickAuth,
-    name: 'get_project_by_id',
-    displayName: 'Get Project By ID',
-    description: 'Retrieve the details of a specific project in TickTick',
-    props: {
-        projectId: Property.Dropdown({
-            displayName: 'Project',
-            description: 'Select the project to retrieve details for.',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-                const projects = await fetchAllProjects(auth as OAuth2PropertyValue);
-                if (projects.length === 0) return { disabled: true, placeholder: 'No projects found.', options: [] };
-                return {
-                    disabled: false,
-                    options: projects.map(p => ({ label: p.name, value: p.id })),
-                };
-            }
-        }),
-    },
-    async run(context) {
-        const { projectId } = context.propsValue;
-        const authentication = context.auth as OAuth2PropertyValue;
+export const getProjectAction = createAction({
+	auth: ticktickAuth,
+	name: 'get_project',
+	displayName: 'Get Task List',
+	description: 'Retrieves the details of a specific task list by ID.',
+	props: {
+		projectId: Property.ShortText({
+			displayName: 'List ID',
+			description: 'Select the list to retrieve details for.',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { projectId } = context.propsValue;
 
-        const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: `https://api.ticktick.com/open/v1/project/${projectId as string}`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: authentication.access_token,
-            },
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        };
-        const response = await httpClient.sendRequest(request);
-        return response.body;
-    },
+		const response = await tickTickApiCall({
+			accessToken: context.auth.access_token,
+			method: HttpMethod.GET,
+			resourceUri: `/project/${projectId}`,
+		});
+
+		return response;
+	},
 });
