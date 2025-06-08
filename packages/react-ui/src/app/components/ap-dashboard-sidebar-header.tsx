@@ -51,9 +51,7 @@ const ApDashboardSidebarHeader = ({
                     <img
                       src={branding.logos.logoIconUrl}
                       alt={t('home')}
-                      width={28}
-                      height={28}
-                      className="max-h-[22px] max-w-[22px] object-contain"
+                      className="h-5 w-5 object-contain"
                     />
                   )}
 
