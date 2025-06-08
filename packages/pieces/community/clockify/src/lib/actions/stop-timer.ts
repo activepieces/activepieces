@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { workspaceId } from '../common/props';
 
 export const stopTimerAction = createAction({
 	auth: clockifyAuth,
@@ -9,61 +10,31 @@ export const stopTimerAction = createAction({
 	displayName: 'Stop Timer',
 	description: 'Stops currently running timer on specified workspace.',
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
 	},
 	async run(context) {
 		const { workspaceId } = context.propsValue;
 
-		const currentUserResponse = await httpClient.sendRequest<{ id: string; email: string }>({
+		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
+			apiKey: context.auth,
 			method: HttpMethod.GET,
-			url: BASE_URL + `/user`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/user`,
 		});
 
-		const userId = currentUserResponse.body.id;
+		const userId = currentUserResponse.id;
 
-		const response = await httpClient.sendRequest({
+		const response = await clockifyApiCall({
+			apiKey: context.auth,
 			method: HttpMethod.PATCH,
-			url: BASE_URL + `/workspaces/${workspaceId}/user/${userId}/time-entries`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			body: {
 				end: new Date().toISOString(),
 			},
 		});
 
-		return response.body;
+		return response;
 	},
 });

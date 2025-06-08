@@ -1,8 +1,9 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { workspaceId } from '../common/props';
 
 const TRIGGER_KEY = 'new-timer-started-trigger';
 
@@ -13,46 +14,18 @@ export const newTimerStartedTrigger = createTrigger({
 	description: 'Triggers when a new entry is started and running.',
 	type: TriggerStrategy.WEBHOOK,
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
 	},
 	async onEnable(context) {
 		const { workspaceId } = context.propsValue;
 
-		const response = await httpClient.sendRequest<{ id: string }>({
+		const response = await clockifyApiCall<{ id: string }>({
+			apiKey: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/webhooks`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: {
 				url: context.webhookUrl,
 				webhookEvent: 'NEW_TIMER_STARTED',
@@ -61,7 +34,7 @@ export const newTimerStartedTrigger = createTrigger({
 			},
 		});
 
-		await context.store.put<string>(TRIGGER_KEY, response.body.id);
+		await context.store.put<string>(TRIGGER_KEY, response.id);
 	},
 	async onDisable(context) {
 		const { workspaceId } = context.propsValue;
@@ -69,12 +42,10 @@ export const newTimerStartedTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
 		if (!isNil(webhookId)) {
-			await httpClient.sendRequest<{ id: string }>({
+			await clockifyApiCall<{ id: string }>({
+				apiKey: context.auth,
 				method: HttpMethod.DELETE,
-				url: BASE_URL + `/workspaces/${workspaceId}/webhooks/${webhookId}`,
-				headers: {
-					'X-Api-Key': context.auth as string,
-				},
+				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
 		}
 	},

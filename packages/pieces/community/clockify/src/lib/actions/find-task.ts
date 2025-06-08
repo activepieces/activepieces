@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { projectId, workspaceId } from '../common/props';
 
 export const findTaskAction = createAction({
 	auth: clockifyAuth,
@@ -9,65 +10,13 @@ export const findTaskAction = createAction({
 	displayName: 'Find Task',
 	description: 'Finds an existing task in a specific project.',
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
-		projectId: Property.Dropdown({
+		projectId: projectId({
 			displayName: 'Project',
-			refreshers: ['workspaceId'],
 			required: true,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((project) => ({
-						label: project.name,
-						value: project.id,
-					})),
-				};
-			},
 		}),
 		name: Property.ShortText({
 			displayName: 'Task Name',
@@ -81,18 +30,16 @@ export const findTaskAction = createAction({
 	async run(context) {
 		const { workspaceId, projectId, name, exactMatch } = context.propsValue;
 
-		const response = await httpClient.sendRequest({
+		const response = await clockifyApiCall({
+			apiKey: context.auth,
 			method: HttpMethod.GET,
-			url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
-			queryParams: {
+			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+			query: {
 				name,
 				'strict-name-search': exactMatch ? 'true' : 'false',
 			},
 		});
 
-		return response.body;
+		return response;
 	},
 });

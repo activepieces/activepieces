@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { assigneeIds, projectId, workspaceId } from '../common/props';
 
 export const createTaskAction = createAction({
 	auth: clockifyAuth,
@@ -9,65 +10,13 @@ export const createTaskAction = createAction({
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific project.',
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
-		projectId: Property.Dropdown({
+		projectId: projectId({
 			displayName: 'Project',
-			refreshers: ['workspaceId'],
 			required: true,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((project) => ({
-						label: project.name,
-						value: project.id,
-					})),
-				};
-			},
 		}),
 		name: Property.ShortText({
 			displayName: 'Task Name',
@@ -94,47 +43,19 @@ export const createTaskAction = createAction({
 				],
 			},
 		}),
-		assigneeIds: Property.MultiSelectDropdown({
+		assigneeIds: assigneeIds({
 			displayName: 'Assignee',
-			refreshers: ['workspaceId'],
 			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; email: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/users`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((user) => ({
-						label: user.email,
-						value: user.id,
-					})),
-				};
-			},
 		}),
 	},
 	async run(context) {
 		const { workspaceId, projectId, name, status } = context.propsValue;
 		const assigneeIds = context.propsValue.assigneeIds ?? [];
 
-		const response = await httpClient.sendRequest({
+		const response = await clockifyApiCall({
+			apiKey: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			body: {
 				name,
 				status,
@@ -142,6 +63,6 @@ export const createTaskAction = createAction({
 			},
 		});
 
-		return response.body;
+		return response;
 	},
 });

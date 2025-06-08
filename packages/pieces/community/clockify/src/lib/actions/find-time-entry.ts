@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { projectId, taskId, workspaceId } from '../common/props';
 
 export const findTimeEntryAction = createAction({
 	auth: clockifyAuth,
@@ -9,35 +10,9 @@ export const findTimeEntryAction = createAction({
 	displayName: 'Find Time Entry',
 	description: 'Finds a time entry by description, start datetime or end datetime.',
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
 		start: Property.DateTime({
 			displayName: 'Start Datetime',
@@ -51,81 +26,27 @@ export const findTimeEntryAction = createAction({
 			displayName: 'Entry Description',
 			required: false,
 		}),
-		projectId: Property.Dropdown({
+		projectId: projectId({
 			displayName: 'Project',
-			refreshers: ['workspaceId'],
 			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((project) => ({
-						label: project.name,
-						value: project.id,
-					})),
-				};
-			},
 		}),
-		taskId: Property.Dropdown({
+		taskId: taskId({
 			displayName: 'Task',
-			refreshers: ['workspaceId', 'projectId'],
 			required: false,
-			options: async ({ auth, workspaceId, projectId }) => {
-				if (!auth || !workspaceId || !projectId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((task) => ({
-						label: task.name,
-						value: task.id,
-					})),
-				};
-			},
 		}),
 	},
 	async run(context) {
 		const { workspaceId, projectId, start, end, description, taskId } = context.propsValue;
 
-		const currentUserResponse = await httpClient.sendRequest<{ id: string; email: string }>({
+		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
+			apiKey: context.auth,
 			method: HttpMethod.GET,
-			url: BASE_URL + `/user`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/user`,
 		});
 
-		const userId = currentUserResponse.body.id;
+		const userId = currentUserResponse.id;
 
-		const qs: QueryParams = {};
+		const qs: QueryParams = { hydrated: 'true' };
 
 		if (description) qs['description'] = description;
 		if (start) qs['start'] = start;
@@ -133,15 +54,13 @@ export const findTimeEntryAction = createAction({
 		if (projectId) qs['project'] = projectId;
 		if (taskId) qs['task'] = taskId;
 
-		const response = await httpClient.sendRequest({
+		const response = await clockifyApiCall({
+			apiKey: context.auth,
 			method: HttpMethod.GET,
-			url: BASE_URL + `/workspaces/${workspaceId}/user/${userId}/time-entries`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
-			queryParams: qs,
+			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
+			query: qs,
 		});
 
-		return response.body;
+		return response;
 	},
 });

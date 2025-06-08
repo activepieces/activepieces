@@ -1,8 +1,9 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { projectId, taskId, workspaceId } from '../common/props';
 
 const TRIGGER_KEY = 'new-time-entry-trigger';
 
@@ -13,95 +14,17 @@ export const newTimeEntryTrigger = createTrigger({
 	description: 'Triggers when a new time entry is created.',
 	type: TriggerStrategy.WEBHOOK,
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
-		projectId: Property.Dropdown({
+		projectId: projectId({
 			displayName: 'Project',
-			refreshers: ['workspaceId'],
 			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((project) => ({
-						label: project.name,
-						value: project.id,
-					})),
-				};
-			},
 		}),
-		taskId: Property.Dropdown({
+		taskId: taskId({
 			displayName: 'Task',
-			refreshers: ['workspaceId', 'projectId'],
 			required: false,
-			options: async ({ auth, workspaceId, projectId }) => {
-				if (!auth || !workspaceId || !projectId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((task) => ({
-						label: task.name,
-						value: task.id,
-					})),
-				};
-			},
 		}),
 	},
 	async onEnable(context) {
@@ -127,16 +50,14 @@ export const newTimeEntryTrigger = createTrigger({
 			payload['triggerSource'] = [taskId];
 		}
 
-		const response = await httpClient.sendRequest<{ id: string }>({
+		const response = await clockifyApiCall<{ id: string }>({
+			apiKey: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/webhooks`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: payload,
 		});
 
-		await context.store.put<string>(TRIGGER_KEY, response.body.id);
+		await context.store.put<string>(TRIGGER_KEY, response.id);
 	},
 	async onDisable(context) {
 		const { workspaceId } = context.propsValue;
@@ -144,14 +65,36 @@ export const newTimeEntryTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
 		if (!isNil(webhookId)) {
-			await httpClient.sendRequest<{ id: string }>({
+			await clockifyApiCall({
+				apiKey: context.auth,
 				method: HttpMethod.DELETE,
-				url: BASE_URL + `/workspaces/${workspaceId}/webhooks/${webhookId}`,
-				headers: {
-					'X-Api-Key': context.auth as string,
-				},
+				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
 		}
+	},
+	async test(context) {
+		const { workspaceId, projectId, taskId } = context.propsValue;
+		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
+			apiKey: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/user`,
+		});
+
+		const userId = currentUserResponse.id;
+
+		const qs: QueryParams = { hydrated: 'true', page: '1', 'page-size': '5' };
+
+		if (projectId) qs['project'] = projectId;
+		if (taskId) qs['task'] = taskId;
+
+		const response = await clockifyApiCall<{id:string}[]>({
+			apiKey: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
+			query: qs,
+		});
+
+		return response;
 	},
 	async run(context) {
 		return [context.payload.body];

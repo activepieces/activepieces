@@ -1,7 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
-import { BASE_URL } from '../common';
+import { clockifyApiCall } from '../common/client';
+import { projectId, tagIds, taskId, workspaceId } from '../common/props';
 
 export const createTimeEntryAction = createAction({
 	auth: clockifyAuth,
@@ -9,35 +10,9 @@ export const createTimeEntryAction = createAction({
 	displayName: 'Create Time Entry',
 	description: 'Creates a new time entry.',
 	props: {
-		workspaceId: Property.Dropdown({
+		workspaceId: workspaceId({
 			displayName: 'Workspace',
-			refreshers: [],
 			required: true,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + '/workspaces',
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((workspace) => ({
-						label: workspace.name,
-						value: workspace.id,
-					})),
-				};
-			},
 		}),
 		start: Property.DateTime({
 			displayName: 'Start Datetime',
@@ -51,99 +26,21 @@ export const createTimeEntryAction = createAction({
 			displayName: 'Entry Description',
 			required: false,
 		}),
-		projectId: Property.Dropdown({
+		projectId: projectId({
 			displayName: 'Project',
-			refreshers: ['workspaceId'],
 			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((project) => ({
-						label: project.name,
-						value: project.id,
-					})),
-				};
-			},
 		}),
-		taskId: Property.Dropdown({
+		taskId: taskId({
 			displayName: 'Task',
-			refreshers: ['workspaceId', 'projectId'],
 			required: false,
-			options: async ({ auth, workspaceId, projectId }) => {
-				if (!auth || !workspaceId || !projectId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((task) => ({
-						label: task.name,
-						value: task.id,
-					})),
-				};
-			},
 		}),
 		billable: Property.Checkbox({
 			displayName: 'Billable',
 			required: false,
 		}),
-		tagIds: Property.MultiSelectDropdown({
+		tagIds: tagIds({
 			displayName: 'Tags',
-			refreshers: ['workspaceId'],
 			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/tags`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((tag) => ({
-						label: tag.name,
-						value: tag.id,
-					})),
-				};
-			},
 		}),
 	},
 	async run(context) {
@@ -151,12 +48,10 @@ export const createTimeEntryAction = createAction({
 			context.propsValue;
 		const tagIds = context.propsValue.tagIds ?? [];
 
-		const response = await httpClient.sendRequest({
+		const response = await clockifyApiCall({
+			apiKey: context.auth,
 			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/time-entries`,
-			headers: {
-				'X-Api-Key': context.auth as string,
-			},
+			resourceUri: `/workspaces/${workspaceId}/time-entries`,
 			body: {
 				billable,
 				description,
@@ -169,6 +64,6 @@ export const createTimeEntryAction = createAction({
 			},
 		});
 
-		return response.body;
+		return response;
 	},
 });
