@@ -1,10 +1,13 @@
 'use client';
 
+import { ApFlagId, LocalesEnum } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,13 +27,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { ApFlagId, LocalesEnum } from '@activepieces/shared';
-
-import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 export const localesMap = {
   [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
   [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
@@ -52,6 +53,7 @@ export function LanguageSwitcher() {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  console.log('===i18n.language====', i18n.language);
   const languageWithoutLocale = i18n.language?.includes('-')
     ? i18n.language.split('-')[0]
     : i18n.language;
