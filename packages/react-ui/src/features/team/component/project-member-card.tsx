@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
@@ -13,7 +14,6 @@ import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
 import { EditRoleDialog } from './edit-role-dialog';
-import { UserAvatar } from '@/components/ui/user-avatar';
 
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;

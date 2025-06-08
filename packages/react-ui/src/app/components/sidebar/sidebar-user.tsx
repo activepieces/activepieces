@@ -11,10 +11,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import Avatar from 'boring-avatars';
-import { UserAvatar } from '@/components/ui/user-avatar';
 
 export function SidebarUser() {
   const { embedState } = useEmbedding();
@@ -28,7 +27,11 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem className="flex items-center justify-between w-full">
         <div className="flex items-center">
-          <UserAvatar name={user.firstName + ' ' + user.lastName} email={user.email} size={28} />
+          <UserAvatar
+            name={user.firstName + ' ' + user.lastName}
+            email={user.email}
+            size={28}
+          />
           <div className="grid flex-1 text-left text-sm leading-tight ml-2">
             <span className="truncate font-semibold">{user.firstName}</span>
             <span className="truncate text-xs">{user.email}</span>

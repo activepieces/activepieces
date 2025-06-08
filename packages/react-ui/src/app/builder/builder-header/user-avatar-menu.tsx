@@ -2,6 +2,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut } from 'lucide-react';
 
+import { useEmbedding } from '@/components/embed-provider';
+import { useTelemetry } from '@/components/telemetry-provider';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,15 +16,8 @@ import {
   DropdownMenuItem,
 } from '../../../components/ui/dropdown-menu';
 import { TextWithIcon } from '../../../components/ui/text-with-icon';
-import { useEmbedding } from '@/components/embed-provider';
-import { useTelemetry } from '@/components/telemetry-provider';
-import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { Avatar } from '@/components/ui/avatar';
 
 export function UserAvatarMenu() {
-
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
@@ -30,7 +29,8 @@ export function UserAvatarMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <UserAvatar disableTooltip={true}
+        <UserAvatar
+          disableTooltip={true}
           name={user.firstName + ' ' + user.lastName}
           email={user.email}
           size={28}

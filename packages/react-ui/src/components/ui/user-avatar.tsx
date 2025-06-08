@@ -1,6 +1,6 @@
-import Avatar from "boring-avatars";
-import { Tooltip, TooltipTrigger, TooltipContent } from "./tooltip";
-import { Button } from "./button";
+import Avatar from 'boring-avatars';
+
+import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 type UserAvatarProps = {
   name: string;
@@ -9,15 +9,20 @@ type UserAvatarProps = {
   disableTooltip?: boolean;
 };
 
-export function UserAvatar({ name, email, size, disableTooltip = false }: UserAvatarProps) {
+export function UserAvatar({
+  name,
+  email,
+  size,
+  disableTooltip = false,
+}: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
   const avatarElement = (
-      <Avatar
-        name={email}
-        size={size}
-        colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
-        variant="beam"
-      />
+    <Avatar
+      name={email}
+      size={size}
+      colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
+      variant="beam"
+    />
   );
 
   if (disableTooltip) {
@@ -26,12 +31,8 @@ export function UserAvatar({ name, email, size, disableTooltip = false }: UserAv
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        {avatarElement}
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {tooltip}
-      </TooltipContent>
+      <TooltipTrigger asChild>{avatarElement}</TooltipTrigger>
+      <TooltipContent side="bottom">{tooltip}</TooltipContent>
     </Tooltip>
   );
 }

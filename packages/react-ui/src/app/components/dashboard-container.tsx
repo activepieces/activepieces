@@ -3,12 +3,13 @@ import { ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import mcp from '@/assets/img/custom/mcp.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
-import mcp from '@/assets/img/custom/mcp.svg';
+
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';

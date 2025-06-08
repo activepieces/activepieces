@@ -36,10 +36,11 @@ import {
   Permission,
   supportUrl,
 } from '@activepieces/shared';
-import { UserAvatarMenu } from './user-avatar-menu';
-import FlowActionMenu from '../../components/flow-actions-menu';
 
+import FlowActionMenu from '../../components/flow-actions-menu';
 import { BuilderFlowStatusSection } from '../builder-flow-status-section';
+
+import { UserAvatarMenu } from './user-avatar-menu';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();

@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -46,7 +47,6 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { UserAvatar } from '@/components/ui/user-avatar';
 
 type UseAsDraftOptionProps = {
   versionNumber: number;
