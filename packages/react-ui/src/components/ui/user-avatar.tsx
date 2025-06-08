@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { LogOut, SunMoon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
@@ -46,16 +45,6 @@ export function UserAvatar() {
             <div className="flex-grow flex-shrink truncate">{user.email}</div>
           </div>
         </DropdownMenuLabel>
-        <Link to="/settings/appearance">
-          <DropdownMenuItem className="cursor-pointer">
-            <TextWithIcon
-              icon={<SunMoon size={18} />}
-              text={t('Appearance')}
-              className="cursor-pointer"
-            />
-          </DropdownMenuItem>
-        </Link>
-
         <DropdownMenuItem
           onClick={() => {
             userHooks.invalidateCurrentUser(queryClient);

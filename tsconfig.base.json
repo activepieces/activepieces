@@ -789,6 +789,9 @@
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
       ],
+      "@activepieces/piece-ticktick": [
+        "packages/pieces/community/ticktick/src/index.ts"
+      ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
