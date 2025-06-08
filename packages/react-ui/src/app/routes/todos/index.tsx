@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -10,30 +9,23 @@ import {
   ListTodo,
   CheckCheck,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
+import { TableTitle } from '@/components/custom/table-title';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  CURSOR_QUERY_PARAM,
-  DataTable,
-  LIMIT_QUERY_PARAM,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/custom/table-title';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
-import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   Todo,
   PopulatedTodo,
-  UNRESOLVED_STATUS,
   STATUS_COLORS,
   STATUS_VARIANT,
 } from '@activepieces/shared';
@@ -49,45 +41,9 @@ function TodosPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
 
   const location = useLocation();
-  const projectId = authenticationSession.getProjectId()!;
-  const platformId = authenticationSession.getPlatformId()!;
   const { data: currentUser } = userHooks.useCurrentUser();
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    if (!location.search.includes('assignee')) {
-      setSearchParams((prev) => {
-        prev.set('status', UNRESOLVED_STATUS.name);
-        return prev;
-      });
-    }
-  }, []);
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['todos', location, projectId, activeTab],
-    queryFn: () => {
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      const assigneeId = searchParams.get('assigneeId') ?? undefined;
-      const flowId = searchParams.get('flowId') ?? undefined;
-      const title = searchParams.get('title') ?? undefined;
-      const statusOptions =
-        activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
-
-      return todosApi.list({
-        projectId,
-        cursor: cursor ?? undefined,
-        limit,
-        platformId,
-        assigneeId,
-        flowId,
-        statusOptions,
-        title,
-      });
-    },
-  });
+  const { data, isLoading, refetch } = todosHooks.useTodosList(activeTab);
 
   const filteredData = useMemo(() => {
     if (!data?.data) return undefined;

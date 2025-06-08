@@ -17,7 +17,7 @@ const CardList = forwardRef<
   >
     <div
       ref={ref}
-      className={cn('flex flex-col gap-4 h-full w-full', listClassName)}
+      className={cn('flex flex-col h-full w-full', listClassName)}
       {...props}
     >
       {children}
@@ -103,8 +103,8 @@ type CardListEmptyProps = React.HTMLAttributes<HTMLDivElement> & {
 const CardListEmpty = React.memo(({ message }: CardListEmptyProps) => {
   return (
     <div className="flex h-full w-full items-center justify-center gap-3 flex-col text-muted-foreground">
-      <PackageOpen className="w-14 h-14" />
-      <div className="text-center  text-lg tracking-tight">{message}</div>
+      <PackageOpen className="w-10 h-10" />
+      <div className="text-center tracking-tight">{message}</div>
     </div>
   );
 });

@@ -149,10 +149,6 @@ export function McpPieceDialog({
       return await mcpApi.update(mcp.id, { tools: updatedTools });
     },
     onSuccess: () => {
-      toast({
-        description: t('Tool updated successfully'),
-        duration: 3000,
-      });
       onSuccess?.();
       handleClose();
     },

@@ -44,10 +44,14 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
             onDelete: 'CASCADE',
         },
         agent: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'agent',
-            inverseSide: 'mcp',
+            cascade: true,
             onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'agentId',
+                foreignKeyConstraintName: 'fk_mcp_agent_id',
+            },
         },
     },
     

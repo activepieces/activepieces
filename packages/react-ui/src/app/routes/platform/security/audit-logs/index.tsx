@@ -14,13 +14,13 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { TableTitle } from '@/components/custom/table-title';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   LIMIT_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/custom/table-title';
 import {
   Tooltip,
   TooltipContent,

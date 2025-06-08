@@ -1,20 +1,25 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, Bot } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import { TableTitle } from '@/components/custom/table-title';
-import { Agent } from '@activepieces/shared';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { Agent, ApFlagId } from '@activepieces/shared';
 
 import { AgentBuilder } from './agent-builder';
 import { AgentCard } from './agent-card';
 import { agentsApi } from './agents-api';
+import { CreateAgentButton } from './create-agent-button';
 
 export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | undefined>();
+
+  const { data: isAgentsEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AGENTS_ENABLED,
+  );
 
   const {
     data: agentsPage,
@@ -25,29 +30,19 @@ export const AgentsPage = () => {
     queryFn: () => agentsApi.list(),
   });
 
-  const createAgentMutation = useMutation({
-    mutationFn: () =>
-      agentsApi.create({
-        displayName: 'Fresh Agent',
-        description:
-          'I am a fresh agent, Jack of all trades, master of none (yet)',
-      }),
-    onSuccess: (newAgent) => {
-      refetch();
-      setSelectedAgent(newAgent);
-      setIsOpen(true);
-    },
-  });
-
   const agents = agentsPage?.data || [];
 
   const handleOpenBuilder = async (agent?: Agent) => {
     if (agent) {
       setSelectedAgent(agent);
       setIsOpen(true);
-    } else {
-      createAgentMutation.mutate();
     }
+  };
+
+  const handleAgentCreated = (newAgent: Agent) => {
+    refetch();
+    setSelectedAgent(newAgent);
+    setIsOpen(true);
   };
 
   const deleteAgentMutation = useMutation({
@@ -56,6 +51,7 @@ export const AgentsPage = () => {
       refetch();
     },
   });
+
   if (isLoading) {
     return <LoadingScreen mode="container" />;
   }
@@ -79,15 +75,10 @@ export const AgentsPage = () => {
           }}
           agent={selectedAgent}
           trigger={
-            <Button
-              onClick={() => handleOpenBuilder()}
-              disabled={createAgentMutation.isPending}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {createAgentMutation.isPending
-                ? t('Creating...')
-                : t('Create Agent')}
-            </Button>
+            <CreateAgentButton
+              onAgentCreated={handleAgentCreated}
+              isAgentsEnabled={isAgentsEnabled ?? false}
+            />
           }
         />
       </div>
@@ -113,6 +104,7 @@ export const AgentsPage = () => {
             {agents.map((agent) => (
               <div key={agent.id} onClick={() => handleOpenBuilder(agent)}>
                 <AgentCard
+                  taskCompleted={agent.taskCompleted}
                   title={agent.displayName}
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}

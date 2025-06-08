@@ -1,7 +1,6 @@
 import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { Socket } from 'socket.io'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { userService } from '../user/user-service'
 import { todoService } from './todo.service'
@@ -11,7 +10,7 @@ const DEFAULT_CURSOR = null
 
 export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListTodosRequest, async (request) => {
-        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title } = request.query
+        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title, agentId } = request.query
         return todoService(request.log).list({
             platformId,
             projectId,
@@ -20,6 +19,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             cursor: cursor ?? DEFAULT_CURSOR,
             statusOptions,
             title,
+            agentId,
         })
     })
 

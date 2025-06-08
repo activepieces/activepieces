@@ -1,13 +1,14 @@
 import { ActivepiecesError, Agent, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, Todo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { mcpService } from '../mcp/mcp-service'
+import { todoService } from '../todos/todo.service'
 import { AgentEntity } from './agent-entity'
 import { agentExecutor } from './agent-executor'
-import { Socket } from 'socket.io'
-import { mcpService } from '../mcp/mcp-service'
 
 const agentRepo = repoFactory(AgentEntity)
 
@@ -17,7 +18,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             name: params.displayName,
             projectId: params.projectId,
         })
-        const agentPayload: Omit<Agent, 'created' | 'updated'> = {
+        const agentPayload: Omit<Agent, 'created' | 'updated' | 'taskCompleted'> = {
             displayName: params.displayName,
             id: apId(),
             description: params.description,
@@ -34,7 +35,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             mcpId: mcp.id,
             agentId: agent.id,
         })
-        return agent
+        return enrichAgent(log, agent)
     },
     async update(params: UpdateParams): Promise<Agent> {
         await agentRepo().update(params.id, {
@@ -97,8 +98,10 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
+        const enrichedData = await Promise.all(data.map(async (agent) => enrichAgent(log, agent)))
+
         return paginationHelper.createPage<Agent>(
-            data,
+            enrichedData,
             cursor,
         )
     },
@@ -106,6 +109,19 @@ export const agentsService = (log: FastifyBaseLogger) => ({
 
 function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
+}
+
+async function enrichAgent(log: FastifyBaseLogger, agent: Agent): Promise<Agent> {
+    const taskCompleted = await getTaskCompleted(log, agent.id)
+    return {
+        ...agent,
+        taskCompleted,
+    }
+}
+async function getTaskCompleted(log: FastifyBaseLogger, agentId: string): Promise<number> {
+    return todoService(log).countBy({
+        agentId,
+    })
 }
 
 type RunParams = {

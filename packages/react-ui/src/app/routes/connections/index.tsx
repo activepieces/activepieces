@@ -19,6 +19,7 @@ import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -30,7 +31,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/custom/table-title';
 import {
   Tooltip,
   TooltipContent,

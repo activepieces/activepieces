@@ -1,12 +1,10 @@
-import { Agent, Mcp, Platform, Project } from '@activepieces/shared'
+import { Agent, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
-
 
 type AgentSchema = Agent & {
     project: Project    
     platform: Platform
-    mcp: Mcp
 }
 export const AgentEntity = new EntitySchema<AgentSchema>({
     name: 'agent',
@@ -58,11 +56,6 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
         platform: {
             type: 'many-to-one',
             target: 'platform',
-            inverseSide: 'agents',
-        },
-        mcp: {
-            type: 'many-to-one',
-            target: 'mcp',
             inverseSide: 'agents',
         },
     },

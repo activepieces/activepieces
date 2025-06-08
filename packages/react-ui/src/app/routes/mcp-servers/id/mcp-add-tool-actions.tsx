@@ -49,10 +49,7 @@ export const McpAddToolDropdown = ({
           disabled={!doesUserHavePermissionToWriteMcp}
           asChild
         >
-          <Button
-            disabled={!doesUserHavePermissionToWriteMcp}
-            variant="default"
-          >
+          <Button disabled={!doesUserHavePermissionToWriteMcp} variant="basic">
             <span>{t('Add tool')}</span>
             <ChevronDown className="h-4 w-4 ml-2 " />
           </Button>

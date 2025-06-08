@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Activity } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ interface AgentCardProps {
   picture: string;
   title: string;
   description: string;
+  taskCompleted: number;
   onDelete?: () => Promise<void>;
   onDescriptionChange?: (newDescription: string) => Promise<void>;
 }
@@ -19,6 +20,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   picture,
   title,
   description,
+  taskCompleted,
   onDelete,
   onDescriptionChange,
 }) => {
@@ -34,7 +36,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
   return (
     <div className="flex flex-col">
-      <Card className="w-full h-[100px] cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
+      <Card className="w-full h-[125px] cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between">
         <CardContent className="p-4 flex flex-col h-full">
           <div className="flex gap-4 items-center">
             <div className="flex-shrink-0">
@@ -101,6 +103,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   {description}
                 </div>
               )}
+              <div className="flex items-center gap-1 mt-2">
+                <Activity className="h-4 w-4 text-success" />
+                <span className="text-xs font-medium">
+                  Task Completed: {taskCompleted}
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>

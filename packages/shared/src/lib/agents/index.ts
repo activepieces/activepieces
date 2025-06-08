@@ -19,6 +19,7 @@ export const Agent = Type.Object({
     maxSteps: Type.Number(),
     mcpId: Type.String(),
     platformId: Type.String(),
+    taskCompleted: Type.Number(),
 })
 
 export type Agent = Static<typeof Agent>

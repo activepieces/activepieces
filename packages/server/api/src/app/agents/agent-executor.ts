@@ -1,16 +1,15 @@
-import { Agent, isNil, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { todoService } from '../todos/todo.service'
-import { streamText, ToolExecutionOptions, ToolSet } from 'ai';
-import { createOpenAI, openai } from '@ai-sdk/openai'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { todoActivitiesService } from '../todos/activity/todos-activity.service'
+import { Agent, isNil, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
+import { createOpenAI } from '@ai-sdk/openai'
+import { experimental_createMCPClient, streamText } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { mcpService } from '../mcp/mcp-service'
+import { todoActivitiesService } from '../todos/activity/todos-activity.service'
 import { todoSideEfffects } from '../todos/todo-side-effects'
-import { experimental_createMCPClient } from "ai"
-import { mcpService } from '../mcp/mcp-service';
-import { domainHelper } from '../ee/custom-domains/domain-helper';
-import { accessTokenManager } from '../authentication/lib/access-token-manager';
+import { todoService } from '../todos/todo.service'
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     execute: async (params: ExecuteAgent) => {
@@ -40,7 +39,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
 })
 
 async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBaseLogger) {
-    let comment = await createEmptyComment(params, todoId, log)
+    const comment = await createEmptyComment(params, todoId, log)
     let currentComment = ''
     log.info({
         agentId: params.agent.id,
@@ -52,15 +51,15 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             type: 'sse',
             url: mcpServer,
         },
-    });
-    const tools = await mcpClient.tools();
-    const currentDate = new Date().toISOString().split('T')[0];
+    })
+    const tools = await mcpClient.tools()
+    const currentDate = new Date().toISOString().split('T')[0]
     let textResult = ''
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId: params.agent.platformId,
     })
-    const { fullStream } = await streamText({
+    const { fullStream } = streamText({
         model: createOpenAI({
             baseURL: baseUrl,
             apiKey: await accessTokenManager.generateEngineToken({
@@ -93,13 +92,14 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 toolName: chunk.toolName,
                 result: chunk.args,
             })}</tool-call>`
-        } else if (chunk.type === 'tool-result') {
+        }
+        else if (chunk.type === 'tool-result') {
             const textResult = chunk.result
             currentComment += `<tool-result id="${chunk.toolCallId}">${JSON.stringify({
                 result: textResult,
             })}</tool-result>`
         }
-        todoSideEfffects(log).notifyActivity({
+        await todoSideEfffects(log).notifyActivity({
             socket: params.socket,
             projectId: params.agent.projectId,
             activityId: comment.id,

@@ -37,6 +37,11 @@ export const aiProviderService = {
         const provider = await repo().findOneByOrFail({ platformId, provider: aiConfig.provider })
         return removeSensitiveData(provider)
     },
+    async isAgentConfigured(): Promise<boolean> {
+        return repo().existsBy({
+            provider: 'openai',
+        })
+    },
     async delete(params: DeleteParams): Promise<void> {
         await this.getOrThrow(params)
         await repo().delete(params)

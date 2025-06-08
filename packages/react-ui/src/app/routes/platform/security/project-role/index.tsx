@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Button } from '@/components/ui/button';
 import { TableTitle } from '@/components/custom/table-title';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,

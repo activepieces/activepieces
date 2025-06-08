@@ -19,7 +19,7 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
             ...params,
         })
         const savedActivity = await repo().save(activity)
-        todoSideEfffects(log).notify({
+        await todoSideEfffects(log).notify({
             socket: params.socket,
             todoId: params.todoId,
             projectId: params.projectId,
@@ -31,7 +31,7 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
         await repo().update(activity.id, {
             content: params.content,
         })
-        todoSideEfffects(log).notify({
+        await todoSideEfffects(log).notify({
             socket: params.socket,
             todoId: activity.todoId,
             projectId: params.projectId,

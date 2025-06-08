@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
 
@@ -53,6 +54,8 @@ export const UpsertAIProviderDialog = ({
     defaultValues: provider,
   });
 
+  const { refetch } = flagsHooks.useFlags();
+
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
@@ -77,6 +80,7 @@ export const UpsertAIProviderDialog = ({
     onSuccess: (data) => {
       form.reset(data);
       setOpen(false);
+      refetch();
       onSave();
     },
     onError: () => {

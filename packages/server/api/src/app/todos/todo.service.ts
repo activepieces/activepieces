@@ -1,30 +1,35 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, PopulatedTodo, UNRESOLVED_STATUS, UserId, TodoEnvironment } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { Like } from 'typeorm'
+import { agentsService } from '../agents/agents-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { Order } from '../helper/pagination/paginator'
 import { userService } from '../user/user-service'
 import { todoSideEfffects } from './todo-side-effects'
 import { TodoEntity } from './todo.entity'
-import { agentsService } from '../agents/agents-service'
-import { flowService } from '../flows/flow/flow.service'
 
-const repo = repoFactory(TodoEntity)  
+const todoRepo = repoFactory(TodoEntity)
 
 export const todoService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Todo> {
-        return repo().save({
+        return todoRepo().save({
             id: apId(),
             status: UNRESOLVED_STATUS,
             locked: params.locked ?? false,
             ...params,
         })
     },
+    async countBy(params: CountByParams): Promise<number> {
+        return todoRepo().countBy({
+            ...spreadIfDefined('agentId', params.agentId),
+        })
+    },
     async getOne(params: GetParams): Promise<Todo | null> {
-        return repo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
+        return todoRepo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
     },
     async getOnePopulatedOrThrow(params: GetParams): Promise<PopulatedTodo> {
         const todo = await this.getOne(params)
@@ -42,7 +47,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
         if (params.status && todo.resolveUrl && params.status.continueFlow !== false) {
             await sendResolveRequest(todo.resolveUrl, params.status)
         }
-        await repo().update({
+        await todoRepo().update({
             id: params.id,
             platformId: params.platformId,
             projectId: params.projectId,
@@ -54,7 +59,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('assigneeId', params.assigneeId),
             ...(params.status && params.status.continueFlow !== false && !params.isTest ? { resolveUrl: null } : {}),
         })
-        todoSideEfffects(log).notify({
+        await todoSideEfffects(log).notify({
             socket: params.socket,
             todoId: params.id,
             projectId: params.projectId,
@@ -104,11 +109,16 @@ export const todoService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        let query = repo().createQueryBuilder('todo').where({
+        let query = todoRepo().createQueryBuilder('todo').where({
             platformId: params.platformId,
             projectId: params.projectId,
             ...spreadIfDefined('flowId', params.flowId),
         })
+        if (!isNil(params.agentId)) {
+            query = query.andWhere({
+                agentId: params.agentId,
+            })
+        }
         if (!isNil(params.assigneeId)) {
             query = query.andWhere({
                 assigneeId: params.assigneeId,
@@ -176,6 +186,10 @@ async function enrichTodoWithAssignee(
     }
 }
 
+type CountByParams = {
+    agentId: string
+}
+
 type ResolveParams = {
     id: string
     status: string
@@ -191,6 +205,7 @@ type GetParams = {
 
 type ListParams = {
     platformId: PlatformId
+    agentId?: string
     projectId: ProjectId
     flowId?: FlowId
     assigneeId?: UserId
