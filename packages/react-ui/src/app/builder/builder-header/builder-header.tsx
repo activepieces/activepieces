@@ -23,7 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -37,10 +36,10 @@ import {
   Permission,
   supportUrl,
 } from '@activepieces/shared';
+import { UserAvatarMenu } from './user-avatar-menu';
+import FlowActionMenu from '../../components/flow-actions-menu';
 
-import FlowActionMenu from '../components/flow-actions-menu';
-
-import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -211,7 +210,7 @@ export const BuilderHeader = () => {
           )}
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatar></UserAvatar>
+          <UserAvatarMenu></UserAvatarMenu>
         </div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
@@ -9,12 +8,12 @@ import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
-import { Avatar } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
 import { EditRoleDialog } from './edit-role-dialog';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;
@@ -43,13 +42,11 @@ export function ProjectMemberCard({
       key={member.id}
     >
       <div className="flex items-center space-x-4">
-        <Avatar className="hidden size-9 sm:flex">
-          <AvatarFallback className="justify-center items-center flex">
-            <span className="p-2">
-              {member.user.firstName.charAt(0).toLocaleUpperCase()}
-            </span>
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          name={member.user.firstName + ' ' + member.user.lastName}
+          email={member.user.email}
+          size={32}
+        ></UserAvatar>
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">
             {member.user.firstName} {member.user.lastName} (

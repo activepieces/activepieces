@@ -8,7 +8,6 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
 import {
@@ -47,6 +46,7 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 type UseAsDraftOptionProps = {
   versionNumber: number;
@@ -178,7 +178,8 @@ const FlowVersionDetailsCard = React.memo(
     return (
       <CardListItem interactive={false}>
         {flowVersion.updatedByUser && (
-          <AvatarLetter
+          <UserAvatar
+            size={24}
             name={
               flowVersion.updatedByUser.firstName +
               ' ' +
