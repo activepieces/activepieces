@@ -26,14 +26,18 @@ export const duplicateFileAction = createAction({
       required: true,
     }),
     mimeType: Property.StaticDropdown({
-      displayName: 'Convert to Google Workspace Format',
-      description: 'Optionally convert the file to a Google Workspace format',
+      displayName: 'Duplicate as',
+      description: 'If left unselected the file will be duplicated as it is',
       required: false,
       options: {
         options: [
           {
-            label: 'CSV to Google Spreadsheet',
+            label: 'Google Sheets',
             value: 'application/vnd.google-apps.spreadsheet',
+          },
+          {
+            label: 'Google Docs',
+            value: 'application/vnd.google-apps.document',
           }
         ],
       },
