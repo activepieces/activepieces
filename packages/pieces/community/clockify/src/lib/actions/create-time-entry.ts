@@ -3,11 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
 import { BASE_URL } from '../common';
 
-export const createTaskAction = createAction({
+export const createTimeEntryAction = createAction({
 	auth: clockifyAuth,
-	name: 'create-task',
-	displayName: 'Create Task',
-	description: 'Creates a new in a specific project.',
+	name: 'create-time-entry',
+	displayName: 'Create Time Entry',
+	description: 'Creates a new time entry.',
 	props: {
 		workspaceId: Property.Dropdown({
 			displayName: 'Workspace',
@@ -39,10 +39,22 @@ export const createTaskAction = createAction({
 				};
 			},
 		}),
+		start: Property.DateTime({
+			displayName: 'Start Datetime',
+			required: true,
+		}),
+		end: Property.DateTime({
+			displayName: 'End Datetime',
+			required: true,
+		}),
+		description: Property.LongText({
+			displayName: 'Entry Description',
+			required: false,
+		}),
 		projectId: Property.Dropdown({
 			displayName: 'Project',
 			refreshers: ['workspaceId'],
-			required: true,
+			required: false,
 			options: async ({ auth, workspaceId }) => {
 				if (!auth || !workspaceId) {
 					return {
@@ -69,33 +81,42 @@ export const createTaskAction = createAction({
 				};
 			},
 		}),
-		name: Property.ShortText({
-			displayName: 'Task Name',
-			required: true,
-		}),
-		status: Property.StaticDropdown({
-			displayName: 'Status',
+		taskId: Property.Dropdown({
+			displayName: 'Task',
+			refreshers: ['workspaceId', 'projectId'],
 			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Active',
-						value: 'ACTIVE',
+			options: async ({ auth, workspaceId, projectId }) => {
+				if (!auth || !workspaceId || !projectId) {
+					return {
+						disabled: true,
+						options: [],
+						placeholder: 'Please connect your account first.',
+					};
+				}
+
+				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
+					method: HttpMethod.GET,
+					url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+					headers: {
+						'X-Api-Key': auth as string,
 					},
-					{
-						label: 'Done',
-						value: 'DONE',
-					},
-					{
-						label: 'All',
-						value: 'ALL',
-					},
-				],
+				});
+
+				return {
+					disabled: false,
+					options: response.body.map((task) => ({
+						label: task.name,
+						value: task.id,
+					})),
+				};
 			},
 		}),
-		assigneeIds: Property.MultiSelectDropdown({
-			displayName: 'Assignee',
+		billable: Property.Checkbox({
+			displayName: 'Billable',
+			required: false,
+		}),
+		tagIds: Property.MultiSelectDropdown({
+			displayName: 'Tags',
 			refreshers: ['workspaceId'],
 			required: false,
 			options: async ({ auth, workspaceId }) => {
@@ -107,9 +128,9 @@ export const createTaskAction = createAction({
 					};
 				}
 
-				const response = await httpClient.sendRequest<{ id: string; email: string }[]>({
+				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
 					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/users`,
+					url: BASE_URL + `/workspaces/${workspaceId}/tags`,
 					headers: {
 						'X-Api-Key': auth as string,
 					},
@@ -117,28 +138,34 @@ export const createTaskAction = createAction({
 
 				return {
 					disabled: false,
-					options: response.body.map((user) => ({
-						label: user.email,
-						value: user.id,
+					options: response.body.map((tag) => ({
+						label: tag.name,
+						value: tag.id,
 					})),
 				};
 			},
 		}),
 	},
 	async run(context) {
-		const { workspaceId, projectId, name, status } = context.propsValue;
-		const assigneeIds = context.propsValue.assigneeIds ?? [];
+		const { workspaceId, projectId, start, end, description, billable, taskId } =
+			context.propsValue;
+		const tagIds = context.propsValue.tagIds ?? [];
 
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+			url: BASE_URL + `/workspaces/${workspaceId}/time-entries`,
 			headers: {
 				'X-Api-Key': context.auth as string,
 			},
 			body: {
-				name,
-				status,
-				assigneeIds,
+				billable,
+				description,
+				start,
+				end,
+				projectId,
+				taskId,
+				tagIds,
+				type: 'REGULAR',
 			},
 		});
 

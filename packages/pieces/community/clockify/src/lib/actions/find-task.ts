@@ -3,11 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
 import { BASE_URL } from '../common';
 
-export const createTaskAction = createAction({
+export const findTaskAction = createAction({
 	auth: clockifyAuth,
-	name: 'create-task',
-	displayName: 'Create Task',
-	description: 'Creates a new in a specific project.',
+	name: 'find-task',
+	displayName: 'Find Task',
+	description: 'Finds an existing task in a specific project.',
 	props: {
 		workspaceId: Property.Dropdown({
 			displayName: 'Workspace',
@@ -73,72 +73,23 @@ export const createTaskAction = createAction({
 			displayName: 'Task Name',
 			required: true,
 		}),
-		status: Property.StaticDropdown({
-			displayName: 'Status',
+		exactMatch: Property.Checkbox({
+			displayName: 'Exact Match ?',
 			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Active',
-						value: 'ACTIVE',
-					},
-					{
-						label: 'Done',
-						value: 'DONE',
-					},
-					{
-						label: 'All',
-						value: 'ALL',
-					},
-				],
-			},
-		}),
-		assigneeIds: Property.MultiSelectDropdown({
-			displayName: 'Assignee',
-			refreshers: ['workspaceId'],
-			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const response = await httpClient.sendRequest<{ id: string; email: string }[]>({
-					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/users`,
-					headers: {
-						'X-Api-Key': auth as string,
-					},
-				});
-
-				return {
-					disabled: false,
-					options: response.body.map((user) => ({
-						label: user.email,
-						value: user.id,
-					})),
-				};
-			},
 		}),
 	},
 	async run(context) {
-		const { workspaceId, projectId, name, status } = context.propsValue;
-		const assigneeIds = context.propsValue.assigneeIds ?? [];
+		const { workspaceId, projectId, name, exactMatch } = context.propsValue;
 
 		const response = await httpClient.sendRequest({
-			method: HttpMethod.POST,
+			method: HttpMethod.GET,
 			url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			headers: {
 				'X-Api-Key': context.auth as string,
 			},
-			body: {
+			queryParams: {
 				name,
-				status,
-				assigneeIds,
+				'strict-name-search': exactMatch ? 'true' : 'false',
 			},
 		});
 

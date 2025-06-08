@@ -1,13 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../index';
 import { BASE_URL } from '../common';
 
-export const createTaskAction = createAction({
+export const findTimeEntryAction = createAction({
 	auth: clockifyAuth,
-	name: 'create-task',
-	displayName: 'Create Task',
-	description: 'Creates a new in a specific project.',
+	name: 'find-time-entry',
+	displayName: 'Find Time Entry',
+	description: 'Finds a time entry by description, start datetime or end datetime.',
 	props: {
 		workspaceId: Property.Dropdown({
 			displayName: 'Workspace',
@@ -39,10 +39,22 @@ export const createTaskAction = createAction({
 				};
 			},
 		}),
+		start: Property.DateTime({
+			displayName: 'Start Datetime',
+			required: false,
+		}),
+		end: Property.DateTime({
+			displayName: 'End Datetime',
+			required: false,
+		}),
+		description: Property.LongText({
+			displayName: 'Entry Description',
+			required: false,
+		}),
 		projectId: Property.Dropdown({
 			displayName: 'Project',
 			refreshers: ['workspaceId'],
-			required: true,
+			required: false,
 			options: async ({ auth, workspaceId }) => {
 				if (!auth || !workspaceId) {
 					return {
@@ -69,37 +81,12 @@ export const createTaskAction = createAction({
 				};
 			},
 		}),
-		name: Property.ShortText({
-			displayName: 'Task Name',
-			required: true,
-		}),
-		status: Property.StaticDropdown({
-			displayName: 'Status',
+		taskId: Property.Dropdown({
+			displayName: 'Task',
+			refreshers: ['workspaceId', 'projectId'],
 			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Active',
-						value: 'ACTIVE',
-					},
-					{
-						label: 'Done',
-						value: 'DONE',
-					},
-					{
-						label: 'All',
-						value: 'ALL',
-					},
-				],
-			},
-		}),
-		assigneeIds: Property.MultiSelectDropdown({
-			displayName: 'Assignee',
-			refreshers: ['workspaceId'],
-			required: false,
-			options: async ({ auth, workspaceId }) => {
-				if (!auth || !workspaceId) {
+			options: async ({ auth, workspaceId, projectId }) => {
+				if (!auth || !workspaceId || !projectId) {
 					return {
 						disabled: true,
 						options: [],
@@ -107,9 +94,9 @@ export const createTaskAction = createAction({
 					};
 				}
 
-				const response = await httpClient.sendRequest<{ id: string; email: string }[]>({
+				const response = await httpClient.sendRequest<{ id: string; name: string }[]>({
 					method: HttpMethod.GET,
-					url: BASE_URL + `/workspaces/${workspaceId}/users`,
+					url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 					headers: {
 						'X-Api-Key': auth as string,
 					},
@@ -117,29 +104,42 @@ export const createTaskAction = createAction({
 
 				return {
 					disabled: false,
-					options: response.body.map((user) => ({
-						label: user.email,
-						value: user.id,
+					options: response.body.map((task) => ({
+						label: task.name,
+						value: task.id,
 					})),
 				};
 			},
 		}),
 	},
 	async run(context) {
-		const { workspaceId, projectId, name, status } = context.propsValue;
-		const assigneeIds = context.propsValue.assigneeIds ?? [];
+		const { workspaceId, projectId, start, end, description, taskId } = context.propsValue;
 
-		const response = await httpClient.sendRequest({
-			method: HttpMethod.POST,
-			url: BASE_URL + `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+		const currentUserResponse = await httpClient.sendRequest<{ id: string; email: string }>({
+			method: HttpMethod.GET,
+			url: BASE_URL + `/user`,
 			headers: {
 				'X-Api-Key': context.auth as string,
 			},
-			body: {
-				name,
-				status,
-				assigneeIds,
+		});
+
+		const userId = currentUserResponse.body.id;
+
+		const qs: QueryParams = {};
+
+		if (description) qs['description'] = description;
+		if (start) qs['start'] = start;
+		if (end) qs['end'] = end;
+		if (projectId) qs['project'] = projectId;
+		if (taskId) qs['task'] = taskId;
+
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.GET,
+			url: BASE_URL + `/workspaces/${workspaceId}/user/${userId}/time-entries`,
+			headers: {
+				'X-Api-Key': context.auth as string,
 			},
+			queryParams: qs,
 		});
 
 		return response.body;
