@@ -1823,6 +1823,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "jadhavharshh",
+      "name": "Harsh Jadhav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182950168?v=4",
+      "profile": "https://github.com/jadhavharshh",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
