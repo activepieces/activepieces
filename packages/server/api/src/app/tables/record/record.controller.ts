@@ -28,6 +28,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         const records = await recordService.create({
             request: request.body,
             projectId: request.principal.projectId,
+            logger: request.log,
         })
         await reply.status(StatusCodes.CREATED).send(records)
         await sendRecordsWebhooks({

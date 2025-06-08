@@ -411,6 +411,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Sanket6652"><img src="https://avatars.githubusercontent.com/u/119039046?v=4?s=100" width="100px;" alt="Sanket6652"/><br /><sub><b>Sanket6652</b></sub></a><br /><a href="#plugin-Sanket6652" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Ani-4x"><img src="https://avatars.githubusercontent.com/u/174266491?v=4?s=100" width="100px;" alt="Animesh"/><br /><sub><b>Animesh</b></sub></a><br /><a href="#plugin-Ani-4x" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://tarvent.com"><img src="https://avatars.githubusercontent.com/u/13419128?v=4?s=100" width="100px;" alt="Derek Johnson"/><br /><sub><b>Derek Johnson</b></sub></a><br /><a href="#plugin-DerekJDev" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mamiefurax"><img src="https://avatars.githubusercontent.com/u/3955802?v=4?s=100" width="100px;" alt="MamieFurax"/><br /><sub><b>MamieFurax</b></sub></a><br /><a href="#plugin-mamiefurax" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
