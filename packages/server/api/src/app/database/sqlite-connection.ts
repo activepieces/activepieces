@@ -110,6 +110,7 @@ import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/17
 import { AddMcpToolEntitySQLITE1748365593414 } from './migration/sqlite/1748365593414-AddMcpToolEntitySQLITE'
 import { AddMcpRunEntitySQLITE1748365786218 } from './migration/sqlite/1748365786218-AddMcpRunEntitySQLITE'
 import { AIProviderRefactorSqlite1748824241409 } from './migration/sqlite/1748824241409-AIProviderRefactorSqlite'
+import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqlite/1749129178686-AddMcpToolFlowCascadeDeleteSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -237,6 +238,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolEntitySQLITE1748365593414,
         AddMcpRunEntitySQLITE1748365786218,
         AIProviderRefactorSqlite1748824241409,
+        AddMcpToolFlowCascadeDeleteSqlite1749129178686,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

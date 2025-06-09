@@ -4,9 +4,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApFlagId, isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
 
@@ -31,54 +32,51 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 
 const UsageLimitsButton = React.memo(() => {
   const { project } = projectHooks.useCurrentProject();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  //for ce edition, we don't have plan and usage
-  if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
+  if (edition === ApEdition.COMMUNITY) {
     return null;
   }
 
-  const usageCardComponent = () => {
-    return (
-      <div className="flex flex-col gap-2 w-full px-2">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col gap-3">
-              <UsageProgress
-                name={t('Tasks')}
-                value={project.usage.tasks}
-                max={project.plan.tasks}
-              />
-              <UsageProgress
-                name={t('AI Credits')}
-                value={project.usage.aiCredits}
-                max={project.plan.aiCredits}
-              />
-            </div>
+  return (
+    <div className="flex flex-col gap-2 w-full px-2">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            <UsageProgress
+              name={t('Tasks')}
+              value={project.usage.tasks}
+              max={project.plan.tasks}
+            />
+            <UsageProgress
+              name={t('AI Credits')}
+              value={project.usage.aiCredits}
+              max={project.plan.aiCredits}
+            />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              {project.usage.nextLimitResetDate && (
-                <div className="text-xs text-muted-foreground flex justify-between w-full">
-                  <span>
-                    {t('Usage resets in')}{' '}
-                    {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
-                  </span>
-                  <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-                    <Link to={'/platform/setup/billing'} className="w-fit">
-                      <span className="text-xs text-primary underline">
-                        {t('Manage')}
-                      </span>
-                    </Link>
-                  </FlagGuard>
-                </div>
-              )}
-            </div>
+        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            {project.usage.nextLimitResetDate && (
+              <div className="text-xs text-muted-foreground flex justify-between w-full">
+                <span>
+                  {t('Usage resets in')}{' '}
+                  {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+                </span>
+                <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+                  <Link to={'/platform/setup/billing'} className="w-fit">
+                    <span className="text-xs text-primary underline">
+                      {t('Manage')}
+                    </span>
+                  </Link>
+                </FlagGuard>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    );
-  };
-  return <>{usageCardComponent()}</>;
+    </div>
+  );
 });
 
 type UsageProgressProps = {
