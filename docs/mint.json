@@ -44,6 +44,10 @@
       "url": "developers"
     },
     {
+      "name": "Embedding",
+      "url": "embedding"
+    },
+    {
       "name": "API Reference",
       "url": "endpoints"
     },
@@ -134,7 +138,8 @@
         "handbook/engineering/playbooks/infrastructure",
         "handbook/engineering/playbooks/bullboard",
         "handbook/engineering/playbooks/database-migration",
-        "handbook/engineering/playbooks/product-announcement"
+        "handbook/engineering/playbooks/product-announcement",
+        "handbook/engineering/playbooks/frontend-best-practices"
       ]
     },
     {
@@ -421,21 +426,35 @@
       ]
     },
     {
-      "group": "Embedding",
+      "group": "Essentials",
       "pages": [
         "embedding/overview",
         "embedding/provision-users",
-        "embedding/embed-builder",
-        "embedding/mcps",
+        "embedding/embed-builder"
+      ]
+    },
+   
+    {
+      "group": "Predefined Connections",
+      "pages": [
+        "embedding/predefined-connections/overview",
+        "embedding/predefined-connections/development",
+        "embedding/predefined-connections/production"
+      ]
+    },
+    {
+      "group": "Misc",
+      "pages": [
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
+        "embedding/mcps",
         "embedding/sdk-server-requests",
         "embedding/sdk-changelog"
       ]
     },
     {
-      "group": "Admin Console",
+      "group": "Platform Admin",
       "pages": [
         "admin-console/overview",
         "admin-console/appearance",

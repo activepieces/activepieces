@@ -20,6 +20,7 @@ import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useDialogStore } from '@/lib/dialogs-store';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { isNil } from '@activepieces/shared';
 
 export default function Billing() {

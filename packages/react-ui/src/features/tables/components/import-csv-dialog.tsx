@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogInIcon } from 'lucide-react';
+import { parse } from 'papaparse';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
@@ -25,6 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { ApFlagId } from '@activepieces/shared';
@@ -37,15 +39,16 @@ import { FieldsMappingControl } from './fields-mapping';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [tableId, setRecords, serverFields, recordsCount] = useTableState(
-    (state) => [
+  const [tableId, setRecords, serverFields, serverRecords, recordsCount] =
+    useTableState((state) => [
       state.table.id,
       state.setRecords,
       state.serverFields,
+      state.serverRecords,
       state.records.length,
-    ],
-  );
+    ]);
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
+  const [csvRecords, setCsvRecords] = useState<string[][]>([]);
   const { data: maxFileSize } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FILE_SIZE_MB,
   );
@@ -89,19 +92,13 @@ const ImportCsvDialog = () => {
   const { mutate: importCsv, isPending: isLoading } = useMutation({
     mutationFn: async (data: { file: File; fieldsMapping: FieldsMapping }) => {
       setServerError(null);
-      const csv = await data.file.text();
-      await recordsApi.importCsv({
-        csv,
+      const records = await recordsApi.importCsv({
+        csvRecords,
         tableId,
         fieldsMapping: data.fieldsMapping,
         maxRecordsLimit: (maxRecords ?? 1000) - recordsCount,
       });
-      const records = await recordsApi.list({
-        tableId,
-        limit: 99999999, // TODO: we should implement pagination in ui.
-        cursor: undefined,
-      });
-      setRecords(records.data);
+      setRecords([...serverRecords, ...records]);
     },
     onSuccess: async () => {
       setIsOpen(false);
@@ -163,10 +160,22 @@ const ImportCsvDialog = () => {
                       accept=".csv"
                       onChange={async (e) => {
                         field.onChange(e.target.files?.[0]);
-                        const readCsvColumns = await e.target.files?.[0].text();
-                        const csvColumnsArray =
-                          readCsvColumns?.split('\n')[0].split(',') ?? [];
-                        setCsvColumns(csvColumnsArray);
+
+                        const csvRecords = await new Promise<string[][]>(
+                          (resolve) => {
+                            if (!e.target.files || !e.target.files[0]) return;
+                            parse(e.target.files[0], {
+                              header: false,
+                              skipEmptyLines: 'greedy',
+                              worker: true,
+                              complete: (results) => {
+                                resolve(results.data as string[][]);
+                              },
+                            });
+                          },
+                        );
+                        setCsvColumns(csvRecords[0] ?? []);
+                        setCsvRecords(csvRecords.slice(1));
                       }}
                     />
                   </FormControl>
@@ -175,22 +184,24 @@ const ImportCsvDialog = () => {
               )}
             />
 
-            {csvColumns.length > 0 && (
-              <FormField
-                control={form.control}
-                name="fieldsMapping"
-                key={form.watch('file')?.name}
-                render={({ field }) => (
-                  <FormItem>
-                    <FieldsMappingControl
-                      fields={serverFields}
-                      csvColumns={csvColumns}
-                      onChange={field.onChange}
-                    />
-                  </FormItem>
-                )}
-              />
-            )}
+            <ScrollArea className="max-h-[calc(100vh-500px)] overflow-y-auto flex-1">
+              {csvColumns.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="fieldsMapping"
+                  key={form.watch('file')?.name}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FieldsMappingControl
+                        fields={serverFields}
+                        csvColumns={csvColumns}
+                        onChange={field.onChange}
+                      />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </ScrollArea>
 
             {serverError && (
               <div className=" flex items-center justify-between">

@@ -14,7 +14,7 @@ const CopyTextTooltip = ({
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>
-        <div className="flex gap-2 items-center">
+        <div className="flex text-xs gap-2 items-center">
           {title}: {text || '-'}{' '}
           <CopyButton
             withoutTooltip={true}

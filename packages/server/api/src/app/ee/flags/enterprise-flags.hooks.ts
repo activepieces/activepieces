@@ -6,6 +6,7 @@ import { platformUtils } from '../../platform/platform.utils'
 import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { appearanceHelper } from '../helper/appearance-helper'
+import { flagService } from '../../flags/flag.service'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
@@ -20,6 +21,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
+        modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = flagService.isCloudPlatform(platformId)
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
