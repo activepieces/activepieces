@@ -1,14 +1,9 @@
-import { McpToolType } from '@activepieces/shared';
-import type { McpWithTools } from '@activepieces/shared';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
-
-import { McpPieceActionsDialog } from './mcp-piece-actions';
-import { McpPiecesContent } from './mcp-pieces-content';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +25,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import type { McpWithTools } from '@activepieces/shared';
+import { McpToolType } from '@activepieces/shared';
+
+import { McpPieceActionsDialog } from './mcp-piece-actions';
+import { McpPiecesContent } from './mcp-pieces-content';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;

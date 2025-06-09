@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -121,9 +120,6 @@ function AppConnectionsPage() {
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
-
-  const bulkDeleteConnections =
-    appConnectionsMutations.useBulkDeleteAppConnections(refetch);
 
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
 
