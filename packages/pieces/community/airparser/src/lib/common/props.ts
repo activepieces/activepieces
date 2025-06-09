@@ -1,59 +1,76 @@
-import { Property, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from './index';
+import { Property } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
+import { airparserApiCall } from './index';
 
 export const inboxIdDropdown = Property.Dropdown({
-  displayName: 'Inbox',
-  required: true,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Please connect your Airparser account',
-        options: [],
-      };
-    }
-    const apiKey = auth as string;
-    const inboxes = await makeRequest(apiKey, HttpMethod.GET, '/inboxes');
-    const options: DropdownOption<string>[] = inboxes.map((inbox: { _id: string; name: string }) => ({
-      label: inbox.name,
-      value: inbox._id,
-    }));
+	displayName: 'Inbox',
+	required: true,
+	refreshers: [],
+	options: async ({ auth }) => {
+		if (!auth) {
+			return {
+				disabled: true,
+				placeholder: 'Please connect your Airparser account.',
+				options: [],
+			};
+		}
+		const response = await airparserApiCall<{ _id: string; name: string }[]>({
+			apiKey: auth as string,
+			resourceUri: '/inboxes',
+			method: HttpMethod.GET,
+		});
 
-    return {
-      disabled: false,
-      options,
-    };
-  },
+		return {
+			disabled: false,
+			options: response.map((inbox) => ({
+				label: inbox.name,
+				value: inbox._id,
+			})),
+		};
+	},
 });
 
 export const documentIdDropdown = Property.Dropdown({
-  displayName: 'Document',
-  required: true,
-  refreshers: ['inboxId'],
-  options: async ({ auth, inboxId }) => {
-    if (!auth || !inboxId) {
-      return {
-        disabled: true,
-        placeholder: 'Select an inbox first',
-        options: [],
-      };
-    }
+	displayName: 'Document',
+	required: true,
+	refreshers: ['inboxId'],
+	options: async ({ auth, inboxId }) => {
+		if (!auth || !inboxId) {
+			return {
+				disabled: true,
+				placeholder: 'Select an inbox first.',
+				options: [],
+			};
+		}
 
-    const apiKey = auth as string;
-    const response = await makeRequest(apiKey, HttpMethod.GET, `/inboxes/${inboxId}/docs`);
-    
-    const docs = response.docs ?? [];
+		let hasMore = true;
+		let page = 1;
 
-    const options: DropdownOption<string>[] = docs.map((doc: { _id: string; name?: string }) => ({
-      label: doc.name || doc._id,
-      value: doc._id,
-    }));
+		const docs = [];
 
-    return {
-      disabled: false,
-      options,
-    };
-  },
+		do {
+			const response = await airparserApiCall<{
+				hasPrevPage: boolean;
+				hasNextPage: boolean;
+				docs: { _id: string; name: string }[];
+			}>({
+				apiKey: auth as string,
+				method: HttpMethod.GET,
+				resourceUri: `/inboxes/${inboxId}/docs`,
+				query: {
+					page,
+				},
+			});
+
+			if (!isNil(response.docs)) docs.push(...response.docs);
+			hasMore = response.hasNextPage;
+			page++;
+		} while (hasMore);
+
+		return {
+			disabled: false,
+			options: docs.map((doc) => ({ label: doc.name, value: doc._id })),
+		};
+	},
 });

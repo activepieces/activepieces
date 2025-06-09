@@ -1,28 +1,65 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import {
+	httpClient,
+	HttpMessageBody,
+	HttpMethod,
+	HttpRequest,
+	QueryParams,
+} from '@activepieces/pieces-common';
 
-export async function makeRequest(
-  apiKey: string,
-  method: HttpMethod,
-  path: string,
-  body?: unknown
-) {
-  const url = `https://api.airparser.com${path}`;
-  const isFormData =
-    typeof body === 'object' &&
-    body !== null &&
-    typeof (body as any).getHeaders === 'function';
+export const BASE_URL = 'https://api.airparser.com';
 
-  const response = await httpClient.sendRequest({
-    method,
-    url,
-    headers: {
-      'X-API-Key': apiKey,
-      ...(isFormData
-        ? (body as any).getHeaders()
-        : { 'Content-Type': 'application/json' }),
-    },
-    body,
-  });
+export type AirparserApiCallParams = {
+	apiKey: string;
+	method: HttpMethod;
+	resourceUri: string;
+	query?: Record<string, string | number | string[] | undefined>;
+	body?: any;
+};
 
-  return response.body;
+export async function airparserApiCall<T extends HttpMessageBody>({
+	apiKey,
+	method,
+	resourceUri,
+	query,
+	body,
+}: AirparserApiCallParams): Promise<T> {
+	const qs: QueryParams = {};
+
+	if (query) {
+		for (const [key, value] of Object.entries(query)) {
+			if (value !== null && value !== undefined) {
+				qs[key] = String(value);
+			}
+		}
+	}
+
+	const request: HttpRequest = {
+		method,
+		url: BASE_URL + resourceUri,
+		headers: {
+			'X-API-Key': apiKey,
+		},
+		queryParams: qs,
+		body,
+	};
+
+	const response = await httpClient.sendRequest<T>(request);
+	return response.body;
+}
+
+export interface GetDocumentResponse {
+	json: any;
+	_id: string;
+	inbox_id: string;
+	owner_id: string;
+	name: string;
+	data_text: string;
+	format: string;
+	status: string;
+	created_at: string;
+	processed_at: string;
+	secret: string;
+	filename: string;
+	content_type: string;
+	credits: number;
 }

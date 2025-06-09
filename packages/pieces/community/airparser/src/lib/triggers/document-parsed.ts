@@ -1,81 +1,96 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { airparserAuth } from '../../index';
-import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
+import { airparserAuth } from '../../index';
+import { airparserApiCall, GetDocumentResponse } from '../common';
 import { inboxIdDropdown } from '../common/props';
 
 export const documentParsedTrigger = createTrigger({
-  auth: airparserAuth,
-  name: 'document_parsed',
-  displayName: 'Document Parsed',
-  description: 'Triggers when a new document is parsed in a specific Airparser inbox.',
-  type: TriggerStrategy.WEBHOOK,
-  props: {
-    inboxId: inboxIdDropdown
-  },
-  async onEnable(context) {
-    const apiKey = context.auth as string;
-    const { inboxId } = context.propsValue;
+	auth: airparserAuth,
+	name: 'document_parsed',
+	displayName: 'Document Parsed',
+	description: 'Triggers when a new document is parsed in a specific inbox.',
+	type: TriggerStrategy.WEBHOOK,
+	props: {
+		inboxId: inboxIdDropdown,
+		markdown: Property.MarkDown({
+			value: `## Airparser Webhook Setup
+			To use this trigger, you need to manually set up a webhook in your Airparser account:
 
-    const webhook = await makeRequest(
-      apiKey,
-      HttpMethod.POST,
-      `/inboxes/${inboxId}/webhooks`,
-      {
-        url: context.webhookUrl,
-        event: 'document.parsed'
-      }
-    );
+			1. Login to your Airparser account.
+			2. Navigate to **Integrations** > **Webhooks** in the left sidebar.
+			3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:
+			\`\`\`text
+			{{webhookUrl}}
+			\`\`\`
+			4. Click Save to register the webhook.
+			`,
+		}),
+	},
+	async onEnable(context) {},
 
-    await context.store.put('webhookId', webhook.id);
-  },
+	async onDisable(context) {},
 
-  async onDisable(context) {
-    const apiKey = context.auth as string;
-    const { inboxId } = context.propsValue;
-    const webhookId = await context.store.get('webhookId');
+	async run(context) {
+		const payload = context.payload.body as { inbox_id: string; doc_id: string; event: string };
 
-    if (webhookId) {
-      await makeRequest(
-        apiKey,
-        HttpMethod.DELETE,
-        `/inboxes/${inboxId}/webhooks/${webhookId}`
-      );
-    }
-  },
+		if (payload.event === 'doc.parsed' && payload.inbox_id === context.propsValue.inboxId) {
+			return [payload];
+		}
+		return [];
+	},
 
-  async run(context) {
-    return [context.payload.body];
-  },
+	async test(context) {
+		const { inboxId } = context.propsValue;
+		const listDocResponse = await airparserApiCall<{
+			hasPrevPage: boolean;
+			hasNextPage: boolean;
+			docs: { _id: string; name: string }[];
+		}>({
+			apiKey: context.auth as string,
+			method: HttpMethod.GET,
+			resourceUri: `/inboxes/${inboxId}/docs`,
+			query: {
+				statuses: 'parsed',
+			},
+		});
 
-  async test(context) {
-    const apiKey = context.auth as string;
-    const { inboxId } = context.propsValue;
+		if (isNil(listDocResponse.docs)) return [];
 
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      `/inboxes/${inboxId}/documents?limit=5&sort=-created_at`
-    );
+		const items = [];
+		for (const doc of listDocResponse.docs) {
+			const response = await airparserApiCall<GetDocumentResponse>({
+				apiKey: context.auth,
+				method: HttpMethod.GET,
+				resourceUri: `/docs/${doc._id}/extended`,
+			});
 
-    return response.documents || [];
-  },
+			items.push({
+				inbox_id: inboxId,
+				doc_id: doc._id,
+				event: 'doc.parsed',
+				payload: {
+					filename: response.filename,
+					parsed: response.json,
+				},
+			});
+		}
 
-  sampleData: {
-    "id": "doc_abc123",
-    "inbox_id": "inbox_xyz789",
-    "created_at": "2023-11-15T10:30:00Z",
-    "status": "parsed",
-    "file_name": "invoice.pdf",
-    "file_size": 125000,
-    "mime_type": "application/pdf",
-    "parsed_data": {
-      "total": "$1,234.56",
-      "date": "2023-11-15",
-      "invoice_number": "INV-001"
-    },
-    "meta": {
-      "external_id": "12345"
-    }
-  }
+		return items;
+	},
+
+	sampleData: {
+		inbox_id: '6846e11bb1abe002cb1ada14',
+		doc_id: '6846ee9db1abe002cb1b05ad',
+		event: 'doc.parsed',
+		payload: {
+			filename: 'sample.pdf',
+			parsed: {
+				billing_address: 'Your Company Name\nYour Address City, State Zip',
+				shipping_address: 'Client Name Address City, State Zip',
+				totalamount: '200.00',
+				created_at: '2025-06-09T14:24:29.099Z',
+			},
+		},
+	},
 });
