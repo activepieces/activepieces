@@ -9,7 +9,7 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AIProviderEntity } from '../ai-providers/ai-provider-entity'
+import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'

@@ -287,8 +287,7 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
-        console.log('platformId', platformId)
-        console.log('cloudPlatformId', cloudPlatformId)
+
         return platformId === cloudPlatformId
     },
 }

@@ -46,7 +46,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request, _reply) => {
-            if (![PrincipalType.ENGINE].includes(request.principal.type)) {
+            if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
