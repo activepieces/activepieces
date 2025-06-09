@@ -1,17 +1,17 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../../index';
+import { COUNTRY_OPTIONS } from '../constants/countries';
+import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
+import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleSearchConfig, SerpApiEngine } from '../types';
-import { LANGUAGE_OPTIONS } from '../constants/languages';
-import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
-import { COUNTRY_OPTIONS } from '../constants/countries';
 
 export const googleSearch = createAction({
   auth: serpApiAuth,
   name: 'google_search',
   displayName: 'Google Search',
-  description: 'Retrieve organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis',
+  description: 'Retrieves organic search results for specific keywords with advanced filtering options for SEO monitoring and competitor analysis.',
 
   props: {
     query: Property.ShortText({

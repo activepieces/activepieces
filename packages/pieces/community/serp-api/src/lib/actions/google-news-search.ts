@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../../index';
+import { COUNTRY_OPTIONS } from '../constants/countries';
+import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';
 import { GoogleNewsSearchConfig, SerpApiEngine } from '../types';
-import { LANGUAGE_OPTIONS } from '../constants/languages';
-import { COUNTRY_OPTIONS } from '../constants/countries';
 
 export const googleNewsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_news_search',
   displayName: 'Google News Search',
-  description: 'Track recent news articles for keywords or brands to monitor media mentions and trending topics',
+  description: 'Track recent news articles for keywords or brands to monitor media mentions and trending topics.',
 
   props: {
     query: Property.ShortText({
@@ -89,7 +89,6 @@ export const googleNewsSearch = createAction({
       const searchConfig: GoogleNewsSearchConfig = {
         api_key: auth,
         engine: SerpApiEngine.GOOGLE_NEWS,
-        tbm: 'nws',
         q: propsValue.query,
         hl: propsValue.hl,
         gl: propsValue.gl,

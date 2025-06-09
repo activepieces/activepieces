@@ -7,7 +7,7 @@ export const googleTrendsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_trends_search',
   displayName: 'Google Trends Search',
-  description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights',
+  description: 'Discover trending keywords over time to inform content strategy and market research with geographic insights.',
 
   props: {
     query: Property.ShortText({

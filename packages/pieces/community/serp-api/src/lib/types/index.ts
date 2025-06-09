@@ -80,7 +80,6 @@ export interface GoogleSearchConfig extends BaseSerpApiConfig {
 export interface GoogleNewsSearchConfig extends BaseSerpApiConfig {
   engine: SerpApiEngine.GOOGLE_NEWS;
   /** News search modifier */
-  tbm: 'nws';
   /** Time-based search parameter */
   tbs?: string;
   /** Location for news search */

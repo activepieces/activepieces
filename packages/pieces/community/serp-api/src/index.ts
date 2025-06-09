@@ -1,16 +1,14 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { googleNewsSearch } from './lib/actions/google-news-search';
+import { googleSearch } from './lib/actions/google-search';
+import { googleTrendsSearch } from './lib/actions/google-trends-search';
+import { youtubeSearch } from './lib/actions/youtube-search';
 import { SerpApiClient } from './lib/services/serp-api-client';
 import { SerpApiValidator } from './lib/utils/validators';
 
-// Import all actions
-import { googleSearch } from './lib/actions/google-search';
-import { googleNewsSearch } from './lib/actions/google-news-search';
-import { youtubeSearch } from './lib/actions/youtube-search';
-import { googleTrendsSearch } from './lib/actions/google-trends-search';
-
 export const serpApiAuth = PieceAuth.SecretText({
-  displayName: 'SerpApi API Key',
-  description: 'Enter your SerpApi API key. You can get one from https://serpapi.com/dashboard',
+  displayName: 'API Key',
+  description: `You can obtain your API key from [Dashboard](https://serpapi.com/dashboard).`,
   required: true,
   validate: async ({ auth }) => {
     try {
@@ -72,7 +70,7 @@ export const serpApi = createPiece({
   auth: serpApiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/serp-api.png',
-  authors: ['SerpApi Integration Team'],
+  authors: ['AnkitSharmaOnGithub'],
   actions: [
     googleSearch,
     googleNewsSearch,
@@ -81,20 +79,3 @@ export const serpApi = createPiece({
   ],
   triggers: [],
 });
-
-export type {
-  SerpApiConfig,
-  SerpApiResponse,
-  SerpApiEngine,
-  GoogleSearchConfig,
-  GoogleNewsSearchConfig,
-  YouTubeSearchConfig,
-  GoogleTrendsSearchConfig,
-  ValidationResult,
-} from './lib/types';
-
-// Export client for advanced usage scenarios
-export { SerpApiClient } from './lib/services/serp-api-client';
-
-// Export validators for external validation needs
-export { SerpApiValidator, VALIDATION_CONSTANTS } from './lib/utils/validators';

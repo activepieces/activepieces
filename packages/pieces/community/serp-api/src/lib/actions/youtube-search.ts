@@ -5,17 +5,16 @@
 
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { serpApiAuth } from '../../index';
-import { SerpApiClient } from '../services/serp-api-client';
-import { YouTubeSearchConfig, SerpApiEngine } from '../types';
-import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { COUNTRY_OPTIONS } from '../constants/countries';
+import { LANGUAGE_OPTIONS } from '../constants/languages';
+import { SerpApiClient } from '../services/serp-api-client';
+import { SerpApiEngine, YouTubeSearchConfig } from '../types';
 
 export const youtubeSearch = createAction({
   auth: serpApiAuth,
   name: 'youtube_search',
   displayName: 'YouTube Search',
-  description: 'Retrieve top video content results from YouTube for specific keywords or topics with advanced filtering',
-
+  description: 'Retrieve top video content results from YouTube for specific keywords or topics with advanced filtering.',
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

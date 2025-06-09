@@ -1,4 +1,4 @@
-import { ValidationResult, SerpApiConfig, SerpApiEngine } from '../types';
+import { SerpApiConfig, SerpApiEngine, ValidationResult } from '../types';
 
 // Validation constants
 export const VALIDATION_CONSTANTS = {

@@ -1,10 +1,10 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import {
-  SerpApiConfig,
-  SerpApiResponse,
-  RequestOptions,
-  SerpApiEngine,
   GoogleSearchConfig,
+  RequestOptions,
+  SerpApiConfig,
+  SerpApiEngine,
+  SerpApiResponse,
 } from '../types';
 import { SerpApiValidator } from '../utils/validators';
 
@@ -242,9 +242,6 @@ export class SerpApiClient {
   private transformResponse<T>(rawResponse: any): SerpApiResponse<T> {
     return {
       data: rawResponse as T,
-      search_metadata: rawResponse.search_metadata,
-      search_parameters: rawResponse.search_parameters,
-      search_information: rawResponse.search_information,
     };
   }
 
