@@ -37,10 +37,7 @@ import {
 import { UserFullName } from '@/components/ui/user-fullname';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
-import {
-  appConnectionsMutations,
-  appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';

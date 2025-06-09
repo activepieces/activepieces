@@ -21,7 +21,6 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
-import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
   globalConnectionsMutations,

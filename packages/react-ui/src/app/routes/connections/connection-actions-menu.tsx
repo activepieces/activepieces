@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -12,15 +11,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   AppConnectionWithoutSensitiveData,
   Permission,
 } from '@activepieces/shared';
-import { appConnectionsApi } from '@/features/connections/lib/api/app-connections';
-import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
-
 
 interface ConnectionActionMenuProps {
   connections: AppConnectionWithoutSensitiveData[];
@@ -43,7 +39,6 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
 
   const bulkDeleteConnections =
     appConnectionsMutations.useBulkDeleteAppConnections(refetch);
-
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
