@@ -21,7 +21,7 @@ export const flagService = {
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
         return flagRepo().findOneBy({ id: flagId })
     },
-    async getAll(platformId: string | null): Promise<Flag[]> {
+    async getAll(): Promise<Flag[]> {
         const flags = await flagRepo().findBy({
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
@@ -109,7 +109,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.IS_CLOUD_PLATFORM,
-                value: this.isCloudPlatform(platformId),
+                value: false,
                 created,
                 updated,
             },

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SupportedAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { BillingUsageType, platformUsageService } from '../ee/platform/platform-usage-service'
@@ -15,26 +15,17 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         disableRequestLogging: false,
         replyOptions: {
             getUpstream(request, _base) {
-                const params = request.params as Record<string, string>
-                if (isNil(params) || !params['provider']) {
+                const params = request.params as Record<string, string> | null
+                const provider = params?.['provider']
+                const providerConfig = getProviderConfig(provider)
+                if (isNil(providerConfig)) {
                     throw new ActivepiecesError({
                         code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
                         params: {
-                            provider: params['provider'],
+                            provider: provider ?? 'unknown',
                         },
                     })
                 }
-                const provider = params['provider'] as string
-                const providerConfig = SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-                if (!providerConfig) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-                        params: {
-                            provider: params['provider'],
-                        },
-                    })
-                }
-
                 return providerConfig.baseUrl
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -101,3 +92,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
+    if (isNil(provider)) {
+        return undefined
+    }
+    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}

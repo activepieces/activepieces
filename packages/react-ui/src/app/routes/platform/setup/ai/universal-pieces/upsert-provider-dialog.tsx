@@ -1,12 +1,9 @@
-import { SupportedAIProvider } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +19,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { SupportedAIProvider } from '@activepieces/shared';
+
+import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 const UpsertAIProviderInput = Type.Object({
   provider: Type.String(),

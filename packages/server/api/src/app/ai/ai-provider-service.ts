@@ -42,7 +42,7 @@ export const aiProviderService = {
     },
 
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
-        cloudAdminGuard(platformId)
+        assertOnlyCloudPlatformCanEditOnCloud(platformId)
 
         await aiProviderRepo().upsert({
             id: apId(),
@@ -55,7 +55,7 @@ export const aiProviderService = {
     },
 
     async delete(platformId: PlatformId, provider: string): Promise<void> {
-        cloudAdminGuard(platformId)
+        assertOnlyCloudPlatformCanEditOnCloud(platformId)
 
         await aiProviderRepo().delete({
             platformId,
@@ -90,22 +90,23 @@ export const aiProviderService = {
         const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
-    
+
 }
 
-// TODO (@amrdb) cleanup this guard, eeAdmin
-function cloudAdminGuard(platformId: PlatformId): void {
-    if (isCloudEdition) {
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        if (platformId !== cloudPlatformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'invalid route for principal type',
-                },
-            })
-        }
+function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
+    if (!isCloudEdition) {
+        return
     }
+    const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+    if (platformId === cloudPlatformId) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+            message: 'invalid route for principal type',
+        },
+    })
 }
 
 
