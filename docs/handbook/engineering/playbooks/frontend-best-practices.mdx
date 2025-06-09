@@ -90,10 +90,10 @@ function UserProfile({ userId }) {
 
 Query keys should be unique identifiers for specific queries. Avoid using boolean values, empty strings, or inconsistent patterns.
 
-**Best Practice:** Group all query keys in one centralized location for easy management and refactoring.
+**Best Practice:** Group all query keys in one centralized location (inside the hooks file) for easy management and refactoring.
 
 ```tsx
-// features/users/lib/user-keys.ts
+// features/users/lib/user-hooks.ts
 export const userKeys = {
   all: ['users'] as const,
   lists: () => [...userKeys.all, 'list'] as const,
@@ -226,7 +226,7 @@ function Sidebar() {
   const setDialog = useDialogStore((state) => state.setDialog);
 
   return (
-    <button onClick={() => setDialog('createUser', true)}>
+    <button onClick={() => setDialog('d', true)}>
       Quick Create User
     </button>
   );

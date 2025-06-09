@@ -9,10 +9,13 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
 
 import { alertsApi } from './api';
-import { alertsKeys } from './keys';
 
 type Params = {
   email: string;
+};
+
+export const alertsKeys = {
+  all: ['alerts-email-list'] as const,
 };
 
 type Options = {
