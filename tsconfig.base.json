@@ -105,6 +105,9 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-beehiiv": [
+        "packages/pieces/community/beehiiv/src/index.ts"
+      ],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
@@ -166,8 +169,14 @@
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
+      "@activepieces/piece-clockify": [
+        "packages/pieces/community/clockify/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
+      ],
+      "@activepieces/piece-close": [
+        "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
@@ -429,6 +438,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-kommo": [
+        "packages/pieces/community/kommo/src/index.ts"
+      ],
       "@activepieces/piece-krisp-call": [
         "packages/pieces/community/krisp-call/src/index.ts"
       ],
@@ -492,6 +504,9 @@
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
+      ],
+      "@activepieces/piece-mem": [
+        "packages/pieces/community/mem/src/index.ts"
       ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
@@ -678,6 +693,9 @@
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
+      "@activepieces/piece-serp-api": [
+        "packages/pieces/community/serp-api/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
@@ -759,6 +777,9 @@
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
       ],
+      "@activepieces/piece-tarvent": [
+        "packages/pieces/community/tarvent/src/index.ts"
+      ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"
       ],
@@ -776,6 +797,9 @@
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
+      ],
+      "@activepieces/piece-ticktick": [
+        "packages/pieces/community/ticktick/src/index.ts"
       ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
@@ -874,8 +898,14 @@
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
+      ],
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/community/zoho-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-mail": [
+        "packages/pieces/community/zoho-mail/src/index.ts"
       ],
       "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
       "@activepieces/piece-zoom": [

@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { AssignConnectionToProjectsControl } from '@/components/ui/assign-global-connection-to-projects';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import { api } from '@/lib/api';
@@ -261,10 +261,26 @@ const CreateOrEditConnectionDialogContent = React.memo(
                 ></FormField>
               )}
               {isGlobalConnection && (
-                <AssignConnectionToProjectsControl
-                  control={form.control}
-                  name="request.projectIds"
-                />
+                <div className="my-4 flex flex-col gap-4">
+                  <AssignConnectionToProjectsControl
+                    control={form.control}
+                    name="request.projectIds"
+                  />
+                  {isGlobalConnection && isNil(reconnectConnection) && (
+                    <div>
+                      <FormField
+                        control={form.control}
+                        name="request.externalId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('External ID')}</FormLabel>
+                            <Input {...field} />
+                          </FormItem>
+                        )}
+                      ></FormField>
+                    </div>
+                  )}
+                </div>
               )}
               {auth?.type === PropertyType.SECRET_TEXT && (
                 <SecretTextConnectionSettings

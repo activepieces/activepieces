@@ -1796,6 +1796,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Ani-4x",
+      "name": "Animesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/174266491?v=4",
+      "profile": "https://github.com/Ani-4x",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "DerekJDev",
+      "name": "Derek Johnson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13419128?v=4",
+      "profile": "https://tarvent.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mamiefurax",
+      "name": "MamieFurax",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3955802?v=4",
+      "profile": "https://github.com/mamiefurax",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jadhavharshh",
+      "name": "Harsh Jadhav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182950168?v=4",
+      "profile": "https://github.com/jadhavharshh",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
