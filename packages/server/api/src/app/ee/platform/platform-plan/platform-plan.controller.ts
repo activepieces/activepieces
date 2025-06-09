@@ -1,5 +1,5 @@
-import { CreateSubscriptionParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { CreateSubscriptionParamsSchema, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -27,6 +27,25 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         return {
             portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
         }
+    })
+
+    fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const { limit } = request.body
+
+        if (platformBilling.plan === PlanName.FREE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'AI credit usage is only available for paid plans',
+                },
+            })
+        }
+        
+        return platformPlanService(request.log).update({
+            platformId: request.principal.platform.id,
+            aiCreditsLimit: limit,
+        })
     })
 
     fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
@@ -83,6 +102,16 @@ const UpgradeRequest = {
 const CreateSubscriptionRequest = {
     schema: {
         body: CreateSubscriptionParamsSchema,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+
+const EnableAiCreditUsageRequest = {
+    schema: {
+        body: EnableAiCreditUsageParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],

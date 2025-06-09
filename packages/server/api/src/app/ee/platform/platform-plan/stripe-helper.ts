@@ -12,7 +12,6 @@ export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
 )!
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
-
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 
 export const TASKS_PRICE_ID = getTasksPriceId(stripeSecretKey)
@@ -32,6 +31,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             apiVersion: '2023-10-16',
         })
     },
+
     async createCustomer(user: UserWithMetaInformation, platformId: string) {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
@@ -103,6 +103,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             cancel_url: `${frontendUrl}/platform/billing`,
             customer: customerId,
         })
+
         return session.url!
     },
 
@@ -159,19 +160,5 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         })
 
         return session.url
-    },
-    
-    isPriceForTasks: (subscription: Stripe.Subscription): boolean => {
-        return subscription.items.data.some((item) => item.price.id === TASKS_PRICE_ID)
-    },
-    
-    isPriceForPlan: (subscription: Stripe.Subscription): boolean => {
-        const allPlanPrices = [
-            ...Object.values(STRIPE_PLAN_PRICE_IDS[PlanName.FREE]),
-            ...Object.values(STRIPE_PLAN_PRICE_IDS[PlanName.PLUS]),
-            ...Object.values(STRIPE_PLAN_PRICE_IDS[PlanName.BUSINESS]),
-        ]
-
-        return subscription.items.data.some((item) => allPlanPrices.includes(item.price.id))
     },
 })

@@ -32,6 +32,11 @@ export const CreateSubscriptionParamsSchema = Type.Object({
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
 
+export const EnableAiCreditUsageParamsSchema = Type.Object({
+    limit: Type.Optional(Type.Number()),
+})
+export type EnableAiCreditUsageParams = Static<typeof EnableAiCreditUsageParamsSchema>
+
 
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS), Type.Literal(PlanName.FREE)]),

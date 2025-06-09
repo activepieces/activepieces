@@ -43,7 +43,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         return {
             ...projectPlan,
             tasks: projectPlan.tasks ?? platformBilling?.tasksLimit,
-            aiCredits: projectPlan.aiCredits ?? platformBilling?.aiCreditsLimit,
+            aiCredits: projectPlan.aiCredits,
         }
     },
     async tasksExceededLimit(projectId: string): Promise<boolean> {
@@ -159,7 +159,7 @@ function getPlatformLimit(platformBilling: PlatformPlan, usageType: BillingUsage
         case BillingUsageType.TASKS:
             return platformBilling.tasksLimit
         case BillingUsageType.AI_CREDITS:
-            return platformBilling.aiCreditsLimit
+            return platformBilling.includedAiCredits
     }
 }
 

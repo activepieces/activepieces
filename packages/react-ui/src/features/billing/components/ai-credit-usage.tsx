@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Sparkles, Info } from 'lucide-react';
 import { useState } from 'react';
@@ -9,25 +10,55 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { PlanName } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+
+import { billingMutations } from '../lib/billing-hooks';
 
 export function AICreditUsage({
   platformSubscription,
 }: {
   platformSubscription: PlatformBillingInformation;
 }) {
-  const { plan, usage } = platformSubscription;
-  const aiLimit = plan.aiCreditsLimit ?? 0;
-  const isFreePlan = plan.plan === PlanName.FREE;
-  const [usageBasedEnabled, setUsageBasedEnabled] = useState(false);
-  const [usageLimit, setUsageLimit] = useState('1000');
+  const queryClient = useQueryClient();
 
-  const handleSave = () => {
-    console.log('Saving usage limit:', usageLimit);
+  const { plan, usage } = platformSubscription;
+
+  const aiCreditPlanLimit = plan.includedAiCredits;
+  const aiCreditUsageLimit = plan.aiCreditsLimit;
+
+  const isFreePlan = plan.plan === PlanName.FREE;
+  const [usageBasedEnabled, setUsageBasedEnabled] = useState(
+    aiCreditUsageLimit !== undefined,
+  );
+  const [usageLimit, setUsageLimit] = useState<number>(
+    aiCreditUsageLimit ?? 500,
+  );
+
+  const { mutate: setAiCreditUsageLimit, isPending } =
+    billingMutations.useSetAiCreditUsageLimit(queryClient);
+
+  const handleSaveAiCreditUsageLimit = () => {
+    setAiCreditUsageLimit({ limit: usageLimit });
+  };
+
+  const handleEnableAiCreditUsage = () => {
+    setAiCreditUsageLimit(
+      { limit: usageBasedEnabled ? undefined : 500 },
+      {
+        onSuccess: () => {
+          setUsageBasedEnabled(!usageBasedEnabled);
+        },
+      },
+    );
   };
 
   const currentUsage = usage.aiCredits || 0;
-  const usagePercentage = Math.round((currentUsage / aiLimit) * 100);
+  const planLimitUsagePercentage = Math.round(
+    (currentUsage / aiCreditPlanLimit) * 100,
+  );
+  const usageLimitUsagePercentage = Math.round(
+    (100 / (aiCreditUsageLimit ?? 0)) * 100,
+  );
 
   return (
     <Card className="w-full">
@@ -51,7 +82,8 @@ export function AICreditUsage({
               </span>
               <Switch
                 checked={usageBasedEnabled}
-                onCheckedChange={setUsageBasedEnabled}
+                disabled={isPending}
+                onCheckedChange={handleEnableAiCreditUsage}
               />
             </div>
           )}
@@ -59,7 +91,6 @@ export function AICreditUsage({
       </CardHeader>
 
       <CardContent className="p-6 space-y-10">
-        {/* Current Usage Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <h4 className="text-base font-medium">{t('Current Usage')}</h4>
@@ -74,21 +105,18 @@ export function AICreditUsage({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {currentUsage} / {aiLimit}
+                {currentUsage} / {aiCreditPlanLimit}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Limit')}
               </span>
             </div>
-            <Progress
-              value={(currentUsage / aiLimit) * 100}
-              className="w-full"
-            />
+            <Progress value={planLimitUsagePercentage} className="w-full" />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {usagePercentage}% of monthly allocation used
+                {planLimitUsagePercentage}% of monthly allocation used
               </span>
-              {usagePercentage > 80 && (
+              {planLimitUsagePercentage > 80 && (
                 <span className="text-destructive font-medium">
                   Approaching limit
                 </span>
@@ -97,11 +125,10 @@ export function AICreditUsage({
           </div>
         </div>
 
-        {usageBasedEnabled && !isFreePlan && (
+        {usageBasedEnabled && !isFreePlan && !isNil(aiCreditUsageLimit) && (
           <>
             <Separator />
 
-            {/* Usage Based Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h4 className="text-base font-medium">
@@ -112,14 +139,14 @@ export function AICreditUsage({
               <div className="rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">
-                    {currentUsage} / {parseInt(usageLimit) || 1000}
+                    {currentUsage} / {aiCreditUsageLimit}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
                     {t('Usage Limit')}
                   </span>
                 </div>
                 <Progress
-                  value={(currentUsage / (parseInt(usageLimit) || 1000)) * 100}
+                  value={usageLimitUsagePercentage}
                   className="w-full"
                 />
                 <p className="text-sm text-muted-foreground">
@@ -130,7 +157,6 @@ export function AICreditUsage({
 
             <Separator />
 
-            {/* Limit Setting Section */}
             <div className="space-y-4">
               <div>
                 <h5 className="text-base font-medium mb-1">
@@ -149,11 +175,15 @@ export function AICreditUsage({
                       type="number"
                       placeholder="Enter limit"
                       value={usageLimit}
-                      onChange={(e) => setUsageLimit(e.target.value)}
+                      onChange={(e) => setUsageLimit(Number(e.target.value))}
                       className="w-full"
                     />
                   </div>
-                  <Button onClick={handleSave} className="whitespace-nowrap">
+                  <Button
+                    onClick={handleSaveAiCreditUsageLimit}
+                    disabled={isPending}
+                    className="whitespace-nowrap"
+                  >
                     {t('Save Limit')}
                   </Button>
                 </div>

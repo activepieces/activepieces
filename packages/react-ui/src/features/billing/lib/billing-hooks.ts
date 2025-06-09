@@ -5,6 +5,7 @@ import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
+  EnableAiCreditUsageParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
@@ -77,6 +78,24 @@ export const billingMutations = {
         toast({
           title: t('Success'),
           description: t('Plan created successfully'),
+        });
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
+  },
+  useSetAiCreditUsageLimit: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: (params: EnableAiCreditUsageParams) =>
+        platformBillingApi.setAiCreditUsageLimit(params),
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({
+          queryKey: billingKeys.platformSubscription(data.platformId),
+        });
+        toast({
+          title: t('Success'),
+          description: t('AI credit usage limit set successfully'),
         });
       },
       onError: () => {
