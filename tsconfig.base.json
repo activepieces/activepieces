@@ -502,6 +502,9 @@
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
+      "@activepieces/piece-mem": [
+        "packages/pieces/community/mem/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
