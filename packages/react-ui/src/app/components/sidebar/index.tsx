@@ -57,7 +57,7 @@ type Link = {
 type CustomTooltipLinkProps = {
   to: string;
   label: string;
-  Icon?: React.ElementType;
+  Icon?: React.ReactNode;
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
@@ -99,8 +99,15 @@ export const CustomTooltipLink = ({
         >
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">
-              {Icon && <Icon className={`size-4`} />}
-              <span className={`text-sm`}>{label}</span>
+              {Icon && React.isValidElement(Icon)
+                ? React.cloneElement(
+                    Icon as React.ReactElement<{ className?: string }>,
+                    {
+                      className: cn(Icon.props.className, 'size-4'),
+                    },
+                  )
+                : null}
+              <span className="text-sm">{label}</span>
             </div>
             {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
               <BetaBadge showTooltip={false} />
@@ -140,7 +147,7 @@ export type SidebarLink = {
   to: string;
   label: string;
   name?: string;
-  icon?: React.ElementType;
+  icon?: React.ReactNode;
   type: 'link';
   notification?: boolean;
   locked?: boolean;
@@ -193,7 +200,6 @@ export function SidebarComponent({
           <Sidebar>
             <SidebarContent>
               <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
-              <SidebarSeparator />
               <SidebarContent className="gap-0">
                 <ScrollArea className="h-[calc(100vh-100px)]">
                   {items.map((item, index) => (
@@ -224,7 +230,7 @@ export function SidebarComponent({
                                 '/connections',
                               )}
                               label={t('Connections')}
-                              Icon={Link2}
+                              Icon={<Link2 className="size-4" />}
                               isSubItem={false}
                             />
                           </SidebarMenuButton>

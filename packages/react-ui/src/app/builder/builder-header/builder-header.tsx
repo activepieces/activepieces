@@ -36,9 +36,10 @@ import {
   supportUrl,
 } from '@activepieces/shared';
 
-import FlowActionMenu from '../components/flow-actions-menu';
+import FlowActionMenu from '../../components/flow-actions-menu';
+import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 
-import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { UserAvatarMenu } from './user-avatar-menu';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -207,6 +208,7 @@ export const BuilderHeader = () => {
             </Tooltip>
           )}
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
+          <UserAvatarMenu></UserAvatarMenu>
         </div>
       </div>
     </div>

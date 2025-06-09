@@ -60,7 +60,7 @@ const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
               >
                 {!showBackButton && (
                   <img
-                    className="h-7 w-7 object-contain"
+                    className="h-5 w-5 object-contain"
                     src={branding.logos.logoIconUrl}
                     alt={branding.websiteName}
                   />

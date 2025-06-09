@@ -391,7 +391,7 @@ const routes = [
   // }),
 
   ...ProjectRouterWrapper({
-    path: '/mcp',
+    path: '/mcps',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
@@ -403,7 +403,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/mcp/:mcpId',
+    path: '/mcps/:mcpId',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
