@@ -121,6 +121,7 @@
     "axios-retry": "4.4.1",
     "basic-ftp": "5.0.5",
     "bcrypt": "5.1.1",
+    "boring-avatars": "1.11.2",
     "buffer": "6.0.3",
     "bullmq": "5.28.1",
     "cheerio": "1.0.0-rc.12",

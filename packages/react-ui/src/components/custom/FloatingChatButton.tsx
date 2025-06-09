@@ -1,21 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ChevronsLeftRight, Send, X } from 'lucide-react';
 import { ApFlagId } from '@activepieces/shared';
-import './FloatingChatButton.css';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useForm, Controller } from 'react-hook-form';
+import { ChevronsLeftRight, Send, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import './FloatingChatButton.css';
 
 import { flagsHooks } from '../../hooks/flags-hooks';
 import { useEmbedding } from '../embed-provider';
 import { botxApi } from '../lib/botx-api';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { AvatarLetter } from '../ui/avatar-letter';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
 
 import StreamMarkdown from './StreamMarkdown';
 
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
 
 export const modulesChat = {
@@ -132,15 +131,12 @@ export const FloatingChatButton: React.FC = () => {
             className="max-h-[30px] max-w-[30px] object-contain"
           />
         ) : (
-          <Avatar className="rounded-xs h-5 w-5">
-            <AvatarFallback className="rounded-xs">
-              <AvatarLetter
-                name={user.firstName + ' ' + user.lastName}
-                email={user.email}
-                disablePopup={true}
-              />
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            disableTooltip={true}
+            name={user.firstName + ' ' + user.lastName}
+            email={user.email}
+            size={24}
+          />
         )}
         <div>
           <span className="font-semibold text-base">

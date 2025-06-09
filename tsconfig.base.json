@@ -163,10 +163,13 @@
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
+      "@activepieces/piece-clockify": [
+        "packages/pieces/community/clockify/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -584,9 +587,6 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
-      "@activepieces/piece-zoho-desk": [
-        "packages/pieces/community/zoho-desk/src/index.ts"
-      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -786,6 +786,9 @@
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
       ],
+      "@activepieces/piece-ticktick": [
+        "packages/pieces/community/ticktick/src/index.ts"
+      ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
@@ -883,8 +886,14 @@
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
+      ],
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/community/zoho-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-mail": [
+        "packages/pieces/community/zoho-mail/src/index.ts"
       ],
       "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
       "@activepieces/piece-zoom": [

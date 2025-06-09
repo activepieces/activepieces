@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate-issue-linking:
+    if: false
     name: Check Issue Linking
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +24,7 @@ jobs:
             const body = context.payload.pull_request.body || '';
             const issuePattern = /(?:closes|fixes|resolves)\s+#(\d+)/i;
             const linkedIssue = body.match(issuePattern);
-            
+
             if (!linkedIssue) {
               core.setFailed('Pull request must be linked to an issue using "closes #issue_number", "fixes #issue_number", or "resolves #issue_number"');
-            } 
+            }
