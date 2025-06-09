@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { memAuth } from '../../index';
+import { makeRequest } from '../common';
 
 export const createMemAction = createAction({
   auth: memAuth,
@@ -24,21 +24,15 @@ export const createMemAction = createAction({
       required: false,
       description: 'Additional background information to relate this to your existing knowledge.',
     }),
-    timestamp: Property.ShortText({
-      displayName: 'Timestamp',
-      required: false,
-      description: 'ISO 8601 datetime string for when this information was created.',
-    }),
   },
   async run(context) {
-    const { input, instructions, context: contextInfo, timestamp } = context.propsValue;
+    const { input, instructions, context: contextInfo } = context.propsValue;
     const apiKey = context.auth as string;
 
     const body = {
       input,
       ...(instructions ? { instructions } : {}),
       ...(contextInfo ? { context: contextInfo } : {}),
-      ...(timestamp ? { timestamp } : {}),
     };
 
     const result = await makeRequest(

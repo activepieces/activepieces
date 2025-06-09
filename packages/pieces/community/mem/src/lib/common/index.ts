@@ -6,7 +6,7 @@ export async function makeRequest(
   path: string,
   body?: unknown
 ) {
-  const url = `https://api.mem.ai/v1${path}`;
+  const url = `https://api.mem.ai/v2${path}`;
 
   const response = await httpClient.sendRequest({
     method,
