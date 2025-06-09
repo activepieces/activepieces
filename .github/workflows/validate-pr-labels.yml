@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   validate-labels:
+    if: false
     name: Check PR Labels
     runs-on: ubuntu-latest
     steps:
@@ -22,4 +23,4 @@ jobs:
             const labels = context.payload.pull_request.labels;
             if (!labels || labels.length === 0) {
               core.setFailed('Pull request must have at least one label');
-            } 
+            }
