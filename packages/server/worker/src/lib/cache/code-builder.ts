@@ -1,6 +1,6 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -38,11 +38,6 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-
-enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
 
 export const codeBuilder = (log: FastifyBaseLogger) => ({
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {

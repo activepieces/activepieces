@@ -1,14 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   CheckIcon,
-  Trash,
   Globe,
   AppWindow,
   Tag,
   User,
   Replace,
-  InfoIcon,
+  ChevronDown,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -16,8 +16,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
@@ -59,10 +57,11 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 
+import { ConnectionActionMenu } from './connection-actions-menu';
+
 function AppConnectionsPage() {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
@@ -154,7 +153,7 @@ function AppConnectionsPage() {
     } as const,
     {
       type: 'input',
-      title: t('Display Name'),
+      title: t('Name'),
       accessorKey: 'displayName',
       icon: Tag,
       options: [],
@@ -259,7 +258,7 @@ function AppConnectionsPage() {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
@@ -411,67 +410,25 @@ function AppConnectionsPage() {
       {
         render: (_, resetSelection) => {
           return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteAppConnection}
-              >
-                <ConfirmationDeleteDialog
-                  title={t('Confirm Deletion')}
-                  message={
-                    <span>
-                      {t(
-                        'Are you sure you want to delete the selected connections? This action cannot be undone.',
-                      )}
-                      <span className="text-black font-bold ml-1">
-                        {t(
-                          `${
-                            Array.from(
-                              new Set(
-                                selectedRows.flatMap(
-                                  (row) => row.flowIds || [],
-                                ),
-                              ),
-                            ).length
-                          } flows will be affected`,
-                        )}
-                      </span>
-                      <Alert className="mt-4 flex flex-col gap-2">
-                        <InfoIcon className="h-5 w-5" />
-                        <span className="font-bold">
-                          {t(
-                            'Deleting connections may cause your Flows or MCP tools to break.',
-                          )}
-                        </span>
-                      </Alert>
-                    </span>
-                  }
-                  entityName="connections"
-                  mutationFn={async () => {
-                    try {
-                      await bulkDeleteConnections.mutateAsync(
-                        selectedRows.map((row) => row.id),
-                      );
-                      resetSelection();
-                      setSelectedRows([]);
-                    } catch (error) {
-                      console.error('Error deleting connections:', error);
-                    }
+            <>
+              {selectedRows.length > 0 && (
+                <ConnectionActionMenu
+                  connections={selectedRows}
+                  refetch={refetch}
+                  onDelete={() => {
+                    resetSelection();
+                    setSelectedRows([]);
                   }}
                 >
-                  {selectedRows.length > 0 && (
-                    <Button
-                      className="w-full mr-2"
-                      onClick={() => setIsDialogOpen(true)}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      <Trash className="mr-2 w-4" />
-                      {`${t('Delete')} (${selectedRows.length})`}
-                    </Button>
-                  )}
-                </ConfirmationDeleteDialog>
-              </PermissionNeededTooltip>
-            </div>
+                  <Button className="h-9 w-full" variant={'default'}>
+                    {selectedRows.length > 0
+                      ? `${t('Actions')} (${selectedRows.length})`
+                      : t('Actions')}
+                    <ChevronDown className="h-3 w-4 ml-2" />
+                  </Button>
+                </ConnectionActionMenu>
+              )}
+            </>
           );
         },
       },
@@ -523,12 +480,7 @@ function AppConnectionsPage() {
         },
       },
     ],
-    [
-      bulkDeleteConnections,
-      userHasPermissionToWriteAppConnection,
-      isDialogOpen,
-      selectedRows,
-    ],
+    [userHasPermissionToWriteAppConnection, selectedRows],
   );
   return (
     <div className="flex-col w-full">

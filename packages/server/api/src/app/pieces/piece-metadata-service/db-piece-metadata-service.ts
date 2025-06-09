@@ -69,7 +69,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        message: `piece_metadata_not_found projectId=${projectId}`,
+                        message: `piece_metadata_not_found projectId=${projectId} pieceName=${name}`,
                     },
                 })
             }

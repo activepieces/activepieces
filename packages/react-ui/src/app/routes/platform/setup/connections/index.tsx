@@ -10,6 +10,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -20,12 +21,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
   globalConnectionsMutations,
@@ -152,22 +148,16 @@ const GlobalConnectionsTable = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {t('External ID')}: {row.original.externalId || '-'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <CopyTextTooltip
+            title={t('External ID')}
+            text={row.original.externalId || ''}
+          >
+            <div className="text-left">{row.original.displayName}</div>
+          </CopyTextTooltip>
         );
       },
     },
