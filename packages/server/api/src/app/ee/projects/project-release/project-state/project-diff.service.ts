@@ -173,7 +173,12 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
         return acc
     }, {})
 
-    const isMatched = Object.keys(versionSetOne).every(key => isSameVersion(versionSetTwo[key], versionSetOne[key]))
+    const isMatched = Object.keys(versionSetOne).every(key => {
+        if (isNil(versionSetTwo[key])) {
+            return false
+        }
+        return isSameVersion(versionSetTwo[key], versionSetOne[key])
+    })
 
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
         || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger) || !isMatched

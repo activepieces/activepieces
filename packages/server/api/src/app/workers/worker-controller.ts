@@ -164,7 +164,7 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
         flowVersionId: job.flowVersionId,
     }, 'removing stale scheduled job')
     await jobQueue(log).removeRepeatingJob({
-        flowVersionId: job.flowVersionId,
+        flowVersionId: job.flowVersionId,   
     })
     const flowVersion = await flowVersionService(log).getOne(job.flowVersionId)
     if (isNil(flowVersion)) {
