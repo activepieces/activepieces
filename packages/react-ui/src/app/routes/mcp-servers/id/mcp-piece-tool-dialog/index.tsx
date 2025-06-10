@@ -25,8 +25,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
-import { McpToolType } from '@activepieces/shared';
 import type { McpWithTools } from '@activepieces/shared';
+import { McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
@@ -191,7 +191,7 @@ export function McpPieceDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="min-w-[700px] max-w-[700px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader className={`${selectedPiece ? 'gap-2' : 'gap-0'}`}>
           <DialogTitle>
             {selectedPiece ? (

@@ -213,6 +213,7 @@ import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
 import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
+import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
 import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
@@ -366,6 +367,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateApproval1748648340742,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
+        AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
         AddMcpToolFlowCascadeDelete1749128866314,
         AddAgents1749405724276,

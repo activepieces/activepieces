@@ -10,7 +10,7 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AgentEntity } from '../agents/agent-entity'
-import { AiProviderEntity } from '../ai/ai-provider-entity'
+import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -90,7 +90,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
-        AiProviderEntity,
+        AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,

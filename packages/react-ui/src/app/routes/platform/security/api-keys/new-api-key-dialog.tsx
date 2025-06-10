@@ -98,6 +98,7 @@ export const NewApiKeyDialog = ({
                 <CopyToClipboardInput
                   useInput={true}
                   textToCopy={apiKey.value}
+                  fileName={`${apiKey.displayName}`}
                 />
               </div>
             </div>

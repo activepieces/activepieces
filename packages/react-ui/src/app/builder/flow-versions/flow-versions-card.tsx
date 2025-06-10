@@ -10,7 +10,6 @@ import {
 } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,6 +34,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -178,7 +178,8 @@ const FlowVersionDetailsCard = React.memo(
     return (
       <CardListItem interactive={false}>
         {flowVersion.updatedByUser && (
-          <AvatarLetter
+          <UserAvatar
+            size={28}
             name={
               flowVersion.updatedByUser.firstName +
               ' ' +
