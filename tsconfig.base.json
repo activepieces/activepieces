@@ -87,6 +87,9 @@
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
+      "@activepieces/piece-attio": [
+        "packages/pieces/community/attio/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
