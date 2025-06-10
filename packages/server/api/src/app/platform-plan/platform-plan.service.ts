@@ -15,7 +15,7 @@ type Quota = {
 
 const fetchQuota = async (log: FastifyBaseLogger, zeroApiUrl: string, token: string): Promise<Quota> => {
     try {
-        const url = `${zeroApiUrl}/pmtx-ai-token-api/v1/quota-check`
+        const url = `${zeroApiUrl}/automationx/v1/quota-check`
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
