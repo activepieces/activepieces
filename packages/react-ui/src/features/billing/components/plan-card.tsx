@@ -88,7 +88,7 @@ export const PlanCard = ({
           <div className="flex justify-start mb-2">
             <img
               src={plan.image}
-              alt={`${plan.name} plan`}
+              alt={`${plan.name}`}
               className="max-h-20 object-contain"
               style={{ maxWidth: '100%' }}
             />
