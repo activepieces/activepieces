@@ -47,7 +47,7 @@ export const tarvent = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
-  authors: ["derekjohnson"],
+  authors: ["derekjdev","206mph"],
   actions: [createContact, updateContactTags, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, createAudienceGroup, updateJourneyStatus, createTransaction, sendCampaign, generateCustomEvent, getAudiences, getAudienceGroups, createSuppressionFilter, getCampaigns, getContact, getCustomEvent, getJourney],
   triggers: [contactAddedTrigger, contactGroupUpdatedTrigger, contactUpdatedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactNoteAddedTrigger, contactUnsubscribedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, contactClickedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactBouncedTrigger,campaignSendFinishedTrigger, transactionCreatedTrigger, transactionSentTrigger],
 });

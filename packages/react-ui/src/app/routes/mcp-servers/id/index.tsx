@@ -80,7 +80,7 @@ const McpServerPage = () => {
             size="icon"
             className="p-2"
             onClick={() => {
-              navigate('/mcp');
+              navigate('/mcps');
             }}
           >
             <ChevronLeft className="h-4 w-4" />
