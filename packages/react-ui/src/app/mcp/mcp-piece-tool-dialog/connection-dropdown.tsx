@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Label } from '@/components/ui/label';
-import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
@@ -39,10 +40,14 @@ export const ConnectionDropdown = React.memo(
       isLoading: connectionsLoading,
       refetch: refetchConnections,
       isRefetching: isRefetchingConnections,
-    } = appConnectionsHooks.useConnections({
-      pieceName: piece?.name || '',
-      cursor: undefined,
-      limit: 1000,
+    } = appConnectionsQueries.useAppConnections({
+      request: {
+        pieceName: piece?.name || '',
+        projectId: authenticationSession.getProjectId()!,
+        limit: 1000,
+      },
+      extraKeys: [piece?.name, authenticationSession.getProjectId()!],
+      staleTime: 0,
     });
 
     const pieceHasAuth = !isNil(piece?.auth);
@@ -55,7 +60,7 @@ export const ConnectionDropdown = React.memo(
     }
 
     const connectionOptions =
-      connections?.map((connection) => ({
+      connections?.data?.map((connection) => ({
         label: connection.displayName,
         value: connection.externalId,
       })) ?? [];
