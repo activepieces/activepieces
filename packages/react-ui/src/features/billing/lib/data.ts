@@ -49,6 +49,16 @@ export const planData = {
       },
     },
     {
+      key: 'users',
+      label: t('Users'),
+      values: {
+        free: '1',
+        plus: '1',
+        business: '5+',
+        enterprise: 'Custom',
+      },
+    },
+    {
       key: 'activeFlows',
       label: t('Active Flows'),
       values: {
@@ -108,20 +118,6 @@ export const planData = {
       label: t('Human in the Loop'),
       values: { free: false, plus: true, business: true, enterprise: true },
     },
-    {
-      key: 'globalConnections',
-      label: t('Global Connections'),
-      values: { free: false, plus: false, business: true, enterprise: true },
-    },
-    {
-      key: 'users',
-      label: t('Users'),
-      values: {
-        free: '1',
-        plus: '1',
-        business: '5+',
-        enterprise: 'Custom',
-      },
-    },
+
   ],
 };

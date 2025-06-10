@@ -2,12 +2,11 @@ import { t } from 'i18next';
 import {
   Database,
   LayoutGrid,
-  Package,
-  LucideIcon,
   Users,
-  Server,
+  Activity,
 } from 'lucide-react';
 
+import mcp from '@/assets/img/custom/mcp.svg';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -31,7 +30,7 @@ export const UsageCards = ({
     >
       {!isBusinessPlan && (
         <UsageCard
-          icon={Users}
+          icon={<Users className="w-4 h-4" />}
           title={t('Member seats')}
           used={usage.seats}
           total={plan.userSeatsLimit}
@@ -39,26 +38,26 @@ export const UsageCards = ({
       )}
 
       <UsageCard
-        icon={LayoutGrid}
+        icon={<LayoutGrid className="w-4 h-4" />}
         title={t('Projects')}
         used={usage.projects}
         total={plan.projectsLimit}
       />
       <UsageCard
-        icon={Package}
+        icon={<img src={mcp} alt="MCP" className="w-4 h-4" />}
         title={t('MCP Servers')}
         used={usage.mcps}
         total={plan.mcpLimit}
       />
 
       <UsageCard
-        icon={Database}
+        icon={<Database className="w-4 h-4" />}
         title={t('Tables')}
         used={usage.tables}
         total={plan.tablesLimit}
       />
       <UsageCard
-        icon={Server}
+        icon={<Activity className='w-4 h-4' />}
         title={t('Active flows')}
         used={usage.activeFlows}
         total={plan.activeFlowsLimit}
@@ -68,7 +67,7 @@ export const UsageCards = ({
 };
 
 interface UsageCardProps {
-  icon: LucideIcon;
+  icon: React.ReactNode ;
   title: string;
   used: number;
   total?: number;
@@ -76,7 +75,7 @@ interface UsageCardProps {
 }
 
 export default function UsageCard({
-  icon: Icon,
+  icon,
   title,
   used,
   total,
@@ -91,7 +90,7 @@ export default function UsageCard({
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-md border">
-              <Icon className="w-4 h-4" />
+              {icon}
             </div>
             <div className="flex-1">
               <h3 className="font-semibold">{title}</h3>

@@ -61,12 +61,6 @@ export const PlanCard = ({
     return t('Select');
   };
 
-  const getButtonVariant = () => {
-    if (isSelected) return 'outline' as const;
-    if (isEnterprisePlan) return 'default' as const;
-    return 'outline' as const;
-  };
-
   return (
     <div
       className={cn(
@@ -76,7 +70,7 @@ export const PlanCard = ({
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
+          <Badge className="bg-secondary text-secondary-foreground px-3 py-1 text-xs font-medium">
             <StarIcon className="mr-1 h-3 w-3 fill-current" />
             {t('Most Popular')}
           </Badge>
@@ -118,7 +112,7 @@ export const PlanCard = ({
       </div>
 
       <Button
-        variant={getButtonVariant()}
+        variant="default"
         className="w-full font-semibold transition-all"
         onClick={() => {
           if (isEnterprisePlan) {
@@ -172,7 +166,7 @@ export const PlanCard = ({
                   )}
                 >
                   {isIncluded && typeof featureValue !== 'boolean' && (
-                    <span className="font-medium text-foreground mr-2">
+                    <span className="font-medium text-foreground me-1">
                       {featureValue}
                     </span>
                   )}

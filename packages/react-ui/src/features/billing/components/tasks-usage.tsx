@@ -92,14 +92,6 @@ export function TasksUsage({
               )}
             </div>
           </div>
-
-          <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
-            {isFreePlan
-              ? `Includes ${(
-                  plan?.includedTasks || 1000
-                ).toLocaleString()} tasks free with your plan`
-              : 'Unlimited tasks under fair usage policy - no hard limits applied'}
-          </div>
         </div>
       </CardContent>
     </Card>
