@@ -12,8 +12,8 @@ import { createAppointment } from './lib/actions/create-appointment';
 import { updateClientAction } from './lib/actions/update-client';
 import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
-import { canceledAppointmentTrigger } from './lib/triggers/appointment-canceled';
-import { updatedScheduleTrigger } from './lib/triggers/appointment-scheduled';
+import { canceledAppointmentTrigger } from './lib/triggers/appointment-cancelled';
+import { appointmentRescheduledTrigger } from './lib/triggers/appointment-scheduled';
 import { error } from 'console';
 
 export const BASE_URL = 'https://acuityscheduling.com/api/v1';
@@ -65,7 +65,7 @@ export function createClient(auth: { userId: string, apiKey: string }) {
       password: auth.apiKey,
     },
     headers: {
-      'Authorization': `Bearer ${auth.apiKey && auth.userId}`,
+      'Authorization': `Basic ${Buffer.from(`${auth.userId}:${auth.apiKey}`).toString('base64')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -92,6 +92,6 @@ export const acuityscheduling = createPiece({
   ],
   triggers: [
     canceledAppointmentTrigger,
-    updatedScheduleTrigger
+    appointmentRescheduledTrigger
   ],
 });

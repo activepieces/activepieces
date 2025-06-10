@@ -20,11 +20,6 @@ export const rescheduleAppointmentAction = createAction({
       description: 'The new start time for the appointment',
       required: true,
     }),
-    new_end_time: Property.DateTime({
-      displayName: 'New End Time',
-      description: 'The new end time for the appointment',
-      required: true,
-    }),
     send_notifications: Property.Checkbox({
       displayName: 'Send Notifications',
       description: 'Whether to send rescheduling notifications to participants',
@@ -41,7 +36,6 @@ export const rescheduleAppointmentAction = createAction({
     const { 
       appointment_id, 
       new_start_time, 
-      new_end_time,
     } = propsValue;
 
 
@@ -54,7 +48,7 @@ export const rescheduleAppointmentAction = createAction({
                 url: `${BASE_URL}/appointments/${appointment_id}/reschedule`,
                 queryParams: {
                     new_start_time: new_start_time,
-                    new_end_time: new_end_time,  
+                    appointment_id: appointment_id, 
                 },
                 authentication: {
                     type: AuthenticationType.BASIC,

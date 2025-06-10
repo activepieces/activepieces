@@ -10,11 +10,6 @@ export const updateClientAction = createAction({
     displayName: 'Update Client',
     description: 'Update existing client information',
     props: {
-        client_id: Property.ShortText({
-            displayName: 'Client ID',
-            description: 'The ID of the client to update',
-            required: true,
-        }),
         first_name: Property.ShortText({
             displayName: 'First Name',
             description: 'Client\'s first name',
@@ -28,7 +23,7 @@ export const updateClientAction = createAction({
         email: Property.ShortText({
             displayName: 'Email',
             description: 'Client\'s email address',
-            required: true,
+            required: false,
         }),
         phone: Property.ShortText({
             displayName: 'Phone',
@@ -38,7 +33,6 @@ export const updateClientAction = createAction({
     },
     async run({ auth, propsValue }) {
         const {
-            client_id,
             first_name,
             last_name,
             email,
@@ -55,7 +49,7 @@ export const updateClientAction = createAction({
 
         try {
             const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
-                method: HttpMethod.PATCH,
+                method: HttpMethod.PUT,
                 url: `${BASE_URL}/Clients`,
                 authentication: {
                     type: AuthenticationType.BASIC,
@@ -63,7 +57,6 @@ export const updateClientAction = createAction({
                     password: auth.apiKey,
                 },
                 body: {
-                    client_id,
                     first_name,
                     last_name,
                     email,

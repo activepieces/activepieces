@@ -9,14 +9,19 @@ export const findClientByNameAction = createAction({
 	displayName: 'Find Client by Name',
 	description: 'Finds a client by name.',
 	props: {
-		name: Property.ShortText({
+		first_name: Property.ShortText({
 			displayName: 'Name',
-			description: "Provide user's full name to search.",
+			description: "Provide user\'s first name to search.",
+			required: true,
+		}),
+		last_name: Property.ShortText({
+			displayName: 'Last Name',
+			description: 'Provide user\'s last name to search.',
 			required: true,
 		}),
 	},
 	async run({ auth, propsValue }) {
-		const { name } = propsValue;
+		const { first_name, last_name } = propsValue;
 
 		const response = await httpClient.sendRequest<{
 			status: string;
@@ -25,7 +30,8 @@ export const findClientByNameAction = createAction({
 			method: HttpMethod.GET,
 			url: `${BASE_URL}/clients`,
 			queryParams: {
-				name: name,
+				first_name: first_name,
+				last_name: last_name,
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,

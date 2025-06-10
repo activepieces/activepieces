@@ -9,6 +9,11 @@ export const findAppointmentByClientInfoAction = createAction({
 	displayName: 'Find Appointment by User Info',
 	description: 'Finds apponintment by user info.',
 	props: {
+    appointment_id: Property.ShortText({
+      displayName: 'Appointment ID',
+      description: 'ID of the appointment to search for',
+      required: true,
+    }),
     search_field: Property.StaticDropdown({
       displayName: 'Search Field',
       description: 'Field to search by',
@@ -21,11 +26,6 @@ export const findAppointmentByClientInfoAction = createAction({
           { label: 'Last Name', value: 'last_name' },
         ]
       }
-    }),
-    search_value: Property.ShortText({
-      displayName: 'Search Value',
-      description: 'Value to search for',
-      required: true,
     }),
     include_past: Property.Checkbox({
       displayName: 'Include Past Appointments',
@@ -41,7 +41,7 @@ export const findAppointmentByClientInfoAction = createAction({
     })
   },
 	async run({ auth, propsValue }) {
-		const { search_field, search_value} = propsValue;
+		const { search_field,appointment_id} = propsValue;
 
 		const response = await httpClient.sendRequest<{
 			status: string;
@@ -51,7 +51,7 @@ export const findAppointmentByClientInfoAction = createAction({
 			url: `${BASE_URL}/appointments`,
 			queryParams: {
 				field_id: search_field.toString(),
-				field_value: search_value,
+				appointment_id: appointment_id.toString(),
 			},
 			authentication: {
 				type: AuthenticationType.BASIC,

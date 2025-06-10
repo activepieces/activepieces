@@ -9,6 +9,11 @@ export const canceledAppointmentTrigger = createTrigger({
   displayName: 'Canceled Appointment',
   description: 'Triggered when an appointment is canceled',
   props: {
+    appointment_id: Property.ShortText({
+      displayName: 'Appointment ID',
+      description: 'The ID of the appointment to monitor for cancellations',
+      required: true,
+    }),
     webhookInstructions: Property.MarkDown({
       value: `
       ## ActivityScheduling Webhook Setup
@@ -59,8 +64,8 @@ export const canceledAppointmentTrigger = createTrigger({
 
   async test({ auth }) {
     const response = await httpClient.sendRequest<{ data: { appointments: Record<string, any>[] } }>({
-      url: `${BASE_URL}/appointments`,
-      method: HttpMethod.GET,
+      url: `${BASE_URL}/appointments/{appointment_id}/cancel`,
+      method: HttpMethod.PUT,
       queryParams: {
         status: 'canceled',
         limit: '5'
@@ -78,7 +83,7 @@ export const canceledAppointmentTrigger = createTrigger({
   async run(auth) {
     
     const payload = auth.payload.body as {
-      id: string;
+      appointment_id: string;
       status: string;
       canceled_at: string;
       canceled_by: string;
@@ -90,7 +95,7 @@ export const canceledAppointmentTrigger = createTrigger({
 
     // Fetch full appointment details
     const response = await httpClient.sendRequest({
-      url: `${BASE_URL}/appointments/${payload['id']}`,
+      url: `${BASE_URL}/appointments/${payload['appointment_id']}`,
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BASIC,

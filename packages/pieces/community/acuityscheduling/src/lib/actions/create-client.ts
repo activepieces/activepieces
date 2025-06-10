@@ -28,8 +28,8 @@ export const createclientAction = createAction({
 			required: false,
 			description: 'Fill in at least one field: phone or email',
 		}),
-		gender: Property.ShortText({
-			displayName: 'Gender',
+		notes: Property.ShortText({
+			displayName: 'Notes',
 			required: false,
 		}),
 	},
@@ -39,7 +39,7 @@ export const createclientAction = createAction({
 			last_name,
 			phone,
 			email,
-			gender,
+			notes,
 			
 		} = propsValue;
 		if (isNil(phone) && isNil(email)) {
@@ -60,7 +60,7 @@ export const createclientAction = createAction({
 				last_name,
 				phone,
 				email,
-				gender,
+				notes,
 			},
 		});
 

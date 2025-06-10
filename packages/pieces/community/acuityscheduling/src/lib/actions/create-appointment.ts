@@ -9,6 +9,16 @@ export const createAppointment = createAction({
     displayName: 'Create Appointment',
     description: 'Create a new appointment in ActivityScheduling',
     props: {
+        first_name: Property.ShortText({
+            displayName: 'First Name', 
+            description: 'First name of the client',
+            required: true,
+        }),
+        last_name: Property.ShortText({
+            displayName: 'Last Name',
+            description: 'Last name of the client',
+            required: true,
+        }),
         title: Property.ShortText({
             displayName: 'Title',
             description: 'The title of the appointment',
@@ -19,24 +29,19 @@ export const createAppointment = createAction({
             description: 'The start time of the appointment',
             required: true,
         }),
-        endTime: Property.DateTime({
-            displayName: 'End Time',
-            description: 'The end time of the appointment',
-            required: true,
-        }),
         description: Property.LongText({
             displayName: 'Description',
             description: 'Description of the appointment',
             required: false,
         }),
-        attendees: Property.Array({
+        email: Property.Array({
             displayName: 'Attendees',
             description: 'Email addresses of attendees',
             required: false,
         })
     },
     async run({ auth, propsValue }) {
-        const { title, startTime, endTime, description, attendees } = propsValue;
+        const { title, startTime, description, email } = propsValue;
 
         const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
             method: HttpMethod.POST,
@@ -47,11 +52,12 @@ export const createAppointment = createAction({
                 password: auth.apiKey,
             },
             body: {
+                first_name: propsValue.first_name,
+                last_name: propsValue.last_name,
                 title,
                 start_time: startTime,
-                end_time: endTime,
                 description,
-                attendees: attendees || []
+                email: email || []
             },
         });
 

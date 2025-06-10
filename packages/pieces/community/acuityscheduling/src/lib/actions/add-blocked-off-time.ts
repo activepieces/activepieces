@@ -9,11 +9,6 @@ export const addBlockedTimeAction = createAction({
     displayName: 'Add Blocked Time',
     description: 'Block off time slots to prevent appointments',
     props: {
-        title: Property.ShortText({
-            displayName: 'Title',
-            description: 'Description for the blocked time',
-            required: true,
-        }),
         start_time: Property.DateTime({
             displayName: 'Start Time',
             description: 'When the blocked time begins',
@@ -24,60 +19,31 @@ export const addBlockedTimeAction = createAction({
             description: 'When the blocked time ends',
             required: true,
         }),
-        staff_id: Property.ShortText({
-            displayName: 'Staff ID',
-            description: 'ID of staff member this applies to (leave blank for all)',
-            required: false,
+        calender_id: Property.ShortText({
+            displayName: 'Calendar ID',
+            description: 'The ID of the calendar to block time on',
+            required: true,
         }),
-        recurring: Property.Checkbox({
-            displayName: 'Recurring Block',
-            description: 'Whether this is a recurring time block',
-            required: false,
-            defaultValue: false,
-        }),
-        recurrence_pattern: Property.StaticDropdown({
-            displayName: 'Recurrence Pattern',
-            description: 'How often the block repeats',
-            required: false,
-            options: {
-                options: [
-                    { label: 'Daily', value: 'daily' },
-                    { label: 'Weekly', value: 'weekly' },
-                    { label: 'Monthly', value: 'monthly' }
-                ]
-            },
-            defaultValue: 'weekly'
-        }),
-        recurrence_end_date: Property.DateTime({
-            displayName: 'Recurrence End Date',
-            description: 'When the recurring block should stop',
+        notes: Property.LongText({
+            displayName: 'Notes',
+            description: 'Optional notes for the blocked time',
             required: false,
         }),
     },
     async run({ auth, propsValue }) {
         const {
-            title,
             start_time,
             end_time,
-            staff_id,
-            recurring,
-            recurrence_pattern,
-            recurrence_end_date
+            calender_id,
+            notes,
         } = propsValue;
 
         const blockData: Record<string, any> = {
-            title,
+            calendar_id: calender_id,
             start_time,
             end_time,
             is_blocked: true
         };
-
-        if (staff_id) blockData['staff_id'] = staff_id;
-        if (recurring) {
-            blockData['recurring'] = true;
-            blockData['recurrence_pattern'] = recurrence_pattern;
-            if (recurrence_end_date) blockData['recurrence_end_date'] = recurrence_end_date;
-        }
 
         const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
             method: HttpMethod.POST,
@@ -88,13 +54,11 @@ export const addBlockedTimeAction = createAction({
                 password: auth.apiKey,
             },
             body: {
-                title,
+                calender_id,
                 start_time,
                 end_time,
-                staff_id,
-                recurring,
-                recurrence_pattern,
-                recurrence_end_date
+                notes: notes || '',
+
             },
         });
 

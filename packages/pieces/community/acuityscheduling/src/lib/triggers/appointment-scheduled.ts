@@ -3,101 +3,56 @@ import { acuityschedulingAuth } from '../../index';
 import { BASE_URL } from '../../index';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const updatedScheduleTrigger = createTrigger({
+export const appointmentRescheduledTrigger = createTrigger({
   auth: acuityschedulingAuth,
-  name: 'updated_schedule',
-  displayName: 'Updated Schedule',
-  description: 'Triggers when a staff member\'s schedule is updated',
+  name: 'appointment_rescheduled',
+  displayName: 'Appointment Rescheduled',
+  description: 'Triggers when a specific appointment is rescheduled',
   props: {
+    appointment_id: Property.ShortText({
+      displayName: 'Appointment ID',
+      description: 'The ID of the appointment to monitor for rescheduling',
+      required: true,
+    }),
     webhookInstructions: Property.MarkDown({
       value: `
-      ## ActivityScheduling Webhook Setup
-      To use this trigger, manually set up a webhook in your ActivityScheduling account:
+      ## AcuityScheduling Webhook Setup
+      To use this trigger, manually set up a webhook in your AcuityScheduling account:
       1. Go to **Settings** > **Webhooks**
       2. Enter this URL:
       \`\`\`text
       {{webhookUrl}}
       \`\`\`
-      3. Select "Schedule Updated" as the event type
+      3. Select "Appointment Rescheduled" as the event type
       4. Click Save to activate the webhook
       `,
-    }),
-    staff_filter: Property.ShortText({
-      displayName: 'Staff ID Filter',
-      description: 'Only trigger for specific staff members (leave blank for all)',
-      required: false
     }),
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    "event_type": "schedule.updated",
+    "event_type": "appointment.rescheduled",
     "data": {
-      "staff_id": "staff_123",
-      "changes": {
-        "monday": {
-          "old": {"start": "09:00", "end": "17:00"},
-          "new": {"start": "10:00", "end": "18:00"}
-        },
-        "tuesday": {
-          "old": {"start": "09:00", "end": "17:00"},
-          "new": {"start": "08:00", "end": "16:00"}
-        }
-      },
-      "updated_at": "2023-08-15T14:30:00Z",
-      "updated_by": "admin@example.com"
+      "appointment_id": "12345",
+      "old_time": "2023-08-15T14:30:00Z",
+      "new_time": "2023-08-15T15:30:00Z",
+      "calendar_id": "67890",
+      "updated_at": "2023-08-14T10:15:00Z"
     }
   },
 
-  async onEnable() {
-    // Manual webhook setup as per instructions
+  async onEnable(context) {
+    // No need to register webhooks programmatically as user will do it manually
+  },
+  async onDisable(context) {
+    // No cleanup needed as webhooks are managed by the user
   },
 
-  async onDisable() {
-    // Manual webhook removal
-  },
-
-  async test(auth) {
+  async test(context) {
+    const { appointment_id } = context.propsValue;
+    
+    // Test by checking recent appointment changes
     const response = await httpClient.sendRequest({
-      url: `${BASE_URL}/staff/schedule-changes`,
-      method: HttpMethod.GET,
-      queryParams: {
-        limit: '3',
-        sort: 'updated_at:desc'
-      },
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.auth.userId.toString(),
-        password: auth.auth.apiKey,
-      },
-    });
-
-    return response.body.data.changes || [];
-  },
-
-  async run(context) {
-    const payload = context.payload.body as {
-      event_type: string;
-      data: {
-        staff_id: string;
-        changes: Record<string, any>;
-        updated_at: string;
-      };
-    };
-
-    // Verify event type
-    if (payload.event_type !== 'schedule.updated') {
-      return [];
-    }
-
-    // Apply staff filter if specified
-    const staffFilter = context.propsValue.staff_filter;
-    if (staffFilter && payload.data.staff_id !== staffFilter) {
-      return [];
-    }
-
-    // Fetch full staff details
-    const staffResponse = await httpClient.sendRequest({
-      url: `${BASE_URL}/staff/${payload.data.staff_id}`,
+      url: `${BASE_URL}/appointments/${appointment_id}/reschedule`,
       method: HttpMethod.GET,
       authentication: {
         type: AuthenticationType.BASIC,
@@ -106,9 +61,33 @@ export const updatedScheduleTrigger = createTrigger({
       },
     });
 
-    return [{
-      ...payload.data,
-      staff_details: staffResponse.body.data
-    }];
+    return response.body.data || [];
+  },
+
+  async run(context) {
+    const { appointment_id } = context.propsValue;
+    const payload = context.payload.body as {
+      event_type: string;
+      data: {
+        appointment_id: string;
+        old_time: string;
+        new_time: string;
+        calendar_id?: string;
+        updated_at: string;
+      };
+    };
+
+    // Verify event type
+    if (payload.event_type !== 'appointment.rescheduled') {
+      return [];
+    }
+
+    // Verify it's the appointment we're monitoring
+    if (payload.data.appointment_id !== appointment_id) {
+      return [];
+    }
+
+    // Return the rescheduling details
+    return [payload.data];
   }
 });
