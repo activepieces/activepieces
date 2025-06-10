@@ -2,6 +2,11 @@ import { t } from 'i18next';
 
 import { PlanName } from '@activepieces/ee-shared';
 
+import PlanFreeImg from '@/assets/img/custom/plans/1.png';
+import PlanPlusImg from '@/assets/img/custom/plans/2.png';
+import PlanBusinessImg from '@/assets/img/custom/plans/3.png';
+import PlanEnterpriseImg from '@/assets/img/custom/plans/4.png';
+
 export const planData = {
   tabs: [t('Monthly'), t('Annual')],
 
@@ -10,25 +15,25 @@ export const planData = {
       name: PlanName.FREE,
       description: t('Explorers & Tinkers'),
       price: 0,
-      image: '/src/assets/img/custom/plans/1.png',
+      image: PlanFreeImg,
     },
     {
       name: PlanName.PLUS,
       description: t('Standard Users'),
       price: 25,
-      image: '/src/assets/img/custom/plans/2.png',
+      image: PlanPlusImg,
     },
     {
       name: PlanName.BUSINESS,
       description: t('Power Users & Small Teams'),
       price: 150,
-      image: '/src/assets/img/custom/plans/3.png',
+      image: PlanBusinessImg,
     },
     {
       name: PlanName.ENTERPRISE,
       description: t('Cloud or Self-Hosted'),
       price: 'Custom',
-      image: '/src//assets/img/custom/plans/4.png',
+      image: PlanEnterpriseImg,
     },
   ],
 
