@@ -23,7 +23,8 @@ export function UserAvatar({
       size={size}
       colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
       variant="beam"
-    />);
+    />
+  );
 
   if (disableTooltip) {
     return avatarElement;
