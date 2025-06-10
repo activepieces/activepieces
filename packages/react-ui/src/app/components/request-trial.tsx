@@ -3,6 +3,8 @@ import { t } from 'i18next';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { useState } from 'react';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -36,6 +38,7 @@ export const RequestTrial = ({
 }: RequestTrialProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
+  const [isOpen, setIsOpen] = useState(false);
 
   const createQueryParams = () => {
     const params = {
@@ -51,17 +54,16 @@ export const RequestTrial = ({
       .join('&');
   };
 
-  const handleClick = () => {
-    window.open(
-      `https://www.activepieces.com/sales?${createQueryParams()}`,
-      '_blank',
-      'noopener noreferrer',
-    );
-  };
 
   return (
-    <Button variant={buttonVariant} onClick={handleClick}>
-      {t('Contact Sales')}
-    </Button>
+    <>
+      <Button variant={buttonVariant} onClick={() => setIsOpen(true)}>
+        {t('Upgrade Now')}
+      </Button>
+      <ManagePlanDialog
+        open={isOpen}
+        setOpen={setIsOpen}
+      />
+    </>
   );
 };

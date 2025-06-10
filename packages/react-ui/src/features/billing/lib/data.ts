@@ -104,6 +104,11 @@ export const planData = {
       values: { free: false, plus: true, business: true, enterprise: true },
     },
     {
+      key: 'globalConnections',
+      label: t('Global Connections'),
+      values: { free: false, plus: false, business: true, enterprise: true },
+    },
+    {
       key: 'users',
       label: t('Users'),
       values: {

@@ -42,9 +42,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { HttpError } from '@/lib/api';
+import { api, HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
+  ErrorCode,
   InvitationType,
   isNil,
   Permission,
@@ -53,6 +54,7 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -87,6 +89,8 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
+
+  const [managePlanDialogOpen, setManagePlanDialogOpen] = useState(false);
 
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
@@ -123,7 +127,12 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
       //TODO: navigate to platform admin users
     },
     onError: (error) => {
-      console.error(error);
+      if(api.isApError(error, ErrorCode.QUOTA_EXCEEDED)){
+        setManagePlanDialogOpen(true);
+        setIsOpen(false);
+      }else{
+        console.error(error);
+      }
     },
   });
 
@@ -168,7 +177,14 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
   };
 
   return (
-    userHasPermissionToInviteUser && (
+    <>
+    <ManagePlanDialog
+        metric="userSeats"
+        open={managePlanDialogOpen}
+        setOpen={setManagePlanDialogOpen}
+      />
+    {userHasPermissionToInviteUser && (
+    
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
@@ -356,6 +372,7 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
           )}
         </DialogContent>
       </Dialog>
-    )
+    )}
+    </>
   );
 };

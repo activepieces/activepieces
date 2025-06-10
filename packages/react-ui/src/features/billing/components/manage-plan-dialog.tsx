@@ -13,7 +13,7 @@ import { planData } from '@/features/billing/lib/data';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 type ManagePlanDialogProps = {
-  metric?: 'activeFlows' | 'mcp' | 'tables';
+  metric?: 'activeFlows' | 'mcp' | 'tables' | 'userSeats';
   title?: string;
   open: boolean;
   setOpen: (isOpen: boolean) => void;
@@ -23,6 +23,7 @@ const messages: Record<string, string> = {
   activeFlows: 'You have run out of active flows. Upgrade to get more.',
   mcp: 'You have run out of MCP servers. Upgrade to get more.',
   tables: 'You have run out of tables. Upgrade to get more.',
+  userSeats: 'You have run out of user seats. Upgrade to get more.',
 };
 
 export const ManagePlanDialog: FC<ManagePlanDialogProps> = ({

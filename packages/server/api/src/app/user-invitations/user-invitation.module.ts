@@ -9,6 +9,7 @@ import {
     isNil,
     ListUserInvitationsRequest,
     Permission,
+    PlatformUsageMetric,
     PrincipalType,
     ProjectRole,
     SeekPage,
@@ -26,6 +27,7 @@ import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
+import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -46,6 +48,12 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
+
+        await checkQuotaOrThrow({
+            platformId: request.principal.platform.id,
+            metric: PlatformUsageMetric.USER_SEATS,
+        })
+
         const invitation = await userInvitationsService(request.log).create({
             email,
             type,
