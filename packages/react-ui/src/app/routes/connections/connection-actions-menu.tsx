@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -12,8 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { toast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   AppConnectionWithoutSensitiveData,
@@ -39,21 +37,8 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
   );
   const [open, setOpen] = useState(false);
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-      onDelete();
-    },
-    onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const bulkDeleteConnections =
+    appConnectionsMutations.useBulkDeleteAppConnections(refetch);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -108,7 +93,7 @@ export const ConnectionActionMenu: React.FC<ConnectionActionMenuProps> = ({
               </div>
             }
             mutationFn={() =>
-              bulkDeleteMutation.mutateAsync(
+              bulkDeleteConnections.mutateAsync(
                 connections.map((connection) => connection.id),
               )
             }
