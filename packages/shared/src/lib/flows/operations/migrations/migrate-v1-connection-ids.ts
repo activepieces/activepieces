@@ -12,5 +12,5 @@ export const migrateConnectionIds: Migration = {
             }
         }
         return flowVersion
-    }
+    },
 } 

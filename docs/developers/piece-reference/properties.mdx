@@ -349,6 +349,13 @@ This property is used to construct forms dynamically based on API responses or u
 **Example:**
 
 ```typescript
+
+import {
+	httpClient,
+	HttpMethod,
+} from '@activepieces/pieces-common';
+
+
 Property.DynamicProperties({
   description: 'Dynamic Form',
   displayName: 'Dynamic Form',
@@ -357,8 +364,10 @@ Property.DynamicProperties({
   props: async (propsValue) => {
     const authentication = propsValue['authentication'];
     const apiEndpoint = 'https://someapi.com';
-    const response = await fetch(apiEndpoint);
-    const data = await response.json();
+    const response = await httpClient.sendRequest<{ values: [string[]][] }>({
+        method: HttpMethod.GET,
+        url: apiEndpoint 
+	  });
 
     const properties = {
       prop1: Property.ShortText({
@@ -385,52 +394,53 @@ Property.DynamicProperties({
 <Warning>
  This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
 </Warning>
-This is a property that basically lets you inject JS code into the frontend and manipulate the DOM of this content however you like.
-It has a "code" property which is your JS script, it should be a function that takes in an object parameter which will have the following schema:
+This is a property that lets you inject JS code into the frontend and manipulate the DOM of this content however you like, it is extremely useful in case you are [embedding](/embedding/overview) Activepieces and want to have a way to communicate with the SaaS embedding it.
+It has a `code` property which is a function that takes in an object parameter which will have the following schema:
 
-```typescript
-{
-        //the container in which you will add your html, you can use tailwind to stylize your template
-        containerId,
-        value,
-        onChange,
-        //in case you want to hide your property for embedding.
-        isEmbedded,
-        projectId,
-        disabled
-}
-```
 
-here is how to define such a property:
+| Parameter Name |  Type | Description |
+| ---  | --- | --- |
+| onChange | `(value:unknown)=>void` | A callback you call to set the value of your input (only call this inside event handlers)|
+| value | `unknown` | Whatever the type of the value you pass to onChange|
+| containerId | `string` | The ID of an HTML element in which you can modify the DOM however you like |
+| isEmbedded | `boolean` | The flag that tells you if the code is running inside an [embedded instance](/embedding/overview) of Activepieces |
+| projectId | `string` | The project ID of the flow the step that contains this property is in |
+| disabled | `boolean` | The flag that tells you whether or not the property is disabled |
+| property | `{ displayName:string, description?: string, required: boolean}` | The current property information|
+
+- You can return a clean up function at the end of the `code` property function to remove any listeners or HTML elements you inserted (this is important for development mode, the component gets [mounted twice](https://react.dev/reference/react/useEffect#my-effect-runs-twice-when-the-component-mounts)).
+- This function must be pure without any imports from external packages or variables outside the function scope. 
+- **Must** mark your piece `minimumSupportedRelease` property to be at least `0.58.0` after introducing this property to it.
+
+Here is how to define such a property:
 ```typescript
  Property.Custom({
-      code: `
-      (params) => {
-        const containerId = params.containerId;
-        const label = document.createElement('div');
-        label.textContent = 'Hello from custom property';
-        const labelClasses = 'text-sm font-medium text-gray-900'.split(' ');
-        label.classList.add(...labelClasses);
+      code:(({value,onChange,containerId})=>{
         const container = document.getElementById(containerId);
-        container.appendChild(label);
-        container.appendChild(button);
-        const containerClasses = 'flex items-center justify-between'.split(' ');
-        container.classList.add(...containerClasses);
         const input = document.createElement('input');
-        const inputClassList = 'border border-solid border-border rounded-md'.split(' ');
-        input.classList.add(...inputClassList)
+        input.classList.add(...['border','border-solid', 'border-border', 'rounded-md']) 
         input.type = 'text';
-        input.value = params.value?? "Default value";
-        input.oninput = (e) => {
-          console.log("input changed", e.target.value);
-          params.onChange(e.target.value);
+        input.value = `${value}`;
+        input.oninput = (e: Event) => {
+          const value = (e.target as HTMLInputElement).value;
+          onChange(value);
         }
-        container.appendChild(input);
-      }`,
+       container!.appendChild(input);
+       const windowCallback = (e:MessageEvent<{type:string,value:string,propertyName:string}>) => {
+        if(e.data.type === 'updateInput' && e.data.propertyName === 'YOUR_PROPERTY_NAME'){
+          input.value= e.data.value;
+          onChange(e.data.value);
+        }
+       }
+       window.addEventListener('message', windowCallback);
+        return ()=>{
+          window.removeEventListener('message', windowCallback);
+          container!.removeChild(input);
+        }
+      }),
       displayName: 'Custom Property',
-      required: true,
-      defaultValue: "Default Value", 
-      description: "Custom Property Made By You",
+      required: true
     })
   ```
 
+- If you would like to know more about how to setup communication between Activepieces and the SaaS that's embedding it, check the [window postMessage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).

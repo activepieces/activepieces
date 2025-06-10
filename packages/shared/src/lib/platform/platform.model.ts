@@ -59,9 +59,25 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
+
+export enum PlatformUsageMetric {
+    TASKS = 'tasks',
+    AI_TOKENS = 'ai-tokens',
+    ACTIVE_FLOWS = 'active-flows',
+    USER_SEATS = 'user-seats',
+    PROJECTS = 'projects',
+    TABLES = 'tables',
+}
+
+
 export const PlatformUsage = Type.Object({
     tasks: Type.Number(),
     aiCredits: Type.Number(),
+    activeFlows: Type.Number(),
+    tables: Type.Number(),
+    mcp: Type.Number(),
+    seats: Type.Number(),
+    projects: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -101,21 +117,18 @@ export const PlatformPlan = Type.Object({
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
+
+    userSeatsLimit: Type.Optional(Type.Number()),
+    projectsLimit: Type.Optional(Type.Number()),
+    tablesLimit: Type.Optional(Type.Number()),
+    mcpLimit: Type.Optional(Type.Number()),
+    activeFlowsLimit: Type.Optional(Type.Number()),
 })
   
 export type PlatformPlan = Static<typeof PlatformPlan>
 
 export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
 export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
-
-export const PlatformPlanResponse = Type.Object({
-    nextBillingDate: Type.String(),
-    subscription: PlatformPlanLimits,
-    flowRunCount: Type.Number(),
-    aiCredits: Type.Number(),
-})
-  
-export type PlatformPlanResponse = Static<typeof PlatformPlanResponse>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
@@ -177,3 +190,13 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
 ])])
 
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>
+
+
+export const PlatformBillingInformation = Type.Object({
+    plan: PlatformPlan,
+    usage: PlatformUsage,
+    nextBillingDate: Type.String(),
+})
+
+export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
+
