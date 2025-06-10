@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SupportedAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { BillingUsageType, platformUsageService } from '../ee/platform/platform-usage-service'
