@@ -57,7 +57,7 @@ export const reactMessage = createAction({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/react`,
       headers: {
-        Authorization: `Bearer ${authToken.split(':')[1]}`,
+        Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
       },
       body: {
         messageId: propsValue.messageId,
