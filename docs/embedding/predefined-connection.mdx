@@ -18,7 +18,8 @@ The high-level steps are:
 
 <Steps>
   <Step title="Create an API Key">
-    Go to <b>Platform Admin → Security → API Keys</b> and create an API key. Save it for use in the next step.
+    Go to **Platform Admin → Security → API Keys** and create an API key. Save it for use in the next step.
+    ![Create API Key](/resources/screenshots/create-api-key.png)
   </Step>
   <Step title="Create a Global Connection via API">
     Add the following snippet to your backend to create a global connection each time you generate the <b>JWT token</b>.
@@ -27,13 +28,14 @@ The high-level steps are:
         - Create Project If it doesn't exist.
         - Create a global connection for the project with certain naming convention.
 ```js
-// Usage
 const apiKey = 'YOUR_API_KEY';
 const instanceUrl = 'https://cloud.activepieces.com';
 
 // The name of the user / organization in your SAAS
 const externalProjectId = 'org_1234';
 const pieceName = '@activepieces/piece-gelato';
+// This will depend on what your piece auth type is
+const pieceAuthType = "CUSTOM_AUTH"
 const connectionProps = {
     // Fill in the props required by your piece's auth
 }
@@ -50,6 +52,7 @@ await createGlobalConnection({
   instanceUrl,
   pieceName,
   props,
+  pieceAuthType
 });
 
 ```
@@ -117,14 +120,16 @@ async function createGlobalConnection({
     apiKey,
     instanceUrl,
     pieceName,
-    props
+    props,
+    pieceAuthType
 }: {
     projectId: string,
     externalProjectId: string,
     apiKey: string,
     instanceUrl: string,
     pieceName: string,
-    props: Record<string, any>
+    props: Record<string, any>,
+    pieceAuthType
 }) {
 
     const displayName = 'Gelato Connection';
@@ -140,9 +145,9 @@ async function createGlobalConnection({
             displayName,
             pieceName,
             metadata: {},
-            type: 'CUSTOM_AUTH',
+            type: pieceAuthType,
             value: {
-                type: 'CUSTOM_AUTH',
+                type: pieceAuthType,
                 props
             },
             scope: 'PLATFORM',
@@ -160,11 +165,11 @@ async function createGlobalConnection({
 
 <Steps>
     <Step title="Modify Trigger / Action Definition">
-       Go to `createTrigger` or `createAction` and set `requireAuth` to `false`, this will hide the connections dropdown in the piece settings,
-       next we need to fetch it based on naming convention.
+       Wherever you call `createTrigger` or `createAction` set `requireAuth` to `false`, this will hide the connections dropdown in the piece settings in the builder,
+       next we need to fetch it based on a naming convention.
     </Step>
     <Step title="Fetch the connection">
-        Here is example how you can fetch the connection value based on naming convention.
+        Here is example how you can fetch the connection value based on naming convention, make sure this naming convention is followed when creating a global connection.
 
 ```js
 import {
@@ -176,8 +181,6 @@ import {
    createTrigger
 } from "@activepieces/pieces-framework";
 import {
-   AppConnectionType,
-   AppConnectionValue,
    isNil
 } from "@activepieces/shared";
 // Add this import from the index.ts file, where it contains the definition of the auth object.
@@ -186,17 +189,17 @@ import { auth } from '../..';
 const fetchConnection = async (
 	connections: ConnectionsManager,
 	projectExternalId: string | undefined,
-): Promise<PiecePropValueSchema<typeof googleSheetsAuth>> => {
-	if (!projectExternalId) {
+): Promise<PiecePropValueSchema<typeof auth>> => {
+	if (isNil(projectExternalId)) {
 		throw new Error('This project is missing an external id');
 	}
-	
+	// the naming convention here is gelato_projectExternalId
 	const connection = await connections.get(`gelato_${projectExternalId}`);
-	if (!connection) {
+	if (isNil(connection)) {
 		throw new Error(`Connection not found for project ${projectExternalId}`);
 	}
 
-	return connection as PiecePropValueSchema<typeof googleSheetsAuth>;
+	return connection as PiecePropValueSchema<typeof auth>;
 };
 
 
@@ -214,7 +217,7 @@ export const newFlavorCreated = createTrigger({
             connections,
             project
          }) => {
-            const connection = await fetchConnection (connections, (await project.externalId()));
+            const connection = await fetchConnection(connections, (await project.externalId()));
             // your logic
             return {
                options: [{
@@ -228,22 +231,22 @@ export const newFlavorCreated = createTrigger({
    sampleData: {},
    type: TriggerStrategy.POLLING,
    async test({connections,project}) {
-      const connection = await fetchConnection < AppConnectionType.CUSTOM_AUTH > (connections, (await project.externalId()));
+      const connection = await fetchConnection(connections, (await project.externalId()));
       // use the connection with your own logic
       return []
    },
    async onEnable({connections,project}) {
-      const connection = await fetchConnection < AppConnectionType.CUSTOM_AUTH > (connections, (await project.externalId()));
+      const connection = await fetchConnection(connections, (await project.externalId()));
       // use the connection with your own logic
    },
 
    async onDisable({connections,project}) {
-      const connection = await fetchConnection < AppConnectionType.CUSTOM_AUTH > (connections, (await project.externalId()));
+      const connection = await fetchConnection(connections, (await project.externalId()));
       // use the connection with your own logic
    },
 
    async run({connections,project}) {
-    const connection = await fetchConnection < AppConnectionType.CUSTOM_AUTH > (connections, (await project.externalId()));
+    const connection = await fetchConnection(connections, (await project.externalId()));
       // use the connection with your own logic
       return []
    },
