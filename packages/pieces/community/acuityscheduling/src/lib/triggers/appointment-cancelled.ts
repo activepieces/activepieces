@@ -3,7 +3,7 @@ import { acuityschedulingAuth } from '../../index';
 import { BASE_URL } from '../../index';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const canceledAppointmentTrigger = createTrigger({
+export const cancelledAppointmentTrigger = createTrigger({
   auth: acuityschedulingAuth,
   name: 'canceled_appointment',
   displayName: 'Canceled Appointment',

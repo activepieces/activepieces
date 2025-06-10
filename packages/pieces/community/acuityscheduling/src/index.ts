@@ -12,7 +12,7 @@ import { createAppointment } from './lib/actions/create-appointment';
 import { updateClientAction } from './lib/actions/update-client';
 import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
-import { canceledAppointmentTrigger } from './lib/triggers/appointment-cancelled';
+import { cancelledAppointmentTrigger } from './lib/triggers/appointment-cancelled';
 import { appointmentRescheduledTrigger } from './lib/triggers/appointment-scheduled';
 import { error } from 'console';
 
@@ -91,7 +91,7 @@ export const acuityscheduling = createPiece({
     findAppointmentByClientInfoAction
   ],
   triggers: [
-    canceledAppointmentTrigger,
+    cancelledAppointmentTrigger,
     appointmentRescheduledTrigger
   ],
 });
