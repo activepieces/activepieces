@@ -35,15 +35,16 @@ export const createAppointment = createAction({
             required: false,
         })
     },
-    async run({ auth, propsValue}) {
+    async run({ auth, propsValue }) {
         const { title, startTime, endTime, description, attendees } = propsValue;
 
         const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
             method: HttpMethod.POST,
-            url: `${BASE_URL}/Client/createCleint`,
+            url: `${BASE_URL}/appointments`,
             authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: auth.apiKey && auth.userId,
+                type: AuthenticationType.BASIC,
+                username: auth.userId.toString(),
+                password: auth.apiKey,
             },
             body: {
                 title,

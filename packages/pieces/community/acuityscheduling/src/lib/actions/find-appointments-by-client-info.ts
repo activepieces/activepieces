@@ -48,14 +48,15 @@ export const findAppointmentByClientInfoAction = createAction({
 			data: Array<Record<string, any>>;
 		}>({
 			method: HttpMethod.GET,
-			url: `${BASE_URL}/appointment/findByUserInfo`,
+			url: `${BASE_URL}/appointments`,
 			queryParams: {
 				field_id: search_field.toString(),
 				field_value: search_value,
 			},
 			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth.apiKey && auth.userId,
+				type: AuthenticationType.BASIC,
+        username: auth.userId.toString(), 
+        password: auth.apiKey,
 			},
 		});
 

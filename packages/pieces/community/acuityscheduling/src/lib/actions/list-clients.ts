@@ -23,7 +23,7 @@ export const findClientByNameAction = createAction({
 			data: Array<Record<string, any>>;
 		}>({
 			method: HttpMethod.GET,
-			url: `${BASE_URL}/Client/findByName`,
+			url: `${BASE_URL}/clients`,
 			queryParams: {
 				name: name,
 			},

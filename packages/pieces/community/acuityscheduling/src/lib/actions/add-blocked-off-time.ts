@@ -81,10 +81,11 @@ export const addBlockedTimeAction = createAction({
 
         const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
             method: HttpMethod.POST,
-            url: `${BASE_URL}/appointments/createBlockedTime`,
+            url: `${BASE_URL}/blocks`,
             authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: auth.apiKey && auth.userId,
+                type: AuthenticationType.BASIC,
+                username: auth.userId.toString(),
+                password: auth.apiKey,
             },
             body: {
                 title,

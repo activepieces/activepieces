@@ -66,8 +66,9 @@ export const canceledAppointmentTrigger = createTrigger({
         limit: '5'
       },
       authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey && auth.userId,
+        type: AuthenticationType.BASIC,
+        username: auth.userId.toString(),
+        password: auth.apiKey,
       },
     });
 
@@ -92,8 +93,9 @@ export const canceledAppointmentTrigger = createTrigger({
       url: `${BASE_URL}/appointments/${payload['id']}`,
       method: HttpMethod.GET,
       authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.auth.apiKey && auth.auth.userId,
+        type: AuthenticationType.BASIC,
+        username: auth.auth.userId.toString(),
+        password: auth.auth.apiKey,
       },
     });
 

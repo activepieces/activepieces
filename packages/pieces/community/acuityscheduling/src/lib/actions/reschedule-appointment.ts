@@ -57,8 +57,9 @@ export const rescheduleAppointmentAction = createAction({
                     new_end_time: new_end_time,  
                 },
                 authentication: {
-                    type: AuthenticationType.BEARER_TOKEN,
-                    token: auth.apiKey && auth.userId,
+                    type: AuthenticationType.BASIC,
+                    username: auth.userId.toString(),
+                    password: auth.apiKey,
                 },
             });
       return {

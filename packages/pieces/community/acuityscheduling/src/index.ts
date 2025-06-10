@@ -14,8 +14,9 @@ import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointmen
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
 import { canceledAppointmentTrigger } from './lib/triggers/appointment-canceled';
 import { updatedScheduleTrigger } from './lib/triggers/appointment-scheduled';
+import { error } from 'console';
 
-export const BASE_URL = 'https://acuityscheduling.com/api/v1/appointments';
+export const BASE_URL = 'https://acuityscheduling.com/api/v1';
 
 export const acuityschedulingAuth = PieceAuth.CustomAuth({
  
@@ -50,7 +51,7 @@ export const acuityschedulingAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid credentials. Please check your User ID and API Key.',
+        error: "Invalid credentials. Please check your User ID and API Key.",
       };
     }
   },

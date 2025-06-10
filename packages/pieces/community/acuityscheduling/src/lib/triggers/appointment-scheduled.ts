@@ -65,8 +65,9 @@ export const updatedScheduleTrigger = createTrigger({
         sort: 'updated_at:desc'
       },
       authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.auth.apiKey && auth.auth.userId,
+        type: AuthenticationType.BASIC,
+        username: auth.auth.userId.toString(),
+        password: auth.auth.apiKey,
       },
     });
 
@@ -99,8 +100,9 @@ export const updatedScheduleTrigger = createTrigger({
       url: `${BASE_URL}/staff/${payload.data.staff_id}`,
       method: HttpMethod.GET,
       authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.apiKey && context.auth.userId,
+        type: AuthenticationType.BASIC,
+        username: context.auth.userId.toString(),
+        password: context.auth.apiKey,
       },
     });
 

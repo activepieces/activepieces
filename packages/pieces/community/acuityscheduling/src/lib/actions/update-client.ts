@@ -56,10 +56,11 @@ export const updateClientAction = createAction({
         try {
             const response = await httpClient.sendRequest<{ status: string; data: Record<string, any> }>({
                 method: HttpMethod.PATCH,
-                url: `${BASE_URL}/Client/createCleint`,
+                url: `${BASE_URL}/Clients`,
                 authentication: {
-                    type: AuthenticationType.BEARER_TOKEN,
-                    token: auth.apiKey && auth.userId,
+                    type: AuthenticationType.BASIC,
+                    username: auth.userId.toString(),
+                    password: auth.apiKey,
                 },
                 body: {
                     client_id,
