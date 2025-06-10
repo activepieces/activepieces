@@ -714,6 +714,9 @@
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
       ],
+      "@activepieces/piece-skyvern": [
+        "packages/pieces/community/skyvern/src/index.ts"
+      ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
