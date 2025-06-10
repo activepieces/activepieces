@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   Users,
   Activity,
+  Workflow,
 } from 'lucide-react';
 
 import mcp from '@/assets/img/custom/mcp.svg';
@@ -57,7 +58,7 @@ export const UsageCards = ({
         total={plan.tablesLimit}
       />
       <UsageCard
-        icon={<Activity className='w-4 h-4' />}
+        icon={<Workflow className='w-4 h-4' />}
         title={t('Active flows')}
         used={usage.activeFlows}
         total={plan.activeFlowsLimit}
