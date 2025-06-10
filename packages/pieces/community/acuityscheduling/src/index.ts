@@ -88,6 +88,7 @@ export const acuityscheduling = createPiece({
     updateClientAction,
     rescheduleAppointmentAction,
     findAppointmentByClientInfoAction
+    
   ],
   triggers: [
     cancelledAppointmentTrigger,
