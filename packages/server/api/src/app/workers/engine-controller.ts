@@ -78,7 +78,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepId } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
 
@@ -91,12 +91,16 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
 
-        const runWithoutSteps = await flowRunService(request.log).getOnePopulatedOrThrow({
-            id: runId,
+        const runWithoutSteps = await flowRunService(request.log).updateStatus({
+            flowRunId: runId,
+            status: getTerminalStatus(runDetails.status),
+            tasks: runDetails.tasks,
+            duration: runDetails.duration,
             projectId: request.principal.projectId,
+            tags: runDetails.tags ?? [],
+            failedStepId,
         })
 
-        // save logs first then update status.
         let uploadUrl: string | undefined
         const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
@@ -111,15 +115,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         else {
             app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
         }
- 
-        await flowRunService(request.log).updateStatus({
-            flowRunId: runId,
-            status: getTerminalStatus(runDetails.status),
-            tasks: runDetails.tasks,
-            duration: runDetails.duration,
-            projectId: request.principal.projectId,
-            tags: runDetails.tags ?? [],
-        })
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({

@@ -1,10 +1,9 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActionType, ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, ExecutioOutputFile, FileType, FlowRun, FlowRunStatus, flowStructureUtil, isNil, Issue, IssueStatus, ListIssuesParams, LoopStepOutput, PopulatedIssue, SeekPage, spreadIfDefined, StepOutput, StepOutputStatus, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FlowRun, FlowRunStatus, flowStructureUtil, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { LessThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -17,14 +16,16 @@ const repo = repoFactory(IssueEntity)
 export const issuesService = (log: FastifyBaseLogger) => ({
     async add(flowRun: FlowRun): Promise<Issue> {
         const date = dayjs(flowRun.created).toISOString()
-        const failedStepId = await extractFailedStepId(flowRun, log)
+
+
+        assertNotNullOrUndefined(flowRun.failedStepId, 'failedStepId')
 
         // First try to find an existing issue for this step
         const existingIssue = await repo().findOne({
             where: {
                 projectId: flowRun.projectId,
                 flowId: flowRun.flowId,
-                stepId: failedStepId,
+                stepId: flowRun.failedStepId,
                 status: IssueStatus.UNRESOLVED,
             },
         })
@@ -47,7 +48,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 flowId: flowRun.flowId,
                 id: issueId,
                 lastOccurrence: date,
-                stepId: failedStepId,
+                stepId: flowRun.failedStepId,
                 status: IssueStatus.UNRESOLVED,
                 created: date,
                 updated: date,
@@ -55,7 +56,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             .execute()
 
         const issue = await repo().findOneByOrFail({ id: issueId })
-        issue.step = await getStepFromFlow(flowRun.flowId, failedStepId, log)
+        issue.step = await getStepFromFlow(flowRun.flowId, flowRun.failedStepId, log)
         return issue
     },
     async get({ projectId, flowId, stepId }: { projectId: string, flowId: string, stepId: string }): Promise<Issue | null> {
@@ -193,31 +194,6 @@ type UpdateParams = {
     projectId: string
     id: string
     status: IssueStatus
-}
-
-const extractFailedStepId = async (flowRun: FlowRun, log: FastifyBaseLogger) => {
-    const flowSteps = await fileService(log).getDataOrThrow({
-        projectId: flowRun.projectId, 
-        fileId: flowRun.logsFileId ?? '', 
-        type: FileType.FLOW_RUN_LOG,
-    })
-    const rawData = Buffer.from(flowSteps.data).toString('utf-8')
-    const executionOutput = JSON.parse(rawData) as ExecutioOutputFile
-    const executionState = executionOutput.executionState
-
-    const failedStep = Object.entries(executionState.steps).find(([_, step]) => {
-        const stepOutput = step as StepOutput
-        if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
-            const loopOutput = stepOutput as LoopStepOutput
-            return loopOutput.output?.iterations.some(iteration => 
-                Object.values(iteration).some(step => step.status === StepOutputStatus.FAILED),
-            )
-        }
-        return stepOutput.status === StepOutputStatus.FAILED
-    })
-
-    assertNotNullOrUndefined(failedStep, 'failedStep')
-    return failedStep[0]
 }
 
 const getStepFromFlow = async (flowId: string, stepId: string, log: FastifyBaseLogger) => {

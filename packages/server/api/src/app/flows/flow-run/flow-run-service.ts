@@ -188,6 +188,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         projectId,
         tags,
         duration,
+        failedStepId,
     }: FinishParams): Promise<FlowRun> {
 
         await flowRunRepo().update({
@@ -200,6 +201,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
+            failedStepId: failedStepId ?? undefined,
         })
 
 
@@ -516,6 +518,7 @@ type FinishParams = {
     tasks: number | undefined
     duration: number | undefined
     tags: string[]
+    failedStepId?: string | undefined
 }
 
 type GetOrCreateParams = {
