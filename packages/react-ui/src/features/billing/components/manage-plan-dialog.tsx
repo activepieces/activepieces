@@ -42,7 +42,7 @@ export const ManagePlanDialog: FC<ManagePlanDialogProps> = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-col items-center mb-6">
-          <DialogTitle className="text-2xl font-bold text-center">
+          <DialogTitle className="text-2xl font-bold text-center mb-4">
             {title}
             {message && (
               <div className="text-center font-medium text-lg mb-4 mt-3 flex items-center justify-center gap-2">

@@ -13,7 +13,7 @@ import {
   CreateSubscriptionParams,
   PlanName,
 } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
@@ -65,12 +65,12 @@ export const PlanCard = ({
     <div
       className={cn(
         'relative flex flex-col rounded-xl border bg-card p-6',
-        isSelected && 'ring-2 ring-primary border-transparent ring-offset-2',
+        isPopular && 'ring-2 ring-primary border-transparent ring-offset-2',
       )}
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-secondary text-secondary-foreground px-3 py-1 text-xs font-medium">
+          <Badge variant="ghost" className="bg-secondary text-foreground px-3 py-1 text-xs font-medium">
             <StarIcon className="mr-1 h-3 w-3 fill-current" />
             {t('Most Popular')}
           </Badge>
@@ -78,16 +78,6 @@ export const PlanCard = ({
       )}
 
       <div className="space-y-2">
-        {plan.image && (
-          <div className="flex justify-start mb-2">
-            <img
-              src={plan.image}
-              alt={`${plan.name}`}
-              className="max-h-20 object-contain"
-              style={{ maxWidth: '100%' }}
-            />
-          </div>
-        )}
         <h3 className="text-2xl font-bold tracking-tight">
           {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
         </h3>
@@ -136,11 +126,13 @@ export const PlanCard = ({
 
       <div className="mt-6 space-y-4">
         <h4 className="text-sm font-semibold text-foreground">
-          {t("What's included")}
+          {plan.featuresTitle}
         </h4>
         <ul className="space-y-2">
           {planData.features.map((feature) => {
             const featureValue = feature.values[plan.name];
+            if(isNil(featureValue)) return null;
+            
             const isIncluded =
               typeof featureValue !== 'boolean' || featureValue === true;
 
@@ -170,7 +162,7 @@ export const PlanCard = ({
                       {featureValue}
                     </span>
                   )}
-                  <span>{feature.label}</span>
+                  <span>{featureValue === '1' ? feature.label.slice(0, -1) :  feature.label}</span>
                 </div>
               </li>
             );

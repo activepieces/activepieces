@@ -32,7 +32,7 @@ export const UsageCards = ({
       {!isBusinessPlan && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
-          title={t('Member seats')}
+          title={t('Users')}
           used={usage.seats}
           total={plan.userSeatsLimit}
         />
@@ -103,9 +103,6 @@ export default function UsageCard({
               <span className="text-muted-foreground">
                 {used.toLocaleString()} /{' '}
                 {isUnlimited ? 'Unlimited' : total?.toLocaleString()}
-              </span>
-              <span className="text-xs font-medium text-muted-foreground">
-                {isUnlimited ? 'Unlimited' : 'Usage'}
               </span>
             </div>
 
