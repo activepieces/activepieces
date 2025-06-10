@@ -197,6 +197,7 @@ export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
     nextBillingDate: Type.String(),
+    nextBillingAmmount: Type.Optional(Type.Number())
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

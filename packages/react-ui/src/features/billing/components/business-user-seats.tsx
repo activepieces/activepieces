@@ -21,7 +21,7 @@ export function BusinessUserSeats({
   const { setDialog } = useDialogStore();
   const { plan, usage } = platformSubscription;
   const currentSeats = usage.seats || 0;
-  const seatsLimit = plan.userSeatsLimit ?? 100;
+  const seatsLimit = plan.userSeatsLimit ?? 5;
   const usagePercentage =
     seatsLimit > 0 ? Math.round((currentSeats / seatsLimit) * 100) : 0;
 

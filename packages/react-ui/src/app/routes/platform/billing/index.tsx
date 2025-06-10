@@ -16,11 +16,9 @@ import {
   billingMutations,
   billingQueries,
 } from '@/features/billing/lib/billing-hooks';
-import { calculateTotalCost } from '@/features/billing/lib/utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useDialogStore } from '@/lib/dialogs-store';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { isNil } from '@activepieces/shared';
 
 export default function Billing() {
@@ -39,10 +37,6 @@ export default function Billing() {
     platformSubscription?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.ACTIVE;
   const isBusinessPlan = platformSubscription?.plan.plan === PlanName.BUSINESS;
-  const calculatedTotalCost = calculateTotalCost(
-    platformSubscription?.usage.tasks || 0,
-    platformSubscription?.plan.tasksLimit || 0,
-  );
 
   if (isPlatformSubscriptionLoading || isNil(platformSubscription)) {
     return (
@@ -100,7 +94,9 @@ export default function Billing() {
           </Badge>
         </div>
         <div className="flex items-baseline gap-2">
-          <div className="text-5xl font-semibold">{calculatedTotalCost}</div>
+          <div className="text-5xl font-semibold">
+            ${platformSubscription.nextBillingAmmount || Number(0).toFixed(2)}
+          </div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>
         {platformSubscription?.nextBillingDate && (

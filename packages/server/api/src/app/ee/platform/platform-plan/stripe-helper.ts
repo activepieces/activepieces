@@ -1,11 +1,9 @@
 import {  CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, UpdateSubscriptionParams } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
@@ -78,32 +76,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             },
         })
         
-        return session.url!
-    },
-
-    createCheckoutUrl: async (
-        customerId: string,
-    ): Promise<string> => {
-        const stripe = stripeHelper(log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-
-        const startBillingPeriod = platformUsageService(log).getCurrentBillingPeriodStart()
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [
-                {
-                    price: TASKS_PRICE_ID,
-                },
-            ],
-            subscription_data: {
-                billing_cycle_anchor: dayjs(startBillingPeriod).add(30, 'day').unix(),
-            },
-            mode: 'subscription',
-            success_url: `${frontendUrl}/platform/billing`,
-            cancel_url: `${frontendUrl}/platform/billing`,
-            customer: customerId,
-        })
-
         return session.url!
     },
 

@@ -75,7 +75,7 @@ export function AICreditUsage({
               </p>
             </div>
           </div>
-          {!isFreePlan && (
+          {false && (
             <div className="flex items-center gap-3 py-2">
               <span className="text-sm font-medium">
                 {t('Usage Based Billing')}

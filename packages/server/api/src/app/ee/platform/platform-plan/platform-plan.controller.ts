@@ -1,25 +1,73 @@
 import { CreateSubscriptionParamsSchema, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import Stripe from 'stripe'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
+import { stripeHelper, TASKS_PRICE_ID } from './stripe-helper'
 
+
+async function getNextBillingInfo(
+    stripe: Stripe, 
+    subscriptionId: string | null, 
+    defaultBillingDate: string,
+) {
+    if (isNil(subscriptionId)) {
+        return {
+            nextBillingAmount: 0,
+            actualNextBillingDate: defaultBillingDate,
+        }
+    }
+    
+    const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        subscription: subscriptionId,
+    })
+    
+    const containsTasks = upcomingInvoice.lines.data.some(
+        line => line.price?.id === TASKS_PRICE_ID,
+    )
+    
+    const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
+    
+    const actualNextBillingDate = containsTasks || isNil(upcomingInvoice.next_payment_attempt)
+        ? defaultBillingDate
+        : new Date(upcomingInvoice.next_payment_attempt * 1000).toISOString()
+    
+    return { nextBillingAmount, actualNextBillingDate }
+}
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-
+    
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const stripe = stripeHelper(request.log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+        
+        const [platformBilling, usage] = await Promise.all([
+            platformPlanService(request.log).getOrCreateForPlatform(platform.id),
+            platformUsageService(request.log).getPlatformUsage(platform.id),
+        ])
+        
+        const nextBillingDate = platformUsageService(request.log).getCurrentBillingPeriodEnd()
+        
+        const { nextBillingAmount, actualNextBillingDate } = await getNextBillingInfo(
+            stripe, 
+            platformBilling.stripeSubscriptionId ?? null, 
+            nextBillingDate,
+        )
+        
         const response: PlatformBillingInformation = {
-            plan: await platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            usage: await platformUsageService(request.log).getPlatformUsage(platform.id),
-            nextBillingDate: platformUsageService(request.log).getCurrentBillingPeriodEnd(),
+            plan: platformBilling,
+            usage,
+            nextBillingDate: actualNextBillingDate,
+            nextBillingAmmount: nextBillingAmount,
         }
+        
         return response
     })
 
