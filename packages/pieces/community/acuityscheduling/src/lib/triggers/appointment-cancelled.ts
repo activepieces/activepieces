@@ -9,16 +9,73 @@ export const cancelledAppointmentTrigger = createTrigger({
   displayName: 'Canceled Appointment',
   description: 'Triggered when an appointment is canceled',
   props: {
-    appointment_id: Property.ShortText({
+    appointment_id: Property.Dropdown({
       displayName: 'Appointment ID',
-      description: 'The ID of the appointment to monitor for cancellations',
-      required: true,
+      description: 'Select an appointment for cancellations',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        const authData = auth as { userId: string | number, apiKey: string };
+
+        try {
+          const response = await httpClient.sendRequest<{
+            status: string;
+            data: Array<{
+              id: string | number;
+              calendar: string;
+              datetime: string;
+              status: string;
+            }>;
+          }>({
+            method: HttpMethod.GET,
+            url: `${BASE_URL}/appointments`,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: authData.userId.toString(),
+              password: authData.apiKey,
+            },
+            queryParams: {
+              max: '10',
+              include_canceled: 'false' // Only show active appointments
+            }
+          });
+
+          if (response.body.status === 'success') {
+            return {
+              disabled: false,
+              options: response.body.data.map(appointment => ({
+                label: `${appointment.calendar} - ${new Date(appointment.datetime).toLocaleString()}`,
+                value: appointment.id.toString()
+              }))
+            };
+          }
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No active appointments found'
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not fetch appointments. Check your authentication.'
+          };
+        }
+      }
     }),
     webhookInstructions: Property.MarkDown({
       value: `
-      ## ActivityScheduling Webhook Setup
-      To use this trigger, you need to manually set up a webhook in your ActivityScheduling account:
-      1. Login to your ActivityScheduling account.
+      ## AcuityScheduling Webhook Setup
+      To use this trigger, you need to manually set up a webhook in your AcuityScheduling account:
+      1. Login to your AcuityScheduling account.
       2. Navigate to **Settings** > **Webhooks**.
       3. Enter the following URL in the webhooks field:
       \`\`\`text
@@ -26,7 +83,8 @@ export const cancelledAppointmentTrigger = createTrigger({
       \`\`\`
       4. Select "Appointment Canceled" as the event type.
       5. Click Save to register the webhook.
-      This webhook will be triggered when an appointment is canceled.
+      
+      **Note:** The webhook will trigger for all canceled appointments unless you specify an appointment above.
       `,
     }),
     include_past: Property.Checkbox({
@@ -38,72 +96,53 @@ export const cancelledAppointmentTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    "id": "apt_12345",
+    "appointment_id": "apt_12345",
     "status": "canceled",
     "title": "Annual Checkup",
-    "start_time": "2025-08-15T09:00:00Z",
-    "end_time": "2025-08-15T10:00:00Z",
+    "datetime": "2025-08-15T09:00:00Z",
+    "enddatetime": "2025-08-15T10:00:00Z",
     "client": {
       "id": "cli_67890",
-      "name": "John Doe",
+      "firstName": "John",
+      "lastName": "Doe",
       "email": "john@example.com",
       "phone": "+1232324327"
     },
-    "canceled_at": "2025-08-14T14:30:00Z",
-    "canceled_by": "client",
-    "cancelation_reason": "Scheduling conflict"
+    "canceledAt": "2025-08-14T14:30:00Z",
+    "canceledBy": "client",
+    "cancelationReason": "Scheduling conflict"
   },
 
   async onEnable(context) {
     // No need to register webhooks programmatically as user will do it manually
+    return Promise.resolve();
   },
 
   async onDisable(context) {
     // No need to unregister webhooks as user will do it manually
+    return Promise.resolve();
   },
 
-  async test({ auth }) {
-    const response = await httpClient.sendRequest<{ data: { appointments: Record<string, any>[] } }>({
-      url: `${BASE_URL}/appointments/{appointment_id}/cancel`,
+  async run(context) {
+    const appointment_id = context.propsValue.appointment_id;
+    const response = await httpClient.sendRequest<{ data: Array<Record<string, any>> }>({
+      url: `${BASE_URL}/appointments/${appointment_id}/cancel`,
       method: HttpMethod.PUT,
       queryParams: {
         status: 'canceled',
-        limit: '5'
+        limit: '1'
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.userId.toString(),
-        password: auth.apiKey,
+        username: context.auth.userId.toString(),
+        password: context.auth.apiKey,
       },
     });
 
-    return response.body.data.appointments;
+    if (response.body.data && response.body.data.length > 0) {
+      return [response.body.data[0]];
+    }
+
+    return [context.propsValue];
   },
-
-  async run(auth) {
-    
-    const payload = auth.payload.body as {
-      appointment_id: string;
-      status: string;
-      canceled_at: string;
-      canceled_by: string;
-      cancelation_reason: string;
-    };
-
-    const now = new Date();
-
-
-    // Fetch full appointment details
-    const response = await httpClient.sendRequest({
-      url: `${BASE_URL}/appointments/${payload['appointment_id']}`,
-      method: HttpMethod.GET,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.auth.userId.toString(),
-        password: auth.auth.apiKey,
-      },
-    });
-
-    return [response.body.data];
-  }
 });

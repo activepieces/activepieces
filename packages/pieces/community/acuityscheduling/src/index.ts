@@ -14,7 +14,6 @@ import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointmen
 import { findAppointmentByClientInfoAction } from './lib/actions/find-appointments-by-client-info';
 import { cancelledAppointmentTrigger } from './lib/triggers/appointment-cancelled';
 import { appointmentRescheduledTrigger } from './lib/triggers/appointment-scheduled';
-import { error } from 'console';
 
 export const BASE_URL = 'https://acuityscheduling.com/api/v1';
 

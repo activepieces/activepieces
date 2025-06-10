@@ -35,7 +35,7 @@ export const createAppointment = createAction({
             required: false,
         }),
         email: Property.Array({
-            displayName: 'Attendees',
+            displayName: 'Email',
             description: 'Email addresses of attendees',
             required: false,
         })
