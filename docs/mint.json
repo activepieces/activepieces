@@ -138,7 +138,8 @@
         "handbook/engineering/playbooks/infrastructure",
         "handbook/engineering/playbooks/bullboard",
         "handbook/engineering/playbooks/database-migration",
-        "handbook/engineering/playbooks/product-announcement"
+        "handbook/engineering/playbooks/product-announcement",
+        "handbook/engineering/playbooks/frontend-best-practices"
       ]
     },
     {
@@ -402,16 +403,8 @@
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
         "developers/piece-reference/custom-api-calls",
-        "developers/piece-reference/i18n"
-      ]
-    },
-    {
-      "group": "Universal AI",
-      "pages": [
-        "developers/unified-ai/overview",
-        "developers/unified-ai/chat",
-        "developers/unified-ai/function-calling",
-        "developers/unified-ai/image"
+        "developers/piece-reference/i18n",
+        "developers/piece-reference/ai-providers"
       ]
     },
     {

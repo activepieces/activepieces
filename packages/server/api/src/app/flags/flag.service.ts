@@ -29,6 +29,7 @@ export const flagService = {
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -103,6 +104,12 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: system.getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
                 created,
                 updated,
             },
@@ -280,6 +287,7 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
+
         return platformId === cloudPlatformId
     },
 }
