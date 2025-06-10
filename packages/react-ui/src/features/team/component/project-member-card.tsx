@@ -46,6 +46,7 @@ export function ProjectMemberCard({
           name={member.user.firstName + ' ' + member.user.lastName}
           email={member.user.email}
           size={32}
+          disableTooltip={true}
         ></UserAvatar>
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">
