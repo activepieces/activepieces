@@ -57,15 +57,15 @@ export function IssuesTable() {
     },
   });
 
-  const handleMarkAsResolved = async (
+  const handleMarkAsArchived = async (
     flowDisplayName: string,
     issueId: string,
   ) => {
-    await issuesApi.resolve(issueId);
+    await issuesApi.archive(issueId);
     refetch();
     toast({
       title: t('Success'),
-      description: t('Issues in {flowDisplayName} is marked as resolved.', {
+      description: t('Issues in {flowDisplayName} is marked as archived.', {
         flowDisplayName,
       }),
       duration: 3000,
@@ -73,7 +73,7 @@ export function IssuesTable() {
   };
   const { checkAccess } = useAuthorization();
   const openNewWindow = useNewWindow();
-  const userHasPermissionToMarkAsResolved = checkAccess(
+  const userHasPermissionToMarkAsArchived = checkAccess(
     Permission.WRITE_ISSUES,
   );
 
@@ -81,15 +81,12 @@ export function IssuesTable() {
   const handleRowClick = ({
     newWindow,
     flowId,
-    created,
   }: {
     newWindow: boolean;
     flowId: string;
-    created: string;
   }) => {
     const searchParams = createSearchParams({
       flowId: flowId,
-      createdAfter: created,
       status: [
         FlowRunStatus.FAILED,
         FlowRunStatus.INTERNAL_ERROR,
@@ -131,22 +128,22 @@ export function IssuesTable() {
                 return (
                   <div className="flex items-center gap-2">
                     <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToMarkAsResolved}
+                      hasPermission={userHasPermissionToMarkAsArchived}
                     >
                       <Button
-                        disabled={!userHasPermissionToMarkAsResolved}
+                        disabled={!userHasPermissionToMarkAsArchived}
                         className="gap-2"
                         size={'sm'}
                         onClick={(e) => {
                           selectedRows.forEach((row) => {
-                            handleMarkAsResolved(row.flowDisplayName, row.id);
+                            handleMarkAsArchived(row.flowDisplayName, row.id);
                             row.delete();
                           });
                           resetSelection();
                         }}
                       >
                         <Check className="size-3" />
-                        {t('Mark as Resolved')}{' '}
+                        {t('Mark as Archived')}{' '}
                         {selectedRows.length === 0
                           ? ''
                           : `(${selectedRows.length})`}
@@ -163,7 +160,7 @@ export function IssuesTable() {
                   handleRowClick({
                     newWindow,
                     flowId: row.flowId,
-                    created: row.created,
+                    // created: row.created,
                   })
               : undefined
           }

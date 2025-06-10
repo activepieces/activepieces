@@ -90,14 +90,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 await getFlowResponse(runDetails),
             )
         }
-        const runWithoutSteps = await flowRunService(request.log).updateStatus({
-            flowRunId: runId,
-            status: getTerminalStatus(runDetails.status),
-            tasks: runDetails.tasks,
-            duration: runDetails.duration,
+
+        const runWithoutSteps = await flowRunService(request.log).getOnePopulatedOrThrow({
+            id: runId,
             projectId: request.principal.projectId,
-            tags: runDetails.tags ?? [],
         })
+
+        // save logs first then update status.
         let uploadUrl: string | undefined
         const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
@@ -112,6 +111,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         else {
             app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
         }
+ 
+        await flowRunService(request.log).updateStatus({
+            flowRunId: runId,
+            status: getTerminalStatus(runDetails.status),
+            tasks: runDetails.tasks,
+            duration: runDetails.duration,
+            projectId: request.principal.projectId,
+            tags: runDetails.tags ?? [],
+        })
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({

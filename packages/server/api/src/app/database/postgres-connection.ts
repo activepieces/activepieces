@@ -209,6 +209,7 @@ import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/pos
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AddStepToIssuesTablePostgres1748789709144 } from './migration/postgres/1748789709144-AddStepToIssuesTablePostgres'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -356,6 +357,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
         MigrateMcpFlowsToBeTools1748996336492,
+        AddStepToIssuesTablePostgres1748789709144, 
     ]
 
     const edition = system.getEdition()

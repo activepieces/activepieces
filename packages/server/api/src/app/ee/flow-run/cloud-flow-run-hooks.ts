@@ -20,11 +20,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
             return
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION) {
-            const issue = await issuesService(log).add({
-                flowId: flowRun.flowId,
-                projectId: flowRun.projectId,
-                flowRunCreatedAt: flowRun.created,
-            })
+            const issue = await issuesService(log).add(flowRun)
             await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
         }
         if (isNil(flowRun.tasks)) {
