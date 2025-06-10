@@ -30,7 +30,7 @@ export function SidebarUser() {
           <UserAvatar
             name={user.firstName + ' ' + user.lastName}
             email={user.email}
-            size={28}
+            size={32}
             disableTooltip={true}
           />
           <div className="grid flex-1 text-left text-sm leading-tight ml-2">

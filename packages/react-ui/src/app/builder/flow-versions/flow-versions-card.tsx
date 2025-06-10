@@ -179,7 +179,7 @@ const FlowVersionDetailsCard = React.memo(
       <CardListItem interactive={false}>
         {flowVersion.updatedByUser && (
           <UserAvatar
-            size={24}
+            size={28}
             name={
               flowVersion.updatedByUser.firstName +
               ' ' +

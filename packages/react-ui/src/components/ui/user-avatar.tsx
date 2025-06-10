@@ -1,9 +1,5 @@
 import Avatar from 'boring-avatars';
 
-import { flagsHooks } from '@/hooks/flags-hooks';
-
-import { useTheme } from '../theme-provider';
-
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 type UserAvatarProps = {
@@ -20,15 +16,14 @@ export function UserAvatar({
   disableTooltip = false,
 }: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
-  const branding = flagsHooks.useWebsiteBranding();
-  const theme = useTheme();
-  const colors =
-    theme.theme === 'dark'
-      ? [branding.colors.primary.dark, branding.colors.primary.light]
-      : [branding.colors.primary.light, branding.colors.primary.dark];
+
   const avatarElement = (
-    <Avatar name={email} size={size} colors={colors} variant="beam" />
-  );
+    <Avatar
+      name={email}
+      size={size}
+      colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
+      variant="beam"
+    />);
 
   if (disableTooltip) {
     return avatarElement;
