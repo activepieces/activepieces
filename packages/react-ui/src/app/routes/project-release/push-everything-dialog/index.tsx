@@ -71,7 +71,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
     onSuccess: () => {
       toast({
         title: t('Success'),
-        description: t('Pushed successfully'),
+        description: t('Everything is pushed successfully'),
         duration: 3000,
       });
       setOpen(false);
@@ -114,7 +114,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         {t(
-                          'This will push all published flows, connections and tables to the Git repository.',
+                          'Push all published flows, connections, and tables to the Git repository.',
                         )}
                       </TooltipContent>
                     </Tooltip>
