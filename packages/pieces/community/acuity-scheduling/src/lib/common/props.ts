@@ -78,7 +78,7 @@ export const clientFirstNameDropdown = Property.Dropdown({
 
     const options: DropdownOption<string>[] = clients.map((client: any) => ({
       label: `${client.firstName} ${client.lastName} (${client.email || ''}, ${client.phone || ''})`,
-      value: client.firstName,
+      value: client.id,
     }));
 
     return {
@@ -106,7 +106,7 @@ export const clientLastNameDropdown = Property.Dropdown({
 
     const options: DropdownOption<string>[] = clients.map((client: any) => ({
       label: `${client.lastName} ${client.firstName} (${client.email || ''}, ${client.phone || ''})`,
-      value: client.lastName,
+      value: client.id,
     }));
 
     return {
@@ -134,7 +134,7 @@ export const clientPhoneDropdown = Property.Dropdown({
 
     const options: DropdownOption<string>[] = clients.map((client: any) => ({
       label: `${client.phone} (${client.firstName} ${client.lastName}, ${client.email || ''})`,
-      value: client.phone,
+      value: client.id,
     }));
 
     return {
