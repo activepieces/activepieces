@@ -32,7 +32,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
 
                 let apiKey = ''
                 const providerType = provider.provider.toLowerCase()
-                
+
                 if (providerType === 'anthropic') {
                     apiKey = decryptedConfig.defaultHeaders['x-api-key'] || ''
                 }
@@ -51,7 +51,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 const encryptedNewConfig = encryptUtils.encryptObject(newConfig)
-                
+
                 await queryRunner.query(`
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2
                 `, [encryptedNewConfig, provider.id])
@@ -69,7 +69,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
             ALTER TABLE "ai_provider" DROP CONSTRAINT "fk_ai_provider_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider" ALTER COLUMN "platformId" TYPE character varying(21)
@@ -98,10 +98,10 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
         for (const provider of aiProviders) {
             try {
                 const decryptedConfig: NewAiProviderConfig = encryptUtils.decryptObject(provider.config)
-                
+
                 const defaultHeaders: Record<string, string> = {}
                 const providerType = provider.provider.toLowerCase()
-                
+
                 if (providerType === 'anthropic') {
                     defaultHeaders['x-api-key'] = decryptedConfig.apiKey
                 }
@@ -117,7 +117,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
                 }
 
                 const encryptedOldConfig = encryptUtils.encryptObject(oldConfig)
-                
+
                 await queryRunner.query(`
                     UPDATE "ai_provider" SET config = $1 WHERE id = $2
                 `, [encryptedOldConfig, provider.id])
@@ -135,7 +135,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
             ALTER TABLE "ai_provider" DROP CONSTRAINT "fk_ai_provider_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider" ALTER COLUMN "platformId" TYPE character varying
