@@ -3,33 +3,31 @@ import { Workflow } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { isNil } from '@activepieces/shared';
-
-const getInitials = (name?: string) => {
-  return isNil(name) ? '?' : name[0]?.toUpperCase();
-};
+import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
   type: 'agent' | 'user' | 'flow';
   fullName: string;
+  userEmail?: string;
   pictureUrl?: string;
   profileUrl?: string;
-  size?: string;
+  size: 'small' | 'medium';
   includeName?: boolean;
 }
 
 export const ApAvatar = ({
   type,
   fullName,
+  userEmail,
   pictureUrl,
   profileUrl,
-  size = 'w-8 h-8',
   includeName = false,
+  size = 'medium',
 }: ApAvatarProps) => {
   const renderAvatar = () => {
     if (type === 'agent') {
       return (
-        <Avatar className={size}>
+        <Avatar className={size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}>
           <AvatarImage
             src={pictureUrl}
             alt={fullName}
@@ -41,19 +39,18 @@ export const ApAvatar = ({
 
     if (type === 'user') {
       return (
-        <Avatar className={size}>
-          <AvatarFallback className={`text-xs font-bold border ${size}`}>
-            <span className="text-xs font-bold border p-1">
-              {getInitials(fullName)}
-            </span>
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          name={fullName}
+          email={userEmail!}
+          size={size === 'small' ? 24 : 32}
+          disableTooltip={true}
+        />
       );
     }
 
     return (
-      <Avatar className={size}>
-        <AvatarFallback className={`text-xs font-bold border ${size}`}>
+      <Avatar className={size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}>
+        <AvatarFallback className={`text-xs font-bold border ${size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}`}>
           <Workflow className="p-1" />
         </AvatarFallback>
       </Avatar>

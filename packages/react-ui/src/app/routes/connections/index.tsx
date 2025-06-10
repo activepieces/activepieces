@@ -327,6 +327,8 @@ function AppConnectionsPage() {
               <ApAvatar
                 type="user"
                 includeName={true}
+                size="small"
+                userEmail={row.original.owner.email}
                 fullName={
                   row.original.owner.firstName +
                   ' ' +

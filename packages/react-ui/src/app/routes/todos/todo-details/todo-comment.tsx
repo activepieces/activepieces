@@ -12,6 +12,7 @@ export type ActivityItem = {
   authorName: string;
   pictureUrl?: string;
   profileUrl?: string;
+  userEmail?: string;
   flowId?: string;
   key?: string;
   id?: string;
@@ -29,7 +30,9 @@ export const TodoComment = ({ comment, showConnector }: TodoCommentProps) => {
         <div className="flex items-center gap-4">
           <ApAvatar
             type={comment.authorType}
+            size="medium"
             fullName={comment.authorName}
+            userEmail={comment.userEmail}
             pictureUrl={comment.pictureUrl}
             profileUrl={comment.profileUrl}
           />

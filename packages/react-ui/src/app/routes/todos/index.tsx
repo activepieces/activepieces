@@ -194,9 +194,10 @@ function TodosPage() {
         return (
           <div className="text-left flex items-center gap-2">
             <ApAvatar
-              size="w-6 h-6"
+              size="small"
               type={todoUtils.getAuthorType(row.original)}
               fullName={authorName}
+              userEmail={row.original.createdByUser?.email ?? ''}
               pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
               profileUrl={todoUtils.getAuthorProfileUrl(row.original)}
             />
@@ -217,7 +218,7 @@ function TodosPage() {
             <div className="text-left">
               <ApAvatar
                 type="agent"
-                size="w-6 h-6"
+                size="small"
                 includeName={true}
                 pictureUrl={row.original.agent?.profilePictureUrl}
                 profileUrl={
@@ -235,8 +236,10 @@ function TodosPage() {
           <div className="text-left">
             {row.original.assignee && (
               <ApAvatar
-                type="user"
+                type="user" 
+                size="small"
                 includeName={true}
+                userEmail={row.original.assignee.email}
                 fullName={
                   row.original.assignee.firstName +
                   ' ' +

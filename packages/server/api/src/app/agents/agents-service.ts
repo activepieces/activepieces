@@ -44,7 +44,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('description', params.description),
             ...spreadIfDefined('testPrompt', params.testPrompt),
         })
-        return agentRepo().findOneByOrFail({ id: params.id })
+        return this.getOneOrThrow({ id: params.id })
     },
     async run(params: RunParams): Promise<Todo> {
         const agent = await this.getOneOrThrow({ id: params.id })
@@ -57,10 +57,14 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetOneParams): Promise<Agent | null> {
-        return agentRepo().findOneBy({ id: params.id })
+        const agent = await agentRepo().findOneBy({ id: params.id })
+        if (isNil(agent)) {
+            return null
+        }
+        return enrichAgent(log, agent)
     },
     async getOneOrThrow(params: GetOneParams): Promise<Agent> {
-        const agent = await agentRepo().findOneBy({ id: params.id })
+        const agent = await this.getOne(params)
         if (isNil(agent)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

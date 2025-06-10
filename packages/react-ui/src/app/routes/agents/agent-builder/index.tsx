@@ -11,7 +11,7 @@ import {
 import { Agent } from '@activepieces/shared';
 
 import { AgentSettings } from './agent-settings';
-import { AgentTestSection } from './agent-test-section';
+import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -39,29 +39,28 @@ export const AgentBuilder = ({
       <DrawerContent>
         <DrawerHeader>
           <div className="p-4">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="basic"
-                size={'icon'}
-                className="text-foreground"
-                onClick={() => onOpenChange(false)}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <DrawerTitle>
-                {agent ? 'Edit Agent' : 'Agent Builder'}
-              </DrawerTitle>
+            <div className="flex items-center gap-1 justify-between">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="basic"
+                  size={'icon'}
+                  className="text-foreground"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <DrawerTitle>
+                  {agent ? 'Edit Agent' : 'Agent Builder'}
+                </DrawerTitle>
+              </div>
+  
             </div>
           </div>
         </DrawerHeader>
 
-        <div className="flex flex-1 h-full">
-          <div className="w-2/3 border-r">
+        <div className="flex flex-1 h-full justify-center">
+          <div className="w-full max-w-3xl px-4">
             <AgentSettings agent={agent} refetch={refetch} />
-          </div>
-
-          <div className="w-1/3 px-4 py-4">
-            {agent && <AgentTestSection agentId={agent.id} />}
           </div>
         </div>
       </DrawerContent>

@@ -13,11 +13,14 @@ import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 
 function applyVariables(markdown: string, variables: Record<string, string>) {
-  return markdown
-    .replaceAll('<br>', '\n')
-    .replaceAll(/\{\{(.*?)\}\}/g, (_, variableName) => {
-      return variables[variableName] ?? '';
-    });
+  if (typeof markdown !== 'string') {
+    return '';
+  }
+  let result = markdown.split('<br>').join('\n');
+  result = result.replace(/\{\{(.*?)\}\}/g, (_, variableName) => {
+    return variables[variableName] ?? '';
+  });
+  return result;
 }
 
 type MarkdownProps = {
@@ -98,11 +101,12 @@ const ApMarkdown = React.memo(
       return null;
     }
 
-    const markdownProcessed = applyVariables(markdown, variables ?? {})
+    let markdownProcessed = applyVariables(markdown, variables ?? {});
+    markdownProcessed = markdownProcessed
       .split('\n')
       .map((line) => line.trim())
-      .join('\n')
-      .replaceAll('\n', '\n\n');
+      .join('\n');
+    markdownProcessed = markdownProcessed.split('\n').join('\n\n');
 
     return (
       <Container variant={variant}>

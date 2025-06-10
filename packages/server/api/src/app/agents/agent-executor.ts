@@ -1,7 +1,7 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { Agent, isNil, RESOLVED_STATUS, TodoEnvironment } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
-import { experimental_createMCPClient, streamText } from 'ai'
+import { experimental_createMCPClient, generateText, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -11,12 +11,13 @@ import { todoActivitiesService } from '../todos/activity/todos-activity.service'
 import { todoSideEfffects } from '../todos/todo-side-effects'
 import { todoService } from '../todos/todo.service'
 
+
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     execute: async (params: ExecuteAgent) => {
         const { agent } = params
         const todo = await todoService(log).create({
             description: params.prompt,
-            title: 'Agent Test Todo',
+            title: await generateTitle(params.prompt, params, log),
             statusOptions: [{
                 name: RESOLVED_STATUS.name,
                 description: RESOLVED_STATUS.description,
@@ -38,6 +39,18 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function generateTitle(prompt: string, params: { agent: Agent }, log: FastifyBaseLogger) {
+    const model = await initializeOpenAIModel(params.agent, 'gpt-4o-mini')
+    const result = await generateText({
+        model,
+        prompt: `
+        You are a helpful assistant that generates concise, clear, and relevant todo titles based on user descriptions. Only return the title, nothing else.
+        User description: ${prompt}
+        `,
+    })
+    return result.text
+}
+
 async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBaseLogger) {
     const comment = await createEmptyComment(params, todoId, log)
     let currentComment = ''
@@ -55,19 +68,9 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
     const tools = await mcpClient.tools()
     const currentDate = new Date().toISOString().split('T')[0]
     let textResult = ''
-    const baseUrl = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai/v1/',
-        platformId: params.agent.platformId,
-    })
+    const model = await initializeOpenAIModel(params.agent, 'gpt-4o')
     const { fullStream } = streamText({
-        model: createOpenAI({
-            baseURL: baseUrl,
-            apiKey: await accessTokenManager.generateEngineToken({
-                platformId: params.agent.platformId,
-                projectId: params.agent.projectId,
-            }),
-        }).chat('gpt-4o'),
-
+        model,
         system: `
         You are an autonomous assistant designed to efficiently achieve the user's single-shot goal using tools. Prioritize accuracy, minimal steps, and user-friendly clarity.
         
@@ -132,6 +135,20 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
     }, 'Agent execution completed')
 }
 
+async function initializeOpenAIModel(agent: Agent, model: string) {
+    const baseUrl = await domainHelper.getPublicApiUrl({
+        path: '/v1/ai-providers/proxy/openai/v1/',
+        platformId: agent.platformId,
+    })
+    const apiKey = await accessTokenManager.generateEngineToken({
+        platformId: agent.platformId,
+        projectId: agent.projectId,
+    })
+    return createOpenAI({
+        baseURL: baseUrl,
+        apiKey,
+    }).chat(model)
+}
 
 async function createEmptyComment(params: ExecuteAgent, todoId: string, log: FastifyBaseLogger) {
     return todoActivitiesService(log).create({

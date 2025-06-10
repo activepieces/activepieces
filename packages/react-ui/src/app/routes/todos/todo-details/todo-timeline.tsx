@@ -50,6 +50,7 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
         timestamp: new Date(todo.created),
         authorType: todoUtils.getAuthorType(todo),
         authorName: todoUtils.getAuthorName(todo),
+        userEmail: todo.createdByUser?.email,
         pictureUrl: todoUtils.getAuthorPictureUrl(todo),
         flowId: todo.flowId,
       },
