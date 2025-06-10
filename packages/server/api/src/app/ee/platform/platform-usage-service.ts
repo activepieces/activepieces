@@ -76,11 +76,11 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const tasks = await getUsage(platformId, BillingEntityType.PLATFORM, startBillingPeriod, BillingUsageType.TASKS)
         const aiCredits = await getUsage(platformId, BillingEntityType.PLATFORM, startBillingPeriod, BillingUsageType.AI_CREDITS)
         const activeFlows = await this.getActiveFlows(platformId)
-        const mcp = await this.getMCPsCount(platformId)
+        const mcps = await this.getMCPsCount(platformId)
         const projects = await this.getProjectsCount(platformId)
         const seats = await this.getActiveUsers(platformId)
         const tables = await this.getTables(platformId)
-        return { tasks, aiCredits, activeFlows, mcp, projects, seats, tables }
+        return { tasks, aiCredits, activeFlows, mcps, projects, seats, tables }
     },
     
     async getTaskAndCreditUsage(entityId: string, entityType: BillingEntityType): Promise<ProjectUsage> {

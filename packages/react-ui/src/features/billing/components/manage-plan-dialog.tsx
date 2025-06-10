@@ -1,3 +1,4 @@
+import { Sparkle } from 'lucide-react';
 import { FC } from 'react';
 
 import {
@@ -10,24 +11,45 @@ import { PlanCard } from '@/features/billing/components/plan-card';
 import { billingQueries } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useDialogStore } from '@/lib/dialogs-store';
 
-export const ManagePlanDialog: FC = () => {
-  const { dialogs, setDialog } = useDialogStore();
+type ManagePlanDialogProps = {
+  metric?: 'activeFlows' | 'mcp' | 'tables';
+  title?: string;
+  open: boolean;
+  setOpen: (isOpen: boolean) => void;
+};
+
+const messages: Record<string, string> = {
+  activeFlows: 'You have run out of active flows. Upgrade to get more.',
+  mcp: 'You have run out of MCP servers. Upgrade to get more.',
+  tables: 'You have run out of tables. Upgrade to get more.',
+};
+
+export const ManagePlanDialog: FC<ManagePlanDialogProps> = ({
+  metric,
+  title = 'Manage Your Plan',
+  open,
+  setOpen,
+}) => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { data: platformBillingInformation } =
     billingQueries.usePlatformSubscription(platform.id);
 
+  const message = metric ? messages[metric] : undefined;
   return (
-    <Dialog
-      open={dialogs.managePlan}
-      onOpenChange={(isOpen) => setDialog('managePlan', isOpen)}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Manage Your Plan
+        <DialogHeader className="flex flex-col items-center mb-6">
+          <DialogTitle className="text-2xl font-bold text-center">
+            {title}
+            {message && (
+              <div className="text-center font-medium text-lg mb-4 mt-3 flex items-center justify-center gap-2">
+                <Sparkle className="h-5 w-5 text-primary" />
+                {message}
+                <Sparkle className="h-5 w-5 text-primary" />
+              </div>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -36,6 +58,7 @@ export const ManagePlanDialog: FC = () => {
             <PlanCard
               key={plan.name}
               plan={plan}
+              setDialogOpen={setOpen}
               billingInformation={platformBillingInformation}
             />
           ))}

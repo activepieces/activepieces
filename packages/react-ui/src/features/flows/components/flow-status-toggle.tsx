@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { api } from '@/lib/api';
 import {
+  ErrorCode,
   Flow,
   FlowOperationType,
   FlowStatus,
@@ -38,6 +41,8 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
     Permission.UPDATE_FLOW_STATUS,
   );
 
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+
   useEffect(() => {
     setIsChecked(flow.status === FlowStatus.ENABLED);
   }, [flow.status]);
@@ -58,13 +63,22 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
     onSuccess: (flow) => {
       setIsChecked(flow.status === FlowStatus.ENABLED);
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+    onError: (err: Error) => {
+      if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
+        setUpgradeDialogOpen(true);
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
     },
   });
 
   return (
     <>
+      <UpgradeHookDialog
+        metric="activeFlows"
+        open={upgradeDialogOpen}
+        setOpen={setUpgradeDialogOpen}
+      />
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">

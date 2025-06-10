@@ -13,14 +13,19 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { useDialogStore } from '@/lib/dialogs-store';
 import { PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
-export const ExtraSeatsDialog = () => {
-  const { setDialog, dialogs } = useDialogStore();
+type ExtraSeatsDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
+export const ExtraSeatsDialog = ({
+  open,
+  onOpenChange,
+}: ExtraSeatsDialogProps) => {
   const [extraSeats, setExtraSeats] = useState([1]);
   const seatCount = extraSeats[0];
   const totalMonthlyCost = seatCount * PRICE_PER_EXTRA_USER;
@@ -28,15 +33,12 @@ export const ExtraSeatsDialog = () => {
   const queryClient = useQueryClient();
   const { mutate: addUserSeats, isPending } =
     billingMutations.useUpdateSubscription(
-      () => setDialog('addUserSeats', false),
+      () => onOpenChange(false),
       queryClient,
     );
 
   return (
-    <Dialog
-      open={dialogs.addUserSeats}
-      onOpenChange={(open) => setDialog('addUserSeats', open)}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -91,10 +93,7 @@ export const ExtraSeatsDialog = () => {
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setDialog('addUserSeats', false)}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button

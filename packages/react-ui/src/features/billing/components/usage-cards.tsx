@@ -47,7 +47,7 @@ export const UsageCards = ({
       <UsageCard
         icon={Package}
         title={t('MCP Servers')}
-        used={usage.mcp}
+        used={usage.mcps}
         total={plan.mcpLimit}
       />
 

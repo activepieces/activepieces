@@ -10,21 +10,25 @@ export const planData = {
       name: PlanName.FREE,
       description: t('Explorers & Tinkers'),
       price: 0,
+      image: '/src/assets/img/custom/plans/1.png',
     },
     {
       name: PlanName.PLUS,
       description: t('Standard Users'),
       price: 25,
+      image: '/src/assets/img/custom/plans/2.png',
     },
     {
       name: PlanName.BUSINESS,
       description: t('Power Users & Small Teams'),
       price: 150,
+      image: '/src/assets/img/custom/plans/3.png',
     },
     {
       name: PlanName.ENTERPRISE,
       description: t('Cloud or Self-Hosted'),
       price: 'Custom',
+      image: '/src//assets/img/custom/plans/4.png',
     },
   ],
 

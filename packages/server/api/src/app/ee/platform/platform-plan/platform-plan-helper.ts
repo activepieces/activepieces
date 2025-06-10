@@ -15,6 +15,7 @@ const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.USER_SEATS]: 'userSeatsLimit',
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
     [PlatformUsageMetric.TABLES]: 'tablesLimit',
+    [PlatformUsageMetric.MCPS]: 'mcpLimit',
 } as const
 
 const METRIC_TO_USAGE_MAPPING = {
@@ -24,6 +25,7 @@ const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.USER_SEATS]: 'seats',
     [PlatformUsageMetric.PROJECTS]: 'projects',
     [PlatformUsageMetric.TABLES]: 'tables',
+    [PlatformUsageMetric.MCPS]: 'mcps',
 } as const
 
 const edition = system.getEdition()

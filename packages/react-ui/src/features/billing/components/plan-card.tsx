@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
-import { useDialogStore } from '@/lib/dialogs-store';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 import {
@@ -19,23 +18,27 @@ import { PlatformBillingInformation } from '@activepieces/shared';
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
   billingInformation?: PlatformBillingInformation;
+  setDialogOpen: (open: boolean) => void;
 };
 
-export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
+export const PlanCard = ({
+  plan,
+  billingInformation,
+  setDialogOpen,
+}: PlanCardProps) => {
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
-  const { setDialog } = useDialogStore();
   const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
   const isSelected = currentPlan === plan.name;
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
     billingMutations.useUpdateSubscription(
-      () => setDialog('managePlan', false),
+      () => setDialogOpen(false),
       queryClient,
     );
   const { mutate: createSubscription } = billingMutations.useCreateSubscription(
-    () => setDialog('managePlan', false),
+    () => setDialogOpen(false),
   );
 
   const hasActiveSubscription =
@@ -81,6 +84,16 @@ export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
       )}
 
       <div className="space-y-2">
+        {plan.image && (
+          <div className="flex justify-start mb-2">
+            <img
+              src={plan.image}
+              alt={`${plan.name} plan`}
+              className="max-h-20 object-contain"
+              style={{ maxWidth: '100%' }}
+            />
+          </div>
+        )}
         <h3 className="text-2xl font-bold tracking-tight">
           {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
         </h3>
@@ -131,14 +144,14 @@ export const PlanCard = ({ plan, billingInformation }: PlanCardProps) => {
         <h4 className="text-sm font-semibold text-foreground">
           {t("What's included")}
         </h4>
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {planData.features.map((feature) => {
             const featureValue = feature.values[plan.name];
             const isIncluded =
               typeof featureValue !== 'boolean' || featureValue === true;
 
             return (
-              <li key={feature.key} className="flex items-start gap-3 text-sm">
+              <li key={feature.key} className="flex items-start gap-2 text-sm">
                 <div className="mt-0.5 flex-shrink-0">
                   {isIncluded ? (
                     <CheckIcon

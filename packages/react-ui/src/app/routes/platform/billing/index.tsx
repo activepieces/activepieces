@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
-import { ExtraSeatsDialog } from '@/features/billing/components/extra-user-seats-dialog';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { UsageCards } from '@/features/billing/components/usage-cards';
@@ -17,13 +17,12 @@ import {
   billingQueries,
 } from '@/features/billing/lib/billing-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useDialogStore } from '@/lib/dialogs-store';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 
 export default function Billing() {
-  const { setDialog } = useDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
+  const [managePlanOpen, setManagePlanOpen] = useState(false);
 
   const {
     data: platformSubscription,
@@ -74,10 +73,7 @@ export default function Billing() {
               {t('Access Billing Portal')}
             </Button>
           )}
-          <Button
-            variant="default"
-            onClick={() => setDialog('managePlan', true)}
-          >
+          <Button variant="default" onClick={() => setManagePlanOpen(true)}>
             {t('Upgrade')}
           </Button>
         </div>
@@ -119,8 +115,7 @@ export default function Billing() {
       <AICreditUsage platformSubscription={platformSubscription} />
       <TasksUsage platformSubscription={platformSubscription} />
 
-      <ManagePlanDialog />
-      <ExtraSeatsDialog />
+      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
     </article>
   );
 }
