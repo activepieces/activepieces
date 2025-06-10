@@ -5,7 +5,7 @@ icon: "building"
 
 The enterprise edition requires a postgres and redis instance to run, and a license key to activate.
 
-
+<Steps>
 <Step title="Run the dev container">
 
 Follow the instructions [here](/developers/development-setup/dev-container) to run the dev container.
@@ -15,7 +15,8 @@ Follow the instructions [here](/developers/development-setup/dev-container) to r
 
 Pase the following env variables in `server/api/.env`
 
-```
+```bash
+## these variables are set to align with the .devcontainer/docker-compose.yml file
 AP_DB_TYPE=POSTGRES
 AP_DEV_PIECES="your_piece_name"
 AP_ENVIRONMENT="dev"
@@ -37,10 +38,14 @@ AP_POSTGRES_HOST=db
 AP_POSTGRES_PORT=5432
 AP_POSTGRES_USERNAME=postgres
 AP_POSTGRES_PASSWORD=A79Vm5D4p2VQHOp2gd5
+AP_ENCRYPTION_KEY=427a130d9ffab21dc07bcd549fcf0966
+AP_JWT_SECRET=secret
 ```
 
 </Step>
 <Step title="Activate Your License Key">
-After signing in, activate the license key by going to **Platform Admin -> Setup -> License Keys**
-![Activation License Key](/resources/screenshots/activation-license-key-settings.png)
+    After signing in, activate the license key by going to **Platform Admin -> Setup -> License Keys**
+    ![Activation License Key](/resources/screenshots/activation-license-key-settings.png)
 </Step>
+
+</Steps>
