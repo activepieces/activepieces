@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAcuityRequest, fetchClients } from '../common';
+import { makeAcuityRequest } from '../common';
 import { acuityAuth } from '../../index';
 import { clientFirstNameDropdown, clientLastNameDropdown, clientPhoneDropdown } from '../common/props';
 

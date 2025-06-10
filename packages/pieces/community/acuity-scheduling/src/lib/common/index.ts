@@ -11,7 +11,7 @@ export async function makeAcuityRequest(
   queryParams?: Record<string, string>
 ) {
   const credentials = Buffer.from(`${auth.userId}:${auth.apiKey}`).toString('base64');
-  
+
   const response = await httpClient.sendRequest({
     method,
     url: `${BASE_URL}${path}`,
@@ -25,16 +25,4 @@ export async function makeAcuityRequest(
   });
 
   return response.body;
-}
-
-export async function fetchClients(auth: { userId: string; apiKey: string }, queryParams?: Record<string, string>) {
-  return await makeAcuityRequest(auth, HttpMethod.GET, '/clients', undefined, queryParams);
-}
-
-export async function fetchCalendars(auth: { userId: string; apiKey: string }) {
-  return await makeAcuityRequest(auth, HttpMethod.GET, '/calendars');
-}
-
-export async function fetchAppointmentTypes(auth: { userId: string; apiKey: string }) {
-  return await makeAcuityRequest(auth, HttpMethod.GET, '/appointment-types');
 }

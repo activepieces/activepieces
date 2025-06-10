@@ -1,7 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { addBlockedTime, createAppointment, createClient, findAppointmentsByClientInfo, listClients, rescheduleAppointment, updateClient } from './lib/actions';
 import { appointmentCanceledTrigger, appointmentScheduledTrigger } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { Buffer } from 'buffer';
 
 export const acuityAuth = PieceAuth.CustomAuth({
   required: true,
@@ -34,6 +36,19 @@ export const acuityScheduling = createPiece({
     createClient,
     updateClient,
     addBlockedTime,
+    createCustomApiCallAction({
+      auth: acuityAuth,
+      baseUrl: () => 'https://acuityscheduling.com/api/v1',
+      authMapping: async (auth) => {
+        const authValue = auth as PiecePropValueSchema<typeof acuityAuth>;
+        const base64Credentials = Buffer.from(`${authValue.userId}:${authValue.apiKey}`).toString('base64');
+        return {
+          Authorization: `Basic ${base64Credentials}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        };
+      },
+    }),
   ],
   triggers: [
     appointmentScheduledTrigger,
