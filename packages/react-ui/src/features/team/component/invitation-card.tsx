@@ -31,6 +31,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
           name={invitation.email}
           email={invitation.email}
           size={32}
+          disableTooltip={true}
         ></UserAvatar>
         <div>
           <p className="text-sm font-medium leading-none">
