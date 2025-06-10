@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { skyvernAuth } from '../../index';
+import { workflowDropdown } from '../common/props';
 
 export const runWorkflowAction = createAction({
   auth: skyvernAuth,
@@ -9,11 +10,7 @@ export const runWorkflowAction = createAction({
   displayName: 'Run Workflow',
   description: 'Run a Skyvern workflow by providing a workflow ID and optional settings.',
   props: {
-    workflow_id: Property.ShortText({
-      displayName: 'Workflow ID',
-      description: 'ID of the workflow to run (starts with wpid_).',
-      required: true,
-    }),
+    workflow_id: workflowDropdown,
     title: Property.ShortText({
       displayName: 'Title',
       description: 'Optional title for this workflow run.',

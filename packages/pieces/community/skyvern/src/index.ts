@@ -2,9 +2,11 @@ import { createPiece, PieceAuth, PiecePropValueSchema } from '@activepieces/piec
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { runAgentTaskAction } from './lib/actions/run-agent-task';
+import { getAgentTaskRunAction } from './lib/actions/get-agent-task-run';
 import { runWorkflowAction } from './lib/actions/run-workflow';
 import { cancelWorkflowAction } from './lib/actions/cancel-workflow-run';
 import { findWorkflowAction } from './lib/actions/find-workflow';
+import { getWorkflowRunByIdAction } from './lib/actions/get-a-workflow-run-by-id';
 
 export const skyvernAuth = PieceAuth.CustomAuth({
   description: 'Enter your Skyvern API key. You can find it in your Skyvern account settings.',
@@ -26,10 +28,11 @@ export const skyvern = createPiece({
   authors: ['krushnarout'],
   actions: [
     runAgentTaskAction,
+    getAgentTaskRunAction,
     runWorkflowAction,
     cancelWorkflowAction,
     findWorkflowAction,
-    
+    getWorkflowRunByIdAction,
     createCustomApiCallAction({
       auth: skyvernAuth,
       baseUrl: () => 'https://api.skyvern.com/v1',
