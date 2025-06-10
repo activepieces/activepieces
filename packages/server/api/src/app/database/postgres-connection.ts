@@ -34,6 +34,7 @@ import { AddOrderToFolder1747095861746 } from './migration/postgres/174709586174
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
 import { DefaultMCPServer1749183083485 } from './migration/postgres/1749183083485-DefaultMCPServer'
@@ -54,6 +55,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolFlowCascadeDelete1749128866314,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
+        AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
         DeprecateApproval1748648340742,
         UpgradePieceVersionsToLatest1748253670449,

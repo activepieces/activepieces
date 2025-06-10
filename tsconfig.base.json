@@ -39,6 +39,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-airparser": [
+        "packages/pieces/community/airparser/src/index.ts"
+      ],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
@@ -150,6 +153,9 @@
       ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
+      ],
+      "@activepieces/piece-chatbase": [
+        "packages/pieces/community/chatbase/src/index.ts"
       ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
@@ -499,6 +505,9 @@
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
+      "@activepieces/piece-mem": [
+        "packages/pieces/community/mem/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -683,6 +692,9 @@
       ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
+      ],
+      "@activepieces/piece-serp-api": [
+        "packages/pieces/community/serp-api/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
