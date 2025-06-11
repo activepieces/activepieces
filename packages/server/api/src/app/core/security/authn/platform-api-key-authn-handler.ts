@@ -99,7 +99,6 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private async extractProjectIdOrThrow(
         request: FastifyRequest,
     ): Promise<ProjectId> {
-        const projectIdFromRequest = requestUtils.extractProjectId(request)
         
         // Check if route has :id parameter
         const hasIdParam = request.routerPath.includes(':id') &&
@@ -122,6 +121,8 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
                 },
             })
         }
+        const projectIdFromRequest = requestUtils.extractProjectId(request)
+
         
         // Route doesn't have :id parameter, must get project ID from request
         if (isNil(projectIdFromRequest)) {
