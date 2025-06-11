@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'packages/pieces/**'
+      - 'packages/**'
 
 jobs:
   validate-publishable-packages:
