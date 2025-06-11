@@ -46,9 +46,10 @@ export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const openNewWindow = useNewWindow();
-  const { data: showSupport } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
+  // const { data: showSupport } = flagsHooks.useFlag<boolean>(
+  //   ApFlagId.SHOW_COMMUNITY,
+  // );
+  const showSupport = false;
   const isInRunsPage = useMemo(
     () => location.pathname.includes('/runs'),
     [location.pathname],
@@ -159,7 +160,7 @@ export const BuilderHeader = () => {
 
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
-          {/* {showSupport && (
+          {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -173,7 +174,7 @@ export const BuilderHeader = () => {
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
-          )} */}
+          )}
           {hasPermissionToReadRuns && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -208,7 +209,7 @@ export const BuilderHeader = () => {
             </Tooltip>
           )}
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatarMenu></UserAvatarMenu>
+          {/* <UserAvatarMenu></UserAvatarMenu> */}
         </div>
       </div>
     </div>
