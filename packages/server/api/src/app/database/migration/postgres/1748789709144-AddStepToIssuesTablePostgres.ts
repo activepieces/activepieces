@@ -20,20 +20,20 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
         `)
 
         await queryRunner.query(`
-            CREATE INDEX "idx_issue_flowId_StepId" ON "issue" ("flowId", "stepName")
+            CREATE INDEX "idx_issue_flowId_stepId" ON "issue" ("flowId", "stepName")
         `)
 
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD "failedstepName" character varying(21)
+            ADD "failedStepName" character varying(21)
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedstepName")
+            CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedStepName")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX "idx_issue_flowId_StepId"')
+        await queryRunner.query('DROP INDEX "idx_issue_flowId_stepId"')
 
         await queryRunner.query(`
             ALTER TABLE "issue"
@@ -55,7 +55,7 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            DROP COLUMN "failedstepName"
+            DROP COLUMN "failedStepName"
         `)
     }
 }

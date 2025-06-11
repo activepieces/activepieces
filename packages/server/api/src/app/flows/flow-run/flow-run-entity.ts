@@ -99,6 +99,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_logs_file_id',
             columns: ['logsFileId'],
         },
+        {
+            name: 'idx_flow_run_flow_failed_step',
+            columns: ['flowId', 'failedStepName'],
+        },
     ],
     relations: {
         project: {

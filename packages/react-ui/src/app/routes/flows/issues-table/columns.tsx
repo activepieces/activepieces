@@ -81,4 +81,36 @@ export const issuesTableColumns: ColumnDef<
       );
     },
   },
+  {
+    id: 'status',
+    accessorKey: 'status',
+    header: t('Status'),
+    cell: ({ row }) => {
+      const issue = row.original;
+      return (
+        <div
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
+          style={{
+            backgroundColor:
+              issue.status === 'UNRESOLVED'
+                ? '#FEF3C7'
+                : issue.status === 'RESOLVED'
+                ? '#D1FAE5'
+                : '#E5E7EB',
+            color:
+              issue.status === 'UNRESOLVED'
+                ? '#92400E'
+                : issue.status === 'RESOLVED'
+                ? '#065F46'
+                : '#374151',
+          }}
+        >
+          {issue.status.toLowerCase()}
+        </div>
+      );
+    },
+    filterFn: (row, columnId, filterValue) => {
+      return filterValue.includes(row.getValue(columnId));
+    },
+  },
 ];

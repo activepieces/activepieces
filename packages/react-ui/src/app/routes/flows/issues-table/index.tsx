@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, CheckCircle } from 'lucide-react';
+import { Check, CheckCircle, CheckIcon } from 'lucide-react';
+import { useMemo, useRef, useEffect } from 'react';
 import {
   createSearchParams,
   useNavigate,
@@ -26,6 +27,7 @@ import {
   ApEdition,
   ApFlagId,
   FlowRunStatus,
+  IssueStatus,
   Permission,
 } from '@activepieces/shared';
 
@@ -38,21 +40,86 @@ export function IssuesTable() {
   const isEditionSupported = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(
     edition as ApEdition,
   );
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
+  const prevSearchParamsRef = useRef<string>('');
+  const currentSearchParams = searchParams.toString();
+
+  const statusValues = searchParams.getAll('status');
+  const hasStatusFilter = statusValues.length > 0;
+
+  useEffect(() => {
+    if (!hasStatusFilter) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.append('status', IssueStatus.UNRESOLVED);
+      setSearchParams(newSearchParams);
+    }
+  }, [hasStatusFilter, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    prevSearchParamsRef.current = currentSearchParams;
+  }, [currentSearchParams]);
+
+  const filters = useMemo(
+    () => [
+      {
+        type: 'select',
+        id: 'status',
+        title: t('Status'),
+        accessorKey: 'status',
+        options: [
+          {
+            label: t('Unresolved'),
+            value: IssueStatus.UNRESOLVED,
+          },
+          {
+            label: t('Resolved'),
+            value: IssueStatus.RESOLVED,
+          },
+          {
+            label: t('Archived'),
+            value: IssueStatus.ARCHIVED,
+          },
+        ],
+        icon: CheckIcon,
+      } as const,
+    ],
+    []
+  );
+
   const { data, isLoading } = useQuery({
-    queryKey: ['issues', searchParams.toString(), projectId],
+    queryKey: ['issues', currentSearchParams, projectId],
     staleTime: 0,
     gcTime: 0,
-    queryFn: () => {
+    enabled:
+      prevSearchParamsRef.current === '' ||
+      prevSearchParamsRef.current !== currentSearchParams,
+    queryFn: (): Promise<any> => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
+
+      let status: IssueStatus[];
+      if (statusValues.length > 0) {
+        status = statusValues
+          .filter((value) =>
+            Object.values(IssueStatus).includes(value as IssueStatus),
+          )
+          .map((value) => value as IssueStatus);
+
+        if (status.length === 0) {
+          status = [IssueStatus.UNRESOLVED];
+        }
+      } else {
+        status = [IssueStatus.UNRESOLVED];
+      }
+
       return issuesApi.list({
         projectId,
         cursor: cursor ?? undefined,
         limit,
+        status,
       });
     },
   });
@@ -122,6 +189,7 @@ export function IssuesTable() {
           page={data}
           isLoading={isLoading}
           columns={issuesTableColumns}
+          filters={filters}
           bulkActions={[
             {
               render: (selectedRows, resetSelection) => {

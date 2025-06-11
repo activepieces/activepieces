@@ -8,6 +8,7 @@ export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
+            status: req.query.status ?? [],
         })
     })
 

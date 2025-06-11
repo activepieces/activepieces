@@ -36,7 +36,7 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
 
         // Add indexes
         await queryRunner.query(`
-            CREATE INDEX "idx_issue_flowId_StepId" ON "issue" ("flowId", "stepName")
+            CREATE INDEX "idx_issue_flowId_stepId" ON "issue" ("flowId", "stepName")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
@@ -44,11 +44,11 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
 
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD COLUMN "failedstepName" varchar(21)
+            ADD COLUMN "failedStepName" varchar(21)
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_run_flow_failed_step"
-            ON "flow_run" ("flowId", "failedstepName")
+            ON "flow_run" ("flowId", "failedStepName")
         `)
     }
 
@@ -95,7 +95,7 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            DROP COLUMN "failedstepName"
+            DROP COLUMN "failedStepName"
         `)
     }
 }
