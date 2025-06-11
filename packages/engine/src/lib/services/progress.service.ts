@@ -79,7 +79,7 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
-            failedStepId: extractFailedStepId(runDetails.steps as Record<string, StepOutput>),
+            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -146,7 +146,7 @@ type UpdateStepProgressParams = {
     updateImmediate?: boolean
 }
 
-export const extractFailedStepId = (steps: Record<string, StepOutput>): string | undefined => {
+export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
     if (!steps) {
         return undefined
     }

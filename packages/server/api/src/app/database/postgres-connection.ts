@@ -213,7 +213,6 @@ import { AddStepToIssuesTablePostgres1748789709144 } from './migration/postgres/
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
-import { AddFailedstepNameToFlowRunTablePostgres1749560332604 } from './migration/postgres/1749560332604-add_failedStep_to_flow_run_table.postgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -363,7 +362,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateMcpFlowsToBeTools1748996336492,
         AddStepToIssuesTablePostgres1748789709144, 
         AddMcpToolFlowCascadeDelete1749128866314,
-        AddFailedstepNameToFlowRunTablePostgres1749560332604,
     ]
 
     const edition = system.getEdition()

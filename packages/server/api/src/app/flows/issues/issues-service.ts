@@ -18,9 +18,8 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         const date = dayjs(flowRun.created).toISOString()
 
 
-        assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepId')
+        assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepName')
 
-        // First try to find an existing issue for this step
         const existingIssue = await repo().findOne({
             where: {
                 projectId: flowRun.projectId,
@@ -38,7 +37,6 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // If no existing issue, create a new one
         const issueId = apId()
         await repo().createQueryBuilder()
             .insert()

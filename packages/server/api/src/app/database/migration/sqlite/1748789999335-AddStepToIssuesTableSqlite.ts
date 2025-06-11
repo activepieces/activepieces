@@ -41,6 +41,15 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
         await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ADD COLUMN "failedstepName" varchar(21)
+        `)
+        await queryRunner.query(`
+            CREATE INDEX "idx_flow_run_flow_failed_step"
+            ON "flow_run" ("flowId", "failedstepName")
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -79,6 +88,14 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
+        `)
+
+        await queryRunner.query(`
+            DROP INDEX "idx_flow_run_flow_failed_step"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            DROP COLUMN "failedstepName"
         `)
     }
 }
