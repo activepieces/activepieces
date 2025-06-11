@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fetchPosts, fetchSpaces, makeCircleRequest } from '../common';
+import { postDropdown, spaceDropdown } from '../common/props';
+import { makeCircleRequest } from '../common/index';
 import { circleAuth } from '../../index';
 
 export const createCommentAction = createAction({
@@ -14,56 +15,8 @@ export const createCommentAction = createAction({
       description: 'The content of the comment',
       required: true,
     }),
-    postId: Property.Dropdown({
-      displayName: 'Post',
-      description: 'The post to comment on',
-      required: true,
-      refreshers: ['spaceId'],
-      options: async ({ auth, spaceId }) => {
-        if (!auth || !spaceId) {
-          return {
-            disabled: true,
-            placeholder: spaceId ? 'Please connect your Circle.so account' : 'Please select a space first',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const posts = await fetchPosts(apiKey, spaceId as string);
-
-        return {
-          options: posts.map((post: any) => ({
-            label: post.name,
-            value: post.id.toString(),
-          })),
-        };
-      },
-    }),
-    spaceId: Property.Dropdown({
-      displayName: 'Space',
-      description: 'The space containing the post',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your Circle.so account',
-            options: [],
-          };
-        }
-
-        const apiKey = auth as string;
-        const spaces = await fetchSpaces(apiKey);
-
-        return {
-          options: spaces.map((space: any) => ({
-            label: space.name,
-            value: space.id.toString(),
-          })),
-        };
-      },
-    }),
+    postId: postDropdown,
+    spaceId: spaceDropdown,
     parentCommentId: Property.ShortText({
       displayName: 'Parent Comment ID',
       description: 'ID of the comment to reply to (for threaded replies)',
