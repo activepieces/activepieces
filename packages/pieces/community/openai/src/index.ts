@@ -47,7 +47,7 @@ export const openaiAuth = PieceAuth.SecretText({
 export const openai = createPiece({
   displayName: 'OpenAI',
   description: 'Use the many tools ChatGPT has to offer.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.62.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
