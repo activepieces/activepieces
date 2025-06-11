@@ -24,7 +24,7 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-const OPENSOURCE_PLAN = {
+const DEFAULT_PLAN = {
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,
@@ -37,7 +37,7 @@ const OPENSOURCE_PLAN = {
     showPoweredBy: false,
     auditLogEnabled: false,
     managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
+    manageTemplatesEnabled: true,
     customAppearanceEnabled: false,
     tasksLimit: undefined,
     manageProjectsEnabled: false,
@@ -215,12 +215,12 @@ async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWitho
     }
 }
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return OPENSOURCE_PLAN
-    }
-    return OPENSOURCE_PLAN
+    // const edition = system.getEdition()
+    // if (edition === ApEdition.COMMUNITY) {
+    //     return DEFAULT_PLAN
+    // }
     // return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
+    return DEFAULT_PLAN
 }
 
 type AddParams = {
