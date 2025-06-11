@@ -8,7 +8,7 @@ import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
-import { AddParams, JOB_PRIORITY, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
+import { AddParams, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
 
 
