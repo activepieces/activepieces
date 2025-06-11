@@ -101,33 +101,29 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     ): Promise<ProjectId> {
         const projectIdFromRequest = requestUtils.extractProjectId(request)
         
-        // Check if route has :id parameter
         const hasIdParam = request.routerPath.includes(':id') &&
             isObject(request.params) &&
             'id' in request.params &&
             typeof request.params.id === 'string'
         
         if (hasIdParam) {
-            // Route has :id parameter, try to fetch from resource
             const projectIdFromResource = await this.extractProjectIdFromResource(request)
             if (!isNil(projectIdFromResource)) {
                 return projectIdFromResource
             }
             
-            // Resource with :id not found
             const resourceName = extractResourceName(request.routerPath)
             const resourceId = (request.params as { id: string }).id
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    message: `${resourceName || 'resource'} with id ${resourceId} not found`,
+                    message: `${resourceId} not found`,
                     entityType: resourceName,
                     entityId: resourceId,
                 },
             })
         }
         
-        // Route doesn't have :id parameter, must get project ID from request
         if (isNil(projectIdFromRequest)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
