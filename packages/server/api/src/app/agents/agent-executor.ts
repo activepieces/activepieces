@@ -58,20 +58,14 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
         agentId: params.agent.id,
         mcpId: params.agent.mcpId,
     }, 'Starting agent execution')
-    const mcpServer = await mcpService(log).getMcpServerUrl({ mcpId: params.agent.mcpId })
-    const mcpClient = await experimental_createMCPClient({
-        transport: {
-            type: 'sse',
-            url: mcpServer,
-        },
-    })
-    const tools = await mcpClient.tools()
-    const currentDate = new Date().toISOString().split('T')[0]
-    let textResult = ''
-    const model = await initializeOpenAIModel(params.agent, 'gpt-4o')
-    const { fullStream } = streamText({
-        model,
-        system: `
+    const mcpClient = await getMcpClient(params.agent, log)
+    try {
+        const currentDate = new Date().toISOString().split('T')[0]
+        let textResult = ''
+        const model = await initializeOpenAIModel(params.agent, 'gpt-4o')
+        const { fullStream } = streamText({
+            model,
+            system: `
         You are an autonomous assistant designed to efficiently achieve the user's single-shot goal using tools. Prioritize accuracy, minimal steps, and user-friendly clarity.
         
         **Today's Date**: ${currentDate}  
@@ -80,59 +74,79 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
         ---
         ${params.agent.systemPrompt}
         `,
-        prompt: params.prompt,
-        maxSteps: params.agent.maxSteps,
-        tools,
-    })
-    for await (const chunk of fullStream) {
-        if (chunk.type === 'text-delta') {
-            textResult += chunk.textDelta
-            currentComment += chunk.textDelta
-        }
+            prompt: params.prompt,
+            maxSteps: params.agent.maxSteps,
+            tools: isNil(mcpClient) ? undefined : await mcpClient.tools(),
+        })
+        for await (const chunk of fullStream) {
+            if (chunk.type === 'text-delta') {
+                textResult += chunk.textDelta
+                currentComment += chunk.textDelta
+            }
 
-        else if (chunk.type === 'tool-call') {
-            currentComment += `<tool-call id="${chunk.toolCallId}">${JSON.stringify({
-                toolName: chunk.toolName,
-                result: chunk.args,
-            })}</tool-call>`
+            else if (chunk.type === 'tool-call') {
+                currentComment += `<tool-call id="${chunk.toolCallId}">${JSON.stringify({
+                    toolName: chunk.toolName,
+                    result: chunk.args,
+                })}</tool-call>`
+            }
+            else if (chunk.type === 'tool-result') {
+                const textResult = chunk.result
+                currentComment += `<tool-result id="${chunk.toolCallId}">${JSON.stringify({
+                    result: textResult,
+                })}</tool-result>`
+            }
+            await todoSideEfffects(log).notifyActivity({
+                socket: params.socket,
+                projectId: params.agent.projectId,
+                activityId: comment.id,
+                content: currentComment,
+            })
         }
-        else if (chunk.type === 'tool-result') {
-            const textResult = chunk.result
-            currentComment += `<tool-result id="${chunk.toolCallId}">${JSON.stringify({
-                result: textResult,
-            })}</tool-result>`
-        }
-        await todoSideEfffects(log).notifyActivity({
+        await todoActivitiesService(log).update({
+            id: comment.id,
+            content: currentComment,
             socket: params.socket,
             projectId: params.agent.projectId,
-            activityId: comment.id,
-            content: currentComment,
         })
-    }
-    await todoActivitiesService(log).update({
-        id: comment.id,
-        content: currentComment,
-        socket: params.socket,
-        projectId: params.agent.projectId,
-    })
 
-    await mcpClient.close()
-    await todoService(log).resolve({
-        id: todoId,
-        status: RESOLVED_STATUS.name,
-        socket: params.socket,
-    })
-
-    if (!isNil(params.callbackUrl)) {
-        await fetch(params.callbackUrl, {
-            method: 'POST',
-            body: JSON.stringify({ output: textResult }),
+        await todoService(log).resolve({
+            id: todoId,
+            status: RESOLVED_STATUS.name,
+            socket: params.socket,
         })
+
+        if (!isNil(params.callbackUrl)) {
+            await fetch(params.callbackUrl, {
+                method: 'POST',
+                body: JSON.stringify({ output: textResult }),
+            })
+        }
+        log.info({
+            agentId: params.agent.id,
+            mcpId: params.agent.mcpId,
+        }, 'Agent execution completed')
+    } finally {
+        if (!isNil(mcpClient)) {
+            await mcpClient.close()
+        }
     }
-    log.info({
-        agentId: params.agent.id,
-        mcpId: params.agent.mcpId,
-    }, 'Agent execution completed')
+}
+
+async function getMcpClient(agent: Agent, log: FastifyBaseLogger) {
+    const mcpServer = await mcpService(log).getOrThrow({
+        mcpId: agent.mcpId,
+    })
+    if (mcpServer.tools.length === 0) {
+        return null;
+    }
+    const mcpServerUrl = await mcpService(log).getMcpServerUrl({ mcpId: agent.mcpId })
+    return await experimental_createMCPClient({
+        transport: {
+            type: 'sse',
+            url: mcpServerUrl,
+        },
+    })
 }
 
 async function initializeOpenAIModel(agent: Agent, model: string) {

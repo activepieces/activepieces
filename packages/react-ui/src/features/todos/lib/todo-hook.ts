@@ -1,18 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { UNRESOLVED_STATUS } from '@activepieces/shared';
+import { PopulatedTodo, UNRESOLVED_STATUS } from '@activepieces/shared';
 
 import { todosApi } from './todos-api';
 
+const todoKeys = {
+  single: (id: string) => ['todo', id],
+};
 export const todosHooks = {
   useTodo: (todoId: string | null) => {
     return useQuery({
-      queryKey: ['todo', todoId],
+      queryKey: todoKeys.single(todoId!),
       queryFn: () => todosApi.get(todoId!),
       enabled: !!todoId,
     });
+  },
+  setTodoManually: (todoId: string, todo: PopulatedTodo, queryClient: QueryClient) => {
+    queryClient.setQueryData(todoKeys.single(todoId), todo)
   },
 
   useTodosList: (

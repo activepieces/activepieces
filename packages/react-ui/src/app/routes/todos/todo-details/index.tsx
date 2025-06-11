@@ -13,29 +13,39 @@ import {
   TodoChanged,
   WebsocketClientEvent,
   UNRESOLVED_STATUS,
+  isNil,
+  PopulatedTodo,
 } from '@activepieces/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
 import { TodoDetailsStatus } from './todo-details-status';
 import { TodoTimeline } from './todo-timeline';
+import { TodoCreateTodo } from './todo-create-todo';
+import { useQueryClient } from '@tanstack/react-query';
 
 type TodoDetailsProps = {
-  todoId: string;
+  todoId: string | null;
   onClose?: () => void;
+  agentId?: string;
   onStatusChange?: (status: Todo['status'], source: 'agent' | 'manual') => void;
   className?: string;
 };
 
 export const TodoDetails = ({
-  todoId,
+  todoId: initialTodoId,
   onClose,
+  agentId,
   onStatusChange,
   className,
 }: TodoDetailsProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const [createdTodoId, setCreatedTodoId] = useState<string | null>(null);
+  const todoId = createdTodoId ?? initialTodoId;
   const socket = useSocket();
   const previousStatus = useRef<Todo['status']>();
   const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
+  const queryClient = useQueryClient()
 
   const handleTodoChanged = async (event: TodoChanged) => {
     if (event.todoId === todoId) {
@@ -65,6 +75,12 @@ export const TodoDetails = ({
     };
   }, [socket, refetch, todoId]);
 
+  const handleTodoCreated = (todo: PopulatedTodo) => {
+
+    todosHooks.setTodoManually(todo.id, todo, queryClient);
+    setCreatedTodoId(todo.id);
+  };
+
   const handleStatusChange = async (
     status: Todo['status'],
     source: 'agent' | 'manual',
@@ -82,6 +98,15 @@ export const TodoDetails = ({
   return (
     <div className={cn('flex flex-col w-full h-[100vh]', className)}>
       {isLoading && <LoadingScreen mode="container"></LoadingScreen>}
+      {!isLoading && isNil(todo) && !isNil(agentId) && (
+        <TodoCreateTodo
+          onTodoCreated={handleTodoCreated}
+          agentId={agentId}
+          onClose={() => {
+            onClose?.();
+          }}
+        />
+      )}
       {!isLoading && todo && (
         <ScrollArea className="flex-1 px-0">
           <div className="flex flex-col py-5 gap-2">

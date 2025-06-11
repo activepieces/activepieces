@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
+import { TodoTimelineStatus } from './todo-timeline-status';
 
 interface TodoTimelineProps {
   todo: PopulatedTodo;
@@ -100,6 +101,7 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
           showConnector={index !== activities.length - 1}
         />
       ))}
+      <TodoTimelineStatus todo={todo} />
     </div>
   );
 };
