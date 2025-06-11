@@ -16,6 +16,7 @@ export function UserAvatar({
   disableTooltip = false,
 }: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
+
   const avatarElement = (
     <Avatar
       name={email}
@@ -30,7 +31,11 @@ export function UserAvatar({
   }
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{avatarElement}</TooltipTrigger>
+      <TooltipTrigger asChild>
+        <div>
+          {avatarElement} {disableTooltip}
+        </div>
+      </TooltipTrigger>
       <TooltipContent side="bottom">{tooltip}</TooltipContent>
     </Tooltip>
   );

@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+
 import { CopyButton } from '../ui/copy-button';
 import { DownloadButton } from '../ui/download-button';
 import { Input } from '../ui/input';
@@ -28,7 +30,11 @@ const CopyToClipboardInput = ({
           readOnly
         />
       )}
-      <div className="flex flex-col gap-1">
+      <div
+        className={cn('flex  gap-1', {
+          'flex-col': !useInput,
+        })}
+      >
         <CopyButton textToCopy={textToCopy} variant="ghost" />
         {fileName && (
           <DownloadButton
