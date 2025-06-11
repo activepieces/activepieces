@@ -26,8 +26,8 @@ export const workflowDropdown = Property.Dropdown({
     const workflows = workflowsResponse?.workflows || workflowsResponse || [];
 
     const options: DropdownOption<string>[] = workflows.map((workflow: any) => ({
-      label: workflow.title || workflow.workflow_id,
-      value: workflow.workflow_id,
+      label: workflow.title || workflow.workflow_permanent_id,
+      value: workflow.workflow_permanent_id,
     }));
 
     return {
