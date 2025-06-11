@@ -1,3 +1,4 @@
+import { Writable } from 'stream'
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -14,6 +15,10 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         upstream: '',
         disableRequestLogging: false,
         replyOptions: {
+            rewriteRequestHeaders: (request, headers) => {
+                headers['accept-encoding'] = 'identity'
+                return headers
+            },
             getUpstream(request, _base) {
                 const params = request.params as Record<string, string> | null
                 const provider = params?.['provider']
@@ -31,8 +36,37 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
                 const projectId = request.principal.projectId
-                await platformUsageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_CREDITS })
-                await reply.send(response)
+                const params = request.params as Record<string, string> | null
+                const provider = params?.['provider'] as string
+
+                let buffer = Buffer.from('')
+
+                response.pipe(new Writable({
+                    write(chunk, encoding, callback) {
+                        buffer = Buffer.concat([buffer, chunk])
+                        callback()
+                    },
+                    async final(callback) {
+                        if (response.statusCode >= 400) {
+                            app.log.error({
+                                response,
+                                body: buffer.toString(),
+                            }, 'Error response from AI provider')
+                            await reply.send(buffer)
+                            return callback()
+                        }
+
+                        const completeResponse = JSON.parse(buffer.toString())
+                        const totalTokens = getTokens(provider, completeResponse)
+                        const model = completeResponse.model
+                        await Promise.all([
+                            aiProviderService.increaseProjectAIUsage({ projectId, provider, model, tokens: totalTokens }),
+                            platformUsageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_CREDITS }),
+                        ])
+                        await reply.send(buffer)
+                        callback()
+                    },
+                }))
             },
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -97,4 +131,18 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
         return undefined
     }
     return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getTokens(provider: string, response: any): number {
+    switch (provider) {
+        case 'openai':
+            return response.usage.total_tokens
+        case 'anthropic':
+            return response.usage.input_tokens + response.usage.output_tokens
+        case 'replicate':
+            return 0
+        default:
+            return 0
+    }
 }
