@@ -1,7 +1,5 @@
 import { PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/ee-shared'
 import { 
-    ActivepiecesError, 
-    ErrorCode, 
     FieldType, 
     FlowVersionState, 
     isNil, 
@@ -23,7 +21,6 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
             
             const flows: PopulatedFlow[] = []
-            const notPublishedFlowsNames: string[] = []
             await Promise.all(request.flowIds.map(async (flowId) => {
                 const flow = await flowService(log).getOnePopulatedOrThrow({
                     id: flowId,
@@ -31,19 +28,10 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
                     removeConnectionsName: false,
                     removeSampleData: true,
                 })
-                flows.push(flow)
-                if (isNil(flow.publishedVersionId) || flow.version.state === FlowVersionState.DRAFT) {
-                    notPublishedFlowsNames.push(flow.version.displayName)
+                if (!isNil(flow.publishedVersionId) && flow.version.state === FlowVersionState.LOCKED) {
+                    flows.push(flow)
                 }
             }))
-            if (notPublishedFlowsNames.length > 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FLOW_OPERATION_INVALID,
-                    params: {
-                        message: `These flows must be published before pushing to Git: ${notPublishedFlowsNames.join(', ')}`,
-                    },
-                })
-            }
             for (const flow of flows) {
                 const flowName = flow.externalId
                 await gitSyncHelper(log).upsertFlowToGit({

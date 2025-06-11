@@ -38,7 +38,7 @@ import {
   PushEverythingGitRepoRequest,
   PushGitRepoRequest,
 } from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined, ErrorCode } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 type PushEverythingDialogProps = {
   children?: React.ReactNode;
@@ -77,15 +77,8 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
       setOpen(false);
     },
     onError: (error: any) => {
-      if (error.response.data.code === ErrorCode.FLOW_OPERATION_INVALID) {
-        toast({
-          title: t('Invalid Operation'),
-          description: error.response.data.params.message,
-          duration: 3000,
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
+      console.error(error);
+      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
