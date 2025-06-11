@@ -1,12 +1,11 @@
 import {
-  AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
@@ -18,7 +17,7 @@ import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 
 export const openaiAuth = PieceAuth.SecretText({
-  description: AI_PROVIDERS_MAKRDOWN.openai,
+  description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')?.markdown,
   displayName: 'API Key',
   required: true,
   validate: async (auth) => {
