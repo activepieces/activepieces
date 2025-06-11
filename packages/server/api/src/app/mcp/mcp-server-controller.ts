@@ -2,8 +2,8 @@ import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullab
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { mcpService } from './mcp-service'
 import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
 

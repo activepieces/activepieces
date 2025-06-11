@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,24 +13,36 @@ import {
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
+
+const MAX_SEATS = 20;
+const DEFAULT_SEATS = 5;
 
 type ExtraSeatsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  platformSubscription: PlatformBillingInformation;
 };
 
 export const ExtraSeatsDialog = ({
   open,
   onOpenChange,
+  platformSubscription,
 }: ExtraSeatsDialogProps) => {
-  const [extraSeats, setExtraSeats] = useState([1]);
-  const seatCount = extraSeats[0];
-  const totalMonthlyCost = seatCount * PRICE_PER_EXTRA_USER;
+  const { plan } = platformSubscription;
+  const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
+
+  // Initialize with current user limit
+  const [selectedSeats, setSelectedSeats] = useState([currentUserLimit]);
+
+  const newSeatCount = selectedSeats[0];
+  const seatDifference = newSeatCount - currentUserLimit;
+  const costDifference = seatDifference * PRICE_PER_EXTRA_USER;
 
   const queryClient = useQueryClient();
-  const { mutate: addUserSeats, isPending } =
+  const { mutate: updateUserSeats, isPending } =
     billingMutations.useUpdateSubscription(
       () => onOpenChange(false),
       queryClient,
@@ -42,73 +53,90 @@ export const ExtraSeatsDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            Add Extra Seats
+            Manage User Seats
           </DialogTitle>
           <DialogDescription>
-            Expand your team capacity with additional user seats
+            Adjust your team&apos;s capacity by modifying the number of user
+            seats.
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-6 py-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-sm font-medium">
-                Number of extra seats
+                Total number of seats
               </label>
-              <p className="text-lg font-bold px-3 py-1">{seatCount}</p>
+              <p className="text-lg font-bold px-3 py-1">{newSeatCount}</p>
             </div>
-
             <div className="space-y-3">
               <Slider
-                value={extraSeats}
-                onValueChange={setExtraSeats}
-                max={20}
-                min={1}
+                value={selectedSeats}
+                onValueChange={setSelectedSeats}
+                max={MAX_SEATS}
+                min={DEFAULT_SEATS}
                 step={1}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1 seat</span>
-                <span>20 seats</span>
+                <span>{DEFAULT_SEATS} seats (minimum)</span>
+                <span>{MAX_SEATS} seats (maximum)</span>
               </div>
             </div>
+            <div className="text-xs text-muted-foreground">
+              Current seats: {currentUserLimit}
+            </div>
           </div>
-
           <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-sm text-muted-foreground">
-                  {t('Additional Monthly cost')}
+                  {costDifference >= 0
+                    ? 'Additional Monthly Cost'
+                    : 'Monthly Savings'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {seatCount} seat{seatCount > 1 ? 's' : ''} × $
+                  {Math.abs(seatDifference)} seat
+                  {Math.abs(seatDifference) !== 1 ? 's' : ''} × $
                   {PRICE_PER_EXTRA_USER}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-primary">
-                ${totalMonthlyCost}
+              <div
+                className={`text-2xl font-bold ${
+                  costDifference >= 0 ? 'text-primary' : 'text-green-600'
+                }`}
+              >
+                {costDifference >= 0 ? '+' : '-'}${Math.abs(costDifference)}
               </div>
             </div>
           </div>
-        </div>
 
+          {seatDifference < 0 && (
+            <div className="text-xs text-muted-foreground">
+              You will be charged a prorated amount for the remaining days of
+              the month.
+            </div>
+          )}
+        </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             onClick={() =>
-              addUserSeats({ extraUsers: seatCount, plan: PlanName.BUSINESS })
+              updateUserSeats({
+                extraUsers: newSeatCount - DEFAULT_SEATS,
+                plan: PlanName.BUSINESS,
+              })
             }
-            disabled={isPending}
+            disabled={isPending || newSeatCount === currentUserLimit}
           >
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Adding Seats
+                Updating Seats
               </>
             ) : (
-              'Add Seats'
+              'Update Seats'
             )}
           </Button>
         </DialogFooter>

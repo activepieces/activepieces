@@ -22,22 +22,32 @@ async function getNextBillingInfo(
             actualNextBillingDate: defaultBillingDate,
         }
     }
+
+
+    try {
+        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+            subscription: subscriptionId,
+        })
+        const containsTasks = upcomingInvoice.lines.data.some(
+            line => line.price?.id === TASKS_PRICE_ID,
+        )
+        
+        const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
+        
+        const actualNextBillingDate = containsTasks || isNil(upcomingInvoice.next_payment_attempt)
+            ? defaultBillingDate
+            : new Date(upcomingInvoice.next_payment_attempt * 1000).toISOString()
+        
+        return { nextBillingAmount, actualNextBillingDate }
+
+    }
+    catch (error) {
+        return {
+            nextBillingAmount: 0, actualNextBillingDate: defaultBillingDate,
+        }
+    }
     
-    const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
-        subscription: subscriptionId,
-    })
-    
-    const containsTasks = upcomingInvoice.lines.data.some(
-        line => line.price?.id === TASKS_PRICE_ID,
-    )
-    
-    const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-    
-    const actualNextBillingDate = containsTasks || isNil(upcomingInvoice.next_payment_attempt)
-        ? defaultBillingDate
-        : new Date(upcomingInvoice.next_payment_attempt * 1000).toISOString()
-    
-    return { nextBillingAmount, actualNextBillingDate }
+   
 }
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {

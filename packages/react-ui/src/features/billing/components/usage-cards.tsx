@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import {
-  Database,
-  LayoutGrid,
-  Users,
-  Activity,
-  Workflow,
-} from 'lucide-react';
+import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import mcp from '@/assets/img/custom/mcp.svg';
 import { CardContent, Card } from '@/components/ui/card';
@@ -58,7 +52,7 @@ export const UsageCards = ({
         total={plan.tablesLimit}
       />
       <UsageCard
-        icon={<Workflow className='w-4 h-4' />}
+        icon={<Workflow className="w-4 h-4" />}
         title={t('Active flows')}
         used={usage.activeFlows}
         total={plan.activeFlowsLimit}
@@ -68,7 +62,7 @@ export const UsageCards = ({
 };
 
 interface UsageCardProps {
-  icon: React.ReactNode ;
+  icon: React.ReactNode;
   title: string;
   used: number;
   total?: number;

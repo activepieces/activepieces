@@ -34,6 +34,7 @@ export function BusinessUserSeats({
       <ExtraSeatsDialog
         open={addUserSeatsOpen}
         onOpenChange={setAddUserSeatsOpen}
+        platformSubscription={platformSubscription}
       />
       <Card className="w-full">
         <CardHeader className="border-b">

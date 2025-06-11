@@ -70,7 +70,10 @@ export const PlanCard = ({
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge variant="ghost" className="bg-secondary text-foreground px-3 py-1 text-xs font-medium">
+          <Badge
+            variant="ghost"
+            className="bg-secondary text-foreground px-3 py-1 text-xs font-medium"
+          >
             <StarIcon className="mr-1 h-3 w-3 fill-current" />
             {t('Most Popular')}
           </Badge>
@@ -131,8 +134,8 @@ export const PlanCard = ({
         <ul className="space-y-2">
           {planData.features.map((feature) => {
             const featureValue = feature.values[plan.name];
-            if(isNil(featureValue)) return null;
-            
+            if (isNil(featureValue)) return null;
+
             const isIncluded =
               typeof featureValue !== 'boolean' || featureValue === true;
 
@@ -162,7 +165,11 @@ export const PlanCard = ({
                       {featureValue}
                     </span>
                   )}
-                  <span>{featureValue === '1' ? feature.label.slice(0, -1) :  feature.label}</span>
+                  <span>
+                    {featureValue === '1'
+                      ? feature.label.slice(0, -1)
+                      : feature.label}
+                  </span>
                 </div>
               </li>
             );

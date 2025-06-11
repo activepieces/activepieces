@@ -2,7 +2,6 @@ import { t } from 'i18next';
 
 import { PlanName } from '@activepieces/ee-shared';
 
-
 export const planData = {
   tabs: [t('Monthly'), t('Annual')],
 
@@ -107,11 +106,11 @@ export const planData = {
     {
       key: 'humanInLoop',
       label: t('Human in the Loop'),
-      values: { 
+      values: {
         free: null,
-        plus: true, 
-        business: true, 
-        enterprise: true 
+        plus: true,
+        business: true,
+        enterprise: true,
       },
     },
     {

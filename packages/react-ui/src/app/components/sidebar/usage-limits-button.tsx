@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
+import { billingQueries } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -32,6 +33,9 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 
 const UsageLimitsButton = React.memo(() => {
   const { project } = projectHooks.useCurrentProject();
+  const { data: platformSubscription } = billingQueries.usePlatformSubscription(
+    project.platformId,
+  );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   if (edition === ApEdition.COMMUNITY) {
@@ -51,7 +55,7 @@ const UsageLimitsButton = React.memo(() => {
             <UsageProgress
               name={t('AI Credits')}
               value={project.usage.aiCredits}
-              max={project.plan.aiCredits}
+              max={platformSubscription?.plan.includedAiCredits}
             />
           </div>
         </div>

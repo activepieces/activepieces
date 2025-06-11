@@ -75,7 +75,8 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     >
       <div
         className={cn({
-          'bg-black/80 h-screen w-screen': state.useDarkBackground && state.isEmbedded,
+          'bg-black/80 h-screen w-screen':
+            state.useDarkBackground && state.isEmbedded,
         })}
       >
         {children}

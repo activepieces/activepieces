@@ -6,7 +6,6 @@ import {
     isNil,
     PlatformId,
     PlatformRole,
-    PlatformUsageMetric,
     ProjectId,
     SeekPage,
     spreadIfDefined,
