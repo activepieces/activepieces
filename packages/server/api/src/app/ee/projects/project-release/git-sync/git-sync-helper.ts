@@ -59,7 +59,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         return exists
     },
 
-    async updateConectionStateOnGit({ flowFolderPath, connectionsFolderPath, git, gitRepo, platformId, log, commitMessage }: ClearUnusedConnectionsFromGitParams): Promise<void> {
+    async updateConectionStateOnGit({ flowFolderPath, connectionsFolderPath, git, gitRepo, platformId, log }: ClearUnusedConnectionsFromGitParams): Promise<void> {
         const oldConnections = await readConnectionsFromGit(connectionsFolderPath)
         await Promise.all(oldConnections.map((connection) => this.deleteFromGit({ fileName: connection.externalId, folderPath: connectionsFolderPath })))
 
@@ -88,7 +88,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
             })
         }))
         
-        await gitHelper.commitAndPush(git, gitRepo, commitMessage ?? 'chore: update and remove unused connections')
+        await gitHelper.commitAndPush(git, gitRepo, 'chore: update and remove unused connections')
     },
     
 })
@@ -181,7 +181,6 @@ type ClearUnusedConnectionsFromGitParams = {
     flowFolderPath: string
     connectionsFolderPath: string
     platformId: string
-    commitMessage?: string
     git: SimpleGit
     gitRepo: GitRepo
     log: FastifyBaseLogger

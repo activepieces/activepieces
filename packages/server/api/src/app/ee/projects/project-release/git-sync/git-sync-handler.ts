@@ -59,7 +59,6 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
                 id,
                 platformId,
                 userId,
-                commitMessage: request.commitMessage,
             })
         },
         
@@ -85,20 +84,18 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
                 id,
                 platformId,
                 userId,
-                commitMessage: request.commitMessage,
             })
         },
     },
 
     connections: {
-        async push({ id, platformId, userId, commitMessage }: ConnectionOperationParams): Promise<void> {
+        async push({ id, platformId, userId }: ConnectionOperationParams): Promise<void> {
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, connectionsFolderPath, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
 
             await gitSyncHelper(log).updateConectionStateOnGit({
                 flowFolderPath,
                 connectionsFolderPath,
-                commitMessage,
                 git,
                 gitRepo,
                 platformId,
@@ -183,6 +180,5 @@ type TableOperationParams = {
 type ConnectionOperationParams = {
     id: string
     platformId: string
-    commitMessage?: string
     userId: string
 }
