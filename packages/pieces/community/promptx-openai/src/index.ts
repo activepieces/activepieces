@@ -83,7 +83,7 @@ export const avalantOpenai = createPiece({
   displayName: 'PromptX OpenAI',
   description: 'Talk to OpenAI ChatGPT tweaked for PromptX platform',
   auth: promptxAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.62.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
