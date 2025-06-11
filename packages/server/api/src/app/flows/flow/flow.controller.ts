@@ -61,12 +61,17 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
 
-        if (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) {
-            // await checkQuotaOrThrow({
-            //     platformId: request.principal.platform.id,
-            //     metric: PlatformUsageMetric.ACTIVE_FLOWS,
-            // })
+        // if (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) {
+        //     await checkQuotaOrThrow({
+        //         platformId: request.principal.platform.id,
+        //         metric: PlatformUsageMetric.ACTIVE_FLOWS,
+        //     })
+        // }
 
+        if (
+            (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) ||
+            (request.body.type === FlowOperationType.LOCK_AND_PUBLISH)
+        ) {
             const exceededLimit = await platformPlanService(request.log).flowsExceeded(request.principal.projectId)
             if (exceededLimit) {
                 throw new ActivepiecesError({
