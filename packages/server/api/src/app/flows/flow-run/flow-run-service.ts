@@ -201,7 +201,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
-            failedStepId: failedStepId ?? undefined,
+            failedStepName: failedStepId ?? undefined,
         })
 
 

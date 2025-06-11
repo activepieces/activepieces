@@ -18,14 +18,14 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         const date = dayjs(flowRun.created).toISOString()
 
 
-        assertNotNullOrUndefined(flowRun.failedStepId, 'failedStepId')
+        assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepId')
 
         // First try to find an existing issue for this step
         const existingIssue = await repo().findOne({
             where: {
                 projectId: flowRun.projectId,
                 flowId: flowRun.flowId,
-                stepId: flowRun.failedStepId,
+                stepName: flowRun.failedStepName,
                 status: IssueStatus.UNRESOLVED,
             },
         })
@@ -48,7 +48,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 flowId: flowRun.flowId,
                 id: issueId,
                 lastOccurrence: date,
-                stepId: flowRun.failedStepId,
+                stepName: flowRun.failedStepName,
                 status: IssueStatus.UNRESOLVED,
                 created: date,
                 updated: date,
@@ -56,18 +56,18 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             .execute()
 
         const issue = await repo().findOneByOrFail({ id: issueId })
-        issue.step = await getStepFromFlow(flowRun.flowId, flowRun.failedStepId, log)
+        issue.step = await getStepFromFlow(flowRun.flowId, flowRun.failedStepName, log)
         return issue
     },
-    async get({ projectId, flowId, stepId }: { projectId: string, flowId: string, stepId: string }): Promise<Issue | null> {
+    async get({ projectId, flowId, stepName }: { projectId: string, flowId: string, stepName: string }): Promise<Issue | null> {
         const issue = await repo().findOneByOrFail({
             projectId,
             flowId,
-            stepId,
+            stepName: stepName,
             status: IssueStatus.UNRESOLVED,
         })
 
-        issue.step = await getStepFromFlow(issue.flowId, stepId, log)
+        issue.step = await getStepFromFlow(issue.flowId, stepName, log)
         return issue
     },
     async list({ projectId, cursor, limit }: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
@@ -100,14 +100,24 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 .getRawOne()
                 .then(result => parseInt(result.count, 10))
 
-            const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
-            if (!isNil(issue.stepId)) {
-                issue.step = await getStepFromFlow(issue.flowId, issue.stepId ?? '', log) 
+            if (count === 0) {
+                await this.updateById({
+                    projectId: issue.projectId,
+                    id: issue.id,
+                    status: IssueStatus.RESOLVED
+                })
             }
+
+            const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
+            if (!isNil(issue.stepName)) {
+                issue.step = await getStepFromFlow(issue.flowId, issue.stepName ?? '', log) 
+            }
+            
             return {
                 ...issue,
                 flowDisplayName: flowVersion.displayName,
                 count,
+                status: count === 0 ? IssueStatus.RESOLVED : issue.status,
             }
         }))
 
@@ -157,8 +167,8 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             projectId,
             flowId,
         })
-        if (!isNil(issue.stepId)) {
-            issue.step = await getStepFromFlow(issue.flowId, issue.stepId, log)
+        if (!isNil(issue.stepName)) {
+            issue.step = await getStepFromFlow(issue.flowId, issue.stepName, log)
         }
 
         return issue
@@ -196,15 +206,15 @@ type UpdateParams = {
     status: IssueStatus
 }
 
-const getStepFromFlow = async (flowId: string, stepId: string, log: FastifyBaseLogger) => {
+const getStepFromFlow = async (flowId: string, stepName: string, log: FastifyBaseLogger) => {
     const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(flowId)
     const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-    const step = allSteps.find(s => s.name === stepId)
+    const step = allSteps.find(s => s.name === stepName)
     
     assertNotNullOrUndefined(step, 'step')
 
     return {
-        stepId: step.name,
+        stepName: step.name,
         name: step.displayName,
         type: step.type,
     }

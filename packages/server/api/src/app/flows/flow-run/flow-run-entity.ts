@@ -69,7 +69,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
-        failedStepId: {
+        failedStepName: {
             type: String,
             nullable: true,
         },

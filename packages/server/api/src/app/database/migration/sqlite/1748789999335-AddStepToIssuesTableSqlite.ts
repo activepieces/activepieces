@@ -4,6 +4,7 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
     name = 'AddStepToIssuesTableSQLite1748789999335'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // Create temporary table with new structure
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -13,45 +14,29 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
                 "flowId" varchar(21) NOT NULL,
                 "status" varchar CHECK("status" IN ('ONGOING', 'RESOLEVED')) NOT NULL,
                 "count" integer NOT NULL,
-                "stepId" varchar(21),
+                "stepName" varchar(21),
                 "lastOccurrence" datetime NOT NULL,
-                CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId", "stepId"),
+                CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId", "stepName"),
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
             )
         `)
         
+        // Copy data to temporary table
         await queryRunner.query(`
-            INSERT INTO "temporary_issue" (
-                "id",
-                "created",
-                "updated",
-                "projectId",
-                "flowId",
-                "status",
-                "count",
-                "stepId",
-                "lastOccurrence"
-            )
+            INSERT INTO "temporary_issue"
             SELECT 
-                "id",
-                "created",
-                "updated",
-                "projectId",
-                "flowId",
-                "status",
-                "count",
-                NULL,
-                "lastOccurrence"
+                id, created, updated, projectId, flowId, status, count, NULL as stepName, lastOccurrence
             FROM "issue"
         `)
         
+        // Drop original table and rename temporary
         await queryRunner.query('DROP TABLE "issue"')
-        
         await queryRunner.query('ALTER TABLE "temporary_issue" RENAME TO "issue"')
 
+        // Add indexes
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId", "stepId")
+            CREATE INDEX "idx_issue_flowId_StepId" ON "issue" ("flowId", "stepName")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
@@ -59,9 +44,7 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX "idx_issue_project_id_flow_id"')
-        await queryRunner.query('DROP INDEX "idx_issue_flow_id"')
-        
+        // Create temporary table without stepName
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -78,38 +61,24 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
             )
         `)
         
+        // Copy data excluding stepName
         await queryRunner.query(`
-            INSERT INTO "temporary_issue" (
-                "id",
-                "created",
-                "updated",
-                "projectId",
-                "flowId",
-                "status",
-                "count",
-                "lastOccurrence"
-            )
+            INSERT INTO "temporary_issue"
             SELECT 
-                "id",
-                "created",
-                "updated",
-                "projectId",
-                "flowId",
-                "status",
-                0,
-                "lastOccurrence"
+                id, created, updated, projectId, flowId, status, count, lastOccurrence
             FROM "issue"
         `)
         
+        // Drop and rename
         await queryRunner.query('DROP TABLE "issue"')
-        
         await queryRunner.query('ALTER TABLE "temporary_issue" RENAME TO "issue"')
 
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
-        `)
+        // Recreate indexes
         await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
+        `)
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
         `)
     }
 }

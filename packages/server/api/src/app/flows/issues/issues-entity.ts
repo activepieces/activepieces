@@ -37,7 +37,7 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
-        stepId: {
+        stepName: {
             type: String,
         },
     },

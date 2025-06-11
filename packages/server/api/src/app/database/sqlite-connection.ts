@@ -112,7 +112,7 @@ import { AddMcpRunEntitySQLITE1748365786218 } from './migration/sqlite/174836578
 import { AddStepToIssuesTableSQLite1748789999335 } from './migration/sqlite/1748789999335-AddStepToIssuesTableSqlite'
 import { AIProviderRefactorSqlite1748824241409 } from './migration/sqlite/1748824241409-AIProviderRefactorSqlite'
 import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqlite/1749129178686-AddMcpToolFlowCascadeDeleteSqlite'
-import { AddFailedStepIdToFlowRunTableSqlite1749560332604 } from './migration/sqlite/1749560332604-add_failedStepId_to_flow_run_table.sqlite'
+import { AddFailedstepNameToFlowRunTableSqlite1749560332604 } from './migration/sqlite/1749560332604-add_failedStep_to_flow_run_table.sqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -242,7 +242,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddStepToIssuesTableSQLite1748789999335,
         AIProviderRefactorSqlite1748824241409,
         AddMcpToolFlowCascadeDeleteSqlite1749129178686,
-        AddFailedStepIdToFlowRunTableSqlite1749560332604,
+        AddFailedstepNameToFlowRunTableSqlite1749560332604,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

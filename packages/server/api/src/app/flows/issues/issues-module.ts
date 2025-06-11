@@ -12,7 +12,6 @@ export const issuesModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     await app.register(issuesController, { prefix: '/v1/issues' })
 
-    // Setup archive task using system jobs
     const archiveDays = parseInt(system.getOrThrow(AppSystemProp.ISSUE_ARCHIVE_DAYS))
     systemJobHandlers.registerJobHandler(SystemJobName.ISSUE_AUTO_ARCHIVE, async (_job: SystemJobData<SystemJobName.ISSUE_AUTO_ARCHIVE>) => {
         await issuesService(app.log).archiveOldIssues(archiveDays)
@@ -25,7 +24,7 @@ export const issuesModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0 0 * * *', // Run at midnight every day
+            cron: '0 0 * * *',
         },
     })
 

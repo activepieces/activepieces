@@ -1,16 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddFailedStepIdToFlowRunTableSqlite1749560332604 implements MigrationInterface {
-    name = 'AddFailedStepIdToFlowRunTableSqlite1749560332604'
+export class AddFailedstepNameToFlowRunTablePostgres1749560332604 implements MigrationInterface {
+    name = 'AddFailedstepNameToFlowRunTablePostgres1749560332604'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD COLUMN "failedStepId" varchar(21)
+            ADD "failedstepName" character varying(21)
         `)
         await queryRunner.query(`
-            CREATE INDEX "idx_flow_run_flow_failed_step"
-            ON "flow_run" ("flowId", "failedStepId")
+            CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedstepName")
         `)
     }
 
@@ -20,7 +19,7 @@ export class AddFailedStepIdToFlowRunTableSqlite1749560332604 implements Migrati
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            DROP COLUMN "failedStepId"
+            DROP COLUMN "failedstepName"
         `)
     }
 }

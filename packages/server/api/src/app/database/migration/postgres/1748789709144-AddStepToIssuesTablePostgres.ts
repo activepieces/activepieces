@@ -6,7 +6,7 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "issue" 
-            ADD COLUMN "stepId" varchar(21)
+            ADD COLUMN "stepName" varchar(21)
         `)
 
         await queryRunner.query(`
@@ -16,21 +16,16 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
 
         await queryRunner.query(`
             ALTER TABLE "issue"
-            ADD CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId", "stepId")
+            ADD CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId", "stepName")
         `)
 
         await queryRunner.query(`
-            CREATE INDEX "idx_issue_flow_id" ON "issue" ("flowId", "stepId")
-        `)
-
-        await queryRunner.query(`
-            CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
+            CREATE INDEX "idx_issue_flowId_StepId" ON "issue" ("flowId", "stepName")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX "idx_issue_project_id_flow_id"')
-        await queryRunner.query('DROP INDEX "idx_issue_flow_id"')
+        await queryRunner.query('DROP INDEX "idx_issue_flowId_StepId"')
 
         await queryRunner.query(`
             ALTER TABLE "issue"
@@ -44,7 +39,7 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
 
         await queryRunner.query(`
             ALTER TABLE "issue" 
-            DROP COLUMN "stepId"
+            DROP COLUMN "stepName"
         `)
     }
 }

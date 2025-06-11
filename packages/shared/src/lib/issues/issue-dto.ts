@@ -9,7 +9,7 @@ export enum IssueStatus {
 }
 
 const Step = Type.Object({
-    stepId: Type.String(),
+    stepName: Type.String(),
     name: Type.String(),
 })
 
@@ -18,7 +18,7 @@ export const Issue = Type.Object({
     projectId: ApId,
     flowId: ApId,
     status: Type.Enum(IssueStatus),
-    stepId: Type.Optional(Type.String()),
+    stepName: Type.Optional(Type.String()),
     step: Type.Optional(Step),
     count: Type.Number({ default: 0 }),
     lastOccurrence: Type.String(),

@@ -11,7 +11,7 @@ export const UpdateRunProgressRequest = Type.Object({
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     workerHandlerId: Nullable(Type.String()),
     httpRequestId: Nullable(Type.String()),
-    failedStepId: Type.Optional(Type.String()),
+    failedStepName: Type.Optional(Type.String()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>

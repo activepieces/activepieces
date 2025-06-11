@@ -78,7 +78,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength, failedStepName: failedStepId } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
 
