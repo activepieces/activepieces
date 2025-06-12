@@ -13,7 +13,7 @@ const main = async () => {
 
   const isSharedDependenciesChanged = !sharedDependenciesValidationResults.every(p => p)
 
-  if (!isSharedDependenciesChanged) {
+  if (isSharedDependenciesChanged) {
     validationResults.push(packagePrePublishChecks('packages/shared'))
   }
 
