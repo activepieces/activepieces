@@ -24,12 +24,6 @@ export enum WebhookHandshakeStrategy {
     BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
 }
 
-export enum FlowType {
-    // TESTING CLI CHANGES
-    TRIGGER = 'TRIGGER',
-    ACTION = 'ACTION',
-}
-  
 export const WebhookHandshakeConfiguration = Type.Object({
     strategy: Type.Enum(WebhookHandshakeStrategy),
     paramName: Type.Optional(Type.String()),

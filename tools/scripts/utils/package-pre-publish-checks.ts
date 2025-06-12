@@ -36,7 +36,6 @@ const getLatestPublishedVersion = async (packageName: string, maxRetries: number
 
 
 const packageChangedFromMainBranch = async (path: string): Promise<boolean> => {
-  console.log('HAHAHAHAHA cleaned: ', path)
   const cleaned = path.includes('/packages') ? `packages/` + path.split('packages/')[1] : path
   if (!cleaned.startsWith('packages/')) {
     throw new Error(`[packageChangedFromMainBranch] path=${cleaned} is not a valid package path`)
