@@ -20,21 +20,26 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const log = app.log
         log.info('Running platform-daily-report')
 
+        const stripe = stripeHelper(log).getStripe()
+
+        if (isNil(stripe)) {
+            log.info('Skipping platform-daily-report as Stripe is not configured')
+            return
+        }
+
         const startOfDay = dayjs().startOf('day').toISOString()
         const endOfDay = dayjs().endOf('day').toISOString()
         const currentTimestamp = dayjs().unix()
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
             .where(`"project"."id" IN (
-            SELECT DISTINCT "flowRun"."projectId" 
+            SELECT DISTINCT "flowRun"."projectId"
             FROM "flow_run" "flowRun"
             WHERE "flowRun"."created" >= :startDate
             AND "flowRun"."created" <= :endDate
         )`, { startDate: startOfDay, endDate: endOfDay })
             .getRawMany()
         log.info({ platformCount: platforms.length }, 'Found platforms with usage in the current day')
-        const stripe = stripeHelper(log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         for (const { platformId } of platforms) {
             const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
@@ -59,16 +64,23 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         log.info('Finished platform-daily-report')
     })
 
-    await systemJobsSchedule(app.log).upsertJob({
-        job: {
-            name: SystemJobName.PLATFORM_USAGE_REPORT,
-            data: {},
-        },
-        schedule: {
-            type: 'repeated',
-            cron: EVERY_4_HOURS,
-        },
-    })
+    const stripe = stripeHelper(app.log).getStripe()
+    if (!isNil(stripe)) {
+        await systemJobsSchedule(app.log).upsertJob({
+            job: {
+                name: SystemJobName.PLATFORM_USAGE_REPORT,
+                data: {},
+            },
+            schedule: {
+                type: 'repeated',
+                cron: EVERY_4_HOURS,
+            },
+        })
+    }
+    else {
+        app.log.info('Skipping platform usage report job registration as Stripe is not configured')
+    }
+
     await app.register(platformPlanController, { prefix: '/v1/platform-billing' })
     await app.register(stripeBillingController, { prefix: '/v1/stripe-billing' })
 }
