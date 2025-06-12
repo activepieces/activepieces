@@ -20,13 +20,6 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const log = app.log
         log.info('Running platform-daily-report')
 
-        const stripe = stripeHelper(log).getStripe()
-
-        if (isNil(stripe)) {
-            log.info('Skipping platform-daily-report as Stripe is not configured')
-            return
-        }
-
         const startOfDay = dayjs().startOf('day').toISOString()
         const endOfDay = dayjs().endOf('day').toISOString()
         const currentTimestamp = dayjs().unix()
@@ -40,6 +33,8 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         )`, { startDate: startOfDay, endDate: endOfDay })
             .getRawMany()
         log.info({ platformCount: platforms.length }, 'Found platforms with usage in the current day')
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         for (const { platformId } of platforms) {
             const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
