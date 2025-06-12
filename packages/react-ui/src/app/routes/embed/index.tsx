@@ -1,10 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
 import { memoryRouter } from '@/app/router';
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
@@ -19,8 +21,6 @@ import {
   ActivepiecesVendorInit,
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/components/theme-provider';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
@@ -85,10 +85,18 @@ const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
   const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
-    mutationFn: async ({externalAccessToken,locale}:{externalAccessToken: string, locale: string}) => {
-      const data = await managedAuthApi.generateApToken({externalAccessToken})
-      await i18n.changeLanguage(locale)
-      return data
+    mutationFn: async ({
+      externalAccessToken,
+      locale,
+    }: {
+      externalAccessToken: string;
+      locale: string;
+    }) => {
+      const data = await managedAuthApi.generateApToken({
+        externalAccessToken,
+      });
+      await i18n.changeLanguage(locale);
+      return data;
     },
   });
   const { setTheme } = useTheme();
@@ -99,8 +107,8 @@ const EmbedPage = React.memo(() => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       if (event.data.data.jwtToken) {
-        if(event.data.data.mode){
-          setTheme(event.data.data.mode)
+        if (event.data.data.mode) {
+          setTheme(event.data.data.mode);
         }
         mutateAsync(
           {
@@ -136,7 +144,7 @@ const EmbedPage = React.memo(() => {
                 homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
                 hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
               });
-              console.log('embedState',embedState)
+              console.log('embedState', embedState);
               navigate(initialRoute);
               handleVendorNavigation({ projectId: data.projectId });
               handleClientNavigation();
@@ -156,8 +164,6 @@ const EmbedPage = React.memo(() => {
       }
     }
   };
-
-
 
   useEffectOnce(() => {
     const event: ActivepiecesClientInit = {

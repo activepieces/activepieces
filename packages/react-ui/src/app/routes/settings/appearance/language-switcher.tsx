@@ -28,7 +28,6 @@ import { ApFlagId, LocalesEnum } from '@activepieces/shared';
 
 import { flagsHooks } from '../../../../hooks/flags-hooks';
 
-
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
