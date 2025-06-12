@@ -38,12 +38,13 @@ import {
 } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
+import { PushEverythingDialog } from './push-everything-dialog';
 import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
-  const doesUserHavePermissionToWriteFlow = checkAccess(
+  const doesUserHavePermissionToWriteRelease = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
   const { data, isLoading, refetch } = useQuery({
@@ -173,14 +174,23 @@ const ProjectReleasesPage = () => {
         </TableTitle>
 
         <div className="flex items-center gap-2">
+          <PushEverythingDialog>
+            <Button
+              className="h-9 w-full"
+              variant="outline"
+              disabled={!doesUserHavePermissionToWriteRelease}
+            >
+              {t('Push Everything')}
+            </Button>
+          </PushEverythingDialog>
           <PermissionNeededTooltip
-            hasPermission={doesUserHavePermissionToWriteFlow}
+            hasPermission={doesUserHavePermissionToWriteRelease}
           >
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   className="h-9 w-full"
-                  disabled={!doesUserHavePermissionToWriteFlow}
+                  disabled={!doesUserHavePermissionToWriteRelease}
                 >
                   {t('Create Release')}
                   <ChevronDown className="h-3 w-4 ml-2" />
