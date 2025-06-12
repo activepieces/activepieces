@@ -8,7 +8,6 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -24,7 +23,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import {
-  ApEdition,
   ApFlagId,
   FlowRunStatus,
   IssueStatus,
@@ -36,10 +34,7 @@ import { issuesTableColumns } from './columns';
 export function IssuesTable() {
   const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
-  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
-  const isEditionSupported = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(
-    edition as ApEdition,
-  );
+
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const prevSearchParamsRef = useRef<string>('');
@@ -171,69 +166,59 @@ export function IssuesTable() {
     }
   };
   return (
-    <LockedFeatureGuard
-      featureKey="ISSUES"
-      locked={!isEditionSupported}
-      lockTitle={t('Unlock Issues')}
-      lockDescription={t(
-        'Track issues in your workflows and troubleshoot them.',
-      )}
-    >
-      <div className="flex-col w-full">
-        <DataTable
-          emptyStateTextTitle={t('No issues found')}
-          emptyStateTextDescription={t(
-            'All your workflows are running smoothly.',
-          )}
-          emptyStateIcon={<CheckCircle className="size-14" />}
-          page={data}
-          isLoading={isLoading}
-          columns={issuesTableColumns}
-          filters={filters}
-          bulkActions={[
-            {
-              render: (selectedRows, resetSelection) => {
-                return (
-                  <div className="flex items-center gap-2">
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToMarkAsArchived}
+    <div className="flex-col w-full">
+      <DataTable
+        emptyStateTextTitle={t('No issues found')}
+        emptyStateTextDescription={t(
+          'All your workflows are running smoothly.',
+        )}
+        emptyStateIcon={<CheckCircle className="size-14" />}
+        page={data}
+        isLoading={isLoading}
+        columns={issuesTableColumns}
+        filters={filters}
+        bulkActions={[
+          {
+            render: (selectedRows, resetSelection) => {
+              return (
+                <div className="flex items-center gap-2">
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToMarkAsArchived}
+                  >
+                    <Button
+                      disabled={!userHasPermissionToMarkAsArchived}
+                      className="gap-2"
+                      size={'sm'}
+                      onClick={(e) => {
+                        selectedRows.forEach((row) => {
+                          handleMarkAsArchived(row.flowDisplayName, row.id);
+                          row.delete();
+                        });
+                        resetSelection();
+                      }}
                     >
-                      <Button
-                        disabled={!userHasPermissionToMarkAsArchived}
-                        className="gap-2"
-                        size={'sm'}
-                        onClick={(e) => {
-                          selectedRows.forEach((row) => {
-                            handleMarkAsArchived(row.flowDisplayName, row.id);
-                            row.delete();
-                          });
-                          resetSelection();
-                        }}
-                      >
-                        <Check className="size-3" />
-                        {t('Mark as Archived')}{' '}
-                        {selectedRows.length === 0
-                          ? ''
-                          : `(${selectedRows.length})`}
-                      </Button>
-                    </PermissionNeededTooltip>
-                  </div>
-                );
-              },
+                      <Check className="size-3" />
+                      {t('Mark as Archived')}{' '}
+                      {selectedRows.length === 0
+                        ? ''
+                        : `(${selectedRows.length})`}
+                    </Button>
+                  </PermissionNeededTooltip>
+                </div>
+              );
             },
-          ]}
-          onRowClick={
-            userHasPermissionToSeeRuns
-              ? (row, newWindow) =>
-                  handleRowClick({
-                    newWindow,
-                    flowId: row.flowId,
-                    // created: row.created,
-                  })
-              : undefined
-          }
-        />
-      </div>
-    </LockedFeatureGuard>
+          },
+        ]}
+        onRowClick={
+          userHasPermissionToSeeRuns
+            ? (row, newWindow) =>
+                handleRowClick({
+                  newWindow,
+                  flowId: row.flowId,
+                })
+            : undefined
+        }
+      />
+    </div>
   );
 }
