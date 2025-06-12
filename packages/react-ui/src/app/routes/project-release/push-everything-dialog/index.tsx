@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -21,38 +22,29 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
+import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   GitBranchType,
   GitPushOperationType,
+  PushEverythingGitRepoRequest,
   PushGitRepoRequest,
-  PushFlowsGitRepoRequest,
-  PushTablesGitRepoRequest,
 } from '@activepieces/ee-shared';
-import {
-  assertNotNullOrUndefined,
-  PopulatedFlow,
-  Table,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
+type PushEverythingDialogProps = {
+  children?: React.ReactNode;
+};
 
-type PushToGitDialogProps =
-  | {
-      type: 'flow';
-      flows: PopulatedFlow[];
-      children?: React.ReactNode;
-    }
-  | {
-      type: 'table';
-      tables: Table[];
-      children?: React.ReactNode;
-    };
-
-const PushToGitDialog = (props: PushToGitDialogProps) => {
+const PushEverythingDialog = (props: PushEverythingDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
@@ -62,46 +54,24 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
   );
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {
-      type:
-        props.type === 'flow'
-          ? GitPushOperationType.PUSH_FLOW
-          : GitPushOperationType.PUSH_TABLE,
+      type: GitPushOperationType.PUSH_EVERYTHING,
       commitMessage: '',
-      flowIds: props.type === 'flow' ? props.flows.map((item) => item.id) : [],
-      tableIds:
-        props.type === 'table' ? props.tables.map((item) => item.id) : [],
     },
-    resolver: typeboxResolver(
-      props.type === 'flow'
-        ? PushFlowsGitRepoRequest
-        : PushTablesGitRepoRequest,
-    ),
+    resolver: typeboxResolver(PushEverythingGitRepoRequest),
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      switch (props.type) {
-        case 'flow':
-          await gitSyncApi.push(gitSync.id, {
-            type: GitPushOperationType.PUSH_FLOW,
-            commitMessage: request.commitMessage,
-            flowIds: props.flows.map((item) => item.id),
-          });
-          break;
-        case 'table':
-          await gitSyncApi.push(gitSync.id, {
-            type: GitPushOperationType.PUSH_TABLE,
-            commitMessage: request.commitMessage,
-            tableIds: props.tables.map((item) => item.id),
-          });
-          break;
-      }
+      await gitSyncApi.push(gitSync.id, {
+        type: GitPushOperationType.PUSH_EVERYTHING,
+        commitMessage: request.commitMessage,
+      });
     },
     onSuccess: () => {
       toast({
         title: t('Success'),
-        description: t('Pushed successfully'),
+        description: t('Everything is pushed successfully'),
         duration: 3000,
       });
       setOpen(false);
@@ -122,25 +92,37 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
-              <DialogTitle>{t('Push to Git')}</DialogTitle>
+              <DialogTitle>{t('Push Everything to Git')}</DialogTitle>
             </DialogHeader>
             <FormField
               control={form.control}
               name="commitMessage"
               render={({ field }) => (
                 <FormItem className="gap-2 flex flex-col">
-                  <FormLabel>{t('Commit Message')}</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>{t('Commit Message')}</FormLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        {t(
+                          'Push all published flows, connections, and tables to the Git repository.',
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
+                  <div className="text-sm text-gray-500">
+                    {t(
+                      'Enter a commit message to describe the changes you want to push.',
+                    )}
+                  </div>
                 </FormItem>
               )}
             />
-            <div className="text-sm text-gray-500 mt-2">
-              {t(
-                'Enter a commit message to describe the changes you want to push.',
-              )}
-            </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -167,5 +149,5 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
   );
 };
 
-PushToGitDialog.displayName = 'PushToGitDialog';
-export { PushToGitDialog };
+PushEverythingDialog.displayName = 'PushEverythingDialog';
+export { PushEverythingDialog };
