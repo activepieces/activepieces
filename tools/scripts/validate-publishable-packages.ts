@@ -8,7 +8,7 @@ const main = async () => {
   const packages = [
     ...piecesMetadata,
   ]
-  const validationResults = packages.map(p => packagePrePublishChecks(p))
+  const validationResults = packages.filter(p => !sharedDependencies.includes(p)).map(p => packagePrePublishChecks(p))
   const isSharedDependenciesChanged = await Promise.all(sharedDependencies.map(p => packagePrePublishChecks(p)))
 
   if (isSharedDependenciesChanged.some(p => p)) {
