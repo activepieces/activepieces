@@ -15,6 +15,8 @@ import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -27,6 +29,7 @@ if (!typesFormatsAdded) {
 }
 
 export function App() {
+  const { i18n } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
@@ -34,6 +37,7 @@ export function App() {
           <EmbeddingFontLoader>
             <TelemetryProvider>
               <TooltipProvider>
+                <React.Fragment key={i18n.language}>
                 <ThemeProvider storageKey="vite-ui-theme">
                   <SidebarProvider>
                     <ApRouter />
@@ -41,6 +45,8 @@ export function App() {
                     <ChangelogProvider />
                   </SidebarProvider>
                 </ThemeProvider>
+                </React.Fragment>
+               
               </TooltipProvider>
             </TelemetryProvider>
           </EmbeddingFontLoader>
