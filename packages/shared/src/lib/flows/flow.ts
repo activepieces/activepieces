@@ -23,6 +23,7 @@ export enum WebhookHandshakeStrategy {
     QUERY_PRESENT = 'QUERY_PRESENT',
     BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
 }
+  
 export const WebhookHandshakeConfiguration = Type.Object({
     strategy: Type.Enum(WebhookHandshakeStrategy),
     paramName: Type.Optional(Type.String()),
