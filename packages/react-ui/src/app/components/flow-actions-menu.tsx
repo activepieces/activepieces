@@ -218,23 +218,25 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </MoveFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
-          <DropdownMenuItem
-            disabled={!userHasPermissionToUpdateFlow}
-            onClick={() => duplicateFlow()}
-          >
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              {isDuplicatePending ? (
-                <LoadingSpinner />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-              <span>
-                {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
-              </span>
-            </div>
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
+   { !embedState.hideDuplicateFlow && (
+         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
+         <DropdownMenuItem
+           disabled={!userHasPermissionToUpdateFlow}
+           onClick={() => duplicateFlow()}
+         >
+           <div className="flex cursor-pointer  flex-row gap-2 items-center">
+             {isDuplicatePending ? (
+               <LoadingSpinner />
+             ) : (
+               <Copy className="h-4 w-4" />
+             )}
+             <span>
+               {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+             </span>
+           </div>
+         </DropdownMenuItem>
+       </PermissionNeededTooltip>
+   )}
 
         {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
           <PermissionNeededTooltip
