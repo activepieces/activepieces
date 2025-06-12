@@ -1,3 +1,6 @@
+import { t } from 'i18next';
+
+import { toast } from '@/components/ui/use-toast';
 import {
   Action,
   flowOperations,
@@ -65,12 +68,12 @@ export async function getActionsInClipboard(): Promise<Action[]> {
   return [];
 }
 
-export function pasteNodes(
-  actions: Action[],
+export async function pasteNodes(
   flowVersion: BuilderState['flowVersion'],
   pastingDetails: PasteLocation,
   applyOperation: BuilderState['applyOperation'],
 ) {
+  const actions = await getActionsInClipboard();
   const addOperations = flowOperations.getOperationsForPaste(
     actions,
     flowVersion,
@@ -79,6 +82,14 @@ export function pasteNodes(
   addOperations.forEach((request) => {
     applyOperation(request);
   });
+  if (addOperations.length === 0) {
+    toast({
+      title: t('No Steps Pasted'),
+      description: t(
+        'Please make sure you have copied a step(s) and allowed permission to your clipboard',
+      ),
+    });
+  }
 }
 
 export function getLastLocationAsPasteLocation(
