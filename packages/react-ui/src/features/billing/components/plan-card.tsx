@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckIcon, XIcon, Loader2Icon, StarIcon } from 'lucide-react';
 
@@ -10,8 +9,8 @@ import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 import {
   ApSubscriptionStatus,
-  CreateSubscriptionParams,
   PlanName,
+  PlanNameWithEnterprise,
 } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -26,17 +25,13 @@ export const PlanCard = ({
   billingInformation,
   setDialogOpen,
 }: PlanCardProps) => {
-  const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
   const isSelected = currentPlan === plan.name;
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
-    billingMutations.useUpdateSubscription(
-      () => setDialogOpen(false),
-      queryClient,
-    );
+    billingMutations.useUpdateSubscription(() => setDialogOpen(false));
   const { mutate: createSubscription } = billingMutations.useCreateSubscription(
     () => setDialogOpen(false),
   );
@@ -44,15 +39,7 @@ export const PlanCard = ({
   const hasActiveSubscription =
     billingInformation?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.ACTIVE;
-  const isEnterprisePlan = plan.name === PlanName.ENTERPRISE;
-
-  const handleSelect = (params: CreateSubscriptionParams) => {
-    if (!hasActiveSubscription) {
-      createSubscription(params);
-    } else {
-      updateSubscription({ plan: params.plan });
-    }
-  };
+  const isEnterprisePlan = plan.name === PlanNameWithEnterprise.ENTERPRISE;
 
   const getButtonText = () => {
     if (isUpdatingSubscription) return t('Updating...');
@@ -111,12 +98,13 @@ export const PlanCard = ({
           if (isEnterprisePlan) {
             openNewWindow('https://activepieces.com/sales');
           } else if (!isSelected) {
-            handleSelect({
-              plan: plan.name as
-                | PlanName.FREE
-                | PlanName.PLUS
-                | PlanName.BUSINESS,
-            });
+            if (hasActiveSubscription) {
+              updateSubscription({ plan: plan.name as PlanName });
+            } else {
+              createSubscription({
+                plan: plan.name as PlanName.PLUS | PlanName.BUSINESS,
+              });
+            }
           }
         }}
         disabled={isUpdatingSubscription || isSelected}
@@ -133,7 +121,8 @@ export const PlanCard = ({
         </h4>
         <ul className="space-y-2">
           {planData.features.map((feature) => {
-            const featureValue = feature.values[plan.name];
+            const featureValue =
+              feature.values[plan.name as keyof typeof feature.values];
             if (isNil(featureValue)) return null;
 
             const isIncluded =

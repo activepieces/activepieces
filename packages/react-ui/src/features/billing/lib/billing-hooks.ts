@@ -27,17 +27,11 @@ export const billingMutations = {
       onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
-  useUpdateSubscription: (
-    setIsOpen: (isOpen: boolean) => void,
-    queryClient: QueryClient,
-  ) => {
+  useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
     return useMutation({
       mutationFn: (params: UpdateSubscriptionParams) =>
         platformBillingApi.updateSubscription(params),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
-        });
+      onSuccess: () => {
         setIsOpen(false);
         toast({
           title: t('Success'),

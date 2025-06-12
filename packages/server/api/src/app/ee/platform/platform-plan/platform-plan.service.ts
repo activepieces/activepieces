@@ -1,6 +1,6 @@
-import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, checkCanDowngrade, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN, UpdateSubscriptionParams } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
@@ -8,7 +8,6 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
-import { platformUsageService } from '../platform-usage-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
 
@@ -21,7 +20,7 @@ type UpdatePlatformBillingParams = {
 
 const edition = system.getEdition()
 
-function getPlanLimits(planName: PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE): Partial<PlatformPlanLimits> {
+function getPlanLimits(planName: PlanName): Partial<PlatformPlanLimits> {
     switch (planName) {
         case PlanName.FREE:
             return FREE_CLOUD_PLAN
@@ -45,73 +44,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return platformPlan
     },
 
-
-    async handleDowngrade(platformPlan: PlatformPlan, params: UpdateSubscriptionParams): Promise<PlatformPlan> {
-        const { plan } = params
-
-        const currentPlatformUsage = await platformUsageService(log).getPlatformUsage(platformPlan.platformId)
-        const { canDowngrade, metrics } = checkCanDowngrade(platformPlanService(log).getPlanLimits(plan), currentPlatformUsage)
-
-        if (!canDowngrade) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED_DOWNGRADE,
-                params: {
-                    metrics,
-                },
-            })
-        }
-
-        assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Stripe subscription id is not set')
-        await stripeHelper(log).updateSubscription(
-            platformPlan.stripeSubscriptionId,
-            { plan },
-        )
-
-        log.info(`${plan} subscription updated for platform ${platformPlan.platformId}`)
-        const planLimits = platformPlanService(log).getPlanLimits(plan)
-
-        const updatedPlatformPlan = await platformPlanService(log).update({ 
-            platformId: platformPlan.platformId,
-            ...planLimits,
-        })
-
-        return updatedPlatformPlan
-    },
-
-    async handleUpgrade(platformPlan: PlatformPlan, params: UpdateSubscriptionParams): Promise<PlatformPlan> {
-        const { plan, extraUsers } = params
-
-        if (plan !== PlanName.BUSINESS &&  !isNil(extraUsers) && extraUsers > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Extra users are only available for business plan',
-                },
-            })
-        }
-
-        assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Stripe subscription id is not set')
-        await stripeHelper(log).updateSubscription(
-            platformPlan.stripeSubscriptionId,
-            { plan, extraUsers },
-        )
-
-        log.info(`${plan} subscription updated for platform ${platformPlan.platformId}`)
-        const planLimits = platformPlanService(log).getPlanLimits(plan)
-        if (plan === PlanName.BUSINESS && !isNil(extraUsers) && Number(extraUsers) > 0) {
-            planLimits.userSeatsLimit = (planLimits.userSeatsLimit ?? 0) + Number(extraUsers)
-        }
-
-        const updatedPlatformPlan = await platformPlanService(log).update({ 
-            platformId: platformPlan.platformId,
-            ...planLimits,
-        })
-
-        return updatedPlatformPlan
-
-
-    },
-
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
         const { platformId, ...update } = params
         log.info({ platformId, update }, 'updating platform billing')
@@ -128,7 +60,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return updatedPlatformPlan
     },
 
-    async updateSubscriptionIdByCustomerId(subscription: Partial<Stripe.Subscription>): Promise<PlatformPlan> {
+    async updateSubscriptionStatus(subscription: Partial<Stripe.Subscription>): Promise<PlatformPlan> {
         const stripeCustomerId = subscription.customer as string
         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId })
 
@@ -142,6 +74,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             stripeSubscriptionId: subscription.id,
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
         })
+
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId })
     },
 

@@ -14,10 +14,7 @@ export const platformBillingApi = {
     return api.post<{ portalLink: string }>('/v1/platform-billing/portal');
   },
   updateSubscription(params: UpdateSubscriptionParams) {
-    return api.post<PlatformPlan>(
-      '/v1/platform-billing/update-subscription',
-      params,
-    );
+    return api.post<string>('/v1/platform-billing/update-subscription', params);
   },
   createSubscription(params: CreateSubscriptionParams) {
     return api.post<string>('/v1/platform-billing/create-subscription', params);

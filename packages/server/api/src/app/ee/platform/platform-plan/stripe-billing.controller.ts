@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared'
+import { DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformPlanService } from './platform-plan.service'
-import { stripeHelper  } from './stripe-helper'
+import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -17,6 +17,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
             try {
                 const payload = request.rawBody as string
                 const signature = request.headers['stripe-signature'] as string
+
                 const stripe = stripeHelper(request.log).getStripe()
                 assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
@@ -26,25 +27,49 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     signature,
                     webhookSecret,
                 )
-                const subscription = webhook.data.object as Stripe.Subscription
 
-                if (webhook.type === 'customer.subscription.created' && subscription.metadata.event === 'create_subscription') {
-                    const platformBilling = await platformPlanService(request.log).updateSubscriptionIdByCustomerId({
-                        ...subscription,
-                        status: ApSubscriptionStatus.ACTIVE,
-                    })
-                    const planName = subscription.metadata?.plan as PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE
+                switch (webhook.type) {
+                    case 'customer.subscription.deleted': 
+                    case 'customer.subscription.created':
+                    case 'customer.subscription.updated': {
+                        const subscription = webhook.data.object as Stripe.Subscription
+            
+                        const platformPlan = await platformPlanService(request.log).updateSubscriptionStatus({
+                            id: subscription.id,
+                            status: subscription.status,
+                        })
+            
+                        const newPlan = getPlanFromSubscription(subscription)
 
-                    request.log.info(`${planName} subscription activated for platform ${platformBilling.platformId}`)
+                        const extraUsers = subscription.items.data.find(item => item.price.id === USER_PRICE_ID)?.quantity ?? 0
 
-                    const planLimits = platformPlanService(request.log).getPlanLimits(planName)
-                    await platformPlanService(request.log).update({ 
-                        platformId: platformBilling.platformId, 
-                        ...planLimits, 
-                    })
+                        request.log.info('Processing subscription event', {
+                            webhookType: webhook.type,
+                            subscriptionStatus: subscription.status,
+                            newPlan,
+                            extraUsers,
+                        })
+
+                        const planLimits = platformPlanService(request.log).getPlanLimits(newPlan)
+
+                        if (newPlan === PlanName.BUSINESS && extraUsers > 0) {
+                            planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
+                        }
+
+                        await platformPlanService(request.log).update({ 
+                            platformId: platformPlan.platformId, 
+                            ...planLimits,
+                        })
+            
+                        break
+                    }
+                    default:
+                        request.log.info(`Unhandled webhook event type: ${webhook.type}`)
+                        break
                 }
-
-                return await reply.status(StatusCodes.OK).send()
+    
+                return await reply.status(StatusCodes.OK).send({ received: true })
+    
             }
             catch (err) {
                 request.log.error(err)
@@ -57,7 +82,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
         },
     )
 }
-
 
 const WebhookRequest = {
     config: {

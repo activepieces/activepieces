@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,19 +33,14 @@ export const ExtraSeatsDialog = ({
   const { plan } = platformSubscription;
   const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
 
-  // Initialize with current user limit
   const [selectedSeats, setSelectedSeats] = useState([currentUserLimit]);
 
   const newSeatCount = selectedSeats[0];
   const seatDifference = newSeatCount - currentUserLimit;
   const costDifference = seatDifference * PRICE_PER_EXTRA_USER;
 
-  const queryClient = useQueryClient();
   const { mutate: updateUserSeats, isPending } =
-    billingMutations.useUpdateSubscription(
-      () => onOpenChange(false),
-      queryClient,
-    );
+    billingMutations.useUpdateSubscription(() => onOpenChange(false));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,7 +118,7 @@ export const ExtraSeatsDialog = ({
           <Button
             onClick={() =>
               updateUserSeats({
-                extraUsers: newSeatCount - DEFAULT_SEATS,
+                seats: newSeatCount,
                 plan: PlanName.BUSINESS,
               })
             }
