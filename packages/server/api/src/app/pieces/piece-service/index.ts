@@ -51,7 +51,7 @@ export const pieceService = (log: FastifyBaseLogger) => ({
                 projectId: undefined,
                 packageType: params.packageType,
                 platformId,
-                pieceType: PieceType.CUSTOM,
+                pieceType: PieceType.OFFICIAL,
                 archiveId,
             })
 
