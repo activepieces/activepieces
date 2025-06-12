@@ -1,7 +1,6 @@
 import {
     CopilotProviderType,
     FilteredPieceBehavior,
-    LocalesEnum,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
@@ -63,7 +62,6 @@ describe('Platform API', () => {
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
                 emailAuthEnabled: false,
-                defaultLocale: LocalesEnum.ENGLISH,
             }
             // act
             const response = await app?.inject({
@@ -102,7 +100,6 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
             expect(responseBody.cloudAuthEnabled).toBe(false)
-            expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
         })
 
         it('fails if user is not owner', async () => {
