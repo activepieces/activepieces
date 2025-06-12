@@ -10,7 +10,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import { combinePaths, parentWindow } from '@/lib/utils';
 import {
-  _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
   ActivepiecesClientConfigurationFinished,
@@ -20,6 +19,8 @@ import {
   ActivepiecesVendorInit,
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/theme-provider';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
@@ -84,19 +85,27 @@ const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
   const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
-    mutationFn: managedAuthApi.generateApToken,
+    mutationFn: async ({externalAccessToken,locale}:{externalAccessToken: string, locale: string}) => {
+      const data = await managedAuthApi.generateApToken({externalAccessToken})
+      await i18n.changeLanguage(locale)
+      return data
+    },
   });
+  const { setTheme } = useTheme();
+  const { i18n } = useTranslation();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
       event.source === parentWindow &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      const token =
-        event.data.data.jwtToken || getExternalTokenFromSearchQuery();
-      if (token) {
+      if (event.data.data.jwtToken) {
+        if(event.data.data.mode){
+          setTheme(event.data.data.mode)
+        }
         mutateAsync(
           {
-            externalAccessToken: token,
+            externalAccessToken: event.data.data.jwtToken,
+            locale: event.data.data.locale ?? 'en',
           },
           {
             onSuccess: (data) => {
@@ -105,10 +114,8 @@ const EmbedPage = React.memo(() => {
               setEmbedState({
                 hideSideNav: event.data.data.hideSidebar,
                 isEmbedded: true,
-                hideLogoInBuilder: event.data.data.hideLogoInBuilder ?? false,
                 hideFlowNameInBuilder:
                   event.data.data.hideFlowNameInBuilder ?? false,
-                prefix: event.data.data.prefix,
                 disableNavigationInBuilder:
                   event.data.data.disableNavigationInBuilder !== false,
                 hideFolders: event.data.data.hideFolders ?? false,
@@ -126,8 +133,10 @@ const EmbedPage = React.memo(() => {
                     : event.data.data.disableNavigationInBuilder,
                 emitHomeButtonClickedEvent:
                   event.data.data.emitHomeButtonClickedEvent ?? false,
+                homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
+                hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
               });
-              //previously initialRoute was optional
+              console.log('embedState',embedState)
               navigate(initialRoute);
               handleVendorNavigation({ projectId: data.projectId });
               handleClientNavigation();
@@ -148,11 +157,7 @@ const EmbedPage = React.memo(() => {
     }
   };
 
-  const getExternalTokenFromSearchQuery = () => {
-    return new URLSearchParams(window.location.search).get(
-      _AP_JWT_TOKEN_QUERY_PARAM_NAME,
-    );
-  };
+
 
   useEffectOnce(() => {
     const event: ActivepiecesClientInit = {
@@ -165,7 +170,6 @@ const EmbedPage = React.memo(() => {
       window.removeEventListener('message', initState);
     };
   });
-
   return <LoadingScreen brightSpinner={embedState.useDarkBackground} />;
 });
 
