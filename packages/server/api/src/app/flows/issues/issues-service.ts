@@ -1,25 +1,25 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FlowRun, FlowRunStatus, flowStructureUtil, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { LessThan } from 'typeorm'
+import { In, LessThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { IssueEntity } from './issues-entity'
+import { flowRunRepo } from '../flow-run/flow-run-service'
 
 const repo = repoFactory(IssueEntity)
 
-
 export const issuesService = (log: FastifyBaseLogger) => ({
-    async add(flowRun: FlowRun): Promise<Issue> {
+    async add(flowRun: FlowRun): Promise<PopulatedIssue> {
         const date = dayjs(flowRun.created).toISOString()
         assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepName')
         const issueId = apId()
-        
-        const insertQuery = repo().createQueryBuilder()
+
+        await repo().createQueryBuilder()
             .insert()
             .into(IssueEntity)
             .values({
@@ -31,7 +31,6 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 status: IssueStatus.UNRESOLVED,
                 created: date,
                 updated: date,
-                count: 0,
             })
             .orUpdate(
                 ['lastOccurrence', 'updated', 'status', 'projectId'],
@@ -39,9 +38,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 {
                     skipUpdateIfNoValuesChanged: true,
                 },
-            )
-        
-        await insertQuery.execute()
+            ).execute()
 
         const issue = await repo().findOneByOrFail({
             projectId: flowRun.projectId,
@@ -49,10 +46,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             stepName: flowRun.failedStepName,
             status: IssueStatus.UNRESOLVED,
         })
-        
-        issue.step = await getStepFromFlow(flowRun.flowId, flowRun.failedStepName, log)
-        
-        return issue
+        return enrichIssue(issue, log)
     },
     async get({ projectId, flowId, stepName }: { projectId: string, flowId: string, stepName: string }): Promise<Issue | null> {
         const issue = await repo().findOneByOrFail({
@@ -62,10 +56,11 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             status: IssueStatus.UNRESOLVED,
         })
 
-        issue.step = await getStepFromFlow(issue.flowId, stepName, log)
-        return issue
+        return enrichIssue(issue, log)
     },
-    async list({ projectId, cursor, limit, status }: ListIssuesParams ): Promise<SeekPage<PopulatedIssue>> {
+    async list({ projectId, cursor, limit, status }: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
+        await resolveIssueWithZeroCount(log)
+
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: IssueEntity,
@@ -80,68 +75,13 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         let query = repo().createQueryBuilder(IssueEntity.options.name)
             .where({ projectId })
 
-        if (status && status.length > 0) {
-            query = query.andWhere('status IN (:...statuses)', { statuses: status })
+        if (!isNil(status) && status.length > 0) {
+            query = query.andWhere('status = :status', { status: In(status) })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
 
-        const issuesWithCounts = await Promise.all(data.map(async issue => {
-            // Fixed query with proper join between issue and flow_run
-            const count = await repo()
-                .createQueryBuilder('i') 
-                .select('COUNT(*)', 'count')
-                .innerJoin('flow_run', 'fr', 'i."flowId" = fr."flowId" AND i."stepName" = fr."failedStepName"')
-                .where('fr."flowId" = :flowId', { flowId: issue.flowId })
-                .andWhere('fr.status IN (:...statuses)', { statuses: [FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT] })
-                .andWhere('fr."failedStepName" = :stepName', { stepName: issue.stepName })
-                .andWhere('i.id = :issueId', { issueId: issue.id })
-                .getRawOne()
-                .then(result => parseInt(result.count, 10))
-
-            if (count === 0 && issue.status === IssueStatus.UNRESOLVED) {
-                await this.updateById({
-                    projectId: issue.projectId,
-                    id: issue.id,
-                    status: IssueStatus.RESOLVED,
-                })
-                issue.status = IssueStatus.RESOLVED
-            }
-
-            const actualStatus = issue.status === IssueStatus.ARCHIVED 
-                ? IssueStatus.ARCHIVED 
-                : (count === 0 ? IssueStatus.RESOLVED : issue.status)
-
-            return {
-                issue,
-                count,
-                actualStatus,
-            }
-        }))
-
-        // Filter issues based on the actual calculated status
-        const filteredIssues = issuesWithCounts.filter(({ actualStatus }) => {
-            if (!status || status.length === 0) {
-                return true
-            }
-            
-            return status.includes(actualStatus)
-        })
-
-        const populatedIssues = await Promise.all(filteredIssues.map(async ({ issue, count, actualStatus }) => {
-            const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
-            if (!isNil(issue.stepName)) {
-                issue.step = await getStepFromFlow(issue.flowId, issue.stepName ?? '', log) 
-            }
-            
-            return {
-                ...issue,
-                flowDisplayName: flowVersion.displayName,
-                count,
-                status: actualStatus,
-            }
-        }))
-
+        const populatedIssues = await Promise.all(data.map(issue => enrichIssue(issue, log)))
         return paginationHelper.createPage<PopulatedIssue>(populatedIssues, newCursor)
     },
 
@@ -188,11 +128,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             projectId,
             flowId,
         })
-        if (!isNil(issue.stepName)) {
-            issue.step = await getStepFromFlow(issue.flowId, issue.stepName, log)
-        }
-
-        return issue
+        return enrichIssue(issue, log)
     },
     async count({ projectId }: { projectId: ApId }): Promise<number> {
         return repo().count({
@@ -204,7 +140,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
     },
     async archiveOldIssues(olderThanDays: number): Promise<void> {
         const cutoffDate = dayjs().subtract(olderThanDays, 'days').toISOString()
-        
+
         const result = await repo().update({
             status: IssueStatus.UNRESOLVED,
             updated: LessThan(cutoffDate),
@@ -227,11 +163,49 @@ type UpdateParams = {
     status: IssueStatus
 }
 
-const getStepFromFlow = async (flowId: string, stepName: string, log: FastifyBaseLogger) => {
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(flowId)
+
+async function resolveIssueWithZeroCount(log: FastifyBaseLogger) {
+    await repo().createQueryBuilder()
+        .update(IssueEntity)
+        .set({
+            status: IssueStatus.RESOLVED,
+            updated: new Date().toISOString(),
+        })
+        .where('status = :status', { status: IssueStatus.UNRESOLVED })
+        .andWhere(_issue => {
+            const subQuery = flowRunRepo()
+                .createQueryBuilder('flowRun')
+                .select('flowRun.id')
+                .where('flowRun."flowId" = IssueEntity."flowId"')
+                .andWhere('flowRun."failedStepName" = IssueEntity."stepName"')
+                .andWhere('flowRun.status IN (:...failedStatuses)', { FAILED_STATES })
+                .getQuery()
+            return `NOT EXISTS (${subQuery})`
+        })
+        .execute()
+
+    log.info('Resolved issues with zero failed runs')
+}
+
+async function enrichIssue(issue: Issue, log: FastifyBaseLogger) {
+    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
+    const count = await flowRunRepo().countBy({
+        flowId: issue.flowId,
+        failedStepName: issue.stepName,
+        status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
+    })
+    return {
+        ...issue,
+        step: isNil(issue.stepName) ? undefined : await getStepFromFlow(flowVersion, issue.stepName),
+        flowDisplayName: flowVersion.displayName ?? '',
+        count,
+    }
+}
+
+function getStepFromFlow(flowVersion: FlowVersion, stepName: string) {
     const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const step = allSteps.find(s => s.name === stepName)
-    
+
     assertNotNullOrUndefined(step, 'step')
 
     return {

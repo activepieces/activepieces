@@ -5,7 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/shared';
+import { IssueStatus, PopulatedIssue, FlowRunStatus } from '@activepieces/shared';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { Archive, Check, X } from 'lucide-react';
 
 export const issuesTableColumns: ColumnDef<
   RowDataWithActions<PopulatedIssue>
@@ -49,10 +51,23 @@ export const issuesTableColumns: ColumnDef<
   {
     accessorKey: 'count',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Count')} />
+      <DataTableColumnHeader column={column} title={t('Runs Failed')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left"> {row.original.count} </div>;
+      return (
+        <div
+          className="text-center hover:underline cursor-pointer"
+          onClick={() => {
+            window.open(
+              `/flows/${row.original.flowId}/runs?status=${FlowRunStatus.FAILED}`,
+              '_blank'
+            );
+          }}
+          role="button"
+        >
+          <span className="block text-center">{row.original.count}</span>
+        </div>
+      );
     },
   },
   {
@@ -84,28 +99,26 @@ export const issuesTableColumns: ColumnDef<
   {
     id: 'status',
     accessorKey: 'status',
-    header: t('Status'),
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Status')} />
+    ),
     cell: ({ row }) => {
       const issue = row.original;
+      const status = issue.status === IssueStatus.ARCHIVED ? t('Archived') : issue.status === IssueStatus.RESOLVED ? t('Resolved') : t('Unresolved');
+      const icon = issue.status === IssueStatus.ARCHIVED ? Archive : issue.status === IssueStatus.RESOLVED ? Check : X;
       return (
-        <div
-          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-          style={{
-            backgroundColor:
-              issue.status === 'UNRESOLVED'
-                ? '#FEF3C7'
-                : issue.status === 'RESOLVED'
-                ? '#D1FAE5'
-                : '#E5E7EB',
-            color:
-              issue.status === 'UNRESOLVED'
-                ? '#92400E'
-                : issue.status === 'RESOLVED'
-                ? '#065F46'
-                : '#374151',
-          }}
-        >
-          {issue.status.toLowerCase()}
+        <div className="flex justify-center">
+          <StatusIconWithText
+            variant={
+              issue.status === IssueStatus.ARCHIVED
+                ? 'default'
+                : issue.status === IssueStatus.RESOLVED
+                ? 'success'
+                : 'error'
+            }
+            icon={icon}
+            text={status}
+          />
         </div>
       );
     },

@@ -19,14 +19,14 @@ export const Issue = Type.Object({
     flowId: ApId,
     status: Type.Enum(IssueStatus),
     stepName: Type.Optional(Type.String()),
-    step: Type.Optional(Step),
-    count: Type.Number({ default: 0 }),
     lastOccurrence: Type.String(),
 })
 
 export type Issue = Static<typeof Issue>
 
 export const PopulatedIssue = Type.Composite([Issue, Type.Object({
+    count: Type.Number({ default: 0 }),
+    step: Type.Optional(Step),
     flowDisplayName: Type.String(),
 })])
 

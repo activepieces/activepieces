@@ -3,11 +3,8 @@ import { t } from 'i18next';
 import { Check, CheckCircle, CheckIcon } from 'lucide-react';
 import { useMemo, useRef, useEffect } from 'react';
 import {
-  createSearchParams,
-  useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -21,12 +18,11 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { FlowRunStatus, IssueStatus, Permission } from '@activepieces/shared';
-
+import { IssueStatus, Permission } from '@activepieces/shared';
 import { issuesTableColumns } from './columns';
+import { useEffectOnce } from 'react-use';
 
 export function IssuesTable() {
-  const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,13 +33,13 @@ export function IssuesTable() {
   const statusValues = searchParams.getAll('status');
   const hasStatusFilter = statusValues.length > 0;
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (!hasStatusFilter) {
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.append('status', IssueStatus.UNRESOLVED);
       setSearchParams(newSearchParams);
     }
-  }, [hasStatusFilter, searchParams, setSearchParams]);
+  });
 
   useEffect(() => {
     prevSearchParamsRef.current = currentSearchParams;
@@ -133,40 +129,7 @@ export function IssuesTable() {
     Permission.WRITE_ISSUES,
   );
 
-  const userHasPermissionToSeeRuns = checkAccess(Permission.READ_RUN);
-  const handleRowClick = ({
-    newWindow,
-    flowId,
-    failedStepName,
-  }: {
-    newWindow: boolean;
-    flowId: string;
-    failedStepName?: string;
-  }) => {
-    const params: Record<string, string | string[]> = {
-      flowId: flowId,
-      status: [
-        FlowRunStatus.FAILED,
-        FlowRunStatus.INTERNAL_ERROR,
-        FlowRunStatus.TIMEOUT,
-      ],
-    };
 
-    if (failedStepName) {
-      params.failedStepName = failedStepName;
-    }
-
-    const searchParams = createSearchParams(params).toString();
-    const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
-    if (newWindow) {
-      openNewWindow(pathname, searchParams);
-    } else {
-      navigate({
-        pathname,
-        search: searchParams,
-      });
-    }
-  };
   return (
     <div className="flex-col w-full">
       <DataTable
@@ -211,16 +174,6 @@ export function IssuesTable() {
             },
           },
         ]}
-        onRowClick={
-          userHasPermissionToSeeRuns
-            ? (row, newWindow) =>
-                handleRowClick({
-                  newWindow,
-                  flowId: row.flowId,
-                  failedStepName: row.stepName,
-                })
-            : undefined
-        }
       />
     </div>
   );
