@@ -16,8 +16,10 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
+import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
@@ -91,6 +93,15 @@ export const aiProviderService = {
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
+    async increaseProjectAIUsage(params: IncreaseProjectAIUsageParams): Promise<void> {
+        await aiUsageRepo().insert({
+            id: apId(),
+            projectId: params.projectId,
+            provider: params.provider,
+            model: params.model,
+            tokens: params.tokens,
+        })
+    },
 }
 
 function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
@@ -109,4 +120,10 @@ function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
     })
 }
 
+type IncreaseProjectAIUsageParams = {
+    projectId: string
+    provider: string
+    model: string
+    tokens: number
+}
 
