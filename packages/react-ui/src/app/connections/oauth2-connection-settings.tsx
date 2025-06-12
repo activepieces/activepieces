@@ -23,6 +23,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  resolveValueFromProps,
   ApEdition,
   ApFlagId,
   AppConnectionType,
@@ -50,17 +51,10 @@ type OAuth2ConnectionSettingsProps = {
 const replaceVariables = (
   authUrl: string,
   scope: string,
-  props: Record<string, unknown>,
+  props: Record<string, string> | undefined,
 ) => {
-  let newAuthUrl = authUrl;
-  Object.entries(props).forEach(([key, value]) => {
-    newAuthUrl = newAuthUrl.replace(`{${key}}`, value as string);
-  });
-
-  let newScope = scope;
-  Object.entries(props).forEach(([key, value]) => {
-    newScope = newScope.replace(`{${key}}`, value as string);
-  });
+  const newAuthUrl = resolveValueFromProps(props, authUrl);
+  const newScope = resolveValueFromProps(props, scope);
   return {
     authUrl: newAuthUrl,
     scope: newScope,
@@ -294,7 +288,7 @@ const OAuth2ConnectionSettingsForm = ({
   const openPopup = async (
     redirectUrl: string,
     clientId: string,
-    props: Record<string, unknown> | undefined,
+    props: Record<string, string> | undefined,
   ) => {
     const { authUrl, scope } = replaceVariables(
       authProperty.authUrl,
