@@ -75,7 +75,8 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
     async executeValidateAuth(engineToken, operation) {
-        log.debug({ operation }, '[threadEngineRunner#executeValidateAuth]')
+        
+        log.debug({...operation.piece, platformId:operation.platformId} , '[threadEngineRunner#executeValidateAuth]')
 
         const { piece } = operation
         const lockedPiece = await pieceEngineUtil(log).resolveExactVersion(engineToken, piece)
