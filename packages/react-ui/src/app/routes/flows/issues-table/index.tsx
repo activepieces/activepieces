@@ -19,15 +19,9 @@ import { toast } from '@/components/ui/use-toast';
 import { issuesApi } from '@/features/issues/api/issues-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import {
-  ApFlagId,
-  FlowRunStatus,
-  IssueStatus,
-  Permission,
-} from '@activepieces/shared';
+import { FlowRunStatus, IssueStatus, Permission } from '@activepieces/shared';
 
 import { issuesTableColumns } from './columns';
 
@@ -79,7 +73,7 @@ export function IssuesTable() {
         icon: CheckIcon,
       } as const,
     ],
-    []
+    [],
   );
 
   const { data, isLoading } = useQuery({
@@ -143,18 +137,26 @@ export function IssuesTable() {
   const handleRowClick = ({
     newWindow,
     flowId,
+    failedStepName,
   }: {
     newWindow: boolean;
     flowId: string;
+    failedStepName?: string;
   }) => {
-    const searchParams = createSearchParams({
+    const params: Record<string, string | string[]> = {
       flowId: flowId,
       status: [
         FlowRunStatus.FAILED,
         FlowRunStatus.INTERNAL_ERROR,
         FlowRunStatus.TIMEOUT,
       ],
-    }).toString();
+    };
+
+    if (failedStepName) {
+      params.failedStepName = failedStepName;
+    }
+
+    const searchParams = createSearchParams(params).toString();
     const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
     if (newWindow) {
       openNewWindow(pathname, searchParams);
@@ -215,6 +217,7 @@ export function IssuesTable() {
                 handleRowClick({
                   newWindow,
                   flowId: row.flowId,
+                  failedStepName: row.stepName,
                 })
             : undefined
         }

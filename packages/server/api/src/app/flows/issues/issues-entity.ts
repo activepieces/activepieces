@@ -43,16 +43,6 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
     },
     indices: [
         {
-            name: 'idx_issue_flow_id',
-            unique: true,
-            columns: ['flowId'],
-        },
-        {
-            name: 'idx_issue_project_id_flow_id',
-            unique: false,
-            columns: ['projectId', 'flowId'],
-        },
-        {
             name: 'idx_issue_flowId_stepId',
             columns: ['flowId', 'stepName'],
         },

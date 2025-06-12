@@ -16,11 +16,10 @@ const repo = repoFactory(IssueEntity)
 export const issuesService = (log: FastifyBaseLogger) => ({
     async add(flowRun: FlowRun): Promise<Issue> {
         const date = dayjs(flowRun.created).toISOString()
-
         assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepName')
-
         const issueId = apId()
-        await repo().createQueryBuilder()
+        
+        const insertQuery = repo().createQueryBuilder()
             .insert()
             .into(IssueEntity)
             .values({
@@ -32,17 +31,18 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 status: IssueStatus.UNRESOLVED,
                 created: date,
                 updated: date,
+                count: 0,
             })
             .orUpdate(
-                ['lastOccurrence', 'updated', 'status'],
-                ['projectId', 'flowId', 'stepName'],
+                ['lastOccurrence', 'updated', 'status', 'projectId'],
+                ['flowId', 'stepName'],
                 {
                     skipUpdateIfNoValuesChanged: true,
                 },
             )
-            .execute()
+        
+        await insertQuery.execute()
 
-        // Find the issue (either the newly created one or the updated existing one)
         const issue = await repo().findOneByOrFail({
             projectId: flowRun.projectId,
             flowId: flowRun.flowId,
@@ -51,6 +51,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         })
         
         issue.step = await getStepFromFlow(flowRun.flowId, flowRun.failedStepName, log)
+        
         return issue
     },
     async get({ projectId, flowId, stepName }: { projectId: string, flowId: string, stepName: string }): Promise<Issue | null> {
@@ -80,18 +81,21 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             .where({ projectId })
 
         if (status && status.length > 0) {
-            query = query.andWhere('status IN (:...status)', { status })
+            query = query.andWhere('status IN (:...statuses)', { statuses: status })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
 
         const issuesWithCounts = await Promise.all(data.map(async issue => {
-            const count = await repo().createQueryBuilder()
+            // Fixed query with proper join between issue and flow_run
+            const count = await repo()
+                .createQueryBuilder('i') 
                 .select('COUNT(*)', 'count')
-                .from('flow_run', 'fr')
+                .innerJoin('flow_run', 'fr', 'i."flowId" = fr."flowId" AND i."stepName" = fr."failedStepName"')
                 .where('fr."flowId" = :flowId', { flowId: issue.flowId })
-                .andWhere('fr.status = :status', { status: FlowRunStatus.FAILED })
+                .andWhere('fr.status IN (:...statuses)', { statuses: [FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT] })
                 .andWhere('fr."failedStepName" = :stepName', { stepName: issue.stepName })
+                .andWhere('i.id = :issueId', { issueId: issue.id })
                 .getRawOne()
                 .then(result => parseInt(result.count, 10))
 
@@ -104,23 +108,27 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 issue.status = IssueStatus.RESOLVED
             }
 
+            const actualStatus = issue.status === IssueStatus.ARCHIVED 
+                ? IssueStatus.ARCHIVED 
+                : (count === 0 ? IssueStatus.RESOLVED : issue.status)
+
             return {
                 issue,
                 count,
+                actualStatus,
             }
         }))
 
-        const filteredIssues = issuesWithCounts.filter(({ issue, count }) => {
+        // Filter issues based on the actual calculated status
+        const filteredIssues = issuesWithCounts.filter(({ actualStatus }) => {
             if (!status || status.length === 0) {
                 return true
             }
             
-            const actualStatus = count === 0 ? IssueStatus.RESOLVED : issue.status
-            const shouldKeep = status.includes(actualStatus)
-            return shouldKeep
+            return status.includes(actualStatus)
         })
 
-        const populatedIssues = await Promise.all(filteredIssues.map(async ({ issue, count }) => {
+        const populatedIssues = await Promise.all(filteredIssues.map(async ({ issue, count, actualStatus }) => {
             const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
             if (!isNil(issue.stepName)) {
                 issue.step = await getStepFromFlow(issue.flowId, issue.stepName ?? '', log) 
@@ -130,7 +138,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 ...issue,
                 flowDisplayName: flowVersion.displayName,
                 count,
-                status: count === 0 ? IssueStatus.RESOLVED : issue.status,
+                status: actualStatus,
             }
         }))
 

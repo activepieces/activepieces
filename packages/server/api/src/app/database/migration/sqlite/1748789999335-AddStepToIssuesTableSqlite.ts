@@ -34,12 +34,8 @@ export class AddStepToIssuesTableSQLite1748789999335 implements MigrationInterfa
         await queryRunner.query('DROP TABLE "issue"')
         await queryRunner.query('ALTER TABLE "temporary_issue" RENAME TO "issue"')
 
-        // Add indexes
         await queryRunner.query(`
             CREATE INDEX "idx_issue_flowId_stepId" ON "issue" ("flowId", "stepName")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
 
         await queryRunner.query(`
