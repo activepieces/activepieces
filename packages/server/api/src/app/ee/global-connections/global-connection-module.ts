@@ -95,7 +95,6 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
-            userId: request.principal.id,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,

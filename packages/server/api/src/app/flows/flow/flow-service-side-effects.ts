@@ -1,6 +1,5 @@
 import {
     assertNotNullOrUndefined,
-    EngineResponseStatus,
     FileType,
     Flow,
     FlowScheduleOptions,
@@ -51,10 +50,6 @@ export const flowSideEffects = (log: FastifyBaseLogger): FlowSideEffects => ({
                         projectId: flowToUpdate.projectId,
                         simulate: false,
                     }, log)
-                if (response && response.status !== EngineResponseStatus.OK) {
-                    const errorMessage = response.standardError || 'Failed to enable trigger'
-                    throw new Error(`Trigger activation failed: ${errorMessage}`)
-                }
                 scheduleOptions = response?.result.scheduleOptions
                 webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
                 break
@@ -113,11 +108,6 @@ export const flowSideEffects = (log: FastifyBaseLogger): FlowSideEffects => ({
                 simulate: false,
             },
             log)
-
-        if (enableResult && enableResult.status !== EngineResponseStatus.OK) {
-            const errorMessage = enableResult.standardError || 'Failed to enable trigger'
-            throw new Error(`Trigger activation failed: ${errorMessage}`)
-        }
 
         const scheduleOptions = enableResult?.result.scheduleOptions
         const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
