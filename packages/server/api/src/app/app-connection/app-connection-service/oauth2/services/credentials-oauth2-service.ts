@@ -1,13 +1,12 @@
-import { resolveValueFromProps } from '@activepieces/shared'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
     isNil,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
+    resolveValueFromProps,
 } from '@activepieces/shared'
 import axios, { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
