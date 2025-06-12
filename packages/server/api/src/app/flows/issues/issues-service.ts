@@ -85,18 +85,16 @@ export const issuesService = (log: FastifyBaseLogger) => ({
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
 
-        // First, gather counts for all issues
         const issuesWithCounts = await Promise.all(data.map(async issue => {
-            // Get flow runs count for this issue
             const count = await repo().createQueryBuilder()
                 .select('COUNT(*)', 'count')
                 .from('flow_run', 'fr')
                 .where('fr."flowId" = :flowId', { flowId: issue.flowId })
                 .andWhere('fr.status = :status', { status: FlowRunStatus.FAILED })
+                .andWhere('fr."failedStepName" = :stepName', { stepName: issue.stepName })
                 .getRawOne()
                 .then(result => parseInt(result.count, 10))
 
-            // Only update status to RESOLVED if count is 0 and the issue is currently UNRESOLVED
             if (count === 0 && issue.status === IssueStatus.UNRESOLVED) {
                 await this.updateById({
                     projectId: issue.projectId,
