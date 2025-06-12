@@ -1,3 +1,4 @@
+import { resolveValueFromProps } from '@activepieces/shared'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -34,10 +35,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
                     if (request.scope) {
-                        body.scope = request.scope
-                        Object.entries(request.props ?? {}).forEach(([key, value]) => {
-                            body.scope = body.scope.replace(`{${key}}`, String(value))
-                        })
+                        body.scope = resolveValueFromProps(request.props, request.scope)
                     }
                     if (request.props) {
                         Object.entries(request.props).forEach(([key, value]) => {
@@ -128,15 +126,13 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 break
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
-                body.grant_type = grantType
+                body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
                 if (appConnection.scope) {
-                    body.scope = appConnection.scope
+                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
                 }
                 if (appConnection.props) {
                     Object.entries(appConnection.props).forEach(([key, value]) => {
-                        if (typeof value === 'string') {
-                            body[key] = value
-                        }
+                        body[key] = value
                     })
                 }
                 break
