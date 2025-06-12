@@ -9,9 +9,11 @@ const main = async () => {
     ...piecesMetadata,
   ]
   const validationResults = packages.filter(p => !sharedDependencies.includes(p)).map(p => packagePrePublishChecks(p))
-  const isSharedDependenciesChanged = await Promise.all(sharedDependencies.map(p => packagePrePublishChecks(p)))
+  const sharedDependenciesValidationResults = await Promise.all(sharedDependencies.map(p => packagePrePublishChecks(p)))
 
-  if (!isSharedDependenciesChanged.every(p => p)) {
+  const isSharedDependenciesChanged = !sharedDependenciesValidationResults.every(p => p)
+
+  if (!isSharedDependenciesChanged) {
     validationResults.push(packagePrePublishChecks('packages/shared'))
   }
 
