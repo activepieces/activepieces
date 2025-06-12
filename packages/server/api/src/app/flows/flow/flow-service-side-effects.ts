@@ -1,3 +1,10 @@
+import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
+import { system } from '../../helper/system/system'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { sampleDataService } from '../step-run/sample-data.service'
+import { triggerHooks } from '../trigger'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     FileType,
@@ -10,11 +17,6 @@ import {
     ScheduleType,
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { sampleDataService } from '../step-run/sample-data.service'
-import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
@@ -44,7 +46,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     projectId: flowToUpdate.projectId,
                     simulate: false,
                 }, log)
-                scheduleOptions = response?.result.scheduleOptions  
+                scheduleOptions = response?.result.scheduleOptions
                 webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
                 break
             }
@@ -79,6 +81,8 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         flowToUpdate,
         flowVersionToPublish,
     }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
+        const ENABLE_FLOW_ON_PUBLISH = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
+
         if (
             flowToUpdate.status === FlowStatus.ENABLED &&
       flowToUpdate.publishedVersionId
@@ -92,28 +96,36 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             }, log)
         }
 
-        const enableResult = await triggerHooks.enable({
-            flowVersion: flowVersionToPublish,
-            projectId: flowToUpdate.projectId,
-            simulate: false,
-        }, log)
+        if (flowToUpdate.status === FlowStatus.ENABLED || ENABLE_FLOW_ON_PUBLISH) {
+            const enableResult = await triggerHooks.enable({
+                flowVersion: flowVersionToPublish,
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+            }, log)
 
-        const scheduleOptions = enableResult?.result.scheduleOptions
-        const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
-        if (isNil(scheduleOptions)) {
+            const scheduleOptions = enableResult?.result.scheduleOptions
+            const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
+            if (isNil(scheduleOptions)) {
+                return {
+                    scheduleOptions: null,
+                    webhookHandshakeConfiguration,
+                }
+            }
+
             return {
-                scheduleOptions: null,
+                scheduleOptions: {
+                    ...scheduleOptions,
+                    type: ScheduleType.CRON_EXPRESSION,
+                    failureCount: 0,
+                },
                 webhookHandshakeConfiguration,
             }
         }
-
-        return {
-            scheduleOptions: {
-                ...scheduleOptions,
-                type: ScheduleType.CRON_EXPRESSION,
-                failureCount: 0,
-            },
-            webhookHandshakeConfiguration,
+        else {
+            return {
+                scheduleOptions: null,
+                webhookHandshakeConfiguration: null,
+            }
         }
     },
 

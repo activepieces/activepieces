@@ -120,7 +120,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
         const queryWhere: Record<string, unknown> = { projectId }
-        
+
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
         }
@@ -579,7 +579,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id: flowId,
             projectId,
         })
-        
+
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
     },
