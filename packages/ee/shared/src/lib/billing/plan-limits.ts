@@ -1,4 +1,4 @@
-import { PlatformPlanLimits } from "@activepieces/shared"
+import { PlatformPlanLimits } from '@activepieces/shared'
 
 export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
     plan: 'free',

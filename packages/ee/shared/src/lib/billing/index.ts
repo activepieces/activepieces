@@ -1,7 +1,7 @@
-import { PiecesFilterType, PlatformPlanLimits, PlatformUsage, PlatformUsageMetric } from '@activepieces/shared'
+import { PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
-import Stripe from 'stripe';
+import Stripe from 'stripe'
 
 export type FlowPlanLimits = {
     nickname: string
@@ -74,11 +74,11 @@ export function getUserPriceId(stripeKey: string | undefined) {
 export function getPlanPriceId(stripeKey: string | undefined) {
     const testMode = stripeKey?.startsWith('sk_test')
     return {
-            [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
-            [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
-        }
-
+        [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
+        [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
     }
+
+}
 
 export function getPlanFromPriceId(priceId: string): PlanName {
     switch (priceId) {
@@ -96,7 +96,7 @@ export function getPlanFromPriceId(priceId: string): PlanName {
 
 export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
     if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
-        return PlanName.FREE;
+        return PlanName.FREE
     }
 
     return getPlanFromPriceId(subscription.items.data[0].price.id)
@@ -106,20 +106,20 @@ const PLAN_HIERARCHY = {
     [PlanName.FREE]: 0,
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
-} as const;
+} as const
 
 export const isUpgradeExperience = (
     currentPlan: PlanName, 
     newPlan: PlanName,
     userSeatsLimit?: number,
-    seats?: number
+    seats?: number,
 ): boolean => {
-    const isPlanTierUpgrade = PLAN_HIERARCHY[newPlan] > PLAN_HIERARCHY[currentPlan];
+    const isPlanTierUpgrade = PLAN_HIERARCHY[newPlan] > PLAN_HIERARCHY[currentPlan]
     
     const isSeatsUpgrade = !!(newPlan === PlanName.BUSINESS && 
                              userSeatsLimit && 
                              seats && 
-                             userSeatsLimit < seats);
+                             userSeatsLimit < seats)
     
-    return isPlanTierUpgrade || isSeatsUpgrade;
-};
+    return isPlanTierUpgrade || isSeatsUpgrade
+}
