@@ -48,18 +48,6 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
 };
-const replaceVariables = (
-  authUrl: string,
-  scope: string,
-  props: Record<string, string> | undefined,
-) => {
-  const newAuthUrl = resolveValueFromProps(props, authUrl);
-  const newScope = resolveValueFromProps(props, scope);
-  return {
-    authUrl: newAuthUrl,
-    scope: newScope,
-  };
-};
 const getOAuth2TypeAndApp = (
   pieceToClientIdMap: PieceToClientIdMap,
   reconnectConnection: AppConnectionWithoutSensitiveData | null,
@@ -290,11 +278,8 @@ const OAuth2ConnectionSettingsForm = ({
     clientId: string,
     props: Record<string, string> | undefined,
   ) => {
-    const { authUrl, scope } = replaceVariables(
-      authProperty.authUrl,
-      authProperty.scope.join(' '),
-      props ?? {},
-    );
+    const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
+    const authUrl = resolveValueFromProps(props, authProperty.authUrl);
     const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
       authUrl,
       clientId,

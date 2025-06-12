@@ -137,6 +137,7 @@ export const AppConnectionOwners = Type.Object({
 })
 
 export type AppConnectionOwners = Static<typeof AppConnectionOwners>
+/**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
 export const resolveValueFromProps = (props: Record<string, string> | undefined, value: string)=>{
     let resolvedScope = value
     if (!props) {
