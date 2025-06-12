@@ -78,7 +78,7 @@ export const avalantAnthropicClaude = createPiece({
   displayName: 'PromptX Claude',
   description: 'Talk to Anthropic Claude AI tweaked for PromptX platform',
   auth: promptxAuth,
-  minimumSupportedRelease: '0.62.1',
+  minimumSupportedRelease: '0.63.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
