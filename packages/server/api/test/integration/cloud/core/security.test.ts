@@ -331,7 +331,7 @@ describe('API Security', () => {
             // assert
             await expect(result).rejects.toEqual(
                 new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
+                    code: ErrorCode.VALIDATION,
                     params: {
                         message: 'invalid project id',
                     },
