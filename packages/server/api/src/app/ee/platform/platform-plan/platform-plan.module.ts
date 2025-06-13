@@ -1,8 +1,9 @@
 import { ApSubscriptionStatus } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import Stripe from 'stripe'
+import { system } from '../../../helper/system/system'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
@@ -26,7 +27,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
             .where(`"project"."id" IN (
-            SELECT DISTINCT "flowRun"."projectId" 
+            SELECT DISTINCT "flowRun"."projectId"
             FROM "flow_run" "flowRun"
             WHERE "flowRun"."created" >= :startDate
             AND "flowRun"."created" <= :endDate
@@ -59,16 +60,22 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         log.info('Finished platform-daily-report')
     })
 
-    await systemJobsSchedule(app.log).upsertJob({
-        job: {
-            name: SystemJobName.PLATFORM_USAGE_REPORT,
-            data: {},
-        },
-        schedule: {
-            type: 'repeated',
-            cron: EVERY_4_HOURS,
-        },
-    })
+    if (system.getEdition() === ApEdition.CLOUD) {
+        await systemJobsSchedule(app.log).upsertJob({
+            job: {
+                name: SystemJobName.PLATFORM_USAGE_REPORT,
+                data: {},
+            },
+            schedule: {
+                type: 'repeated',
+                cron: EVERY_4_HOURS,
+            },
+        })
+    }
+    else {
+        app.log.info('Skipping platform usage report job registration as it is not CLOUD edition')
+    }
+
     await app.register(platformPlanController, { prefix: '/v1/platform-billing' })
     await app.register(stripeBillingController, { prefix: '/v1/stripe-billing' })
 }
