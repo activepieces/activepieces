@@ -9,7 +9,6 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
-    AppConnectionScope,
     ErrorCode,
     FieldType,
     FlowVersionState,
@@ -20,7 +19,6 @@ import {
     TableState,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../../helper/pagination/pagination-utils'
@@ -106,20 +104,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 })
                 break
             }
-            case GitPushOperationType.DELETE_CONNECTION: {
-                await gitRepoService(log).push({
-                    id: gitRepo.id,
-                    platformId,
-                    userId,
-                    request: {
-                        type: GitPushOperationType.DELETE_CONNECTION,
-                        commitMessage: `chore: deleted connection ${idOrExternalId}`,
-                        connectionExternalIds: [idOrExternalId],
-                    },
-                    log,
-                })
-                break
-            }
             case GitPushOperationType.DELETE_TABLE: {
                 await gitRepoService(log).push({
                     id: gitRepo.id,
@@ -179,6 +163,15 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     })
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
+
+                await gitSyncHelper(log).updateConectionStateOnGit({
+                    flowFolderPath,
+                    connectionsFolderPath,
+                    git,
+                    gitRepo,
+                    platformId,
+                    log,
+                })
                 break
             }
             case GitPushOperationType.DELETE_FLOW: {
@@ -194,6 +187,14 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowIds[0]} from user interface`)
                 }
+                await gitSyncHelper(log).updateConectionStateOnGit({
+                    flowFolderPath,
+                    connectionsFolderPath,
+                    git,
+                    gitRepo,
+                    platformId,
+                    log,
+                })
                 break
             }
             case GitPushOperationType.PUSH_TABLE: {
@@ -245,42 +246,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted table ${request.tableIds[0]} from user interface`)
                 }
-                break
-            }
-            case GitPushOperationType.DELETE_CONNECTION: {
-                await Promise.all(request.connectionExternalIds.map(async (connection) => {
-                    await gitSyncHelper(log).deleteFromGit({
-                        fileName: connection,
-                        folderPath: connectionsFolderPath,
-                    })
-                }))
-                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted connections ${request.connectionExternalIds.join(', ')}`)
-                break
-            }
-            case GitPushOperationType.PUSH_CONNECTION: {
-                const connections = await appConnectionService(log).list({
-                    projectId: gitRepo.projectId,
-                    externalIds: request.connectionExternalIds,
-                    platformId,
-                    scope: AppConnectionScope.PROJECT,
-                    cursorRequest: null,
-                    limit: 10000,
-                    pieceName: undefined,
-                    displayName: undefined,
-                    status: undefined,
-                })
-                await Promise.all(connections.data.map(async (connection) => {
-                    await gitSyncHelper(log).upsertConnectionToGit({
-                        fileName: connection.externalId,
-                        connection: {
-                            externalId: connection.externalId,
-                            displayName: connection.displayName,
-                            pieceName: connection.pieceName,
-                        },
-                        folderPath: connectionsFolderPath,
-                    })
-                }))
-                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated connections ${request.connectionExternalIds.join(', ')}`)
                 break
             }
         }

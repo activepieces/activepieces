@@ -30,12 +30,10 @@ import {
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,
   PushTablesGitRepoRequest,
-  PushConnectionsGitRepoRequest,
 } from '@activepieces/ee-shared';
 import {
   assertNotNullOrUndefined,
   ErrorCode,
-  AppConnectionWithoutSensitiveData,
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';
@@ -53,11 +51,6 @@ type PushToGitDialogProps =
       type: 'table';
       tables: Table[];
       children?: React.ReactNode;
-    }
-  | {
-      type: 'connection';
-      connections: AppConnectionWithoutSensitiveData[];
-      children?: React.ReactNode;
     };
 
 const PushToGitDialog = (props: PushToGitDialogProps) => {
@@ -73,24 +66,16 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       type:
         props.type === 'flow'
           ? GitPushOperationType.PUSH_FLOW
-          : props.type === 'table'
-          ? GitPushOperationType.PUSH_TABLE
-          : GitPushOperationType.PUSH_CONNECTION,
+          : GitPushOperationType.PUSH_TABLE,
       commitMessage: '',
       flowIds: props.type === 'flow' ? props.flows.map((item) => item.id) : [],
       tableIds:
         props.type === 'table' ? props.tables.map((item) => item.id) : [],
-      connectionExternalIds:
-        props.type === 'connection'
-          ? props.connections.map((item) => item.externalId)
-          : [],
     },
     resolver: typeboxResolver(
       props.type === 'flow'
         ? PushFlowsGitRepoRequest
-        : props.type === 'table'
-        ? PushTablesGitRepoRequest
-        : PushConnectionsGitRepoRequest,
+        : PushTablesGitRepoRequest,
     ),
   });
 
@@ -110,15 +95,6 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
             type: GitPushOperationType.PUSH_TABLE,
             commitMessage: request.commitMessage,
             tableIds: props.tables.map((item) => item.id),
-          });
-          break;
-        case 'connection':
-          await gitSyncApi.push(gitSync.id, {
-            type: GitPushOperationType.PUSH_CONNECTION,
-            commitMessage: request.commitMessage,
-            connectionExternalIds: props.connections.map(
-              (item) => item.externalId,
-            ),
           });
           break;
       }
