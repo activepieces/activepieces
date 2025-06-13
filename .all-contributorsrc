@@ -1832,6 +1832,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lucaslimasouza",
+      "name": "Lucas Lima de Souza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1576846?v=4",
+      "profile": "http://twitter.com/lucaslima_souza",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
