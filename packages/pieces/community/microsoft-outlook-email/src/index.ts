@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { newEmailTrigger } from './lib/triggers/new-email';
 import { sendEmail } from './lib/actions/send-email';
 import { replyEmail } from './lib/actions/reply-email';
+import { downloadAttachment } from './lib/actions/download-attachment';
 
 export const outlookEmailAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Outlook Email',
@@ -21,6 +22,6 @@ export const microsoftOutlookEmail = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
   authors: [],
-  actions: [sendEmail, replyEmail],
+  actions: [sendEmail, replyEmail, downloadAttachment],
   triggers: [newEmailTrigger],
 });
