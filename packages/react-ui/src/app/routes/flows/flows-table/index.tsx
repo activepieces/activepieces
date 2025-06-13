@@ -1,42 +1,32 @@
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckIcon, Link2, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { DataTable } from '@/components/ui/data-table';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import {
-  AppConnectionWithoutSensitiveData,
-  FlowStatus,
-  PopulatedFlow,
-  SeekPage,
-} from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 
 import { flowsTableColumns } from './columns';
 
 type FlowsTableProps = {
-  data: SeekPage<PopulatedFlow> | undefined;
-  isLoading: boolean;
-  connections: AppConnectionWithoutSensitiveData[];
-  isLoadingConnections: boolean;
-  refetch: () => void;
+  refetch?: () => void;
 };
 
-export const FlowsTable = ({
-  data,
-  isLoading,
-  refetch,
-  connections,
-  isLoadingConnections,
-}: FlowsTableProps) => {
+export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   const { embedState } = useEmbedding();
   const openNewWindow = useNewWindow();
+  const [searchParams] = useSearchParams();
+  const projectId = authenticationSession.getProjectId()!;
 
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
@@ -44,15 +34,57 @@ export const FlowsTable = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { pieces } = piecesHooks.usePieces({});
 
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['flow-table', searchParams.toString(), projectId, refresh],
+    staleTime: 0,
+    queryFn: () => {
+      const name = searchParams.get('name');
+      const status = searchParams.getAll('status') as FlowStatus[];
+      const cursor = searchParams.get('cursor');
+      const limit = searchParams.get('limit')
+        ? parseInt(searchParams.get('limit')!)
+        : 10;
+      const folderId = searchParams.get('folderId') ?? undefined;
+      const connectionExternalId =
+        searchParams.getAll('connectionExternalId') ?? undefined;
+
+      return flowsApi.list({
+        projectId,
+        cursor: cursor ?? undefined,
+        limit,
+        name: name ?? undefined,
+        status,
+        folderId,
+        connectionExternalIds: connectionExternalId,
+      });
+    },
+  });
+
+  const { data: connections, isLoading: isLoadingConnections } =
+    appConnectionsQueries.useAppConnections({
+      request: {
+        projectId,
+        limit: 10000,
+      },
+      extraKeys: [projectId, refresh],
+    });
+
+  const handleRefetch = () => {
+    refetch();
+    if (parentRefetch) {
+      parentRefetch();
+    }
+  };
+
   const columns = useMemo(() => {
     return flowsTableColumns({
-      refetch,
+      refetch: handleRefetch,
       refresh,
       setRefresh,
       selectedRows,
       setSelectedRows,
     });
-  }, [refresh, setRefresh, selectedRows, setSelectedRows]);
+  }, [refresh, handleRefetch, selectedRows]);
 
   const filters = [
     {
@@ -78,7 +110,7 @@ export const FlowsTable = ({
       type: 'select',
       title: t('Connection'),
       accessorKey: 'connectionExternalId',
-      options: connections.map((connection) => {
+      options: (connections?.data || []).map((connection) => {
         return {
           label: connection.displayName,
           value: connection.externalId,
@@ -96,7 +128,7 @@ export const FlowsTable = ({
     refresh,
     setSelectedRows,
     setRefresh,
-    refetch,
+    refetch: handleRefetch,
   });
 
   return (

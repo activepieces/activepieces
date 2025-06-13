@@ -4,8 +4,10 @@ import { t } from 'i18next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { getIssueStatusConfig } from '@/lib/issue-status-utils';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/ee-shared';
+import { PopulatedIssue } from '@activepieces/shared';
 
 export const issuesTableColumns: ColumnDef<
   RowDataWithActions<PopulatedIssue>
@@ -35,6 +37,15 @@ export const issuesTableColumns: ColumnDef<
     ),
     cell: ({ row }) => {
       return <div className="text-left"> {row.original.flowDisplayName} </div>;
+    },
+  },
+  {
+    accessorKey: 'step',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Step')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left"> {row.original.step?.name} </div>;
     },
   },
   {
@@ -70,6 +81,28 @@ export const issuesTableColumns: ColumnDef<
           {formatUtils.formatDate(new Date(row.original.lastOccurrence))}
         </div>
       );
+    },
+  },
+  {
+    id: 'status',
+    accessorKey: 'status',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Status')} />
+    ),
+    cell: ({ row }) => {
+      const issue = row.original;
+      const statusConfig = getIssueStatusConfig(issue.status);
+
+      return (
+        <StatusIconWithText
+          color={statusConfig.variant}
+          text={statusConfig.text}
+          icon={statusConfig.icon}
+        />
+      );
+    },
+    filterFn: (row, columnId, filterValue) => {
+      return filterValue.includes(row.getValue(columnId));
     },
   },
 ];

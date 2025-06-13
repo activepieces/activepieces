@@ -11,6 +11,7 @@ export const ListFlowRunsRequestQuery = Type.Object({
     createdAfter: Type.Optional(Type.String({})),
     createdBefore: Type.Optional(Type.String({})),
     projectId: ApId,
+    failedStepName: Type.Optional(Type.String({})),
 })
 
 export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery>

@@ -112,6 +112,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: req.body.flowId,
             createdAfter: req.body.createdAfter,
             createdBefore: req.body.createdBefore,
+            failedStepName: req.body.failedStepName,
         })
     })
 
