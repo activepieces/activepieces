@@ -176,6 +176,9 @@ export const triggerHelper = {
                                 stepName: triggerName,
                                 flowId: params.flowVersion.flowId,
                             }),
+                            run: {
+                                id: constants.flowRunId,
+                            },
                         }),
                     }
                 }
@@ -230,6 +233,9 @@ export const triggerHelper = {
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,
                     }),
+                    run: {
+                        id: constants.flowRunId,
+                    },
                 })
                 if (!Array.isArray(items)) {
                     throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
