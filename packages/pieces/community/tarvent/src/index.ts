@@ -43,6 +43,7 @@ export const tarventAuth = PieceAuth.CustomAuth({
 
 export const tarvent = createPiece({
   displayName: "Tarvent",
+  description: "Tarvent is email marketing, marketing automation, and email API platform that empowers businesses of all sizes by providing a great depth of features and customization to control every aspect of your customer's experience.",
   auth: tarventAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
