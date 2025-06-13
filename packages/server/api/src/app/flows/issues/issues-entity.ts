@@ -29,11 +29,6 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
             type: String,
             enum: IssueStatus,
         },
-        count: {
-            type: Number,
-            select: false,
-            readonly: true,
-        },
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
         },

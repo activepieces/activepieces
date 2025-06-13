@@ -11,6 +11,11 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
 
         await queryRunner.query(`
             ALTER TABLE "issue"
+            DROP COLUMN "count"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "issue"
             DROP CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f"
         `)
 
@@ -73,6 +78,11 @@ export class AddStepToIssuesTablePostgres1748789709144 implements MigrationInter
         await queryRunner.query(`
             ALTER TABLE "flow_run"
             DROP COLUMN "failedStepName"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "issue"
+            ADD COLUMN "count" integer NOT NULL DEFAULT 0
         `)
     }
 }

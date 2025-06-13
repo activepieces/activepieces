@@ -4,6 +4,8 @@ import { t } from 'i18next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { getIssueStatusConfig } from '@/lib/issue-status-utils';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/shared';
 
@@ -84,29 +86,19 @@ export const issuesTableColumns: ColumnDef<
   {
     id: 'status',
     accessorKey: 'status',
-    header: t('Status'),
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Status')} />
+    ),
     cell: ({ row }) => {
       const issue = row.original;
+      const statusConfig = getIssueStatusConfig(issue.status);
+
       return (
-        <div
-          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize"
-          style={{
-            backgroundColor:
-              issue.status === 'UNRESOLVED'
-                ? '#FEF3C7'
-                : issue.status === 'RESOLVED'
-                ? '#D1FAE5'
-                : '#E5E7EB',
-            color:
-              issue.status === 'UNRESOLVED'
-                ? '#92400E'
-                : issue.status === 'RESOLVED'
-                ? '#065F46'
-                : '#374151',
-          }}
-        >
-          {issue.status.toLowerCase()}
-        </div>
+        <StatusIconWithText
+          color={statusConfig.variant}
+          text={statusConfig.text}
+          icon={statusConfig.icon}
+        />
       );
     },
     filterFn: (row, columnId, filterValue) => {

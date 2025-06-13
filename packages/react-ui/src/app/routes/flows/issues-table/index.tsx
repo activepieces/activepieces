@@ -29,21 +29,12 @@ export function IssuesTable() {
   const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const prevSearchParamsRef = useRef<string>('');
   const currentSearchParams = searchParams.toString();
 
   const statusValues = searchParams.getAll('status');
-  const hasStatusFilter = statusValues.length > 0;
-
-  useEffect(() => {
-    if (!hasStatusFilter) {
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.append('status', IssueStatus.UNRESOLVED);
-      setSearchParams(newSearchParams);
-    }
-  }, [hasStatusFilter, searchParams, setSearchParams]);
 
   useEffect(() => {
     prevSearchParamsRef.current = currentSearchParams;
@@ -89,19 +80,13 @@ export function IssuesTable() {
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
 
-      let status: IssueStatus[];
+      let status: IssueStatus[] | undefined;
       if (statusValues.length > 0) {
         status = statusValues
           .filter((value) =>
             Object.values(IssueStatus).includes(value as IssueStatus),
           )
           .map((value) => value as IssueStatus);
-
-        if (status.length === 0) {
-          status = [IssueStatus.UNRESOLVED];
-        }
-      } else {
-        status = [IssueStatus.UNRESOLVED];
       }
 
       return issuesApi.list({
