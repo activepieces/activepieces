@@ -49,7 +49,7 @@ const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
   const branding = flagsHooks.useWebsiteBranding();
   return (
     <>
-      {!embedState.hideLogoInBuilder && !embedState.hideHomeButtonInBuilder && (
+      {!embedState.hideHomeButtonInBuilder && (
         <Tooltip>
           <HomeButtonWrapper route={route}>
             <TooltipTrigger asChild>
