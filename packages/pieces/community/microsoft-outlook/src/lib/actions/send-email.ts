@@ -1,68 +1,112 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { BASE_URL, outlookAuth } from '../common/common';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import { Client } from '@microsoft/microsoft-graph-client';
+import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 
-export const sendEmail = createAction({
-  auth: outlookAuth,
-  name: 'send_email',
-  displayName: 'Send Email',
-  description: 'Send an email using Microsoft Outlook',
-  props: {
-    to: Property.ShortText({
-      displayName: 'To',
-      description: 'Recipient email address',
-      required: true,
-    }),
-    subject: Property.ShortText({
-      displayName: 'Subject',
-      description: 'Email subject',
-      required: true,
-    }),
-    body: Property.LongText({
-      displayName: 'Body',
-      description: 'Email body (HTML or plain text)',
-      required: true,
-    }),
-  },
-  async run({ propsValue, auth }) {
-    const requestBody = {
-      message: {
-        toRecipients: [
-          {
-            emailAddress: {
-              address: propsValue.to,
-            },
-          },
-        ],
-        subject: propsValue.subject,
-        body: {
-          contentType: 'HTML',
-          content: propsValue.body,
-        },
-      },
-      saveToSentItems: 'true',
-    };
+import { microsoftOutlookAuth } from '../common/auth';
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${BASE_URL}/me/sendMail`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: requestBody,
-      responseType: 'json',
-    };
+export const sendEmailAction = createAction({
+	auth: microsoftOutlookAuth,
+	name: 'send-email',
+	displayName: 'Send Email',
+	description: 'Sends an email using Microsoft Outlook.',
+	props: {
+		recipients: Property.Array({
+			displayName: 'To Email(s)',
+			required: true,
+		}),
+		ccRecipients: Property.Array({
+			displayName: 'CC Email(s)',
+			required: false,
+			defaultValue: [],
+		}),
+		bccRecipients: Property.Array({
+			displayName: 'BCC Email(s)',
+			required: false,
+			defaultValue: [],
+		}),
+		subject: Property.ShortText({
+			displayName: 'Subject',
+			required: true,
+		}),
+		bodyFormat: Property.StaticDropdown({
+			displayName: 'Body Format',
+			required: true,
+			defaultValue: 'text',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'HTML', value: 'html' },
+					{ label: 'Text', value: 'text' },
+				],
+			},
+		}),
+		body: Property.LongText({
+			displayName: 'Body',
+			required: true,
+		}),
+		attachments: Property.Array({
+			displayName: 'Attachments',
+			required: false,
+			defaultValue: [],
+			properties: {
+				file: Property.File({
+					displayName: 'File',
+					required: true,
+				}),
+				fileName: Property.ShortText({
+					displayName: 'File Name',
+					required: false,
+				}),
+			},
+		}),
+	},
+	async run(context) {
+		const recipients = context.propsValue.recipients as string[];
+		const ccRecipients = context.propsValue.ccRecipients as string[];
+		const bccRecipients = context.propsValue.bccRecipients as string[];
+		const attachments = context.propsValue.attachments as Array<{ file: ApFile; fileName: string }>;
 
-    const response = await httpClient.sendRequest(request);
-    return response.status;
-  },
+		const { subject, body, bodyFormat } = context.propsValue;
+
+		const mailPayload: Message = {
+			subject,
+			body: {
+				content: body,
+				contentType: bodyFormat as BodyType,
+			},
+			toRecipients: recipients.map((mail) => ({
+				emailAddress: {
+					address: mail,
+				},
+			})),
+			ccRecipients: ccRecipients.map((mail) => ({
+				emailAddress: {
+					address: mail,
+				},
+			})),
+			bccRecipients: bccRecipients.map((mail) => ({
+				emailAddress: {
+					address: mail,
+				},
+			})),
+			attachments: attachments.map((attachment) => ({
+				'@odata.type': '#microsoft.graph.fileAttachment',
+				name: attachment.fileName || attachment.file.filename,
+				contentBytes: attachment.file.base64,
+			})),
+		};
+
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(context.auth.access_token),
+			},
+		});
+
+		const response = await client.api('/me/sendMail').post({
+			message: mailPayload,
+			saveToSentItems: 'true',
+		});
+
+		return response;
+	},
 });
