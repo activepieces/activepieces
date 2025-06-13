@@ -11,6 +11,7 @@
       "cache": true
     },
     "test": {
+      
       "inputs": [
         "default",
         "^production",
@@ -120,5 +121,9 @@
       "preVersionCommand": "npx nx run-many -t build"
     }
   },
-  "useLegacyCache": true
+  "useLegacyCache": true,
+  "tui": {
+    "enabled": false,
+    "autoExit": true
+  }
 }
