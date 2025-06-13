@@ -50,7 +50,7 @@ export type BaseOAuth2ConnectionValue = {
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
     data: Record<string, unknown>
-    props?: Record<string, unknown>
+    props?: Record<string, string>
     grant_type?: OAuth2GrantType
 }
 
@@ -137,3 +137,14 @@ export const AppConnectionOwners = Type.Object({
 })
 
 export type AppConnectionOwners = Static<typeof AppConnectionOwners>
+/**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
+export const resolveValueFromProps = (props: Record<string, string> | undefined, value: string)=>{
+    let resolvedScope = value
+    if (!props) {
+        return resolvedScope
+    }
+    Object.entries(props).forEach(([key, value]) => {
+        resolvedScope = resolvedScope.replace(`{${key}}`, String(value))
+    })
+    return resolvedScope
+}

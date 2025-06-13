@@ -1,6 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     AppConnection,
     AppConnectionType,
     assertNotNullOrUndefined,
@@ -9,6 +8,7 @@ import {
     ErrorCode,
     OAuth2GrantType,
     PlatformId,
+    resolveValueFromProps,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
@@ -80,7 +80,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(auth, 'auth')
         switch (auth.type) {
             case PropertyType.OAUTH2:
-                return resolveUrl(auth.tokenUrl, props)
+                return resolveValueFromProps(props, auth.tokenUrl)
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -111,17 +111,4 @@ type OAuth2TokenUrlParams = {
     platformId: PlatformId
     pieceName: string
     props?: Record<string, string>
-}
-
-function resolveUrl(
-    url: string,
-    props: Record<string, unknown> | undefined,
-): string {
-    if (!props) {
-        return url
-    }
-    for (const [key, value] of Object.entries(props)) {
-        url = url.replace(`{${key}}`, String(value))
-    }
-    return url
 }
