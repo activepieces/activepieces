@@ -1,16 +1,9 @@
-import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogInIcon } from 'lucide-react';
+import { parse } from 'papaparse';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
-import { parse } from 'papaparse';
-
-import { recordsApi } from '../lib/records-api';
-import { FieldsMapping } from '../lib/utils';
-
-import { useTableState } from './ap-table-state-provider';
-import { FieldsMappingControl } from './fields-mapping';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -36,6 +29,13 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
+import { ApFlagId } from '@activepieces/shared';
+
+import { recordsApi } from '../lib/records-api';
+import { FieldsMapping } from '../lib/utils';
+
+import { useTableState } from './ap-table-state-provider';
+import { FieldsMappingControl } from './fields-mapping';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -140,12 +140,12 @@ const ImportCsvDialog = () => {
             <ApMarkdown
               markdown={`
                 ${t(
-                'Imported records will be added to the bottom of the table',
-              )} \n           
+                  'Imported records will be added to the bottom of the table',
+                )} \n           
                 ${t(
-                'Any records after the limit ({maxRecords} records) will be ignored',
-                { maxRecords: maxRecords ?? 0 },
-              )}
+                  'Any records after the limit ({maxRecords} records) will be ignored',
+                  { maxRecords: maxRecords ?? 0 },
+                )}
                     `}
             />
             <FormField
@@ -172,7 +172,8 @@ const ImportCsvDialog = () => {
                                 resolve(results.data as string[][]);
                               },
                             });
-                          });
+                          },
+                        );
                         setCsvColumns(csvRecords[0] ?? []);
                         setCsvRecords(csvRecords.slice(1));
                       }}
