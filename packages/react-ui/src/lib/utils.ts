@@ -1,11 +1,10 @@
+import { LocalesEnum, Permission } from '@activepieces/shared';
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
-
-import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -155,6 +154,7 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 export const localesMap = {
   [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
   [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
