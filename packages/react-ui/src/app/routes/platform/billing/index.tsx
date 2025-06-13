@@ -91,7 +91,7 @@ export default function Billing() {
         </div>
         <div className="flex items-baseline gap-2">
           <div className="text-5xl font-semibold">
-            ${platformSubscription.nextBillingAmmount || Number(0).toFixed(2)}
+            ${platformSubscription.nextBillingAmount || Number(0).toFixed(2)}
           </div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>

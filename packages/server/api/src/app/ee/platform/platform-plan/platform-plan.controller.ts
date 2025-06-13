@@ -73,7 +73,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             plan: platformBilling,
             usage,
             nextBillingDate: actualNextBillingDate,
-            nextBillingAmmount: nextBillingAmount,
+            nextBillingAmount: nextBillingAmount,
         }
         
         return response
