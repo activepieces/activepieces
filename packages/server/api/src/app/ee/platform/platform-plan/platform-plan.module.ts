@@ -11,7 +11,7 @@ import { BillingEntityType, platformUsageService } from '../platform-usage-servi
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
-import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
+import { stripeHelper, TASKS_PRICE_ID } from './stripe-helper'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
@@ -23,6 +23,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const startOfDay = dayjs().startOf('day').toISOString()
         const endOfDay = dayjs().endOf('day').toISOString()
         const currentTimestamp = dayjs().unix()
+
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
             .where(`"project"."id" IN (
@@ -38,12 +39,13 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
         for (const { platformId } of platforms) {
             const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+
             if (isNil(platformBilling.stripeSubscriptionId) || platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
                 continue
             }
 
             const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId)
-            const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
+            const item = subscription.items.data.find((item) => item.price.id === TASKS_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
             const { tasks, aiCredits } = await platformUsageService(log).getTaskAndCreditUsage(platformId, BillingEntityType.PLATFORM)

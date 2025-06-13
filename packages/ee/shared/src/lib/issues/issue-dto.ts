@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { ApId, BaseModelSchema } from "@activepieces/shared";
+import { ApId, BaseModelSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export enum IssueStatus {
     ONGOING = 'ONGOING',
@@ -19,7 +19,7 @@ export type Issue = Static<typeof Issue>
 
 
 export const PopulatedIssue = Type.Composite([Issue, Type.Object({
-    flowDisplayName: Type.String()
+    flowDisplayName: Type.String(),
 })])
 
 export type PopulatedIssue = Static<typeof PopulatedIssue>

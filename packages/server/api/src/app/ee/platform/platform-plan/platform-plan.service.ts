@@ -1,6 +1,6 @@
-import { ApSubscriptionStatus, FREE_CLOUD_PLAN, OPENSOURCE_PLAN } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, spreadIfDefined, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
@@ -11,84 +11,89 @@ import { userService } from '../../../user/user-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
 
-const platformPlanRepo = repoFactory(PlatformPlanEntity)
+export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 
 type UpdatePlatformBillingParams = {
     platformId: string
 } & Partial<PlatformPlanLimits>
+
+
 const edition = system.getEdition()
+
+function getPlanLimits(planName: PlanName): Partial<PlatformPlanLimits> {
+    switch (planName) {
+        case PlanName.FREE:
+            return FREE_CLOUD_PLAN
+        case PlanName.PLUS:
+            return PLUS_CLOUD_PLAN
+        case PlanName.BUSINESS:
+            return BUSINESS_CLOUD_PLAN
+        default:
+            throw new Error(`Invalid plan name: ${planName}`)
+    }
+}
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+
         if (isNil(platformPlan)) {
             return createInitialBilling(platformId, log)
         }
+
         return platformPlan
     },
 
-
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
-        const platformPlan = await this.getOrCreateForPlatform(params.platformId)
-        await platformPlanRepo().update(platformPlan.id, {
-            ...spreadIfDefined('tasksLimit', params.tasksLimit),
-            ...spreadIfDefined('aiCreditsLimit', params.aiCreditsLimit),
-            ...spreadIfDefined('includedTasks', params.includedTasks),
-            ...spreadIfDefined('includedAiCredits', params.includedAiCredits),
-            ...spreadIfDefined('environmentsEnabled', params.environmentsEnabled),
-            ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
-            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
-            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
-            ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
-            ...spreadIfDefined('manageTemplatesEnabled', params.manageTemplatesEnabled),
-            ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
-            ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
-            ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
-            ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
-            ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
-            ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
-            ...spreadIfDefined('apiKeysEnabled', params.apiKeysEnabled),
-            ...spreadIfDefined('tablesEnabled', params.tablesEnabled),
-            ...spreadIfDefined('todosEnabled', params.todosEnabled),
-            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
-            ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
-            ...spreadIfDefined('licenseKey', params.licenseKey),
-            ...spreadIfDefined('stripeCustomerId', params.stripeCustomerId),
-            ...spreadIfDefined('stripeSubscriptionId', params.stripeSubscriptionId),
-            ...spreadIfDefined('stripeSubscriptionStatus', params.stripeSubscriptionStatus),
+        const { platformId, ...update } = params
+        log.info({ platformId, update }, 'updating platform billing')
+
+        const platformPlan = await platformPlanRepo().findOneByOrFail({
+            platformId,
         })
-        return platformPlanRepo().findOneByOrFail({ platformId: params.platformId })
+
+        const normalizedUpdate = Object.fromEntries(
+            Object.entries(update).map(([key, value]) => [key, value === undefined ? null : value]),
+        )
+
+        const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        return updatedPlatformPlan
     },
 
-    async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<PlatformPlan> {
+    async updateSubscriptionStatus(subscription: Partial<Stripe.Subscription>): Promise<PlatformPlan> {
         const stripeCustomerId = subscription.customer as string
         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId })
+
         log.info({
             platformPlanId: platformPlan.id,
             subscriptionId: subscription.id,
             subscriptionStatus: subscription.status,
         }, 'Updating subscription id for platform plan')
+
         await platformPlanRepo().update(platformPlan.id, {
             stripeSubscriptionId: subscription.id,
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
         })
+
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId })
     },
-})
 
+    getPlanLimits,
+})
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
     const platform = await platformService.getOneOrThrow(platformId)
     const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
     const plan = getInitialPlanByEdition()
+
     const platformPlan: Omit<PlatformPlan, 'created' | 'updated'> = {
         id: apId(),
         platformId,
         stripeCustomerId: stripeCustomerId ?? undefined,
         ...plan,
     }
+
     return platformPlanRepo().save(platformPlan)
 }
 

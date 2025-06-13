@@ -209,6 +209,7 @@ import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/pos
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AddPlanNameOnPlatformPlan1748549003744 } from './migration/postgres/1748549003744-AddPlanNameOnPlatformPlan'
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
@@ -444,6 +445,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ChangeManualTasksCommentsToTodoComments1742433144687,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
+                AddPlanNameOnPlatformPlan1748549003744,
+              
        
             )
             break

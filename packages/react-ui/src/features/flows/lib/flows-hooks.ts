@@ -2,9 +2,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
 import {
+  ErrorCode,
   FlowOperationType,
   FlowVersion,
   FlowVersionMetadata,
@@ -32,11 +34,13 @@ export const flowsHooks = {
     flowId,
     setFlow,
     setVersion,
+    showUpgradeDialog,
     setIsPublishing,
   }: {
     flowId: string;
     setFlow: (flow: PopulatedFlow) => void;
     setVersion: (version: FlowVersion) => void;
+    showUpgradeDialog: () => void;
     setIsPublishing: (isPublishing: boolean) => void;
   }) => {
     return useMutation({
@@ -56,8 +60,12 @@ export const flowsHooks = {
         setVersion(flow.version);
         setIsPublishing(false);
       },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
+      onError: (err: Error) => {
+        if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
+          showUpgradeDialog();
+        } else {
+          toast(INTERNAL_ERROR_TOAST);
+        }
         setIsPublishing(false);
       },
     });
