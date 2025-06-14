@@ -46,6 +46,14 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
             type: String,
             nullable: false,
         },
+        outputType: {
+            type: String,
+            nullable: false,
+        },
+        outputFields: {
+            type: 'jsonb',
+            nullable: false,
+        },  
     },
     relations: {
         project: {

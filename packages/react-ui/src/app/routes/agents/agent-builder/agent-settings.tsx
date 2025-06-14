@@ -12,12 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Agent } from '@activepieces/shared';
+import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
 
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 import { agentsApi } from '../agents-api';
-
-import { ChangeSaveBar } from './change-save-bar';
+import { AgentSettingsOutput } from './agent-settings-output';
 import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentSettingsProps {
@@ -29,19 +28,25 @@ interface AgentFormValues {
   systemPrompt: string;
 }
 
+type AgentUpdateFields = {
+  displayName?: string;
+  description?: string;
+  systemPrompt?: string;
+  outputType?: string;
+  outputFields?: any[];
+};
+
 export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
-  const { register, handleSubmit, reset, setValue, formState } =
-    useForm<AgentFormValues>({
-      defaultValues: {
-        systemPrompt: '',
-      },
-    });
+  const { register, watch, setValue } = useForm<AgentFormValues>({
+    defaultValues: {
+      systemPrompt: '',
+    },
+  });
 
-  const isDirty = formState.isDirty;
-  const hasUnsavedChanges = useRef(false);
-  const [showSaveBar, setShowSaveBar] = useState(false);
+  const systemPrompt = watch('systemPrompt');
+  const debounceTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (agent) {
@@ -49,93 +54,64 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
       setDisplayName(agent.displayName || '');
       setDescription(agent.description || '');
     } else {
-      reset();
+      setValue('systemPrompt', '');
       setDisplayName('');
       setDescription('');
     }
-    hasUnsavedChanges.current = false;
-    setShowSaveBar(false);
-  }, [agent, setValue, reset]);
+  }, [agent, setValue]);
 
+  const updateAgentMutation = useMutation({
+    mutationFn: (fields: AgentUpdateFields) => {
+      if (!agent?.id) return Promise.reject('No agent ID');
+      return agentsApi.update(agent.id, fields);
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  // Auto-save system prompt with debounce
   useEffect(() => {
-    hasUnsavedChanges.current = isDirty;
-    setShowSaveBar(isDirty);
-  }, [isDirty]);
+    if (!agent?.id) return;
 
-  const updateNameMutation = useMutation({
-    mutationFn: (displayName: string) => {
-      if (!agent?.id) return Promise.reject('No agent ID');
-      return agentsApi.update(agent.id, { displayName });
-    },
-    onSuccess: () => {
-      refetch();
-    },
-  });
-
-  const updateDescriptionMutation = useMutation({
-    mutationFn: (description: string) => {
-      if (!agent?.id) return Promise.reject('No agent ID');
-      return agentsApi.update(agent.id, { description });
-    },
-    onSuccess: () => {
-      refetch();
-    },
-  });
-
-  const updatePromptMutation = useMutation({
-    mutationFn: (values: AgentFormValues) => {
-      if (!agent?.id) return Promise.reject('No agent ID');
-      return agentsApi.update(agent.id, {
-        systemPrompt: values.systemPrompt,
-      });
-    },
-    onSuccess: (values) => {
-      hasUnsavedChanges.current = false;
-      setShowSaveBar(false);
-      reset(
-        {
-          systemPrompt: values.systemPrompt,
-        },
-        { keepDirty: false },
-      );
-      refetch();
-    },
-  });
-
-  const onSubmit = async (values: AgentFormValues) => {
-    await updatePromptMutation.mutateAsync(values);
-  };
-
-  const handleReset = () => {
-    if (agent) {
-      setValue('systemPrompt', agent.systemPrompt || '');
-      setDisplayName(agent.displayName || '');
-      setDescription(agent.description || '');
-    } else {
-      reset();
-      setDisplayName('');
-      setDescription('');
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
     }
-    hasUnsavedChanges.current = false;
-    setShowSaveBar(false);
-  };
+
+    debounceTimeout.current = setTimeout(() => {
+      if (systemPrompt !== agent.systemPrompt) {
+        updateAgentMutation.mutate({ systemPrompt });
+      }
+    }, 1000);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [systemPrompt, agent?.id, agent?.systemPrompt]);
 
   const handleNameChange = async (value: string) => {
     setDisplayName(value);
-    await updateNameMutation.mutateAsync(value);
+    await updateAgentMutation.mutateAsync({ displayName: value });
   };
 
   const handleDescriptionChange = async (value: string) => {
     setDescription(value);
-    await updateDescriptionMutation.mutateAsync(value);
+    await updateAgentMutation.mutateAsync({ description: value });
   };
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
+  const handleOutputChange = (outputType: AgentOutputType, outputFields: AgentOutputField[]) => {
+    if (!agent?.id) return;
+    updateAgentMutation.mutate({ outputType, outputFields });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 h-full">
-      <div className="w-full overflow-y-auto px-6 pb-6 space-y-6">
+    <div className="flex flex-1 h-full">
+      <div className="w-full px-6 pb-6 space-y-6">
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="flex-shrink-0">
             <img
@@ -208,20 +184,14 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
             className="min-h-[100px] resize-none w-full"
           />
         </div>
+
         {agent?.mcpId && (
           <div className="space-y-6">
             <McpToolsSection mcpId={agent.mcpId} />
+            <AgentSettingsOutput onChange={handleOutputChange} agent={agent} />
           </div>
         )}
-        {showSaveBar && (
-          <ChangeSaveBar
-            isDirty={isDirty}
-            isPending={updatePromptMutation.isPending}
-            onReset={handleReset}
-            onSubmit={handleSubmit(onSubmit)}
-          />
-        )}
       </div>
-    </form>
+    </div>
   );
 };

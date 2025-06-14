@@ -1,10 +1,11 @@
-import { ArrowUp } from 'lucide-react';
+import { ArrowRight, ArrowUp } from 'lucide-react';
 import { useState, KeyboardEvent } from 'react';
-
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { userHooks } from '@/hooks/user-hooks';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type TodoTextareaProps = {
   onSubmit: (content: string) => Promise<void>;
@@ -52,10 +53,10 @@ export const TodoTextarea = ({
       <div className="flex gap-4">
         <div className="flex-shrink-0">
           {currentUser && (
-            <UserAvatar 
+            <UserAvatar
               size={32}
-              email={currentUser?.email} 
-              name={currentUser?.firstName + ' ' + currentUser?.lastName} 
+              email={currentUser?.email}
+              name={currentUser?.firstName + ' ' + currentUser?.lastName}
             />
           )}
         </div>
@@ -66,27 +67,39 @@ export const TodoTextarea = ({
             </div>
           )}
           <div className="relative mt-1">
-            <Textarea
-              placeholder={placeholder}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="min-h-[100px] pr-12"
-            />
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !content.trim()}
-              className="absolute bottom-2 right-2 flex items-center gap-2 rounded-full border 
-                            enabled:hover:text-white
-                            enabled:bg-primary enabled:hover:bg-primary/90 enabled:text-white"
-              size="icon"
-              variant="ghost"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
+            <div className="h-[155px] w-full p-[1px] rounded-lg border border-input-border">
+              <div className={cn("relative rounded-md bg-background w-full h-full flex flex-col justify-between")}>
+                <ScrollArea className="w-full flex-grow overflow-auto">
+                  <div className="p-2 pb-0">
+                    <Textarea
+                      className="w-full bg-background border-none resize-none overflow-hidden"
+                      placeholder={placeholder}
+                      minRows={2}
+                      maxRows={10}
+                      value={content}
+                      onChange={e => setContent(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-end mx-2 mb-3">
+                  <Button
+                    variant="neutral"
+                    size="icon"
+                    onClick={handleSubmit}
+                    loading={isSubmitting}
+                    disabled={!content.trim()}
+                    aria-label="Submit"
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}; 
+};

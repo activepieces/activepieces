@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 import { UserWithMetaInformation } from '../user'
 import { Agent } from '../agents'
-import { FlowVersionMetadata } from '../flows/flow-version'
 import { PopulatedFlow } from '../flows'
 
 export enum STATUS_VARIANT {
@@ -22,6 +21,27 @@ export const RESOLVED_STATUS = {
     description: 'Resolved',
     variant: STATUS_VARIANT.POSITIVE,
 }
+
+
+export const AGENT_RESOLVED_STATUS_OPTION = {
+    name: 'Resolved',
+    description: 'Resolved',
+    variant: STATUS_VARIANT.POSITIVE,
+    continueFlow: true,
+}
+
+export const AGENT_REJECTED_STATUS_OPTION = {
+    name: 'Failed',
+    description: 'Failed',
+    variant: STATUS_VARIANT.NEGATIVE,
+    continueFlow: false,
+}
+
+export const AGENT_STATUS_OPTIONS = [
+    AGENT_RESOLVED_STATUS_OPTION,
+    AGENT_REJECTED_STATUS_OPTION,
+]    
+
 
 export const STATUS_COLORS: Record<STATUS_VARIANT, StatusColor> = {
     [STATUS_VARIANT.POSITIVE]: {

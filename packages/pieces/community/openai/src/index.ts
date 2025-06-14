@@ -1,5 +1,4 @@
 import {
-  AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
@@ -18,7 +17,7 @@ import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 
 export const openaiAuth = PieceAuth.SecretText({
-  description: AI_PROVIDERS_MAKRDOWN.openai,
+  description: AI_PROVIDERS_MAKRDOWn.openai,
   displayName: 'API Key',
   required: true,
   validate: async (auth) => {

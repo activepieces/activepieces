@@ -1,36 +1,24 @@
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { STATUS_COLORS } from '@activepieces/shared';
-import { Todo } from '@activepieces/shared';
-import { CircleDot, CheckCircle, X } from 'lucide-react';
+import { STATUS_VARIANT, Todo } from '@activepieces/shared';
 
 interface TodoTimelineStatusProps {
   todo: Todo;
 }
 
 export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
-  if (!todo.status) {
+  if (todo.status.variant === STATUS_VARIANT.NEUTRAL) {
     return null;
   }
 
-  const getStatusIcon = (statusVariant: string) => {
-    if (statusVariant === 'negative') {
-      return X;
-    }
-    if (statusVariant === 'positive') {
-      return CheckCircle;
-    }
-    return CircleDot;
-  };
+  const bgColor = {
+    [STATUS_VARIANT.POSITIVE]: 'bg-emerald-700',
+    [STATUS_VARIANT.NEGATIVE]: 'bg-rose-700',
+    [STATUS_VARIANT.NEUTRAL]: 'bg-gray-700',
+  }[todo.status.variant];
 
   return (
-    <div className="flex items-center justify-center gap-2 py-2 mt-6">
-      <div className="flex-shrink-0">
-        <StatusIconWithText
-          icon={getStatusIcon(todo.status.variant)}
-          text={`This todo is now marked as ${todo.status.name}`}
-          color={STATUS_COLORS[todo.status.variant].color}
-          textColor={STATUS_COLORS[todo.status.variant].textColor}
-        />
+    <div className="flex justify-center mt-6">
+      <div className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}>
+        This todo is now marked as {todo.status.name}
       </div>
     </div>
   );

@@ -25,8 +25,8 @@ export const TodoCreateTodo = ({
     },
   });
 
-  const handleCreateTodo = async (content: string) => {
-    mutation.mutate(content);
+  const handleCreateTodo = async (content: string): Promise<void> => {
+    await mutation.mutateAsync(content);
   };
 
   return (

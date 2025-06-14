@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { isNil, PopulatedTodo, Todo } from '@activepieces/shared';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { TodoDetails } from './todo-details';
 import { TodoCreateTodo } from './todo-details/todo-create-todo';
@@ -32,14 +33,16 @@ function TodoDetailsDrawer({
       onClose={onClose}
     >
       <DrawerContent>
-        <div className="px-6">
-          <TodoDetails
-            todoId={currentTodo?.id ?? null}
-            onClose={onClose}
-            agentId={agentId}
-            onStatusChange={onStatusChange}
-          />
-        </div>
+        <ScrollArea >
+          <div className="px-6">
+            <TodoDetails
+              todoId={currentTodo?.id ?? null}
+              onClose={onClose}
+              agentId={agentId}
+              onStatusChange={onStatusChange}
+            />
+          </div>
+        </ScrollArea>
       </DrawerContent>
     </Drawer>
   );

@@ -8,8 +8,11 @@ import {
     ErrorCode,
     isNil,
     McpTool,
+    McpToolMetadata,
+    mcpToolNaming,
     McpToolType,
     McpWithTools,
+    PlatformId,
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -25,6 +28,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { McpEntity } from './mcp-entity'
 import { McpToolEntity } from './tool/mcp-tool.entity'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
 
 export const mcpRepo = repoFactory(McpEntity)
 const mcpToolRepo = repoFactory(McpToolEntity)
@@ -43,12 +47,42 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
+    async getMcpTool(toolId: ApId): Promise<McpTool> {
+        return mcpToolRepo().findOneOrFail({ where: { id: toolId } })
+    },
+    async getMcpToolMetadata({ toolName, projectId, platformId }: GetMcpToolMetadataParams): Promise<McpToolMetadata> {
+        const toolId = mcpToolNaming.extractToolId(toolName)
+        const mcpTool = await this.getMcpTool(toolId)
+        switch (mcpTool.type) {
+            case McpToolType.PIECE: {
+                const pieceMetadataTool = mcpTool.pieceMetadata
+                assertNotNullOrUndefined(pieceMetadataTool, 'pieceMetadataTool is required')
+                const pieceMetadata = await pieceMetadataService(_log).getOrThrow({ name: pieceMetadataTool.pieceName, projectId, version: pieceMetadataTool.pieceVersion, platformId })
+                const actionMetadataEntry = Object.entries(pieceMetadata.actions).find(([_, action]) => mcpToolNaming.fixTool(action.displayName, toolId, McpToolType.PIECE) === toolName)
+                assertNotNullOrUndefined(actionMetadataEntry, 'actionMetadataEntry is required')
+                const actionMetadata = actionMetadataEntry[1]
+                return {
+                    displayName: actionMetadata.displayName,
+                    logoUrl: pieceMetadata.logoUrl,
+                }
+            }
+            case McpToolType.FLOW: {
+                const flow = await flowService(_log).getOnePopulatedOrThrow({
+                    id: mcpTool.flowId!,
+                    projectId,
+                })
+                return {
+                    displayName: flow.version.displayName,
+                }
+            }
+        }
+    },
     async getMcpServerUrl({ mcpId }: GetMcpServerUrlParams): Promise<string> {
         const mcp = await mcpRepo().findOneOrFail({ where: { id: mcpId } })
         return domainHelper.getPublicApiUrl({ path: `/v1/mcp/${mcp.token}/sse` })
     },
 
-    async deleteFlowTools({ flowId }: DeleteFlowToolsParams): Promise<void> {
+    async deleteFlowTool({ flowId }: DeleteFlowToolsParams): Promise<void> {
         await mcpToolRepo().delete({ flowId })
     },
 
@@ -222,6 +256,13 @@ async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated'
 type GetMcpServerUrlParams = {
     mcpId: ApId
 }
+
+type GetMcpToolMetadataParams = {
+    toolName: string
+    platformId: PlatformId
+    projectId: ApId
+}
+
 
 type CreateParams = {
     projectId: ApId

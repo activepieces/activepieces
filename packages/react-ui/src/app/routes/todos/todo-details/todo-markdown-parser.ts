@@ -1,8 +1,14 @@
+import { agentbuiltInToolsNames, isNil } from "@activepieces/shared";
+
 export const todoMarkdownParser = {
-  stripToolCalls: (markdown: string): string => {
-    return markdown
-      .replace(/<tool-call[^>]*>.*?<\/tool-call>/g, '')
-      .replace(/<tool-result[^>]*>.*?<\/tool-result>/g, '');
+  findTodoResult: (markdown: string): string | undefined => {
+    const tools = todoMarkdownParser.parse(markdown)
+    const outputBlock = tools.find((tool) => tool.type === 'tool-call' && tool.toolName === agentbuiltInToolsNames.markAsComplete) as ToolCallBlock
+    if (!isNil(outputBlock)) {
+      const { data } = JSON.parse(outputBlock.result ?? '{}')
+      return data
+    }
+    return undefined
   },
   parse: (markdown: string): Block[] => {
     const blocks: Block[] = [];
@@ -49,10 +55,11 @@ export const todoMarkdownParser = {
   },
 };
 
-type ToolCall = {
+type ToolCallBlock = {
   type: 'tool-call';
   id: string;
   toolName: string;
+  logoUrl?: string;
   args: unknown;
   result?: string;
   status: 'pending' | 'done';
@@ -63,14 +70,14 @@ type TextBlock = {
   text: string;
 };
 
-type Block = ToolCall | TextBlock;
+type Block = ToolCallBlock | TextBlock;
 
 const createTextBlock = (text: string): TextBlock => ({
   type: 'text',
   text: text.trim(),
 });
 
-const parseToolCall = (toolCallStr: string): ToolCall => {
+const parseToolCall = (toolCallStr: string): ToolCallBlock => {
   const idMatch = toolCallStr.match(/id="([^"]+)"/);
   const jsonStart = toolCallStr.indexOf('{');
   const jsonEnd = toolCallStr.lastIndexOf('}') + 1;
@@ -79,7 +86,8 @@ const parseToolCall = (toolCallStr: string): ToolCall => {
   return {
     type: 'tool-call',
     id: idMatch?.[1] ?? '',
-    toolName: toolCallData.toolName,
+    toolName: toolCallData.displayName,
+    logoUrl: toolCallData.logoUrl,
     args: toolCallData.result,
     status: 'pending',
   };
@@ -100,7 +108,7 @@ const updateToolCallWithResult = (
   );
 
   if (toolCallIndex !== -1) {
-    const toolCall = blocks[toolCallIndex] as ToolCall;
+    const toolCall = blocks[toolCallIndex] as ToolCallBlock;
     toolCall.result = toolResultData.result;
     toolCall.status = 'done';
   }

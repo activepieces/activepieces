@@ -33,7 +33,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
+  setIsAlertClosed: (isAlertClosed: boolean) => { },
 });
 
 export function DashboardContainer({
@@ -60,6 +60,14 @@ export function DashboardContainer({
   const permissionFilter = (link: SidebarItem) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
+    }
+    return true;
+  };
+
+  // TODO(agents): after we enable agents for everyone.
+  const filterAgents = (item: SidebarItem) => {
+    if (item.label === t('Agents')) {
+      return platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
     }
     return true;
   };
@@ -143,7 +151,8 @@ export function DashboardContainer({
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts);
+    .filter(filterAlerts)
+    .filter(filterAgents);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

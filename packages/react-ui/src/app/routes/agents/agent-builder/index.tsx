@@ -32,7 +32,7 @@ export const AgentBuilder = ({
     <Drawer
       open={isOpen}
       onOpenChange={onOpenChange}
-      className="w-full"
+      className="w-full overflow-auto"
       dismissible={false}
     >
       {trigger}
@@ -53,13 +53,13 @@ export const AgentBuilder = ({
                   {agent ? 'Edit Agent' : 'Agent Builder'}
                 </DrawerTitle>
               </div>
-  
+
             </div>
           </div>
         </DrawerHeader>
 
         <div className="flex flex-1 h-full justify-center">
-          <div className="w-full max-w-3xl px-4">
+          <div className="w-full max-w-3xl px-4" style={{ maxHeight: 'calc(100vh - 80px)' }}>
             <AgentSettings agent={agent} refetch={refetch} />
           </div>
         </div>

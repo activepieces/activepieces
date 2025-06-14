@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, Todo } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, Todo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { Equal, FindOperator } from 'typeorm'
@@ -29,6 +29,8 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             maxSteps: 10,
             projectId: params.projectId,
             mcpId: mcp.id,
+            outputType: AgentOutputType.NO_OUTPUT,
+            outputFields: [],
         }
         const agent = await agentRepo().save(agentPayload)
         await mcpService(log).update({
@@ -43,6 +45,8 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
             ...spreadIfDefined('testPrompt', params.testPrompt),
+            ...spreadIfDefined('outputType', params.outputType),
+            ...spreadIfDefined('outputFields', params.outputFields),
         })
         return this.getOneOrThrow({ id: params.id })
     },
@@ -156,6 +160,8 @@ type UpdateParams = {
     systemPrompt?: string
     description?: string
     testPrompt?: string
+    outputType?: string
+    outputFields?: AgentOutputField[]
 }
 
 type GetOneParams = {

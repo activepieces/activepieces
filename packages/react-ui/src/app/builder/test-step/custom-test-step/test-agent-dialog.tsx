@@ -29,7 +29,7 @@ function AgentTestingDialog({
     });
     const agentResult: AgentTestResult = {
       todoId,
-      output: todoMarkdownParser.stripToolCalls(
+      output: todoMarkdownParser.findTodoResult(
         activities.data[activities.data.length - 1].content,
       ),
     };
