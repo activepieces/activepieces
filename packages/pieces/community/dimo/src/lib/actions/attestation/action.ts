@@ -7,8 +7,8 @@ import { getHeaders, handleFailures } from "../../helpers";
 
 export const attestationApiAction = createAction({
     auth: vehicleAuth,
-    name: "attestation-api",
-    displayName: "Attestation API",
+    name: "generate-vehicle-vc-attestation-api",
+    displayName: "Generate Vehicle VC via Attestation API",
     description: "Generates the VIN VC for a given vehicle if it has never been created, or if it has expired. If an unexpired VC is found, returns the VC.",
     props: {
         vehicleTokenId : Property.Number({

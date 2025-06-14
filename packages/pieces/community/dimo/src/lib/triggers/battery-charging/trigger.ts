@@ -7,7 +7,7 @@ import { developerAuth } from '../../common';
 
 export const batteryChargingTrigger = createTrigger({
   auth: developerAuth,
-  name: 'battery_charging_trigger',
+  name: 'battery-is-charging-trigger',
   displayName: 'Battery Is Charging Trigger',
   description: 'Triggers when vehicle battery charging status changes (True/False) - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,

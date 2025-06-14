@@ -7,7 +7,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant
 
 export const chargeLevelTrigger = createTrigger({
   auth: developerAuth,
-  name: 'charge_level_trigger',
+  name: 'charge-level-trigger',
   displayName: 'Charge Level Trigger',
   description: 'Triggers when vehicle battery charge level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,

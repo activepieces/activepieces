@@ -6,7 +6,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
 export const vehicleEventsUnifiedAction = createAction({
   auth: developerAuth,
-  name: "vehicle-events-unified",
+  name: "all-endpoints-vehicle-events-api",
   displayName: "Vehicle Events (All Operations)",
   description: "Perform any vehicle events operation (list, create, update, delete, subscribe, unsubscribe, etc.)",
   props: {

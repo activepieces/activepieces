@@ -7,7 +7,7 @@ import { WebhookInfo, WebhookPayload } from '../../models';
 
 export const fuelRelativeTrigger = createTrigger({
   auth: developerAuth,
-  name: 'fuel_relative_trigger',
+  name: 'fuel-relative-level-trigger',
   displayName: 'Fuel System Relative Level Trigger',
   description: 'Triggers when vehicle fuel system relative level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,

@@ -16,7 +16,7 @@ import { developerAuth } from '../../common';
 
 export const odometerTrigger = createTrigger({
   auth: developerAuth,
-  name: 'odometer_trigger',
+  name: 'odometer-trigger',
   displayName: 'Odometer Trigger',
   description:
     'Triggers when vehicle odometer meets the specified condition - requires Developer JWT',

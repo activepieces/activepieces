@@ -7,8 +7,8 @@ import { TokenExchangeResponse } from "./type";
 
 export const tokenExchangeApiAction = createAction({
     auth: developerAuth,
-    name: "token-exchange-api",
-    displayName: "Token Exchange API",
+    name: "vehicle-jwt-token-exchange-api",
+    displayName: "Vehicle JWT via Token Exchange API",
     description: "Creates a token exchange to obtain a Vehicle JWT. The response will provide a short-lived token that last you 10 minutes to access additional vehicle information such as Trips and Telemetry data",
     props: {
         vehicleTokenId : Property.Number({

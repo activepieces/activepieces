@@ -11,7 +11,7 @@ import { getHeaders, handleFailures } from '../../helpers';
 
 export const ignitionTrigger = createTrigger({
   auth: developerAuth,
-  name: 'ignition_trigger',
+  name: 'ignition-trigger',
   displayName: 'Ignition Status Trigger',
   description:
     'Triggers when vehicle ignition status changes (ON/OFF) - requires Developer JWT',

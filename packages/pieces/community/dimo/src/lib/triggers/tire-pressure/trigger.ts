@@ -17,7 +17,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant
 
 export const tirePressureTrigger = createTrigger({
   auth: developerAuth,
-  name: 'tire_pressure_trigger',
+  name: 'tire-pressure-trigger',
   displayName: 'Tire Pressure Trigger',
   description:
     'Triggers when vehicle tire pressure meets the specified condition - requires Developer JWT',

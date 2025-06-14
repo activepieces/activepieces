@@ -5,7 +5,7 @@ import { handleFailures } from '../../helpers';
 
 export const identityApiAction = createAction({
   requireAuth : false,
-  name: 'identity_api',
+  name: 'identity-api-query',
   displayName: 'Identity API (GraphQL)',
   description: 'Query DIMO Identity API using GraphQL - open catalog of vehicles, devices, and rewards (no authentication required)',
   props: {
