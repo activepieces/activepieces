@@ -3,7 +3,7 @@ import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import mcp from '@/assets/img/custom/mcp.svg';
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -105,7 +105,7 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: <img src={mcp} alt="MCP" />,
+    icon: McpSvg,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
