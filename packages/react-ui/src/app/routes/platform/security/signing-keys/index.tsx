@@ -6,14 +6,14 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { NewSigningKeyDialog } from '@/features/platform-admin-panel/components/new-signing-key-dialog';
-import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-api';
+import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
+import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';

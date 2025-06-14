@@ -29,7 +29,7 @@ import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 

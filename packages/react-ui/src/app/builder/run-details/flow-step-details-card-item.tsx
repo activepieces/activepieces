@@ -4,8 +4,8 @@ import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { CardListItem } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
-import { CardListItem } from '@/components/ui/card-list';
 import {
   Collapsible,
   CollapsibleContent,

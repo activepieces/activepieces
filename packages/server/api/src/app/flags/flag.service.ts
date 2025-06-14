@@ -7,6 +7,7 @@ import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { aiProviderService } from '../ai/ai-provider-service'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -68,6 +69,12 @@ export const flagService = {
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(AppSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: await aiProviderService.isAgentConfigured(),
                 created,
                 updated,
             },

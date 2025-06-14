@@ -12,9 +12,9 @@ import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
-import { McpConfigPage } from '../../../mcp/mcp-config';
-import { McpConnectPage } from '../../../mcp/mcp-connect';
-import { McpHistoryPage } from '../../../mcp/runs/mcp-runs';
+import { McpConfigPage } from './mcp-config';
+import { McpConnectPage } from './mcp-connect';
+import { McpHistoryPage } from './runs/mcp-runs';
 
 const tabs = [
   {

@@ -27,7 +27,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { FlowTemplate } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/ui/table-title';
+import { TableTitle } from '../../../../../components/custom/table-title';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
 

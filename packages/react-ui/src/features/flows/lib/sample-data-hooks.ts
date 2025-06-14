@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, QueryClient } from '@tanstack/react-query';
 
 import { flowStructureUtil, FlowVersion, FileType } from '@activepieces/shared';
 
@@ -88,6 +88,12 @@ export const sampleDataHooks = {
         });
         return sampleDataInput;
       },
+    });
+  },
+  invalidateSampleData: (flowVersionId: string, queryClient: QueryClient) => {
+    queryClient.invalidateQueries({ queryKey: ['sampleData', flowVersionId] });
+    queryClient.invalidateQueries({
+      queryKey: ['sampleDataInput', flowVersionId],
     });
   },
 };

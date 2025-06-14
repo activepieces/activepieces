@@ -4,6 +4,7 @@ import { ChevronDown, DownloadIcon, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import { HomeButton } from '@/components/ui/home-button';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';

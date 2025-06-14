@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -20,8 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,

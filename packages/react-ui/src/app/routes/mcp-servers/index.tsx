@@ -4,6 +4,8 @@ import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,8 +16,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';

@@ -7,10 +7,11 @@ import { useLocation } from 'react-router-dom';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -20,7 +21,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
   globalConnectionsMutations,

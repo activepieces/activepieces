@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
+import { TableTitle } from '@/components/custom/table-title';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {

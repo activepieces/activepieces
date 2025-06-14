@@ -15,9 +15,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { ApAvatar } from '@/components/custom/ap-avatar';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -26,15 +29,12 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UserFullName } from '@/components/ui/user-fullname';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
@@ -324,10 +324,16 @@ function AppConnectionsPage() {
         return (
           <div className="text-left">
             {row.original.owner && (
-              <UserFullName
-                firstName={row.original.owner.firstName}
-                lastName={row.original.owner.lastName}
-                email={row.original.owner.email}
+              <ApAvatar
+                type="user"
+                includeName={true}
+                size="small"
+                userEmail={row.original.owner.email}
+                fullName={
+                  row.original.owner.firstName +
+                  ' ' +
+                  row.original.owner.lastName
+                }
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}

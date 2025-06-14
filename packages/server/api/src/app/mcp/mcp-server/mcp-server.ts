@@ -71,13 +71,11 @@ async function addPieceToServer(
         platformId,
     })
 
-    const pieceName = pieceMetadata.name.split('piece-')[1].replace(/-/g, '_')
     const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of filteredAction) {
-        const actionName = mcpToolNaming.fixTool(action).startsWith(pieceName) 
-            ? mcpToolNaming.fixTool(action) 
-            : mcpToolNaming.fixTool(`${pieceName}_${action}`)
         const actionMetadata = pieceMetadata.actions[action]
+        const actionName = mcpToolNaming.fixTool(actionMetadata.displayName, mcpTool.id, McpToolType.PIECE)
+
         const actionSchema = Object.fromEntries(
             Object.entries(actionMetadata.props)
                 .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
@@ -168,7 +166,7 @@ async function addFlowToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool(triggerSettings.input?.toolName)
+    const toolName = mcpToolNaming.fixTool(mcpTool.flowId!, mcpTool.id, McpToolType.FLOW)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse

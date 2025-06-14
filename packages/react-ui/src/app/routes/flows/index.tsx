@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
@@ -35,7 +35,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
-import { TableTitle } from '../../../components/ui/table-title';
+import { TableTitle } from '../../../components/custom/table-title';
 
 import { FlowsTable } from './flows-table';
 import { IssuesTable } from './issues-table';

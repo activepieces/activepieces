@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Alert } from '@/components/ui/alert';
 import {
@@ -10,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {

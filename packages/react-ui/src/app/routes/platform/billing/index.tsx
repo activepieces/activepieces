@@ -15,11 +15,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress-bar';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,

@@ -5,8 +5,8 @@ import { nanoid } from 'nanoid';
 import { useState, useRef, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 
+import { CardList } from '@/components/custom/card-list';
 import { useSocket } from '@/components/socket-provider';
-import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {

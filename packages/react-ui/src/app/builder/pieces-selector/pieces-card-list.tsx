@@ -4,13 +4,13 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
 import {
   CardList,
   CardListItem,
   CardListItemSkeleton,
-} from '@/components/ui/card-list';
+} from '@/components/custom/card-list';
+import { useEmbedding } from '@/components/embed-provider';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
