@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { LocalesEnum, SAFE_STRING_PATTERN } from '../common'
+import { SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
 import { CopilotSettings, FilteredPieceBehavior, SMTPInformation } from './platform.model'
@@ -21,7 +21,6 @@ export const UpdatePlatformRequestBody = Type.Object({
     allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
     enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
     pinnedPieces: Type.Optional(Type.Array(Type.String())),
-    defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
     copilotSettings: Type.Optional(CopilotSettings),
 })
 
