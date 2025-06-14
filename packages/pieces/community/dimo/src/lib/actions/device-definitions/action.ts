@@ -13,8 +13,8 @@ import {
 
 export const deviceDefinitionApiAction = createAction({
   auth: developerAuth,
-  name: "device-definitions-api",
-  displayName: "Device Definitions API",
+  name: "submit-decode-vin-device-definitions-api",
+  displayName: "Submit Decode VIN via Device Definitions API",
   description: "Submits a decoding request for vehicle identification number, returns the device definition ID corresponding to the VIN.",
   props: {
     countryCode: Property.ShortText({
@@ -50,7 +50,7 @@ export const deviceDefinitionApiAction = createAction({
 
 export const deviceDefinitionsSearchAction = createAction({
   auth: developerAuth,
-  name: "device-definitions-search",
+  name: "lookup-device-definitions-api",
   displayName: "Device Definitions Lookup",
   description: "Search for device definitions by query and filters.",
   props: {

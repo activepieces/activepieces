@@ -7,7 +7,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant
 
 export const fuelAbsoluteTrigger = createTrigger({
   auth: developerAuth,
-  name: 'fuel_absolute_trigger',
+  name: 'fuel-absolute-level-trigger',
   displayName: 'Fuel System Absolute Level Trigger',
   description: 'Triggers when vehicle fuel system absolute level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,

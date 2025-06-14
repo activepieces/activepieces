@@ -7,7 +7,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant
 
 export const batteryPowerTrigger = createTrigger({
   auth: developerAuth,
-  name: 'battery_power_trigger',
+  name: 'battery-power-trigger',
   displayName: 'Battery Current Power Trigger',
   description: 'Triggers when vehicle battery current power meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,

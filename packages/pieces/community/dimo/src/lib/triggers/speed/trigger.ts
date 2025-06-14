@@ -11,7 +11,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant
 
 export const speedTrigger = createTrigger({
   auth: developerAuth,
-  name: 'speed_trigger',
+  name: 'speed-trigger',
   displayName: 'Speed Trigger',
   description:
     'Triggers when vehicle speed meets specified conditions (requires Developer JWT)',

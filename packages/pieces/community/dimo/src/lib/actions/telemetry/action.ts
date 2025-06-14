@@ -4,7 +4,7 @@ import { commonQueries, TELEMETR_API_BASE_URL } from './constant';
 
 export const telemetryApiAction = createAction({
   requireAuth: false,
-  name: 'telemetry_api',
+  name: 'telemetry-api-query',
   displayName: 'Telemetry API (GraphQL)',
   description: 'Query DIMO Telemetry API using GraphQL for vehicle signals and telemetry data.',
   props: {
