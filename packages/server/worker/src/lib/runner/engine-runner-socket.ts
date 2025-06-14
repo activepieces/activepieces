@@ -112,7 +112,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 throw new Error(`Socket for worker ${workerId} is not connected`)
             }
             socket.send(JSON.stringify({
-                type: EngineSocketEvent.ENGINE_OPERATION,
+                type: 'engine-operation',
                 data: message,
             }))
         },
