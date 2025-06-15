@@ -126,18 +126,11 @@ export const todoService = (log: FastifyBaseLogger) => ({
             })
         }
         if (!isNil(params.statusOptions)) {
-            if (params.statusOptions[0] === UNRESOLVED_STATUS.name) {
-                query = query.andWhere('(status->>\'name\' = :statusName OR status->>\'continueFlow\' = :continueFlow)', {
-                    statusName: UNRESOLVED_STATUS.name,
-                    continueFlow: 'false',
+            params.statusOptions.forEach((statusOption) => {
+                query = query.andWhere('(status->>\'name\' = :statusName)', {
+                    statusName: statusOption,
                 })
-            }
-            else {
-                query = query.andWhere('status->>\'name\' != :statusName AND (status->>\'continueFlow\' IS NULL OR status->>\'continueFlow\' != :continueFlow)', {
-                    statusName: UNRESOLVED_STATUS.name,
-                    continueFlow: 'false',
-                })
-            }
+            })
         }
         if (!isNil(params.title)) {
             query = query.andWhere({
@@ -155,7 +148,20 @@ export const todoService = (log: FastifyBaseLogger) => ({
         const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task, log)))
         return paginationHelper.createPage<PopulatedTodo>(enrichedData, newCursor)
     },
+    async delete(params: DeleteParams) {
+        await todoRepo().delete({
+            id: params.id,
+            platformId: params.platformId,
+            projectId: params.projectId,
+        })
+    },
 })
+
+type DeleteParams = {
+    id: string
+    platformId: PlatformId
+    projectId: ProjectId
+}   
 
 async function sendResolveRequest(resolveUrl: string, status: StatusOption) {
     const url = new URL(resolveUrl)

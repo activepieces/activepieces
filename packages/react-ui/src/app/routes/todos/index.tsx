@@ -8,13 +8,14 @@ import {
   X,
   ListTodo,
   CheckCheck,
+  Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { TableTitle } from '@/components/custom/table-title';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions, BulkAction } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,8 @@ import {
   STATUS_COLORS,
   STATUS_VARIANT,
 } from '@activepieces/shared';
+import { Button } from '@/components/ui/button';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 import { ApAvatar } from '../../../components/custom/ap-avatar';
 
@@ -39,11 +42,13 @@ function TodosPage() {
   const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const location = useLocation();
   const { data: currentUser } = userHooks.useCurrentUser();
 
   const { data, isLoading, refetch } = todosHooks.useTodosList(activeTab);
+  const { mutateAsync: deleteTodos } = todosHooks.useDeleteTodos(refetch);
 
   const filteredData = useMemo(() => {
     if (!data?.data) return undefined;
@@ -105,6 +110,46 @@ function TodosPage() {
     }
     return CircleDot;
   };
+
+  const bulkActions: BulkAction<Todo>[] = useMemo(
+    () => [
+      {
+        render: (_, resetSelection) => {
+          return (
+            <>
+              {selectedRows.length > 0 && (
+                <ConfirmationDeleteDialog
+                  title={t('Delete Todos')}
+                  message={t('Are you sure you want to delete these todos? This action cannot be undone.')}
+                  mutationFn={async () => {
+                    await deleteTodos(selectedRows.map(row => row.id));
+                    refetch();
+                    resetSelection();
+                    setSelectedRows([]);
+                  }}
+                  entityName={t('todos')}
+                  open={showDeleteDialog}
+                  onOpenChange={setShowDeleteDialog}
+                  showToast
+                >
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('Delete')} ({selectedRows.length})
+                  </Button>
+                </ConfirmationDeleteDialog>
+              )}
+            </>
+          );
+        },
+      },
+    ],
+    [selectedRows, showDeleteDialog],
+  );
+
   const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
       id: 'select',
@@ -338,6 +383,7 @@ function TodosPage() {
           setSelectedTask(row);
           setDrawerOpen(true);
         }}
+        bulkActions={bulkActions}
       />
       {selectedTask && (
         <TodoDetailsDrawer

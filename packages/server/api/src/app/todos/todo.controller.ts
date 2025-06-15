@@ -84,7 +84,26 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         return paginationHelper.createPage(users, null)
     })
 
+    app.delete('/:id', DeleteTodoRequest, async (request) => {
+        const { id } = request.params
+        return todoService(request.log).delete({
+            id,
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+    })
+}
 
+const DeleteTodoRequest = {
+
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
 }
 
 

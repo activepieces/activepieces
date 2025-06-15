@@ -1,4 +1,4 @@
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -8,6 +8,7 @@ import { todosApi } from './todos-api';
 
 const todoKeys = {
   single: (id: string) => ['todo', id],
+  list: (projectId: string, activeTab: string, searchParams: URLSearchParams) => ['todos', projectId, activeTab, searchParams.toString()],
 };
 export const todosHooks = {
   useTodo: (todoId: string | null) => {
@@ -25,17 +26,26 @@ export const todosHooks = {
     queryClient.setQueryData(todoKeys.single(todoId), todo);
   },
 
+  useDeleteTodos: (refetch: () => void) => {
+    return useMutation({
+      mutationFn: async (todoIds: string[]) => {
+        await Promise.all(todoIds.map(id => todosApi.delete(id)));
+      },
+      onSuccess: () => {
+        refetch();
+      },
+    });
+  },
+
   useTodosList: (
     activeTab: 'all' | 'needs-action' = 'all',
-    flowId?: string,
   ) => {
-    const location = useLocation();
     const projectId = authenticationSession.getProjectId()!;
     const platformId = authenticationSession.getPlatformId()!;
     const [searchParams] = useSearchParams();
 
     return useQuery({
-      queryKey: ['todos', location, projectId, activeTab, flowId],
+      queryKey: todoKeys.list(projectId, activeTab, searchParams),
       queryFn: () => {
         const cursor = searchParams.get('cursor');
         const limit = searchParams.get('limit')
@@ -52,7 +62,6 @@ export const todosHooks = {
           limit,
           platformId,
           assigneeId,
-          flowId,
           statusOptions,
           title,
         });

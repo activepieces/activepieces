@@ -17,4 +17,7 @@ export const todosApi = {
   async update(id: string, requestBody: UpdateTodoRequestBody) {
     return await api.post<Todo>(`/v1/todos/${id}`, requestBody);
   },
+  async delete(id: string) {
+    return await api.delete<void>(`/v1/todos/${id}`);
+  },
 };
