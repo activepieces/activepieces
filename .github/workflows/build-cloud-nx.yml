@@ -18,7 +18,7 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents --stop-agents-after=server-api:test-cloud-command,server-api:test-ce-command,server-api:test-ee-command,engine:test,shared:test
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents 
 
       - run: npm ci
 
