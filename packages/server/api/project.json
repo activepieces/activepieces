@@ -87,14 +87,31 @@
         "testPathPattern": ["packages/server/api/test/integration/ee"]
       }
     },
-    "test": {
+    "test-ee-command": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee server-api --output-style stream-without-prefixes"
+        ],
+        "parallel": false
+      }
+    },
+    "test-ce-command": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud server-api --output-style stream-without-prefixes",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce server-api --output-style stream-without-prefixes",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce server-api --output-style stream-without-prefixes"
+        ],
+        "parallel": false
+      }
+    },
+    "test-cloud-command": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx build server-api",
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
