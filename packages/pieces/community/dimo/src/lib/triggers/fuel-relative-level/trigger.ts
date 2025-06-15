@@ -4,7 +4,7 @@ import { getHeaders, getNumberExpression, handleFailures } from '../../helpers';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
-import { operatorStaticDropdown } from '../common';
+import { operatorStaticDropdown, verificationTokenInput } from '../common';
 
 export const fuelRelativeTrigger = createTrigger({
   auth: developerAuth,
@@ -36,12 +36,7 @@ export const fuelRelativeTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput
   },
   sampleData: {
     tokenId: 17,
@@ -102,6 +97,7 @@ export const fuelRelativeTrigger = createTrigger({
     }
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken
     });
   },
   async onDisable(context) {
@@ -116,7 +112,16 @@ export const fuelRelativeTrigger = createTrigger({
       });
       handleFailures(res);
   },
+  async onHandshake(context) {
 
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
+  },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
 

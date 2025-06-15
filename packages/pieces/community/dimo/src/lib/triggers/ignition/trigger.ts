@@ -8,6 +8,7 @@ import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions';
 import { getHeaders, handleFailures } from '../../helpers';
+import { verificationTokenInput } from '../common';
 
 export const ignitionTrigger = createTrigger({
   auth: developerAuth,
@@ -47,12 +48,7 @@ export const ignitionTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput,
   },
   sampleData: {
     tokenId: 17,
@@ -85,7 +81,7 @@ export const ignitionTrigger = createTrigger({
         description: `Ignition trigger: ${ignitionState.toUpperCase()}`,
         target_uri: context.webhookUrl,
         status: 'Active',
-        verification_token: verificationToken || 'token',
+        verification_token: verificationToken
       },
       headers: getHeaders(context.auth.token),
     });
@@ -121,6 +117,7 @@ export const ignitionTrigger = createTrigger({
     }
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken
     });
   },
   async onDisable(context) {
@@ -136,7 +133,16 @@ export const ignitionTrigger = createTrigger({
       handleFailures(res);
     }
   },
+  async onHandshake(context) {
 
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
+  },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
 

@@ -13,7 +13,7 @@ import {
 } from '../../helpers';
 import { getTirePressurePositionLabel, TirePressurePosition } from './type';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown } from '../common';
+import { operatorStaticDropdown, verificationTokenInput } from '../common';
 
 export const tirePressureTrigger = createTrigger({
   auth: developerAuth,
@@ -61,12 +61,7 @@ export const tirePressureTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput,
   },
   sampleData: {
     tokenId: 17,
@@ -105,7 +100,7 @@ export const tirePressureTrigger = createTrigger({
         )} ${operator} ${pressureKpa} kPa`,
         target_uri: context.webhookUrl,
         status: 'Active',
-        verification_token: verificationToken || 'token',
+        verification_token: verificationToken
       },
       headers: getHeaders(context.auth.token),
     });
@@ -137,9 +132,9 @@ export const tirePressureTrigger = createTrigger({
       handleFailures(res);
     }
 
-    // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken
     });
   },
 
@@ -161,7 +156,16 @@ export const tirePressureTrigger = createTrigger({
       console.warn('Failed to cleanup webhook:', error);
     }
   },
+  async onHandshake(context) {
 
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
+  },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
 

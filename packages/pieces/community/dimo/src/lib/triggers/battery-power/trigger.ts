@@ -4,7 +4,7 @@ import { developerAuth } from "../../common";
 import { WebhookInfo, WebhookPayload } from "../../models";
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown } from "../common";
+import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
 export const batteryPowerTrigger = createTrigger({
   auth: developerAuth,
@@ -36,12 +36,7 @@ export const batteryPowerTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput
   },
   sampleData: {
     tokenId: 17,
@@ -75,7 +70,7 @@ export const batteryPowerTrigger = createTrigger({
         description: `Battery power trigger: ${operator} ${powerWatts}W`,
         target_uri: context.webhookUrl,
         status: 'Active',
-        verification_token: verificationToken || 'token',
+        verification_token: verificationToken
       },
       headers: getHeaders(context.auth.token),
     });
@@ -113,6 +108,7 @@ export const batteryPowerTrigger = createTrigger({
     // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken,
     });
   },
   async onDisable(context) {
@@ -124,6 +120,16 @@ export const batteryPowerTrigger = createTrigger({
         headers: getHeaders(context.auth.token),
       });
     }
+  },
+    async onHandshake(context) {
+
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
@@ -168,4 +174,5 @@ export const batteryPowerTrigger = createTrigger({
       },
     ];
   },
+
 });

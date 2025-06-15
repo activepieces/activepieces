@@ -5,10 +5,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
 import { developerAuth } from '../../common';
-import { handleFailures } from '../../helpers';
+import { getHeaders, handleFailures } from '../../helpers';
 import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown } from '../common';
+import { operatorStaticDropdown, verificationTokenInput } from '../common';
 
 export const speedTrigger = createTrigger({
   auth: developerAuth,
@@ -42,12 +42,7 @@ export const speedTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput,
   },
   sampleData: {
     tokenId: 17,
@@ -101,12 +96,9 @@ export const speedTrigger = createTrigger({
         description: webhookDef.description,
         target_uri: webhookDef.targetUri,
         status: webhookDef.status,
-        verification_token: verificationToken || 'token',
+        verification_token: verificationToken
       },
-      headers: {
-        Authorization: `Bearer ${context.auth.token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(context.auth.token),
     });
     handleFailures(webhookResponse);
     const webhookId = webhookResponse.body.id;
@@ -135,6 +127,7 @@ export const speedTrigger = createTrigger({
     }
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken
     });
   },
   async onDisable(context) {
@@ -152,6 +145,16 @@ export const speedTrigger = createTrigger({
       },
     });
     handleFailures(res);
+  },
+    async onHandshake(context) {
+
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;

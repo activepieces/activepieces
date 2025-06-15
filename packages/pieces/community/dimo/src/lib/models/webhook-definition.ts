@@ -72,7 +72,7 @@ export interface TriggerInput {
 
 export interface WebhookInfo {
   webhookId: string;
-  // verificationToken: string;
+  verificationToken: string;
 }
 
 export interface WebhookPayload {
@@ -84,4 +84,8 @@ export interface WebhookPayload {
   source: string;
   producer: string;
   cloudEventId: string;
+}
+
+export interface WebhookVerificationRequest {
+  verification: string
 }
