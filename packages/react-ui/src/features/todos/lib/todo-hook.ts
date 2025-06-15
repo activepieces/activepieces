@@ -1,5 +1,5 @@
 import { QueryClient, useQuery, useMutation } from '@tanstack/react-query';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { PopulatedTodo, UNRESOLVED_STATUS } from '@activepieces/shared';
@@ -8,7 +8,11 @@ import { todosApi } from './todos-api';
 
 const todoKeys = {
   single: (id: string) => ['todo', id],
-  list: (projectId: string, activeTab: string, searchParams: URLSearchParams) => ['todos', projectId, activeTab, searchParams.toString()],
+  list: (
+    projectId: string,
+    activeTab: string,
+    searchParams: URLSearchParams,
+  ) => ['todos', projectId, activeTab, searchParams.toString()],
 };
 export const todosHooks = {
   useTodo: (todoId: string | null) => {
@@ -29,7 +33,7 @@ export const todosHooks = {
   useDeleteTodos: (refetch: () => void) => {
     return useMutation({
       mutationFn: async (todoIds: string[]) => {
-        await Promise.all(todoIds.map(id => todosApi.delete(id)));
+        await Promise.all(todoIds.map((id) => todosApi.delete(id)));
       },
       onSuccess: () => {
         refetch();
@@ -37,9 +41,7 @@ export const todosHooks = {
     });
   },
 
-  useTodosList: (
-    activeTab: 'all' | 'needs-action' = 'all',
-  ) => {
+  useTodosList: (activeTab: 'all' | 'needs-action' = 'all') => {
     const projectId = authenticationSession.getProjectId()!;
     const platformId = authenticationSession.getPlatformId()!;
     const [searchParams] = useSearchParams();

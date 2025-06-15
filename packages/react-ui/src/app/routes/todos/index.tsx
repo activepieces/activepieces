@@ -14,8 +14,14 @@ import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { TableTitle } from '@/components/custom/table-title';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions, BulkAction } from '@/components/ui/data-table';
+import {
+  DataTable,
+  RowDataWithActions,
+  BulkAction,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,8 +36,6 @@ import {
   STATUS_COLORS,
   STATUS_VARIANT,
 } from '@activepieces/shared';
-import { Button } from '@/components/ui/button';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 import { ApAvatar } from '../../../components/custom/ap-avatar';
 
@@ -120,9 +124,11 @@ function TodosPage() {
               {selectedRows.length > 0 && (
                 <ConfirmationDeleteDialog
                   title={t('Delete Todos')}
-                  message={t('Are you sure you want to delete these todos? This action cannot be undone.')}
+                  message={t(
+                    'Are you sure you want to delete these todos? This action cannot be undone.',
+                  )}
                   mutationFn={async () => {
-                    await deleteTodos(selectedRows.map(row => row.id));
+                    await deleteTodos(selectedRows.map((row) => row.id));
                     refetch();
                     resetSelection();
                     setSelectedRows([]);

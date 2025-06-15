@@ -32,7 +32,7 @@ export const TodoDetailsStatus = ({
 
   const getStatusButtonIcon = (statusName: string, variant: string) => {
     if (statusName === UNRESOLVED_STATUS.name) {
-      return <CircleDot className="h-4 w-4" />;
+      return <CircleDot className="h-4 w-4 text-warning-300" />;
     }
     if (variant === STATUS_VARIANT.NEGATIVE) {
       return <X className="h-4 w-4 text-destructive-300" />;

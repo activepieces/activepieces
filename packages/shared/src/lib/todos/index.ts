@@ -53,8 +53,8 @@ export const STATUS_COLORS: Record<STATUS_VARIANT, StatusColor> = {
         textColor: '#dd111b',
     },
     [STATUS_VARIANT.NEUTRAL]: {
-        color: '#f6f6f6',
-        textColor: '#2c2c2c',
+        color: '#fef3c7',
+        textColor: '#b45309',
     },
 }
 
