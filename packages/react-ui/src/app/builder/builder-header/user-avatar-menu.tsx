@@ -33,7 +33,7 @@ export function UserAvatarMenu() {
           disableTooltip={true}
           name={user.firstName + ' ' + user.lastName}
           email={user.email}
-          size={28}
+          size={32}
         ></UserAvatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[220px]">

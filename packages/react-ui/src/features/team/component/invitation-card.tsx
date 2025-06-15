@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, UserInvitation } from '@activepieces/shared';
@@ -31,6 +31,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
           name={invitation.email}
           email={invitation.email}
           size={32}
+          disableTooltip={true}
         ></UserAvatar>
         <div>
           <p className="text-sm font-medium leading-none">

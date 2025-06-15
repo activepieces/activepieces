@@ -5,9 +5,9 @@ import { parse } from 'papaparse';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
   DialogClose,

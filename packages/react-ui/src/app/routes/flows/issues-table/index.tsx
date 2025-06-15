@@ -5,13 +5,15 @@ import { useMemo, useRef, useEffect } from 'react';
 import {
   useSearchParams,
 } from 'react-router-dom';
+
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
 } from '@/components/ui/data-table';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { issuesApi } from '@/features/issues/api/issues-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';

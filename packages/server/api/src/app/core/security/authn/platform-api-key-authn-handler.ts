@@ -100,18 +100,40 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         request: FastifyRequest,
     ): Promise<ProjectId> {
         const projectIdFromRequest = requestUtils.extractProjectId(request)
-        const projectIdFromResource = await this.extractProjectIdFromResource(request)
-        const projectId = projectIdFromRequest ?? projectIdFromResource
-        if (isNil(projectId)) {
+        
+        const hasIdParam = request.routerPath.includes(':id') &&
+            isObject(request.params) &&
+            'id' in request.params &&
+            typeof request.params.id === 'string'
+        
+        if (hasIdParam) {
+            const projectIdFromResource = await this.extractProjectIdFromResource(request)
+            if (!isNil(projectIdFromResource)) {
+                return projectIdFromResource
+            }
+            
+            const resourceName = extractResourceName(request.routerPath)
+            const resourceId = (request.params as { id: string }).id
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    message: 'missing project id',
+                    message: `${resourceId} not found`,
+                    entityType: resourceName,
+                    entityId: resourceId,
                 },
             })
         }
-
-        return projectId
+        
+        if (isNil(projectIdFromRequest)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'missing project id in request',
+                },
+            })
+        }
+        
+        return projectIdFromRequest
     }
 
     private async extractProjectIdFromResource(

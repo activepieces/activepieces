@@ -6,6 +6,7 @@ import {
     PieceMetadataServiceHooks,
 } from '../../../pieces/piece-metadata-service/hooks'
 import { platformService } from '../../../platform/platform.service'
+import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
@@ -14,14 +15,35 @@ export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
         if (isNil(platformId) || includeHidden) {
             return defaultPieceHooks.filterPieces({ ...params, pieces })
         }
+
+
         const resultPieces = await filterPiecesBasedPlatform(platformId, pieces)
         const piecesAfterDefaultFilter = await defaultPieceHooks.filterPieces({ ...params, pieces: resultPieces })
 
         if (isNil(projectId)) {
             return piecesAfterDefaultFilter
         }
-        return filterBasedOnProject(projectId, piecesAfterDefaultFilter)
+        const filterAfterProject = await filterBasedOnProject(projectId, piecesAfterDefaultFilter)
+
+        if (!isNil(platformId)) {
+            return filterAgentsPieceIfPlatformHasLimit(platformId, filterAfterProject)
+        }
+        return filterAfterProject
     },
+}
+
+// TODO(agents): after we enable agents for everyone.
+async function filterAgentsPieceIfPlatformHasLimit(platformId: string, pieces: PieceMetadataSchema[]): Promise<PieceMetadataSchema[]> {
+    if (!isNil(platformId)) {
+        const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        return pieces.filter((piece) => {
+            if (piece.name === '@activepieces/agent') {
+                return platformBilling.agentsLimit && platformBilling.agentsLimit > 0
+            }
+            return true
+        })
+    }
+    return pieces
 }
 
 async function filterBasedOnProject(
