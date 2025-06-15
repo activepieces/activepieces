@@ -20,7 +20,22 @@
         "*.ts",
         "*.tsx"
       ],
-      "rules": {}
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "enforceBuildableLibDependency": true,
+            "allow": [],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": ["*"],
+                "allowedExternalImports": ["ethers"]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "files": [

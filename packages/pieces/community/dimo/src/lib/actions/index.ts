@@ -4,3 +4,4 @@ export * from "./identity"
 export * from "./telemetry"
 export * from "./token-exchange"
 export * from "./vehicle-events"
+export * from './auth'
