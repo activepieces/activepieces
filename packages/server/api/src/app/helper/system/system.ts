@@ -81,6 +81,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.SHOW_CHANGELOG]: 'true',
     [AppSystemProp.MAX_MCPS_PER_PROJECT]: '3',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
 }
 
 let globalLogger: FastifyBaseLogger

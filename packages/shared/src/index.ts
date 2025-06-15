@@ -90,3 +90,6 @@ import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/license-keys'
 export * from './lib/flow-run/execution/flow-execution'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
+export * from './lib/issues/index'
+export * from './lib/issues/issues-requests'
+export * from './lib/issues/issue-dto'

@@ -1,8 +1,7 @@
 import {
+    Flow,
     Issue,
-    IssueStatus,
-} from '@activepieces/ee-shared'
-import { Flow, Project } from '@activepieces/shared'
+    IssueStatus, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -30,23 +29,18 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
             type: String,
             enum: IssueStatus,
         },
-        count: {
-            type: Number,
-        },
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
+        },
+        stepName: {
+            type: String,
         },
     },
     indices: [
         {
-            name: 'idx_issue_flow_id',
+            name: 'idx_issue_flowId_stepName',
+            columns: ['flowId', 'stepName'],
             unique: true,
-            columns: ['flowId'],
-        },
-        {
-            name: 'idx_issue_project_id_flow_id',
-            unique: false,
-            columns: ['projectId', 'flowId'],
         },
     ],
     relations: {

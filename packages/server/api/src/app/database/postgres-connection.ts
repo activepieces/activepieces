@@ -217,8 +217,10 @@ import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/17
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
 import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
 import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
 import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
+import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -375,6 +377,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
         AddAgentsLimitToPlatformPlan1749917984363,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddStepToIssuesTable1750017637712,
     ]
 
     const edition = system.getEdition()
