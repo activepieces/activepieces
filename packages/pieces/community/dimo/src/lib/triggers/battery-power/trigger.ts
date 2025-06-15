@@ -2,8 +2,9 @@ import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { developerAuth } from "../../common";
 import { WebhookInfo, WebhookPayload } from "../../models";
-import { getHeaders, getNumberExpression, handleFailures, Operator } from "../../helpers";
+import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
+import { operatorStaticDropdown } from "../common";
 
 export const batteryPowerTrigger = createTrigger({
   auth: developerAuth,
@@ -17,19 +18,7 @@ export const batteryPowerTrigger = createTrigger({
       description: 'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
       required: false,
     }),
-    comparisonType: Property.StaticDropdown({
-      displayName: 'Comparison Type',
-      description: 'How to compare the battery power in watts',
-      required: true,
-      defaultValue: Operator.GREATER_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     powerWatts: Property.Number({
       displayName: 'Battery Power (Watts)',
       description: 'The battery power in watts to compare against',
@@ -65,14 +54,14 @@ export const batteryPowerTrigger = createTrigger({
     cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
   },
   async onEnable(context) {
-    const { vehicleTokenIds, comparisonType, powerWatts, triggerFrequency, verificationToken } = context.propsValue;
+    const { vehicleTokenIds, operator, powerWatts, triggerFrequency, verificationToken } = context.propsValue;
 
     if (!context.auth.token) {
       throw new Error('Developer JWT is required for battery power trigger. Please provide a Developer JWT in the authentication configuration.');
     }
 
     // Build trigger condition
-    const triggerCondition = getNumberExpression(comparisonType, powerWatts);
+    const triggerCondition = getNumberExpression(operator, powerWatts);
 
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
@@ -83,7 +72,7 @@ export const batteryPowerTrigger = createTrigger({
         data: 'powertrainTractionBatteryCurrentPower',
         trigger: triggerCondition,
         setup: triggerFrequency,
-        description: `Battery power trigger: ${comparisonType} ${powerWatts}W`,
+        description: `Battery power trigger: ${operator} ${powerWatts}W`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'token',
@@ -171,7 +160,7 @@ export const batteryPowerTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.comparisonType,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.powerWatts,
           actualValue: powerWatts,
           unit: 'W',

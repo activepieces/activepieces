@@ -6,8 +6,9 @@ import {
 import { httpClient } from '@activepieces/pieces-common';
 import { developerAuth } from '../../common';
 import { handleFailures } from '../../helpers';
-import { NumericOperator, TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
+import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
+import { operatorStaticDropdown } from '../common';
 
 export const speedTrigger = createTrigger({
   auth: developerAuth,
@@ -23,19 +24,7 @@ export const speedTrigger = createTrigger({
         'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
       required: false,
     }),
-    operator: Property.StaticDropdown({
-      displayName: 'Operator',
-      description: 'How to compare the vehicle speed',
-      required: true,
-      defaultValue: NumericOperator.GreaterThan,
-      options: {
-        options: [
-          { label: 'Equal to', value: NumericOperator.Equal },
-          { label: 'Greater than', value: NumericOperator.GreaterThan },
-          { label: 'Less than', value: NumericOperator.LessThan },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     speedValue: Property.Number({
       displayName: 'Speed Value (km/h)',
       description: 'Speed value to compare against in kilometers per hour',

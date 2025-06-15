@@ -33,8 +33,9 @@ export const vehicleEventsUnifiedAction = createAction({
         trigger: "valueNumber > 1000",
         setup: "Realtime",
         description: "",
-        targetUri: "https://mysite.com/webhook",
+        target_uri: "https://mysite.com/webhook",
         status: "Active",
+        verification_token: "token",
       },
     }),
     tokenId: Property.Number({

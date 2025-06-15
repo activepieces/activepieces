@@ -2,8 +2,9 @@ import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { WebhookInfo, WebhookPayload } from "../../models";
 import { developerAuth } from "../../common";
-import { getHeaders, getNumberExpression, handleFailures, Operator } from "../../helpers";
+import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
+import { operatorStaticDropdown } from "../common";
 
 export const chargeLevelTrigger = createTrigger({
   auth: developerAuth,
@@ -17,19 +18,7 @@ export const chargeLevelTrigger = createTrigger({
       description: 'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
       required: false,
     }),
-    comparisonType: Property.StaticDropdown({
-      displayName: 'Comparison Type',
-      description: 'How to compare the charge level percentage',
-      required: true,
-      defaultValue: Operator.LESS_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     chargePercentage: Property.Number({
       displayName: 'Charge Percentage (%)',
       description: 'The battery charge level percentage (0-100%) to compare against',
@@ -65,7 +54,7 @@ export const chargeLevelTrigger = createTrigger({
     cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
   },
   async onEnable(context) {
-    const { vehicleTokenIds, comparisonType, chargePercentage, triggerFrequency, verificationToken } = context.propsValue;
+    const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } = context.propsValue;
 
     if (!context.auth.token) {
       throw new Error('Developer JWT is required for charge level trigger. Please provide a Developer JWT in the authentication configuration.');
@@ -77,7 +66,7 @@ export const chargeLevelTrigger = createTrigger({
     }
 
     // Build trigger condition
-    const triggerCondition = getNumberExpression(comparisonType, chargePercentage);
+    const triggerCondition = getNumberExpression(operator, chargePercentage);
 
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
@@ -88,7 +77,7 @@ export const chargeLevelTrigger = createTrigger({
         data: 'powertrainTractionBatteryStateOfChargeCurrent',
         trigger: triggerCondition,
         setup: triggerFrequency,
-        description: `Charge level trigger: ${comparisonType} ${chargePercentage}%`,
+        description: `Charge level trigger: ${operator} ${chargePercentage}%`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'activepieces-charge-level-trigger',
@@ -181,7 +170,7 @@ export const chargeLevelTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.comparisonType,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.chargePercentage,
           actualValue: chargePercentage,
           unit: '%',

@@ -1,9 +1,10 @@
 import { httpClient } from '@activepieces/pieces-common';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { getHeaders, getNumberExpression, handleFailures, Operator } from '../../helpers';
+import { getHeaders, getNumberExpression, handleFailures } from '../../helpers';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
+import { operatorStaticDropdown } from '../common';
 
 export const fuelRelativeTrigger = createTrigger({
   auth: developerAuth,
@@ -17,19 +18,7 @@ export const fuelRelativeTrigger = createTrigger({
       description: 'List of vehicle token IDs to monitor (leave empty or select All Vehicles to monitor all vehicles with permissions)',
       required: false,
     }),
-    operator: Property.StaticDropdown({
-      displayName: 'Operator',
-      description: 'How to compare the fuel level percentage',
-      required: true,
-      defaultValue: Operator.LESS_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     fuelPercentage: Property.Number({
       displayName: 'Fuel Percentage (%)',
       description: 'The fuel level percentage (0-100%) to compare against',
@@ -65,12 +54,12 @@ export const fuelRelativeTrigger = createTrigger({
     cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
   },
   async onEnable(context) {
-    const { vehicleTokenIds, operator: comparisonType, fuelPercentage, triggerFrequency, verificationToken } = context.propsValue;
+    const { vehicleTokenIds,  operator, fuelPercentage, triggerFrequency, verificationToken } = context.propsValue;
 
     if (fuelPercentage < 0 || fuelPercentage > 100) {
       throw new Error('Fuel percentage must be between 0 and 100');
     }
-    const triggerCondition = getNumberExpression(comparisonType, fuelPercentage);
+    const triggerCondition = getNumberExpression(operator, fuelPercentage);
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
@@ -79,7 +68,7 @@ export const fuelRelativeTrigger = createTrigger({
         data: 'powertrainFuelSystemRelativeLevel',
         trigger: triggerCondition,
         setup: triggerFrequency,
-        description: `Fuel relative level trigger: ${comparisonType} ${fuelPercentage}%`,
+        description: `Fuel relative level trigger: ${operator} ${fuelPercentage}%`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'token',
@@ -151,7 +140,7 @@ export const fuelRelativeTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.operator,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.fuelPercentage,
           actualValue: fuelPercentage,
           unit: '%',
