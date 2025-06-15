@@ -17,7 +17,6 @@ const repo = repoFactory(IssueEntity)
 export const issuesService = (log: FastifyBaseLogger) => ({
     async add(flowRun: FlowRun): Promise<PopulatedIssue> {
         const date = dayjs(flowRun.created).toISOString()
-        assertNotNullOrUndefined(flowRun.failedStepName, 'failedStepName')
         const issueId = apId()
 
         await repo().createQueryBuilder()

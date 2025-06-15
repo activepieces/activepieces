@@ -101,8 +101,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             query = query.andWhere(APArrayContains('tags', tags))
         }
 
-        if (failedStepName) {
-            query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+        if (!isNil(failedStepName)) {
+            query = query.andWhere({
                 failedStepName,
             })
         }
