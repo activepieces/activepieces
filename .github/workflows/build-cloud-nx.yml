@@ -18,11 +18,9 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents 
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents
 
       - run: npm ci
-
-      - run: npx nx reset 
 
       - uses: nrwl/nx-set-shas@v4
 
@@ -70,11 +68,4 @@ jobs:
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
         
-      - run: npx nx run-many --target=test --projects=engine,shared --agents --parallel
-
-      - run: npx nx run server-api:test-ce-command 
-
-      - run: npx nx run server-api:test-ee-command 
-
-      - run: npx nx run server-api:test-cloud-command 
-
+      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel
