@@ -5,6 +5,9 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
+            DELETE FROM "issue"
+        `)
+        await queryRunner.query(`
             DROP INDEX "idx_issue_project_id_flow_id"
         `)
         await queryRunner.query(`
