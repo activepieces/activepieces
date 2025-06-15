@@ -2,13 +2,14 @@ import { cn } from '../../lib/utils';
 
 import { LoadingSpinner } from './spinner';
 
+type LoadingScreenProps = {
+  brightSpinner?: boolean;
+  mode?: 'fullscreen' | 'container';
+};
 export const LoadingScreen = ({
   brightSpinner = false,
   mode = 'fullscreen',
-}: {
-  brightSpinner?: boolean;
-  mode?: 'fullscreen' | 'container';
-}) => {
+}: LoadingScreenProps) => {
   switch (mode) {
     case 'fullscreen':
       return (
