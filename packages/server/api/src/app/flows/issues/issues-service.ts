@@ -7,10 +7,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
+import { FlowRunEntity } from '../flow-run/flow-run-entity'
 import { flowRunRepo } from '../flow-run/flow-run-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { IssueEntity } from './issues-entity'
-import { FlowRunEntity } from '../flow-run/flow-run-entity'
 
 const repo = repoFactory(IssueEntity)
 

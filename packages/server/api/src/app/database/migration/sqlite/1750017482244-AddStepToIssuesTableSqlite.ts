@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterface {
     name = 'AddStepToIssuesTableSqlite1750017482244'
@@ -6,10 +6,10 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_issue_project_id_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -24,7 +24,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -45,32 +45,32 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "count",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -96,7 +96,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                     CONSTRAINT "fk_flow_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_run"(
                     "id",
@@ -135,29 +135,29 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "terminationReason",
                 "duration"
             FROM "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_run"
                 RENAME TO "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -166,7 +166,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -183,7 +183,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -204,33 +204,33 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "stepName",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_run_flow_failed_step" ON "flow_run" ("flowId", "failedStepName")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_run_flow_failed_step"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -245,7 +245,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -266,32 +266,32 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
                 RENAME TO "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -316,7 +316,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                     CONSTRAINT "fk_flow_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_run"(
                     "id",
@@ -355,10 +355,10 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "terminationReason",
                 "duration"
             FROM "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -367,26 +367,26 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -401,7 +401,7 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -422,16 +422,16 @@ export class AddStepToIssuesTableSqlite1750017482244 implements MigrationInterfa
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
-        `);
+        `)
     }
 
 }
