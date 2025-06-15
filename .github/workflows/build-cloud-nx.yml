@@ -70,8 +70,9 @@ jobs:
         
       - run: npx nx run-many --target=test --projects=engine,shared --agents --parallel
 
-      - run: npx nx run server-api:test-cloud-command --agents --parallel
-
       - run: npx nx run server-api:test-ce-command --agents --parallel
 
       - run: npx nx run server-api:test-ee-command --agents --parallel
+      
+      - run: npx nx run server-api:test-cloud-command --agents --parallel
+
