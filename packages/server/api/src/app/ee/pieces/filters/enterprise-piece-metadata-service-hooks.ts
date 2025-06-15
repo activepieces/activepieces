@@ -6,8 +6,8 @@ import {
     PieceMetadataServiceHooks,
 } from '../../../pieces/piece-metadata-service/hooks'
 import { platformService } from '../../../platform/platform.service'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
+import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {
@@ -53,8 +53,8 @@ async function filterBasedOnProject(
     const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPlanWithPlatformLimits(projectId)
 
     const filterPredicate: Record<
-        PiecesFilterType,
-        (p: PieceMetadataSchema) => boolean
+    PiecesFilterType,
+    (p: PieceMetadataSchema) => boolean
     > = {
         [PiecesFilterType.NONE]: () => true,
         [PiecesFilterType.ALLOWED]: (p) =>
@@ -75,8 +75,8 @@ async function filterPiecesBasedPlatform(
     const platform = await platformService.getOneOrThrow(platformId)
 
     const filterPredicate: Record<
-        FilteredPieceBehavior,
-        (p: PieceMetadataSchema) => boolean
+    FilteredPieceBehavior,
+    (p: PieceMetadataSchema) => boolean
     > = {
         [FilteredPieceBehavior.ALLOWED]: (p) =>
             platform.filteredPieceNames.includes(p.name),

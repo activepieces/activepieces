@@ -1,4 +1,9 @@
-import { Type as TextIcon, Hash as NumberIcon, CheckSquare as BooleanIcon, List as CategoryIcon } from 'lucide-react';
+import {
+  Type as TextIcon,
+  Hash as NumberIcon,
+  CheckSquare as BooleanIcon,
+} from 'lucide-react';
+
 import { AgentOutputFieldType } from '@activepieces/shared';
 
 interface FieldTypeIconProps {
@@ -6,7 +11,10 @@ interface FieldTypeIconProps {
   className?: string;
 }
 
-export const FieldTypeIcon = ({ type, className = "h-4 w-4" }: FieldTypeIconProps) => {
+export const FieldTypeIcon = ({
+  type,
+  className = 'h-4 w-4',
+}: FieldTypeIconProps) => {
   switch (type) {
     case AgentOutputFieldType.TEXT:
       return <TextIcon className={className} />;
@@ -17,4 +25,4 @@ export const FieldTypeIcon = ({ type, className = "h-4 w-4" }: FieldTypeIconProp
     default:
       return null;
   }
-}; 
+};

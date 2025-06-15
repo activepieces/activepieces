@@ -1,5 +1,6 @@
 import { Play } from 'lucide-react';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 
 import { TodoDetailsDrawer } from '../../todos/todos-details-drawer';
@@ -8,11 +9,8 @@ type AgentTestRunButtonProps = {
   agentId: string;
 };
 
-export const AgentTestRunButton = ({
-  agentId,
-}: AgentTestRunButtonProps) => {
+export const AgentTestRunButton = ({ agentId }: AgentTestRunButtonProps) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
 
   return (
     <div className="relative">

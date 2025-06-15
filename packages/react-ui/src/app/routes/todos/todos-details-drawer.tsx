@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
-import { isNil, PopulatedTodo, Todo } from '@activepieces/shared';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PopulatedTodo, Todo } from '@activepieces/shared';
 
 import { TodoDetails } from './todo-details';
-import { TodoCreateTodo } from './todo-details/todo-create-todo';
 
 type TodoDetailsProps = {
   open: boolean;
@@ -23,7 +21,6 @@ function TodoDetailsDrawer({
   onOpenChange,
   onClose,
 }: TodoDetailsProps) {
-
   return (
     <Drawer
       dismissible={false}
@@ -33,7 +30,7 @@ function TodoDetailsDrawer({
       onClose={onClose}
     >
       <DrawerContent>
-        <ScrollArea >
+        <ScrollArea>
           <div className="px-6">
             <TodoDetails
               todoId={currentTodo?.id ?? null}

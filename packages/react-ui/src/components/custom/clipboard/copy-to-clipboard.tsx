@@ -1,10 +1,10 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 import { DownloadButton } from '../download-button';
 
 import { CopyButton } from './copy-button';
-import { cn } from '@/lib/utils';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;

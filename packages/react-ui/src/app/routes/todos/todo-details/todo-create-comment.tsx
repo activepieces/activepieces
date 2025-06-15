@@ -1,5 +1,6 @@
-import { Todo } from '@activepieces/shared';
 import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
+import { Todo } from '@activepieces/shared';
+
 import { TodoTextarea } from './todo-textarea';
 
 type TodoCreateCommentProps = {
@@ -17,7 +18,7 @@ export const TodoCreateComment = ({ todo }: TodoCreateCommentProps) => {
   return (
     <TodoTextarea
       onSubmit={handleSubmitComment}
-      disabled={todo.locked}  
+      disabled={todo.locked}
       title="Add a Comment"
     />
   );

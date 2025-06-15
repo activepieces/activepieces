@@ -1,9 +1,12 @@
-import { agentsApi } from '../../agents/agents-api';
-import { TodoTextarea } from './todo-textarea';
 import { useMutation } from '@tanstack/react-query';
-import { PopulatedTodo } from '@activepieces/shared';
-import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { PopulatedTodo } from '@activepieces/shared';
+
+import { agentsApi } from '../../agents/agents-api';
+
+import { TodoTextarea } from './todo-textarea';
 
 type TodoCreateTodoProps = {
   onTodoCreated?: (todo: PopulatedTodo) => void;

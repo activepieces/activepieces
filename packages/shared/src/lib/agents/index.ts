@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "../common";
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema } from '../common'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',

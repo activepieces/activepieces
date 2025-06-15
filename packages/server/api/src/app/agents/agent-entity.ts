@@ -1,6 +1,6 @@
 import { Agent, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../database/database-common'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 
 type AgentSchema = Agent & {
     project: Project    
@@ -51,7 +51,7 @@ export const AgentEntity = new EntitySchema<AgentSchema>({
             nullable: false,
         },
         outputFields: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },  
     },

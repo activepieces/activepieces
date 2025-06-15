@@ -11,7 +11,6 @@ import {
 import { Agent } from '@activepieces/shared';
 
 import { AgentSettings } from './agent-settings';
-import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -53,13 +52,15 @@ export const AgentBuilder = ({
                   {agent ? 'Edit Agent' : 'Agent Builder'}
                 </DrawerTitle>
               </div>
-
             </div>
           </div>
         </DrawerHeader>
 
         <div className="flex flex-1 h-full justify-center">
-          <div className="w-full max-w-3xl px-4" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+          <div
+            className="w-full max-w-3xl px-4"
+            style={{ maxHeight: 'calc(100vh - 80px)' }}
+          >
             <AgentSettings agent={agent} refetch={refetch} />
           </div>
         </div>

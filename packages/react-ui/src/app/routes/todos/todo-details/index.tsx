@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -18,10 +19,9 @@ import {
 } from '@activepieces/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
+import { TodoCreateTodo } from './todo-create-todo';
 import { TodoDetailsStatus } from './todo-details-status';
 import { TodoTimeline } from './todo-timeline';
-import { TodoCreateTodo } from './todo-create-todo';
-import { useQueryClient } from '@tanstack/react-query';
 
 type TodoDetailsProps = {
   todoId: string | null;
@@ -45,28 +45,34 @@ export const TodoDetails = ({
   const socket = useSocket();
   const previousStatus = useRef<Todo['status']>();
   const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
+
+  function detectStatusChange(updatedTodo: Todo) {
+    if (updatedTodo && previousStatus.current) {
+      const wasUnresolved =
+        previousStatus.current.name === UNRESOLVED_STATUS.name;
+      const isNowResolved =
+        updatedTodo.status.name !== UNRESOLVED_STATUS.name &&
+        updatedTodo.status.continueFlow !== false;
+
+      if (wasUnresolved && isNowResolved) {
+        onStatusChange?.(updatedTodo.status, 'agent');
+      }
+    }
+    previousStatus.current = updatedTodo?.status;
+  }
+
+  useEffect(() => {
+    if (todo) {
+      detectStatusChange(todo);
+    }
+  }, [todo]);
 
   const handleTodoChanged = async (event: TodoChanged) => {
     if (event.todoId === todoId) {
-      const result = await refetch();
-      const updatedTodo = result.data;
-
-      if (updatedTodo && previousStatus.current) {
-        const wasUnresolved =
-          previousStatus.current.name === UNRESOLVED_STATUS.name;
-        const isNowResolved =
-          updatedTodo.status.name !== UNRESOLVED_STATUS.name &&
-          updatedTodo.status.continueFlow !== false;
-
-        if (wasUnresolved && isNowResolved) {
-          onStatusChange?.(updatedTodo.status, 'agent');
-        }
-      }
-      previousStatus.current = updatedTodo?.status;
+      await refetch();
     }
   };
-
   useEffect(() => {
     socket.on(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
 
@@ -76,7 +82,6 @@ export const TodoDetails = ({
   }, [socket, refetch, todoId]);
 
   const handleTodoCreated = (todo: PopulatedTodo) => {
-
     todosHooks.setTodoManually(todo.id, todo, queryClient);
     setCreatedTodoId(todo.id);
   };

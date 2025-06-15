@@ -113,7 +113,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <LoadingSpinner
             className={
-              variant === 'default' || variant === 'neutral' ? 'stroke-background' : 'stroke-foreground'
+              variant === 'default' || variant === 'neutral'
+                ? 'stroke-background'
+                : 'stroke-foreground'
             }
           />
         ) : (

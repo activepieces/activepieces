@@ -43,7 +43,7 @@ export const aiProviderService = {
 
     async isAgentConfigured(): Promise<boolean> {
         return aiProviderRepo().existsBy({
-            provider: 'openai'
+            provider: 'openai',
         })
     },
 

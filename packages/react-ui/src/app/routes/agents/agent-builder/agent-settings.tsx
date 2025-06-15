@@ -16,6 +16,7 @@ import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
 
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 import { agentsApi } from '../agents-api';
+
 import { AgentSettingsOutput } from './agent-settings-output';
 import { AgentTestRunButton } from './agent-test-run-button';
 
@@ -104,7 +105,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
-  const handleOutputChange = (outputType: AgentOutputType, outputFields: AgentOutputField[]) => {
+  const handleOutputChange = (
+    outputType: AgentOutputType,
+    outputFields: AgentOutputField[],
+  ) => {
     if (!agent?.id) return;
     updateAgentMutation.mutate({ outputType, outputFields });
   };
@@ -133,9 +137,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
-              <div>
-                {agent && <AgentTestRunButton agentId={agent.id} />}
-              </div>
+              <div>{agent && <AgentTestRunButton agentId={agent.id} />}</div>
             </div>
             <EditableTextWithPen
               value={description}

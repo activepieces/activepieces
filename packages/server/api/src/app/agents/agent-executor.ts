@@ -1,7 +1,8 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_STATUS_OPTIONS, isNil, TodoEnvironment, agentbuiltInToolsNames } from '@activepieces/shared'
+import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentbuiltInToolsNames, agentMarkdownParser, isNil, TodoEnvironment } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText } from 'ai'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -9,7 +10,6 @@ import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { todoActivitiesService } from '../todos/activity/todos-activity.service'
 import { todoSideEfffects } from '../todos/todo-side-effects'
 import { todoService } from '../todos/todo.service'
-import dayjs from 'dayjs'
 import { agentTools } from './agent-tools'
 
 
@@ -18,7 +18,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
         const { agent } = params
         const todo = await todoService(log).create({
             description: params.prompt,
-            title: await generateTitle(params.prompt, params, log),
+            title: await generateTitle(params.prompt, agent),
             statusOptions: AGENT_STATUS_OPTIONS,
             createdByUserId: params.userId,
             platformId: agent.platformId,
@@ -57,15 +57,16 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             maxSteps: params.agent.maxSteps,
             tools: await agentToolInstance.tools(),
         })
-        let toolsCalled = []
-    let currentComment = ''
+        const toolsCalled = []
+        let currentComment = ''
 
         let textResult = ''
         for await (const chunk of fullStream) {
             if (chunk.type === 'text-delta') {
                 textResult += chunk.textDelta
                 currentComment += chunk.textDelta
-            } else if (chunk.type === 'tool-call') {
+            }
+            else if (chunk.type === 'tool-call') {
                 toolsCalled.push(chunk.toolName)
                 const metadata = await agentToolInstance.getMetadata(chunk.toolName)
                 currentComment += `<tool-call id="${chunk.toolCallId}">${JSON.stringify({
@@ -76,7 +77,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 })}</tool-call>`
             }
             else if (chunk.type === 'tool-result') {
-                
+
                 const textResult = chunk.result
                 currentComment += `<tool-result id="${chunk.toolCallId}">${JSON.stringify({
                     result: textResult,
@@ -96,22 +97,23 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             projectId: params.agent.projectId,
         })
 
-        const completed = toolsCalled.includes(agentbuiltInToolsNames.markAsComplete)
-        await markAsFailedIfNotCompleted(completed, todoId, log, params.socket, params.agent)
-        await callbackIfUrlIsProvided(params, textResult)
+        const success = toolsCalled.includes(agentbuiltInToolsNames.markAsComplete)
+        await markCompleted(success, todoId, log, params.socket, params.agent)
+        await callbackIfUrlIsProvided(params, todoId, textResult)
         log.info({
             agentId: params.agent.id,
             mcpId: params.agent.mcpId,
         }, 'Agent execution completed')
-    } finally {
+    }
+    finally {
         await agentToolInstance.close()
     }
 }
 
 
 
-async function markAsFailedIfNotCompleted(completed: boolean, todoId: string, log: FastifyBaseLogger, socket: Socket, agent: Agent) {
-    if (!completed) {
+async function markCompleted(success: boolean, todoId: string, log: FastifyBaseLogger, socket: Socket, agent: Agent) {
+    if (!success) {
         await todoService(log).update({
             id: todoId,
             status: AGENT_REJECTED_STATUS_OPTION,
@@ -120,15 +122,26 @@ async function markAsFailedIfNotCompleted(completed: boolean, todoId: string, lo
             socket,
         })
     }
+    else {
+        await todoService(log).resolve({
+            id: todoId,
+            status: AGENT_RESOLVED_STATUS_OPTION.name,
+            socket,
+        })
+    }
 }
 
-async function callbackIfUrlIsProvided(params: ExecuteAgent, textResult: string) {
+async function callbackIfUrlIsProvided(params: ExecuteAgent, todoId: string, textResult: string) {
     if (isNil(params.callbackUrl)) {
         return
     }
+    const agentResult = agentMarkdownParser.findAgentResult({
+        todoId,
+        output: textResult,
+    })
     await fetch(params.callbackUrl, {
         method: 'POST',
-        body: JSON.stringify({ output: textResult }),
+        body: JSON.stringify(agentResult),
     })
 }
 
@@ -136,7 +149,7 @@ function constructSystemPrompt(agent: Agent) {
     return `
     You are an autonomous assistant designed to efficiently achieve the user's goal.
 
-    Always when you finish your task, call the mark as complete tool with the output or message.
+    YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
     
     **Today's Date**: ${dayjs().format('YYYY-MM-DD')}  
     Use this to interpret time-based queries like "this week" or "due tomorrow."
@@ -174,8 +187,8 @@ async function createEmptyComment(params: ExecuteAgent, todoId: string, log: Fas
     })
 }
 
-async function generateTitle(prompt: string, params: { agent: Agent }, log: FastifyBaseLogger) {
-    const model = await initializeOpenAIModel(params.agent, 'gpt-4o-mini')
+async function generateTitle(prompt: string, agent: Agent) {
+    const model = await initializeOpenAIModel(agent, 'gpt-4o-mini')
     const result = await generateText({
         model,
         prompt: `

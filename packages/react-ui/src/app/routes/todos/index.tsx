@@ -236,7 +236,7 @@ function TodosPage() {
           <div className="text-left">
             {row.original.assignee && (
               <ApAvatar
-                type="user" 
+                type="user"
                 size="small"
                 includeName={true}
                 userEmail={row.original.assignee.email}

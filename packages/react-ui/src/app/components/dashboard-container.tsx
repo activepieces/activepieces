@@ -33,7 +33,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => { },
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({

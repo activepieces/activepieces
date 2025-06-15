@@ -37,7 +37,7 @@ export const mcpToolNaming = {
     fixTool: (name: string, id: string, type: McpToolType) => {
         const spaceToReserve = id.length + 1
         const baseName = name.replace(/[\s/@-]+/g, '_')
-        switch(type){
+        switch (type) {
             case McpToolType.FLOW:
                 return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}`
             case McpToolType.PIECE:{
@@ -51,7 +51,7 @@ export const mcpToolNaming = {
     extractToolId: (toolName: string) => {
         const splitted = toolName.split('_')
         return splitted[splitted.length - 1]
-    }
+    },
 }
 
 

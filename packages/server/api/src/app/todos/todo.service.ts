@@ -22,7 +22,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
             locked: params.locked ?? false,
             ...params,
         })
-        return await enrichTodoWithAssignee(todo, log)
+        return enrichTodoWithAssignee(todo, log)
     },
     async countBy(params: CountByParams): Promise<number> {
         return todoRepo().countBy({
@@ -31,7 +31,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
     },
     async getOne(params: GetParams): Promise<Todo | null> {
         const todo = await todoRepo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
-        return !isNil(todo) ? await enrichTodoWithAssignee(todo, log) : null
+        return !isNil(todo) ? enrichTodoWithAssignee(todo, log) : null
     },
     async getOnePopulatedOrThrow(params: GetParams): Promise<PopulatedTodo> {
         const todo = await this.getOne(params)
@@ -41,7 +41,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
             })
         }
-        return await enrichTodoWithAssignee(todo, log)
+        return enrichTodoWithAssignee(todo, log)
     },
     async update(params: UpdateParams): Promise<PopulatedTodo | null> {
         const todo = await this.getOnePopulatedOrThrow(params)

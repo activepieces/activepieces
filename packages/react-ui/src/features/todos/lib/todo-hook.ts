@@ -1,4 +1,4 @@
-import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
@@ -17,8 +17,12 @@ export const todosHooks = {
       enabled: !!todoId,
     });
   },
-  setTodoManually: (todoId: string, todo: PopulatedTodo, queryClient: QueryClient) => {
-    queryClient.setQueryData(todoKeys.single(todoId), todo)
+  setTodoManually: (
+    todoId: string,
+    todo: PopulatedTodo,
+    queryClient: QueryClient,
+  ) => {
+    queryClient.setQueryData(todoKeys.single(todoId), todo);
   },
 
   useTodosList: (

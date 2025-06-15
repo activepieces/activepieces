@@ -1,8 +1,11 @@
 import { TodoDetails } from '@/app/routes/todos/todo-details';
-import { todoMarkdownParser } from '@/app/routes/todos/todo-details/todo-markdown-parser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
-import { Action, AgentTestResult } from '@activepieces/shared';
+import {
+  Action,
+  agentMarkdownParser,
+  AgentTestResult,
+} from '@activepieces/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 
@@ -27,12 +30,10 @@ function AgentTestingDialog({
     const activities = await todoActivityApi.list(todoId, {
       limit: 100,
     });
-    const agentResult: AgentTestResult = {
+    const agentResult: AgentTestResult = agentMarkdownParser.findAgentResult({
       todoId,
-      output: todoMarkdownParser.findTodoResult(
-        activities.data[activities.data.length - 1].content,
-      ),
-    };
+      output: activities.data[activities.data.length - 1].content,
+    });
     updateSampleData({
       response: {
         output: agentResult,

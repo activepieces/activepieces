@@ -1,22 +1,24 @@
 import { Loader2, Wrench, CircleCheck } from 'lucide-react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
-
-import { todoMarkdownParser } from './todo-markdown-parser';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import {
+  isNil,
+  MarkdownVariant,
+  agentMarkdownParser,
+} from '@activepieces/shared';
 
 interface TodoMarkdownProps {
   content: string;
 }
 
 export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
-  const blocks = todoMarkdownParser.parse(content);
+  const blocks = agentMarkdownParser.parse(content);
 
   return (
     <div className="space-y-4">
@@ -55,10 +57,13 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
                   </div>
                 )}
                 <span className="text-sm font-medium flex-1 text-left">
-                  {block.toolName}
+                  {block.toolDisplayName}
                 </span>
                 {isDone ? (
-                  <CircleCheck className="h-4 w-4 text-emerald-600 shrink-0" style={{ transform: 'none' }} />
+                  <CircleCheck
+                    className="h-4 w-4 text-emerald-600 shrink-0"
+                    style={{ transform: 'none' }}
+                  />
                 ) : (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 )}

@@ -17,7 +17,9 @@ export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
 
   return (
     <div className="flex justify-center mt-6">
-      <div className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}>
+      <div
+        className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}
+      >
         This todo is now marked as {todo.status.name}
       </div>
     </div>

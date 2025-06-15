@@ -1,11 +1,12 @@
-import { ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useState, KeyboardEvent } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { userHooks } from '@/hooks/user-hooks';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 type TodoTextareaProps = {
   onSubmit: (content: string) => Promise<void>;
@@ -16,9 +17,9 @@ type TodoTextareaProps = {
 
 export const TodoTextarea = ({
   onSubmit,
-  placeholder = "You can use markdown to format your comment",
+  placeholder = 'You can use markdown to format your comment',
   disabled = false,
-  title
+  title,
 }: TodoTextareaProps) => {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,13 +63,15 @@ export const TodoTextarea = ({
         </div>
         <div className="flex-1">
           {title && (
-            <div className="flex items-center gap-2 h-8 font-bold">
-              {title}
-            </div>
+            <div className="flex items-center gap-2 h-8 font-bold">{title}</div>
           )}
           <div className="relative mt-1">
             <div className="h-[155px] w-full p-[1px] rounded-lg border border-input-border">
-              <div className={cn("relative rounded-md bg-background w-full h-full flex flex-col justify-between")}>
+              <div
+                className={cn(
+                  'relative rounded-md bg-background w-full h-full flex flex-col justify-between',
+                )}
+              >
                 <ScrollArea className="w-full flex-grow overflow-auto">
                   <div className="p-2 pb-0">
                     <Textarea
@@ -77,7 +80,7 @@ export const TodoTextarea = ({
                       minRows={2}
                       maxRows={10}
                       value={content}
-                      onChange={e => setContent(e.target.value)}
+                      onChange={(e) => setContent(e.target.value)}
                       onKeyDown={handleKeyDown}
                       disabled={isSubmitting}
                     />

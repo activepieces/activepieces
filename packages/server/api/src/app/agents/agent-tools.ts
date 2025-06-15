@@ -1,10 +1,9 @@
-import { experimental_createMCPClient, tool } from "ai";
-import { mcpService } from "../mcp/mcp-service";
-import { FastifyBaseLogger } from "fastify";
-import { Agent,  AGENT_RESOLVED_STATUS_OPTION,  agentbuiltInToolsNames,  AgentOutputFieldType,  AgentOutputType, isNil, McpToolMetadata } from "@activepieces/shared";
-import { todoService } from "../todos/todo.service";
-import { z, ZodRawShape, ZodSchema } from "zod";
-import { Socket } from "socket.io";
+import { Agent,  agentbuiltInToolsNames,  AgentOutputFieldType,  AgentOutputType, isNil, McpToolMetadata } from '@activepieces/shared'
+import { experimental_createMCPClient, tool } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
+import { z, ZodRawShape, ZodSchema } from 'zod'
+import { mcpService } from '../mcp/mcp-service'
 
 export const agentTools = async (params: AgentToolsParams) => {
     const mcpClient = await getMcpClient(params.agent, params.log)
@@ -23,13 +22,13 @@ export const agentTools = async (params: AgentToolsParams) => {
             await mcpClient?.close()
         },
         getMetadata: async (toolName: string): Promise<McpToolMetadata> => {
-            if(toolName === agentbuiltInToolsNames.markAsComplete) {
+            if (toolName === agentbuiltInToolsNames.markAsComplete) {
                 return {
                     displayName: 'Mark as Complete',
                 }
             }
-            return await mcpService(params.log).getMcpToolMetadata({ toolName, projectId: params.agent.projectId, platformId: params.agent.platformId })
-        }
+            return mcpService(params.log).getMcpToolMetadata({ toolName, projectId: params.agent.projectId, platformId: params.agent.platformId })
+        },
     }
 }
 
@@ -42,14 +41,9 @@ async function buildInternalTools(params: AgentToolsParams) {
                 output: await getStructuredOutput(params.agent),
             }),
             execute: async () => {
-                await todoService(params.log).resolve({
-                    id: params.todoId,
-                    status: AGENT_RESOLVED_STATUS_OPTION.name,
-                    socket: params.socket,
-                })
                 return 'Marked as Complete'
             },
-        })
+        }),
     }   
 }
 
@@ -58,10 +52,10 @@ async function getMcpClient(agent: Agent, log: FastifyBaseLogger) {
         mcpId: agent.mcpId,
     })
     if (mcpServer.tools.length === 0) {
-        return null;
+        return null
     }
     const mcpServerUrl = await mcpService(log).getMcpServerUrl({ mcpId: agent.mcpId })
-    return await experimental_createMCPClient({
+    return experimental_createMCPClient({
         transport: {
             type: 'sse',
             url: mcpServerUrl,

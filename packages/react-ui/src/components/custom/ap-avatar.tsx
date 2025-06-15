@@ -3,6 +3,7 @@ import { Workflow } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
 import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
@@ -50,7 +51,11 @@ export const ApAvatar = ({
 
     return (
       <Avatar className={size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}>
-        <AvatarFallback className={`text-xs font-bold border ${size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}`}>
+        <AvatarFallback
+          className={`text-xs font-bold border ${
+            size === 'small' ? 'w-6 h-6' : 'w-8 h-8'
+          }`}
+        >
           <Workflow className="p-1" />
         </AvatarFallback>
       </Avatar>

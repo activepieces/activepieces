@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Nullable } from '../common'
-import { UserWithMetaInformation } from '../user'
 import { Agent } from '../agents'
+import { BaseModelSchema, Nullable } from '../common'
 import { PopulatedFlow } from '../flows'
+import { UserWithMetaInformation } from '../user'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',

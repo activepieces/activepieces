@@ -374,7 +374,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpToolFlowCascadeDelete1749128866314,
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
-        AddAgentsLimitToPlatformPlan1749917984363
+        AddAgentsLimitToPlatformPlan1749917984363,
     ]
 
     const edition = system.getEdition()
