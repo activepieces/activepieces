@@ -5,6 +5,9 @@ export class AddStepToIssuesTable1750017637712 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
+            DELETE FROM "issue"
+        `)
+        await queryRunner.query(`
             DROP INDEX "public"."idx_issue_flow_id"
         `)
         await queryRunner.query(`
