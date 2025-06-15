@@ -1,12 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, CheckCircle, CheckIcon } from 'lucide-react';
-import { useMemo, useRef, useEffect } from 'react';
-import {
-  useSearchParams,
-} from 'react-router-dom';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useEffectOnce } from 'react-use';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,17 +17,15 @@ import { issuesApi } from '@/features/issues/api/issues-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { IssueStatus, Permission } from '@activepieces/shared';
+
 import { issuesTableColumns } from './columns';
-import { useEffectOnce } from 'react-use';
 
 export function IssuesTable() {
   const { refetch } = issueHooks.useIssuesNotification();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
-  const prevSearchParamsRef = useRef<string>('');
   const currentSearchParams = searchParams.toString();
 
   const statusValues = searchParams.getAll('status');
@@ -42,10 +38,6 @@ export function IssuesTable() {
       setSearchParams(newSearchParams);
     }
   });
-
-  useEffect(() => {
-    prevSearchParamsRef.current = currentSearchParams;
-  }, [currentSearchParams]);
 
   const filters = useMemo(
     () => [
@@ -78,35 +70,20 @@ export function IssuesTable() {
     queryKey: ['issues', currentSearchParams, projectId],
     staleTime: 0,
     gcTime: 0,
-    enabled:
-      prevSearchParamsRef.current === '' ||
-      prevSearchParamsRef.current !== currentSearchParams,
-    queryFn: (): Promise<any> => {
+    enabled: true,
+    queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
-
-      let status: IssueStatus[];
-      if (statusValues.length > 0) {
-        status = statusValues
-          .filter((value) =>
-            Object.values(IssueStatus).includes(value as IssueStatus),
-          )
-          .map((value) => value as IssueStatus);
-
-        if (status.length === 0) {
-          status = [IssueStatus.UNRESOLVED];
-        }
-      } else {
-        status = [IssueStatus.UNRESOLVED];
-      }
-
       return issuesApi.list({
         projectId,
         cursor: cursor ?? undefined,
         limit,
-        status,
+        status:
+          statusValues.length > 0
+            ? statusValues.map((value) => value as IssueStatus)
+            : undefined,
       });
     },
   });
@@ -126,11 +103,9 @@ export function IssuesTable() {
     });
   };
   const { checkAccess } = useAuthorization();
-  const openNewWindow = useNewWindow();
   const userHasPermissionToMarkAsArchived = checkAccess(
     Permission.WRITE_ISSUES,
   );
-
 
   return (
     <div className="flex-col w-full">

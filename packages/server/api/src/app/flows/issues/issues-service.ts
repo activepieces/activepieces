@@ -10,6 +10,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { flowRunRepo } from '../flow-run/flow-run-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { IssueEntity } from './issues-entity'
+import { FlowRunEntity } from '../flow-run/flow-run-entity'
 
 const repo = repoFactory(IssueEntity)
 
@@ -76,7 +77,9 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             .where({ projectId })
 
         if (!isNil(status) && status.length > 0) {
-            query = query.andWhere('status = :status', { status: In(status) })
+            query = query.andWhere({
+                status: In(status),
+            })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -165,24 +168,26 @@ type UpdateParams = {
 
 
 async function resolveIssueWithZeroCount(projectId: string, log: FastifyBaseLogger) {
-    await repo().createQueryBuilder()
+    await repo().createQueryBuilder('issue')
         .update(IssueEntity)
         .set({
             status: IssueStatus.RESOLVED,
-            projectId,
             updated: new Date().toISOString(),
         })
-        .where('status = :status', { status: IssueStatus.UNRESOLVED })
-        .andWhere(_issue => {
-            const subQuery = flowRunRepo()
-                .createQueryBuilder('flowRun')
-                .select('flowRun.id')
-                .where('flowRun."flowId" = IssueEntity."flowId"')
-                .andWhere('flowRun."failedStepName" = IssueEntity."stepName"')
-                .andWhere('flowRun.status IN (:...failedStatuses)', { FAILED_STATES })
+        .where({
+            status: IssueStatus.UNRESOLVED,
+            projectId,
+        })
+        .andWhere(qb => {
+            const subQuery = qb.createQueryBuilder()
+                .select('1')
+                .from(FlowRunEntity, 'flow_run')
+                .where('flow_run."flowId" = issue."flowId"')
+                .andWhere('flow_run."failedStepName" = issue."stepName"')
+                .andWhere('flow_run.status IN (:...statuses)')
                 .getQuery()
             return `NOT EXISTS (${subQuery})`
-        })
+        }, { statuses: FAILED_STATES })
         .execute()
 
     log.info('Resolved issues with zero failed runs')

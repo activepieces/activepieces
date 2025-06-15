@@ -29,11 +29,6 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
             type: String,
             enum: IssueStatus,
         },
-        count: {
-            type: Number,
-            select: false,
-            readonly: true,
-        },
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
@@ -43,8 +38,9 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
     },
     indices: [
         {
-            name: 'idx_issue_flowId_stepId',
+            name: 'idx_issue_flowId_stepName',
             columns: ['flowId', 'stepName'],
+            unique: true,
         },
     ],
     relations: {

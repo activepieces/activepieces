@@ -209,7 +209,6 @@ import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/pos
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
-import { AddStepToIssuesTablePostgres1748789709144 } from './migration/postgres/1748789709144-AddStepToIssuesTablePostgres'
 import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
@@ -220,6 +219,8 @@ import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1
 import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
 import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
 import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
+import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -372,11 +373,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpRunEntity1748358415599,
         AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
-        AddStepToIssuesTablePostgres1748789709144, 
         AddMcpToolFlowCascadeDelete1749128866314,
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
         AddAgentsLimitToPlatformPlan1749917984363,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddStepToIssuesTable1750017637712
     ]
 
     const edition = system.getEdition()

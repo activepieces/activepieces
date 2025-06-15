@@ -1,13 +1,17 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { Archive, Check, X } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
-import { IssueStatus, PopulatedIssue, FlowRunStatus } from '@activepieces/shared';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { Archive, Check, X } from 'lucide-react';
+import { formatUtils } from '@/lib/utils';
+import {
+  IssueStatus,
+  PopulatedIssue,
+  FlowRunStatus,
+} from '@activepieces/shared';
 
 export const issuesTableColumns: ColumnDef<
   RowDataWithActions<PopulatedIssue>
@@ -59,8 +63,8 @@ export const issuesTableColumns: ColumnDef<
           className="text-center hover:underline cursor-pointer"
           onClick={() => {
             window.open(
-              `/flows/${row.original.flowId}/runs?status=${FlowRunStatus.FAILED}`,
-              '_blank'
+              `/runs?status=${FlowRunStatus.FAILED}&flowId=${row.original.flowId}`,
+              '_blank',
             );
           }}
           role="button"
@@ -104,8 +108,18 @@ export const issuesTableColumns: ColumnDef<
     ),
     cell: ({ row }) => {
       const issue = row.original;
-      const status = issue.status === IssueStatus.ARCHIVED ? t('Archived') : issue.status === IssueStatus.RESOLVED ? t('Resolved') : t('Unresolved');
-      const icon = issue.status === IssueStatus.ARCHIVED ? Archive : issue.status === IssueStatus.RESOLVED ? Check : X;
+      const status =
+        issue.status === IssueStatus.ARCHIVED
+          ? t('Archived')
+          : issue.status === IssueStatus.RESOLVED
+          ? t('Resolved')
+          : t('Unresolved');
+      const icon =
+        issue.status === IssueStatus.ARCHIVED
+          ? Archive
+          : issue.status === IssueStatus.RESOLVED
+          ? Check
+          : X;
       return (
         <div className="flex justify-center">
           <StatusIconWithText

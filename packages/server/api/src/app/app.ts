@@ -36,7 +36,6 @@ import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { emailService } from './ee/helper/email/email-service'
@@ -61,7 +60,6 @@ import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
-import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
@@ -296,7 +294,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
@@ -327,7 +324,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.set(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             break
