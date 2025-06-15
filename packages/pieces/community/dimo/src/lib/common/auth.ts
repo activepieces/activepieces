@@ -5,7 +5,7 @@ export const vehicleAuth = PieceAuth.CustomAuth({
     props : {
       token : PieceAuth.SecretText({
         displayName : "Vehicle JWT",
-        description : "Use your developer token and Token Exchange API to get the vehicle JWT",
+        description : "With your developer token and use 'vehicle-jwt-token-exchange-api' to generate a vehicle JWT",
         required : true,
       })
     }
@@ -17,7 +17,7 @@ export const vehicleAuth = PieceAuth.CustomAuth({
     props: {
       token : PieceAuth.SecretText({
         displayName : "Developer Token",
-        description : "Generate a developer token from the DIMO Developer Portal",
+        description : "Generate a developer token using 'generate-developer-token-auth-api' action",
         required : true,
       })
     }
