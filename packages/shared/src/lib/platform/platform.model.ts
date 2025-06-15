@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { LocalesEnum } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../federated-authn'
@@ -149,8 +148,6 @@ export const Platform = Type.Object({
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
-    defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
-
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
@@ -164,7 +161,6 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    defaultLocale: Nullable(Type.String()),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
