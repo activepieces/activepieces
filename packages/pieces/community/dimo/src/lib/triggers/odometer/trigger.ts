@@ -4,7 +4,6 @@ import {
   getHeaders,
   getNumberExpression,
   handleFailures,
-  Operator as Operator,
 } from '../../helpers';
 import {
   createTrigger,
@@ -13,6 +12,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { developerAuth } from '../../common';
+import { operatorStaticDropdown } from '../common';
 
 export const odometerTrigger = createTrigger({
   auth: developerAuth,
@@ -28,19 +28,7 @@ export const odometerTrigger = createTrigger({
         'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
       required: false,
     }),
-    operator: Property.StaticDropdown({
-      displayName: 'Operator',
-      description: 'How to compare the odometer value',
-      required: true,
-      defaultValue: Operator.GREATER_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     odometerValue: Property.Number({
       displayName: 'Odometer Value (km)',
       description: 'The odometer value in kilometers to compare against',
@@ -84,12 +72,12 @@ export const odometerTrigger = createTrigger({
   async onEnable(context) {
     const {
       vehicleTokenIds,
-      operator: comparisonType,
+      operator,
       odometerValue,
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
-    const triggerCondition = getNumberExpression(comparisonType, odometerValue);
+    const triggerCondition = getNumberExpression(operator, odometerValue);
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
@@ -98,7 +86,7 @@ export const odometerTrigger = createTrigger({
         data: 'powertrainTransmissionTravelledDistance',
         trigger: triggerCondition,
         setup: triggerFrequency,
-        description: `Odometer trigger: ${comparisonType} ${odometerValue} km`,
+        description: `Odometer trigger: ${operator} ${odometerValue} km`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'token',
@@ -184,7 +172,7 @@ export const odometerTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.operator,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.odometerValue,
           actualValue: odometerKm,
           unit: 'km',

@@ -1,9 +1,10 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { WebhookInfo, WebhookPayload } from "../../models";
-import { getHeaders, getNumberExpression, handleFailures, Operator } from "../../helpers";
+import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { developerAuth } from "../../common";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
+import { operatorStaticDropdown } from "../common";
 
 export const fuelAbsoluteTrigger = createTrigger({
   auth: developerAuth,
@@ -17,19 +18,7 @@ export const fuelAbsoluteTrigger = createTrigger({
       description: 'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
       required: false,
     }),
-    operator: Property.StaticDropdown({
-      displayName: 'Operator',
-      description: 'How to compare the fuel level in liters',
-      required: true,
-      defaultValue: Operator.LESS_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     fuelLiters: Property.Number({
       displayName: 'Fuel Level (Liters)',
       description: 'The fuel level in liters to compare against',
@@ -65,10 +54,10 @@ export const fuelAbsoluteTrigger = createTrigger({
     cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
   },
   async onEnable(context) {
-    const { vehicleTokenIds, operator: comparisonType, fuelLiters, triggerFrequency, verificationToken } = context.propsValue;
+    const { vehicleTokenIds,  operator, fuelLiters, triggerFrequency, verificationToken } = context.propsValue;
 
     // Build trigger condition
-    const triggerCondition = getNumberExpression(comparisonType, fuelLiters);
+    const triggerCondition = getNumberExpression(operator, fuelLiters);
 
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
@@ -79,7 +68,7 @@ export const fuelAbsoluteTrigger = createTrigger({
         data: 'powertrainFuelSystemAbsoluteLevel',
         trigger: triggerCondition,
         setup: triggerFrequency,
-        description: `Fuel absolute level trigger: ${comparisonType} ${fuelLiters}L`,
+        description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'token',
@@ -164,7 +153,7 @@ export const fuelAbsoluteTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.operator,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.fuelLiters,
           actualValue: fuelLiters,
           unit: 'L',

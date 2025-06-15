@@ -1,5 +1,7 @@
 // Type-safe WebhookDefinition ve trigger gereksinimleri için enum/union tipleri
 
+import { Operator } from "../helpers";
+
 export enum TriggerField {
   Speed = 'speed',
   IsIgnitionOn = 'isIgnitionOn',
@@ -31,11 +33,7 @@ export type BooleanTriggerField =
   | TriggerField.IsIgnitionOn
   | TriggerField.PowertrainTractionBatteryChargingIsCharging;
 
-export enum NumericOperator {
-  Equal = 'Equal',
-  GreaterThan = 'GreaterThan',
-  LessThan = 'LessThan',
-}
+export type NumericOperator = Operator
 
 export enum BooleanOperator {
   Is = 'Is',
@@ -74,6 +72,7 @@ export interface TriggerInput {
 
 export interface WebhookInfo {
   webhookId: string;
+  // verificationToken: string;
 }
 
 export interface WebhookPayload {

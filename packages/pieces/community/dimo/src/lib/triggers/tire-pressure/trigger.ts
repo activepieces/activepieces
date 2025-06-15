@@ -10,10 +10,10 @@ import {
   getHeaders,
   getNumberExpression,
   handleFailures,
-  Operator,
 } from '../../helpers';
 import { getTirePressurePositionLabel, TirePressurePosition } from './type';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
+import { operatorStaticDropdown } from '../common';
 
 export const tirePressureTrigger = createTrigger({
   auth: developerAuth,
@@ -43,19 +43,7 @@ export const tirePressureTrigger = createTrigger({
         ],
       },
     }),
-    comparisonType: Property.StaticDropdown({
-      displayName: 'Comparison Type',
-      description: 'How to compare the tire pressure',
-      required: true,
-      defaultValue: Operator.LESS_THAN,
-      options: {
-        options: [
-          { label: 'Equal to', value: Operator.EQUAL },
-          { label: 'Greater than', value: Operator.GREATER_THAN },
-          { label: 'Less than', value: Operator.LESS_THAN },
-        ],
-      },
-    }),
+    operator: operatorStaticDropdown,
     pressureKpa: Property.Number({
       displayName: 'Tire Pressure (kPa)',
       description: 'The tire pressure in kilopascals to compare against',
@@ -94,14 +82,14 @@ export const tirePressureTrigger = createTrigger({
     const {
       vehicleTokenIds,
       tirePosition,
-      comparisonType,
+       operator,
       pressureKpa,
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
 
     // Build trigger condition
-    const triggerCondition = getNumberExpression(comparisonType, pressureKpa);
+    const triggerCondition = getNumberExpression(operator, pressureKpa);
 
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
@@ -114,7 +102,7 @@ export const tirePressureTrigger = createTrigger({
         setup: triggerFrequency,
         description: `Tire pressure trigger: ${getTirePressurePositionLabel(
           tirePosition
-        )} ${comparisonType} ${pressureKpa} kPa`,
+        )} ${operator} ${pressureKpa} kPa`,
         target_uri: context.webhookUrl,
         status: 'Active',
         verification_token: verificationToken || 'token',
@@ -230,7 +218,7 @@ export const tirePressureTrigger = createTrigger({
         eventId: webhookBody.cloudEventId,
         triggerInfo: {
           conditionMet: true,
-          comparison: context.propsValue.comparisonType,
+          operator: context.propsValue.operator,
           threshold: context.propsValue.pressureKpa,
           actualValue: pressureKpa,
           unit: 'kPa',
