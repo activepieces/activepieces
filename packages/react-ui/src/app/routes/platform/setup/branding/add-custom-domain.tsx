@@ -20,7 +20,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { customDomainApi } from '@/features/platform-admin-panel/lib/custom-domain-api';
+import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
 import { CustomDomain } from '@activepieces/ee-shared';
 

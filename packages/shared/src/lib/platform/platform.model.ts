@@ -123,6 +123,7 @@ export const PlatformPlan = Type.Object({
     tablesLimit: Type.Optional(Type.Number()),
     mcpLimit: Type.Optional(Type.Number()),
     activeFlowsLimit: Type.Optional(Type.Number()),
+    agentsLimit: Type.Optional(Type.Number()),
 })
   
 export type PlatformPlan = Static<typeof PlatformPlan>
