@@ -242,6 +242,9 @@
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
+      "@activepieces/piece-dimo": [
+        "packages/pieces/community/dimo/src/index.ts"
+      ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
