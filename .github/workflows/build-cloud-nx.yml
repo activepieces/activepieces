@@ -22,6 +22,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npx nx reset 
+
       - uses: nrwl/nx-set-shas@v4
 
       - name: List all nx targets
