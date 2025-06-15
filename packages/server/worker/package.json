@@ -8,6 +8,7 @@
     "@activepieces/pieces-framework": "0.14.1",
     "@activepieces/server-shared": "0.0.2",
     "@activepieces/shared": "0.13.2",
+    "write-file-atomic": "5.0.1",
     "tslib": "2.6.2"
   }
 }
