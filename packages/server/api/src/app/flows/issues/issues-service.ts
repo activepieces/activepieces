@@ -7,9 +7,9 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
+import { flowRunRepo } from '../flow-run/flow-run-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { IssueEntity } from './issues-entity'
-import { flowRunRepo } from '../flow-run/flow-run-service'
 
 const repo = repoFactory(IssueEntity)
 
@@ -59,7 +59,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         return enrichIssue(issue, log)
     },
     async list({ projectId, cursor, limit, status }: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
-        await resolveIssueWithZeroCount(log)
+        await resolveIssueWithZeroCount(projectId, log)
 
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
@@ -164,11 +164,12 @@ type UpdateParams = {
 }
 
 
-async function resolveIssueWithZeroCount(log: FastifyBaseLogger) {
+async function resolveIssueWithZeroCount(projectId: string, log: FastifyBaseLogger) {
     await repo().createQueryBuilder()
         .update(IssueEntity)
         .set({
             status: IssueStatus.RESOLVED,
+            projectId,
             updated: new Date().toISOString(),
         })
         .where('status = :status', { status: IssueStatus.UNRESOLVED })
@@ -196,7 +197,7 @@ async function enrichIssue(issue: Issue, log: FastifyBaseLogger) {
     })
     return {
         ...issue,
-        step: isNil(issue.stepName) ? undefined : await getStepFromFlow(flowVersion, issue.stepName),
+        step: isNil(issue.stepName) ? undefined : getStepFromFlow(flowVersion, issue.stepName),
         flowDisplayName: flowVersion.displayName ?? '',
         count,
     }
