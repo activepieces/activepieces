@@ -63,7 +63,7 @@ export const issuesTableColumns: ColumnDef<
           className="text-center hover:underline cursor-pointer"
           onClick={() => {
             window.open(
-              `/runs?status=${FlowRunStatus.FAILED}&flowId=${row.original.flowId}`,
+              `/runs?status=${FlowRunStatus.FAILED}&flowId=${row.original.flowId}&failedStepName=${row.original.step?.stepName}`,
               '_blank',
             );
           }}

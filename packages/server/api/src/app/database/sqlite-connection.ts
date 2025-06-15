@@ -115,6 +115,7 @@ import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqli
 import { RemoveDefaultLocaleFromPlatform1749735242946 } from './migration/sqlite/1749735242946-removeDefaultLocaleFromPlatform'
 import { AddAgentsSqlite1749953500521 } from './migration/sqlite/1749953500521-AddAgentsSqlite'
 import { AddStepToIssuesTableSqlite1750017482244 } from './migration/sqlite/1750017482244-AddStepToIssuesTableSqlite'
+import { MakeStepNameOptionalSqlite1750025280435 } from './migration/sqlite/1750025280435-MakeStepNameOptionalSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -247,6 +248,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAgentsSqlite1749953500521,
         RemoveDefaultLocaleFromPlatform1749735242946,
         AddStepToIssuesTableSqlite1750017482244,
+        MakeStepNameOptionalSqlite1750025280435,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
