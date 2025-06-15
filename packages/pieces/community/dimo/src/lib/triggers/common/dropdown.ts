@@ -19,3 +19,10 @@ export const operatorStaticDropdown = Property.StaticDropdown({
     ],
   },
 });
+
+export const verificationTokenInput = Property.ShortText({
+      displayName: 'Verification Token',
+      description: 'Token for webhook verification',
+      required: true,
+      defaultValue: 'token',
+    })

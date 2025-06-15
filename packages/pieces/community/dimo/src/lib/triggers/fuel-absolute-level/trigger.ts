@@ -4,7 +4,7 @@ import { WebhookInfo, WebhookPayload } from "../../models";
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { developerAuth } from "../../common";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown } from "../common";
+import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
 export const fuelAbsoluteTrigger = createTrigger({
   auth: developerAuth,
@@ -36,12 +36,7 @@ export const fuelAbsoluteTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: Property.ShortText({
-      displayName: 'Verification Token',
-      description: 'Token for webhook verification (optional)',
-      required: false,
-      defaultValue: 'token',
-    }),
+    verificationToken: verificationTokenInput,
   },
   sampleData: {
     tokenId: 17,
@@ -71,7 +66,7 @@ export const fuelAbsoluteTrigger = createTrigger({
         description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
         target_uri: context.webhookUrl,
         status: 'Active',
-        verification_token: verificationToken || 'token',
+        verification_token: verificationToken
       },
       headers: getHeaders(context.auth.token),
     });
@@ -106,6 +101,7 @@ export const fuelAbsoluteTrigger = createTrigger({
     // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
+      verificationToken: verificationToken
     });
   },
   async onDisable(context) {
@@ -122,7 +118,16 @@ export const fuelAbsoluteTrigger = createTrigger({
       console.warn('Failed to cleanup webhook:', error);
     }
   },
+  async onHandshake(context) {
 
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
+  },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
 
