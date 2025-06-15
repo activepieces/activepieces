@@ -7,7 +7,7 @@ import {
   Tag,
   User,
   Replace,
-  ChevronDown,
+  Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { ApAvatar } from '@/components/custom/ap-avatar';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -37,7 +38,10 @@ import {
 } from '@/components/ui/tooltip';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
-import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import {
+  appConnectionsMutations,
+  appConnectionsQueries,
+} from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -53,14 +57,13 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 
-import { ConnectionActionMenu } from './connection-actions-menu';
-
 function AppConnectionsPage() {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
   const location = useLocation();
@@ -80,8 +83,6 @@ function AppConnectionsPage() {
   const pieceName = searchParams.get('pieceName') ?? undefined;
   const displayName = searchParams.get('displayName') ?? undefined;
 
-  console.info(location.search);
-
   const {
     data: connections,
     isLoading: connectionsLoading,
@@ -97,6 +98,9 @@ function AppConnectionsPage() {
     },
     extraKeys: [location.search, projectId],
   });
+
+  const { mutateAsync: deleteConnections } =
+    appConnectionsMutations.useBulkDeleteAppConnections(refetch);
 
   const filteredData = useMemo(() => {
     if (!connections?.data) return undefined;
@@ -411,21 +415,31 @@ function AppConnectionsPage() {
           return (
             <>
               {selectedRows.length > 0 && (
-                <ConnectionActionMenu
-                  connections={selectedRows}
-                  refetch={refetch}
-                  onDelete={() => {
+                <ConfirmationDeleteDialog
+                  title={t('Delete Connections')}
+                  message={t(
+                    'Are you sure you want to delete these connections? This action cannot be undone.',
+                  )}
+                  mutationFn={async () => {
+                    await deleteConnections(selectedRows.map((row) => row.id));
+                    refetch();
                     resetSelection();
                     setSelectedRows([]);
                   }}
+                  entityName={t('connection')}
+                  open={showDeleteDialog}
+                  onOpenChange={setShowDeleteDialog}
+                  showToast
                 >
-                  <Button className="h-9 w-full" variant={'default'}>
-                    {selectedRows.length > 0
-                      ? `${t('Actions')} (${selectedRows.length})`
-                      : t('Actions')}
-                    <ChevronDown className="h-3 w-4 ml-2" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('Delete')} ({selectedRows.length})
                   </Button>
-                </ConnectionActionMenu>
+                </ConfirmationDeleteDialog>
               )}
             </>
           );
@@ -479,7 +493,7 @@ function AppConnectionsPage() {
         },
       },
     ],
-    [userHasPermissionToWriteAppConnection, selectedRows],
+    [userHasPermissionToWriteAppConnection, selectedRows, showDeleteDialog],
   );
   return (
     <div className="flex-col w-full">
