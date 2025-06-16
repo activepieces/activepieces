@@ -1,8 +1,8 @@
 import { t } from 'i18next';
-import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
+import { isNil } from '@activepieces/shared';
 
 import { TestButtonTooltip } from '../test-step-tooltip';
 
@@ -50,7 +50,7 @@ export const FirstTimeTestingSection = ({
           </Button>
         </TestButtonTooltip>
 
-        {mockData !== undefined && (
+        {!isNil(mockData) && (
           <>
             {t('Or')}
             <Button

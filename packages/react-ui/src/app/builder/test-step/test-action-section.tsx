@@ -1,5 +1,7 @@
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,7 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
+type ActionWithoutNext = Omit<Action, 'nextAction'>;
 enum DialogType {
   NONE = 'NONE',
   TODO_CREATE_TASK = 'TODO_CREATE_TASK',
@@ -77,19 +80,25 @@ const TestStepSectionImplementation = React.memo(
     );
     const socket = useSocket();
     const [todoId, setTodoId] = useState<string | null>(null);
-
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[currentStep.name],
         sampleDataInput: state.sampleDataInput[currentStep.name],
       };
     });
-    const { mutate } = testStepHooks.useTestAction({
-      currentStep,
-      setErrorMessage,
-      setConsoleLogs,
-      onSuccess: undefined,
-    });
+    const form = useFormContext<ActionWithoutNext>();
+    const { mutate: testAction, isPending: isWatingTestResult } =
+      testStepHooks.useTestAction({
+        currentStep,
+        setErrorMessage,
+        setConsoleLogs,
+        onSuccess: () => {
+          form.setValue(
+            `settings.inputUiInfo.lastTestDate`,
+            dayjs().toISOString(),
+          );
+        },
+      });
 
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
@@ -129,7 +138,7 @@ const TestStepSectionImplementation = React.memo(
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
-        mutate(undefined);
+        testAction(undefined);
       }
     };
 
@@ -137,6 +146,8 @@ const TestStepSectionImplementation = React.memo(
       setActiveDialog(DialogType.NONE);
       setTodoId(null);
     };
+    const isTesting =
+      activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
 
     return (
       <>
@@ -154,10 +165,10 @@ const TestStepSectionImplementation = React.memo(
                   } else if (isRunAgent(currentStep)) {
                     handleRunAgent();
                   } else {
-                    mutate(undefined);
+                    testAction(undefined);
                   }
                 }}
-                loading={activeDialog !== DialogType.NONE || isLoadingTodo}
+                loading={isTesting || isSaving}
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -169,7 +180,7 @@ const TestStepSectionImplementation = React.memo(
         {sampleDataExists && (
           <TestSampleDataViewer
             isValid={currentStep.valid}
-            isTesting={activeDialog !== DialogType.NONE || isLoadingTodo}
+            isTesting={isTesting}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
