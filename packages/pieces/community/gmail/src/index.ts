@@ -78,6 +78,7 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'Ani-4x'
   ],
   
   triggers: [gmailNewEmailTrigger,
