@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../../index';
 import { gmailCommon } from '../common/common';
 
@@ -18,7 +18,8 @@ export const newConversation = createTrigger({
         if (!auth) return { options: [] };
         
         try {
-          const response = await gmailCommon.getLabels(auth.access_token);
+            const authData = auth as OAuth2PropertyValue;
+          const response = await gmailCommon.getLabels(authData.access_token);
           return {
             options: [
               { label: 'All Labels', value: '' },

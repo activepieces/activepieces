@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework'; 
 import { gmailAuth } from '../../index';
 import { gmailCommon } from '../common/common';
+
 
 
 export const removeLabelFromEmail = createAction({
@@ -23,7 +24,8 @@ export const removeLabelFromEmail = createAction({
         if (!auth) return { options: [] };
         
         try {
-          const response = await gmailCommon.getLabels(auth.access_token);
+          const authData = auth as OAuth2PropertyValue;
+          const response = await gmailCommon.getLabels(authData.access_token);
           return {
             options: response.labels.map((label: any) => ({
               label: label.name,
@@ -31,16 +33,18 @@ export const removeLabelFromEmail = createAction({
             })),
           };
         } catch (error) {
+          console.error('Error fetching labels:', error);
           return { options: [] };
         }
       },
     }),
   },
   async run({ auth, propsValue }) {
+    const authData = auth as OAuth2PropertyValue;
     const { messageId, labelId } = propsValue;
     
     return gmailCommon.makeRequest(
-      auth.access_token,
+      authData.access_token,
       'POST',
       `/users/me/messages/${messageId}/modify`,
       {
