@@ -24,12 +24,15 @@ These steps assume you have already generated a JWT token from the backend. If n
 <script src="https://cdn.activepieces.com/sdk/embed/0.4.0.js">
 </script>
 <script>
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
 activepieces.configure({
   prefix: "/",
-  instanceUrl: 'INSTANCE_URL',
-  jwtToken: "GENERATED_JWT_TOKEN",
+  instanceUrl,
+  jwtToken,
   embedding: {
-    containerId: "container",
+    containerId,
     builder: {
       disableNavigation: false,
       hideLogo: false,
