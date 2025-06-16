@@ -203,13 +203,13 @@ type UsageStrategy = (request: FastifyRequest<RequestGenericInterface, RawServer
 
 const openAIUsageStrategy: UsageStrategy = (request, response) => {
     const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number, prompt_tokens?: number, completion_tokens?: number } }
-    const params = request.params as Record<string, string> | null
+    const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
-    const body = request.body as Record<string, string>
+    const body = request.body as Record<string, unknown>
     const model = aiProviderService.extractModel(provider!, request)!
     const size = body.size
-    const imageCount = parseInt(body.n ?? '1')
+    const imageCount = parseInt(body.n as string ?? '1')
     const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
 
     const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
@@ -260,7 +260,7 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
 
 const anthropicUsageStrategy: UsageStrategy = (request, response) => {
     const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number } }
-    const params = request.params as Record<string, string> | null
+    const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
     const model = aiProviderService.extractModel(provider!, request)!
@@ -285,7 +285,7 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
 }
 
 const replicateUsageStrategy: UsageStrategy = (request, _response) => {
-    const params = request.params as Record<string, string> | null
+    const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
     const model = aiProviderService.extractModel(provider!, request)!
