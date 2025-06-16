@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 
 import { repoFactory } from '../../../core/db/repo-factory'
+import { distributedLock } from '../../../helper/lock'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -16,7 +17,6 @@ export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 type UpdatePlatformBillingParams = {
     platformId: string
 } & Partial<PlatformPlanLimits>
-
 
 const edition = system.getEdition()
 
@@ -36,12 +36,24 @@ function getPlanLimits(planName: PlanName): Partial<PlatformPlanLimits> {
 export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+        if (!isNil(platformPlan)) return platformPlan
 
-        if (isNil(platformPlan)) {
-            return createInitialBilling(platformId, log)
+        const lock = await distributedLock.acquireLock({
+            key: `platform_plan_${platformId}`,
+            timeout: 5000,
+            log,
+        })
+
+        try {
+
+            const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+            if (!isNil(platformPlan)) return platformPlan
+
+            return await createInitialBilling(platformId, log)
         }
-
-        return platformPlan
+        finally {
+            await lock.release()
+        }
     },
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
