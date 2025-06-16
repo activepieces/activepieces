@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { flushSync } from 'react-dom';
 import { useEffectOnce } from 'react-use';
 
 import { memoryRouter } from '@/app/router';
@@ -81,7 +81,6 @@ const handleClientNavigation = () => {
 };
 
 const EmbedPage = React.memo(() => {
-  const navigate = useNavigate();
   const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
     mutationFn: managedAuthApi.generateApToken,
@@ -102,33 +101,35 @@ const EmbedPage = React.memo(() => {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data, true);
               const initialRoute = event.data.data.initialRoute ?? '/';
-              setEmbedState({
-                hideSideNav: event.data.data.hideSidebar,
-                isEmbedded: true,
-                hideLogoInBuilder: event.data.data.hideLogoInBuilder ?? false,
-                hideFlowNameInBuilder:
-                  event.data.data.hideFlowNameInBuilder ?? false,
-                prefix: event.data.data.prefix,
-                disableNavigationInBuilder:
-                  event.data.data.disableNavigationInBuilder !== false,
-                hideFolders: event.data.data.hideFolders ?? false,
-                sdkVersion: event.data.data.sdkVersion,
-                fontUrl: event.data.data.fontUrl,
-                fontFamily: event.data.data.fontFamily,
-                useDarkBackground:
-                  initialRoute.startsWith('/embed/connections'),
-                hideExportAndImportFlow:
-                  event.data.data.hideExportAndImportFlow ?? false,
-                hideHomeButtonInBuilder:
-                  event.data.data.disableNavigationInBuilder ===
-                  'keep_home_button_only'
-                    ? false
-                    : event.data.data.disableNavigationInBuilder,
-                emitHomeButtonClickedEvent:
-                  event.data.data.emitHomeButtonClickedEvent ?? false,
+              //must use it to ensure that the correct router in RouterProvider is used before navigation
+              flushSync(() => {
+                setEmbedState({
+                  hideSideNav: event.data.data.hideSidebar,
+                  isEmbedded: true,
+                  hideLogoInBuilder: event.data.data.hideLogoInBuilder ?? false,
+                  hideFlowNameInBuilder:
+                    event.data.data.hideFlowNameInBuilder ?? false,
+                  prefix: event.data.data.prefix,
+                  disableNavigationInBuilder:
+                    event.data.data.disableNavigationInBuilder !== false,
+                  hideFolders: event.data.data.hideFolders ?? false,
+                  sdkVersion: event.data.data.sdkVersion,
+                  fontUrl: event.data.data.fontUrl,
+                  fontFamily: event.data.data.fontFamily,
+                  useDarkBackground:
+                    initialRoute.startsWith('/embed/connections'),
+                  hideExportAndImportFlow:
+                    event.data.data.hideExportAndImportFlow ?? false,
+                  hideHomeButtonInBuilder:
+                    event.data.data.disableNavigationInBuilder ===
+                    'keep_home_button_only'
+                      ? false
+                      : event.data.data.disableNavigationInBuilder,
+                  emitHomeButtonClickedEvent:
+                    event.data.data.emitHomeButtonClickedEvent ?? false,
+                });
               });
-              //previously initialRoute was optional
-              navigate(initialRoute);
+              memoryRouter.navigate(initialRoute);
               handleVendorNavigation({ projectId: data.projectId });
               handleClientNavigation();
               notifyVendorPostAuthentication();

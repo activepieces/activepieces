@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { memoryRouter } from '@/app/router';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { cn, parentWindow } from '@/lib/utils';
@@ -21,22 +22,18 @@ import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
 const extractIdFromQueryParams = () => {
-  const connectionName = new URLSearchParams(window.location.search).get(
-    NEW_CONNECTION_QUERY_PARAMS.connectionName,
-  );
+  const connectionName = new URLSearchParams(
+    memoryRouter.state.location.search,
+  ).get(NEW_CONNECTION_QUERY_PARAMS.connectionName);
   return isNil(connectionName) || connectionName.length === 0
     ? apId()
     : connectionName;
 };
 export const EmbeddedConnectionDialog = () => {
   const connectionName = extractIdFromQueryParams();
-  const pieceName = new URLSearchParams(window.location.search).get(
-    NEW_CONNECTION_QUERY_PARAMS.name,
-  );
-  const randomId = new URLSearchParams(window.location.search).get(
-    NEW_CONNECTION_QUERY_PARAMS.randomId,
-  );
-  console.log(connectionName);
+  const queryParams = new URLSearchParams(memoryRouter.state.location.search);
+  const pieceName = queryParams.get(NEW_CONNECTION_QUERY_PARAMS.name);
+  const randomId = queryParams.get(NEW_CONNECTION_QUERY_PARAMS.randomId);
   return (
     <EmbeddedConnectionDialogContent
       connectionName={
