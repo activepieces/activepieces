@@ -586,49 +586,6 @@ class ActivepiecesEmbedded {
 
 
 
-  async getMcpInfo() {
-    return this.request({path: '/mcp-servers', method: 'GET'}).then(res => res.data[0]);
-  }
-
-  async getMcpTools():Promise<{pieces:McpPiece[]}> {
-    return this.request({path: '/mcp-pieces', method: 'GET'})
-  }
-
-  async addMcpTool(params:{pieceName:string, connectionId?:string, status?:McpPieceStatus}) {
-    const status = params.status ?? McpPieceStatus.ENABLED;
-    const mcp = await this.getMcpInfo();
-    return this.request({path: '/mcp-pieces', method: 'POST', body: {
-      pieceName: params.pieceName,
-      connectionId: params.connectionId,
-      status,
-      mcpId: mcp.id,
-    }})
-  }
-
-  async updateMcpTool({pieceName, status, connectionId}:{pieceName:string, status?:McpPieceStatus, connectionId?:string}) {
-    const pieces = await this.getMcpTools();
-    const pieceToUpdate = pieces.pieces.find((piece:McpPiece) => piece.pieceName === pieceName);
-    if(!pieceToUpdate)
-    {
-      return this.getMcpInfo();
-    }
-    return this.request({path: `/mcp-pieces/${pieceToUpdate.id}`, method: 'POST', body: {
-      pieceName,
-      status: status ?? pieceToUpdate.status,
-      connectionId: connectionId ?? pieceToUpdate.connectionId,
-    }})
-  }
-
-
-  async removeMcpTool({pieceName}:{pieceName:string}) {
-    const pieces = await this.getMcpTools();
-    const pieceToRemove = pieces.pieces.find((piece:McpPiece) => piece.pieceName === pieceName);
-    if(!pieceToRemove) {
-      return this.getMcpInfo();
-    }
-    return this.request({path: `/mcp-pieces/${pieceToRemove.id}`, method: 'DELETE'})
-  }
-
 
  async request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}, useJwtToken = true) {
     const headers:Record<string, string> = {
