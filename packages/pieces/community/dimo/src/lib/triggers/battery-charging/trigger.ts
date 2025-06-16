@@ -3,8 +3,8 @@ import { httpClient } from '@activepieces/pieces-common';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { getHeaders, handleFailures } from '../../helpers';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { developerAuth } from '../../common';
 import { verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const batteryChargingTrigger = createTrigger({
   auth: developerAuth,

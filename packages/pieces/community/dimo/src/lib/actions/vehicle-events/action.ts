@@ -1,9 +1,9 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { developerAuth } from "../../common/auth";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { getHeaders, handleFailures } from "../../helpers/http-request-helper";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
+import { developerAuth } from '../../../index';
 export const vehicleEventsUnifiedAction = createAction({
   auth: developerAuth,
   name: "all-endpoints-vehicle-events-api",

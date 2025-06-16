@@ -2,9 +2,9 @@ import { httpClient } from '@activepieces/pieces-common';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { getHeaders, getNumberExpression, handleFailures } from '../../helpers';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const fuelRelativeTrigger = createTrigger({
   auth: developerAuth,

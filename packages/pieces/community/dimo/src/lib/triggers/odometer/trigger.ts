@@ -11,8 +11,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { WebhookInfo, WebhookPayload } from '../../models';
-import { developerAuth } from '../../common';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const odometerTrigger = createTrigger({
   auth: developerAuth,

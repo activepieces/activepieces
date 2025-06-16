@@ -1,7 +1,7 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { WebhookInfo, WebhookPayload } from "../../models";
-import { developerAuth } from "../../common";
+import { developerAuth } from '../../../index';
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";

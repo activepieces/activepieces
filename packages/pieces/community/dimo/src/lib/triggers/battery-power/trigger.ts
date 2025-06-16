@@ -1,6 +1,6 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { developerAuth } from "../../common";
+import { developerAuth } from '../../../index';
 import { WebhookInfo, WebhookPayload } from "../../models";
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';

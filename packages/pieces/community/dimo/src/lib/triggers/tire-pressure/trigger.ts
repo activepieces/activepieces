@@ -4,7 +4,6 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import {
   getHeaders,
@@ -14,6 +13,7 @@ import {
 import { getTirePressurePositionLabel, TirePressurePosition } from './type';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const tirePressureTrigger = createTrigger({
   auth: developerAuth,
