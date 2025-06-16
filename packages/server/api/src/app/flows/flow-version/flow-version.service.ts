@@ -150,6 +150,13 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async exists(id: FlowVersionId): Promise<boolean> {
+        return flowVersionRepo().exists({
+            where: {
+                id,
+            },
+        })
+    },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
         return flowVersionRepo().findOne({
             where: {
