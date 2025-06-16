@@ -202,7 +202,11 @@ type Usage = {
 type UsageStrategy = (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>) => Usage
 
 const openAIUsageStrategy: UsageStrategy = (request, response) => {
-    const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number, prompt_tokens?: number, completion_tokens?: number } }
+    const apiResponse = response as {
+        usage: 
+        | { input_tokens: number, output_tokens: number }
+        | { prompt_tokens: number, completion_tokens: number }
+    } 
     const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
@@ -223,15 +227,15 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
         })
     }
     if (languageModelConfig) {
-        let inputTokens = 0
-        let outputTokens = 0
-        if (request.url.includes('chat/completions')) {
-            inputTokens = apiResponse.usage?.prompt_tokens ?? 0
-            outputTokens = apiResponse.usage?.completion_tokens ?? 0
+        let inputTokens: number
+        let outputTokens: number
+        if ('prompt_tokens' in apiResponse.usage) {
+            inputTokens = apiResponse.usage.prompt_tokens
+            outputTokens = apiResponse.usage.completion_tokens
         }
         else {
-            inputTokens = apiResponse.usage?.input_tokens ?? 0
-            outputTokens = apiResponse.usage?.output_tokens ?? 0
+            inputTokens = apiResponse.usage.input_tokens
+            outputTokens = apiResponse.usage.output_tokens
         }
 
         const { input, output } = languageModelConfig.pricing
@@ -259,7 +263,7 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
 }
 
 const anthropicUsageStrategy: UsageStrategy = (request, response) => {
-    const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number } }
+    const apiResponse = response as { usage: { input_tokens: number, output_tokens: number } }
     const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
@@ -275,11 +279,10 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
         })
     }
 
-    const inputTokens = apiResponse.usage?.input_tokens ?? 0
-    const outputTokens = apiResponse.usage?.output_tokens ?? 0
     const { input, output } = languageModelConfig.pricing
+    const { input_tokens, output_tokens } = apiResponse.usage
     return {
-        cost: calculateTokensCost(inputTokens, outputTokens, input, output),
+        cost: calculateTokensCost(input_tokens, output_tokens, input, output),
         model,
     }
 }
