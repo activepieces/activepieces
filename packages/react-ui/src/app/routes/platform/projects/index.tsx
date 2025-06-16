@@ -30,9 +30,9 @@ import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
+import { EditProjectDialog } from '../../settings/edit-project-dialog';
 
 import { NewProjectDialog } from './new-project-dialog';
-import { EditProjectDialog } from '../../settings/edit-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
@@ -138,7 +138,8 @@ export default function ProjectsPage() {
   const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProjectWithLimits | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectWithLimits | null>(null);
 
   const [searchParams] = useSearchParams();
 

@@ -79,8 +79,6 @@ export function EditProjectDialog({
     resolver: typeboxResolver(updateProjectFormSchema),
   });
 
-
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -91,9 +89,7 @@ export function EditProjectDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <div
-            className="grid space-y-4"
-          >
+          <div className="grid space-y-4">
             <FormField
               name="displayName"
               render={({ field }) => (
@@ -129,7 +125,9 @@ export function EditProjectDialog({
                 name="plan.aiCredits"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="plan.aiCredits">{t('AI Credits Limit')}</Label>
+                    <Label htmlFor="plan.aiCredits">
+                      {t('AI Credits Limit')}
+                    </Label>
                     <OptionalNumber
                       name="plan.aiCredits"
                       placeholder="100"
@@ -170,18 +168,27 @@ export function EditProjectDialog({
             )}
             {checkAccess(Permission.WRITE_PROJECT) && (
               <div className="flex gap-2 justify-end mt-4">
-                <Button type="submit" onClick={() => {
-                  const values = form.getValues();
-                  updateProjectMutation.mutate({
-                    displayName: values.displayName,
-                    externalId: values.externalId,
-                    plan: {
-                      tasks: isNil(values.plan.tasks) ? undefined : parseInt(values.plan.tasks),
-                      aiCredits: isNil(values.plan.aiCredits) ? undefined : parseInt(values.plan.aiCredits),
-                    },
-                  });
-                  onOpenChange(false);
-                }}>{t('Save')}</Button>
+                <Button
+                  type="submit"
+                  onClick={() => {
+                    const values = form.getValues();
+                    updateProjectMutation.mutate({
+                      displayName: values.displayName,
+                      externalId: values.externalId,
+                      plan: {
+                        tasks: isNil(values.plan.tasks)
+                          ? undefined
+                          : parseInt(values.plan.tasks),
+                        aiCredits: isNil(values.plan.aiCredits)
+                          ? undefined
+                          : parseInt(values.plan.aiCredits),
+                      },
+                    });
+                    onOpenChange(false);
+                  }}
+                >
+                  {t('Save')}
+                </Button>
               </div>
             )}
           </div>
@@ -189,4 +196,4 @@ export function EditProjectDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -1,12 +1,17 @@
-import { useQuery, QueryClient, useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  QueryClient,
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { useToast } from '@/components/ui/use-toast';
-import { INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
+import { useToast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';

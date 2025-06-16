@@ -7,9 +7,10 @@ import {
   SunMoon,
   Users,
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
+import { EditProjectDialog } from '@/app/routes/settings/edit-project-dialog';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -28,7 +29,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission, isNil } from '@activepieces/shared';
-import { EditProjectDialog } from '@/app/routes/settings/edit-project-dialog';
 
 export type ProjectSettingsLinkItem = {
   title: string;
@@ -108,10 +108,15 @@ const SettingsDropdownMenu = () => {
                 <Settings className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Project Settings')}</TooltipContent>
+            <TooltipContent side="bottom">
+              {t('Project Settings')}
+            </TooltipContent>
           </Tooltip>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[180px] space-y-[2px]">
+        <DropdownMenuContent
+          align="end"
+          className="min-w-[180px] space-y-[2px]"
+        >
           <ThemeToggle />
           {filteredLinkItems.map((item) => (
             <DropdownMenuItem key={item.title} className="p-0">

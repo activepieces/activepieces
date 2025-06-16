@@ -1,6 +1,7 @@
+import { useFormContext } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFormContext } from 'react-hook-form';
 
 interface OptionalNumberProps {
   name: string;
@@ -8,7 +9,11 @@ interface OptionalNumberProps {
   className?: string;
 }
 
-export function OptionalNumber({ name, placeholder, className }: OptionalNumberProps) {
+export function OptionalNumber({
+  name,
+  placeholder,
+  className,
+}: OptionalNumberProps) {
   const { register, setValue } = useFormContext();
 
   return (
@@ -31,4 +36,4 @@ export function OptionalNumber({ name, placeholder, className }: OptionalNumberP
       </Button>
     </div>
   );
-} 
+}
