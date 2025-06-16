@@ -73,7 +73,8 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             plan: platformBilling,
             usage,
             nextBillingDate: actualNextBillingDate,
-            nextBillingAmount: nextBillingAmount,
+            nextBillingAmount,
+            cancelAt: subscription?.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : undefined,
         }
         
         return response

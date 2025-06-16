@@ -95,14 +95,25 @@ export default function Billing() {
           </div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>
-        {platformSubscription?.nextBillingDate && (
+        {platformSubscription?.nextBillingDate &&
+          isNil(platformSubscription.cancelAt) && (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              <span>
+                Resets{' '}
+                {dayjs(platformSubscription.nextBillingDate).format(
+                  'MMM D, YYYY',
+                )}
+              </span>
+            </div>
+          )}
+
+        {platformSubscription?.cancelAt && (
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             <span>
-              Resets{' '}
-              {dayjs(platformSubscription.nextBillingDate).format(
-                'MMM D, YYYY',
-              )}
+              Cancels at{' '}
+              {dayjs(platformSubscription.cancelAt).format('MMM D, YYYY')}
             </span>
           </div>
         )}
