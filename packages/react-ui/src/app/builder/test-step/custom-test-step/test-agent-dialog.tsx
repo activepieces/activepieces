@@ -39,7 +39,6 @@ function AgentTestingDialog({
         output: agentResult,
         success: true,
       },
-      step: currentStep,
     });
     onOpenChange(false);
   };
