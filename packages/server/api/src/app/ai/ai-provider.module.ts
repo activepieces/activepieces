@@ -44,7 +44,8 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
                 response.pipe(new Writable({
                     write(chunk, encoding, callback) {
-                        buffer = Buffer.concat([buffer, chunk])
+                        buffer = Buffer.concat([buffer, chunk]);
+                        (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
                         callback()
                     },
                     async final(callback) {
@@ -54,14 +55,12 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                     response,
                                     body: buffer.toString(),
                                 }, 'Error response from AI provider')
-                                await reply.send(buffer)
                                 return callback()
                             }
 
                             const completeResponse = JSON.parse(buffer.toString())
                             const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
                             await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
-                            await reply.send(buffer)
                             callback()
                         }
                         catch (error) {
@@ -71,8 +70,10 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 projectId,
                                 body: buffer.toString(),
                             }, 'Error processing AI provider response')
-                            await reply.send(buffer)
                             callback()
+                        }
+                        finally {
+                            reply.raw.end()
                         }
                     },
                 }))

@@ -221,17 +221,17 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
         let inputTokens = 0
         let outputTokens = 0
         if (request.url.includes('chat/completions')) {
-            inputTokens = apiResponse.usage?.input_tokens ?? 0
-            outputTokens = apiResponse.usage?.output_tokens ?? 0
-        }
-        else {
             inputTokens = apiResponse.usage?.prompt_tokens ?? 0
             outputTokens = apiResponse.usage?.completion_tokens ?? 0
         }
-        const inputCostPerMillionTokens = languageModelConfig.pricing.input
-        const outputCostPerMillionTokens = languageModelConfig.pricing.output
+        else {
+            inputTokens = apiResponse.usage?.input_tokens ?? 0
+            outputTokens = apiResponse.usage?.output_tokens ?? 0
+        }
+
+        const { input, output } = languageModelConfig.pricing
         return {
-            cost: (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens,
+            cost: calculateTokensCost(inputTokens, outputTokens, input, output),
             model,
         }
     }
@@ -272,10 +272,9 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
 
     const inputTokens = apiResponse.usage?.input_tokens ?? 0
     const outputTokens = apiResponse.usage?.output_tokens ?? 0
-    const inputCostPerMillionTokens = languageModelConfig.pricing.input
-    const outputCostPerMillionTokens = languageModelConfig.pricing.output
+    const { input, output } = languageModelConfig.pricing
     return {
-        cost: (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens,
+        cost: calculateTokensCost(inputTokens, outputTokens, input, output),
         model,
     }
 }
@@ -307,4 +306,13 @@ const defaultUsageStrategy: UsageStrategy = (_request, _response) => {
         cost: 0,
         model: 'unknown',
     }
+}
+
+function calculateTokensCost(
+    inputTokens: number,
+    outputTokens: number,
+    inputCostPerMillionTokens: number,
+    outputCostPerMillionTokens: number,
+): number {
+    return (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens
 }
