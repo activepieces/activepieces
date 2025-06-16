@@ -272,7 +272,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       </div>
       <div className="flex w-[270px] h-full flex-col space-y-1">
         <Button
-          variant="secondary"
+          variant="ghost"
           className={cn('flex w-full justify-start bg-background', {
             'bg-muted': isInAllFlows,
           })}

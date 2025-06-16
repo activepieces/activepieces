@@ -87,7 +87,7 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
+          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-lg transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
@@ -313,7 +313,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="py-0 gap-2  rounded-lg">
+                <SidebarMenuButton>
                   {item.icon && <item.icon className="size-4" />}
                   <span>{item.label}</span>
                   <SidebarMenuAction asChild>

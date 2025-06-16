@@ -2,7 +2,6 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 /* You can add global styles to this file, and also import other style files */
-
 @layer base {
   input[type='number']::-webkit-inner-spin-button,
   input[type='number']::-webkit-outer-spin-button {
@@ -12,36 +11,43 @@
 
   :root {
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 240 10% 3.9%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 240 10% 3.9%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --border: 220 13% 87%;
-    --input: 220 13% 87%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.75rem;
+    --popover-foreground: 240 10% 3.9%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+
+    --ring: 240 5.9% 10%;
+    --radius: 0.625rem;
 
     --primary-100: 257 75% 85%;
     --primary: 257 74% 57%;
     --primary-300: 257 74% 25%;
     --primary-foreground: 210 20% 98%;
 
+
+    --success-100: 148 48% 80%;
+    --success: 148 48% 46%;
+    --success-300: 148 48% 10%;
+
     --destructive-100: 0 84.2% 90%;
     --destructive: 0 84.2% 60.2%;
     --destructive-300: 0 84.2% 40%;
-
-    --success-100: 148 48% 90%;
-    --success: 148 48% 46%;
-    --success-300: 148 48% 40%;
-
-
+    
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
     --warning-300: 28 80% 31%;
@@ -54,9 +60,9 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 71.4% 4.1%;
+    
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
@@ -65,45 +71,49 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+
   .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 0 0% 95%;
-    --card: 24 9.8% 10%;
-    --card-foreground: 0 0% 95%;
+    --background: 228 12% 8%;
+    --foreground: 0 0% 100%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
+    --card: 228 12% 8%;
+    --card-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
-
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 0 0% 98%;
-
-    --border: 240 3.7% 35%;
-    --input: 240 3.7% 35%;
-    --ring: 240 4.9% 83.9%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 100%;
 
     --primary-100: 257 74% 25%;
     --primary: 257 74% 57%;
     --primary-300: 257 75% 85%;
     --primary-foreground: 210 20% 98%;
 
-    --destructive-100: 4 100% 20%;
-    --destructive: 4 100% 30%;
-    --destructive-300: 0 96.3% 55%;
+    --success-100: 152 58% 44%;
+    --success: 160.1 84.1% 39.4%;
+    --success-300: 165.7 91.3% 9%;
 
-    --success-100: 166 97% 20%;
-    --success: 166 97% 14%;
-    --success-300: 166 97% 60%;
+    --destructive-100:  0 96.3% 89.4%;
+    --destructive: 0 62% 50%;
+    --destructive-300: 0 84.2% 40%;
 
 
-    --warning-100: 51.72, 93.55%, 17.92%;
-    --warning: 47 96% 53%;
-    --warning-300: 52 96% 70%;
+    --warning-100: 32.1 97.7% 75%;
+    --warning: 21.7 77.8% 26.5%;
+    --warning-300: 15 79.1% 33.7%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 228 12% 12%;
+
+    --ring: 0 0% 24%;
+    --radius: 0.625rem;
 
     --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100) / 0.5);
 
@@ -120,7 +130,7 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;  
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -156,3 +166,4 @@
   /* If necessary, add !important to the rule */
   pointer-events: none !important;
 }
+

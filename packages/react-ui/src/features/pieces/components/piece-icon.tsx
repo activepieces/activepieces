@@ -49,12 +49,7 @@ const PieceIcon = React.memo(
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              pieceIconVariants({ border, size, circle }),
-              'dark:bg-accent-foreground/25',
-            )}
-          >
+          <div className={cn(pieceIconVariants({ border, size, circle }))}>
             {logoUrl ? (
               <ImageWithFallback
                 src={logoUrl}

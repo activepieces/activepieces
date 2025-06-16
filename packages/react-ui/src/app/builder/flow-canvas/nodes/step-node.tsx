@@ -167,10 +167,9 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary/70 group',
           {
-            'shadow-step-container': !isDragging,
-            'border-primary': isSelected,
+            'border-primary/70': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
@@ -195,7 +194,7 @@ const ApStepCanvasNode = React.memo(
           className={cn(
             'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
             {
-              'border-t-[3px] border-primary border-solid':
+              'border-t-[2px] border-primary/70 border-solid':
                 isSelected && !isDragging,
             },
           )}
