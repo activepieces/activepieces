@@ -1,9 +1,9 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { developerAuth } from "../../common";
 import { getHeaders, handleFailures } from "../../helpers";
 import { httpClient,HttpMethod } from "@activepieces/pieces-common";
 import { dimoTokenExchangeApiUrl } from "./constant";
 import { TokenExchangeResponse } from "./type";
+import { developerAuth } from '../../../index';
 
 export const tokenExchangeApiAction = createAction({
     auth: developerAuth,

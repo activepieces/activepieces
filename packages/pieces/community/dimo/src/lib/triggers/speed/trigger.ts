@@ -4,11 +4,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
-import { developerAuth } from '../../common';
 import { getHeaders, handleFailures } from '../../helpers';
 import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const speedTrigger = createTrigger({
   auth: developerAuth,

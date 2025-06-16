@@ -4,11 +4,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
-import { developerAuth } from '../../common';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions';
 import { getHeaders, handleFailures } from '../../helpers';
 import { verificationTokenInput } from '../common';
+import { developerAuth } from '../../../index';
 
 export const ignitionTrigger = createTrigger({
   auth: developerAuth,

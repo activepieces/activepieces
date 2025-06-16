@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { commonQueries, TELEMETR_API_BASE_URL } from './constant';
+import { vehicleAuth } from '../../../index';
 
 export const telemetryApiAction = createAction({
-  requireAuth: false,
+  auth : vehicleAuth,
   name: 'telemetry-api-query',
   displayName: 'Telemetry API (GraphQL)',
   description: 'Query DIMO Telemetry API using GraphQL for vehicle signals and telemetry data.',

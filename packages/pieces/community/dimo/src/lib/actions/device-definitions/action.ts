@@ -1,5 +1,4 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { developerAuth } from "../../common";
 import { getHeaders, handleFailures } from "../../helpers";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import {
@@ -10,6 +9,7 @@ import {
   DeviceDefinitionResponse,
   DeviceDefinitionsSearchResponse,
 } from "./type";
+import { developerAuth } from '../../../index';
 
 export const deviceDefinitionApiAction = createAction({
   auth: developerAuth,

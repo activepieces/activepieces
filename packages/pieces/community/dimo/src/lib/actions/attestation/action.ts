@@ -1,9 +1,9 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { vehicleAuth } from "../../common";
 import { AttestationResponse } from "./type";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { CREATE_VC_ENDPOINT } from "./constant";
 import { getHeaders, handleFailures } from "../../helpers";
+import { vehicleAuth } from '../../../index';
 
 export const attestationApiAction = createAction({
     auth: vehicleAuth,
