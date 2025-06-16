@@ -62,10 +62,11 @@ Change log format: DD/MM/YYYY (version)
 - Fixed an issue where sometimes the embed HTML file was getting cached.
 
 
-### 12/06/2025 (0.5.0-rc.0)
+### 16/06/2025 (0.5.0-rc.0)
 - This version requires you to **upgrade Activepieces to > [0.64.0-rc.0](https://github.com/activepieces/activepieces/pkgs/container/activepieces)**
-- Added `embedding.hideDuplicateFlow` parameter to the [configure](./embed-builder#configure-parameters) method. 
-- Added `embedding.builder.homeButtonIcon` parameter to the [configure](./embed-builder#configure-parameters) method. 
-- Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method. 
+- Added `embedding.hideDuplicateFlow` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- Added `embedding.builder.homeButtonIcon` parameter to the [configure](./embed-builder#configure-parameters) method **(value: 'logo' | 'back')**. 
+- Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method, it takes ISO 639-1 locale codes, we don't currently support all of them yet, **(value: 'en' | 'nl' | 'it' | 'de' | 'fr' | 'bg' | 'uk' | 'hu' | 'es' | 'ja' | 'id' | 'vi' | 'zh' | 'pt')**
+- Added `embedding.styling.mode` parameter to [configure](./embed-builder#configure-parameters) method **(value: 'light' | 'dark')**
 - **(Breaking Change)** Removed `prefix` parameter from the [configure](./embed-builder#configure-parameters) method. 
 - **(Breaking Change)** Removed `embedding.builder.hideLogo` parameter from the [configure](./embed-builder#configure-parameters) method. 
