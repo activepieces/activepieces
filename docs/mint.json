@@ -281,17 +281,6 @@
             "endpoints/mcp-servers/rotate",
             "endpoints/mcp-servers/update"
           ]
-        },
-        {
-          "group": "MCP pieces",
-          "icon": "plug",
-          "pages": [
-            "endpoints/mcp-pieces/schema",
-            "endpoints/mcp-pieces/add",
-            "endpoints/mcp-pieces/delete",
-            "endpoints/mcp-pieces/update",
-            "endpoints/mcp-pieces/list"
-          ]
         }
       ]
     },
@@ -432,7 +421,6 @@
       "pages": [
         "embedding/customize-pieces",
         "embedding/embed-connections",
-        "embedding/mcps",
         "embedding/navigation",
         "embedding/predefined-connection",
         "embedding/sdk-changelog",
@@ -535,6 +523,10 @@
     {
       "source": "/embedding/embed-builder/embed-iframe",
       "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/predefined-connection/overview",
+      "destination": "/embedding/predefined-connection"
     }
   ]
 }

@@ -42,6 +42,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
   apiKeysEnabled: false,
   alertsEnabled: false,
   ssoEnabled: false,
+  agentsLimit: 0,
 }
 
 export const OPENSOURCE_PLAN: PlatformPlanLimits = {
@@ -52,6 +53,7 @@ export const OPENSOURCE_PLAN: PlatformPlanLimits = {
   customRolesEnabled: false,
   includedTasks: 0,
   includedAiCredits: 0,
+  agentsLimit: 0,
   environmentsEnabled: false,
   analyticsEnabled: false,
   showPoweredBy: false,

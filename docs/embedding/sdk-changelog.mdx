@@ -53,10 +53,21 @@ Change log format: DD/MM/YYYY (version)
 
 -- Note: we didn't consider adding optional new parameters as a breaking change so we were bumping the patch version, but that was wrong and we will begin bumping the minor version for those changes from now on, and patch version will only get bumped for bug fixes.
 - This version requires you to update Activepieces to 0.56.0
-- Added `embedding.hideExportAndImportFlow` parameter to the [configure](./embed-builder) method.
+- Added `embedding.hideExportAndImportFlow` parameter to the [configure](./embed-builder#configure-parameters) method.
 - Added new possible value to the configure method param `embed.builder.disableNavigation` which is "keep_home_button_only" that keeps only the home button and hides the folder name with the delete flow action. 
 - Added new param to the configure method `embed.builder.homeButtonClickedHandler`, that overrides the navigation behaviour on clicking the home button. 
 
 
 ### 26/05/2025 (0.4.1)
 - Fixed an issue where sometimes the embed HTML file was getting cached.
+
+
+### 16/06/2025 (0.5.0-rc.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.5.0-rc.0.js
+- This version requires you to **upgrade Activepieces to [0.64.0-rc.0](https://github.com/activepieces/activepieces/pkgs/container/activepieces)**
+- Added `embedding.hideDuplicateFlow` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- Added `embedding.builder.homeButtonIcon` parameter to the [configure](./embed-builder#configure-parameters) method **(value: 'logo' | 'back')**. 
+- Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method, it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes, here are the ones supported: **('en' | 'nl' | 'it' | 'de' | 'fr' | 'bg' | 'uk' | 'hu' | 'es' | 'ja' | 'id' | 'vi' | 'zh' | 'pt')**
+- Added `embedding.styling.mode` parameter to [configure](./embed-builder#configure-parameters) method **(value: 'light' | 'dark')**
+- **(Breaking Change)** Removed `prefix` parameter from the [configure](./embed-builder#configure-parameters) method. 
+- **(Breaking Change)** Removed `embedding.builder.hideLogo` parameter from the [configure](./embed-builder#configure-parameters) method. 

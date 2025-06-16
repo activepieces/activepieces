@@ -5,7 +5,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { CardList, CardListItemSkeleton } from '@/components/ui/card-list';
+import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
