@@ -18,8 +18,8 @@ export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
             type: String,
             nullable: false,
         },
-        tokens: {
-            type: Number,
+        cost: {
+            type: 'decimal',
             nullable: false,
         },
         projectId: {

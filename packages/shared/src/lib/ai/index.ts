@@ -26,7 +26,7 @@ export const AIUsage = Type.Object({
     ...BaseModelSchema,
     provider: Type.String({ minLength: 1 }),
     model: Type.String({ minLength: 1 }),
-    tokens: Type.Number({ minimum: 0 }),
+    cost: Type.Number({ minimum: 0 }),
     projectId: Type.String(),
 })
 

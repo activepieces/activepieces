@@ -6,10 +6,16 @@ import {
     ApEdition,
     apId,
     CreateAIProviderRequest,
+    DALLE2PricingPerImage,
+    DALLE3PricingPerImage,
     ErrorCode,
+    isNil,
     PlatformId,
     SeekPage,
+    SUPPORTED_AI_PROVIDERS,
+    SupportedAIProvider,
 } from '@activepieces/shared'
+import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
@@ -99,8 +105,55 @@ export const aiProviderService = {
             projectId: params.projectId,
             provider: params.provider,
             model: params.model,
-            tokens: params.tokens,
+            cost: params.cost,
         })
+    },
+
+    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
+        let strategy: UsageStrategy
+        switch (provider) {
+            case 'openai':
+                strategy = openAIUsageStrategy
+                break
+            case 'anthropic':
+                strategy = anthropicUsageStrategy
+                break
+            case 'replicate':
+                strategy = replicateUsageStrategy
+                break
+            default:
+                strategy = defaultUsageStrategy
+                break
+        }
+        return strategy(request, response)
+    },
+
+    extractModel(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
+        const body = request.body as Record<string, string>
+
+        switch (provider) {
+            case 'openai':
+                return body.model
+            case 'anthropic':
+                return body?.model
+            case 'replicate':
+                if (body.version) {
+                    // e.g. replicate/hello-world:5c7d5dc6
+                    return body.version.split(':')[0]
+                }
+                else {
+                    // Extract model from URL pattern: /v1/models/{owner}/{model-name}/predictions
+                    const urlMatch = request.url.match(/\/v1\/models\/([^/]+\/[^/]+)/)
+                    return urlMatch?.[1] ?? null
+                }
+            default:
+                return null
+        }
+    },
+
+    isModelSupported(provider: string, model: string): boolean {
+        const providerConfig = getProviderConfig(provider)!
+        return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
     },
 }
 
@@ -120,10 +173,138 @@ function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
     })
 }
 
+function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
+    if (isNil(provider)) {
+        return undefined
+    }
+    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}
+
+
+
 type IncreaseProjectAIUsageParams = {
     projectId: string
     provider: string
     model: string
-    tokens: number
+    cost: number
 }
 
+type Usage = {
+    cost: number
+    model: string
+}
+
+type UsageStrategy = (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>) => Usage
+
+const openAIUsageStrategy: UsageStrategy = (request, response) => {
+    const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number, prompt_tokens?: number, completion_tokens?: number } }
+    const params = request.params as Record<string, string> | null
+    const provider = params?.['provider']
+    const providerConfig = getProviderConfig(provider)!
+    const body = request.body as Record<string, string>
+    const model = aiProviderService.extractModel(provider!, request)!
+    const size = body.size
+    const imageCount = parseInt(body.n ?? '1')
+    const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
+
+    const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
+    const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
+    if (!languageModelConfig && !imageModelConfig) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            params: {
+                provider: 'openai',
+            },
+        })
+    }
+    if (languageModelConfig) {
+        let inputTokens = 0
+        let outputTokens = 0
+        if (request.url.includes('chat/completions')) {
+            inputTokens = apiResponse.usage?.input_tokens ?? 0
+            outputTokens = apiResponse.usage?.output_tokens ?? 0
+        }
+        else {
+            inputTokens = apiResponse.usage?.prompt_tokens ?? 0
+            outputTokens = apiResponse.usage?.completion_tokens ?? 0
+        }
+        const inputCostPerMillionTokens = languageModelConfig.pricing.input
+        const outputCostPerMillionTokens = languageModelConfig.pricing.output
+        return {
+            cost: (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens,
+            model,
+        }
+    }
+
+    if (imageModelConfig?.instance.modelId === 'dall-e-3') {
+        const pricing = imageModelConfig.pricing as DALLE3PricingPerImage
+        const imageCost = pricing[quality][size as keyof typeof pricing[typeof quality]]
+        return {
+            cost: imageCost * imageCount,
+            model,
+        }
+    }
+
+    const pricing = imageModelConfig?.pricing as DALLE2PricingPerImage
+    const imageCost = pricing['standard'][size as keyof typeof pricing['standard']]
+    return {
+        cost: imageCost * imageCount,
+        model,
+    }
+}
+
+const anthropicUsageStrategy: UsageStrategy = (request, response) => {
+    const apiResponse = response as { usage?: { input_tokens?: number, output_tokens?: number } }
+    const params = request.params as Record<string, string> | null
+    const provider = params?.['provider']
+    const providerConfig = getProviderConfig(provider)!
+    const model = aiProviderService.extractModel(provider!, request)!
+
+    const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
+    if (!languageModelConfig) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            params: {
+                provider: 'anthropic',
+            },
+        })
+    }
+
+    const inputTokens = apiResponse.usage?.input_tokens ?? 0
+    const outputTokens = apiResponse.usage?.output_tokens ?? 0
+    const inputCostPerMillionTokens = languageModelConfig.pricing.input
+    const outputCostPerMillionTokens = languageModelConfig.pricing.output
+    return {
+        cost: (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens,
+        model,
+    }
+}
+
+const replicateUsageStrategy: UsageStrategy = (request, _response) => {
+    const params = request.params as Record<string, string> | null
+    const provider = params?.['provider']
+    const providerConfig = getProviderConfig(provider)!
+    const model = aiProviderService.extractModel(provider!, request)!
+
+    const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
+    if (!imageModelConfig) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            params: {
+                provider: 'replicate',
+            },
+        })
+    }
+
+    return {
+        cost: imageModelConfig.pricing as number,
+        model,
+    }
+}
+
+const defaultUsageStrategy: UsageStrategy = (_request, _response) => {
+    return {
+        cost: 0,
+        model: 'unknown',
+    }
+}

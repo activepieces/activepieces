@@ -212,6 +212,7 @@ import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -360,6 +361,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
         AddMcpToolFlowCascadeDelete1749128866314,
+        AIUsagePostgres1750090291551,
     ]
 
     const edition = system.getEdition()
