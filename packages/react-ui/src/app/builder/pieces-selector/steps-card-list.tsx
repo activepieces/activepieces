@@ -6,7 +6,7 @@ import {
   CardList,
   CardListItem,
   CardListItemSkeleton,
-} from '@/components/ui/card-list';
+} from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';

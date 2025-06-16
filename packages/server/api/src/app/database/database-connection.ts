@@ -9,6 +9,7 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
+import { AgentEntity } from '../agents/agent-entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
@@ -30,7 +31,6 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 // import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 // import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 // import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
-// import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowTemplateEntity } from '../flow-templates/flow-template.entity'
@@ -41,11 +41,11 @@ import { FolderEntity } from '../flows/folder/folder.entity'
 // import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
-import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
 import { McpEntity } from '../mcp/mcp-entity'
 import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
 import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
+import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
+import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -57,6 +57,7 @@ import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
@@ -105,6 +106,8 @@ function getEntities(): EntitySchema<unknown>[] {
         GlobalOAuthAppEntity,
         TodoEntity,
         McpEntity,
+        AgentEntity,
+        TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
     ]
@@ -130,6 +133,7 @@ function getEntities(): EntitySchema<unknown>[] {
             //     ConnectionKeyEntity,
             //     AppCredentialEntity,
             //     PlatformPlanEntity,
+
             // )
             break
         case ApEdition.COMMUNITY:

@@ -34,10 +34,18 @@ import { AddOrderToFolder1747095861746 } from './migration/postgres/174709586174
 import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
 import { DefaultMCPServer1749183083485 } from './migration/postgres/1749183083485-DefaultMCPServer'
+import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
+import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
+import { AddFailedStepNameFlowRun1750044840070 } from './migration/postgres/1750044840070-add-failed-step-flow-run'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -51,6 +59,14 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddFailedStepNameFlowRun1750044840070,
+        AddAgents1749405724276,
+        AddAgentOutput1749859119064,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddAgentsModule1748456786940,
+        AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639,
         DefaultMCPServer1749183083485,
         AddMcpToolFlowCascadeDelete1749128866314,
         AddMcpToolEntity1748352614033,

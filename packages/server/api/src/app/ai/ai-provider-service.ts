@@ -41,6 +41,12 @@ export const aiProviderService = {
         }
     },
 
+    async isAgentConfigured(): Promise<boolean> {
+        return aiProviderRepo().existsBy({
+            provider: 'openai',
+        })
+    },
+
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
         assertOnlyCloudPlatformCanEditOnCloud(platformId)
 

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ListTodo, Package, Table2, Workflow } from 'lucide-react';
+import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -66,6 +66,14 @@ export function DashboardContainer({
     return true;
   };
 
+  // TODO(agents): after we enable agents for everyone.
+  const filterAgents = (item: SidebarItem) => {
+    if (item.label === t('Agents')) {
+      return platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
+    }
+    return true;
+  };
+
   const filterAlerts = (item: SidebarItem) =>
     platform.plan.alertsEnabled || item.label !== t('Alerts');
 
@@ -105,6 +113,16 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
+  const agentsLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/agents'),
+    label: t('Agents'),
+    icon: <Bot />,
+    showInEmbed: false,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
   const tablesLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
@@ -127,14 +145,16 @@ export function DashboardContainer({
 
   const items: SidebarItem[] = [
     flowsLink,
-    releasesLink,
+    agentsLink,
     mcpLink,
     tablesLink,
     todosLink,
+    releasesLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts);
+    .filter(filterAlerts)
+    .filter(filterAgents);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

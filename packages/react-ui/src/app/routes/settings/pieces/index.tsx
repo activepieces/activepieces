@@ -21,7 +21,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil, PieceType } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 

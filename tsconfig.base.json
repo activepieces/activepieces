@@ -518,6 +518,9 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-outlook": [
+        "packages/pieces/community/microsoft-outlook/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
       ],

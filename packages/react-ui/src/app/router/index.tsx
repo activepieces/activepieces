@@ -28,8 +28,7 @@ import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
-import { ApTablesPage } from '../routes/ap-tables';
-import { ApTableEditorPage } from '../routes/ap-tables/id';
+import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -62,6 +61,8 @@ import GeneralPage from '../routes/settings/general';
 // import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
+import { ApTablesPage } from '../routes/tables';
+import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
@@ -133,6 +134,16 @@ const routes = [
       </PageTitle>
     ),
   },
+  ...ProjectRouterWrapper({
+    path: '/agents',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Agents">
+          <AgentsPage />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
   {
     path: '/chats/:flowId',
     element: (

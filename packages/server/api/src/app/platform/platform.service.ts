@@ -6,7 +6,6 @@ import {
     ErrorCode,
     FilteredPieceBehavior,
     isNil,
-    LocalesEnum,
     Platform,
     PlatformId,
     PlatformPlanLimits,
@@ -95,7 +94,6 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
@@ -150,7 +148,6 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
-            ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,

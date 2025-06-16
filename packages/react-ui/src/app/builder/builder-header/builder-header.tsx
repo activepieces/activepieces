@@ -16,6 +16,7 @@ import {
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
+// import { HomeButton } from '@/components/ui/home-button';
 import {
   Tooltip,
   TooltipContent,
@@ -83,10 +84,15 @@ export const BuilderHeader = () => {
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
+
   return (
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
         <div className="flex items-center gap-2">
+          {/* <HomeButton
+            route={'/flows'}
+            showBackButton={embedState.homeButtonIcon === 'back'}
+          /> */}
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (

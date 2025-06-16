@@ -1,94 +1,58 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckCircle, CheckIcon, Tag, User } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import {
+  CheckCircle,
+  CircleDot,
+  Tag,
+  User,
+  X,
+  ListTodo,
+  CheckCheck,
+  Trash2,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
+import { TableTitle } from '@/components/custom/table-title';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  CURSOR_QUERY_PARAM,
   DataTable,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
+  BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
-import { UserFullName } from '@/components/ui/user-fullname';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
-import { todosApi } from '@/features/todos/lib/todos-api';
+import { todosHooks } from '@/features/todos/lib/todo-hook';
+import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   Todo,
-  TodoWithAssignee,
-  UNRESOLVED_STATUS,
-  RESOLVED_STATUS,
+  PopulatedTodo,
   STATUS_COLORS,
+  STATUS_VARIANT,
 } from '@activepieces/shared';
 
-import { TodoDetails } from './todo-details';
+import { ApAvatar } from '../../../components/custom/ap-avatar';
+
+import { TodoDetailsDrawer } from './todos-details-drawer';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
-  const [selectedTask, setSelectedTask] = useState<TodoWithAssignee | null>(
-    null,
-  );
+  const [selectedTask, setSelectedTask] = useState<PopulatedTodo | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [rowIndex, setRowIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<'all' | 'needs-action'>('all');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const location = useLocation();
-  const projectId = authenticationSession.getProjectId()!;
-  const platformId = authenticationSession.getPlatformId()!;
   const { data: currentUser } = userHooks.useCurrentUser();
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    if (!location.search.includes('assignee')) {
-      setSearchParams((prev) => {
-        if (currentUser) {
-          prev.set('assignee', currentUser.email);
-        }
-        prev.set('status', UNRESOLVED_STATUS.name);
-        return prev;
-      });
-    }
-  }, []);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['todos', location, projectId],
-    queryFn: () => {
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      const assigneeId = searchParams.get('assigneeId') ?? undefined;
-      const flowId = searchParams.get('flowId') ?? undefined;
-      const title = searchParams.get('title') ?? undefined;
-      const status = searchParams.getAll('status') ?? undefined;
-      const isUnresolved =
-        status.length === 1 && status[0] === UNRESOLVED_STATUS.name
-          ? true
-          : false;
-      const isAllStatus = status.length === 0 || status.length === 2;
-      const statusOptions = isAllStatus
-        ? undefined
-        : isUnresolved
-        ? [UNRESOLVED_STATUS.name]
-        : [RESOLVED_STATUS.name];
-      return todosApi.list({
-        projectId,
-        cursor: cursor ?? undefined,
-        limit,
-        platformId,
-        assigneeId,
-        flowId,
-        statusOptions,
-        title,
-      });
-    },
-  });
+  const { data, isLoading, refetch } = todosHooks.useTodosList(activeTab);
+  const { mutateAsync: deleteTodos } = todosHooks.useDeleteTodos(refetch);
 
   const filteredData = useMemo(() => {
     if (!data?.data) return undefined;
@@ -133,22 +97,6 @@ function TodosPage() {
       options: assigneeOptions ?? [],
     } as const,
     {
-      type: 'select',
-      title: t('Status'),
-      accessorKey: 'status',
-      options: [
-        {
-          label: t('Unresolved'),
-          value: UNRESOLVED_STATUS.name,
-        },
-        {
-          label: t('Resolved'),
-          value: RESOLVED_STATUS.name,
-        },
-      ],
-      icon: CheckIcon,
-    } as const,
-    {
       type: 'input',
       title: t('Title'),
       accessorKey: 'title',
@@ -157,7 +105,58 @@ function TodosPage() {
     } as const,
   ];
 
-  const columns: ColumnDef<RowDataWithActions<TodoWithAssignee>, unknown>[] = [
+  const getStatusIcon = (statusVariant: string) => {
+    if (statusVariant === STATUS_VARIANT.NEGATIVE) {
+      return X;
+    }
+    if (statusVariant === STATUS_VARIANT.POSITIVE) {
+      return CheckCircle;
+    }
+    return CircleDot;
+  };
+
+  const bulkActions: BulkAction<Todo>[] = useMemo(
+    () => [
+      {
+        render: (_, resetSelection) => {
+          return (
+            <>
+              {selectedRows.length > 0 && (
+                <ConfirmationDeleteDialog
+                  title={t('Delete Todos')}
+                  message={t(
+                    'Are you sure you want to delete these todos? This action cannot be undone.',
+                  )}
+                  mutationFn={async () => {
+                    await deleteTodos(selectedRows.map((row) => row.id));
+                    refetch();
+                    resetSelection();
+                    setSelectedRows([]);
+                  }}
+                  entityName={t('todos')}
+                  open={showDeleteDialog}
+                  onOpenChange={setShowDeleteDialog}
+                  showToast
+                >
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('Delete')} ({selectedRows.length})
+                  </Button>
+                </ConfirmationDeleteDialog>
+              )}
+            </>
+          );
+        },
+      },
+    ],
+    [selectedRows, showDeleteDialog],
+  );
+
+  const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -237,18 +236,66 @@ function TodosPage() {
       },
     },
     {
+      accessorKey: 'createdBy',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created by')} />
+      ),
+      cell: ({ row }) => {
+        const authorName = todoUtils.getAuthorName(row.original);
+        return (
+          <div className="text-left flex items-center gap-2">
+            <ApAvatar
+              size="small"
+              type={todoUtils.getAuthorType(row.original)}
+              fullName={authorName}
+              userEmail={row.original.createdByUser?.email ?? ''}
+              pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
+              profileUrl={todoUtils.getAuthorProfileUrl(row.original)}
+            />
+            <div>{authorName}</div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'assignee',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Assigned to')} />
       ),
       cell: ({ row }) => {
+        const hasAgent = row.original.agent;
+        if (hasAgent) {
+          return (
+            <div className="text-left">
+              <ApAvatar
+                type="agent"
+                size="small"
+                includeName={true}
+                pictureUrl={row.original.agent?.profilePictureUrl}
+                profileUrl={
+                  row.original.agent?.id
+                    ? `/agents/${row.original.agent.id}`
+                    : undefined
+                }
+                fullName={row.original.agent?.displayName ?? ''}
+              />
+            </div>
+          );
+        }
+
         return (
           <div className="text-left">
             {row.original.assignee && (
-              <UserFullName
-                firstName={row.original.assignee.firstName}
-                lastName={row.original.assignee.lastName}
-                email={row.original.assignee.email}
+              <ApAvatar
+                type="user"
+                size="small"
+                includeName={true}
+                userEmail={row.original.assignee.email}
+                fullName={
+                  row.original.assignee.firstName +
+                  ' ' +
+                  row.original.assignee.lastName
+                }
               />
             )}
             {!row.original.assignee && <div className="text-left">-</div>}
@@ -265,7 +312,7 @@ function TodosPage() {
         return (
           <div className="text-left">
             <StatusIconWithText
-              icon={CheckIcon}
+              icon={getStatusIcon(row.original.status.variant)}
               text={row.original.status.name}
               color={STATUS_COLORS[row.original.status.variant].color}
               textColor={STATUS_COLORS[row.original.status.variant].textColor}
@@ -274,6 +321,7 @@ function TodosPage() {
         );
       },
     },
+
     {
       accessorKey: 'created',
       header: ({ column }) => (
@@ -301,6 +349,32 @@ function TodosPage() {
           {t('Todos')}
         </TableTitle>
       </div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')}
+        className="mb-4"
+      >
+        <TabsList variant="outline">
+          <TabsTrigger
+            value="all"
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <ListTodo className="h-4 w-4" />
+            {t('All Todos')}
+          </TabsTrigger>
+          <TabsTrigger
+            value="needs-action"
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <CheckCheck className="h-4 w-4" />
+            {t('Needs Action')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <DataTable
         emptyStateTextTitle={t('No todos found')}
         emptyStateTextDescription={t(
@@ -314,32 +388,23 @@ function TodosPage() {
         onRowClick={(row) => {
           setSelectedTask(row);
           setDrawerOpen(true);
-          setRowIndex(data?.data.findIndex((task) => task.id === row.id) ?? 0);
         }}
+        bulkActions={bulkActions}
       />
       {selectedTask && (
-        <TodoDetails
+        <TodoDetailsDrawer
           key={selectedTask.id}
           currentTodo={selectedTask}
+          onStatusChange={() => {
+            setSelectedTask(null);
+            refetch();
+            setDrawerOpen(false);
+          }}
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
           onClose={() => {
             setSelectedTask(null);
             setDrawerOpen(false);
-          }}
-          onNext={() => {
-            if (!data || !data.data.length) return;
-            const length = data.data.length;
-            const nextIndex = (rowIndex + 1) % length;
-            setRowIndex(nextIndex);
-            setSelectedTask(data.data[nextIndex]);
-          }}
-          onPrevious={() => {
-            if (!data || !data.data.length) return;
-            const length = data.data.length;
-            const previousIndex = (rowIndex - 1 + length) % length;
-            setRowIndex(previousIndex);
-            setSelectedTask(data.data[previousIndex]);
           }}
         />
       )}

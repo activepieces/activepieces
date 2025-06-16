@@ -74,7 +74,7 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
     }: PostApplyOperation): Promise<void> {
         const isNotMcpTrigger =  !isMcpTriggerPiece(flowVersion) && [FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.LOCK_FLOW].includes(operation.type)
         if (isNotMcpTrigger) {
-            await mcpService(log).deleteFlowTools({ flowId: flowVersion.flowId })
+            await mcpService(log).deleteFlowTool({ flowId: flowVersion.flowId })
         }
     },
 })

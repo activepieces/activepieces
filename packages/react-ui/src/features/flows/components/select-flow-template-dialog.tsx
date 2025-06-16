@@ -5,6 +5,7 @@ import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { InputWithIcon } from '@/components/ui/Input-with-icon';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
