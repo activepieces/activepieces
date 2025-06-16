@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useCallback,
-  useState,
   useEffect,
   useRef,
 } from 'react';
@@ -27,7 +26,6 @@ import {
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
-  Action,
   isFlowStateTerminal,
 } from '@activepieces/shared';
 
@@ -641,7 +639,6 @@ export const useHandleKeyPressOnCanvas = () => {
                 const lastSelectedNode =
                   selectedNodes.length === 1 ? selectedNodes[0] : null;
                 pasteNodes(
-                  actions,
                   flowVersion,
                   {
                     parentStepName: lastSelectedNode ?? lastStep,
@@ -702,21 +699,6 @@ export const useSwitchToDraft = () => {
     switchToDraft,
     isSwitchingToDraftPending,
   };
-};
-
-export const usePasteActionsInClipboard = () => {
-  const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
-  const fetchClipboardOperations = async () => {
-    if (document.hasFocus()) {
-      const fetchedActionsFromClipboard = await getActionsInClipboard();
-      if (fetchedActionsFromClipboard.length > 0) {
-        setActionsToPaste(fetchedActionsFromClipboard);
-      } else {
-        setActionsToPaste([]);
-      }
-    }
-  };
-  return { actionsToPaste, fetchClipboardOperations };
 };
 
 export const useIsFocusInsideListMapperModeInput = ({

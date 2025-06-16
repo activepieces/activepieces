@@ -158,6 +158,13 @@ const systemPropValidators: {
 
     // MCP
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
+        const days = parseInt(value)
+        if (isNaN(days) || days < 0) {
+            return 'Value must be a non-negative number'
+        }
+        return true
+    },
 }
 
 

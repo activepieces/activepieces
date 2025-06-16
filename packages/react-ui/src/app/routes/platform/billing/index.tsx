@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { TableTitle } from '@/components/ui/table-title';
+import { TableTitle } from '@/components/custom/table-title';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';

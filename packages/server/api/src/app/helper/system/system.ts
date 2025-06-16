@@ -79,6 +79,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
     [AppSystemProp.SHOW_CHANGELOG]: 'true',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
 }
 
 let globalLogger: FastifyBaseLogger

@@ -535,6 +535,10 @@
     {
       "source": "/embedding/embed-builder/embed-iframe",
       "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/predefined-connection/overview",
+      "destination": "/embedding/predefined-connection"
     }
   ]
 }
