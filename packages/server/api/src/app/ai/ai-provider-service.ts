@@ -122,7 +122,12 @@ export const aiProviderService = {
                 strategy = replicateUsageStrategy
                 break
             default:
-                strategy = defaultUsageStrategy
+                throw new ActivepiecesError({
+                    code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+                    params: {
+                        provider,
+                    },
+                })
                 break
         }
         return strategy(request, response)
@@ -298,13 +303,6 @@ const replicateUsageStrategy: UsageStrategy = (request, _response) => {
     return {
         cost: imageModelConfig.pricing as number,
         model,
-    }
-}
-
-const defaultUsageStrategy: UsageStrategy = (_request, _response) => {
-    return {
-        cost: 0,
-        model: 'unknown',
     }
 }
 
