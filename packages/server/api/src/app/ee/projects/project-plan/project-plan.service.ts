@@ -28,11 +28,11 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     ): Promise<ProjectPlan> {
         const projectPlan = await getOrCreateDefaultPlan(projectId)
         await projectPlanRepo().update(projectPlan.id, {
-            ...spreadIfDefined('tasks', planLimits.tasks),
+            tasks: planLimits.tasks,
             ...spreadIfDefined('name', planLimits.nickname),
             ...spreadIfDefined('pieces', planLimits.pieces),
             ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
-            ...spreadIfDefined('aiCredits', planLimits.aiCredits),
+            aiCredits: planLimits.aiCredits,
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
     },

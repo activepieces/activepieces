@@ -1,4 +1,4 @@
-import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, QueryClient, useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useToast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
@@ -15,6 +16,8 @@ import {
   isNil,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
+  ApErrorParams,
+  ErrorCode,
 } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
@@ -35,6 +38,58 @@ export const projectHooks = {
       updateCurrentProject,
       setCurrentProject,
     };
+  },
+  useUpdateProject: () => {
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+    const { updateCurrentProject } = projectHooks.useCurrentProject();
+
+    return useMutation<
+      ProjectWithLimits,
+      Error,
+      {
+        displayName: string;
+        externalId?: string;
+        plan: { tasks: number | undefined; aiCredits?: number | undefined };
+      }
+    >({
+      mutationFn: (request) => {
+        updateCurrentProject(queryClient, request);
+        return projectApi.update(authenticationSession.getProjectId()!, {
+          ...request,
+          externalId:
+            request.externalId?.trim() !== '' ? request.externalId : undefined,
+        });
+      },
+      onSuccess: () => {
+        toast({
+          title: t('Success'),
+          description: t('Your changes have been saved.'),
+          duration: 3000,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['current-project', authenticationSession.getProjectId()],
+        });
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          switch (apError.code) {
+            case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
+              return {
+                code: ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS,
+                message: t('The external ID is already taken.'),
+              };
+            }
+            default: {
+              console.log(error);
+              toast(INTERNAL_ERROR_TOAST);
+              break;
+            }
+          }
+        }
+      },
+    });
   },
   useProjects: () => {
     return useQuery<ProjectWithLimits[], Error>({

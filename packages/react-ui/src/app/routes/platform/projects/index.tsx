@@ -32,6 +32,7 @@ import { ProjectWithLimits } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
+import { EditProjectDialog } from '../../settings/edit-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
@@ -136,6 +137,8 @@ export default function ProjectsPage() {
   const navigate = useNavigate();
   const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<ProjectWithLimits | null>(null);
 
   const [searchParams] = useSearchParams();
 
@@ -405,8 +408,8 @@ export default function ProjectsPage() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          await setCurrentProject(queryClient, row);
-                          navigate('/settings/general');
+                          setSelectedProject(row);
+                          setEditDialogOpen(true);
                         }}
                       >
                         <Pencil className="size-4" />
@@ -421,6 +424,17 @@ export default function ProjectsPage() {
             },
           ]}
         />
+        {selectedProject && (
+          <EditProjectDialog
+            open={editDialogOpen}
+            onOpenChange={(open) => {
+              setEditDialogOpen(open);
+              if (!open) {
+                setSelectedProject(null);
+              }
+            }}
+          />
+        )}
       </div>
     </LockedFeatureGuard>
   );

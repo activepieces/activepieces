@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
-import mcp from '@/assets/img/custom/mcp.svg';
+import mcp from '@/assets/img/custom/mcp-with-background.svg';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';

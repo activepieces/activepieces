@@ -8,12 +8,13 @@ import { federatedAuthnService } from '../authentication/federated-authn/federat
 import { domainHelper } from '../custom-domains/domain-helper'
 import { appearanceHelper } from '../helper/appearance-helper'
 
+const edition = system.getEdition()
+
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         if (isNil(platformId)) {
-            const edition = system.getEdition()
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                     [ThirdPartyAuthnProviderEnum.GOOGLE]: true,

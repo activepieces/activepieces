@@ -8,6 +8,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -27,16 +28,19 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission, isNil } from '@activepieces/shared';
+import { EditProjectDialog } from '@/app/routes/settings/edit-project-dialog';
 
 export type ProjectSettingsLinkItem = {
   title: string;
   href: string;
   icon: JSX.Element;
   hasPermission?: boolean;
+  onClick?: () => void;
 };
 
 const SettingsDropdownMenu = () => {
   const location = useLocation();
+  const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -46,8 +50,9 @@ const SettingsDropdownMenu = () => {
   const linkItems: ProjectSettingsLinkItem[] = [
     {
       title: t('General'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+      href: '#',
       icon: <Settings className="w-4 h-4" />,
+      onClick: () => setIsEditProjectDialogOpen(true),
     },
     {
       title: t('Appearance'),
@@ -94,39 +99,56 @@ const SettingsDropdownMenu = () => {
     .filter(filterOnPermission);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Project Settings')}</TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[180px] space-y-[2px]">
-        <ThemeToggle />
-        {filteredLinkItems.map((item) => (
-          <DropdownMenuItem key={item.title} className="p-0">
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                buttonVariants({ variant: 'ghost', size: 'sm' }),
-                'gap-x-2 w-full justify-start',
-                {
-                  'bg-secondary text-primary': linkActive(item),
-                },
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Project Settings')}</TooltipContent>
+          </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[180px] space-y-[2px]">
+          <ThemeToggle />
+          {filteredLinkItems.map((item) => (
+            <DropdownMenuItem key={item.title} className="p-0">
+              {item.onClick ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-x-2 w-full justify-start"
+                  onClick={item.onClick}
+                >
+                  {item.icon}
+                  {item.title}
+                </Button>
+              ) : (
+                <Link
+                  to={item.href}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'sm' }),
+                    'gap-x-2 w-full justify-start',
+                    {
+                      'bg-secondary text-primary': linkActive(item),
+                    },
+                  )}
+                >
+                  {item.icon}
+                  {item.title}
+                </Link>
               )}
-            >
-              {item.icon}
-              {item.title}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <EditProjectDialog
+        open={isEditProjectDialogOpen}
+        onOpenChange={setIsEditProjectDialogOpen}
+      />
+    </>
   );
 };
 

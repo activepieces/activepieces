@@ -68,13 +68,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             const project = await projectService.getOneOrThrow(projectId)
             const isCustomerProject = isCustomerPlatform(project.platformId)
             if (isSubscribed || isCustomerProject) {
-                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
+                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks ?? undefined)
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        ...spreadIfDefined('tasks', newTasks),
-                        ...spreadIfDefined('aiCredits', request.plan.aiCredits),
+                        tasks: newTasks ?? null,
+                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -174,6 +174,9 @@ type GetAllParams = {
 }
 
 function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
+    if (isNil(limit)) {
+        return null
+    }
     return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
 }
 

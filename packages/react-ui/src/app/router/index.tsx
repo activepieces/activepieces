@@ -57,7 +57,6 @@ import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
 import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -338,18 +337,6 @@ const routes = [
         <PageTitle title="Appearance">
           <ProjectSettingsLayout>
             <AppearancePage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="General">
-          <ProjectSettingsLayout>
-            <GeneralPage />
           </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
