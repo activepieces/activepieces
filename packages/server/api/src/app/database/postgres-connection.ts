@@ -222,6 +222,7 @@ import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-
 import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
 import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
 import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
+import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -381,6 +382,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveDefaultLocaleFromPlatform1749733527371,
         AddStepToIssuesTable1750017637712,
         MakeStepNameOptional1750025401754,
+        RemoveUniqueOnFlow1750093037011,
     ]
 
     const edition = system.getEdition()
