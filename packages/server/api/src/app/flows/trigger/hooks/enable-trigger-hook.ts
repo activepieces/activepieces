@@ -7,7 +7,9 @@ import {
     RepeatableJobType,
     UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     EngineResponseStatus,
+    ErrorCode,
     FlowVersion,
     isNil,
     PieceTrigger,
@@ -61,10 +63,12 @@ export const enablePieceTrigger = async (
     let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = null
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return {
-            ...engineHelperResponse,
-            webhookHandshakeConfiguration: null,
-        }
+        throw new ActivepiecesError({
+            code: ErrorCode.TRIGGER_ENABLE,
+            params: {
+                flowVersionId: flowVersion.id,
+            },
+        })
     }
 
     switch (pieceTrigger.type) {
