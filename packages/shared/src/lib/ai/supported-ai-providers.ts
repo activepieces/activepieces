@@ -291,13 +291,13 @@ It is strongly recommended that you add your credit card information to your Ope
         imageModels: [
             {
                 displayName: 'bytedance/sdxl-lightning-4step',
-                instance: replicate.image('bytedance/sdxl-lightning-4step:5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637'),
+                instance: replicate.image('bytedance/sdxl-lightning-4step'),
                 pricing: 0.0014,
             },
             {
-                displayName: 'stability-ai/stable-diffusion',
-                instance: replicate.image('stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4'),
-                pricing: 0.0034,
+                displayName: 'stability-ai/stable-diffusion-3.5-large',
+                instance: replicate.image('stability-ai/stable-diffusion-3.5-large'),
+                pricing: 0.0065,
             },
             {
                 displayName: 'black-forest-labs/flux-schnell',
