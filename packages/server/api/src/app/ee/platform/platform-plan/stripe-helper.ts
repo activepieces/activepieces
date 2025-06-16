@@ -65,8 +65,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'subscription',
-            success_url: `${frontendUrl}/platform/setup/billing`,
-            cancel_url: `${frontendUrl}/platform/setup/billing`,
+            success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
+            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,
         })
         
@@ -175,13 +175,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 }
             }
 
-            return `https://${frontendUrl}/platform/setup/billing/success`
+            return `/platform/setup/billing/success?action=${isUpgrade ? 'upgrade' : 'downgrade'}&plan=${newPlan}`
         }
         catch (error) {
             logger.error(`Failed to handle subscription scheduling ${error}`, { 
                 subscriptionId, 
             })
-            return `https://${frontendUrl}/platform/setup/billing/error`
+            return '/platform/setup/billing/error'
         }
     },
 })

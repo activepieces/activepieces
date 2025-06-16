@@ -1,5 +1,6 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
@@ -28,17 +29,21 @@ export const billingMutations = {
     });
   },
   useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+    const navigate = useNavigate();
     return useMutation({
       mutationFn: (params: UpdateSubscriptionParams) =>
         platformBillingApi.updateSubscription(params),
-      onSuccess: () => {
+      onSuccess: (url) => {
         setIsOpen(false);
+        console.log('url', url);
+        navigate(url);
         toast({
           title: t('Success'),
           description: t('Plan updated successfully'),
         });
       },
       onError: (error) => {
+        navigate(`/platform/setup/billing/error`);
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;
           if (apError.code === ErrorCode.QUOTA_EXCEEDED_DOWNGRADE) {
