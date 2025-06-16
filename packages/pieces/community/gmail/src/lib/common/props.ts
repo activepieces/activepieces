@@ -178,4 +178,164 @@ export const GmailProps = {
       required,
       defaultValue: false,
     }),
+  message: Property.Dropdown({
+    displayName: 'Message',
+    description: 'Select the message to reply to',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first',
+        };
+      }
+
+      try {
+        const response = await GmailRequests.getRecentMessages(
+          auth as OAuth2PropertyValue,
+          20 // Get last 20 messages
+        );
+
+        if (!response.body.messages || response.body.messages.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No messages found',
+          };
+        }
+
+        // Get message details for better display
+        const messageDetails = await Promise.all(
+          response.body.messages.slice(0, 10).map(async (msg: { id: string; threadId: string }) => {
+            try {
+              const details = await GmailRequests.getMail({
+                access_token: (auth as OAuth2PropertyValue).access_token,
+                message_id: msg.id,
+                format: 'metadata' as any,
+              });
+
+              const headers = details.payload?.headers || [];
+              const subject = headers.find((h: any) => h.name === 'Subject')?.value || 'No Subject';
+              const from = headers.find((h: any) => h.name === 'From')?.value || 'Unknown Sender';
+              const date = headers.find((h: any) => h.name === 'Date')?.value || '';
+              
+              // Format date to be more readable
+              const formattedDate = date ? new Date(date).toLocaleDateString() : '';
+              
+              return {
+                id: msg.id,
+                subject: subject.length > 50 ? subject.substring(0, 50) + '...' : subject,
+                from: from.length > 30 ? from.substring(0, 30) + '...' : from,
+                date: formattedDate,
+              };
+            } catch (error) {
+              return {
+                id: msg.id,
+                subject: 'Unable to load details',
+                from: 'Unknown',
+                date: '',
+              };
+            }
+          })
+        );
+
+        return {
+          disabled: false,
+          options: messageDetails.map((msg) => ({
+            label: `${msg.subject} - From: ${msg.from} ${msg.date ? `(${msg.date})` : ''}`,
+            value: msg.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading messages',
+        };
+      }
+    },
+  }),
+  thread: Property.Dropdown({
+    displayName: 'Thread',
+    description: 'Select the email thread to modify',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first',
+        };
+      }
+
+      try {
+        const response = await GmailRequests.getRecentThreads(
+          auth as OAuth2PropertyValue,
+          15 // Get last 15 threads
+        );
+
+        if (!response.body.threads || response.body.threads.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No threads found',
+          };
+        }
+
+        // Get thread details for better display
+        const threadDetails = await Promise.all(
+          response.body.threads.slice(0, 10).map(async (thread: { id: string; snippet?: string }) => {
+            try {
+              const details = await GmailRequests.getThread({
+                access_token: (auth as OAuth2PropertyValue).access_token,
+                thread_id: thread.id,
+                format: 'metadata' as any,
+              });
+
+              // Get the first message to extract subject and participants
+              const firstMessage = details.messages?.[0];
+              const headers = firstMessage?.payload?.headers || [];
+              const subject = headers.find((h: any) => h.name === 'Subject')?.value || 'No Subject';
+              const from = headers.find((h: any) => h.name === 'From')?.value || 'Unknown Sender';
+              const messageCount = details.messages?.length || 0;
+              
+              return {
+                id: thread.id,
+                subject: subject.length > 40 ? subject.substring(0, 40) + '...' : subject,
+                from: from.length > 25 ? from.substring(0, 25) + '...' : from,
+                messageCount: messageCount,
+                snippet: (thread.snippet || '').length > 30 ? 
+                  (thread.snippet || '').substring(0, 30) + '...' : (thread.snippet || ''),
+              };
+            } catch (error) {
+              return {
+                id: thread.id,
+                subject: 'Unable to load details',
+                from: 'Unknown',
+                messageCount: 0,
+                snippet: '',
+              };
+            }
+          })
+        );
+
+        return {
+          disabled: false,
+          options: threadDetails.map((thread) => ({
+            label: `${thread.subject} - ${thread.messageCount} msg(s) - From: ${thread.from}`,
+            value: thread.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading threads',
+        };
+      }
+    },
+  }),
 };

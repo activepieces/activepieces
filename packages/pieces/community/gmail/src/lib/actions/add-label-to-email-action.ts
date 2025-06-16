@@ -12,11 +12,7 @@ export const gmailAddLabelToEmailAction = createAction({
   description: 'Add one or more labels to a specific email message',
   displayName: 'Add Label to Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The ID of the message to add labels to',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     labels: GmailProps.labels,
     verify_message_exists: Property.Checkbox({
       displayName: 'Verify Message Exists',

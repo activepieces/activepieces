@@ -12,11 +12,7 @@ export const gmailRemoveLabelFromThreadAction = createAction({
   description: 'Remove one or more labels from all messages in a thread',
   displayName: 'Remove Label from Thread',
   props: {
-    thread_id: Property.ShortText({
-      displayName: 'Thread ID',
-      description: 'The ID of the thread to remove labels from',
-      required: true,
-    }),
+    thread_id: GmailProps.thread,
     labels_to_remove: Property.MultiSelectDropdown({
       displayName: 'Labels to Remove',
       description: 'Select the labels to remove from all messages in the thread',

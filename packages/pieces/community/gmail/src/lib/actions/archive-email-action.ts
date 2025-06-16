@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { GmailProps } from '../common/props';
 import { GmailRequests } from '../common/data';
 
 export const gmailArchiveEmailAction = createAction({
@@ -10,11 +11,7 @@ export const gmailArchiveEmailAction = createAction({
   description: 'Archive an email message by removing it from the inbox (moves to "All Mail")',
   displayName: 'Archive Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The ID of the message to archive',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     verify_message_exists: Property.Checkbox({
       displayName: 'Verify Message Exists',
       description: 'Check if the message exists and is in the inbox before archiving',

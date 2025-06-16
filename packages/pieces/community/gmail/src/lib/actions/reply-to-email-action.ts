@@ -5,6 +5,7 @@ import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { GmailProps } from '../common/props';
 
 export const gmailReplyToEmailAction = createAction({
   auth: gmailAuth,
@@ -12,11 +13,7 @@ export const gmailReplyToEmailAction = createAction({
   description: 'Reply to an existing email within the same thread',
   displayName: 'Reply to Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The ID of the message you want to reply to',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
       description: 'Choose whether to reply to sender only or to all recipients',

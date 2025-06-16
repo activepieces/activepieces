@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { GmailProps } from '../common/props';
 import { GmailRequests } from '../common/data';
 
 export const gmailDeleteEmailAction = createAction({
@@ -10,11 +11,7 @@ export const gmailDeleteEmailAction = createAction({
   description: 'Move an email message to Trash (can be restored from Trash)',
   displayName: 'Delete Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The ID of the message to move to trash',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     verify_message_exists: Property.Checkbox({
       displayName: 'Verify Message Exists',
       description: 'Check if the message exists before attempting to delete it',

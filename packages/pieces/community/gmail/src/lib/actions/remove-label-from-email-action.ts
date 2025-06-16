@@ -12,11 +12,7 @@ export const gmailRemoveLabelFromEmailAction = createAction({
   description: 'Remove one or more labels from a specific email message',
   displayName: 'Remove Label from Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The ID of the message to remove labels from',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     labels: GmailProps.labelsToRemove,
     verify_message_exists: Property.Checkbox({
       displayName: 'Verify Message Exists',
