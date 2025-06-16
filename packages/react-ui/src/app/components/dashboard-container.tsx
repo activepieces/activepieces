@@ -14,8 +14,6 @@ import { authenticationSession } from '../../lib/authentication-session';
 
 import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
-// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-
 type DashboardContainerProps = {
   children: React.ReactNode;
   hideHeader?: boolean;

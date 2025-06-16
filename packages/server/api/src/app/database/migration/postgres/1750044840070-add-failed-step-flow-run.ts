@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm"
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddFailedStepNameFlowRun1750044840070 implements MigrationInterface {
     name = 'AddFailedStepNameFlowRun1750044840070'

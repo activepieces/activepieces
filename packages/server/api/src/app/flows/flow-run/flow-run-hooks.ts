@@ -17,6 +17,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION) {
             const issue = await issuesService(log).add(flowRun)
+            log.info(`Created an issue for flow run ${flowRun.id}`)
             if (paidEditions) {
                 // await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
             }
@@ -25,15 +26,13 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             return
         }
         // const { consumedProjectUsage } = await platformUsageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
-        await sendQuotaAlertIfNeeded({
-            projectId: flowRun.projectId,
-            // consumedTasks: consumedProjectUsage,
-            consumedTasks: 0,
-            createdAt: dayjs().toISOString(),
-            // previousConsumedTasks: consumedProjectUsage - flowRun.tasks,
-            previousConsumedTasks: 0,
-            log,
-        })
+        // await sendQuotaAlertIfNeeded({
+        //     projectId: flowRun.projectId,
+        //     consumedTasks: consumedProjectUsage,
+        //     createdAt: dayjs().toISOString(),
+        //     previousConsumedTasks: consumedProjectUsage - flowRun.tasks,
+        //     log,
+        // })
     },
 })
 

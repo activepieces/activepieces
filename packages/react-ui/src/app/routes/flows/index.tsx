@@ -28,7 +28,7 @@ import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flo
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { folderIdParamName } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
-// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
+import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
@@ -37,7 +37,7 @@ import { Permission, PopulatedFlow } from '@activepieces/shared';
 import { TableTitle } from '../../../components/custom/table-title';
 
 import { FlowsTable } from './flows-table';
-// import { IssuesTable } from './issues-table';
+import { IssuesTable } from './issues-table';
 import TaskLimitAlert from './task-limit-alert';
 
 export enum FlowsPageTabs {
@@ -48,8 +48,7 @@ export enum FlowsPageTabs {
 
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
-  // const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-  const showIssuesNotification = false;
+  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -119,7 +118,7 @@ const FlowsPage = () => {
                   {t('Runs')}
                 </TabsTrigger>
               )}
-              {false && checkAccess(Permission.READ_ISSUES) && (
+              {checkAccess(Permission.READ_ISSUES) && (
                 <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
                   <CircleAlert className="h-4 w-4 mr-2" />
                   <span className="flex items-center gap-2">
@@ -140,9 +139,9 @@ const FlowsPage = () => {
           <TabsContent value={FlowsPageTabs.HISTORY}>
             <RunsTable />
           </TabsContent>
-          {/* <TabsContent value={FlowsPageTabs.ISSUES}>
+          <TabsContent value={FlowsPageTabs.ISSUES}>
             <IssuesTable />
-          </TabsContent> */}
+          </TabsContent>
         </Tabs>
       </div>
     </div>

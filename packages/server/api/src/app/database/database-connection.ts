@@ -38,7 +38,7 @@ import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-// import { IssueEntity } from '../flows/issues/issues-entity'
+import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-entity'
@@ -90,7 +90,7 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
-        // IssueEntity,
+        IssueEntity,
         // AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,

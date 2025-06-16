@@ -40,6 +40,7 @@ import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqli
 import { RemoveDefaultLocaleFromPlatform1749735242946 } from './migration/sqlite/1749735242946-removeDefaultLocaleFromPlatform'
 import { AddAgentsSqlite1749953500521 } from './migration/sqlite/1749953500521-AddAgentsSqlite'
 import { AddFailedStepNameFlowRun1750045151951 } from './migration/sqlite/1750045151951-add-failed-step-flow-run'
+import { AddIssueEntity1750058424539 } from './migration/sqlite/1750058424539-add-issue-entity'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -62,6 +63,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddIssueEntity1750058424539,
         AddFailedStepNameFlowRun1750045151951,
         AddAgentsSqlite1748573768714,
         AddAgentsSqlite1749953500521,
