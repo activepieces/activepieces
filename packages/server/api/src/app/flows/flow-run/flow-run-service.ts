@@ -59,6 +59,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         createdAfter,
         createdBefore,
+        failedStepName,
     }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator<FlowRun>({
@@ -99,6 +100,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (tags) {
             query = query.andWhere(APArrayContains('tags', tags))
         }
+
+        if (!isNil(failedStepName)) {
+            query = query.andWhere({
+                failedStepName,
+            })
+        }
+
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
@@ -135,8 +143,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds)
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
@@ -188,6 +196,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         projectId,
         tags,
         duration,
+        failedStepName,
     }: FinishParams): Promise<FlowRun> {
 
         await flowRunRepo().update({
@@ -200,6 +209,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
+            failedStepName: failedStepName ?? undefined,
         })
 
 
@@ -410,6 +420,7 @@ async function filterFlowRunsAndApplyFilters(
     createdAfter?: string,
     createdBefore?: string,
     excludeFlowRunIds?: FlowRunId[],
+    failedStepName?: string,
 ): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
@@ -444,6 +455,12 @@ async function filterFlowRunsAndApplyFilters(
     if (excludeFlowRunIds && excludeFlowRunIds.length > 0) {
         query = query.andWhere({
             id: Not(In(excludeFlowRunIds)),
+        })
+    }
+
+    if (failedStepName) {
+        query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+            failedStepName,
         })
     }
 
@@ -516,6 +533,7 @@ type FinishParams = {
     tasks: number | undefined
     duration: number | undefined
     tags: string[]
+    failedStepName?: string | undefined
 }
 
 type GetOrCreateParams = {
@@ -536,6 +554,7 @@ type ListParams = {
     limit: number
     createdAfter?: string
     createdBefore?: string
+    failedStepName?: string
 }
 
 type GetOneParams = {
@@ -581,6 +600,7 @@ type BulkRetryParams = {
     createdAfter?: string
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
+    failedStepName?: string
 }
 type AddToQueueParams = {
     flowRunId: FlowRunId

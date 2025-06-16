@@ -7,6 +7,7 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
 import { Socket } from 'socket.io'
+import { agentModule } from './agents/agent-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 // import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { analyticsModule } from './analytics/analytics-module'
@@ -38,7 +39,6 @@ import { getRedisConnection } from './database/redis-connection'
 // import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 // import { domainHelper } from './ee/custom-domains/domain-helper'
 // import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-// import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 // import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 // import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 // import { emailService } from './ee/helper/email/email-service'
@@ -57,7 +57,6 @@ import { getRedisConnection } from './database/redis-connection'
 // import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 // import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 // import { signingKeyModule } from './ee/signing-key/signing-key-module'
-// import { todoCommentModule } from './ee/todos/comment/todos-comment.module'
 // import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -66,7 +65,6 @@ import { cloudFlowTemplateModule } from './flow-templates/cloud-flow-template.mo
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { flowTemplateModule } from './flow-templates/flow-template.module'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
-// import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
@@ -92,6 +90,7 @@ import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
+import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
@@ -249,6 +248,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     // await app.register(adminPlatformModule)
     await app.register(changelogModule)
+    await app.register(agentModule)
+    await app.register(todoActivityModule)
 
     app.get(
         '/redirect',
@@ -305,12 +306,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(analyticsModule)
             // await app.register(projectRoleModule)
             // await app.register(projectReleaseModule)
-            // await app.register(todoCommentModule)
             // await app.register(globalConnectionModule)
             // setPlatformOAuthService(platformOAuth2Service(app.log))
             // projectHooks.set(projectEnterpriseHooks)
             // eventsHooks.set(auditLogService)
-            // flowRunHooks.set(platformRunHooks)
             // flagHooks.set(enterpriseFlagsHooks)
             // pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             // systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
@@ -336,13 +335,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(analyticsModule)
             // await app.register(projectRoleModule)
             // await app.register(projectReleaseModule)
-            // await app.register(todoCommentModule)
             // await app.register(globalConnectionModule)
             // systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             // setPlatformOAuthService(platformOAuth2Service(app.log))
             // projectHooks.set(projectEnterpriseHooks)
             // eventsHooks.set(auditLogService)
-            // flowRunHooks.set(platformRunHooks)
             // pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             // flagHooks.set(enterpriseFlagsHooks)
             break

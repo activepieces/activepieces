@@ -11,6 +11,7 @@ import {
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   BulkAction,
@@ -25,7 +26,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MessageTooltip } from '@/components/ui/message-tooltip';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
@@ -65,6 +65,7 @@ export const RunsTable = () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const failedStepName = searchParams.get('failedStepName') || undefined;
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
@@ -79,6 +80,7 @@ export const RunsTable = () => {
         limit,
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
+        failedStepName: failedStepName,
       });
     },
   });
@@ -151,6 +153,7 @@ export const RunsTable = () => {
       const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;
       const createdBefore = searchParams.get('createdBefore') || undefined;
+      const failedStepName = searchParams.get('failedStepName') || undefined;
       return flowRunsApi.bulkRetry({
         projectId: authenticationSession.getProjectId()!,
         flowRunIds: selectedAll ? undefined : retryParams.runIds,
@@ -160,6 +163,7 @@ export const RunsTable = () => {
         flowId,
         createdAfter,
         createdBefore,
+        failedStepName,
       });
     },
     onSuccess: () => {

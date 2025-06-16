@@ -8,13 +8,16 @@ import { Shortcut } from './shortcut';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
-  'ring-offset-background inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'ring-offset-background inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
-          'bg-[#254C7E] stroke-background text-primary-foreground enabled:hover:bg-[#254C7E]/90',
-        basic: 'text-primary underline-offset-4 enabled:hover:bg-accent',
+          'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
+        basic:
+          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
+        neutral:
+          'text-background bg-foreground enabled:hover:bg-foreground/80 enabled:hover:text-background',
         destructive:
           'bg-destructive text-background enabled:hover:bg-destructive/90',
         outline:
@@ -110,7 +113,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <LoadingSpinner
             className={
-              variant === 'default' ? 'stroke-background' : 'stroke-foreground'
+              variant === 'default' || variant === 'neutral'
+                ? 'stroke-background'
+                : 'stroke-foreground'
             }
           />
         ) : (

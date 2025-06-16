@@ -34,8 +34,12 @@ import { AddFolderDisplayOrder1747062679388 } from './migration/sqlite/174706267
 import { RemoveFeatureFlagsFromSqlite1747824740845 } from './migration/sqlite/1747824740845-RemoveFeatureFlagsFromSqlite'
 import { AddMcpToolEntitySQLITE1748365593414 } from './migration/sqlite/1748365593414-AddMcpToolEntitySQLITE'
 import { AddMcpRunEntitySQLITE1748365786218 } from './migration/sqlite/1748365786218-AddMcpRunEntitySQLITE'
+import { AddAgentsSqlite1748573768714 } from './migration/sqlite/1748573768714-AddAgentsSqlite'
 import { AIProviderRefactorSqlite1748824241409 } from './migration/sqlite/1748824241409-AIProviderRefactorSqlite'
 import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqlite/1749129178686-AddMcpToolFlowCascadeDeleteSqlite'
+import { RemoveDefaultLocaleFromPlatform1749735242946 } from './migration/sqlite/1749735242946-removeDefaultLocaleFromPlatform'
+import { AddAgentsSqlite1749953500521 } from './migration/sqlite/1749953500521-AddAgentsSqlite'
+import { AddFailedStepNameFlowRun1750045151951 } from './migration/sqlite/1750045151951-add-failed-step-flow-run'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -58,6 +62,10 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddFailedStepNameFlowRun1750045151951,
+        AddAgentsSqlite1748573768714,
+        AddAgentsSqlite1749953500521,
+        RemoveDefaultLocaleFromPlatform1749735242946,
         AIProviderRefactorSqlite1748824241409,
         AddMcpToolFlowCascadeDeleteSqlite1749129178686,
         AddMcpToolEntitySQLITE1748365593414,

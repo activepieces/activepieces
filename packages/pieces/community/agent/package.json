@@ -1,11 +1,4 @@
 {
   "name": "@activepieces/piece-agent",
-  "version": "0.0.2",
-  "dependencies": {
-    "langchain": "0.3.3",
-    "@langchain/anthropic": "0.3.20",
-    "@langchain/core": "0.3.55",
-    "@langchain/mcp-adapters": "0.4.2",
-    "@langchain/openai": "0.5.10"
-  }
+  "version": "0.1.0"
 }

@@ -8,6 +8,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
@@ -15,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 // import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, Table } from '@activepieces/shared';
