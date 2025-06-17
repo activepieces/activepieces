@@ -5,7 +5,7 @@ export type Usage = {
     model: string
 }
 
-export type AIProviderParser = {
+export type AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>) => string | null
-    usageStrategy: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>) => Usage
+    calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>) => Usage
 } 

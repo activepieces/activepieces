@@ -1,15 +1,15 @@
 import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
-import { AIProviderParser, Usage } from './types'
+import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
 
-export const openaiProvider: AIProviderParser = {
+export const openaiProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
         const body = request.body as Record<string, string>
         return body.model
     },
 
-    usageStrategy: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
+    calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
         const apiResponse = response as {
             usage: 
             | { input_tokens: number, output_tokens: number }

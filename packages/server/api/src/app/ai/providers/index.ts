@@ -1,13 +1,13 @@
 import { anthropicProvider } from './anthropic'
 import { openaiProvider } from './openai'
 import { replicateProvider } from './replicate'
-import { AIProviderParser } from './types'
+import { AIProviderStrategy } from './types'
 
-export const aiProviders: Record<string, AIProviderParser> = {
+export const aiProvidersStrategies: Record<string, AIProviderStrategy> = {
     openai: openaiProvider,
     anthropic: anthropicProvider,
     replicate: replicateProvider,
 }
 
-export { AIProviderParser, Usage } from './types'
+export { AIProviderStrategy, Usage } from './types'
 export { getProviderConfig, calculateTokensCost } from './utils' 

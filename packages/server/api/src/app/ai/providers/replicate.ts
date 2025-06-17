@@ -1,9 +1,9 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
-import { AIProviderParser, Usage } from './types'
+import { AIProviderStrategy, Usage } from './types'
 import { getProviderConfig } from './utils'
 
-export const replicateProvider: AIProviderParser = {
+export const replicateProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
         const body = request.body as Record<string, string>
 
@@ -19,7 +19,7 @@ export const replicateProvider: AIProviderParser = {
         }
     },
 
-    usageStrategy: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
+    calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
         const apiResponse = response as { model: string }
         const body = request.body as { num_outputs?: string }
         const { provider } = request.params as { provider: string }

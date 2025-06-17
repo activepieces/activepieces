@@ -21,7 +21,7 @@ import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
-import { aiProviders, Usage } from './providers'
+import { aiProvidersStrategies, Usage } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
@@ -109,14 +109,14 @@ export const aiProviderService = {
     },
 
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
-        const providerParser = aiProviders[provider]
-        return providerParser.usageStrategy(request, response)
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.calculateUsage(request, response)
     },
 
     extractModelId(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
-        const providerParser = aiProviders[provider]
-        if (!providerParser) return null
-        return providerParser.extractModelId(request)
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (!providerStrategy) return null
+        return providerStrategy.extractModelId(request)
     },
 
     isModelSupported(provider: string, model: string): boolean {
