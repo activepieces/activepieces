@@ -133,18 +133,18 @@ export const aiProviderService = {
         return strategy(request, response)
     },
 
-    extractModel(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
+    extractModelId(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
         const body = request.body as Record<string, string>
 
         switch (provider) {
             case 'openai':
-                return body.model
             case 'anthropic':
-                return body?.model
+                return body.model
             case 'replicate':
                 if (body.version) {
                     // e.g. replicate/hello-world:5c7d5dc6
-                    return body.version.split(':')[0]
+                    const version = body.version.split(':')[1]
+                    return getProviderConfig(provider)?.imageModels.find((m) => m.instance.modelId.split(':')[1] === version)?.instance.modelId ?? null
                 }
                 else {
                     // Extract model from URL pattern: /v1/models/{owner}/{model-name}/predictions
@@ -211,7 +211,7 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
     const body = request.body as Record<string, unknown>
-    const model = aiProviderService.extractModel(provider!, request)!
+    const model = aiProviderService.extractModelId(provider!, request)!
     const size = body.size
     const imageCount = parseInt(body.n as string ?? '1')
     const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
@@ -220,9 +220,10 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
     const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
     if (!languageModelConfig && !imageModelConfig) {
         throw new ActivepiecesError({
-            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
             params: {
-                provider: 'openai',
+                provider,
+                model,
             },
         })
     }
@@ -267,14 +268,15 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
     const params = request.params as Record<string, string>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
-    const model = aiProviderService.extractModel(provider!, request)!
+    const model = aiProviderService.extractModelId(provider!, request)!
 
     const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
     if (!languageModelConfig) {
         throw new ActivepiecesError({
-            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
             params: {
-                provider: 'anthropic',
+                provider,
+                model,
             },
         })
     }
@@ -287,24 +289,28 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
     }
 }
 
-const replicateUsageStrategy: UsageStrategy = (request, _response) => {
+const replicateUsageStrategy: UsageStrategy = (request, response) => {
+    const apiResponse = response as { model: string }
     const params = request.params as Record<string, string>
+    const body = request.body as Record<string, unknown>
     const provider = params?.['provider']
     const providerConfig = getProviderConfig(provider)!
-    const model = aiProviderService.extractModel(provider!, request)!
+    const imageCount = parseInt(body.num_outputs as string ?? '1')
+    const model = apiResponse.model
 
-    const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
+    const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId.split(':')[0] === model)
     if (!imageModelConfig) {
         throw new ActivepiecesError({
-            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
             params: {
-                provider: 'replicate',
+                provider,
+                model,
             },
         })
     }
 
     return {
-        cost: imageModelConfig.pricing as number,
+        cost: imageModelConfig.pricing as number * imageCount,
         model,
     }
 }

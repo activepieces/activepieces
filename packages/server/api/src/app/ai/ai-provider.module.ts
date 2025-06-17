@@ -68,7 +68,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 error,
                                 provider,
                                 projectId,
-                                body: buffer.toString(),
+                                response: buffer.toString(),
                             }, 'Error processing AI provider response')
                             callback()
                         }
@@ -114,7 +114,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            const model = aiProviderService.extractModel(provider, request)
+            const model = aiProviderService.extractModelId(provider, request)
             if (!model || !aiProviderService.isModelSupported(provider, model)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
