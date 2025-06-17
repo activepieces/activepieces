@@ -10,7 +10,7 @@
     "axios": "1.8.3",
     "tslib": "2.6.2",
     "@sentry/node": "7.120.0",
-    "fastify": "4.28.1",
+    "fastify": "4.29.1",
     "@sinclair/typebox": "0.34.11",
     "pino": "9.7.0",
     "pino-loki": "2.1.3",
