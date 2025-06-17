@@ -1,9 +1,6 @@
 import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutSensitiveData } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
-import {
-    pieceListUtils,
-} from '../../../pieces/piece-metadata-service/utils'
 import { platformService } from '../../../platform/platform.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
@@ -15,7 +12,7 @@ export const enterpriseFilteringUtils = {
         }
         const { platformId, includeHidden, pieces, projectId } = params
         if (isNil(platformId) || includeHidden) {
-            return pieceListUtils.filterPieces({ ...params, pieces })
+            return pieces
         }
 
         const platformWithPlan = await platformService.getOneWithPlan(platformId)
