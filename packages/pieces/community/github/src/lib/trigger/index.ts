@@ -906,7 +906,7 @@ export const registered = [
     name: GithubEventType.DISCUSSION,
     displayName: 'New Discussion',
     description:
-      'Triggers when there is activity activity relating to a discussion',
+      'Triggers when there is activity relating to a discussion.',
     sampleData: {
       action: 'created',
       discussion: {
@@ -1154,7 +1154,7 @@ export const registered = [
   {
     name: GithubEventType.DISCUSSION_COMMENT,
     displayName: 'New Comment Posted',
-    description: 'Triggers when there is a new comment posted on a discussion',
+    description: 'Triggers when there is a new comment posted on a discussion.',
     sampleData: {
       action: 'created',
       comment: {
