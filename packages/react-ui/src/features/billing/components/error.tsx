@@ -8,7 +8,7 @@ import { CardContent } from '@/components/ui/card';
 
 export const Error = () => {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -1,18 +1,21 @@
 import { t } from 'i18next';
 import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
-import mcp from '@/assets/img/custom/mcp-dark.svg';
+import mcpDark from '@/assets/img/custom/mcp-dark.svg';
+import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { useTheme } from '@/components/theme-provider';
 
 export const UsageCards = ({
   platformSubscription,
 }: {
   platformSubscription: PlatformBillingInformation;
 }) => {
+  const {theme} = useTheme();
   const { usage, plan } = platformSubscription;
   const isBusinessPlan = plan.plan === PlanName.BUSINESS;
 
@@ -39,7 +42,7 @@ export const UsageCards = ({
         total={plan.projectsLimit}
       />
       <UsageCard
-        icon={<img src={mcp} alt="MCP" className="w-4 h-4" />}
+        icon={<img src={theme === 'dark' ? mcpDark : mcpLight} alt="MCP" className="w-4 h-4" />}
         title={t('MCP Servers')}
         used={usage.mcps}
         total={plan.mcpLimit}

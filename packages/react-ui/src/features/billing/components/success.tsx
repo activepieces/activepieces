@@ -9,7 +9,7 @@ import { CardContent } from '@/components/ui/card';
 export const Success = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(5);
 
   const action = searchParams.get('action') || '';
 

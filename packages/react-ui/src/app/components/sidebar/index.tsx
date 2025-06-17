@@ -255,7 +255,7 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 px-10 py-6', {
+          className={cn('flex-1 px-10 py-6 max-w-[1920px] mx-auto', {
             'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,
