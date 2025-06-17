@@ -420,7 +420,7 @@ class ActivepiecesEmbedded {
           event.source === source && 
           this._embeddingState?.navigation?.handler         
         ) {
-          let routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
+          const routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
           this._embeddingState.navigation.handler({ route: routeWithPrefix });
           return;
         }
