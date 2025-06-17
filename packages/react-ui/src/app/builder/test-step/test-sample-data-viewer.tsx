@@ -33,18 +33,20 @@ const DefaultTestingButton = React.forwardRef<
   DefaultTestingButtonProps
 >(({ isValid, isSaving, isTesting, onRetest }, ref) => {
   return (
-    <Button
-      ref={ref}
-      variant="outline"
-      size="sm"
-      disabled={!isValid || isSaving}
-      keyboardShortcut="G"
-      onKeyboardShortcut={onRetest}
-      onClick={onRetest}
-      loading={isTesting}
-    >
-      {t('Retest')}
-    </Button>
+    <TestButtonTooltip disabled={!isValid}>
+      <Button
+        ref={ref}
+        variant="outline"
+        size="sm"
+        disabled={!isValid || isSaving}
+        keyboardShortcut="G"
+        onKeyboardShortcut={onRetest}
+        onClick={onRetest}
+        loading={isTesting}
+      >
+        {t('Retest')}
+      </Button>
+    </TestButtonTooltip>
   );
 });
 DefaultTestingButton.displayName = 'DefaultTestingButton';

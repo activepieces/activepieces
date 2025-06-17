@@ -41,6 +41,7 @@ import { RemoveDefaultLocaleFromPlatform1749735242946 } from './migration/sqlite
 import { AddAgentsSqlite1749953500521 } from './migration/sqlite/1749953500521-AddAgentsSqlite'
 import { AddFailedStepNameFlowRun1750045151951 } from './migration/sqlite/1750045151951-add-failed-step-flow-run'
 import { AddIssueEntity1750058424539 } from './migration/sqlite/1750058424539-add-issue-entity'
+import { RemoveUniqueOnFlowSqlite1750093133906 } from './migration/sqlite/1750093133906-RemoveUniqueOnFlowSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -63,6 +64,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RemoveUniqueOnFlowSqlite1750093133906,
         AddIssueEntity1750058424539,
         AddFailedStepNameFlowRun1750045151951,
         AddAgentsSqlite1748573768714,
