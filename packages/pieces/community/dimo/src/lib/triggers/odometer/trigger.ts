@@ -46,13 +46,7 @@ export const odometerTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: verificationTokenInput,
-        allVehicles: Property.Checkbox({
-      displayName: 'All Vehicles',
-      description: 'If checked, subscribe all vehicles you have access to',
-      required: false,
-      defaultValue: false,
-    }),
+    verificationToken: verificationTokenInput
   },
   sampleData: {
     tokenId: 17,
