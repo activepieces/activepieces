@@ -1,13 +1,13 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { WebhookInfo, WebhookPayload } from "../../models";
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
 export const chargeLevelTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'charge-level-trigger',
   displayName: 'Charge Level Trigger',
   description: 'Triggers when vehicle battery charge level meets the specified condition - requires Developer JWT',
@@ -50,19 +50,16 @@ export const chargeLevelTrigger = createTrigger({
   },
   async onEnable(context) {
     const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } = context.propsValue;
-
-    if (!context.auth.token) {
+    const { developerJwt } = context.auth;
+    if (!developerJwt) {
       throw new Error('Developer JWT is required for charge level trigger. Please provide a Developer JWT in the authentication configuration.');
     }
-
     // Validate charge percentage
     if (chargePercentage < 0 || chargePercentage > 100) {
       throw new Error('Charge percentage must be between 0 and 100');
     }
-
     // Build trigger condition
     const triggerCondition = getNumberExpression(operator, chargePercentage);
-
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -77,18 +74,14 @@ export const chargeLevelTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
-
     handleFailures(webhookResponse);
-
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
     }
-
     const webhookId = webhookResponse.body.id;
     const subscribedVehicles: number[] = [];
-
     // Step 2: Subscribe vehicles to the webhook
     if (vehicleTokenIds && vehicleTokenIds.length > 0) {
       await Promise.all(
@@ -96,7 +89,7 @@ export const chargeLevelTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
           subscribedVehicles.push(Number(tokenId));
@@ -106,44 +99,40 @@ export const chargeLevelTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
-
     // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
       verificationToken
     });
   },
-
   async onDisable(context) {
     try {
+      const { developerJwt } = context.auth;
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-
-      if (webhookInfo?.webhookId && context.auth.token) {
+      if (webhookInfo?.webhookId && developerJwt) {
         // Delete the webhook configuration
         await httpClient.sendRequest({
           method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
           url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-          headers: getHeaders(context.auth.token),
+          headers: getHeaders({ developerJwt }, 'developer'),
         });
       }
     } catch (error) {
       console.warn('Failed to cleanup webhook:', error);
     }
   },
-
-    async onHandshake(context) {
-
-      return {
-        body : context.propsValue.verificationToken,
-        headers : {
-          'Content-Type': 'text/plain',
-        },
-        status: 200,
-      }
+  async onHandshake(context) {
+    return {
+      body: context.propsValue.verificationToken,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      status: 200,
+    }
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;

@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { commonQueries, TELEMETR_API_BASE_URL } from './constant';
-import { vehicleAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
+import { getHeaders } from '../../helpers';
 
 export const telemetryApiAction = createAction({
-  auth : vehicleAuth,
+  auth : dimoAuth,
   name: 'telemetry-api-query',
   displayName: 'Telemetry API (GraphQL)',
   description: 'Query DIMO Telemetry API using GraphQL for vehicle signals and telemetry data.',
@@ -49,6 +50,7 @@ export const telemetryApiAction = createAction({
   },
   async run(context) {
     const { queryType, customQuery, tokenId, startDate, endDate, numDays } = context.propsValue;
+    const { vehicleJwt } = context.auth;
     let graphqlQuery = '';
     if (queryType === 'custom') {
       if (!customQuery) {
@@ -79,7 +81,7 @@ export const telemetryApiAction = createAction({
         method: HttpMethod.POST,
         url: TELEMETR_API_BASE_URL,
         body: { query: graphqlQuery },
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders({ vehicleJwt }, 'vehicle'),
       });
       if (response.body.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);

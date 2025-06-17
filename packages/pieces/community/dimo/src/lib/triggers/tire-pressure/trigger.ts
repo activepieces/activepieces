@@ -13,10 +13,10 @@ import {
 import { getTirePressurePositionLabel, TirePressurePosition } from './type';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const tirePressureTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'tire-pressure-trigger',
   displayName: 'Tire Pressure Trigger',
   description:
@@ -77,15 +77,14 @@ export const tirePressureTrigger = createTrigger({
     const {
       vehicleTokenIds,
       tirePosition,
-       operator,
+      operator,
       pressureKpa,
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
-
+    const { developerJwt } = context.auth;
     // Build trigger condition
     const triggerCondition = getNumberExpression(operator, pressureKpa);
-
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -102,7 +101,7 @@ export const tirePressureTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
@@ -118,7 +117,7 @@ export const tirePressureTrigger = createTrigger({
               webhookId,
               tokenId: Number(tokenId),
             }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -127,11 +126,10 @@ export const tirePressureTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
-
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
       verificationToken
@@ -140,16 +138,16 @@ export const tirePressureTrigger = createTrigger({
 
   async onDisable(context) {
     try {
+      const { developerJwt } = context.auth;
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-
-      if (webhookInfo?.webhookId && context.auth.token) {
+      if (webhookInfo?.webhookId && developerJwt) {
         // Delete the webhook configuration
         await httpClient.sendRequest({
           method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
           url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
             webhookId: webhookInfo.webhookId,
           }),
-          headers: getHeaders(context.auth.token),
+          headers: getHeaders({ developerJwt }, 'developer'),
         });
       }
     } catch (error) {

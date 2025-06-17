@@ -3,10 +3,10 @@ import { getHeaders, handleFailures } from "../../helpers";
 import { httpClient,HttpMethod } from "@activepieces/pieces-common";
 import { dimoTokenExchangeApiUrl } from "./constant";
 import { TokenExchangeResponse } from "./type";
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const tokenExchangeApiAction = createAction({
-    auth: developerAuth,
+    auth: dimoAuth,
     name: "vehicle-jwt-token-exchange-api",
     displayName: "Vehicle JWT via Token Exchange API",
     description: "Creates a token exchange to obtain a Vehicle JWT. The response will provide a short-lived token that last you 10 minutes to access additional vehicle information such as Trips and Telemetry data",
@@ -36,7 +36,7 @@ export const tokenExchangeApiAction = createAction({
     },
     run: async (ctx) => {
         const {vehicleTokenId, privileges} = ctx.propsValue
-        const {token} = ctx.auth
+        const { developerJwt } = ctx.auth;
 
         const response = await httpClient.sendRequest<TokenExchangeResponse>({
             method : HttpMethod.POST,
@@ -45,12 +45,10 @@ export const tokenExchangeApiAction = createAction({
                 vehicleTokenId,
                 privileges,
             },
-            headers : getHeaders(token),
+            headers : getHeaders({ developerJwt }, 'developer'),
         })
 
-
         handleFailures(response)
-
 
         return {
             vehicleJwt : response.body.token

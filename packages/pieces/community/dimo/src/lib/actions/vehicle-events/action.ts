@@ -3,9 +3,9 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { getHeaders, handleFailures } from "../../helpers/http-request-helper";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 export const vehicleEventsUnifiedAction = createAction({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: "all-endpoints-vehicle-events-api",
   displayName: "Vehicle Events (All Operations)",
   description: "Perform any vehicle events operation (list, create, update, delete, subscribe, unsubscribe, etc.)",
@@ -46,10 +46,9 @@ export const vehicleEventsUnifiedAction = createAction({
   },
   async run(ctx) {
     const { operation, webhookId, webhookDefinition, tokenId } = ctx.propsValue;
-    const { token } = ctx.auth;
+    const { developerJwt } = ctx.auth;
     const op = VEHICLE_EVENTS_OPERATIONS[operation as keyof typeof VEHICLE_EVENTS_OPERATIONS];
     if (!op) throw new Error("Invalid operation selected.");
-
 
     if (op.requiredFields) {
       for (const field of op.requiredFields) {
@@ -75,7 +74,7 @@ export const vehicleEventsUnifiedAction = createAction({
       method,
       url,
       ...(body ? { body } : {}),
-      headers: getHeaders(token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(response);
     if (
