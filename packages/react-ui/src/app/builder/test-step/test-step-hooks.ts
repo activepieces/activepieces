@@ -25,6 +25,7 @@ import {
   isNil,
   FlowOperationType,
   TriggerType,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -38,26 +39,35 @@ export const testStepHooks = {
   ) => {
     const projectId = authenticationSession.getProjectId()!;
     const queryClient = useQueryClient();
-    const { setSampleData, setSampleDataInput, applyOperation, flowVersionId } =
-      useBuilderStateContext((state) => {
-        return {
-          sampleDataInput: state.sampleDataInput[stepName],
-          setSampleData: state.setSampleData,
-          setSampleDataInput: state.setSampleDataInput,
-          applyOperation: state.applyOperation,
-          flowVersionId: state.flowVersion.id,
-        };
-      });
+    const {
+      setSampleData,
+      setSampleDataInput,
+      applyOperation,
+      flowVersionId,
+      step,
+    } = useBuilderStateContext((state) => {
+      return {
+        sampleDataInput: state.sampleDataInput[stepName],
+        setSampleData: state.setSampleData,
+        setSampleDataInput: state.setSampleDataInput,
+        applyOperation: state.applyOperation,
+        flowVersionId: state.flowVersion.id,
+        step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
+      };
+    });
 
     return useMutation({
       mutationFn: async ({
         response,
-        step,
       }: {
         response: { output?: unknown; success: boolean };
-        step: Action | Trigger;
       }) => {
         let sampleDataFileId: string | undefined = undefined;
+        if (isNil(step)) {
+          console.error(`Step ${stepName} not found`);
+          toast(INTERNAL_ERROR_TOAST);
+          return;
+        }
         if (response.success && !isNil(response.output)) {
           const sampleFile = await sampleDataApi.save({
             flowVersionId,
@@ -109,7 +119,9 @@ export const testStepHooks = {
       },
       onSuccess: (step) => {
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
-        onSuccess?.(step);
+        if (step) {
+          onSuccess?.(step);
+        }
       },
     });
   },
@@ -151,10 +163,8 @@ export const testStepHooks = {
           const newIds = newData.data.map((triggerEvent) => triggerEvent.id);
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
-              const formValues = form.getValues();
               await updateSampleData({
                 response: { success: true, output: newData.data[0].payload },
-                step: formValues as unknown as Action,
               });
             }
             return newData.data;
@@ -194,10 +204,8 @@ export const testStepHooks = {
           flowId,
           mockData,
         );
-        const formValues = form.getValues();
         await updateSampleData({
           response: { success: true, output: data.payload },
-          step: formValues as unknown as Action,
         });
         return data;
       },
@@ -222,10 +230,8 @@ export const testStepHooks = {
         setErrorMessage(undefined);
         const { data } = await triggerEventsApi.pollTrigger({ flowId });
         if (data.length > 0) {
-          const formValues = form.getValues();
           await updateSampleData({
             response: { success: true, output: data[0].payload },
-            step: formValues as unknown as Action,
           });
         }
         return data;
@@ -290,7 +296,6 @@ export const testStepHooks = {
 
         await updateSampleData({
           response: testStepResponse,
-          step: currentStep,
         });
 
         return testStepResponse;
