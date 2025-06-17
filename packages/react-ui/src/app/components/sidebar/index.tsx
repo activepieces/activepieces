@@ -92,25 +92,22 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
-            !Icon ? 'p-2' : ''
-          }`}
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${!Icon ? 'p-2' : ''
+            }`}
         >
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">
               {Icon && React.isValidElement(Icon)
                 ? React.cloneElement(
-                    Icon as React.ReactElement<{ className?: string }>,
-                    {
-                      className: cn(Icon.props.className, 'size-4'),
-                    },
-                  )
+                  Icon as React.ReactElement<{ className?: string }>,
+                  {
+                    className: cn(Icon.props.className, 'size-4'),
+                  },
+                )
                 : null}
               <span className="text-sm">{label}</span>
             </div>
-            {(label === 'Tables' ||
-              label === 'Todos' ||
-              label === 'MCP' ||
+            {(label === 'MCP' ||
               label === 'Agents') && <BetaBadge showTooltip={false} />}
           </div>
           {locked && (
