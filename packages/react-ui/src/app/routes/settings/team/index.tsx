@@ -71,7 +71,7 @@ export default function TeamPage() {
                 ))}
             </div>
             <Separator />
-            <div className="text-2xl font-bold tracking-tight">
+            <div className="text-2xl font-semibold tracking-tight">
               {t('Pending Invitations')}
             </div>
             <div className="flex min-h-[35px] flex-col gap-4">

@@ -1,15 +1,7 @@
 import { t } from 'i18next';
-import {
-  Bell,
-  GitBranch,
-  Puzzle,
-  Settings,
-  SunMoon,
-  Users,
-} from 'lucide-react';
+import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +20,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission, isNil } from '@activepieces/shared';
 
+import { AppearanceSettings } from './appearance-settings';
+
 export type ProjectSettingsLinkItem = {
   title: string;
   href: string;
@@ -35,7 +29,7 @@ export type ProjectSettingsLinkItem = {
   hasPermission?: boolean;
 };
 
-const SettingsDropdownMenu = () => {
+const ProjectSettingsDropdownMenu = () => {
   const location = useLocation();
 
   const { platform } = platformHooks.useCurrentPlatform();
@@ -49,13 +43,7 @@ const SettingsDropdownMenu = () => {
       href: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       icon: <Settings className="w-4 h-4" />,
     },
-    {
-      title: t('Appearance'),
-      href: authenticationSession.appendProjectRoutePrefix(
-        '/settings/appearance',
-      ),
-      icon: <SunMoon className="h-4 w-4" />,
-    },
+
     {
       title: t('Team'),
       href: authenticationSession.appendProjectRoutePrefix('/settings/team'),
@@ -105,8 +93,8 @@ const SettingsDropdownMenu = () => {
           <TooltipContent side="bottom">{t('Project Settings')}</TooltipContent>
         </Tooltip>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[180px] space-y-[2px]">
-        <ThemeToggle />
+      <DropdownMenuContent align="end" className="min-w-[180px] space-y-2">
+        <AppearanceSettings />
         {filteredLinkItems.map((item) => (
           <DropdownMenuItem key={item.title} className="p-0">
             <Link
@@ -130,4 +118,4 @@ const SettingsDropdownMenu = () => {
   );
 };
 
-export default SettingsDropdownMenu;
+export default ProjectSettingsDropdownMenu;
