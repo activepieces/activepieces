@@ -4,10 +4,10 @@ import { getHeaders, getNumberExpression, handleFailures } from '../../helpers';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const fuelRelativeTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'fuel-relative-level-trigger',
   displayName: 'Fuel System Relative Level Trigger',
   description: 'Triggers when vehicle fuel system relative level meets the specified condition - requires Developer JWT',
@@ -50,7 +50,7 @@ export const fuelRelativeTrigger = createTrigger({
   },
   async onEnable(context) {
     const { vehicleTokenIds,  operator, fuelPercentage, triggerFrequency, verificationToken } = context.propsValue;
-
+    const { developerJwt } = context.auth;
     if (fuelPercentage < 0 || fuelPercentage > 100) {
       throw new Error('Fuel percentage must be between 0 and 100');
     }
@@ -68,9 +68,8 @@ export const fuelRelativeTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken || 'token',
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
-
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
@@ -82,7 +81,7 @@ export const fuelRelativeTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -91,7 +90,7 @@ export const fuelRelativeTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
@@ -101,6 +100,7 @@ export const fuelRelativeTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
     if (!webhookInfo) {
       throw new Error('No webhook info found in store. Trigger may not have been enabled.');
@@ -108,7 +108,7 @@ export const fuelRelativeTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
   },

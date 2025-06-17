@@ -1,13 +1,13 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { developerAuth } from '../../../index';
+import {  dimoAuth } from '../../../index';
 import { WebhookInfo, WebhookPayload } from "../../models";
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
 export const batteryPowerTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'battery-power-trigger',
   displayName: 'Battery Current Power Trigger',
   description: 'Triggers when vehicle battery current power meets the specified condition - requires Developer JWT',
@@ -50,14 +50,9 @@ export const batteryPowerTrigger = createTrigger({
   },
   async onEnable(context) {
     const { vehicleTokenIds, operator, powerWatts, triggerFrequency, verificationToken } = context.propsValue;
-
-    if (!context.auth.token) {
-      throw new Error('Developer JWT is required for battery power trigger. Please provide a Developer JWT in the authentication configuration.');
-    }
-
+    const { developerJwt } = context.auth;
     // Build trigger condition
     const triggerCondition = getNumberExpression(operator, powerWatts);
-
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -72,17 +67,13 @@ export const batteryPowerTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
-
     handleFailures(webhookResponse);
-
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
     }
-
     const webhookId = webhookResponse.body.id;
-
     // Step 2: Subscribe vehicles to the webhook
     if (vehicleTokenIds && vehicleTokenIds.length > 0) {
       await Promise.all(
@@ -90,9 +81,8 @@ export const batteryPowerTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
-
           handleFailures(res);
         })
       );
@@ -100,11 +90,10 @@ export const batteryPowerTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
-
     // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
@@ -112,12 +101,13 @@ export const batteryPowerTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-    if (webhookInfo?.webhookId && context.auth.token) {
+    if (webhookInfo?.webhookId && developerJwt) {
       await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
     }
   },

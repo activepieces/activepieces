@@ -3,10 +3,11 @@ import { AttestationResponse } from "./type";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { CREATE_VC_ENDPOINT } from "./constant";
 import { getHeaders, handleFailures } from "../../helpers";
-import { vehicleAuth } from '../../../index';
+import { dimoAuth } from "../../../index";
+// import { vehicleAuth } from '../../../index';
 
 export const attestationApiAction = createAction({
-    auth: vehicleAuth,
+    auth: dimoAuth, // Will be set to dimoAuth in the piece
     name: "generate-vehicle-vc-attestation-api",
     displayName: "Generate Vehicle VC via Attestation API",
     description: "Generates the VIN VC for a given vehicle if it has never been created, or if it has expired. If an unexpired VC is found, returns the VC.",
@@ -19,11 +20,11 @@ export const attestationApiAction = createAction({
     },
     run : async (ctx) => {
         const {vehicleTokenId} = ctx.propsValue
-        const {token} = ctx.auth
+
         const response = await httpClient.sendRequest<AttestationResponse>({
           method: HttpMethod.GET,
           url: CREATE_VC_ENDPOINT.replace("{0}", vehicleTokenId.toString()),
-          headers : getHeaders(token),
+          headers : getHeaders(ctx.auth as { developerJwt?: string; vehicleJwt?: string }, 'vehicle'),
         })
 
         handleFailures(response)

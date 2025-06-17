@@ -12,10 +12,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { WebhookInfo, WebhookPayload } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const odometerTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'odometer-trigger',
   displayName: 'Odometer Trigger',
   description:
@@ -72,6 +72,7 @@ export const odometerTrigger = createTrigger({
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
+    const { developerJwt } = context.auth;
     const triggerCondition = getNumberExpression(operator, odometerValue);
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -86,7 +87,7 @@ export const odometerTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
@@ -99,7 +100,7 @@ export const odometerTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -108,7 +109,7 @@ export const odometerTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
@@ -118,23 +119,21 @@ export const odometerTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
     if (!webhookInfo) {
       throw new Error(
         'No webhook information found in store. Please enable the trigger first.'
       );
     }
-
     const res = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
         webhookId: webhookInfo.webhookId,
       }),
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
-
     handleFailures(res);
-
     await context.store.delete('webhook_info');
   },
   async onHandshake(context) {

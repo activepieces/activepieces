@@ -2,12 +2,12 @@ import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import { WebhookInfo, WebhookPayload } from "../../models";
 import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
 export const fuelAbsoluteTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'fuel-absolute-level-trigger',
   displayName: 'Fuel System Absolute Level Trigger',
   description: 'Triggers when vehicle fuel system absolute level meets the specified condition - requires Developer JWT',
@@ -50,6 +50,7 @@ export const fuelAbsoluteTrigger = createTrigger({
   },
   async onEnable(context) {
     const { vehicleTokenIds,  operator, fuelLiters, triggerFrequency, verificationToken } = context.propsValue;
+    const { developerJwt } = context.auth;
 
     // Build trigger condition
     const triggerCondition = getNumberExpression(operator, fuelLiters);
@@ -68,7 +69,7 @@ export const fuelAbsoluteTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
 
     handleFailures(webhookResponse);
@@ -84,7 +85,7 @@ export const fuelAbsoluteTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -93,7 +94,7 @@ export const fuelAbsoluteTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
@@ -106,12 +107,13 @@ export const fuelAbsoluteTrigger = createTrigger({
   },
   async onDisable(context) {
     try {
+      const { developerJwt } = context.auth;
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-      if (webhookInfo?.webhookId && context.auth.token) {
+      if (webhookInfo?.webhookId && developerJwt) {
         await httpClient.sendRequest({
           method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
           url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-          headers: getHeaders(context.auth.token),
+          headers: getHeaders({ developerJwt }, 'developer'),
         });
       }
     } catch (error) {

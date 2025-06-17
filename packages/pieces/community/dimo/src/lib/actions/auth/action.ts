@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { generateChallenge, signChallenge, submitChallenge } from "./helper";
 
 export const generateDeveloperTokenAction = createAction({
+    requireAuth : false,
     name: "generate-developer-token-auth-api",
     displayName: "Generate Developer Token via Auth API",
     description: "Obtains an developer token using client credentials and Web3 signature. Generate your API key from DIMO Developer Console",

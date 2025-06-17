@@ -8,10 +8,10 @@ import { WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions';
 import { getHeaders, handleFailures } from '../../helpers';
 import { verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const ignitionTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'ignition-trigger',
   displayName: 'Ignition Status Trigger',
   description:
@@ -67,6 +67,7 @@ export const ignitionTrigger = createTrigger({
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
+    const { developerJwt } = context.auth;
     const triggerValue = ignitionState.toLowerCase() === 'on' ? 1 : 0;
 
     // Step 1: Create webhook configuration
@@ -83,7 +84,7 @@ export const ignitionTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
 
     handleFailures(webhookResponse);
@@ -102,7 +103,7 @@ export const ignitionTrigger = createTrigger({
               webhookId,
               tokenId: Number(tokenId),
             }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -111,7 +112,7 @@ export const ignitionTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }
@@ -121,14 +122,15 @@ export const ignitionTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-    if (webhookInfo?.webhookId && context.auth.token) {
+    if (webhookInfo?.webhookId && developerJwt) {
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
           webhookId: webhookInfo.webhookId,
         }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     }

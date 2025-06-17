@@ -9,10 +9,10 @@ import {
   DeviceDefinitionResponse,
   DeviceDefinitionsSearchResponse,
 } from "./type";
-import { developerAuth } from '../../../index';
+import { dimoAuth } from "../../../index";
 
 export const deviceDefinitionApiAction = createAction({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: "submit-decode-vin-device-definitions-api",
   displayName: "Submit Decode VIN via Device Definitions API",
   description: "Submits a decoding request for vehicle identification number, returns the device definition ID corresponding to the VIN.",
@@ -30,7 +30,7 @@ export const deviceDefinitionApiAction = createAction({
   },
   run: async (ctx) => {
     const { countryCode, vin } = ctx.propsValue;
-    const { token } = ctx.auth;
+    const { developerJwt } = ctx.auth;
     const response = await httpClient.sendRequest<DeviceDefinitionResponse>({
       method: HttpMethod.POST,
       url: DIMO_DECODE_VIN_ENDPOINT,
@@ -38,7 +38,7 @@ export const deviceDefinitionApiAction = createAction({
         countryCode,
         vin,
       },
-      headers: getHeaders(token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(response);
     return {
@@ -49,7 +49,7 @@ export const deviceDefinitionApiAction = createAction({
 });
 
 export const deviceDefinitionsSearchAction = createAction({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: "lookup-device-definitions-api",
   displayName: "Device Definitions Lookup",
   description: "Search for device definitions by query and filters.",
@@ -87,7 +87,7 @@ export const deviceDefinitionsSearchAction = createAction({
   },
   run: async (ctx) => {
     const { query, makeSlug, modelSlug, year, page, pageSize } = ctx.propsValue;
-    const { token } = ctx.auth;
+    const { developerJwt } = ctx.auth;
     const params = new URLSearchParams();
     params.append('query', query);
     if (makeSlug) params.append('makeSlug', makeSlug);
@@ -99,7 +99,7 @@ export const deviceDefinitionsSearchAction = createAction({
     const response = await httpClient.sendRequest<DeviceDefinitionsSearchResponse>({
       method: HttpMethod.GET,
       url,
-      headers: getHeaders(token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(response);
     return response.body;

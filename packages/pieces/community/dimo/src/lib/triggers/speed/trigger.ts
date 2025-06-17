@@ -8,10 +8,10 @@ import { getHeaders, handleFailures } from '../../helpers';
 import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const speedTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'speed-trigger',
   displayName: 'Speed Trigger',
   description:
@@ -62,14 +62,13 @@ export const speedTrigger = createTrigger({
       triggerFrequency,
       verificationToken,
     } = context.propsValue;
-
+    const { developerJwt } = context.auth;
     const ids: string[] =
       vehicleTokenIds &&
       Array.isArray(vehicleTokenIds) &&
       vehicleTokenIds.length > 0
         ? vehicleTokenIds.map(String)
         : [];
-
     const webhookDef: WebhookDefinition = {
       service: 'Telemetry',
       data: TriggerField.Speed,
@@ -83,7 +82,6 @@ export const speedTrigger = createTrigger({
       targetUri: context.webhookUrl,
       status: 'Active',
     };
-
     // Create Webhook
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -98,7 +96,7 @@ export const speedTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(webhookResponse);
     const webhookId = webhookResponse.body.id;
@@ -106,9 +104,7 @@ export const speedTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: {
-          Authorization: `Bearer ${context.auth.token}`,
-        },
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
       handleFailures(res);
     } else {
@@ -117,9 +113,7 @@ export const speedTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: {
-              Authorization: `Bearer ${context.auth.token}`,
-            },
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
           handleFailures(res);
         })
@@ -131,6 +125,7 @@ export const speedTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
     if (!webhookInfo) {
       throw new Error(
@@ -140,9 +135,7 @@ export const speedTrigger = createTrigger({
     const res = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-      headers: {
-        Authorization: `Bearer ${context.auth.token}`,
-      },
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
     handleFailures(res);
   },

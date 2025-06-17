@@ -4,10 +4,10 @@ import { WebhookInfo, WebhookPayload } from '../../models';
 import { getHeaders, handleFailures } from '../../helpers';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { verificationTokenInput } from '../common';
-import { developerAuth } from '../../../index';
+import { dimoAuth } from '../../../index';
 
 export const batteryChargingTrigger = createTrigger({
-  auth: developerAuth,
+  auth: dimoAuth,
   name: 'battery-is-charging-trigger',
   displayName: 'Battery Is Charging Trigger',
   description: 'Triggers when vehicle battery charging status changes (True/False) - requires Developer JWT',
@@ -56,11 +56,10 @@ export const batteryChargingTrigger = createTrigger({
   },
   async onEnable(context) {
     const { vehicleTokenIds, chargingState, triggerFrequency, verificationToken } = context.propsValue;
-
+    const { developerJwt } = context.auth;
     // Build trigger condition for charging state (1 = charging, 0 = not charging)
     const triggerValue = chargingState === 'true' ? 1 : 0;
     const triggerCondition = `valueNumber = ${triggerValue}`;
-
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
@@ -75,15 +74,12 @@ export const batteryChargingTrigger = createTrigger({
         status: 'Active',
         verification_token: verificationToken
       },
-      headers: getHeaders(context.auth.token),
+      headers: getHeaders({ developerJwt }, 'developer'),
     });
-
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
     }
-
     const webhookId = webhookResponse.body.id;
-
     // Step 2: Subscribe vehicles to the webhook
     if (vehicleTokenIds && vehicleTokenIds.length > 0) {
       await Promise.all(
@@ -91,23 +87,19 @@ export const batteryChargingTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(context.auth.token),
+            headers: getHeaders({ developerJwt }, 'developer'),
           });
-
             handleFailures(res);
-
         })
       );
     } else {
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
-
       handleFailures(res);
     }
-
     // Store webhook info for cleanup
     await context.store.put<WebhookInfo>('webhook_info', {
       webhookId,
@@ -115,17 +107,17 @@ export const batteryChargingTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-    if (webhookInfo?.webhookId && context.auth.token) {
+    if (webhookInfo?.webhookId && developerJwt) {
       await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders(context.auth.token),
+        headers: getHeaders({ developerJwt }, 'developer'),
       });
     }
   },
   async onHandshake(context) {
-
       return {
         body : context.propsValue.verificationToken,
         headers : {
@@ -136,20 +128,16 @@ export const batteryChargingTrigger = createTrigger({
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
-
     // Validate webhook payload structure
     if (!webhookBody || typeof webhookBody !== 'object') {
       throw new Error('Invalid webhook payload');
     }
-
     // Verify this is a battery charging event
     if (webhookBody.name !== 'powertrainTractionBatteryChargingIsCharging') {
       throw new Error('Received non-battery-charging webhook event');
     }
-
     const isCharging = webhookBody.valueNumber === 1;
     const chargingStatus = isCharging ? 'CHARGING' : 'NOT CHARGING';
-
     // Return the webhook data
     return [
       {
