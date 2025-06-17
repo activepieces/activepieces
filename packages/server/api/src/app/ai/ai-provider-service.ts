@@ -207,11 +207,11 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
         | { input_tokens: number, output_tokens: number }
         | { prompt_tokens: number, completion_tokens: number }
     } 
-    const params = request.params as Record<string, string>
-    const provider = params?.['provider']
+    const body = request.body as { size: string, n?: string, quality?: string }
+    const { provider } = request.params as { provider: string }
+
     const providerConfig = getProviderConfig(provider)!
-    const body = request.body as Record<string, unknown>
-    const model = aiProviderService.extractModelId(provider!, request)!
+    const model = aiProviderService.extractModelId(provider, request)!
     const size = body.size
     const imageCount = parseInt(body.n as string ?? '1')
     const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
@@ -265,10 +265,10 @@ const openAIUsageStrategy: UsageStrategy = (request, response) => {
 
 const anthropicUsageStrategy: UsageStrategy = (request, response) => {
     const apiResponse = response as { usage: { input_tokens: number, output_tokens: number } }
-    const params = request.params as Record<string, string>
-    const provider = params?.['provider']
+    const { provider } = request.params as { provider: string }
+
     const providerConfig = getProviderConfig(provider)!
-    const model = aiProviderService.extractModelId(provider!, request)!
+    const model = aiProviderService.extractModelId(provider, request)!
 
     const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
     if (!languageModelConfig) {
@@ -291,9 +291,9 @@ const anthropicUsageStrategy: UsageStrategy = (request, response) => {
 
 const replicateUsageStrategy: UsageStrategy = (request, response) => {
     const apiResponse = response as { model: string }
-    const params = request.params as Record<string, string>
-    const body = request.body as Record<string, unknown>
-    const provider = params?.['provider']
+    const body = request.body as { num_outputs?: string }
+    const { provider } = request.params as { provider: string }
+
     const providerConfig = getProviderConfig(provider)!
     const imageCount = parseInt(body.num_outputs as string ?? '1')
     const model = apiResponse.model
