@@ -18,8 +18,8 @@ import {
   AgentOutputType,
 } from '@activepieces/shared';
 
-import { AddFieldPopover } from './add-field-popover';
 import { FieldTypeIcon } from './field-type-icon';
+import { AddFieldPopover } from './add-field-popover';
 
 interface AgentSettingsOutputProps {
   onChange: (
@@ -78,7 +78,6 @@ export const AgentSettingsOutput = ({
 
   return (
     <div className="space-y-6">
-      <Separator className="my-2" />
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <div className="flex items-center gap-2 text-base">
