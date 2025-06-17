@@ -111,19 +111,6 @@ export interface ActivepiecesVendorInit {
 }
 
 
-enum McpPieceStatus {
-  ENABLED = 'ENABLED',
-  DISABLED = 'DISABLED',
-}
-
-type McpPiece = {
-  pieceName:string,
-  connectionId?:string,
-  mcpId:string,
-  status:McpPieceStatus
-  id:string
-}
-
 
 type newWindowFeatures = {
   height?: number,
@@ -160,13 +147,15 @@ type EmbeddingParam = {
 type ConfigureParams = {
   instanceUrl: string;
   jwtToken: string;
+  prefix?: string;
   embedding?: EmbeddingParam;
 }
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
   readonly _sdkVersion = "0.5.0";
-  _prefix = '';
+  //used for  Automatically Sync URL feature i.e /org/1234
+  _prefix = '/';
   _instanceUrl = '';
   //this is used to authenticate embedding for the first time
   _jwtToken = '';
@@ -189,9 +178,11 @@ class ActivepiecesEmbedded {
     jwtToken,
     instanceUrl,
     embedding,
+    prefix,
   }: ConfigureParams) {
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._jwtToken = jwtToken;
+    this._prefix = this._removeTrailingSlashes(this._prependForwardSlashToRoute(prefix ?? '/'));
     this._embeddingState = embedding;
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
@@ -416,6 +407,9 @@ class ActivepiecesEmbedded {
     this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
   }
 
+  private _prependForwardSlashToRoute(route: string) {
+    return route.startsWith('/') ? route : `/${route}`;
+  }
   private _checkForClientRouteChanges = (source: Window) => {
     window.addEventListener(
       'message',
@@ -423,12 +417,12 @@ class ActivepiecesEmbedded {
         if (
           event.data.type ===
           ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
-          event.source === source
+          event.source === source && 
+          this._embeddingState?.navigation?.handler         
         ) {
-            if (this._embeddingState?.navigation?.handler) {
-            this._embeddingState.navigation.handler({ route: event.data.data.route });
-          }
-
+          const routeWithPrefix =  this._prefix + this._prependForwardSlashToRoute(event.data.data.route);
+          this._embeddingState.navigation.handler({ route: routeWithPrefix });
+          return;
         }
       }
     );
@@ -442,7 +436,14 @@ class ActivepiecesEmbedded {
     });
   }
 
+  private _extractRouteAfterPrefix(vendorUrl: string, parentOriginWithPrefix: string) {
+    return vendorUrl.split(parentOriginWithPrefix)[1];
+  }
 
+  //used for  Automatically Sync URL feature 
+  extractActivepiecesRouteFromUrl({ vendorUrl }: { vendorUrl: string }) {
+    return this._extractRouteAfterPrefix(vendorUrl, this._removeTrailingSlashes(this._parentOrigin) + this._prefix);
+  }
 
 
   private _doesFrameHaveWindow(
