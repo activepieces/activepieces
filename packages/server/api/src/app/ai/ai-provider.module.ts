@@ -37,8 +37,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             onResponse: async (request, reply, response) => {
                 request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
                 const projectId = request.principal.projectId
-                const params = request.params as Record<string, string> | null
-                const provider = params?.['provider'] as string
+                const { provider } = request.params as { provider: string }
 
                 let buffer = Buffer.from('')
 
@@ -49,19 +48,20 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                         callback()
                     },
                     async final(callback) {
+                        reply.raw.end()
+
                         try {
                             if (reply.statusCode >= 400) {
                                 app.log.error({
                                     response,
                                     body: buffer.toString(),
                                 }, 'Error response from AI provider')
-                                return callback()
+                                return
                             }
 
                             const completeResponse = JSON.parse(buffer.toString())
                             const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
                             await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
-                            callback()
                         }
                         catch (error) {
                             app.log.error({
@@ -70,10 +70,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 projectId,
                                 response: buffer.toString(),
                             }, 'Error processing AI provider response')
-                            callback()
                         }
                         finally {
-                            reply.raw.end()
+                            callback()
                         }
                     },
                 }))
