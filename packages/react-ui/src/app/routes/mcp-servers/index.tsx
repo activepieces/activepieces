@@ -218,7 +218,6 @@ const McpServersPage = () => {
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
           <Button
-            size="sm"
             className="flex items-center gap-2"
             onClick={() => createMcp('Untitled')}
             disabled={!userHasMcpWritePermission}

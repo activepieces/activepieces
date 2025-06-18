@@ -269,7 +269,6 @@ const ApTablesPage = () => {
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <Button
-            size="sm"
             onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
             disabled={!userHasTableWritePermission}

@@ -22,7 +22,7 @@ export const billingMutations = {
   usePortalLink: () => {
     return useMutation({
       mutationFn: async () => {
-        const { portalLink } = await platformBillingApi.getPortalLink();
+        const portalLink = await platformBillingApi.getPortalLink();
         window.open(portalLink, '_blank');
       },
       onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -97,8 +97,25 @@ export const billingMutations = {
           description: t('AI credit usage limit set successfully'),
         });
       },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.VALIDATION) {
+            toast({
+              title: t('Setting AI credit usage limit failed'),
+              description: t(apError.params.message),
+              variant: 'default',
+              duration: 5000,
+            });
+            return;
+          }
+        }
+        toast({
+          title: t('Setting AI credit usage limit failed'),
+          description: t(error.message),
+          variant: 'default',
+          duration: 5000,
+        });
       },
     });
   },

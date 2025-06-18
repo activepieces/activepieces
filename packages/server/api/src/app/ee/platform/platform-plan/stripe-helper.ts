@@ -60,7 +60,11 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             price: basePriceId,
             quantity: 1,
         })
-        
+
+        lineItems.push({
+            price: AI_CREDITS_PRICE_ID,
+        })
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: lineItems,
@@ -107,6 +111,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         items.push({
             price: STRIPE_PLAN_PRICE_IDS[plan],
             quantity: 1,
+        })
+
+        items.push({
+            price: AI_CREDITS_PRICE_ID,
         })
 
         if (plan === PlanName.BUSINESS && !isNil(extraUsers) && extraUsers > 0) {
@@ -201,7 +209,7 @@ async function updateSubscriptionSchedule(
         {
             items: subscription.items.data.map(item => ({
                 price: item.price.id,
-                quantity: item.quantity || 1,
+                quantity: item.quantity || undefined,
             })),
             start_date: subscription.current_period_start,
             end_date: currentPeriodEnd,
@@ -214,6 +222,10 @@ async function updateSubscriptionSchedule(
         downgradePhase.push({
             price: STRIPE_PLAN_PRICE_IDS[newPlan],
             quantity: 1,
+        })
+
+        downgradePhase.push({
+            price: AI_CREDITS_PRICE_ID,
         })
 
         if (newPlan === PlanName.BUSINESS && extraUsers > 0) {

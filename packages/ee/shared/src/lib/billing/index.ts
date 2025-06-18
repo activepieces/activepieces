@@ -38,7 +38,7 @@ export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSch
 
 
 export const EnableAiCreditUsageParamsSchema = Type.Object({
-    limit: Type.Optional(Type.Number()),
+    limit: Type.Optional(Type.Number({ minimum: 10 })),
 })
 export type EnableAiCreditUsageParams = Static<typeof EnableAiCreditUsageParamsSchema>
 

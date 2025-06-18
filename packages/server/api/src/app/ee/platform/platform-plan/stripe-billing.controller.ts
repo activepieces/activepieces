@@ -52,12 +52,19 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                         const planLimits = platformPlanService(request.log).getPlanLimits(newPlan)
 
-                        if (newPlan === PlanName.BUSINESS && extraUsers > 0) {
-                            planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
+                        if (newPlan !== PlanName.FREE) {
+                            if (newPlan === PlanName.BUSINESS && extraUsers > 0) {
+                                planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
+                            }
+
+                            planLimits.aiCreditsLimit = platformPlan.aiCreditsLimit
+                        }
+                        else {
+                            planLimits.stripeSubscriptionId = undefined
                         }
 
                         await platformPlanService(request.log).update({ 
-                            platformId: platformPlan.platformId, 
+                            platformId: platformPlan.platformId,
                             ...planLimits,
                         })
             

@@ -81,26 +81,73 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/portal', {}, async (request) => {
-        return {
-            portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
-        }
+        return stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id })
     })
 
     fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const platformId = request.principal.platform.id
         const { limit } = request.body
-
+        
+        const [usage, platformBilling] = await Promise.all([
+            platformUsageService(request.log).getPlatformUsage(platformId),
+            platformPlanService(request.log).getOrCreateForPlatform(platformId),
+        ])
+        assertNotNullOrUndefined(platformBilling, 'Plan is not set')
+        
+        const subscriptionId = platformBilling.stripeSubscriptionId
+        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
+        
         if (platformBilling.plan === PlanName.FREE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'AI credit usage is only available for paid plans',
+                    message: 'AI credit usage limits are only available for paid plans',
+                },
+            })
+        }
+
+        const totalCreditsUsed = usage.aiCredits || 0
+        const planIncludedCredits = platformBilling?.includedAiCredits || 0
+        const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
+
+        if (!limit) {
+            if (overageCreditsUsed > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Cannot disable usage-based billing while you have ${overageCreditsUsed} overage credits used.`,
+                    },
+                })
+            }
+            
+            return platformPlanService(request.log).update({
+                platformId,
+                aiCreditsLimit: undefined,
+            })
+        }
+        
+        if (overageCreditsUsed > limit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Cannot set usage limit to ${limit.toLocaleString()} credits as you have already used ${overageCreditsUsed.toLocaleString()} overage credits this billing period.`,
                 },
             })
         }
         
+        request.log.info({
+            platformId,
+            previousLimit: platformBilling.aiCreditsLimit,
+            newLimit: limit,
+            currentUsage: {
+                total: totalCreditsUsed,
+                planCredits: Math.min(totalCreditsUsed, planIncludedCredits),
+                overageCredits: overageCreditsUsed,
+            },
+        }, 'Updating AI credit usage limit')
+        
         return platformPlanService(request.log).update({
-            platformId: request.principal.platform.id,
+            platformId,
             aiCreditsLimit: limit,
         })
     })
