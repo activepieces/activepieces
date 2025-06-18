@@ -1841,6 +1841,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "BenjaminAlan",
+      "name": "Benjamin Benouarka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42831606?v=4",
+      "profile": "https://github.com/BenjaminAlan",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
