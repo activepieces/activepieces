@@ -202,7 +202,7 @@ export const flowsTableColumns = ({
               refetch();
             }}
           >
-            <EllipsisVertical className="h-10 w-10" />
+            <EllipsisVertical className="h-4 w-4" />
           </FlowActionMenu>
         </div>
       );

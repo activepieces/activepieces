@@ -79,7 +79,7 @@ export default function Billing() {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         <div className="text-sm flex items-center gap-1">
           <span>{t('Current Plan')}</span>
           <Badge variant="secondary">
@@ -100,7 +100,7 @@ export default function Billing() {
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               <span>
-                Resets{' '}
+                {t('Next billing date')}{' '}
                 {dayjs(platformSubscription.nextBillingDate).format(
                   'MMM D, YYYY',
                 )}
@@ -112,7 +112,7 @@ export default function Billing() {
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             <span>
-              Cancels at{' '}
+              {t('Cancels at')}{' '}
               {dayjs(platformSubscription.cancelAt).format('MMM D, YYYY')}
             </span>
           </div>

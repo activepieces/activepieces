@@ -87,7 +87,7 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-lg transition-colors',
+          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
@@ -255,7 +255,7 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 px-10 py-6 max-w-[1920px] mx-auto', {
+          className={cn('flex-1 px-10 py-6 m-4', {
             'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,

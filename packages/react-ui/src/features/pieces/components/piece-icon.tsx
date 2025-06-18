@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {
     circle: {
-      true: 'rounded-full bg-accent/35 p-2',
+      true: 'rounded-full  p-2',
       false: 'dark:rounded-[2px]',
     },
     size: {
