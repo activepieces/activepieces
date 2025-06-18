@@ -164,7 +164,7 @@ export function McpPieceDialog({
   });
 
   const handleSave = () => {
-    if (selectedConnectionExternalId === null) {
+    if (selectedPiece?.auth && selectedConnectionExternalId === null) {
       setShowValidationErrors(true);
       return;
     }
