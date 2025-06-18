@@ -12,7 +12,9 @@ type CustomPropertyParams = {
   disabled: boolean;
   property: CustomPropertyType<boolean>;
 };
-
+const deserialize = (serializedJavascript: string) => {
+  return eval('(' + serializedJavascript + ')');
+};
 const parseFunctionString = (code: string) => {
   return new Function(
     'params',
@@ -46,7 +48,10 @@ const CustomProperty = ({
       // Create function that takes a params object
       const fn = parseFunctionString(code);
       // Execute the function with args as the params object
-      const cleanUpFunction = fn(params);
+      const cleanUpFunction = fn({
+        ...params,
+        deps: property.deps ? deserialize(property.deps) : undefined,
+      });
       if (cleanUpFunction && typeof cleanUpFunction === 'function') {
         return cleanUpFunction;
       }

@@ -235,24 +235,32 @@ export const Property = {
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
-  Custom<R extends boolean>(
-    request: Omit<Properties<CustomProperty<R>>, 'code'> & {
+  Custom<R extends boolean, D extends Record<string, unknown> | undefined = undefined>(
+    request: Omit<Properties<CustomProperty<R>>, 'code' | 'deps'> & {
       /** 
-       * This is designed to be self-contained and operates independently of any
-       * external libraries or imported dependencies. All necessary logic and
-       * functionality are implemented within this function itself.
        * 
        * You can return a cleanup function that will be called when the component is unmounted in the frontend.
        * */
-      code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
-    }
+      code: ((ctx: CustomPropertyCodeFunctionParams<D>) => (()=>void) | void),
+    } & (D extends undefined ? {
+      deps?: undefined;
+    } : {
+      /**
+       * This is a record of dependencies that will be serialized and passed to the custom property code function, if a dependency is a function, it must be a pure function that does not depend on any external state.
+       */
+      deps:D;
+    })
   ): R extends true ? CustomProperty<true> : CustomProperty<false> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const seralize = require('serialize-javascript');
     const code = request.code.toString();
+    const deps = request.deps ? seralize(request.deps) : undefined;
     return {
       ...request,
       code,
       valueSchema: undefined,
       type: PropertyType.CUSTOM,
+      deps
     } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;
   },
   Color<R extends boolean>(
