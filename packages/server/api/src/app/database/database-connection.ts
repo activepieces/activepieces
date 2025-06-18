@@ -63,6 +63,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { StepEntity } from '../flows/flow-version/step/step-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -106,6 +107,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
+        StepEntity
     ]
 
     switch (edition) {
@@ -154,7 +156,7 @@ const getSynchronize = (): boolean => {
 export const commonProperties = {
     subscribers: [],
     entities: getEntities(),
-    synchronize: getSynchronize(),
+    synchronize: true,
 }
 
 let _databaseConnection: DataSource | null = null

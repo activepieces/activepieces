@@ -90,6 +90,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { stepModule } from './flows/flow-version/step/step-module'
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -232,7 +233,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(changelogModule)
     await app.register(agentModule)
     await app.register(todoActivityModule)
-    
+    await app.register(stepModule)
     app.get(
         '/redirect',
         async (
