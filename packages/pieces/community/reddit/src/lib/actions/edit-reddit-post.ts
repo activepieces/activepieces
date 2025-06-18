@@ -5,8 +5,8 @@ import { redditAuth } from '../../index';
 export const editRedditPost = createAction({
   auth: redditAuth,
   name: 'editRedditPost',
-  displayName: 'Edit Reddit Post',
-  description: 'Edit the content of an existing Reddit post.',
+  displayName: 'Edit Post',
+  description: 'Edits the content of an existing Reddit post.',
   props: {
     post_id: Property.ShortText({
       displayName: 'Post ID',

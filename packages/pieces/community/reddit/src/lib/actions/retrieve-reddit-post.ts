@@ -9,8 +9,8 @@ import { redditAuth } from '../../';
 export const retrieveRedditPost = createAction({
   auth: redditAuth,
   name: 'retrieveRedditPost',
-  displayName: 'Retrieve Reddit Post',
-  description: 'Fetch top posts in a subreddit with optional size limit',
+  displayName: 'Retrieve Post',
+  description: 'Fetch top posts in a subreddit with optional size limit.',
   props: {
     post_category: Property.StaticDropdown({
       displayName: 'Post Category',

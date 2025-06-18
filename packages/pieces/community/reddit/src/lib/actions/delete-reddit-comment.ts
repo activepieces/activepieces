@@ -5,7 +5,7 @@ import { redditAuth } from '../../index';
 export const deleteRedditComment = createAction({
   auth: redditAuth,
   name: 'deleteRedditComment',
-  displayName: 'Delete Reddit Comment',
+  displayName: 'Delete Comment',
   description: 'Delete a specific Reddit comment by ID.',
   props: {
     comment_id: Property.ShortText({

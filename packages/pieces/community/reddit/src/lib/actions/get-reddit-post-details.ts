@@ -5,7 +5,7 @@ import { redditAuth } from '../../index';
 export const getRedditPostDetails = createAction({
   auth: redditAuth,
   name: 'getRedditPostDetails',
-  displayName: 'Get Reddit Post Details',
+  displayName: 'Get Post Details',
   description: 'Fetch detailed information about a specific Reddit post using its ID.',
   props: {
     post_id: Property.ShortText({
