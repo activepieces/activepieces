@@ -14,7 +14,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';

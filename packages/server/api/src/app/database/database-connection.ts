@@ -9,7 +9,8 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AiProviderEntity } from '../ai/ai-provider-entity'
+import { AgentEntity } from '../agents/agent-entity'
+import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -30,7 +31,6 @@ import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
-import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -54,6 +54,7 @@ import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
@@ -89,7 +90,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
-        AiProviderEntity,
+        AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
@@ -99,6 +100,8 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
+        AgentEntity,
+        TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
     ]
@@ -118,13 +121,13 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
-                TodoCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 PlatformPlanEntity,
+           
             )
             break
         case ApEdition.COMMUNITY:

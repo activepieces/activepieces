@@ -15,7 +15,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import SettingsDropdownMenu from './settings-dropdown-menu';
+import ProjectSettingsDropdownMenu from './project-settings-dropdown-menu';
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
@@ -51,9 +51,7 @@ const ApDashboardSidebarHeader = ({
                     <img
                       src={branding.logos.logoIconUrl}
                       alt={t('home')}
-                      width={28}
-                      height={28}
-                      className="max-h-[22px] max-w-[22px] object-contain"
+                      className="h-5 w-5 object-contain"
                     />
                   )}
 
@@ -79,7 +77,7 @@ const ApDashboardSidebarHeader = ({
           </div>
         )}
 
-        {isHomeDashboard && <SettingsDropdownMenu />}
+        {isHomeDashboard && <ProjectSettingsDropdownMenu />}
       </div>
     </SidebarHeader>
   );

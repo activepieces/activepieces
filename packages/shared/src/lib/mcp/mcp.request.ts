@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Nullable } from '../common'
 import { McpTool } from './tools/mcp-tool'
 
 export const ListMcpsRequest = Type.Object({
@@ -26,19 +25,3 @@ export const UpdateMcpRequestBody = Type.Object({
 })
 
 export type UpdateMcpRequestBody = Static<typeof UpdateMcpRequestBody>
-
-
-export const UpsertMcpPieceRequestBody = Type.Object({
-    pieceName: Type.String(),
-    pieceVersion: Type.String(),
-    actionNames: Type.Array(Type.String()),
-    connectionId: Nullable(Type.String()),
-})
-
-export type UpsertMcpPieceRequestBody = Static<typeof UpsertMcpPieceRequestBody>
-
-
-export const UpdateMcpFlowsRequestBody = Type.Object({
-    flowIds: Type.Array(Type.String()),
-})
-export type UpdateMcpFlowsRequestBody = Static<typeof UpdateMcpFlowsRequestBody>

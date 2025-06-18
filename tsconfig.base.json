@@ -42,6 +42,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-airparser": [
+        "packages/pieces/community/airparser/src/index.ts"
+      ],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
@@ -154,6 +157,9 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
+      "@activepieces/piece-chatbase": [
+        "packages/pieces/community/chatbase/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
@@ -166,10 +172,13 @@
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
+      "@activepieces/piece-clockify": [
+        "packages/pieces/community/clockify/src/index.ts"
+      ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -499,6 +508,7 @@
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
+      "@activepieces/piece-mem": ["packages/pieces/community/mem/src/index.ts"],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -510,6 +520,9 @@
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-outlook": [
+        "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
@@ -586,9 +599,6 @@
       ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
-      ],
-      "@activepieces/piece-zoho-desk": [
-        "packages/pieces/community/zoho-desk/src/index.ts"
       ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
@@ -687,6 +697,9 @@
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
+      "@activepieces/piece-serp-api": [
+        "packages/pieces/community/serp-api/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
@@ -701,6 +714,9 @@
       ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
+      ],
+      "@activepieces/piece-skyvern": [
+        "packages/pieces/community/skyvern/src/index.ts"
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
@@ -788,6 +804,9 @@
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
+      ],
+      "@activepieces/piece-ticktick": [
+        "packages/pieces/community/ticktick/src/index.ts"
       ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
@@ -886,8 +905,14 @@
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
+      "@activepieces/piece-zoho-desk": [
+        "packages/pieces/community/zoho-desk/src/index.ts"
+      ],
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/community/zoho-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-mail": [
+        "packages/pieces/community/zoho-mail/src/index.ts"
       ],
       "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
       "@activepieces/piece-zoom": [

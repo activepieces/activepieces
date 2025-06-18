@@ -1,10 +1,11 @@
-import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash2, CheckIcon, Table2 } from 'lucide-react';
+import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,10 +16,7 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -55,36 +53,36 @@ const McpServersPage = () => {
     name: searchParams.get('name') ?? undefined,
   });
 
-  const { mutate: createMcp, isPending: isCreatingMcp } = useMutation({
-    mutationFn: async (name: string) => {
-      return mcpApi.create({
-        name,
-        projectId: project.id,
-      });
-    },
-    onSuccess: (newMcpServer) => {
-      refetch();
-      navigate(
-        `/projects/${project.id}/mcp/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`,
-      );
-    },
-    onError: (err: Error) => {
-      if (
-        api.isError(err) &&
-        err.response?.status === api.httpStatus.Conflict
-      ) {
-        toast({
-          title: t('Max MCP servers reached'),
-          description: t(`You can't create more than {maxMcps} MCP servers`, {
-            maxMcps,
-          }),
-          variant: 'destructive',
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
-  });
+  const createMcpMutation = mcpHooks.useCreateMcp();
+
+  const createMcp = (name: string) => {
+    createMcpMutation.mutate(name, {
+      onSuccess: (newMcpServer) => {
+        refetch();
+        navigate(
+          `/projects/${project.id}/mcps/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`,
+        );
+      },
+      onError: (err: Error) => {
+        if (
+          api.isError(err) &&
+          err.response?.status === api.httpStatus.Conflict
+        ) {
+          toast({
+            title: t('Max MCP servers reached'),
+            description: t(`You can't create more than {maxMcps} MCP servers`, {
+              maxMcps,
+            }),
+            variant: 'destructive',
+          });
+        } else {
+          toast(INTERNAL_ERROR_TOAST);
+        }
+      },
+    });
+  };
+
+  const isCreatingMcp = createMcpMutation.isPending;
 
   const columns: ColumnDef<RowDataWithActions<McpWithTools>, unknown>[] = [
     {
@@ -168,17 +166,14 @@ const McpServersPage = () => {
     },
   ];
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => mcpApi.delete(id)));
+  const deleteMcpMutation = mcpHooks.useDeleteMcp();
+
+  const bulkDeleteMutation = {
+    mutateAsync: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => deleteMcpMutation.mutateAsync(id)));
     },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+    isPending: deleteMcpMutation.isPending,
+  };
 
   const bulkActions: BulkAction<McpWithTools>[] = useMemo(
     () => [
@@ -195,10 +190,11 @@ const McpServersPage = () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
                 );
+                refetch();
                 resetSelection();
                 setSelectedRows([]);
               } catch (error) {
-                console.error('Error deleting MCP servers:', error);
+                toast(INTERNAL_ERROR_TOAST);
               }
             }}
           >
@@ -212,7 +208,7 @@ const McpServersPage = () => {
         ),
       },
     ],
-    [selectedRows, bulkDeleteMutation],
+    [selectedRows, bulkDeleteMutation, refetch],
   );
 
   if (isCreatingMcp) {
@@ -242,15 +238,7 @@ const McpServersPage = () => {
       </div>
 
       <DataTable
-        filters={[
-          {
-            accessorKey: 'name',
-            type: 'input',
-            title: t('Name'),
-            icon: CheckIcon,
-            options: [],
-          },
-        ]}
+        filters={[]}
         emptyStateIcon={<Table2 className="size-14" />}
         emptyStateTextTitle={t('No MCP servers have been created yet')}
         emptyStateTextDescription={t('Create a MCP server to get started')}
@@ -258,8 +246,7 @@ const McpServersPage = () => {
         page={data}
         isLoading={isLoading}
         onRowClick={(row) => {
-          const path = `/projects/${project.id}/mcp/${row.id}`;
-          navigate(path);
+          navigate(`/projects/${project.id}/mcps/${row.id}`);
         }}
         bulkActions={bulkActions}
       />
