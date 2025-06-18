@@ -50,7 +50,15 @@ export const gmailNewConversationTrigger = createTrigger({
   },
 });
 
-async function pollNewConversations({ auth, files, lastFetchEpochMS }) {
+async function pollNewConversations({
+  auth,
+  files,
+  lastFetchEpochMS,
+}: {
+  auth: any;
+  files: any;
+  lastFetchEpochMS: number;
+}) {
   const authClient = new OAuth2Client();
   authClient.setCredentials(auth);
 
@@ -106,4 +114,12 @@ async function pollNewConversations({ auth, files, lastFetchEpochMS }) {
   }
 
   return pollingResponse;
+}
+
+function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
 }

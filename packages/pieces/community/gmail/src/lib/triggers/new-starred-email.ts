@@ -50,7 +50,14 @@ export const gmailNewStarredEmailTrigger = createTrigger({
   },
 });
 
-async function pollStarredMessages({ auth, files, lastFetchEpochMS }) {
+async function pollStarredMessages({
+  auth,
+  files,
+}: {
+  auth: any;
+  files: any;
+  lastFetchEpochMS: number;
+}) {
   const authClient = new OAuth2Client();
   authClient.setCredentials(auth);
 
@@ -102,4 +109,12 @@ async function pollStarredMessages({ auth, files, lastFetchEpochMS }) {
   }
 
   return pollingResponse;
+}
+
+function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
 }

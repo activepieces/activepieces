@@ -3,7 +3,7 @@ import { GmailRequests } from '../common/data';
 import { GmailMessageFormat } from '../common/models';
 import { gmailAuth } from '../../';
 
-export const gmailGetThread = createAction({
+export const gmailGetThreadAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_thread',
   description: 'Get a thread from your Gmail account via Id',

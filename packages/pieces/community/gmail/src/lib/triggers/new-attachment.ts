@@ -64,6 +64,11 @@ async function pollMessagesWithAttachments({
   props,
   files,
   lastFetchEpochMS,
+}: {
+  auth: any;
+  props: any;
+  files: any;
+  lastFetchEpochMS: number;
 }) {
   const authClient = new OAuth2Client();
   authClient.setCredentials(auth);
@@ -126,4 +131,12 @@ async function pollMessagesWithAttachments({
   }
 
   return pollingResponse;
+}
+
+function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
 }

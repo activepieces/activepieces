@@ -95,7 +95,10 @@ export const gmailCreateDraftReplyAction = createAction({
       ];
     }
 
-    const mail: unknown = new MailComposer(mailOptions).compile();
+    const mail = new MailComposer(mailOptions).compile() as unknown as {
+      keepBcc: boolean;
+      build(): Promise<Buffer>;
+    };
     mail.keepBcc = true;
     const mailBody = await mail.build();
 
