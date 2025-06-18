@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -46,6 +46,7 @@ export function ProjectMemberCard({
           name={member.user.firstName + ' ' + member.user.lastName}
           email={member.user.email}
           size={32}
+          disableTooltip={true}
         ></UserAvatar>
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">

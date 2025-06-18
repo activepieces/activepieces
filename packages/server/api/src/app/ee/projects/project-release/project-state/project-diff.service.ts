@@ -159,25 +159,27 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
     const normalizedFromFlow = await normalize(fromFlow.version)
     const normalizedTargetFlow = await normalize(targetFlow.version)
 
-    const versionSetOne: Record<string, string> = flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).reduce<Record<string, string>>((acc, step) => {
-        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            acc[step.name] = step.settings.pieceVersion as string
-        }
-        return acc
-    }, {})
+    const versionSetOne = new Map<string, string>()
+    const versionSetTwo = new Map<string, string>()
 
-    const versionSetTwo: Record<string, string> = flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).reduce<Record<string, string>>((acc, step) => {
+    flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).forEach((step) => {
         if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
-            acc[step.name] = step.settings.pieceVersion as string
+            versionSetOne.set(step.name, step.settings.pieceVersion)
         }
-        return acc
-    }, {})
+    })
 
-    const isMatched = Object.keys(versionSetOne).every(key => {
-        if (isNil(versionSetTwo[key])) {
+    flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).forEach((step) => {
+        if ([ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            versionSetTwo.set(step.name, step.settings.pieceVersion)
+        }
+    })
+
+    const isMatched = Array.from(versionSetOne.entries()).every(([key, value]) => {
+        const versionTwo = versionSetTwo.get(key)
+        if (isNil(versionTwo) || isNil(value)) {
             return false
         }
-        return isSameVersion(versionSetTwo[key], versionSetOne[key])
+        return isSameVersion(versionTwo, value)
     })
 
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName

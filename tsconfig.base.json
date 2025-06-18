@@ -508,9 +508,7 @@
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
-      "@activepieces/piece-mem": [
-        "packages/pieces/community/mem/src/index.ts"
-      ],
+      "@activepieces/piece-mem": ["packages/pieces/community/mem/src/index.ts"],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -522,6 +520,9 @@
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-outlook": [
+        "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
@@ -713,6 +714,9 @@
       ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
+      ],
+      "@activepieces/piece-skyvern": [
+        "packages/pieces/community/skyvern/src/index.ts"
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"

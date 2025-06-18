@@ -209,10 +209,21 @@ import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/pos
 import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
 import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
-import { AddPlanNameOnPlatformPlan1748549003744 } from './migration/postgres/1748549003744-AddPlanNameOnPlatformPlan'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
 import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
 import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
+import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
+import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
+import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
+import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
+import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
+import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -355,12 +366,26 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeExternalIdsForTables1747346473001,
         RenameProjectBillingToPlatformPLan1747819919988,
         UpgradePieceVersionsToLatest1748253670449,
+        AddAgentsModule1748456786940,
+        ChangeManualTasksCommentsToTodoComments1742433144687,
+        AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639,
         DeprecateApproval1748648340742,
         AddMcpToolEntity1748352614033,
         AddMcpRunEntity1748358415599,
         AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
         AddMcpToolFlowCascadeDelete1749128866314,
+        AIUsagePostgres1750090291551,
+        AddAgents1749405724276,
+        AddAgentOutput1749859119064,
+        AddAgentsLimitToPlatformPlan1749917984363,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddStepToIssuesTable1750017637712,
+        MakeStepNameOptional1750025401754,
+        RemoveUniqueOnFlow1750093037011,
+
     ]
 
     const edition = system.getEdition()
@@ -442,7 +467,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
                 AddManualTaskCommentTable1742305104390,
-                ChangeManualTasksCommentsToTodoComments1742433144687,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
                 AddPlanNameOnPlatformPlan1748549003744,

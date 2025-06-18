@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { LocalesEnum } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../federated-authn'
@@ -115,6 +114,7 @@ export const PlatformPlan = Type.Object({
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
@@ -125,6 +125,7 @@ export const PlatformPlan = Type.Object({
     tablesLimit: Type.Optional(Type.Number()),
     mcpLimit: Type.Optional(Type.Number()),
     activeFlowsLimit: Type.Optional(Type.Number()),
+    agentsLimit: Type.Optional(Type.Number()),
 })
   
 export type PlatformPlan = Static<typeof PlatformPlan>
@@ -150,8 +151,6 @@ export const Platform = Type.Object({
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
-    defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
-
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
@@ -165,12 +164,9 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    defaultLocale: Nullable(Type.String()),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
-    hasLicenseKey: Type.Optional(Type.Boolean()),
-    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',

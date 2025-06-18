@@ -129,6 +129,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await platformService.update({
             id: platformId,
             plan: {
+                licenseKey: key.key,
+                licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
                 showPoweredBy: key.showPoweredBy,

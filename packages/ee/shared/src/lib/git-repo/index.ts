@@ -26,6 +26,7 @@ export enum GitPushOperationType {
     DELETE_FLOW = 'DELETE_FLOW',
     PUSH_TABLE = 'PUSH_TABLE',
     DELETE_TABLE = 'DELETE_TABLE',
+    PUSH_EVERYTHING = 'PUSH_EVERYTHING',
 }
 
 export const PushFlowsGitRepoRequest = Type.Object({
@@ -48,7 +49,15 @@ export const PushTablesGitRepoRequest = Type.Object({
 
 export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
 
-export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest])
+export const PushEverythingGitRepoRequest = Type.Object({
+    type: Type.Literal(GitPushOperationType.PUSH_EVERYTHING),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
+})
+export type PushEverythingGitRepoRequest = Static<typeof PushEverythingGitRepoRequest>
+
+export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 

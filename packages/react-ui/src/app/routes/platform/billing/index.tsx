@@ -4,6 +4,7 @@ import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';

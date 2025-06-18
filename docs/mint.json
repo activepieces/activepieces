@@ -133,6 +133,7 @@
       "group": "Engineering Playbooks",
       "icon": "code",
       "pages": [
+        "handbook/engineering/playbooks/run-ee",
         "handbook/engineering/playbooks/setup-incident-io",
         "handbook/engineering/playbooks/releases",
         "handbook/engineering/playbooks/infrastructure",
@@ -280,17 +281,6 @@
             "endpoints/mcp-servers/rotate",
             "endpoints/mcp-servers/update"
           ]
-        },
-        {
-          "group": "MCP pieces",
-          "icon": "plug",
-          "pages": [
-            "endpoints/mcp-pieces/schema",
-            "endpoints/mcp-pieces/add",
-            "endpoints/mcp-pieces/delete",
-            "endpoints/mcp-pieces/update",
-            "endpoints/mcp-pieces/list"
-          ]
         }
       ]
     },
@@ -403,16 +393,8 @@
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
         "developers/piece-reference/custom-api-calls",
-        "developers/piece-reference/i18n"
-      ]
-    },
-    {
-      "group": "Universal AI",
-      "pages": [
-        "developers/unified-ai/overview",
-        "developers/unified-ai/chat",
-        "developers/unified-ai/function-calling",
-        "developers/unified-ai/image"
+        "developers/piece-reference/i18n",
+        "developers/piece-reference/ai-providers"
       ]
     },
     {
@@ -435,22 +417,14 @@
     },
    
     {
-      "group": "Predefined Connections",
-      "pages": [
-        "embedding/predefined-connections/overview",
-        "embedding/predefined-connections/development",
-        "embedding/predefined-connections/production"
-      ]
-    },
-    {
       "group": "Misc",
       "pages": [
-        "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
-        "embedding/mcps",
-        "embedding/sdk-server-requests",
-        "embedding/sdk-changelog"
+        "embedding/navigation",
+        "embedding/predefined-connection",
+        "embedding/sdk-changelog",
+        "embedding/sdk-server-requests"
       ]
     },
     {
@@ -549,6 +523,10 @@
     {
       "source": "/embedding/embed-builder/embed-iframe",
       "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/predefined-connection/overview",
+      "destination": "/embedding/predefined-connection"
     }
   ]
 }

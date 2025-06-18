@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Dot } from '@/components/ui/dot';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -109,7 +108,7 @@ export const CustomTooltipLink = ({
                 : null}
               <span className="text-sm">{label}</span>
             </div>
-            {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
+            {(label === 'MCP' || label === 'Agents') && (
               <BetaBadge showTooltip={false} />
             )}
           </div>
@@ -242,13 +241,11 @@ export function SidebarComponent({
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
-                {showProjectUsage && <Separator />}
                 {showProjectUsage && (
                   <SidebarMenu>
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
-                {showProjectUsage && <Separator />}
                 <SidebarUser />
               </SidebarFooter>
             </SidebarContent>

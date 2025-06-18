@@ -26,7 +26,6 @@ import {
   useBuilderStateContext,
   useFocusedFailedStep,
   useHandleKeyPressOnCanvas,
-  usePasteActionsInClipboard,
   useResizeCanvas,
 } from '../builder-hooks';
 
@@ -118,8 +117,7 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-    const { actionsToPaste, fetchClipboardOperations } =
-      usePasteActionsInClipboard();
+
     useShowChevronNextToSelection();
     useFocusedFailedStep();
     useHandleKeyPressOnCanvas();
@@ -146,7 +144,6 @@ export const FlowCanvas = React.memo(
     );
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
-        fetchClipboardOperations();
         if (
           ev.target instanceof HTMLElement ||
           ev.target instanceof SVGElement
@@ -240,7 +237,6 @@ export const FlowCanvas = React.memo(
             flowVersion={flowVersion}
             readonly={readonly}
             setPieceSelectorStep={setPieceSelectorStep}
-            actionsToPaste={actionsToPaste}
             contextMenuType={contextMenuType}
           >
             <ReactFlow
