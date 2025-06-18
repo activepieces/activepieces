@@ -203,17 +203,6 @@ const ApStepCanvasNode = React.memo(
         <div className="px-3 h-full w-full  overflow-hidden">
           {!isDragging && (
             <PieceSelector
-              initialSelectedPiece={
-                step.type === TriggerType.EMPTY
-                  ? undefined
-                  : stepMetadata?.displayName
-              }
-              operation={{
-                type: isEmptyTriggerSelected
-                  ? FlowOperationType.UPDATE_TRIGGER
-                  : pieceSelectorOperation,
-                stepName: step.name,
-              }}
               open={openPieceSelector || isEmptyTriggerSelected}
               onOpenChange={(open) => {
                 setPieceSelectorStep(open ? step.name : null);

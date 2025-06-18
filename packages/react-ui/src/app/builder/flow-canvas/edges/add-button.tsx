@@ -72,27 +72,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       )}
       {!showDropIndicator && !readonly && (
         <PieceSelector
-          operation={
-            props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
-              ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
-              : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
-          }
+
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
           asChild={true}
