@@ -11,6 +11,7 @@ import {
 } from 'typeorm'
 import { AgentEntity } from '../agents/agent-entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -104,6 +105,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
+        AIUsageEntity,
     ]
 
     switch (edition) {
