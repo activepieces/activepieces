@@ -6,8 +6,8 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { CardList } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
-import { CardList } from '@/components/ui/card-list';
 import {
   ResizableHandle,
   ResizablePanel,

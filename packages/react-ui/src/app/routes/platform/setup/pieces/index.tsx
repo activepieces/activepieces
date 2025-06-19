@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
-import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
+import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -33,7 +33,7 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/ui/table-title';
+import { TableTitle } from '../../../../../components/custom/table-title';
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
@@ -49,8 +49,10 @@ const PlatformPiecesPage = () => {
     includeHidden: true,
   });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const { refetch: refetchPiecesClientIdsMap } =
-    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [

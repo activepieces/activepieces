@@ -1,6 +1,7 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
@@ -29,6 +30,7 @@ export const flagService = {
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -71,6 +73,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: await aiProviderService.isAgentConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,
@@ -103,6 +111,12 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: system.getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
                 created,
                 updated,
             },
@@ -280,6 +294,7 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
+
         return platformId === cloudPlatformId
     },
 }

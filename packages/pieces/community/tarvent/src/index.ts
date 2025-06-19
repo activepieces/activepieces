@@ -43,11 +43,12 @@ export const tarventAuth = PieceAuth.CustomAuth({
 
 export const tarvent = createPiece({
   displayName: "Tarvent",
+  description: "Tarvent is an email marketing, automation, and email API platform that allows to you to send campaigns, manage contacts, automate your marketing, and more.",
   auth: tarventAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
-  authors: ["derekjohnson"],
+  authors: ["derekjdev","206mph"],
   actions: [createContact, updateContactTags, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, createAudienceGroup, updateJourneyStatus, createTransaction, sendCampaign, generateCustomEvent, getAudiences, getAudienceGroups, createSuppressionFilter, getCampaigns, getContact, getCustomEvent, getJourney],
   triggers: [contactAddedTrigger, contactGroupUpdatedTrigger, contactUpdatedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactNoteAddedTrigger, contactUnsubscribedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, contactClickedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactBouncedTrigger,campaignSendFinishedTrigger, transactionCreatedTrigger, transactionSentTrigger],
 });

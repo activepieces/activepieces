@@ -28,26 +28,27 @@ type DefaultTestingButtonProps = {
   onRetest: () => void;
 };
 
-const DefaultTestingButton = ({
-  isValid,
-  isSaving,
-  isTesting,
-  onRetest,
-}: DefaultTestingButtonProps) => {
+const DefaultTestingButton = React.forwardRef<
+  HTMLButtonElement,
+  DefaultTestingButtonProps
+>(({ isValid, isSaving, isTesting, onRetest }, ref) => {
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={!isValid || isSaving}
-      keyboardShortcut="G"
-      onKeyboardShortcut={onRetest}
-      onClick={onRetest}
-      loading={isTesting}
-    >
-      {t('Retest')}
-    </Button>
+    <TestButtonTooltip disabled={!isValid}>
+      <Button
+        ref={ref}
+        variant="outline"
+        size="sm"
+        disabled={!isValid || isSaving}
+        keyboardShortcut="G"
+        onKeyboardShortcut={onRetest}
+        onClick={onRetest}
+        loading={isTesting}
+      >
+        {t('Retest')}
+      </Button>
+    </TestButtonTooltip>
   );
-};
+});
 DefaultTestingButton.displayName = 'DefaultTestingButton';
 
 const isConsoleLogsValid = (value: unknown) => {

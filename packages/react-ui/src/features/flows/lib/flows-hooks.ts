@@ -7,6 +7,7 @@ import { downloadFile } from '@/lib/utils';
 import {
   FlowOperationType,
   FlowVersion,
+  FlowVersionMetadata,
   ListFlowsRequest,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -91,6 +92,48 @@ export const flowsHooks = {
         }
       },
       onError: () => toast(INTERNAL_ERROR_TOAST),
+    });
+  },
+
+  useFetchFlowVersion: ({
+    onSuccess,
+  }: {
+    onSuccess: (flowVersion: FlowVersion) => void;
+  }) => {
+    return useMutation<FlowVersion, Error, FlowVersionMetadata>({
+      mutationFn: async (flowVersion) => {
+        const result = await flowsApi.get(flowVersion.flowId, {
+          versionId: flowVersion.id,
+        });
+        return result.version;
+      },
+      onSuccess,
+      onError: (error) => {
+        toast(INTERNAL_ERROR_TOAST);
+        console.error(error);
+      },
+    });
+  },
+  useOverWriteDraftWithVersion: ({
+    onSuccess,
+  }: {
+    onSuccess: (flowVersion: PopulatedFlow) => void;
+  }) => {
+    return useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
+      mutationFn: async (flowVersion) => {
+        const result = await flowsApi.update(flowVersion.flowId, {
+          type: FlowOperationType.USE_AS_DRAFT,
+          request: {
+            versionId: flowVersion.id,
+          },
+        });
+        return result;
+      },
+      onSuccess,
+      onError: (error) => {
+        toast(INTERNAL_ERROR_TOAST);
+        console.error(error);
+      },
     });
   },
 };
