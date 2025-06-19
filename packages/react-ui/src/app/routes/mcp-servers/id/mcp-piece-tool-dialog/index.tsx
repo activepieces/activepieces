@@ -26,7 +26,7 @@ import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import type { McpWithTools } from '@activepieces/shared';
-import { McpToolType } from '@activepieces/shared';
+import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
@@ -164,7 +164,7 @@ export function McpPieceDialog({
   });
 
   const handleSave = () => {
-    if (selectedConnectionExternalId === null) {
+    if (!isNil(selectedPiece?.auth) && isNil(selectedConnectionExternalId)) {
       setShowValidationErrors(true);
       return;
     }

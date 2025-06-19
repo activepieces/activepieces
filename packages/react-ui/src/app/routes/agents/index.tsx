@@ -60,6 +60,7 @@ export const AgentsPage = () => {
     <>
       <div className="flex items-center justify-between">
         <TableTitle
+          beta={true}
           description={t('Build and manage your team of digital workers')}
         >
           {t('Agents')}

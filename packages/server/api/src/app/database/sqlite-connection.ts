@@ -112,10 +112,12 @@ import { AddMcpRunEntitySQLITE1748365786218 } from './migration/sqlite/174836578
 import { AddAgentsSqlite1748573768714 } from './migration/sqlite/1748573768714-AddAgentsSqlite'
 import { AIProviderRefactorSqlite1748824241409 } from './migration/sqlite/1748824241409-AIProviderRefactorSqlite'
 import { AddMcpToolFlowCascadeDeleteSqlite1749129178686 } from './migration/sqlite/1749129178686-AddMcpToolFlowCascadeDeleteSqlite'
+import { AIUsageSqlite1750074241300 } from './migration/sqlite/1750074241300-AIUsageSqlite'
 import { RemoveDefaultLocaleFromPlatform1749735242946 } from './migration/sqlite/1749735242946-removeDefaultLocaleFromPlatform'
 import { AddAgentsSqlite1749953500521 } from './migration/sqlite/1749953500521-AddAgentsSqlite'
 import { AddStepToIssuesTableSqlite1750017482244 } from './migration/sqlite/1750017482244-AddStepToIssuesTableSqlite'
 import { MakeStepNameOptionalSqlite1750025280435 } from './migration/sqlite/1750025280435-MakeStepNameOptionalSqlite'
+import { RemoveUniqueOnFlowSqlite1750093133906 } from './migration/sqlite/1750093133906-RemoveUniqueOnFlowSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -245,10 +247,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpRunEntitySQLITE1748365786218,
         AIProviderRefactorSqlite1748824241409,
         AddMcpToolFlowCascadeDeleteSqlite1749129178686,
+        AIUsageSqlite1750074241300,
         AddAgentsSqlite1749953500521,
         RemoveDefaultLocaleFromPlatform1749735242946,
         AddStepToIssuesTableSqlite1750017482244,
         MakeStepNameOptionalSqlite1750025280435,
+        RemoveUniqueOnFlowSqlite1750093133906,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
