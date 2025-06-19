@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+// import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
@@ -62,14 +62,14 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 ))
                 return piece.name === name && strictlyLessThan
             })
-            const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
-            if (isFiltered) {
-                return undefined
-            }
+            // const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
+            //     piece,
+            //     projectId,
+            //     platformId,
+            // })
+            // if (isFiltered) {
+            //     return undefined
+            // }
             return piece
         },
         async getOrThrow({ projectId, version, name, platformId, locale }): Promise<PieceMetadataModel> {
