@@ -22,13 +22,11 @@ import {
   Trigger,
   TriggerType,
   deepMergeAndCast,
-  FlowVersion,
   PieceCategory,
   BranchExecutionType,
   RouterExecutionType,
   spreadIfDefined,
   isNil,
-  flowStructureUtil,
   PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
 
@@ -55,24 +53,6 @@ const isCorePiece = (piece: StepMetadata) =>
     ? true
     : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
 
-const getStepNames = (
-  piece: StepMetadata,
-  flowVersion: FlowVersion,
-  count: number,
-) => {
-  if (piece.type === TriggerType.PIECE) {
-    return ['trigger'];
-  }
-  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count);
-};
-
-const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
-  if (piece.type === TriggerType.PIECE) {
-    return 'trigger';
-  }
-  return flowStructureUtil.findUnusedName(flowVersion.trigger);
-};
-
 const isAiPiece = (piece: StepMetadata) =>
   piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
     ? piece.categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
@@ -80,19 +60,6 @@ const isAiPiece = (piece: StepMetadata) =>
 
 const isAppPiece = (piece: StepMetadata) =>
   !isAiPiece(piece) && !isCorePiece(piece);
-
-const isActionOrTrigger = (
-  item: PieceSelectorItem,
-  stepMetadata: StepMetadata,
-): item is ActionBase | TriggerBase => {
-  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
-};
-
-const isPieceStepMetadata = (
-  stepMetadata: StepMetadata,
-): stepMetadata is PieceStepMetadata => {
-  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
-};
 
 const isPopularPieces = (
   stepMetadata: StepMetadataWithSuggestions,
@@ -136,18 +103,53 @@ const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   return false;
 };
 
-const isUtilityCorePiece = (
+const isPieceActionOrTrigger = (
+  pieceSelectorItem: PieceSelectorItem,
+): pieceSelectorItem is TriggerBase | ActionBase => {
+  return !('type' in pieceSelectorItem);
+};
+
+const isStepInitiallyValid = (
   stepMetadata: StepMetadata,
-  platform: PlatformWithoutSensitiveData,
+  actionOrTrigger: PieceSelectorItem,
 ) => {
-  if (stepMetadata.type === ActionType.CODE) {
-    return true;
+  switch (stepMetadata.type) {
+    case ActionType.CODE:
+      return true;
+    case ActionType.PIECE:
+    case TriggerType.PIECE: {
+      const isPieceStep = isPieceActionOrTrigger(actionOrTrigger);
+      if (!isPieceStep) {
+        console.error('Invalid piece selector item', actionOrTrigger);
+        return false;
+      }
+      const inputValidity = checkPieceInputValidity(
+        getInitalStepInput(stepMetadata, actionOrTrigger),
+        actionOrTrigger.props,
+      );
+      return inputValidity && !actionOrTrigger.requireAuth;
+    }
+    case ActionType.LOOP_ON_ITEMS:
+    case ActionType.ROUTER:
+    case TriggerType.EMPTY:
+      return false;
   }
-  if (!isCorePiece(stepMetadata)) {
-    return false;
+};
+
+const getInitalStepInput = (
+  stepMetadata: StepMetadata,
+  actionOrTrigger: PieceSelectorItem,
+) => {
+  const isPieceStep = isPieceActionOrTrigger(actionOrTrigger);
+  if (!isPieceStep) {
+    return {};
   }
-  return (
-    !isFlowController(stepMetadata) && !isPopularPieces(stepMetadata, platform)
+  return formUtils.getDefaultValueForStep(
+    {
+      ...spreadIfDefined('auth', stepMetadata.auth),
+      ...actionOrTrigger.props,
+    },
+    {},
   );
 };
 
@@ -170,31 +172,12 @@ const getDefaultStep = ({
       value: false,
     },
   };
-  const isPieceStep =
-    isActionOrTrigger(actionOrTrigger, stepMetadata) &&
-    isPieceStepMetadata(stepMetadata);
-  const input = isPieceStep
-    ? formUtils.getDefaultValueForStep(
-        actionOrTrigger.requireAuth
-          ? {
-              ...spreadIfDefined('auth', stepMetadata.auth),
-              ...actionOrTrigger.props,
-            }
-          : actionOrTrigger.props,
-        {},
-      )
-    : {};
 
+  const input = getInitalStepInput(stepMetadata, actionOrTrigger);
+  const isValid = isStepInitiallyValid(stepMetadata, actionOrTrigger);
   const common = {
     name: stepName,
-    valid: isPieceStep
-      ? checkPieceInputValidity(input, actionOrTrigger.props) &&
-        (actionOrTrigger.requireAuth && !isNil(actionOrTrigger.props['auth'])
-          ? !isNil(input['auth'])
-          : true)
-      : stepMetadata.type === ActionType.CODE
-      ? true
-      : false,
+    valid: isValid,
     displayName: actionOrTrigger.displayName,
     skip: false,
     settings: {
@@ -326,7 +309,6 @@ const checkPieceInputValidity = (
 
 const maxListHeight = 300;
 const minListHeight = 100;
-const aboveListSectionHeight = 86;
 
 const useAdjustPieceListHeightToAvailableSpace = (
   isPieceSelectorOpen: boolean,
@@ -341,7 +323,7 @@ const useAdjustPieceListHeightToAvailableSpace = (
   ) {
     const popoverTriggerRect =
       popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
+    const popOverFullHeight = maxListHeight;
     const isRenderingPopoverBelowTrigger =
       popoverTriggerRect.top <
       (window.innerHeight || document.documentElement.clientHeight) -
@@ -375,20 +357,16 @@ const useAdjustPieceListHeightToAvailableSpace = (
     listHeightRef,
     popoverTriggerRef,
     maxListHeight,
-    aboveListSectionHeight,
   };
 };
 
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
-  getStepName,
-  getStepNames,
   isAiPiece,
   isAppPiece,
   toKey,
   isPopularPieces,
-  isUtilityCorePiece,
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,

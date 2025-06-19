@@ -90,26 +90,18 @@ export const FlowCanvas = React.memo(
   }) => {
     const [
       flowVersion,
-      readonly,
       setSelectedNodes,
       selectedNodes,
-      applyOperation,
       selectedStep,
-      exitStepSettings,
       panningMode,
-      setPieceSelectorStep,
       selectStepByName,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
-        state.readonly,
         state.setSelectedNodes,
         state.selectedNodes,
-        state.applyOperation,
         state.selectedStep,
-        state.exitStepSettings,
         state.panningMode,
-        state.setPieceSelectorStep,
         state.selectStepByName,
       ];
     });
@@ -162,20 +154,16 @@ export const FlowCanvas = React.memo(
           const targetIsSelectionRect = ev.target.classList.contains(
             NODE_SELECTION_RECT_CLASS_NAME,
           );
-          if (
-            stepElement ||
-            targetIsSelectionRect ||
-            targetIsSelectionChevron
-          ) {
+          const showStepContextMenu =
+            stepElement || targetIsSelectionRect || targetIsSelectionChevron;
+          if (showStepContextMenu) {
             setContextMenuType(ContextMenuType.STEP);
           } else {
             setContextMenuType(ContextMenuType.CANVAS);
           }
-          if (
-            doesSelectionRectangleExist() &&
-            !targetIsSelectionRect &&
-            !targetIsSelectionChevron
-          ) {
+          const shouldRemoveSelectionRect =
+            !targetIsSelectionRect && !targetIsSelectionChevron;
+          if (shouldRemoveSelectionRect) {
             document
               .querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`)
               ?.remove();
@@ -186,12 +174,6 @@ export const FlowCanvas = React.memo(
     );
 
     const onSelectionEnd = useCallback(() => {
-      if (
-        !storeApi.getState().userSelectionActive ||
-        doesSelectionRectangleExist()
-      ) {
-        return;
-      }
       const selectedSteps = selectedNodes.map((node) =>
         flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
       );
@@ -226,16 +208,7 @@ export const FlowCanvas = React.memo(
           cursorPosition={cursorPosition}
           lefSideBarContainerWidth={lefSideBarContainerWidth}
         >
-          <CanvasContextMenu
-            selectedNodes={selectedNodes}
-            applyOperation={applyOperation}
-            selectedStep={selectedStep}
-            exitStepSettings={exitStepSettings}
-            flowVersion={flowVersion}
-            readonly={readonly}
-            setPieceSelectorStep={setPieceSelectorStep}
-            contextMenuType={contextMenuType}
-          >
+          <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               onContextMenu={onContextMenu}
               onPaneClick={() => {

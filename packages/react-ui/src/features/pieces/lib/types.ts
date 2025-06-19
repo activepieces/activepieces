@@ -43,6 +43,7 @@ type PrimitiveStepMetadata = BaseStepMetadata & {
     | ActionType.LOOP_ON_ITEMS
     | ActionType.ROUTER
     | TriggerType.EMPTY;
+  auth?: undefined;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &

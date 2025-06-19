@@ -4,10 +4,6 @@ import { useDebounce } from 'use-debounce';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import {
-  PieceTagEnum,
-  PieceTagGroup,
-} from '@/app/builder/pieces-selector/piece-tag-group';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -49,8 +45,8 @@ import { StepsCardList } from './steps-card-list';
 type PieceSelectorProps = {
   children: React.ReactNode;
   open: boolean;
-  asChild?: boolean;
-  initialSelectedPiece?: string | undefined;
+  asChild: boolean;
+  initialSelectedPieceDisplayName?: string | undefined;
   onOpenChange: (open: boolean) => void;
 } & { operation: PieceSelectorOperation };
 
@@ -64,10 +60,10 @@ const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
 const PieceSelector = ({
   children,
   open,
-  asChild = true,
+  asChild,
   onOpenChange,
   operation,
-  initialSelectedPiece,
+  initialSelectedPieceDisplayName,
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
@@ -79,9 +75,6 @@ const PieceSelector = ({
     undefined,
   );
 
-  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
-    PieceTagEnum.ALL,
-  );
   const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
     useBuilderStateContext((state) => [
       state.applyOperation,
@@ -102,27 +95,13 @@ const PieceSelector = ({
   const pieceGroups = useMemo(() => {
     if (!metadata) return [];
 
-    const filteredMetadataOnTag = metadata.filter((stepMetadata) => {
-      switch (selectedTag) {
-        case PieceTagEnum.CORE:
-          return pieceSelectorUtils.isCorePiece(stepMetadata);
-        case PieceTagEnum.AI:
-          return pieceSelectorUtils.isAiPiece(stepMetadata);
-        case PieceTagEnum.APPS:
-          return pieceSelectorUtils.isAppPiece(stepMetadata);
-        case PieceTagEnum.ALL:
-        default:
-          return true;
-      }
-    });
-
     const piecesMetadata =
       debouncedQuery.length > 0
-        ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
-        : filteredMetadataOnTag;
+        ? filterOutPiecesWithNoSuggestions(metadata)
+        : metadata;
 
     initiallySelectedMetaDataRef.current = piecesMetadata.find(
-      (p) => p.displayName === initialSelectedPiece,
+      (p) => p.displayName === initialSelectedPieceDisplayName,
     );
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
 
@@ -136,26 +115,14 @@ const PieceSelector = ({
     const universalAiPieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
     );
-    const utilityCorePieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
+    const popularPieces = piecesMetadata.filter((p) =>
+      pieceSelectorUtils.isPopularPieces(p, platform),
     );
-    const popularPieces = piecesMetadata.filter(
-      (p) =>
-        pieceSelectorUtils.isPopularPieces(p, platform) &&
-        selectedTag !== PieceTagEnum.AI,
-    );
-    const other = piecesMetadata.filter(
-      (p) =>
-        !popularPieces.includes(p) &&
-        !utilityCorePieces.includes(p) &&
-        !flowControllerPieces.includes(p) &&
-        !universalAiPieces.includes(p),
-    );
+    const other = piecesMetadata.filter((p) => !popularPieces.includes(p));
 
     const groups: PieceGroup[] = [
       { title: 'Popular', pieces: popularPieces },
       { title: 'Flow Control', pieces: flowControllerPieces },
-      { title: 'Utility', pieces: utilityCorePieces },
       { title: 'Universal AI', pieces: universalAiPieces },
       { title: 'Other', pieces: other },
     ];
@@ -163,27 +130,21 @@ const PieceSelector = ({
     return groups.filter((group) => group.pieces.length > 0);
   }, [
     metadata,
-    selectedTag,
     debouncedQuery,
     platform,
     isTrigger,
-    initialSelectedPiece,
+    initialSelectedPieceDisplayName,
   ]);
 
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-  const {
-    listHeightRef,
-    popoverTriggerRef,
-    aboveListSectionHeight,
-    maxListHeight,
-  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
+  const { listHeightRef, popoverTriggerRef, maxListHeight } =
+    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
-    setSelectedTag(PieceTagEnum.ALL);
   };
 
   const handleAddAction = (
@@ -236,9 +197,8 @@ const PieceSelector = ({
       type: ActionType.ROUTER,
     } as StepMetadata;
 
-    const newStepNames = pieceSelectorUtils.getStepNames(
-      stepMetadata,
-      flowVersion,
+    const newStepNames = flowStructureUtil.findUnusedNames(
+      flowVersion.trigger,
       3,
     );
 
@@ -389,10 +349,7 @@ const PieceSelector = ({
     resetField();
     onOpenChange(false);
 
-    const newStepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      flowVersion,
-    );
+    const newStepName = flowStructureUtil.findUnusedName(flowVersion.trigger);
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
@@ -504,11 +461,7 @@ const PieceSelector = ({
         }}
       >
         <>
-          <div
-            style={{
-              height: `${aboveListSectionHeight}px`,
-            }}
-          >
+          <div>
             <div className="p-2 flex gap-1 items-center">
               <SearchInput
                 placeholder="Search"
@@ -516,7 +469,6 @@ const PieceSelector = ({
                 showDeselect={searchQuery.length > 0}
                 onChange={(e) => {
                   setSearchQuery(e);
-                  setSelectedTag(PieceTagEnum.ALL);
                   setSelectedMetadata(undefined);
                 }}
               />
@@ -531,31 +483,13 @@ const PieceSelector = ({
               )}
             </div>
 
-            <PieceTagGroup
-              selectedTag={selectedTag}
-              type={
-                operation.type === FlowOperationType.UPDATE_TRIGGER
-                  ? 'trigger'
-                  : 'action'
-              }
-              onSelectTag={(value) => {
-                setSelectedTag(value);
-                setSelectedMetadata(undefined);
-              }}
-            />
             <Separator orientation="horizontal" />
           </div>
           {!isMobile && (
-            <div
-              className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
-              style={{
-                height: listHeightRef.current + 'px',
-              }}
-            >
+            <div className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] ">
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
                 selectedPieceMetadata={selectedPieceMetadata}
@@ -592,7 +526,6 @@ const PieceSelector = ({
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
                 hiddenActionsOrTriggers={hiddenActionsOrTriggers}
