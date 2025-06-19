@@ -54,7 +54,10 @@ export function ProjectSelectionDialog({
     mutationFn: (request: DiffReleaseRequest) =>
       projectReleaseApi.diff(request),
     onSuccess: (plan) => {
-      if (!plan.operations || plan.operations.length === 0) {
+      if (
+        (!plan.operations || plan.operations.length === 0) &&
+        (!plan.tables || plan.tables.length === 0)
+      ) {
         toast({
           title: t('No Changes Found'),
           description: t('There are no differences to apply'),

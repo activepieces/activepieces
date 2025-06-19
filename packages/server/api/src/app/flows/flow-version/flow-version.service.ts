@@ -126,10 +126,16 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        await flowVersionSideEffects(log).postApplyOperation({
+            flowVersion: mutatedFlowVersion,
+            operation: userOperation,
+        })
+
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
+        mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         return flowVersionRepo(entityManager).save(
             sanitizeObjectForPostgresql(mutatedFlowVersion),
         )
@@ -141,6 +147,25 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         return flowVersionRepo().findOneBy({
             id,
+        })
+    },
+
+    async exists(id: FlowVersionId): Promise<boolean> {
+        return flowVersionRepo().exists({
+            where: {
+                id,
+            },
+        })
+    },
+    async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
+        return flowVersionRepo().findOne({
+            where: {
+                flowId,
+                state,
+            },
+            order: {
+                created: 'DESC',
+            },
         })
     },
 
@@ -259,12 +284,15 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 displayName: 'Select Trigger',
             },
             schemaVersion: LATEST_SCHEMA_VERSION,
+            connectionIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
         }
         return flowVersionRepo().save(flowVersion)
     },
 })
+
+
 
 async function applySingleOperation(
     projectId: ProjectId,
@@ -279,7 +307,12 @@ async function applySingleOperation(
         operation,
     })
     operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
-    return flowOperations.apply(flowVersion, operation)
+    const updatedFlowVersion = flowOperations.apply(flowVersion, operation)
+    await flowVersionSideEffects(log).postApplyOperation({
+        flowVersion: updatedFlowVersion,
+        operation,
+    })
+    return updatedFlowVersion   
 }
 
 async function removeSecretsFromFlow(

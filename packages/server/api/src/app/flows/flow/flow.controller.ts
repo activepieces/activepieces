@@ -1,5 +1,5 @@
 
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -8,6 +8,7 @@ import {
     ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
+    FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
@@ -15,6 +16,7 @@ import {
     isNil,
     ListFlowsRequest,
     Permission,
+    PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
     SeekPage,
@@ -30,7 +32,8 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
+import { checkQuotaOrThrow } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
 
@@ -56,6 +59,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
+
+        if (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) {
+            await checkQuotaOrThrow({
+                platformId: request.principal.platform.id,
+                metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            })
+        }
+
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
@@ -78,6 +89,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
         })
+
         return updatedFlow
     })
 
@@ -90,6 +102,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             status: request.query.status,
             name: request.query.name,
             versionState: request.query.versionState,
+            connectionExternalIds: request.query.connectionExternalIds,
         })
     })
 
@@ -128,10 +141,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersion: flow.version,
             },
         })
-        await gitRepoService(request.log).onFlowDeleted({
-            flowId: request.params.id,
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_FLOW,
+            idOrExternalId: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
             log: request.log,
         })
         await flowService(request.log).delete({

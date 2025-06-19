@@ -17,6 +17,7 @@ describe('flow with response', () => {
                     'hello': 'world',
                 },
             },
+            respond: 'stop',
         }
         const response = {
             status: 200,
@@ -36,7 +37,6 @@ describe('flow with response', () => {
                 input,
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
-   
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({
             reason: FlowRunStatus.STOPPED,

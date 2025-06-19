@@ -126,6 +126,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {
@@ -161,7 +162,8 @@ export type BaseActionContext<
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    sync?: boolean
   }) => string;
 };
 

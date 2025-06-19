@@ -35,78 +35,6 @@ export async function fetchFiltersOptions(
 	return options;
 }
 
-export async function fetchProductsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const products = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/products',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const product of products) {
-		options.push({
-			label: product.name,
-			value: product.id,
-		});
-	}
-
-	return options;
-}
-
-export async function fetchDealsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const deals = await pipedrivePaginatedApiCall<{ id: number; title: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/deals',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const deal of deals) {
-		options.push({
-			label: deal.title,
-			value: deal.id,
-		});
-	}
-
-	return options;
-}
-
-export async function fetchLeadsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const leads = await pipedrivePaginatedApiCall<{ id: number; title: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/leads',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const lead of leads) {
-		options.push({
-			label: lead.title,
-			value: lead.id,
-		});
-	}
-
-	return options;
-}
-
 export async function fetchActivityTypesOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<string>[]> {
@@ -193,30 +121,6 @@ export async function fetchOwnersOptions(
 		options.push({
 			label: user.email,
 			value: user.id,
-		});
-	}
-
-	return options;
-}
-
-export async function fetchOrganizationsOptions(
-	auth: PiecePropValueSchema<typeof pipedriveAuth>,
-): Promise<DropdownOption<number>[]> {
-	const organizations = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
-		accessToken: auth.access_token,
-		apiDomain: auth.data['api_domain'],
-		method: HttpMethod.GET,
-		resourceUri: '/organizations:(id,name)',
-		query: {
-			sort: 'update_time DESC',
-		},
-	});
-
-	const options: DropdownOption<number>[] = [];
-	for (const org of organizations) {
-		options.push({
-			label: org.name,
-			value: org.id,
 		});
 	}
 
@@ -528,27 +432,11 @@ export const filterIdProp = (type: string, required = false) =>
 	});
 
 export const organizationIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Organization',
-		refreshers: [],
-		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchOrganizationsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	});
+		Property.Number({
+		displayName:'Organization ID',
+		description:'You can use Find Organization action to retrieve org ID.',
+		required
+	})
 
 export const dealPipelineIdProp = (required = false) =>
 	Property.Dropdown({
@@ -612,27 +500,12 @@ export const dealStageIdProp = (required = false) =>
 	});
 
 export const personIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Person',
-		refreshers: [],
-		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchPersonsOptions(authValue);
+	Property.Number({
+		displayName:'Person ID',
+		description:'You can use Find Person action to retrieve person ID.',
+		required
+	})
 
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	});
 
 export const labelIdsProp = (objectType: string, labelFieldName: string, required = false) =>
 	Property.MultiSelectDropdown({
@@ -727,50 +600,19 @@ export const leadlabeIdsProp = (required = false) =>
 	});
 
 export const dealIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Deal',
-		refreshers: [],
-		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchDealsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	});
+		Property.Number({
+		displayName:'Deal ID',
+		description:'You can use Find Deal action to retrieve deal ID.',
+		required
+	})
 
 export const productIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Product',
-		refreshers: [],
-		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchProductsOptions(authValue);
+		Property.Number({
+		displayName:'Product ID',
+		description:'You can use Find Product action to retrieve product ID.',
+		required
+	})
 
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	});
 
 export const visibleToProp = Property.StaticDropdown({
 	displayName: 'Visible To',
@@ -791,26 +633,9 @@ export const visibleToProp = Property.StaticDropdown({
 });
 
 export const leadIdProp = (required = false) =>
-	Property.Dropdown({
-		displayName: 'Lead',
-		refreshers: [],
+	Property.ShortText({
+		displayName: 'Lead ID',
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: 'Please connect your account.',
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			const options = await fetchLeadsOptions(authValue);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
 	});
 
 export const activityTypeIdProp = (required = false) =>

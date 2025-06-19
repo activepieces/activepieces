@@ -11,6 +11,7 @@ export const ListFlowsRequest = Type.Object({
     projectId: Type.String({}),
     name: Type.Optional(Type.String({})),
     versionState: Type.Optional(Type.Enum(FlowVersionState)),
+    connectionExternalIds: Type.Optional(Type.Array(Type.String({}))),
 })
 
 export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }

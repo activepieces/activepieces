@@ -1,80 +1,59 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AppConnectionWithoutSensitiveData } from '../app-connection/app-connection'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
+import { McpTool, McpToolType } from './tools/mcp-tool'
 
-export enum McpPropertyType {
-    TEXT = 'Text',
-    BOOLEAN = 'Boolean',
-    DATE = 'Date',
-    NUMBER = 'Number',
-    ARRAY = 'Array',
-    OBJECT = 'Object',
-}
-
-export enum McpPieceStatus {
-    ENABLED = 'ENABLED',
-    DISABLED = 'DISABLED',
-}
-
-export const McpProperty = Type.Object({
-    name: Type.String(),
-    description: Type.Optional(Type.String()),
-    type: Type.String(),
-    required: Type.Boolean(),
-})
-
-export type McpProperty = Static<typeof McpProperty>
-
-
-export const McpPiece = Type.Object({
-    ...BaseModelSchema,
-    pieceName: Type.String(),
-    connectionId: Type.Optional(ApId),
-    mcpId: ApId,
-    status: Type.Optional(Type.Enum(McpPieceStatus)),
-})
-
-export type McpPiece = Static<typeof McpPiece>
-
-export const McpPieceWithConnection = Type.Composite([
-    McpPiece,
-    Type.Object({
-        connection: Type.Optional(AppConnectionWithoutSensitiveData),
-    }),
-])
-
-export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
-
-
+export type McpId = ApId
 
 export const Mcp = Type.Object({
     ...BaseModelSchema,
+    name: Type.String(),
     projectId: ApId,
     token: ApId,
+    agentId: Type.Optional(ApId),
 })
 
-export type Mcp = Static<typeof Mcp> 
+export type Mcp = Static<typeof Mcp>
 
-export const McpWithPieces = Type.Composite([
+export const McpWithTools = Type.Composite([
     Mcp,
     Type.Object({
-        pieces: Type.Array(McpPieceWithConnection),
+        tools: Type.Array(McpTool),
     }),
 ])
 
-export type McpWithPieces = Static<typeof McpWithPieces>
 
+const MAX_TOOL_NAME_LENGTH = 47
 
-export const McpTrigger = Type.Object({
-    pieceName: Type.String(),
-    triggerName: Type.String(),
-    input: Type.Object({
-        toolName: Type.String(),
-        toolDescription: Type.String(),
-        inputSchema: Type.Array(McpProperty),
-        returnsResponse: Type.Boolean(),
-    }),
+export const McpToolMetadata = Type.Object({
+    displayName: Type.String(),
+    logoUrl: Type.Optional(Type.String()),
 })
 
-export type McpTrigger = Static<typeof McpTrigger>
+export type McpToolMetadata = Static<typeof McpToolMetadata>
+
+
+export const mcpToolNaming = {
+    fixTool: (name: string, id: string, type: McpToolType) => {
+        const spaceToReserve = id.length + 1
+        const baseName = name.replace(/[\s/@-]+/g, '_')
+        switch (type) {
+            case McpToolType.FLOW:
+                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}`
+            case McpToolType.PIECE:{
+                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}` 
+            }
+        }
+    },
+    fixProperty: (schemaName: string) => {
+        return schemaName.replace(/[\s/@-]+/g, '_')
+    },
+    extractToolId: (toolName: string) => {
+        const splitted = toolName.split('_')
+        return splitted[splitted.length - 1]
+    },
+}
+
+
+
+export type McpWithTools = Static<typeof McpWithTools>

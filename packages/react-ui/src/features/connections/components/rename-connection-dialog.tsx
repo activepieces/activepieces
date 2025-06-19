@@ -1,7 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogClose, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState, forwardRef } from 'react';
@@ -23,14 +22,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-import { appConnectionsApi } from '../lib/app-connections-api';
-import {
-  ConnectionNameAlreadyExists,
-  isConnectionNameUnique,
-} from '../lib/utils';
+import { appConnectionsMutations } from '../lib/app-connections-hooks';
 
 const RenameConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -57,43 +50,13 @@ const RenameConnectionDialog = forwardRef<
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    AppConnectionWithoutSensitiveData,
-    Error,
-    {
-      connectionId: string;
-      displayName: string;
-    }
-  >({
-    mutationFn: async ({ connectionId, displayName }) => {
-      const existingConnection = await isConnectionNameUnique(
-        false,
-        displayName,
-      );
-      if (!existingConnection && displayName !== currentName) {
-        throw new ConnectionNameAlreadyExists();
-      }
-      return appConnectionsApi.update(connectionId, { displayName });
-    },
-    onSuccess: () => {
-      onRename();
-      toast({
-        title: t('Success'),
-        description: t('Connection has been renamed.'),
-        duration: 3000,
-      });
-      setIsRenameDialogOpen(false);
-    },
-    onError: (error) => {
-      if (error instanceof ConnectionNameAlreadyExists) {
-        renameConnectionForm.setError('displayName', {
-          message: error.message,
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
-  });
+  const { mutate: renameConnection, isPending } =
+    appConnectionsMutations.useRenameAppConnection({
+      currentName,
+      setIsRenameDialogOpen,
+      renameConnectionForm,
+      refetch: onRename,
+    });
 
   return (
     <Tooltip>
@@ -118,9 +81,7 @@ const RenameConnectionDialog = forwardRef<
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {!userHasPermissionToRename
-                ? t('Permission needed')
-                : t('Rename')}
+              {!userHasPermissionToRename ? t('Permission needed') : t('Edit')}
             </TooltipContent>
           </>
         </DialogTrigger>
@@ -134,7 +95,7 @@ const RenameConnectionDialog = forwardRef<
             <form
               className="grid space-y-4"
               onSubmit={renameConnectionForm.handleSubmit((data) =>
-                mutate({
+                renameConnection({
                   connectionId,
                   displayName: data.displayName,
                 }),

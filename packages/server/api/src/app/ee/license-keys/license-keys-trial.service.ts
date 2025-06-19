@@ -94,7 +94,7 @@ async function generateCloudTrialLicense(workEmail: string, platformId: string, 
     })
     const developmentTrialLicenseKey = await generateLicenseKey(workEmail, companyName, disabledFeatures, isEmbeddingsEnabled, 'development', log, platformId)
     const productionTrialLicenseKey = await generateLicenseKey(workEmail, companyName, disabledFeatures, isEmbeddingsEnabled, 'production', log, platformId)
-    await applyLicenseKeyToPlatform(platformId, productionTrialLicenseKey, log)
+    await licenseKeysService(log).applyLimits(platformId, productionTrialLicenseKey)
     return {
         developmentTrialLicenseKey: developmentTrialLicenseKey.key,
         productionTrialLicenseKey: productionTrialLicenseKey.key,
@@ -123,13 +123,7 @@ async function generateLicenseKey(workEmail: string, companyName: string, disabl
     }
 }
 
-async function applyLicenseKeyToPlatform(platformId: string, licenseKey: LicenseKeyEntity, log: FastifyBaseLogger) {
-    await platformService.update({
-        id: platformId,
-        licenseKey: licenseKey.key,
-    })
-    await licenseKeysService(log).applyLimits(platformId, licenseKey)
-}
+
 
 async function addCNAMERecord(
     subdomain: string,

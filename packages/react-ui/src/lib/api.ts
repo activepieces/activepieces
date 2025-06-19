@@ -93,6 +93,8 @@ export const api = {
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },
+  any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
+    request<TResponse>(url, config),
   get: <TResponse>(url: string, query?: unknown, config?: AxiosRequestConfig) =>
     request<TResponse>(url, {
       params: query,

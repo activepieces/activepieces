@@ -12,6 +12,9 @@ export const replyToMcpClient = createAction({
   displayName: 'Reply to MCP Client',
   description: 'Return a response to the MCP client that called the tool.',
   props: {
+    note: Property.MarkDown({
+      value: '**Important**: Make sure your MCP trigger has (Wait for Response) turned on.'
+    }),
     mode: Property.StaticDropdown({
       displayName: 'Mode',
       description: 'Choose Simple for key-value or Advanced for JSON.',

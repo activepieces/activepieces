@@ -39,7 +39,7 @@ export const newMessageInChannelTrigger = createTrigger({
 		const payloadBody = context.payload.body as PayloadBody;
 
 		// check if it's channel message
-		if (payloadBody.event.channel_type !== 'channel') {
+		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
 			return [];
 		}
 		

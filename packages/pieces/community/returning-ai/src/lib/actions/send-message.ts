@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
 import { returningAiAuth } from '../../index';
 
@@ -64,16 +64,23 @@ export const sendMessage = createAction({
           method: HttpMethod.GET,
           url: `${getApiEndpoint(authToken)}/apis/v1/channels`,
           headers: {
-            Authorization: `Bearer ${authToken.split(':')[1]}`,
+            Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
           },
         });
 
         if (response.body.status === 'success') {
           return {
             options: response.body.data.map(
-              (channel: { _id: string; topic: string }) => ({
+              (channel: {
+                _id: string;
+                topic: string;
+                channelType: string;
+              }) => ({
                 label: channel.topic,
-                value: channel._id,
+                value: JSON.stringify({
+                  id: channel._id,
+                  type: channel.channelType,
+                }),
               })
             ),
           };
@@ -86,6 +93,29 @@ export const sendMessage = createAction({
         }
       },
     }),
+    dynamicFields: Property.DynamicProperties({
+      displayName: 'Channel Fields',
+      description: 'Additional fields based on channel type',
+      required: true,
+      refreshers: ['channel'],
+      props: async ({ channel }) => {
+        const properties: Record<string, any> = {};
+
+        if (channel) {
+          const channelData = JSON.parse(channel as unknown as string);
+          if (channelData.type === 'forum') {
+            properties['topicId'] = Property.ShortText({
+              displayName: 'Topic ID',
+              description:
+                'The topic ID of the forum channel where the message will be posted',
+              required: true,
+            });
+          }
+        }
+
+        return properties;
+      },
+    }),
     message: Property.LongText({
       displayName: 'Message',
       description: 'The message to be posted',
@@ -94,16 +124,22 @@ export const sendMessage = createAction({
   },
   async run({ propsValue, auth }) {
     const authToken = auth as string;
+    const channelData = JSON.parse(propsValue.channel as string);
+    const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/send`,
       headers: {
-        Authorization: `Bearer ${authToken.split(':')[1]}`,
+        Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
       },
       body: {
-        channelId: propsValue.channel,
+        channelId: channelData.id,
         message: propsValue.message,
         sender: propsValue.user,
+        ...(channelData.type === 'forum' && {
+          forumTopicId: dynamicFields['topicId'],
+        }),
       },
     });
 

@@ -20,7 +20,11 @@ import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
-const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettings)
+const loopSettingsValidator = TypeCompiler.Compile(Type.Intersect([LoopOnItemsActionSettings, Type.Object({
+    items: Type.String({
+        minLength: 1,
+    }),
+})]))
 const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
 
 type ValidationResult = {
@@ -42,7 +46,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     case ActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.Check(
                             clonedRequest.request.action.settings,
-                        )
+                        ) 
                         break
                     case ActionType.PIECE: {
                         const result = await validateAction(

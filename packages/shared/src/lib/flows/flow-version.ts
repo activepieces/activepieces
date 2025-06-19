@@ -6,7 +6,7 @@ import { Trigger } from './triggers/trigger'
 
 export type FlowVersionId = ApId
 
-export const LATEST_SCHEMA_VERSION = '1'
+export const LATEST_SCHEMA_VERSION = '2'
 
 export enum FlowVersionState {
     LOCKED = 'LOCKED',
@@ -22,6 +22,7 @@ export const FlowVersion = Type.Object({
     valid: Type.Boolean(),
     schemaVersion: Nullable(Type.String()),
     state: Type.Enum(FlowVersionState),
+    connectionIds: Type.Array(Type.String()),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
@@ -38,3 +39,4 @@ export const FlowVersionMetadata = Type.Object({
 })
 
 export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>
+

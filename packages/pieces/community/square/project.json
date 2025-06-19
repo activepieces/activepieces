@@ -6,20 +6,31 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/square",
         "tsConfig": "packages/pieces/community/square/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/square/package.json",
         "main": "packages/pieces/community/square/src/index.ts",
-        "assets": ["packages/pieces/community/square/*.md"],
+        "assets": [
+          "packages/pieces/community/square/*.md",
+          {
+            "input": "packages/pieces/community/square/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []

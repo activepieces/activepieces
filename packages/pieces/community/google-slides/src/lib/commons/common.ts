@@ -2,18 +2,49 @@ import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces
 
 export interface PageElement {
     objectId: string;
-    table?: {
-        tableRows: any[];
-    };
+    table?: Table
     sheetsChart?: {
         spreadsheetId: string;
         chartId: number;
     };
-    shape?: {
-        text: {
-            textElements: {textRun: {content: string}}[]
-        };
-    };
+    shape?: Shape
+}
+
+interface Presentation {
+    slides?: Slide[];
+}
+
+interface Slide {
+    pageElements?: PageElement[];
+}
+
+
+interface Shape {
+    text?: Text;
+}
+
+interface Text {
+    textElements?: TextElement[];
+}
+
+export interface TextElement {
+    textRun?: TextRun;
+}
+
+interface TextRun {
+    content?: string;
+}
+
+interface Table {
+    tableRows?: TableRow[];
+}
+
+interface TableRow {
+    tableCells?: TableCell[];
+}
+
+export interface TableCell {
+    text?: Text;
 }
 
 export const googleSheetsCommon = {

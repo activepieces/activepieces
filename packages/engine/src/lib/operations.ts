@@ -123,8 +123,8 @@ function cleanSampleData(stepOutput: StepOutput) {
 }
 
 async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
-    if (!input.formatPayload) {
-        return input.triggerPayload as TriggerPayload;
+    if (!input.executeTrigger) {
+        return input.triggerPayload as TriggerPayload
     }
     const newPayload = await triggerHelper.executeTrigger({
         params: {
@@ -136,29 +136,32 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
         },
         constants: EngineConstants.fromExecuteFlowInput(input),
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
-    return newPayload.output[0] as TriggerPayload;
+    return newPayload.output[0] as TriggerPayload
 }
 
 async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowExecutorContext> {
+    let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             const newPayload = await runOrReturnPayload(input)
-            return FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
             }).setOutput(newPayload))
+            break
         }
         case ExecutionType.RESUME: {
-            let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
-            for (const [step, output] of Object.entries(input.steps)) {
-                if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-                    flowContext = flowContext.upsertStep(step, output)
-                }
-            }
-            return flowContext
+            break
         }
     }
+
+    for (const [step, output] of Object.entries(input.executionState.steps)) {
+        if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
+            flowContext = flowContext.upsertStep(step, output)
+        }
+    }
+    return flowContext
 }
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {

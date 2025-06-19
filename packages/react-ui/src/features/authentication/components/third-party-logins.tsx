@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -14,7 +13,6 @@ import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
-import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../../../lib/oauth2-utils';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
@@ -22,10 +20,6 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
 };
 
 const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('from') || '/flows';
-
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
@@ -33,6 +27,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -48,23 +43,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
       toast(INTERNAL_ERROR_TOAST);
       return;
     }
-
-    try {
-      const { code } = await oauth2Utils.openWithLoginUrl(
-        loginUrl,
-        thirdPartyRedirectUrl,
-      );
-
-      const data = await authenticationApi.claimThirdPartyRequest({
-        providerName,
-        code,
-      });
-
-      authenticationSession.saveResponse(data);
-      navigate(redirectTo);
-    } catch (e) {
-      toast(INTERNAL_ERROR_TOAST);
-    }
+    thirdPartyLogin(loginUrl, providerName);
   };
 
   const signInWithSaml = () =>

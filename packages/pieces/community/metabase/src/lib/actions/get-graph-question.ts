@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { metabaseAuth } from '../..';
 import jwt from 'jsonwebtoken';
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright';
 
 export const getGraphQuestion = createAction({
   name: 'getGraphQuestion',
@@ -22,9 +22,20 @@ export const getGraphQuestion = createAction({
       displayName: 'The name of the graph (without the extension)',
       required: false,
     }),
+    waitTime: Property.Number({
+      displayName: 'Wait Time (seconds)',
+      description:
+        'How long to wait for the graph to render completely in seconds',
+      required: true,
+      defaultValue: 5,
+    }),
   },
   async run({ auth, propsValue, files }) {
-    if (!auth.embeddingKey) return 'An embedding key is needed.';
+    if ('embeddingKey' in auth && !auth.embeddingKey)
+      return 'An embedding key is needed.';
+
+    if (propsValue.waitTime <= 0)
+      return 'The wait time needs to be superior to 0';
 
     const questionId = propsValue.questionId.split('-')[0];
     const numericQuestionId = parseInt(questionId);
@@ -35,6 +46,7 @@ export const getGraphQuestion = createAction({
       exp: Math.round(Date.now() / 1000) + 10 * 60,
     };
 
+    // @ts-expect-error we expect an embedding key if the user can use this action.
     const token = jwt.sign(payload, auth.embeddingKey);
     const graphName = propsValue.graphName
       ? propsValue.graphName + '.png'
@@ -43,22 +55,25 @@ export const getGraphQuestion = createAction({
     const iframeUrl =
       auth.baseUrl + '/embed/question/' + token + '#bordered=true&titled=true';
 
-    const browser = await puppeteer.launch({
+    const browser = await chromium.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      chromiumSandbox: false,
+      executablePath: '/usr/bin/chromium',
     });
 
     try {
-      const page = await browser.newPage();
-
-      await page.setViewport({
-        width: 1600,
-        height: 1200,
+      const context = await browser.newContext({
+        viewport: {
+          width: 1600,
+          height: 1200,
+        },
         deviceScaleFactor: 2,
       });
 
+      const page = await context.newPage();
+
       const response = await page.goto(iframeUrl, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'networkidle',
         timeout: 30000,
       });
 
@@ -67,6 +82,9 @@ export const getGraphQuestion = createAction({
           `Page load failed with status: ${response ? response.status() : 400}`
         );
       }
+
+      // we wait so the graph can load
+      await page.waitForTimeout(propsValue.waitTime * 1000);
 
       const screenshotBuffer = await page.screenshot({
         path: graphName,

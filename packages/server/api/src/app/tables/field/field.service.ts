@@ -13,6 +13,7 @@ export const fieldService = {
             ...request,
             projectId,
             id: apId(),
+            externalId: request.externalId ?? apId(),
         })
         return field
     },

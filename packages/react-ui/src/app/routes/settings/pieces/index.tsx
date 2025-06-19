@@ -21,7 +21,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil, PieceType } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 
@@ -128,7 +128,7 @@ const ProjectPiecesPage = () => {
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
-        {!platform.managePiecesEnabled && (
+        {!platform.plan.managePiecesEnabled && (
           <LockedAlert
             title={t('Control Pieces')}
             description={t(
@@ -166,7 +166,7 @@ const ProjectPiecesPage = () => {
           }}
           isLoading={isLoading}
           hidePagination={true}
-          bulkActions={platform.managePiecesEnabled ? bulkActions : []}
+          bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
         />
       </div>
     </div>

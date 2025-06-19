@@ -14,8 +14,8 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
         title: t('Success'),
         description:
           type === OtpType.EMAIL_VERIFICATION
-            ? t('Verification resent')
-            : t('Password reset link resent'),
+            ? t('Verification email resent, if previous one expired.')
+            : t('Password reset link resent, if previous one expired.'),
       });
     },
     onError: (error) => {
@@ -29,15 +29,13 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
         <MailCheck className="w-16 h-16" />
         <span className="text-left w-fit">
           {type === OtpType.EMAIL_VERIFICATION
-            ? t(
-                'We sent you a link to complete your registration, check your email.',
-              )
-            : t('We sent you a link to reset your password, check your email.')}
-          <strong>{email}</strong>.
+            ? t('We sent you a link to complete your registration to')
+            : t('We sent you a link to reset your password to')}
+          <strong>&nbsp;{email}</strong>.
         </span>
       </div>
       <div className="flex flex-row gap-1">
-        {t("Didn't receive an email?")}
+        {t("Didn't receive an email or it expired?")}
         <button
           className="cursor-pointer text-primary underline"
           onClick={() =>

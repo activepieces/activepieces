@@ -43,7 +43,10 @@ export const ApplyButton = ({
       return projectReleaseApi.diff(request);
     },
     onSuccess: (plan) => {
-      if (!plan.operations || plan.operations.length === 0) {
+      if (
+        (!plan.operations || plan.operations.length === 0) &&
+        (!plan.tables || plan.tables.length === 0)
+      ) {
         setLoadingRequestId(null);
         return;
       }

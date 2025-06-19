@@ -274,6 +274,7 @@ const selectFormComponentForProperty = ({
             ></TextInputWithMentions>
           ) : (
             <Input
+              ref={field.ref}
               value={field.value}
               onChange={field.onChange}
               disabled={disabled}
@@ -303,6 +304,7 @@ const selectFormComponentForProperty = ({
           value={field.value}
           onChange={field.onChange}
           disabled={disabled}
+          property={property}
         ></CustomProperty>
       );
     case PropertyType.COLOR:

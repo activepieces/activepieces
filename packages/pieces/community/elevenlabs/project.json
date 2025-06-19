@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/elevenlabs/package.json",
         "main": "packages/pieces/community/elevenlabs/src/index.ts",
         "assets": [
-          "packages/pieces/community/elevenlabs/*.md"
+          "packages/pieces/community/elevenlabs/*.md",
+          {
+            "input": "packages/pieces/community/elevenlabs/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

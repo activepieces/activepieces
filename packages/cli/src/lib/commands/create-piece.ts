@@ -116,7 +116,11 @@ const updateProjectJsonConfig = async (
   const projectJson = await readProjectJson(
     `packages/pieces/${pieceType}/${pieceName}`
   );
-
+ const i18nAsset = {
+  input: `packages/pieces/${pieceType}/${pieceName}/src/i18n`,
+  output: './src/i18n',
+  glob: '**/!(i18n.json)'
+}
   assert(
     projectJson.targets?.build?.options,
     '[updateProjectJsonConfig] targets.build.options is required'
@@ -126,9 +130,15 @@ const updateProjectJsonConfig = async (
     'dependencies';
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =
     true;
+   if(projectJson.targets.build.options.assets){
+    projectJson.targets.build.options.assets.push(i18nAsset);
+   }
+   else{
+    projectJson.targets.build.options.assets = [i18nAsset];
+   }
 
     const lintFilePatterns = projectJson.targets.lint?.options?.lintFilePatterns;
-
+    
     if (lintFilePatterns) {
     const patternIndex = lintFilePatterns.findIndex((item) =>
       item.endsWith('package.json')

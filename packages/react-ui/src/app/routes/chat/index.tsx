@@ -10,7 +10,7 @@ import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { humanInputApi } from '@/features/forms/lib/human-input-api';
 import { cn, useElementSize } from '@/lib/utils';
 import {
   ApErrorParams,

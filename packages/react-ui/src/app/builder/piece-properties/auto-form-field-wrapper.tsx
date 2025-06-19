@@ -53,7 +53,7 @@ const AutoFormFieldWrapper = ({
     form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
     true;
 
-  function handleChange(mode: boolean) {
+  function handleDynamicValueToggleChange(mode: boolean) {
     const newCustomizedInputs = {
       ...form.getValues().settings?.inputUiInfo?.customizedInputs,
       [propertyName]: mode,
@@ -113,7 +113,7 @@ const AutoFormFieldWrapper = ({
               <TooltipTrigger asChild>
                 <Toggle
                   pressed={dynamicInputModeToggled}
-                  onPressedChange={(e) => handleChange(e)}
+                  onPressedChange={(e) => handleDynamicValueToggleChange(e)}
                   disabled={disabled}
                 >
                   <SquareFunction

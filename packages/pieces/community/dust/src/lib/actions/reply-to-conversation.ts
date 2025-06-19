@@ -4,7 +4,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { dustAuth } from '../..';
+import { dustAuth, DustAuthType } from '../..';
 import {
   assistantProp,
   DUST_BASE_URL,
@@ -32,9 +32,12 @@ export const replyToConversation = createAction({
     timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
+    const dustAuth = auth as DustAuthType;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${DUST_BASE_URL}/${auth.workspaceId}/assistant/conversations/${propsValue.conversationId}/messages`,
+      url: `${DUST_BASE_URL[dustAuth.region || 'us']}/${
+        dustAuth.workspaceId
+      }/assistant/conversations/${propsValue.conversationId}/messages`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,
@@ -58,7 +61,7 @@ export const replyToConversation = createAction({
     return await getConversationContent(
       propsValue.conversationId,
       propsValue.timeout,
-      auth
+      dustAuth
     );
   },
 });

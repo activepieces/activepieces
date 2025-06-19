@@ -89,6 +89,7 @@ async function removeDeprecatedJobs() {
     const deprecatedJobs = [
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
+        'usage-report',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
@@ -123,5 +124,13 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
 
 const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name)
+    return allSystemJobs.find(job => {
+        if (isNil(job)) {
+            return false
+        }
+        if (!isNil(jobId)) {
+            return job.name === name && job.id === jobId
+        }
+        return job.name === name
+    })
 }

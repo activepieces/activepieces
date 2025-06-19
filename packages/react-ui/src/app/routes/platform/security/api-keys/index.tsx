@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
@@ -63,7 +63,7 @@ const ApiKeysPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="API"
-      locked={!platform.apiKeysEnabled}
+      locked={!platform.plan.apiKeysEnabled}
       lockTitle={t('Enable API Keys')}
       lockDescription={t(
         'Create and manage API keys to access Activepieces APIs.',

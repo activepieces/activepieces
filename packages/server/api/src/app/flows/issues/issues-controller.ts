@@ -1,5 +1,4 @@
-import { ListIssuesParams, UpdateIssueRequestBody } from '@activepieces/ee-shared'
-import { ApId, Permission, PrincipalType } from '@activepieces/shared'
+import { ApId, ListIssuesParams, Permission, PrincipalType, UpdateIssueRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { issuesService } from './issues-service'
 
@@ -9,6 +8,7 @@ export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
+            status: req.query.status ?? [],
         })
     })
 

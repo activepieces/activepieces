@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
@@ -74,7 +74,7 @@ export const useFlowsBulkActions = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -113,7 +113,7 @@ export const useFlowsBulkActions = ({
                     hasPermission={userHasPermissionToWroteProjectRelease}
                   >
                     <PublishedNeededTooltip allowPush={allowPush}>
-                      <PushToGitDialog flows={selectedRows}>
+                      <PushToGitDialog type="flow" flows={selectedRows}>
                         <DropdownMenuItem
                           disabled={
                             !userHasPermissionToWroteProjectRelease ||

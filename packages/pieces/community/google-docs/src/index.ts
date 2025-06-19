@@ -34,6 +34,7 @@ export const googleDocs = createPiece({
 		'khaledmashaly',
 		'abuaboud',
 		'AbdullahBitar',
+		'Kevinyu-alan'
 	],
 	auth: googleDocsAuth,
 	actions: [

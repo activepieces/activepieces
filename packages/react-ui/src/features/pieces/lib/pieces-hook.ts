@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import {
   PieceMetadataModel,
@@ -9,6 +10,7 @@ import {
   Action,
   ActionType,
   flowPieceUtil,
+  LocalesEnum,
   SuggestionType,
   Trigger,
   TriggerType,
@@ -61,9 +63,11 @@ type UseMetadataProps = {
 
 export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
+    const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
       queryKey: ['piece', name, version],
-      queryFn: () => piecesApi.get({ name, version }),
+      queryFn: () =>
+        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
       staleTime: Infinity,
       enabled,
     });
@@ -109,17 +113,24 @@ export const piecesHooks = {
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
+    const { i18n } = useTranslation();
     return useQueries({
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
-        queryFn: () => piecesApi.get({ name, version: undefined }),
+        queryFn: () =>
+          piecesApi.get({
+            name,
+            version: undefined,
+            locale: i18n.language as LocalesEnum,
+          }),
         staleTime: Infinity,
       })),
     });
   },
   useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
+    const { i18n } = useTranslation();
     const query = useQuery<StepMetadata, Error>({
-      ...stepMetadataQueryBuilder(step),
+      ...stepMetadataQueryBuilder(step, i18n.language as LocalesEnum),
       enabled,
     });
     return {
@@ -128,8 +139,11 @@ export const piecesHooks = {
     };
   },
   useStepsMetadata: (props: UseStepsMetadata) => {
+    const { i18n } = useTranslation();
     return useQueries({
-      queries: props.map((step) => stepMetadataQueryBuilder(step)),
+      queries: props.map((step) =>
+        stepMetadataQueryBuilder(step, i18n.language as LocalesEnum),
+      ),
     });
   },
   usePieces: ({
@@ -137,10 +151,16 @@ export const piecesHooks = {
     includeHidden = false,
     includeTags = false,
   }: UsePiecesProps) => {
+    const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: ['pieces', searchQuery, includeHidden],
       queryFn: () =>
-        piecesApi.list({ searchQuery, includeHidden, includeTags }),
+        piecesApi.list({
+          searchQuery,
+          includeHidden,
+          includeTags,
+          locale: i18n.language as LocalesEnum,
+        }),
       staleTime: searchQuery ? 0 : Infinity,
     });
     return {
@@ -150,6 +170,7 @@ export const piecesHooks = {
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
+    const { i18n } = useTranslation();
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
@@ -157,6 +178,7 @@ export const piecesHooks = {
           searchQuery,
           suggestionType:
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+          locale: i18n.language as LocalesEnum,
         });
         const piecesMetadata = pieces
           .filter(
@@ -201,6 +223,7 @@ export const piecesHooks = {
   }: {
     stepMetadata?: StepMetadata;
   }) => {
+    const { i18n } = useTranslation();
     return useQuery<PieceSelectorItem[], Error>({
       queryKey: [
         'pieceMetadata',
@@ -217,6 +240,7 @@ export const piecesHooks = {
             case ActionType.PIECE: {
               const pieceMetadata = await piecesApi.get({
                 name: stepMetadata.pieceName,
+                locale: i18n.language as LocalesEnum,
               });
               return Object.values(
                 stepMetadata.type === TriggerType.PIECE
@@ -240,7 +264,7 @@ export const piecesHooks = {
     });
   },
 };
-function stepMetadataQueryBuilder(step: Step) {
+function stepMetadataQueryBuilder(step: Step, locale: LocalesEnum) {
   const isPieceStep =
     step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
@@ -249,7 +273,7 @@ function stepMetadataQueryBuilder(step: Step) {
     'customLogoUrl' in step ? step.customLogoUrl : undefined;
   return {
     queryKey: ['piece', step.type, pieceName, pieceVersion, customLogoUrl],
-    queryFn: () => piecesApi.getMetadata(step),
+    queryFn: () => piecesApi.getMetadata(step, locale),
     staleTime: Infinity,
   };
 }

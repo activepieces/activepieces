@@ -1,5 +1,6 @@
 import {
   createAction,
+  DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
@@ -8,20 +9,8 @@ import { claudeAuth } from '../..';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-const billingIssueMessage = `Error Occurred: 429 \n
-
-1. Ensure that you have enough tokens on your Anthropic platform. \n
-2. Generate a new API key. \n
-3. Attempt the process again. \n
-
-For guidance, visit: https://console.anthropic.com/settings/plans`;
-
-const unauthorizedMessage = `Error Occurred: 401 \n
-
-Ensure that your API key is valid. \n
-`;
-
+import { billingIssueMessage, unauthorizedMessage } from '../common/common';
+const DEFAULT_TOKENS_FOR_THINKING_MODE=1024;
 export const askClaude = createAction({
   auth: claudeAuth,
   name: 'ask_claude',
@@ -78,6 +67,33 @@ export const askClaude = createAction({
       required: false,
       description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
     }),
+    thinkingMode:Property.Checkbox({
+      displayName:'Extended Thinking Mode',
+      required:false,
+      defaultValue:false,
+      description:'Uses claude 3.7 sonnet enhanced reasoning capabilities for complex tasks.'
+  }),
+  thinkingModeParams:Property.DynamicProperties({
+      displayName:'',
+      refreshers:['thinkingMode'],
+      required:false,
+      props:async({auth,thinkingMode})=>{
+          if(!auth || !thinkingMode) return {}
+
+          const props:DynamicPropsValue={}
+
+          props['budgetTokens'] = Property.Number({
+              displayName:'Budget Tokens',
+              required:true,
+              defaultValue:DEFAULT_TOKENS_FOR_THINKING_MODE,
+              description:'This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.',
+
+          })
+
+          return props;
+
+      }
+  })
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
@@ -152,18 +168,39 @@ export const askClaude = createAction({
 
     const maxRetries = 4;
     let retries = 0;
-    let response: string | undefined;
+    let response:string | undefined;
     while (retries < maxRetries) {
       try {
-        const req = await anthropic?.messages.create({
-          model: model,
-          max_tokens: maxTokens,
-          temperature: temperature,
-          system: systemPrompt,
-          messages: roles,
-        });
 
-        response = (req?.content[0] as TextBlock).text?.trim();
+        if(propsValue.thinkingMode)
+        {
+          const budgetTokens = propsValue.thinkingModeParams ? propsValue.thinkingModeParams['budgetTokens'] :1024;
+
+          const req = await anthropic.messages.create({
+            model: 'claude-3-7-sonnet-20250219',
+            max_tokens: maxTokens,
+            system: systemPrompt,
+            thinking: {
+              type: 'enabled',
+              budget_tokens: budgetTokens ?? DEFAULT_TOKENS_FOR_THINKING_MODE,
+            },
+            messages: roles,
+          });
+  
+          response = req.content.filter((block) => block.type === 'text')[0].text.trim()
+        }
+        else{
+          const req = await anthropic?.messages.create({
+            model: model,
+            max_tokens: maxTokens,
+            temperature: temperature,
+            system: systemPrompt,
+            messages: roles,
+          });
+  
+          response = (req?.content[0] as TextBlock).text?.trim();
+        }
+       
 
         break; // Break out of the loop if the request is successful
       } catch (e: any) {
