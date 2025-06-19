@@ -1,19 +1,25 @@
 import { t } from 'i18next';
 
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import {
   Action,
   ActionType,
+  FlowOperationType,
+  FlowRun,
+  flowStructureUtil,
   FlowVersion,
   isNil,
   LoopOnItemsAction,
   RouterAction,
   StepLocationRelativeToParent,
   Trigger,
+  TriggerType,
 } from '@activepieces/shared';
 
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
+  ApButtonData,
   ApEdge,
   ApEdgeType,
   ApGraph,
@@ -415,6 +421,72 @@ const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
   });
 };
 
+const createAddOperationFromAddButtonData = (data: ApButtonData) => {
+  if (
+    data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+  ) {
+    return {
+      type: FlowOperationType.ADD_ACTION,
+      actionLocation: {
+        parentStep: data.parentStepName,
+        stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+        branchIndex: data.branchIndex,
+      },
+    } as const;
+  }
+  return {
+    type: FlowOperationType.ADD_ACTION,
+    actionLocation: {
+      parentStep: data.parentStepName,
+      stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+    },
+  } as const;
+};
+
+const isSkipped = (stepName: string, trigger: Trigger) => {
+  const step = flowStructureUtil.getStep(stepName, trigger);
+  if (
+    isNil(step) ||
+    step.type === TriggerType.EMPTY ||
+    step.type === TriggerType.PIECE
+  ) {
+    return false;
+  }
+  const skippedParents = flowStructureUtil
+    .findPathToStep(trigger, stepName)
+    .filter(
+      (stepInPath) =>
+        stepInPath.type === ActionType.LOOP_ON_ITEMS ||
+        stepInPath.type === ActionType.ROUTER,
+    )
+    .filter((routerOrLoop) =>
+      flowStructureUtil.isChildOf(routerOrLoop, stepName),
+    )
+    .filter((parent) => parent.skip);
+
+  return skippedParents.length > 0 || !!step.skip;
+};
+
+const getStepStatus = (
+  stepName: string | undefined,
+  run: FlowRun | null,
+  loopIndexes: Record<string, number>,
+  flowVersion: FlowVersion,
+) => {
+  //NOTE: run.steps can be null when the run is older than 30 days,
+  if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
+    return undefined;
+  }
+  const stepOutput = flowRunUtils.extractStepOutput(
+    stepName,
+    loopIndexes,
+    run.steps,
+    flowVersion.trigger,
+  );
+  return stepOutput?.status;
+};
+
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     const graph = buildGraph(version.trigger);
@@ -430,4 +502,7 @@ export const flowCanvasUtils = {
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
+  createAddOperationFromAddButtonData,
+  isSkipped,
+  getStepStatus,
 };

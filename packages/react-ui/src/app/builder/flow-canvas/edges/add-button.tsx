@@ -4,14 +4,11 @@ import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-  isNil,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApButtonData } from '../utils/types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
@@ -72,27 +69,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       )}
       {!showDropIndicator && !readonly && (
         <PieceSelector
-          operation={
-            props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
-              ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
-              : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
-          }
+          operation={flowCanvasUtils.createAddOperationFromAddButtonData(props)}
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
           asChild={true}

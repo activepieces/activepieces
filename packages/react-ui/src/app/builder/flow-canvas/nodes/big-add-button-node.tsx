@@ -6,11 +6,7 @@ import React, { useId, useState } from 'react';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  isNil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -18,6 +14,7 @@ import {
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
 import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApBigAddButtonNode } from '../utils/types';
 
 const ApBigAddButtonCanvasNode = React.memo(
@@ -84,29 +81,12 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   {!showDropIndicator && (
                     <PieceSelector
-                      operation={
-                        data.stepLocationRelativeToParent ===
-                        StepLocationRelativeToParent.INSIDE_BRANCH
-                          ? {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                                branchIndex: data.branchIndex,
-                              },
-                            }
-                          : {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                              },
-                            }
-                      }
+                      operation={flowCanvasUtils.createAddOperationFromAddButtonData(
+                        data,
+                      )}
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
+                      asChild={true}
                     >
                       <span>
                         {showAiIndicator && (
