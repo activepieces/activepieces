@@ -326,7 +326,6 @@ const checkPieceInputValidity = (
 
 const maxListHeight = 300;
 const minListHeight = 100;
-const aboveListSectionHeight = 86;
 
 const useAdjustPieceListHeightToAvailableSpace = (
   isPieceSelectorOpen: boolean,
@@ -341,7 +340,7 @@ const useAdjustPieceListHeightToAvailableSpace = (
   ) {
     const popoverTriggerRect =
       popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
+    const popOverFullHeight = maxListHeight;
     const isRenderingPopoverBelowTrigger =
       popoverTriggerRect.top <
       (window.innerHeight || document.documentElement.clientHeight) -
@@ -375,7 +374,6 @@ const useAdjustPieceListHeightToAvailableSpace = (
     listHeightRef,
     popoverTriggerRef,
     maxListHeight,
-    aboveListSectionHeight,
   };
 };
 

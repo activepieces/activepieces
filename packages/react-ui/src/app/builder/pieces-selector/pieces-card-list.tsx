@@ -33,7 +33,6 @@ import { cn } from '../../../lib/utils';
 
 import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
-import { PieceTagEnum } from './piece-tag-group';
 
 type PieceGroup = {
   title: string;
@@ -42,7 +41,6 @@ type PieceGroup = {
 
 type PiecesCardListProps = {
   debouncedQuery: string;
-  selectedTag: PieceTagEnum;
   selectedPieceMetadata: StepMetadata | undefined;
   setSelectedMetadata: (metadata: StepMetadata) => void;
   operation: PieceSelectorOperation;

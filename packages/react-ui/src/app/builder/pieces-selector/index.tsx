@@ -3,10 +3,7 @@ import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-import {
-  PieceTagEnum,
-  PieceTagGroup,
-} from '@/app/builder/pieces-selector/piece-tag-group';
+
 import {
   Popover,
   PopoverContent,
@@ -79,9 +76,7 @@ const PieceSelector = ({
     undefined,
   );
 
-  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
-    PieceTagEnum.ALL,
-  );
+
   const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
     useBuilderStateContext((state) => [
       state.applyOperation,
@@ -102,24 +97,11 @@ const PieceSelector = ({
   const pieceGroups = useMemo(() => {
     if (!metadata) return [];
 
-    const filteredMetadataOnTag = metadata.filter((stepMetadata) => {
-      switch (selectedTag) {
-        case PieceTagEnum.CORE:
-          return pieceSelectorUtils.isCorePiece(stepMetadata);
-        case PieceTagEnum.AI:
-          return pieceSelectorUtils.isAiPiece(stepMetadata);
-        case PieceTagEnum.APPS:
-          return pieceSelectorUtils.isAppPiece(stepMetadata);
-        case PieceTagEnum.ALL:
-        default:
-          return true;
-      }
-    });
 
     const piecesMetadata =
       debouncedQuery.length > 0
-        ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
-        : filteredMetadataOnTag;
+        ? filterOutPiecesWithNoSuggestions(metadata)
+        : metadata;
 
     initiallySelectedMetaDataRef.current = piecesMetadata.find(
       (p) => p.displayName === initialSelectedPiece,
@@ -141,8 +123,7 @@ const PieceSelector = ({
     );
     const popularPieces = piecesMetadata.filter(
       (p) =>
-        pieceSelectorUtils.isPopularPieces(p, platform) &&
-        selectedTag !== PieceTagEnum.AI,
+        pieceSelectorUtils.isPopularPieces(p, platform)
     );
     const other = piecesMetadata.filter(
       (p) =>
@@ -163,7 +144,6 @@ const PieceSelector = ({
     return groups.filter((group) => group.pieces.length > 0);
   }, [
     metadata,
-    selectedTag,
     debouncedQuery,
     platform,
     isTrigger,
@@ -176,14 +156,12 @@ const PieceSelector = ({
   const {
     listHeightRef,
     popoverTriggerRef,
-    aboveListSectionHeight,
     maxListHeight,
   } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
-    setSelectedTag(PieceTagEnum.ALL);
   };
 
   const handleAddAction = (
@@ -504,11 +482,7 @@ const PieceSelector = ({
         }}
       >
         <>
-          <div
-            style={{
-              height: `${aboveListSectionHeight}px`,
-            }}
-          >
+          <div>
             <div className="p-2 flex gap-1 items-center">
               <SearchInput
                 placeholder="Search"
@@ -516,7 +490,6 @@ const PieceSelector = ({
                 showDeselect={searchQuery.length > 0}
                 onChange={(e) => {
                   setSearchQuery(e);
-                  setSelectedTag(PieceTagEnum.ALL);
                   setSelectedMetadata(undefined);
                 }}
               />
@@ -531,31 +504,16 @@ const PieceSelector = ({
               )}
             </div>
 
-            <PieceTagGroup
-              selectedTag={selectedTag}
-              type={
-                operation.type === FlowOperationType.UPDATE_TRIGGER
-                  ? 'trigger'
-                  : 'action'
-              }
-              onSelectTag={(value) => {
-                setSelectedTag(value);
-                setSelectedMetadata(undefined);
-              }}
-            />
             <Separator orientation="horizontal" />
           </div>
           {!isMobile && (
             <div
-              className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
-              style={{
-                height: listHeightRef.current + 'px',
-              }}
+              className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
+         
             >
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
                 selectedPieceMetadata={selectedPieceMetadata}
@@ -592,7 +550,6 @@ const PieceSelector = ({
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
                 hiddenActionsOrTriggers={hiddenActionsOrTriggers}
