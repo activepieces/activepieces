@@ -3,7 +3,6 @@ import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-
 import {
   Popover,
   PopoverContent,
@@ -46,8 +45,8 @@ import { StepsCardList } from './steps-card-list';
 type PieceSelectorProps = {
   children: React.ReactNode;
   open: boolean;
-  asChild?: boolean;
-  initialSelectedPiece?: string | undefined;
+  asChild: boolean;
+  initialSelectedPieceDisplayName?: string | undefined;
   onOpenChange: (open: boolean) => void;
 } & { operation: PieceSelectorOperation };
 
@@ -61,10 +60,10 @@ const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
 const PieceSelector = ({
   children,
   open,
-  asChild = true,
+  asChild,
   onOpenChange,
   operation,
-  initialSelectedPiece,
+  initialSelectedPieceDisplayName,
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
@@ -75,7 +74,6 @@ const PieceSelector = ({
   const initiallySelectedMetaDataRef = useRef<StepMetadata | undefined>(
     undefined,
   );
-
 
   const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
     useBuilderStateContext((state) => [
@@ -97,14 +95,13 @@ const PieceSelector = ({
   const pieceGroups = useMemo(() => {
     if (!metadata) return [];
 
-
     const piecesMetadata =
       debouncedQuery.length > 0
         ? filterOutPiecesWithNoSuggestions(metadata)
         : metadata;
 
     initiallySelectedMetaDataRef.current = piecesMetadata.find(
-      (p) => p.displayName === initialSelectedPiece,
+      (p) => p.displayName === initialSelectedPieceDisplayName,
     );
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
 
@@ -118,25 +115,14 @@ const PieceSelector = ({
     const universalAiPieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
     );
-    const utilityCorePieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
+    const popularPieces = piecesMetadata.filter((p) =>
+      pieceSelectorUtils.isPopularPieces(p, platform),
     );
-    const popularPieces = piecesMetadata.filter(
-      (p) =>
-        pieceSelectorUtils.isPopularPieces(p, platform)
-    );
-    const other = piecesMetadata.filter(
-      (p) =>
-        !popularPieces.includes(p) &&
-        !utilityCorePieces.includes(p) &&
-        !flowControllerPieces.includes(p) &&
-        !universalAiPieces.includes(p),
-    );
+    const other = piecesMetadata.filter((p) => !popularPieces.includes(p));
 
     const groups: PieceGroup[] = [
       { title: 'Popular', pieces: popularPieces },
       { title: 'Flow Control', pieces: flowControllerPieces },
-      { title: 'Utility', pieces: utilityCorePieces },
       { title: 'Universal AI', pieces: universalAiPieces },
       { title: 'Other', pieces: other },
     ];
@@ -147,17 +133,14 @@ const PieceSelector = ({
     debouncedQuery,
     platform,
     isTrigger,
-    initialSelectedPiece,
+    initialSelectedPieceDisplayName,
   ]);
 
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-  const {
-    listHeightRef,
-    popoverTriggerRef,
-    maxListHeight,
-  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
+  const { listHeightRef, popoverTriggerRef, maxListHeight } =
+    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
@@ -214,9 +197,8 @@ const PieceSelector = ({
       type: ActionType.ROUTER,
     } as StepMetadata;
 
-    const newStepNames = pieceSelectorUtils.getStepNames(
-      stepMetadata,
-      flowVersion,
+    const newStepNames = flowStructureUtil.findUnusedNames(
+      flowVersion.trigger,
       3,
     );
 
@@ -367,10 +349,7 @@ const PieceSelector = ({
     resetField();
     onOpenChange(false);
 
-    const newStepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      flowVersion,
-    );
+    const newStepName = flowStructureUtil.findUnusedName(flowVersion.trigger);
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
@@ -507,10 +486,7 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
           {!isMobile && (
-            <div
-              className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
-         
-            >
+            <div className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] ">
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
