@@ -1,7 +1,4 @@
-import { t } from 'i18next';
-import { SearchX, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import {
@@ -9,8 +6,6 @@ import {
   CardListItem,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
@@ -19,19 +14,10 @@ import {
   HandleSelectCallback,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  ApFlagId,
-  FlowOperationType,
-  TriggerType,
-  supportUrl,
-} from '@activepieces/shared';
-
+import { isNil, TriggerType } from '@activepieces/shared';
 import { cn } from '../../../lib/utils';
-
-import { AskAiButton } from './ask-ai';
+import { NoResultsFound } from './no-results-found';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 
 type PieceGroup = {
@@ -53,38 +39,14 @@ type PiecesCardListProps = {
   hiddenActionsOrTriggers: string[];
 };
 
-export const PiecesCardList: React.FC<PiecesCardListProps> = ({
-  debouncedQuery,
-  selectedPieceMetadata,
-  setSelectedMetadata,
-  handleSelect,
-  pieceGroups,
-  isLoadingPieces,
-  piecesIsLoaded,
-  noResultsFound,
-  operation,
-  closePieceSelector,
-  hiddenActionsOrTriggers,
-}) => {
-  const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
-  const isEmbedding = useEmbedding().embedState.isEmbedded;
-  const showRequestPieceButton = showCommunityLinks && !isEmbedding;
-  const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
-  useEffect(() => {
-    if (
-      piecesIsLoaded &&
-      selectedItemRef.current &&
-      debouncedQuery.length === 0
-    ) {
-      selectedItemRef.current?.scrollIntoView({
-        behavior: 'auto',
-        block: 'nearest',
-      });
-    }
-  }, [piecesIsLoaded, selectedPieceMetadata]);
+export const PiecesCardList: React.FC<PiecesCardListProps> = (props) => {
+  const {
+    debouncedQuery,
+    isLoadingPieces,
+    noResultsFound,
+    operation,
+    closePieceSelector,
+  } = props;
 
   return (
     <CardList
@@ -99,90 +61,66 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         </div>
       )}
 
-      {piecesIsLoaded &&
-        pieceGroups.map((group, index) => (
-          <React.Fragment key={group.title}>
-            {index > 0 && (
-              <div className="my-1">
-                <Separator />
-              </div>
-            )}
-            {pieceGroups.length > 1 && (
-              <div className="text-sm text-muted-foreground mx-2 mt-2">
-                {group.title}
-              </div>
-            )}
+      {!isLoadingPieces && !noResultsFound && (
+        <PieceCardListWrapper {...props} />
+      )}
 
-            {group.pieces.map((pieceMetadata) => (
-              <PieceCardListItem
-                key={pieceSelectorUtils.toKey(pieceMetadata)}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                pieceMetadata={pieceMetadata}
-                selectedPieceMetadata={selectedPieceMetadata}
-                debouncedQuery={debouncedQuery}
-                setSelectedMetadata={setSelectedMetadata}
-                handleSelect={handleSelect}
-                ref={
-                  pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
-                    ? selectedItemRef
-                    : null
-                }
-              />
-            ))}
-          </React.Fragment>
-        ))}
-
-      {noResultsFound &&
-        isCopilotEnabled &&
-        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-3">
-              {t('Let our AI assistant help you out')}
-            </div>
-            <AskAiButton
-              varitant={'default'}
-              operation={operation}
-              onClick={closePieceSelector}
-            ></AskAiButton>
-            {showRequestPieceButton && (
-              <>
-                {t('Or')}
-                <Link
-                  to={`${supportUrl}/c/feature-requests/9`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="ghost" size="sm">
-                    {t('Request Piece')}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-
-      {noResultsFound &&
-        (!isCopilotEnabled ||
-          operation.type === FlowOperationType.UPDATE_TRIGGER) && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <SearchX className="w-14 h-14" />
-            <div className="text-sm ">{t('No pieces found')}</div>
-            <div className="text-sm ">{t('Try adjusting your search')}</div>
-            {showRequestPieceButton && (
-              <Link
-                to={`${supportUrl}/c/feature-requests/9`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="h-8 px-2 ">{t('Request Piece')}</Button>
-              </Link>
-            )}
-          </div>
-        )}
+      {noResultsFound && (
+        <NoResultsFound
+          operation={operation}
+          closePieceSelector={closePieceSelector}
+        />
+      )}
     </CardList>
   );
+};
+
+const PieceCardListWrapper = ({
+  pieceGroups,
+  hiddenActionsOrTriggers,
+  selectedPieceMetadata,
+  debouncedQuery,
+  setSelectedMetadata,
+  handleSelect,
+}: PiecesCardListProps) => {
+  useEffect(() => {
+    if (!isNil(selectedPieceMetadata)) {
+      document
+        .getElementById(selectedPieceMetadata.displayName)
+        ?.scrollIntoView({
+          behavior: 'instant',
+          block: 'nearest',
+        });
+    }
+  }, []);
+  return pieceGroups.map((group, index) => (
+    <React.Fragment key={group.title}>
+      {index > 0 && (
+        <div className="my-1">
+          <Separator />
+        </div>
+      )}
+      {pieceGroups.length > 1 && (
+        <div className="text-sm text-muted-foreground mx-2 mt-2">
+          {group.title}
+        </div>
+      )}
+
+      {group.pieces.map((pieceMetadata) => (
+        <div id={pieceMetadata.displayName}>
+          <PieceCardListItem
+            key={pieceSelectorUtils.toKey(pieceMetadata)}
+            hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+            pieceMetadata={pieceMetadata}
+            selectedPieceMetadata={selectedPieceMetadata}
+            debouncedQuery={debouncedQuery}
+            setSelectedMetadata={setSelectedMetadata}
+            handleSelect={handleSelect}
+          />
+        </div>
+      ))}
+    </React.Fragment>
+  ));
 };
 
 const PieceCardListItem = React.forwardRef<

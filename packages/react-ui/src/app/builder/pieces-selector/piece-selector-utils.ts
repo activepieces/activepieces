@@ -309,54 +309,37 @@ const checkPieceInputValidity = (
 
 const maxListHeight = 300;
 const minListHeight = 100;
+const searchInputDivHeight = 48;
 
-const useAdjustPieceListHeightToAvailableSpace = (
-  isPieceSelectorOpen: boolean,
-) => {
+// Adjusts piece list height to prevent overflow on short screens
+const useAdjustPieceListHeightToAvailableSpace = () => {
   const listHeightRef = useRef<number>(maxListHeight);
   const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen);
-  if (
-    !previousOpenValueRef.current &&
-    isPieceSelectorOpen &&
-    popoverTriggerRef.current
-  ) {
-    const popoverTriggerRect =
-      popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight;
-    const isRenderingPopoverBelowTrigger =
-      popoverTriggerRect.top <
-      (window.innerHeight || document.documentElement.clientHeight) -
-        popoverTriggerRect.bottom;
-    if (isRenderingPopoverBelowTrigger) {
-      const isPopoverOverflowing =
-        popoverTriggerRect.bottom + popOverFullHeight >
-        (window.innerHeight || document.documentElement.clientHeight);
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          minListHeight,
-          maxListHeight +
-            (window.innerHeight || document.documentElement.clientHeight) -
-            popOverFullHeight -
-            popoverTriggerRect.bottom,
-        );
-      }
-    } else {
-      const isPopoverOverflowing =
-        popoverTriggerRect.top - popOverFullHeight < 0;
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          minListHeight,
-          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
-        );
-      }
-    }
+
+  if (!popoverTriggerRef.current) {
+    return {
+      listHeightRef,
+      popoverTriggerRef,
+      searchInputDivHeight,
+    };
   }
-  previousOpenValueRef.current = isPieceSelectorOpen;
+
+  const popOverTriggerRect = popoverTriggerRef.current.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const shouldRenderBelowPopoverTrigger = popOverTriggerRect.top < (viewportHeight - popOverTriggerRect.bottom);
+  
+  if (shouldRenderBelowPopoverTrigger) {
+      const availableSpaceBelow = viewportHeight - popOverTriggerRect.bottom - searchInputDivHeight;
+      listHeightRef.current = Math.max(minListHeight, availableSpaceBelow);
+  } else {
+      const availableSpaceAbove = popOverTriggerRect.top - searchInputDivHeight;
+      listHeightRef.current = Math.max(minListHeight, availableSpaceAbove);
+  }
+
   return {
     listHeightRef,
     popoverTriggerRef,
-    maxListHeight,
+    searchInputDivHeight,
   };
 };
 

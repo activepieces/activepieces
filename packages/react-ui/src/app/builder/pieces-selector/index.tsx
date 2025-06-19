@@ -19,7 +19,6 @@ import {
   PieceStepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Action,
   ActionType,
@@ -38,9 +37,9 @@ import {
 
 import { SearchInput } from '../../../components/ui/search-input';
 
-import { AskAiButton } from './ask-ai';
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -138,9 +137,6 @@ const PieceSelector = ({
 
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
-
-  const { listHeightRef, popoverTriggerRef, maxListHeight } =
-    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
@@ -356,7 +352,6 @@ const PieceSelector = ({
       stepMetadata,
       actionOrTrigger,
     });
-
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
         applyOperation({
@@ -435,6 +430,8 @@ const PieceSelector = ({
     setAskAiButtonProps(null);
   };
   const isMobile = useIsMobile();
+  const { listHeightRef, popoverTriggerRef, searchInputDivHeight } =
+  pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
   return (
     <Popover
       open={open}
@@ -442,7 +439,6 @@ const PieceSelector = ({
       onOpenChange={(open) => {
         if (!open) {
           resetField();
-          listHeightRef.current = maxListHeight;
         }
         onOpenChange(open);
       }}
@@ -462,7 +458,10 @@ const PieceSelector = ({
       >
         <>
           <div>
-            <div className="p-2 flex gap-1 items-center">
+            <div className="p-2 flex gap-1 items-center"
+             style={{
+              height: `${searchInputDivHeight}px`,
+             }}>
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
@@ -472,21 +471,15 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
-              {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-                <AskAiButton
-                  varitant="ghost"
-                  operation={operation}
-                  onClick={() => {
-                    onOpenChange(false);
-                  }}
-                ></AskAiButton>
-              )}
             </div>
 
             <Separator orientation="horizontal" />
           </div>
-          {!isMobile && (
-            <div className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] ">
+          <div className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
+              style={{
+                height: listHeightRef.current + 'px',
+              }}
+          >
               <PiecesCardList
                 closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
@@ -500,45 +493,22 @@ const PieceSelector = ({
                 isLoadingPieces={isLoadingPieces}
                 hiddenActionsOrTriggers={hiddenActionsOrTriggers}
               />
-
               {debouncedQuery.length === 0 &&
                 piecesIsLoaded &&
-                !noResultsFound && (
+                !noResultsFound &&
+                !isMobile && (
                   <>
-                    <Separator orientation="vertical" className="h-full" />
+                     <Separator orientation="vertical" className="h-full" />
                     <StepsCardList
                       hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                       selectedPieceMetadata={selectedPieceMetadata}
                       handleSelect={handleSelect}
                     />
                   </>
+                 
                 )}
-            </div>
-          )}
-
-          {isMobile && (
-            <div
-              className=" max-h-[300px] h-[300px]"
-              style={{
-                height: listHeightRef.current + 'px',
-              }}
-            >
-              <PiecesCardList
-                closePieceSelector={() => onOpenChange(false)}
-                debouncedQuery={debouncedQuery}
-                piecesIsLoaded={piecesIsLoaded}
-                noResultsFound={noResultsFound}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                selectedPieceMetadata={selectedPieceMetadata}
-                setSelectedMetadata={setSelectedMetadata}
-                operation={operation}
-                handleSelect={handleSelect}
-                pieceGroups={pieceGroups}
-                isLoadingPieces={isLoadingPieces}
-              />
-            </div>
-          )}
-        </>
+              </div>
+                     </>
       </PopoverContent>
     </Popover>
   );
