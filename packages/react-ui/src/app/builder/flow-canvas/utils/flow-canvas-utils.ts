@@ -474,7 +474,6 @@ const getStepStatus = (
   loopIndexes: Record<string, number>,
   flowVersion: FlowVersion,
 ) => {
-  //NOTE: run.steps can be null when the run is older than 30 days,
   if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
     return undefined;
   }
