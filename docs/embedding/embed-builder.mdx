@@ -28,9 +28,9 @@ const instanceUrl = 'YOUR_INSTANCE_URL';
 const jwtToken = 'GENERATED_JWT_TOKEN';
 const containerId = 'YOUR_CONTAINER_ID';
 activepieces.configure({
-  prefix: "/",
   instanceUrl,
   jwtToken,
+  prefix: "/",
   embedding: {
     containerId,
     builder: {
@@ -65,9 +65,9 @@ Please check the [navigation](./navigation) section, as it's very important to u
 
 | Parameter Name |  Required |  Type | Description |
 | --- | --- | --- | --- |
-| prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automation` and the Activepieces url is `/flows` the full url would be `/automation/flows`. |
 | instanceUrl| ✅ |  string | The url of the instance hosting Activepieces, could be https://cloud.activepieces.com if you are a cloud user. |
 | jwtToken | ✅  |  string | The jwt token you generated to authenticate your users to Activepieces. |
+| prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automation` and the Activepieces url is `/flows` the full url would be `/automation/flows`. |
 | embedding.containerId | ❌ | string | The html element's id that is going to be containing Activepieces's iframe. |
 | embedding.builder.disableNavigation | ❌ |  boolean \| "keep_home_button_only" | Hides the folder name, home button (if not set to ["keep_home_button_only"](./sdk-changelog#20%2F05%2F2025-0-4-0)) and delete option in the builder, by default it is false. |
 | embedding.builder.hideLogo | ❌ |  boolean | Hides the logo in the builder's header, by default it is false. |

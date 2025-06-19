@@ -15,7 +15,6 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-// import { licenseKeysService } from '../ee/license-keys/license-keys-service'
 // import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -203,11 +202,8 @@ export const platformService = {
 
 async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
     const plan = await getPlan(platform)
-    // const licenseKey = await licenseKeysService(system.globalLogger()).getKey(plan.licenseKey)
     return {
         ...platform,
-        // licenseExpiresAt: licenseKey?.expiresAt,
-        // hasLicenseKey: !isNil(licenseKey),
         plan,
     }
 }
