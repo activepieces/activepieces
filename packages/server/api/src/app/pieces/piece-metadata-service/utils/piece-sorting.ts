@@ -2,17 +2,21 @@ import { PieceOrderBy, PieceSortBy } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 
-export const sortAndOrderPieces = (
-    sortBy: PieceSortBy | undefined,
-    orderBy: PieceOrderBy | undefined,
-    pieces: PieceMetadataSchema[],
-): PieceMetadataSchema[] => {
-    const sortByDefault = sortBy ?? PieceSortBy.NAME
-    const orderByDefault = orderBy ?? PieceOrderBy.ASC
-    const sortedPiece = sortPieces(sortByDefault, pieces)
 
-    return reverseIfDesc(orderByDefault, sortedPiece)
+export const pieceSorting = {
+    sortAndOrder: (
+        sortBy: PieceSortBy | undefined,
+        orderBy: PieceOrderBy | undefined,
+        pieces: PieceMetadataSchema[],
+    ): PieceMetadataSchema[] => {
+        const sortByDefault = sortBy ?? PieceSortBy.NAME
+        const orderByDefault = orderBy ?? PieceOrderBy.ASC
+        const sortedPiece = sortPieces(sortByDefault, pieces)
+
+        return reverseIfDesc(orderByDefault, sortedPiece)
+    },
 }
+
 
 const sortPieces = (
     sortBy: PieceSortBy | undefined,

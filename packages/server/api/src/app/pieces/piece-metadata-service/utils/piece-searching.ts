@@ -1,88 +1,27 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
 import {
-    isNil,
     PieceCategory,
-    PlatformId,
     SuggestionType,
 } from '@activepieces/shared'
 import Fuse from 'fuse.js'
-import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 
-const pieceFilterKeys = [
-    {
-        name: 'displayName',
-        weight: 3,
+export const pieceSearching = {
+    search: (params: SearchParams): PieceMetadataSchema[] => {
+        return filterBasedOnCategories(params.categories, filterBasedOnSearchQuery(params))
     },
-    {
-        name: 'description',
-        weight: 1,
-    },
-]
+}
 
-export const filterPiecesBasedUser = async ({
-    searchQuery,
-    pieces,
-    categories,
-    suggestionType,
-    platformId,
-}: {
+type SearchParams = {
     categories: PieceCategory[] | undefined
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
     suggestionType?: SuggestionType
-    platformId?: PlatformId
-}): Promise<PieceMetadataSchema[]> => {
-    return filterPiecesBasedOnFeatures(
-        platformId,
-        filterBasedOnCategories({
-            categories,
-            pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
-        }),
-    )
 }
 
-export const filterPiecesBasedOnEmbedding = async ({
-    platformId,
-    pieces,
-}: {
-    platformId?: string
-    pieces: PieceMetadataSchema[]
-}): Promise<PieceMetadataSchema[]> => {
-    if (isNil(platformId)) {
-        return pieces
-    }
-    const platform = await platformService.getOneWithPlan(platformId)
-    if (isNil(platform)) {
-        return pieces
-    }
-    if (!platform.plan.embeddingEnabled) {
-        return pieces
-    }
 
-    return pieces
-}
-
-async function filterPiecesBasedOnFeatures(
-    platformId: PlatformId | undefined,
-    pieces: PieceMetadataSchema[],
-): Promise<PieceMetadataSchema[]> {
-    if (isNil(platformId)) {
-        return pieces
-    }
-    return pieces
-}
-
-const filterBasedOnSearchQuery = ({
-    searchQuery,
-    pieces,
-    suggestionType,
-}: {
-    searchQuery: string | undefined
-    pieces: PieceMetadataSchema[]
-    suggestionType?: SuggestionType
-}): PieceMetadataSchema[] => {
+const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: SearchParams): PieceMetadataSchema[] => {
     if (!searchQuery) {
         return pieces
     }
@@ -92,20 +31,27 @@ const filterBasedOnSearchQuery = ({
         return {
             ...piece,
             actions:
-        suggestionType === SuggestionType.ACTION ||
-        suggestionType === SuggestionType.ACTION_AND_TRIGGER
-            ? actions
-            : [],
+                suggestionType === SuggestionType.ACTION ||
+                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                    ? actions
+                    : [],
             triggers:
-        suggestionType === SuggestionType.TRIGGER ||
-        suggestionType === SuggestionType.ACTION_AND_TRIGGER
-            ? triggers
-            : [],
+                suggestionType === SuggestionType.TRIGGER ||
+                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
+                    ? triggers
+                    : [],
         }
     })
 
     const pieceWithTriggersAndActionsFilterKeys = [
-        ...pieceFilterKeys,
+        {
+            name: 'displayName',
+            weight: 3,
+        },
+        {
+            name: 'description',
+            weight: 1,
+        },
         'actions.displayName',
         'actions.description',
         'triggers.displayName',
@@ -140,13 +86,7 @@ const filterBasedOnSearchQuery = ({
     })
 }
 
-const filterBasedOnCategories = ({
-    categories,
-    pieces,
-}: {
-    categories: PieceCategory[] | undefined
-    pieces: PieceMetadataSchema[]
-}): PieceMetadataSchema[] => {
+const filterBasedOnCategories = (categories: PieceCategory[] | undefined, pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     if (!categories) {
         return pieces
     }

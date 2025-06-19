@@ -47,6 +47,7 @@ import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgr
 import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
 import { AddFailedStepNameFlowRun1750044840070 } from './migration/postgres/1750044840070-add-failed-step-flow-run'
 import { AddIssueEntity1750056987397 } from './migration/postgres/1750056987397-add-issue-entity'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -61,6 +62,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AIUsagePostgres1750090291551,
         RemoveUniqueOnFlow1750093037011,
         AddIssueEntity1750056987397,
         AddFailedStepNameFlowRun1750044840070,

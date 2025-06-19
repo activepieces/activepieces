@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Nullable } from '../common'
 import { McpTool } from './tools/mcp-tool'
 
 export const ListMcpsRequest = Type.Object({

@@ -55,7 +55,6 @@ import UsersPage from '../routes/platform/users';
 // import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 // import AlertsPage from '../routes/settings/alerts';
-import AppearancePage from '../routes/settings/appearance';
 // import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
 // import TeamPage from '../routes/settings/team';
@@ -332,18 +331,7 @@ const routes = [
   //     </DashboardContainer>
   //   ),
   // }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.appearance,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Appearance">
-          <ProjectSettingsLayout>
-            <AppearancePage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
+
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.general,
     element: (
@@ -434,7 +422,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
   {
     path: '/404',
     element: (

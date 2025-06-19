@@ -149,7 +149,6 @@ export const ProjectRouterWrapper = ({
 
 export const projectSettingsRoutes = {
   general: '/settings/general',
-  appearance: '/settings/appearance',
   team: '/settings/team',
   pieces: '/settings/pieces',
   environments: '/settings/environments',
