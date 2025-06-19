@@ -84,29 +84,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   {!showDropIndicator && (
                     <PieceSelector
-                      operation={
-                        data.stepLocationRelativeToParent ===
-                        StepLocationRelativeToParent.INSIDE_BRANCH
-                          ? {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                                branchIndex: data.branchIndex,
-                              },
-                            }
-                          : {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                              },
-                            }
-                      }
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
+                      asChild={true}
                     >
                       <span>
                         {showAiIndicator && (
