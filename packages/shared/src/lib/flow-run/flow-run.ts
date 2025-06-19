@@ -37,7 +37,8 @@ export const FlowRun = Type.Object({
     finishTime: Type.Optional(Type.String()),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
-    steps: Type.Record(Type.String(), Type.Unknown()),
+    //NOTE: steps can be null when the run is older than AP_EXECUTION_DATA_RETENTION_DAYS 
+    steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
     failedStepName: Type.Optional(Type.String()),
 })
 
