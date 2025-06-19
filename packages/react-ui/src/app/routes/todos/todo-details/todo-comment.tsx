@@ -3,10 +3,11 @@ import { formatUtils } from '@/lib/utils';
 import { ApAvatar } from '../../../../components/custom/ap-avatar';
 
 import { TodoMarkdown } from './todo-markdown';
+import { RichContentBlock } from '@activepieces/shared';
 
 export type ActivityItem = {
   type: 'comment';
-  text: string;
+  content: RichContentBlock[];
   timestamp: Date;
   authorType: 'user' | 'flow' | 'agent';
   authorName: string;
@@ -48,7 +49,7 @@ export const TodoComment = ({ comment, showConnector }: TodoCommentProps) => {
             <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
           )}
           <div className="pl-12">
-            <TodoMarkdown content={comment.text} />
+            <TodoMarkdown content={comment.content} />
           </div>
           {showConnector && <div className="mb-8"></div>}
         </div>

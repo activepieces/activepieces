@@ -1,4 +1,4 @@
-import { ProjectId, TodoActivityChanged, TodoChanged, WebsocketClientEvent } from '@activepieces/shared'
+import { ProjectId, RichContentBlock, TodoActivityChanged, TodoChanged, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 
@@ -29,5 +29,5 @@ type NotifyActivityParams = {
     socket: Socket
     projectId: ProjectId
     activityId: string
-    content: string
+    content: RichContentBlock[]
 }

@@ -83,9 +83,11 @@ export const runAgent = createAction({
       }
     } else {
       const todoId = await context.store.get<string>(context.resumePayload.queryParams['stateId'])
+      const result = context.resumePayload.body as AgentTestResult
       const output: AgentTestResult = {
         todoId: todoId!,
-        output: (context.resumePayload.body as { output: string })['output'],
+        output: result.output,
+        steps: result.steps,
       }
       return output
     }

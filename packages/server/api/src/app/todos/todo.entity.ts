@@ -24,10 +24,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             type: String,
             nullable: false,
         },
-        description: {
+        content: {
             type: String,
             nullable: true,
-        },  
+        },
         environment: {
             type: String,
             nullable: false,
