@@ -30,7 +30,7 @@ const getPieceSelectorOperationType = (step: Step) => {
 };
 
 const ApStepCanvasNode = React.memo(
-  ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
+  ({ data: {step} }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,
@@ -43,8 +43,8 @@ const ApStepCanvasNode = React.memo(
       pieceSelectorStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
-      state.selectedStep === data.step?.name,
-      state.activeDraggingStep === data.step?.name,
+      state.selectedStep === step.name,
+      state.activeDraggingStep === step.name,
       state.readonly,
       state.exitStepSettings,
       state.flowVersion,
@@ -52,10 +52,7 @@ const ApStepCanvasNode = React.memo(
       state.setPieceSelectorStep,
       state.pieceSelectorStep,
     ]);
-    const openPieceSelector = pieceSelectorStep === data.step!.name;
-    const step =
-      flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
-      data.step!;
+    const openPieceSelector = pieceSelectorStep === step.name;
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step,
     });
@@ -63,7 +60,7 @@ const ApStepCanvasNode = React.memo(
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
-    }, [data, flowVersion]);
+    }, [step, flowVersion]);
 
     const isTrigger = flowStructureUtil.isTrigger(step.type);
 
@@ -84,8 +81,7 @@ const ApStepCanvasNode = React.memo(
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
-      const { name } = data.step!;
-      selectStepByName(name);
+      selectStepByName(step.name);
       setSelectedBranchIndex(null);
       e.preventDefault();
       e.stopPropagation();

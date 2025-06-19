@@ -40,42 +40,19 @@ export enum ContextMenuType {
   CANVAS = 'CANVAS',
   STEP = 'STEP',
 }
-export type CanvasContextMenuProps = Pick<
-  BuilderState,
-  | 'applyOperation'
-  | 'selectedStep'
-  | 'flowVersion'
-  | 'exitStepSettings'
-  | 'readonly'
-  | 'selectedNodes'
-  | 'setPieceSelectorStep'
-> & {
+export type CanvasContextMenuProps = {
   children?: React.ReactNode;
   contextMenuType: ContextMenuType;
 };
 export const CanvasContextMenu = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  children,
-  exitStepSettings,
-  readonly,
-  setPieceSelectorStep,
   contextMenuType,
+  children,
 }: CanvasContextMenuProps) => {
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
         <CanvasContextMenuContent
-          selectedNodes={selectedNodes}
-          applyOperation={applyOperation}
-          selectedStep={selectedStep}
-          flowVersion={flowVersion}
-          exitStepSettings={exitStepSettings}
-          readonly={readonly}
-          setPieceSelectorStep={setPieceSelectorStep}
           contextMenuType={contextMenuType}
         ></CanvasContextMenuContent>
       </ContextMenuContent>

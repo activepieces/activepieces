@@ -39,6 +39,7 @@ import {
   CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 const ShortcutWrapper = ({
   children,
@@ -56,15 +57,25 @@ const ShortcutWrapper = ({
 };
 
 export const CanvasContextMenuContent = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  exitStepSettings,
-  readonly,
-  setPieceSelectorStep,
   contextMenuType,
 }: CanvasContextMenuProps) => {
+  const [
+    selectedNodes,
+    applyOperation,
+    selectedStep,
+    flowVersion,
+    exitStepSettings,
+    readonly,
+    setPieceSelectorStep,
+  ] = useBuilderStateContext((state) => [
+    state.selectedNodes,
+    state.applyOperation,
+    state.selectedStep,
+    state.flowVersion,
+    state.exitStepSettings,
+    state.readonly,
+    state.setPieceSelectorStep,
+  ]);
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>

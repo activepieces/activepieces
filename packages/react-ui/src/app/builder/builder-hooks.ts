@@ -589,7 +589,7 @@ export const useHandleKeyPressOnCanvas = () => {
       if (
         e.target instanceof HTMLElement &&
         (e.target === document.body ||
-          e.target.classList.contains('react-flow__nodesselection-rect') ||
+          e.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME) ||
           e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
         !readonly
       ) {
