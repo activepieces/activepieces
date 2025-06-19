@@ -1,4 +1,4 @@
-import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
@@ -47,9 +47,9 @@ export const openaiProvider: AIProviderStrategy = {
                 outputTokens = apiResponse.usage.output_tokens
             }
 
-            const { input, output } = languageModelConfig.pricing
+            const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
             return {
-                cost: calculateTokensCost(inputTokens, outputTokens, input, output),
+                cost: calculateTokensCost(inputTokens, inputCost) + calculateTokensCost(outputTokens, outputCost),
                 model,
             }
         }
