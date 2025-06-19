@@ -53,6 +53,7 @@ export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,
     engineToken: Type.String(),
+    attempsStarted: Type.Number(),
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>

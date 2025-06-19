@@ -5,6 +5,7 @@ import { Ellipsis, User } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { TableTitle } from '@/components/custom/table-title';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,8 +17,7 @@ import {
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
@@ -34,7 +34,7 @@ export const ProjectRoleUsersTable = () => {
       assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required');
       return projectRoleApi.get(projectRoleId);
     },
-    enabled: platform.projectRolesEnabled && !isNil(projectRoleId),
+    enabled: platform.plan.projectRolesEnabled && !isNil(projectRoleId),
   });
 
   const { data, isLoading } = useQuery({
@@ -49,7 +49,7 @@ export const ProjectRoleUsersTable = () => {
         limit: limit,
       });
     },
-    enabled: platform.projectRolesEnabled,
+    enabled: platform.plan.projectRolesEnabled,
   });
 
   const columns: ColumnDef<RowDataWithActions<ProjectMemberWithUser>>[] = [
@@ -109,7 +109,7 @@ export const ProjectRoleUsersTable = () => {
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       lockTitle={t('Project Role Management')}
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',

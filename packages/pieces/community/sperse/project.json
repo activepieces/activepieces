@@ -24,7 +24,12 @@
         "packageJson": "packages/pieces/community/sperse/package.json",
         "main": "packages/pieces/community/sperse/src/index.ts",
         "assets": [
-          "packages/pieces/community/sperse/*.md"
+          "packages/pieces/community/sperse/*.md",
+          {
+            "input": "packages/pieces/community/sperse/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

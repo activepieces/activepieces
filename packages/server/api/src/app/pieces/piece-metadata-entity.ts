@@ -104,6 +104,10 @@ export const PieceMetadataEntity =
               ...ApIdSchema,
               nullable: true,
           },
+          i18n: {
+              type: JSON_COLUMN_TYPE,
+              nullable: true,
+          },
       },
       indices: [
           {

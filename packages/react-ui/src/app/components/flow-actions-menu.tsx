@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -20,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
@@ -76,7 +76,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
@@ -218,25 +218,29 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </MoveFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
-          <DropdownMenuItem
-            disabled={!userHasPermissionToUpdateFlow}
-            onClick={() => duplicateFlow()}
+        {!embedState.hideDuplicateFlow && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
           >
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              {isDuplicatePending ? (
-                <LoadingSpinner />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-              <span>
-                {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
-              </span>
-            </div>
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
+            <DropdownMenuItem
+              disabled={!userHasPermissionToUpdateFlow}
+              onClick={() => duplicateFlow()}
+            >
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                {isDuplicatePending ? (
+                  <LoadingSpinner />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span>
+                  {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+                </span>
+              </div>
+            </DropdownMenuItem>
+          </PermissionNeededTooltip>
+        )}
 
-        {!readonly && insideBuilder && (
+        {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
@@ -253,16 +257,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </ImportFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <DropdownMenuItem onClick={() => exportFlow([flow])}>
-          <div className="flex cursor-pointer  flex-row gap-2 items-center">
-            {isExportPending ? (
-              <LoadingSpinner />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            <span>{isExportPending ? t('Exporting') : t('Export')}</span>
-          </div>
-        </DropdownMenuItem>
+
+        {!embedState.hideExportAndImportFlow && (
+          <DropdownMenuItem onClick={() => exportFlow([flow])}>
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              {isExportPending ? (
+                <LoadingSpinner />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span>{isExportPending ? t('Exporting') : t('Export')}</span>
+            </div>
+          </DropdownMenuItem>
+        )}
         {!embedState.isEmbedded && (
           <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

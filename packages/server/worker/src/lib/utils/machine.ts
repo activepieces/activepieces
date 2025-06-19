@@ -63,6 +63,9 @@ export const workerMachine = {
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
     },
+    hasSettings: () => {
+        return !isNil(settings)
+    },
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings

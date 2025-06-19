@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/zerobounce/package.json",
         "main": "packages/pieces/community/zerobounce/src/index.ts",
         "assets": [
-          "packages/pieces/community/zerobounce/*.md"
+          "packages/pieces/community/zerobounce/*.md",
+          {
+            "input": "packages/pieces/community/zerobounce/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

@@ -2,11 +2,8 @@ import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyReq
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
 import { licenseKeysTrialService } from './license-keys-trial.service'
-
-
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -45,10 +42,6 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        await platformService.update({
-            id: platformId,
-            licenseKey: key.key,
-        })
         await licenseKeysService(app.log).applyLimits(platformId, key)
         return key
     })

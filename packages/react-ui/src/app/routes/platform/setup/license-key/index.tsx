@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlatformPlanLimits } from '@activepieces/shared';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
@@ -96,12 +96,12 @@ const LicenseKeyPage = () => {
   };
 
   const expired =
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs());
+    platform?.plan?.licenseExpiresAt &&
+    dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs());
   const expiresSoon =
     !expired &&
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
+    platform?.plan?.licenseExpiresAt &&
+    dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
 
   return (
     <div className="flex-col w-full max-w-2xl">
@@ -115,7 +115,7 @@ const LicenseKeyPage = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {platform.hasLicenseKey && (
+        {platform.plan.licenseKey && (
           <div className="relative">
             <Input
               value={'....................'}
@@ -139,7 +139,7 @@ const LicenseKeyPage = () => {
         />
       </div>
 
-      {platform.licenseExpiresAt && (
+      {platform.plan.licenseExpiresAt && (
         <div className="rounded-lg p-3 mt-5">
           <div className="flex items-center space-x-2">
             <CalendarDays className="w-5 h-5" />
@@ -148,7 +148,7 @@ const LicenseKeyPage = () => {
               <p className="text-xs">
                 {t('Valid until')}{' '}
                 {formatUtils.formatDateOnly(
-                  dayjs(platform.licenseExpiresAt).toDate(),
+                  dayjs(platform.plan.licenseExpiresAt).toDate(),
                 )}
                 {(expiresSoon || expired) && (
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-300">
@@ -162,14 +162,14 @@ const LicenseKeyPage = () => {
         </div>
       )}
 
-      {platform.licenseExpiresAt && <Separator className="my-5" />}
+      {platform.plan.licenseExpiresAt && <Separator className="my-5" />}
 
       <div className="rounded-lg p-4">
         <h2 className="text-lg font-semibold mb-5">{t('Features')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
           {Object.entries(LICENSE_PROPS_MAP).map(
             ([key, label]) =>
-              platform?.[key as keyof typeof platform] && (
+              platform?.plan?.[key as keyof PlatformPlanLimits] && (
                 <div className="flex items-center p-2 rounded-md" key={key}>
                   <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
                   <span className={`text-sm`}>{t(label)}</span>

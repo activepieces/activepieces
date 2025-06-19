@@ -9,9 +9,9 @@ import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
 import { cn } from '@/lib/utils';
 import { FileResponseInterface } from '@activepieces/shared';
 

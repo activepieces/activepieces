@@ -4,6 +4,7 @@ import {
   SeekPage,
   TestPollingTriggerRequest,
   TriggerEventWithPayload,
+  WebhookSimulation,
 } from '@activepieces/shared';
 
 export const triggerEventsApi = {
@@ -30,6 +31,16 @@ export const triggerEventsApi = {
     return api.delete<void>('/v1/webhook-simulation', {
       flowId,
     });
+  },
+  async getWebhookSimulation(flowId: string) {
+    try {
+      return await api.get<WebhookSimulation>(`/v1/webhook-simulation/`, {
+        flowId,
+      });
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   },
   saveTriggerMockdata(flowId: string, mockData: unknown) {
     return api.post<TriggerEventWithPayload>(

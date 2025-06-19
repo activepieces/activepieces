@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/apollo/package.json",
         "main": "packages/pieces/community/apollo/src/index.ts",
         "assets": [
-          "packages/pieces/community/apollo/*.md"
+          "packages/pieces/community/apollo/*.md",
+          {
+            "input": "packages/pieces/community/apollo/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

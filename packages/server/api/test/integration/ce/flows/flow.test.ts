@@ -63,7 +63,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -73,6 +73,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBeNull()
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
+            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toHaveLength(21)
@@ -142,7 +143,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -152,6 +153,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
+            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -206,7 +208,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -216,6 +218,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
+            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
@@ -265,7 +268,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -275,6 +278,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
+            expect(responseBody?.handshakeConfiguration).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)

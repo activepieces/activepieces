@@ -139,4 +139,5 @@ export const pieceLoader = {
     getPieceAndTriggerOrThrow,
     getPieceAndActionOrThrow,
     getPropOrThrow,
+    getPackageAlias,
 }

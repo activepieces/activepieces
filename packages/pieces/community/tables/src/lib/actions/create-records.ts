@@ -16,11 +16,12 @@ export const createRecords = createAction({
       required: true,
       refreshers: ['table_id'],
       props: async ({ table_id }, context) => {
-        const tableId = table_id as unknown as string;
-        if ((tableId ?? '').toString().length === 0) {
+        const tableExternalId = table_id as unknown as string;
+        if ((tableExternalId ?? '').toString().length === 0) {
           return {};
         }
-
+        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
+        
         const fields = await tablesCommon.createFieldProperties({ tableId, context });
         if ('markdown' in fields) {
           return fields;
@@ -38,7 +39,8 @@ export const createRecords = createAction({
     }),
   },
   async run(context) {
-    const { table_id: tableId, values } = context.propsValue;
+    const { table_id: tableExternalId, values } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
     const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
       Object.entries(record)

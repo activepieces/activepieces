@@ -112,3 +112,11 @@ export const ProjectRouterWrapper = ({
     ),
   },
 ];
+
+export const projectSettingsRoutes = {
+  general: '/settings/general',
+  team: '/settings/team',
+  pieces: '/settings/pieces',
+  environments: '/settings/environments',
+  alerts: '/settings/alerts',
+} as const;

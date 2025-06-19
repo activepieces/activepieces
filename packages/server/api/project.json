@@ -57,7 +57,7 @@
         "testPathPattern": ["packages/server/api/test/unit"]
       }
     },
-    "test-ce": {
+    "test-ce-command": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
@@ -67,7 +67,7 @@
         "testPathPattern": ["packages/server/api/test/integration/ce"]
       }
     },
-    "test-cloud": {
+    "test-cloud-command": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
@@ -77,7 +77,7 @@
         "testPathPattern": ["packages/server/api/test/integration/cloud"]
       }
     },
-    "test-ee": {
+    "test-ee-command": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
@@ -87,16 +87,44 @@
         "testPathPattern": ["packages/server/api/test/integration/ee"]
       }
     },
-    "test": {
+    "test-ee": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
+        ],
+        "parallel": false
+      }
+    },
+    "test-ce": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud server-api --output-style stream-without-prefixes",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce server-api --output-style stream-without-prefixes",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
+      }
+    },
+    "test-cloud": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx build server-api",
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
+        ],
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx test-ee",
+          "nx test-ce",
+          "nx test-cloud"
+        ],
+        "parallel": true
       }
     },
     "test:docker": {

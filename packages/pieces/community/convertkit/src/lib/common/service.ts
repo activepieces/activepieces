@@ -26,14 +26,14 @@ import {
 
 export const fetchBroadcasts = async (auth: string, page: number) => {
   const url = BROADCASTS_API_ENDPOINT;
-  const body = {
-    api_secret: auth,
-    page,
-  };
   const request: HttpRequest = {
     url,
-    body,
     method: HttpMethod.GET,
+    queryParams: {
+      api_secret: auth,
+      page: page.toString(),
+      sort_order: 'desc',
+    },
   };
   const response = await httpClient.sendRequest<{ broadcasts: Broadcast[] }>(
     request

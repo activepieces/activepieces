@@ -1,6 +1,7 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
@@ -29,6 +30,7 @@ export const flagService = {
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -55,6 +57,7 @@ export const flagService = {
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
                 ApFlagId.SHOW_CHANGELOG,
+                ApFlagId.MAX_MCPS_PER_PROJECT,
             ]),
         })
         const now = new Date().toISOString()
@@ -66,6 +69,12 @@ export const flagService = {
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(AppSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: await aiProviderService.isAgentConfigured(),
                 created,
                 updated,
             },
@@ -102,6 +111,12 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: system.getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
                 created,
                 updated,
             },
@@ -245,6 +260,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.MAX_MCPS_PER_PROJECT,
+                value: system.getNumber(AppSystemProp.MAX_MCPS_PER_PROJECT),
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {
@@ -273,6 +294,7 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
+
         return platformId === cloudPlatformId
     },
 }
