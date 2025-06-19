@@ -14,6 +14,7 @@ import {
   FlowRunStatus,
   flowStructureUtil,
   FlowVersion,
+  isFailedState,
   isNil,
   LoopOnItemsAction,
   LoopStepOutput,
@@ -23,16 +24,16 @@ import {
 } from '@activepieces/shared';
 
 export const flowRunUtils = {
-  findFailedStepInOutput,
+  findLastStepWithStatus,
   findLoopsState,
   extractStepOutput,
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
-      | typeof Timer
-      | typeof CircleCheck
-      | typeof PauseCircleIcon
-      | typeof CircleX;
+    | typeof Timer
+    | typeof CircleCheck
+    | typeof PauseCircleIcon
+    | typeof CircleX;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -120,7 +121,7 @@ function findLoopsState(
   const loops = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
-  const failedStep = run.steps ? findFailedStepInOutput(run.steps) : null;
+  const failedStep = run.steps ? findLastStepWithStatus(run.status, run.steps) : null;
 
   return loops.reduce(
     (res, step) => ({
@@ -134,30 +135,38 @@ function findLoopsState(
   );
 }
 
-function findFailedStepInOutput(
+function findLastStepWithStatus(
+  runStatus: FlowRunStatus,
   steps: Record<string, StepOutput>,
 ): string | null {
+  if (runStatus === FlowRunStatus.STOPPED || runStatus === FlowRunStatus.SUCCEEDED) {
+    return null;
+  }
+  const stepStatus = isFailedState(runStatus) ? StepOutputStatus.FAILED : undefined;
   return Object.entries(steps).reduce((res, [stepName, step]) => {
-    if (step.status === StepOutputStatus.FAILED) {
-      return stepName;
-    }
     if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
-      return findFailedStepInLoop(step as LoopStepOutput);
+      return findLatestStepInLoop(step as LoopStepOutput, runStatus);
     }
-    return res;
+    if (!isNil(stepStatus) && step.status === stepStatus) {
+      return res;
+    }
+    return stepName;
   }, null as null | string);
 }
 
-function findFailedStepInLoop(loopStepResult: LoopStepOutput): string | null {
+function findLatestStepInLoop(loopStepResult: LoopStepOutput, runStatus: FlowRunStatus): string | null {
   if (!loopStepResult.output) {
     return null;
   }
   for (const iteration of loopStepResult.output.iterations) {
-    const failedStep = findFailedStepInOutput(iteration);
-    if (failedStep) return failedStep;
+    const lastStep = findLastStepWithStatus(runStatus, iteration);
+    if (!isNil(lastStep)) {
+      return lastStep;
+    }
   }
   return null;
 }
+
 
 function getLoopChildStepOutput(
   parents: LoopOnItemsAction[],
