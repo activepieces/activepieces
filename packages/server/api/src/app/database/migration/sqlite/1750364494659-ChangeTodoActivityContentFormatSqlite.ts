@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class ChangeTodoActivityContentFormatSqlite1750364494659 implements MigrationInterface {
     name = 'ChangeTodoActivityContentFormatSqlite1750364494659'
@@ -6,7 +6,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -23,7 +23,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -44,29 +44,29 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -94,7 +94,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
@@ -133,38 +133,38 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "createdByUserId",
                 "locked"
             FROM "todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             DELETE FROM "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -178,7 +178,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo_activity"(
                     "id",
@@ -197,26 +197,26 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "agentId",
                 "content"
             FROM "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo_activity"
                 RENAME TO "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -231,7 +231,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "lastOccurrence" datetime NOT NULL,
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -252,20 +252,20 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -280,7 +280,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "lastOccurrence" datetime NOT NULL,
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -301,23 +301,23 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -331,7 +331,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo_activity"(
                     "id",
@@ -350,29 +350,29 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "agentId",
                 "content"
             FROM "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo_activity"
                 RENAME TO "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -389,7 +389,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
@@ -410,27 +410,27 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "issue"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -445,7 +445,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "lastOccurrence" datetime NOT NULL,
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -466,29 +466,29 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo_activity"
                 RENAME TO "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -502,7 +502,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo_activity"(
                     "id",
@@ -521,23 +521,23 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "agentId",
                 "content"
             FROM "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -552,7 +552,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "lastOccurrence" datetime NOT NULL,
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -573,20 +573,20 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -602,7 +602,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId"),
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -623,26 +623,26 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo_activity"
                 RENAME TO "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -656,7 +656,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo_activity"(
                     "id",
@@ -675,35 +675,35 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "agentId",
                 "content"
             FROM "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -731,7 +731,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
@@ -770,29 +770,29 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "createdByUserId",
                 "locked"
             FROM "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_issue_flowId_stepName"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -809,7 +809,7 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT,
                 CONSTRAINT "fk_issue_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
@@ -830,13 +830,13 @@ export class ChangeTodoActivityContentFormatSqlite1750364494659 implements Migra
                 "stepName",
                 "lastOccurrence"
             FROM "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_issue"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flowId_stepName" ON "issue" ("flowId", "stepName")
-        `);
+        `)
     }
 
 }

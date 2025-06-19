@@ -18,11 +18,11 @@ type FindAgentResultParams = {
     content: RichContentBlock[]
 }
 
-function getAgentCompletionOutput(content: RichContentBlock[]): unknown | undefined {
+function getAgentCompletionOutput(content: RichContentBlock[]): unknown {
     return content
         .filter((block): block is ToolCallContentBlock =>
             block.type === ContentBlockType.TOOL_CALL &&
-            block.displayName === agentbuiltInToolsNames.markAsComplete
+            block.displayName === agentbuiltInToolsNames.markAsComplete,
         )
         .map(block => block.input)
         .at(0)

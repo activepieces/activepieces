@@ -18,13 +18,10 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   onClick,
   actionOrTriggerDisplayName,
 }) => {
-
-  const isPiece = piece.type === ActionType.PIECE || piece.type === TriggerType.PIECE;
+  const isPiece =
+    piece.type === ActionType.PIECE || piece.type === TriggerType.PIECE;
   return (
-    <div
-      onClick={onClick}
-      className="flex items-center justify-center gap-4"
-    >
+    <div onClick={onClick} className="flex items-center justify-center gap-4">
       <div className="flex h-full min-w-[48px] items-center justify-center">
         <PieceIcon
           logoUrl={(customizedInputs?.logoUrl as string) ?? piece.logoUrl}

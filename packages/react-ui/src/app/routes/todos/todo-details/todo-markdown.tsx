@@ -21,7 +21,6 @@ interface TodoMarkdownProps {
 }
 
 export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
-
   return (
     <div className="space-y-4">
       {content.map((block, index) => {
@@ -29,7 +28,7 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
           return (
             <div key={index} className="prose prose-sm max-w-none">
               <ApMarkdown
-                  markdown={block.markdown}
+                markdown={block.markdown}
                 variant={MarkdownVariant.BORDERLESS}
               />
             </div>

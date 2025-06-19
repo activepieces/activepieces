@@ -1,9 +1,9 @@
 import { formatUtils } from '@/lib/utils';
+import { RichContentBlock } from '@activepieces/shared';
 
 import { ApAvatar } from '../../../../components/custom/ap-avatar';
 
 import { TodoMarkdown } from './todo-markdown';
-import { RichContentBlock } from '@activepieces/shared';
 
 export type ActivityItem = {
   type: 'comment';

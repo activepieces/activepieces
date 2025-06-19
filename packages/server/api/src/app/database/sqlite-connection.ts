@@ -254,7 +254,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddStepToIssuesTableSqlite1750017482244,
         MakeStepNameOptionalSqlite1750025280435,
         RemoveUniqueOnFlowSqlite1750093133906,
-        ChangeTodoActivityContentFormatSqlite1750364494659
+        ChangeTodoActivityContentFormatSqlite1750364494659,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

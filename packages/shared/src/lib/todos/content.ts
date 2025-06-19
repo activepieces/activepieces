@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox"
-import { Nullable } from "../common/base-model"
+import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../common/base-model'
 
 export enum ContentBlockType {
     MARKDOWN = 'markdown',
@@ -16,7 +16,7 @@ export type MarkdownContentBlock = Static<typeof MarkdownContentBlock>
 
 export enum ToolCallStatus {
     IN_PROGRESS = 'in-progress',
-    COMPLETED = 'completed'
+    COMPLETED = 'completed',
 }
 
 export enum ToolCallType {
