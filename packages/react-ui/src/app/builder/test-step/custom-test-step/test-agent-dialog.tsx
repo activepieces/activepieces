@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
 import {
   Action,
-  agentMarkdownParser,
+  agentOutputUtils,
   AgentTestResult,
 } from '@activepieces/shared';
 
@@ -30,9 +30,9 @@ function AgentTestingDialog({
     const activities = await todoActivityApi.list(todoId, {
       limit: 100,
     });
-    const agentResult: AgentTestResult = agentMarkdownParser.findAgentResult({
+    const agentResult: AgentTestResult = agentOutputUtils.findAgentResult({
       todoId,
-      output: activities.data[activities.data.length - 1].content,
+      content: activities.data[activities.data.length - 1].content,
     });
     updateSampleData({
       response: {

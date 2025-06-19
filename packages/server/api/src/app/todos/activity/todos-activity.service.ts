@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, TodoActivity, TodoActivityWithUser, UserId } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, PlatformId, ProjectId, RichContentBlock, SeekPage, spreadIfDefined, TodoActivity, TodoActivityWithUser, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { agentsService } from '../../agents/agents-service'
@@ -29,7 +29,7 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
     async update(params: UpdateParams): Promise<TodoActivity> {
         const activity = await repo().findOneByOrFail({ id: params.id })
         await repo().update(activity.id, {
-            content: params.content,
+            ...spreadIfDefined('content', params.content),
         })
         await todoSideEfffects(log).notify({
             socket: params.socket,
@@ -109,7 +109,7 @@ type ListParams = {
 }
 
 type CreateParams = {
-    content: string
+    content: RichContentBlock[]
     platformId: PlatformId
     projectId: ProjectId
     userId: UserId | null
@@ -120,7 +120,7 @@ type CreateParams = {
 
 type UpdateParams = {
     id: string
-    content: string
+    content: RichContentBlock[]
     socket: Socket
     projectId: ProjectId
 }

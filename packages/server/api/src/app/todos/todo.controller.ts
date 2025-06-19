@@ -33,10 +33,10 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateTodoRequest, async (request) => {
-        const { title, description, statusOptions, flowId, runId, assigneeId, resolveUrl, environment } = request.body
+        const { title, content, statusOptions, flowId, runId, assigneeId, resolveUrl, environment } = request.body
         return todoService(request.log).create({
             title,
-            description,
+            content,
             statusOptions,
             flowId,
             runId,
@@ -50,11 +50,11 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateTodoRequest, async (request) => {
         const { id } = request.params
-        const { title, description, status, statusOptions, assigneeId, isTest } = request.body
+        const { title, content, status, statusOptions, assigneeId, isTest } = request.body
         return todoService(request.log).update({
             id,
             title,
-            description,
+            content,
             status,
             statusOptions,
             assigneeId,

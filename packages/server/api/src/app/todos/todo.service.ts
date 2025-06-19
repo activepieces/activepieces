@@ -18,7 +18,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<PopulatedTodo> {
         const todo = await todoRepo().save({
             id: apId(),
-            status: UNRESOLVED_STATUS,
+            status: UNRESOLVED_STATUS,  
             locked: params.locked ?? false,
             ...params,
         })
@@ -54,7 +54,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
         }, {
             ...spreadIfDefined('title', params.title),
-            ...spreadIfDefined('description', params.description),
+            ...spreadIfDefined('content', params.content),
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
@@ -225,7 +225,7 @@ type ListParams = {
 
 type CreateParams = {
     title: string
-    description?: string
+    content: string
     statusOptions: StatusOption[]
     platformId: string
     createdByUserId?: string
@@ -244,7 +244,7 @@ type UpdateParams = {
     platformId: string
     projectId: string
     title?: string
-    description?: string
+    content?: string
     status?: StatusOption
     statusOptions?: StatusOption[]
     assigneeId?: string

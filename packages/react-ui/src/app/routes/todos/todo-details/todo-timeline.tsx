@@ -9,6 +9,7 @@ import {
   TodoActivityWithUser,
   TodoActivityChanged,
   PopulatedTodo,
+  ContentBlockType,
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
@@ -24,15 +25,15 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
   const socket = useSocket();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
-  const formatComment = (activity: TodoActivityWithUser) => {
+  const formatComment = (activity: TodoActivityWithUser): ActivityItem => {
     const avatarUrl = todoUtils.getAuthorPictureUrl(activity);
-    const hash = encodeURIComponent(activity.content);
+    const hash = encodeURIComponent(JSON.stringify(activity.content));
     const profileUrl = activity.agentId
       ? `/agents/${activity.agentId}`
       : undefined;
     return {
       type: 'comment' as const,
-      text: activity.content,
+      content: activity.content,
       timestamp: new Date(activity.created),
       authorType: todoUtils.getAuthorType(activity),
       authorName: todoUtils.getAuthorName(activity),
@@ -47,7 +48,12 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
     setActivities([
       {
         type: 'comment' as const,
-        text: todo.description ?? '',
+        content: [
+          {
+            type: ContentBlockType.MARKDOWN,
+            markdown: todo.content ?? '',
+          },
+        ],
         timestamp: new Date(todo.created),
         authorType: todoUtils.getAuthorType(todo),
         authorName: todoUtils.getAuthorName(todo),
@@ -69,7 +75,7 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
       setActivities((prev) => {
         const newActivities = prev.map((activity) => {
           if (activity.id === event.activityId) {
-            return { ...activity, text: event.content };
+            return { ...activity, content: event.content };
           }
           return activity;
         });
