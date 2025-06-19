@@ -12,11 +12,19 @@ import { AskAiButton } from './ask-ai';
 
 const RequestPieceButton = () => {
   return (
-      <Button variant="default" size="sm" onClick={() => {
-        window.open(`${supportUrl}/c/feature-requests/9`, '_blank', 'noopener noreferrer');
-      }}>
-        {t('Request Piece')}
-      </Button>
+    <Button
+      variant="default"
+      size="sm"
+      onClick={() => {
+        window.open(
+          `${supportUrl}/c/feature-requests/9`,
+          '_blank',
+          'noopener noreferrer',
+        );
+      }}
+    >
+      {t('Request Piece')}
+    </Button>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import {
@@ -15,8 +15,10 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { isNil, TriggerType } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
+
 import { cn } from '../../../lib/utils';
+
 import { NoResultsFound } from './no-results-found';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 
@@ -107,9 +109,11 @@ const PieceCardListWrapper = ({
       )}
 
       {group.pieces.map((pieceMetadata) => (
-        <div id={pieceMetadata.displayName}>
+        <div
+          id={pieceMetadata.displayName}
+          key={pieceSelectorUtils.toKey(pieceMetadata)}
+        >
           <PieceCardListItem
-            key={pieceSelectorUtils.toKey(pieceMetadata)}
             hiddenActionsOrTriggers={hiddenActionsOrTriggers}
             pieceMetadata={pieceMetadata}
             selectedPieceMetadata={selectedPieceMetadata}
@@ -165,15 +169,15 @@ const PieceCardListItem = React.forwardRef<
       }
     };
     const isMobile = useIsMobile();
+    const showSuggestions = debouncedQuery.length > 0 || isMobile;
     return (
       <div onMouseLeave={handleMouseLeave} ref={ref}>
         <CardListItem
           className="flex-col p-3 gap-1 items-start"
           selected={
-            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-            debouncedQuery.length === 0
+            pieceMetadata.displayName === selectedPieceMetadata?.displayName
           }
-          interactive={debouncedQuery.length === 0}
+          interactive={!showSuggestions}
           onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
         >
           <div className="flex gap-2 items-center h-full">
@@ -189,16 +193,15 @@ const PieceCardListItem = React.forwardRef<
           </div>
         </CardListItem>
 
-        {(debouncedQuery.length > 0 || isMobile) &&
-          pieceMetadata.type !== TriggerType.EMPTY && (
-            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-              <PieceSearchSuggestions
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                pieceMetadata={pieceMetadata}
-                handleSelectOperationSuggestion={handleSelect}
-              />
-            </div>
-          )}
+        {showSuggestions && (
+          <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
+            <PieceSearchSuggestions
+              hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+              pieceMetadata={pieceMetadata}
+              handleSelectOperationSuggestion={handleSelect}
+            />
+          </div>
+        )}
       </div>
     );
   },

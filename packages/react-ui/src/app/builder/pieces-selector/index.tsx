@@ -19,6 +19,7 @@ import {
   PieceStepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Action,
   ActionType,
@@ -39,7 +40,6 @@ import { SearchInput } from '../../../components/ui/search-input';
 
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -431,7 +431,7 @@ const PieceSelector = ({
   };
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef, searchInputDivHeight } =
-  pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
+    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
   return (
     <Popover
       open={open}
@@ -458,10 +458,12 @@ const PieceSelector = ({
       >
         <>
           <div>
-            <div className="p-2 flex gap-1 items-center"
-             style={{
-              height: `${searchInputDivHeight}px`,
-             }}>
+            <div
+              className="p-2 flex gap-1 items-center"
+              style={{
+                height: `${searchInputDivHeight}px`,
+              }}
+            >
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
@@ -475,40 +477,40 @@ const PieceSelector = ({
 
             <Separator orientation="horizontal" />
           </div>
-          <div className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
-              style={{
-                height: listHeightRef.current + 'px',
-              }}
+          <div
+            className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
+            style={{
+              height: listHeightRef.current + 'px',
+            }}
           >
-              <PiecesCardList
-                closePieceSelector={() => onOpenChange(false)}
-                debouncedQuery={debouncedQuery}
-                piecesIsLoaded={piecesIsLoaded}
-                noResultsFound={noResultsFound}
-                selectedPieceMetadata={selectedPieceMetadata}
-                setSelectedMetadata={setSelectedMetadata}
-                operation={operation}
-                handleSelect={handleSelect}
-                pieceGroups={pieceGroups}
-                isLoadingPieces={isLoadingPieces}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-              />
-              {debouncedQuery.length === 0 &&
-                piecesIsLoaded &&
-                !noResultsFound &&
-                !isMobile && (
-                  <>
-                     <Separator orientation="vertical" className="h-full" />
-                    <StepsCardList
-                      hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                      selectedPieceMetadata={selectedPieceMetadata}
-                      handleSelect={handleSelect}
-                    />
-                  </>
-                 
-                )}
-              </div>
-                     </>
+            <PiecesCardList
+              closePieceSelector={() => onOpenChange(false)}
+              debouncedQuery={debouncedQuery}
+              piecesIsLoaded={piecesIsLoaded}
+              noResultsFound={noResultsFound}
+              selectedPieceMetadata={selectedPieceMetadata}
+              setSelectedMetadata={setSelectedMetadata}
+              operation={operation}
+              handleSelect={handleSelect}
+              pieceGroups={pieceGroups}
+              isLoadingPieces={isLoadingPieces}
+              hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+            />
+            {debouncedQuery.length === 0 &&
+              piecesIsLoaded &&
+              !noResultsFound &&
+              !isMobile && (
+                <>
+                  <Separator orientation="vertical" className="h-full" />
+                  <StepsCardList
+                    hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+                    selectedPieceMetadata={selectedPieceMetadata}
+                    handleSelect={handleSelect}
+                  />
+                </>
+              )}
+          </div>
+        </>
       </PopoverContent>
     </Popover>
   );

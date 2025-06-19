@@ -325,15 +325,18 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
   }
 
   const popOverTriggerRect = popoverTriggerRef.current.getBoundingClientRect();
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-  const shouldRenderBelowPopoverTrigger = popOverTriggerRect.top < (viewportHeight - popOverTriggerRect.bottom);
-  
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+  const shouldRenderBelowPopoverTrigger =
+    popOverTriggerRect.top < viewportHeight - popOverTriggerRect.bottom;
+
   if (shouldRenderBelowPopoverTrigger) {
-      const availableSpaceBelow = viewportHeight - popOverTriggerRect.bottom - searchInputDivHeight;
-      listHeightRef.current = Math.max(minListHeight, availableSpaceBelow);
+    const availableSpaceBelow =
+      viewportHeight - popOverTriggerRect.bottom - searchInputDivHeight;
+    listHeightRef.current = Math.max(minListHeight, availableSpaceBelow);
   } else {
-      const availableSpaceAbove = popOverTriggerRect.top - searchInputDivHeight;
-      listHeightRef.current = Math.max(minListHeight, availableSpaceAbove);
+    const availableSpaceAbove = popOverTriggerRect.top - searchInputDivHeight;
+    listHeightRef.current = Math.max(minListHeight, availableSpaceAbove);
   }
 
   return {
