@@ -22,7 +22,7 @@ const ApStepNodeStatus = ({ step }: { step: Step }) => {
     state.flowVersion,
   ]);
 
-  const stepOutputStatus = useMemo(() => {
+  const stepStatusInRun = useMemo(() => {
     return flowCanvasUtils.getStepStatus(
       step.name,
       run,
@@ -31,17 +31,17 @@ const ApStepNodeStatus = ({ step }: { step: Step }) => {
     );
   }, [step.name, run, loopIndexes, flowVersion]);
   const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
-  const showRunningIcon =
-    isNil(stepOutputStatus) &&
+  const stillRunning =
+    isNil(stepStatusInRun) &&
     run?.status === FlowRunStatus.RUNNING &&
     !isSkipped;
 
   return (
     <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
-      {stepOutputStatus && (
-        <StepStatusIcon status={stepOutputStatus} size="4"></StepStatusIcon>
+      {stepStatusInRun && (
+        <StepStatusIcon status={stepStatusInRun} size="4"></StepStatusIcon>
       )}
-      {showRunningIcon && (
+      {stillRunning && (
         <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
       )}
       {isSkipped && (
