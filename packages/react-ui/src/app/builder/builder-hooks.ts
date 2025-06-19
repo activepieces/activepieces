@@ -26,7 +26,7 @@ import {
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
-  isFlowStateTerminal,
+  FlowRunStatus,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -180,23 +180,23 @@ export const createBuilderStore = (
 ) =>
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
-      ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
+      ? flowRunUtils.findLastStepWithStatus(initialState.run.status, initialState.run.steps)
       : null;
     const initiallySelectedStep = newFlow
       ? null
       : determineInitiallySelectedStep(
-          failedStepInRun,
-          initialState.flowVersion,
-        );
+        failedStepInRun,
+        initialState.flowVersion,
+      );
 
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-              initialState.flowVersion,
-              initialState.run,
-              {},
-            )
+            initialState.flowVersion,
+            initialState.run,
+            {},
+          )
           : {},
       sampleData: initialState.sampleData,
       sampleDataInput: initialState.sampleDataInput,
@@ -213,8 +213,8 @@ export const createBuilderStore = (
       activeDraggingStep: null,
       rightSidebar:
         initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+          (initiallySelectedStep !== 'trigger' ||
+            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -257,7 +257,7 @@ export const createBuilderStore = (
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY
+              state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
@@ -346,9 +346,9 @@ export const createBuilderStore = (
             leftSidebar: LeftSideBarType.RUN_DETAILS,
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
-              ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-                state.selectedStep ??
-                'trigger'
+              ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
+              state.selectedStep ??
+              'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -514,7 +514,7 @@ export const createBuilderStore = (
             selectedStep: step ? step : state.selectedStep,
             rightSidebar:
               (step && step !== 'trigger') ||
-              state.flowVersion.trigger.type !== TriggerType.EMPTY
+                state.flowVersion.trigger.type !== TriggerType.EMPTY
                 ? RightSideBarType.PIECE_SETTINGS
                 : state.rightSidebar,
           };
@@ -724,7 +724,7 @@ export const useIsFocusInsideListMapperModeInput = ({
         );
       setIsFocusInsideListMapperModeInput(
         isFocusedInside ||
-          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+        (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
       );
     };
     document.addEventListener('focusin', focusInListener);
@@ -733,27 +733,19 @@ export const useIsFocusInsideListMapperModeInput = ({
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
-export const useFocusedFailedStep = () => {
+export const useFocusOnStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
-  const previousRun = usePrevious(currentRun);
+  const [_, setSelectedStep] = useBuilderStateContext((state) => [state.selectedStep, state.selectStepByName]);
+  const previousStatus = usePrevious(currentRun?.status);
+  const currentStep = flowRunUtils.findLastStepWithStatus(previousStatus ?? FlowRunStatus.RUNNING, currentRun?.steps ?? {});
+  const lastStep = usePrevious(currentStep);
+
   const { fitView } = useReactFlow();
-  if (
-    (currentRun &&
-      previousRun?.id !== currentRun.id &&
-      isFlowStateTerminal(currentRun.status)) ||
-    (currentRun &&
-      previousRun &&
-      !isFlowStateTerminal(previousRun.status) &&
-      isFlowStateTerminal(currentRun.status))
-  ) {
-    const failedStep = currentRun.steps
-      ? flowRunUtils.findFailedStepInOutput(currentRun.steps)
-      : null;
-    if (failedStep) {
-      setTimeout(() => {
-        fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
-      });
-    }
+  if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
+    setTimeout(() => {
+      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+      setSelectedStep(currentStep);
+    });
   }
 };
 
