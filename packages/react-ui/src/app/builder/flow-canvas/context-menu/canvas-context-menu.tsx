@@ -5,8 +5,6 @@ import {
 } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
 
-import { BuilderState } from '../../builder-hooks';
-
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
 export type CanvasShortcutsProps = Record<

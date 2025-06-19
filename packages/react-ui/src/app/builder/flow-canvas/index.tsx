@@ -154,15 +154,15 @@ export const FlowCanvas = React.memo(
           const targetIsSelectionRect = ev.target.classList.contains(
             NODE_SELECTION_RECT_CLASS_NAME,
           );
-          const showStepContextMenu = stepElement || targetIsSelectionRect || targetIsSelectionChevron;
+          const showStepContextMenu =
+            stepElement || targetIsSelectionRect || targetIsSelectionChevron;
           if (showStepContextMenu) {
             setContextMenuType(ContextMenuType.STEP);
           } else {
             setContextMenuType(ContextMenuType.CANVAS);
           }
           const shouldRemoveSelectionRect =
-            !targetIsSelectionRect &&
-            !targetIsSelectionChevron
+            !targetIsSelectionRect && !targetIsSelectionChevron;
           if (shouldRemoveSelectionRect) {
             document
               .querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`)
@@ -208,9 +208,7 @@ export const FlowCanvas = React.memo(
           cursorPosition={cursorPosition}
           lefSideBarContainerWidth={lefSideBarContainerWidth}
         >
-          <CanvasContextMenu
-            contextMenuType={contextMenuType}
-          >
+          <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               onContextMenu={onContextMenu}
               onPaneClick={() => {

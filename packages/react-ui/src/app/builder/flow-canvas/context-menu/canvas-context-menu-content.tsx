@@ -26,6 +26,7 @@ import {
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -39,7 +40,6 @@ import {
   CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
-import { useBuilderStateContext } from '../../builder-hooks';
 
 const ShortcutWrapper = ({
   children,

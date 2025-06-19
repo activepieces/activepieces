@@ -30,7 +30,7 @@ const getPieceSelectorOperationType = (step: Step) => {
 };
 
 const ApStepCanvasNode = React.memo(
-  ({ data: {step} }: NodeProps & Omit<ApStepNode, 'position'>) => {
+  ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,

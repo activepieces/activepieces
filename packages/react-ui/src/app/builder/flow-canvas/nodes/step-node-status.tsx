@@ -41,9 +41,7 @@ const ApStepNodeStatus = ({ step }: { step: Step }) => {
       {stepStatusInRun && (
         <StepStatusIcon status={stepStatusInRun} size="4"></StepStatusIcon>
       )}
-      {stillRunning && (
-        <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
-      )}
+      {stillRunning && <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>}
       {isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
