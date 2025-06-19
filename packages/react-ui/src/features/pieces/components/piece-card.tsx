@@ -21,7 +21,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   return (
     <div
       onClick={onClick}
-      className="flex items-center justify-center gap-4 rounded border border-solid p-3.5"
+      className="flex items-center justify-center gap-4"
     >
       <div className="flex h-full min-w-[48px] items-center justify-center">
         <PieceIcon

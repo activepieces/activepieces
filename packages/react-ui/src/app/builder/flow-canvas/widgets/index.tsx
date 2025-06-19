@@ -56,10 +56,7 @@ const BelowFlowWidget = React.memo(() => {
           pointerEvents: 'auto',
         }}
       >
-        <div
-          className="flex items-center justify-center gap-2"
-          style={{ width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px' }}
-        >
+        <div className="flex items-center justify-center gap-2">
           <FlowEndWidget></FlowEndWidget>
         </div>
       </div>

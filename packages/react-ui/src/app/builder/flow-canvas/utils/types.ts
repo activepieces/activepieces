@@ -8,6 +8,7 @@ import {
 
 export enum ApNodeType {
   STEP = 'STEP',
+  AGENT_STEP = 'AGENT_STEP',
   ADD_BUTTON = 'ADD_BUTTON',
   BIG_ADD_BUTTON = 'BIG_ADD_BUTTON',
   GRAPH_END_WIDGET = 'GRAPH_END_WIDGET',

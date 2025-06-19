@@ -18,13 +18,11 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, McpWithTools, Permission } from '@activepieces/shared';
 
 import { McpToolsIcon } from './mcp-tools-icon';
@@ -38,12 +36,6 @@ const McpServersPage = () => {
   const userHasMcpWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_MCP,
   );
-  const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } =
-    piecesHooks.usePieces({});
-
-  const pieceMetadataMap = allPiecesMetadata
-    ? new Map(allPiecesMetadata.map((p) => [p.name, p]))
-    : new Map<string, PieceMetadataModelSummary>();
 
   const { data, isLoading, refetch } = mcpHooks.useMcps({
     cursor: searchParams.get('cursor') ?? undefined,
@@ -145,11 +137,7 @@ const McpServersPage = () => {
       ),
       cell: ({ row }) => {
         return (
-          <McpToolsIcon
-            mcpTools={row.original.tools || []}
-            pieceMetadataMap={pieceMetadataMap}
-            isLoadingPiecesMetadata={isLoadingPiecesMetadata}
-          />
+          <McpToolsIcon mcpId={row.original.id} />
         );
       },
     },

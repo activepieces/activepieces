@@ -24,10 +24,10 @@ export const mcpHooks = {
       staleTime: 0,
     });
   },
-  useMcp: (id: string) => {
+  useMcp: (id: string | null) => {
     return useQuery<McpWithTools, Error>({
       queryKey: ['mcp', id],
-      queryFn: () => mcpApi.get(id),
+      queryFn: () => mcpApi.get(id!),
       enabled: !!id,
     });
   },

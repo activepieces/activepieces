@@ -7,23 +7,53 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpToolType, McpWithTools } from '@activepieces/shared';
+import { McpToolType } from '@activepieces/shared';
 
 interface McpToolsIconProps {
-  mcpTools: McpWithTools['tools'];
-  pieceMetadataMap: Map<string, PieceMetadataModelSummary>;
-  isLoadingPiecesMetadata: boolean;
+  mcpId: string;
+  size?: 'md' | 'xs';
+  square?: boolean;
 }
 
+const ICON_SIZE_MAP = {
+  md: {
+    piece: 'md',
+    container: 'size-[36px] p-2',
+    workflowIcon: 16,
+    extra: 'size-[36px] p-1 text-sm',
+    gap: 'gap-2',
+  },
+  xs: {
+    piece: 'xs',
+    container: 'size-[20px] p-1',
+    workflowIcon: 12,
+    extra: 'size-[20px] p-1 text-xs',
+    gap: 'gap-2',
+  },
+};
+
 export const McpToolsIcon = ({
-  mcpTools,
-  pieceMetadataMap,
-  isLoadingPiecesMetadata,
+  mcpId,
+  size = 'md',
+  square = false,
 }: McpToolsIconProps) => {
-  if (isLoadingPiecesMetadata) {
-    return <div className="text-left">{t('Loading...')}</div>;
+  const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } =
+    piecesHooks.usePieces({});
+
+  const { data: mcpData, isLoading: isLoadingMcp } = mcpHooks.useMcp(mcpId);
+
+  const pieceMetadataMap = allPiecesMetadata
+    ? new Map(allPiecesMetadata.map((p) => [p.name, p]))
+    : new Map<string, PieceMetadataModelSummary>();
+
+  if (isLoadingPiecesMetadata || isLoadingMcp) {
+    return <div className="text-left"></div>;
   }
+
+  const mcpTools = mcpData?.tools || [];
 
   const MAX_ICONS_TO_SHOW = 3;
   const visibleTools = mcpTools.slice(0, MAX_ICONS_TO_SHOW);
@@ -49,11 +79,21 @@ export const McpToolsIcon = ({
       ` ${t('and')} ${allDisplayNames[allDisplayNames.length - 1]}`;
   }
 
+  const iconStyle = ICON_SIZE_MAP[size];
+
+  const getShapeClass = () => {
+    return square ? 'rounded-[2px]' : 'rounded-full';
+  };
+
+  const getBorderClass = () => {
+    return square ? '' : 'border border-solid';
+  };
+
   return (
     <div className="text-left flex items-center">
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center ${iconStyle.gap}`}>
             {visibleTools.map((tool) => {
               const metadata =
                 tool.type === McpToolType.PIECE && tool.pieceMetadata
@@ -70,9 +110,9 @@ export const McpToolsIcon = ({
                         ? tool.pieceMetadata.pieceName
                         : 'Flow')
                     }
-                    size="md"
-                    circle={true}
-                    border={true}
+                    size={iconStyle.piece as 'md' | 'xs' | 'sm' | 'lg' | 'xxl' | 'xl'}
+                    circle={!square}
+                    border={!square}
                     showTooltip={false}
                   />
                 );
@@ -80,12 +120,10 @@ export const McpToolsIcon = ({
                 return (
                   <div
                     key={tool.id}
-                    className={
-                      'bg-accent/35 rounded-full p-2 border border-solid size-[36px]'
-                    }
+                    className={`bg-accent/35 ${getShapeClass()} ${getBorderClass()} flex items-center justify-center ${iconStyle.container}`}
                   >
                     <WorkflowIcon
-                      size={16}
+                      size={iconStyle.workflowIcon}
                       className="w-full h-full"
                       strokeWidth={1.5}
                     />
@@ -94,7 +132,9 @@ export const McpToolsIcon = ({
               }
             })}
             {extraToolsCount > 0 && (
-              <div className="flex items-center justify-center bg-accent/35 text-accent-foreground p-1 rounded-full border border-solid select-none size-[36px] text-sm">
+              <div
+                className={`flex items-center justify-center bg-accent/35 text-accent-foreground ${getShapeClass()} ${getBorderClass()} select-none ${iconStyle.extra}`}
+              >
                 +{extraToolsCount}
               </div>
             )}

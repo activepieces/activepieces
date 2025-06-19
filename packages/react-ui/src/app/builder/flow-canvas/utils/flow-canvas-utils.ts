@@ -126,7 +126,7 @@ const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
 
   const graph: ApGraph = createStepGraph(
     step,
-    flowUtilConsts.AP_NODE_SIZE.STEP.height +
+    flowCanvasUtils.getActionNodeHeight(step) +
       flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
   );
   const childGraph =
@@ -427,6 +427,12 @@ export const flowCanvasUtils = {
       console.warn('Flow end widget not found');
     }
     return graph;
+  },
+  isAgentPiece: (action: Action | Trigger) => {
+    return action.type === ActionType.PIECE && action.settings.pieceName === '@activepieces/piece-agent';
+  },
+  getActionNodeHeight: (action: Action | Trigger) => {
+    return flowCanvasUtils.isAgentPiece(action) ? flowUtilConsts.AP_NODE_SIZE.AGENT_STEP.height : flowUtilConsts.AP_NODE_SIZE.STEP.height;
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,

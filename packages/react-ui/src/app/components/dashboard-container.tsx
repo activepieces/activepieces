@@ -66,9 +66,6 @@ export function DashboardContainer({
 
   // TODO(agents): after we enable agents for everyone.
   const filterAgents = (item: SidebarItem) => {
-    if (item.label === t('Agents')) {
-      return platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
-    }
     return true;
   };
 

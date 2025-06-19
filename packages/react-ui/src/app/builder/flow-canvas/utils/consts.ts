@@ -47,6 +47,10 @@ const AP_NODE_SIZE: Record<
     height: 70,
     width: 260,
   },
+  [ApNodeType.AGENT_STEP]: {
+    height: 100,
+    width: 260,
+  },
   [ApNodeType.LOOP_RETURN_NODE]: {
     height: 70,
     width: 260,

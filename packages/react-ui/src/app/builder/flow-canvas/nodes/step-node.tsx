@@ -34,6 +34,8 @@ import {
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
 import { ApStepNode } from '../utils/types';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
+import { AgentToolsIcon } from '@/app/routes/agents/agent-tools-icon';
 
 function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
   const step = flowStructureUtil.getStep(stepName, trigger);
@@ -158,11 +160,14 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
+
+    const isAgentPiece = flowCanvasUtils.isAgentPiece(step);
+
     return (
       <div
         {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
         style={{
-          height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+          height: `${flowCanvasUtils.getActionNodeHeight(step)}px`,
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
@@ -191,15 +196,7 @@ const ApStepCanvasNode = React.memo(
         >
           {step.name}
         </div>
-        <div
-          className={cn(
-            'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
-            {
-              'border-t-[3px] border-primary border-solid':
-                isSelected && !isDragging,
-            },
-          )}
-        ></div>
+
         <div className="px-3 h-full w-full  overflow-hidden">
           {!isDragging && (
             <PieceSelector
@@ -224,15 +221,15 @@ const ApStepCanvasNode = React.memo(
               asChild={true}
             >
               <div
-                className="flex h-full w-full"
+                className="flex flex-col h-full w-full gap-2 items-center justify-center"
                 onClick={(e) => {
                   if (!openPieceSelector) {
                     handleStepClick(e);
                   }
                 }}
               >
-                <div className="flex h-full items-center justify-between gap-3 w-full">
-                  <div className="flex items-center justify-center min-w-[46px] h-full">
+                <div className="flex items-center justify-between gap-3 w-full">
+                  <div className="flex items-center justify-center h-[40px] w-[40px]">
                     <div className={isSkipped ? 'opacity-80' : ''}>
                       <PieceIcon
                         logoUrl={
@@ -259,7 +256,7 @@ const ApStepCanvasNode = React.memo(
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="p-1 size-7 "
+                          className="p-1 size-5"
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -328,6 +325,9 @@ const ApStepCanvasNode = React.memo(
                     </div>
                   </div>
                 </div>
+                {isAgentPiece && (
+                    <AgentToolsIcon agentId={step.settings.input['agents']} />
+                )}
               </div>
             </PieceSelector>
           )}

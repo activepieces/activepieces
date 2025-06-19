@@ -128,7 +128,7 @@ const CanvasControls = ({
       }).height;
       const zoomRatio = Math.min(
         Math.max(canvasHeight / graphHeight, 0.9),
-        1.25,
+        1,
       );
 
       setViewport(
