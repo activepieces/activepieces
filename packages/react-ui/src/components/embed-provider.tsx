@@ -6,8 +6,6 @@ import { cn } from '@/lib/utils';
 type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
-  prefix: string;
-  hideLogoInBuilder: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
@@ -19,13 +17,13 @@ type EmbeddingState = {
   useDarkBackground: boolean;
   hideHomeButtonInBuilder: boolean;
   emitHomeButtonClickedEvent: boolean;
+  homeButtonIcon: 'back' | 'logo';
+  hideDuplicateFlow: boolean;
 };
 
 const defaultState: EmbeddingState = {
   isEmbedded: false,
   hideSideNav: false,
-  hideLogoInBuilder: false,
-  prefix: '',
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
@@ -33,6 +31,8 @@ const defaultState: EmbeddingState = {
   useDarkBackground: window.opener !== null,
   hideHomeButtonInBuilder: false,
   emitHomeButtonClickedEvent: false,
+  homeButtonIcon: 'logo',
+  hideDuplicateFlow: false,
 };
 
 const EmbeddingContext = createContext<{
@@ -75,7 +75,8 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     >
       <div
         className={cn({
-          'bg-black/80 h-screen w-screen': state.useDarkBackground,
+          'bg-black/80 h-screen w-screen':
+            state.useDarkBackground && state.isEmbedded,
         })}
       >
         {children}

@@ -1,6 +1,7 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
@@ -72,6 +73,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: await aiProviderService.isAgentConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,
@@ -80,6 +87,12 @@ export const flagService = {
             {
                 id: ApFlagId.PIECES_SYNC_MODE,
                 value: system.get(AppSystemProp.PIECES_SYNC_MODE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.ENABLE_FLOW_ON_PUBLISH,
+                value: system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true,
                 created,
                 updated,
             },
