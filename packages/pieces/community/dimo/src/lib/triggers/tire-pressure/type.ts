@@ -1,21 +1,23 @@
+import { TriggerField } from "../../models";
+
 export enum TirePressurePosition
 {
-    FRONT_LEFT = 'front_left',
-    FRONT_RIGHT = 'front_right',
-    REAR_LEFT = 'rear_left',
-    REAR_RIGHT = 'rear_right',
+    FRONT_LEFT = TriggerField.ChassisAxleRow1WheelLeftTirePressure,
+    FRONT_RIGHT = TriggerField.ChassisAxleRow1WheelRightTirePressure,
+    REAR_LEFT = TriggerField.ChassisAxleRow2WheelLeftTirePressure,
+    REAR_RIGHT = TriggerField.ChassisAxleRow2WheelRightTirePressure,
 }
 
 
-export const getTirePressurePositionLabel = (position: TirePressurePosition): string => {
+export const getTirePressurePositionLabel = (position: TriggerField): string => {
     switch (position) {
-        case TirePressurePosition.FRONT_LEFT:
+        case TriggerField.ChassisAxleRow1WheelLeftTirePressure:
             return 'Front Left';
-        case TirePressurePosition.FRONT_RIGHT:
+        case TriggerField.ChassisAxleRow1WheelRightTirePressure:
             return 'Front Right';
-        case TirePressurePosition.REAR_LEFT:
+        case TriggerField.ChassisAxleRow2WheelLeftTirePressure:
             return 'Rear Left';
-        case TirePressurePosition.REAR_RIGHT:
+        case TriggerField.ChassisAxleRow2WheelRightTirePressure:
             return 'Rear Right';
         default:
             return 'Unknown Position';

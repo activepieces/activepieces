@@ -1,8 +1,8 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
 import {  dimoAuth } from '../../../index';
-import { WebhookInfo, WebhookPayload } from "../../models";
-import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from "../../models";
+import { getHeaders, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
@@ -51,25 +51,41 @@ export const batteryPowerTrigger = createTrigger({
   async onEnable(context) {
     const { vehicleTokenIds, operator, powerWatts, triggerFrequency, verificationToken } = context.propsValue;
     const { developerJwt } = context.auth;
-    // Build trigger condition
-    const triggerCondition = getNumberExpression(operator, powerWatts);
-    // Step 1: Create webhook configuration
+
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainTractionBatteryCurrentPower,
+      trigger: {
+        field: TriggerField.PowertrainTractionBatteryCurrentPower as NumericTriggerField,
+        operator,
+        value: powerWatts,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Battery power trigger: ${operator} ${powerWatts}W`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
+
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainTractionBatteryCurrentPower',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Battery power trigger: ${operator} ${powerWatts}W`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),
     });
+
+
     handleFailures(webhookResponse);
+
+
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
     }

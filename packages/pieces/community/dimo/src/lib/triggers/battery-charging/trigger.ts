@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
-import { WebhookInfo, WebhookPayload } from '../../models';
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, BooleanOperator, vehicleEventTriggerToText } from '../../models';
 import { getHeaders, handleFailures } from '../../helpers';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { verificationTokenInput } from '../common';
@@ -57,25 +57,39 @@ export const batteryChargingTrigger = createTrigger({
   async onEnable(context) {
     const { vehicleTokenIds, chargingState, triggerFrequency, verificationToken } = context.propsValue;
     const { developerJwt } = context.auth;
-    // Build trigger condition for charging state (1 = charging, 0 = not charging)
-    const triggerValue = chargingState === 'true' ? 1 : 0;
-    const triggerCondition = `valueNumber = ${triggerValue}`;
-    // Step 1: Create webhook configuration
+
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainTractionBatteryChargingIsCharging,
+      trigger: {
+        field: TriggerField.PowertrainTractionBatteryChargingIsCharging,
+        operator: BooleanOperator.Is,
+        value: chargingState === "true"
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Battery charging trigger: ${chargingState === 'true' ? 'CHARGING' : 'NOT CHARGING'}`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
+
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainTractionBatteryChargingIsCharging',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Battery charging trigger: ${chargingState === 'true' ? 'CHARGING' : 'NOT CHARGING'}`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),
     });
+
+    handleFailures(webhookResponse);
+
     if (!webhookResponse.body.id) {
       throw new Error('Failed to create webhook: No webhook ID returned');
     }
