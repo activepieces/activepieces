@@ -24,7 +24,7 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             type: String,
             nullable: false,
         },
-        content: {
+        description: {
             type: String,
             nullable: true,
         },

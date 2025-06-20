@@ -54,7 +54,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
         }, {
             ...spreadIfDefined('title', params.title),
-            ...spreadIfDefined('content', params.content),
+            ...spreadIfDefined('description', params.description),
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
@@ -225,7 +225,7 @@ type ListParams = {
 
 type CreateParams = {
     title: string
-    content: string
+    description: string
     statusOptions: StatusOption[]
     platformId: string
     createdByUserId?: string
@@ -244,7 +244,7 @@ type UpdateParams = {
     platformId: string
     projectId: string
     title?: string
-    content?: string
+    description?: string
     status?: StatusOption
     statusOptions?: StatusOption[]
     assigneeId?: string

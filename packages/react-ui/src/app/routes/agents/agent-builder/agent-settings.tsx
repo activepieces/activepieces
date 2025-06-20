@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { Wand, Info, Activity } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -15,7 +14,7 @@ import {
 import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
 
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
-import { agentsApi } from '../agents-api';
+import { agentHooks } from '../agent-hooks';
 
 import { AgentSettingsOutput } from './agent-settings-output';
 import { AgentTestRunButton } from './agent-test-run-button';
@@ -28,14 +27,6 @@ interface AgentSettingsProps {
 interface AgentFormValues {
   systemPrompt: string;
 }
-
-type AgentUpdateFields = {
-  displayName?: string;
-  description?: string;
-  systemPrompt?: string;
-  outputType?: string;
-  outputFields?: any[];
-};
 
 export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
@@ -61,15 +52,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
     }
   }, [agent, setValue]);
 
-  const updateAgentMutation = useMutation({
-    mutationFn: (fields: AgentUpdateFields) => {
-      if (!agent?.id) return Promise.reject('No agent ID');
-      return agentsApi.update(agent.id, fields);
-    },
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const updateAgentMutation = agentHooks.useUpdate();
 
   // Auto-save system prompt with debounce
   useEffect(() => {
@@ -81,7 +64,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
 
     debounceTimeout.current = setTimeout(() => {
       if (systemPrompt !== agent.systemPrompt) {
-        updateAgentMutation.mutate({ systemPrompt });
+        updateAgentMutation.mutate(
+          { id: agent.id, request: { systemPrompt } },
+          { onSuccess: () => refetch() },
+        );
       }
     }, 1000);
 
@@ -94,12 +80,18 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
 
   const handleNameChange = async (value: string) => {
     setDisplayName(value);
-    await updateAgentMutation.mutateAsync({ displayName: value });
+    await updateAgentMutation.mutateAsync(
+      { id: agent!.id, request: { displayName: value } },
+      { onSuccess: () => refetch() },
+    );
   };
 
   const handleDescriptionChange = async (value: string) => {
     setDescription(value);
-    await updateAgentMutation.mutateAsync({ description: value });
+    await updateAgentMutation.mutateAsync(
+      { id: agent!.id, request: { description: value } },
+      { onSuccess: () => refetch() },
+    );
   };
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -110,7 +102,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
     outputFields: AgentOutputField[],
   ) => {
     if (!agent?.id) return;
-    updateAgentMutation.mutate({ outputType, outputFields });
+    updateAgentMutation.mutate(
+      { id: agent.id, request: { outputType, outputFields } },
+      { onSuccess: () => refetch() },
+    );
   };
 
   return (
