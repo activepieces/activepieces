@@ -16,7 +16,14 @@ import { FastifyBaseLogger } from 'fastify'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { EntityManager } from 'typeorm'
 
-export const flowSideEffects = (log: FastifyBaseLogger) => ({
+
+type FlowSideEffects = {
+    preUpdateStatus: (params: PreUpdateStatusParams) => Promise<PreUpdateReturn>
+    preUpdatePublishedVersionId: (params: PreUpdatePublishedVersionIdParams) => Promise<PreUpdateReturn>
+    preDelete: (params: PreDeleteParams) => Promise<void>
+}
+
+export const flowSideEffects = (log: FastifyBaseLogger): FlowSideEffects => ({
     async preUpdateStatus({
         flowToUpdate,
         newStatus,
@@ -27,33 +34,33 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             'publishedVersionId',
         )
 
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
-            {
-                flowId: flowToUpdate.id,
-                versionId: flowToUpdate.publishedVersionId,
-                entityManager,
-            },
-        )
+        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: flowToUpdate.id,
+            versionId: flowToUpdate.publishedVersionId,
+            entityManager,
+        })
 
         let scheduleOptions: ScheduleOptions | undefined
         let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                const response = await triggerHooks.enable({
-                    flowVersion: publishedFlowVersion,
-                    projectId: flowToUpdate.projectId,
-                    simulate: false,
-                }, log)
+                const response = await triggerHooks.enable(
+                    {
+                        flowVersion: publishedFlowVersion,
+                        projectId: flowToUpdate.projectId,
+                        simulate: false,
+                    }, log)
                 scheduleOptions = response?.result.scheduleOptions
                 webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerHooks.disable({
-                    flowVersion: publishedFlowVersion,
-                    projectId: flowToUpdate.projectId,
-                    simulate: false,
-                }, log)
+                await triggerHooks.disable(
+                    {
+                        flowVersion: publishedFlowVersion,
+                        projectId: flowToUpdate.projectId,
+                        simulate: false,
+                    }, log)
                 break
             }
         }
@@ -75,7 +82,6 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         }
     },
 
-
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
@@ -84,18 +90,19 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
-            {
-                flowId: flowToDelete.id,
-                versionId: flowToDelete.publishedVersionId,
-            },
-        )
+        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: flowToDelete.id,
+            versionId: flowToDelete.publishedVersionId,
+        })
 
-        await triggerHooks.disable({
-            flowVersion: publishedFlowVersion,
-            projectId: flowToDelete.projectId,
-            simulate: false,
-        }, log)
+        await triggerHooks.disable(
+            {
+                flowVersion: publishedFlowVersion,
+                projectId: flowToDelete.projectId,
+                simulate: false,
+            },
+            log,
+        )
 
         await sampleDataService(log).deleteForFlow({
             projectId: flowToDelete.projectId,
