@@ -84,6 +84,7 @@ export type TestOrRunHookContext<
   S extends TriggerStrategy
 > = TriggerHookContext<PieceAuth, TriggerProps, S> & {
   files: FilesService;
+  run: Pick<RunContext, 'id'>;
 };
 
 export type StopHookParams = {
