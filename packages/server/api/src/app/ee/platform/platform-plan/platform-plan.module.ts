@@ -5,14 +5,14 @@ import dayjs from 'dayjs'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
-import { SystemJobName } from '../../../helper/system-jobs/common'
+import {  SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { projectRepo } from '../../../project/project-service'
-import { BillingEntityType, platformUsageService } from '../platform-usage-service'
+import { platformUsageService } from '../platform-usage-service'
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
-import { stripeHelper, TASKS_PRICE_ID } from './stripe-helper'
+import { AI_CREDITS_PRICE_ID, stripeHelper, TASKS_PRICE_ID } from './stripe-helper'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
@@ -49,17 +49,46 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
-            const { tasks, aiCredits } = await platformUsageService(log).getTaskAndCreditUsage(platformId, BillingEntityType.PLATFORM)
+            const aiCredits = await platformUsageService(log).getAICreditUsage(platformId)
+            const { platformTasksUsage } = await platformUsageService(log).getTasksUsage(platformId)
 
-            log.info({ platformId, tasks, aiCredits, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
+            log.info({ platformId, tasks: platformTasksUsage, aiCredits, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
 
             await stripe.subscriptionItems.createUsageRecord(item.id, {
-                quantity: Math.max(tasks - (platformBilling.includedTasks || 0), 0),
+                quantity: Math.max(platformTasksUsage - (platformBilling.includedTasks || 0), 0),
                 timestamp: currentTimestamp,
                 action: 'set',
             })
         }
         log.info('Finished platform-daily-report')
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_REPORT, async (data) => {
+        const log = app.log
+        log.info('Running ai-usage-report')
+
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { platformId } = data
+        const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        assertNotNullOrUndefined(platformBilling, 'Plan is not set')
+
+        const subscriptionId = platformBilling.stripeSubscriptionId
+        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
+
+        const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
+
+        const { platformAICreditUsage } = await platformUsageService().getAICreditUsage(platformId)
+        const overage = platformAICreditUsage - platformBilling.includedAiCredits
+
+        const item = subscription.items.data.find((item) => item.price.id === AI_CREDITS_PRICE_ID)
+        assertNotNullOrUndefined(item, 'No item found for ai credits')
+        await stripe.subscriptionItems.createUsageRecord(item.id, {
+            quantity: overage,
+            timestamp: 'now',
+            action: 'set',
+        })
     })
 
     if (system.getEdition() === ApEdition.CLOUD) {

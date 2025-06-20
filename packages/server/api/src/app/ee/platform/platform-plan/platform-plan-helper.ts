@@ -3,6 +3,8 @@ import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
+const edition = system.getEdition()
+
 type QuotaCheckParams = {
     platformId: string
     metric: PlatformUsageMetric
@@ -28,7 +30,6 @@ const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.MCPS]: 'mcps',
 } as const
 
-const edition = system.getEdition()
 
 export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void> {
     if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {

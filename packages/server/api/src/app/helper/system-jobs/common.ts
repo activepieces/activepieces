@@ -1,4 +1,4 @@
-import { ProjectId } from '@activepieces/shared'
+import { PlatformId, ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -11,20 +11,27 @@ export enum SystemJobName {
     ISSUES_REMINDER = 'issue-reminder',
     RUN_TELEMETRY = 'run-telemetry',
     ISSUE_AUTO_ARCHIVE = 'archive-old-issues',
+    AI_USAGE_REPORT = 'ai-usage-report',
 }
 
 type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
 }
+
 type IssuesReminderSystemJobData = {
     projectId: ProjectId
     projectName: string
     platformId: string
 }
 
+type AiUsageReportSystemJobData = {
+    platformId: PlatformId
+}
+
 type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
+    [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PLATFORM_USAGE_REPORT]: Record<string, never>
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>

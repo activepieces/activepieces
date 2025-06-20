@@ -35,7 +35,7 @@ export const webhookService = {
 
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
-        const exceededLimit = await projectLimitsService(pinoLogger).tasksExceededLimit(flow.projectId)
+        const exceededLimit = await projectLimitsService(pinoLogger).checkTasksExceededLimit(flow.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,

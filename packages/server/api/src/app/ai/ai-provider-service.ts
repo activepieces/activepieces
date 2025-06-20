@@ -15,8 +15,13 @@ import {
 } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { platformUsageService } from '../ee/platform/platform-usage-service'
+import { apDayjs } from '../helper/dayjs-helper'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
+import { systemJobsSchedule } from '../helper/system-jobs'
+import { SystemJobName } from '../helper/system-jobs/common'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -24,7 +29,7 @@ import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { aiProvidersStrategies, Usage } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
+export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
@@ -104,14 +109,44 @@ export const aiProviderService = {
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
+
     async increaseProjectAIUsage(params: IncreaseProjectAIUsageParams): Promise<void> {
         await aiUsageRepo().insert({
             id: apId(),
             projectId: params.projectId,
+            platformId: params.platformId,
             provider: params.provider,
             model: params.model,
             cost: params.cost,
         })
+        
+        const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(params.platformId)
+        const { platformAICreditUsage } = await platformUsageService(system.globalLogger()).getAICreditUsage(params.platformId)
+        
+        const aiCreditLimit = platformBilling.aiCreditsLimit
+        const shouldReportUsage = !isNil(aiCreditLimit)
+        if (!shouldReportUsage) {
+            return
+        }
+        
+        const overage = platformAICreditUsage - aiCreditLimit
+        const hasOverage = overage > 0
+        
+        if (hasOverage) {
+            await systemJobsSchedule(system.globalLogger()).upsertJob({
+                job: {
+                    name: SystemJobName.AI_USAGE_REPORT,
+                    data: {
+                        platformId: params.platformId,
+                    },
+                    jobId: `ai-credit-usage-report-${params.platformId}-${apDayjs().endOf('month').unix()}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: apDayjs(),
+                },
+            })
+        }
     },
 
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
@@ -157,6 +192,7 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
 
 
 type IncreaseProjectAIUsageParams = {
+    platformId: string
     projectId: string
     provider: string
     model: string

@@ -35,7 +35,7 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { BillingEntityType, platformUsageService } from '../platform/platform-usage-service'
+import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
@@ -221,15 +221,18 @@ async function enrichProject(
     })
 
 
+    const { projectTasksUsage } = await platformUsageService(log).getTasksUsage(project.id)
+    const { projectAICreditUsage } = await platformUsageService(log).getAICreditUsage(project.platformId, project.id)
     return {
         ...project,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),
-        usage: await platformUsageService(log).getTaskAndCreditUsage(
-            project.id,
-            BillingEntityType.PROJECT,
-        ),
+        usage: {
+            aiCredits: projectAICreditUsage,
+            tasks: projectTasksUsage,
+            nextLimitResetDate: platformUsageService(log).getCurrentBillingPeriodEnd(),
+        },
         analytics: {
             activeFlows,
             totalFlows,
