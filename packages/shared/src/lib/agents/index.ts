@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
+import { RichContentBlock } from '../todos/content'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',
@@ -29,6 +30,7 @@ export type AgentOutputField = Static<typeof AgentOutputField>
 export const AgentTestResult = Type.Object({
     todoId: Type.String(),
     output: Type.Unknown(),
+    steps: Type.Array(RichContentBlock),
 })
 
 export type AgentTestResult = Static<typeof AgentTestResult>

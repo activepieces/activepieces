@@ -27,7 +27,7 @@ const FlowVersionsList = () => {
     queryKey: ['flow-versions', flow.id],
     queryFn: () =>
       flowsApi.listVersions(flow.id, {
-        limit: 100,
+        limit: 1000,
         cursor: undefined,
       }),
     staleTime: 0,

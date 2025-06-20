@@ -36,7 +36,7 @@ export type UpdateTodoRequestBody = Static<typeof UpdateTodoRequestBody>
 
 export const CreateTodoRequestBody = Type.Object({
     title: Type.String(),
-    description: Type.Optional(Type.String()),
+    description: Type.String(),
     statusOptions: StatusOptionsSchema,
     flowId: ApId,
     runId: Type.Optional(ApId),

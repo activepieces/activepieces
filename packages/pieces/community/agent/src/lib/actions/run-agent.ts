@@ -15,7 +15,7 @@ export const runAgent = createAction({
     },
   },
   props: {
-    agents: Property.Dropdown({
+    agentId: Property.Dropdown({
       displayName: 'Agent',
       description: 'Select agent created',
       required: true,
@@ -47,7 +47,7 @@ export const runAgent = createAction({
   async run(context) {
     const serverToken = context.server.token;
     const userPrompt = context.propsValue.prompt;
-    const agentId = context.propsValue.agents;
+    const agentId = context.propsValue.agentId;
 
     if (context.executionType === ExecutionType.BEGIN) {
       const stateId = `__agent_todo_id_${apId()}`
@@ -67,6 +67,7 @@ export const runAgent = createAction({
       });
       const request: RunAgentRequest = {
         prompt: userPrompt,
+        callbackUrl: actionLink,
       }
       const response = await fetch(`${context.server.apiUrl}v1/agents/${agentId}/todos`, {
         method: 'POST',
@@ -83,9 +84,11 @@ export const runAgent = createAction({
       }
     } else {
       const todoId = await context.store.get<string>(context.resumePayload.queryParams['stateId'])
+      const result = context.resumePayload.body as AgentTestResult
       const output: AgentTestResult = {
         todoId: todoId!,
-        output: (context.resumePayload.body as { output: string })['output'],
+        output: result.output,
+        steps: result.steps,
       }
       return output
     }

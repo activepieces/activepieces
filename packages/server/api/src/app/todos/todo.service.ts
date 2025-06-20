@@ -18,7 +18,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<PopulatedTodo> {
         const todo = await todoRepo().save({
             id: apId(),
-            status: UNRESOLVED_STATUS,
+            status: UNRESOLVED_STATUS,  
             locked: params.locked ?? false,
             ...params,
         })
@@ -225,7 +225,7 @@ type ListParams = {
 
 type CreateParams = {
     title: string
-    description?: string
+    description: string
     statusOptions: StatusOption[]
     platformId: string
     createdByUserId?: string
