@@ -160,6 +160,8 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
+      "@activepieces/piece-circle-so": [
+        "packages/pieces/community/circle-so/src/index.ts"
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
