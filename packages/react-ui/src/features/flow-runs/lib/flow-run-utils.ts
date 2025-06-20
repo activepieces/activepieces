@@ -30,10 +30,10 @@ export const flowRunUtils = {
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
-    | typeof Timer
-    | typeof CircleCheck
-    | typeof PauseCircleIcon
-    | typeof CircleX;
+      | typeof Timer
+      | typeof CircleCheck
+      | typeof PauseCircleIcon
+      | typeof CircleX;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -121,7 +121,9 @@ function findLoopsState(
   const loops = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
-  const failedStep = run.steps ? findLastStepWithStatus(run.status, run.steps) : null;
+  const failedStep = run.steps
+    ? findLastStepWithStatus(run.status, run.steps)
+    : null;
 
   return loops.reduce(
     (res, step) => ({
@@ -139,10 +141,15 @@ function findLastStepWithStatus(
   runStatus: FlowRunStatus,
   steps: Record<string, StepOutput>,
 ): string | null {
-  if (runStatus === FlowRunStatus.STOPPED || runStatus === FlowRunStatus.SUCCEEDED) {
+  if (
+    runStatus === FlowRunStatus.STOPPED ||
+    runStatus === FlowRunStatus.SUCCEEDED
+  ) {
     return null;
   }
-  const stepStatus = isFailedState(runStatus) ? StepOutputStatus.FAILED : undefined;
+  const stepStatus = isFailedState(runStatus)
+    ? StepOutputStatus.FAILED
+    : undefined;
   return Object.entries(steps).reduce((res, [stepName, step]) => {
     if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
       return findLatestStepInLoop(step as LoopStepOutput, runStatus);
@@ -154,7 +161,10 @@ function findLastStepWithStatus(
   }, null as null | string);
 }
 
-function findLatestStepInLoop(loopStepResult: LoopStepOutput, runStatus: FlowRunStatus): string | null {
+function findLatestStepInLoop(
+  loopStepResult: LoopStepOutput,
+  runStatus: FlowRunStatus,
+): string | null {
   if (!loopStepResult.output) {
     return null;
   }
@@ -166,7 +176,6 @@ function findLatestStepInLoop(loopStepResult: LoopStepOutput, runStatus: FlowRun
   }
   return null;
 }
-
 
 function getLoopChildStepOutput(
   parents: LoopOnItemsAction[],

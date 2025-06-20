@@ -379,6 +379,13 @@ const useAdjustPieceListHeightToAvailableSpace = (
   };
 };
 
+const isAgentPiece = (action: Action) => {
+  return (
+    action.type === ActionType.PIECE &&
+    action.settings.pieceName === '@activepieces/piece-agent'
+  );
+};
+
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -392,4 +399,5 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
+  isAgentPiece,
 };
