@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { WebhookInfo, WebhookPayload } from '../../models';
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import {
   getHeaders,
   getNumberExpression,
@@ -33,13 +33,13 @@ export const tirePressureTrigger = createTrigger({
       displayName: 'Tire Position',
       description: 'Which tire position to monitor',
       required: true,
-      defaultValue: TirePressurePosition.FRONT_LEFT,
+      defaultValue: TriggerField.ChassisAxleRow1WheelLeftTirePressure,
       options: {
         options: [
-          { label: 'Front Left', value: TirePressurePosition.FRONT_LEFT },
-          { label: 'Front Right', value: TirePressurePosition.FRONT_RIGHT },
-          { label: 'Rear Left', value: TirePressurePosition.REAR_LEFT },
-          { label: 'Rear Right', value: TirePressurePosition.REAR_RIGHT },
+          { label: 'Front Left', value: TriggerField.ChassisAxleRow1WheelLeftTirePressure },
+          { label: 'Front Right', value: TriggerField.ChassisAxleRow1WheelRightTirePressure },
+          { label: 'Rear Left', value: TriggerField.ChassisAxleRow2WheelLeftTirePressure },
+          { label: 'Rear Right', value: TriggerField.ChassisAxleRow2WheelRightTirePressure },
         ],
       },
     }),
@@ -84,21 +84,32 @@ export const tirePressureTrigger = createTrigger({
     } = context.propsValue;
     const { developerJwt } = context.auth;
     // Build trigger condition
-    const triggerCondition = getNumberExpression(operator, pressureKpa);
-    // Step 1: Create webhook configuration
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: tirePosition,
+      trigger: {
+        field: tirePosition as NumericTriggerField,
+        operator,
+        value: pressureKpa,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Tire pressure trigger: ${getTirePressurePositionLabel(tirePosition)} ${operator} ${pressureKpa} kPa`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
+
+
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: tirePosition,
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Tire pressure trigger: ${getTirePressurePositionLabel(
-          tirePosition
-        )} ${operator} ${pressureKpa} kPa`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),
@@ -189,7 +200,7 @@ export const tirePressureTrigger = createTrigger({
     const pressureBar = Math.round(pressureKpa * 0.01 * 100) / 100; // Convert kPa to bar
 
     // Determine tire position and status
-    const tirePosition = webhookBody.name as TirePressurePosition;
+    const tirePosition = webhookBody.name as TriggerField;
     const positionLabel = getTirePressurePositionLabel(tirePosition);
 
     // Standard tire pressure ranges (rough estimates)

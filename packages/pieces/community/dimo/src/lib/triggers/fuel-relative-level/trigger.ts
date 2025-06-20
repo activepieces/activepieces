@@ -1,8 +1,8 @@
 import { httpClient } from '@activepieces/pieces-common';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { getHeaders, getNumberExpression, handleFailures } from '../../helpers';
+import { getHeaders, handleFailures } from '../../helpers';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { WebhookInfo, WebhookPayload } from '../../models';
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
 
@@ -54,18 +54,30 @@ export const fuelRelativeTrigger = createTrigger({
     if (fuelPercentage < 0 || fuelPercentage > 100) {
       throw new Error('Fuel percentage must be between 0 and 100');
     }
-    const triggerCondition = getNumberExpression(operator, fuelPercentage);
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainFuelSystemRelativeLevel,
+      trigger: {
+        field: TriggerField.PowertrainFuelSystemRelativeLevel as NumericTriggerField,
+        operator,
+        value: fuelPercentage,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Fuel relative level trigger: ${operator} ${fuelPercentage}%`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainFuelSystemRelativeLevel',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Fuel relative level trigger: ${operator} ${fuelPercentage}%`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken || 'token',
       },
       headers: getHeaders({ developerJwt }, 'developer'),

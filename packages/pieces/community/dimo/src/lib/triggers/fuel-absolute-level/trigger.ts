@@ -1,7 +1,7 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { WebhookInfo, WebhookPayload } from "../../models";
-import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from "../../models";
+import { getHeaders,  handleFailures } from "../../helpers";
 import { dimoAuth } from '../../../index';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
@@ -52,21 +52,34 @@ export const fuelAbsoluteTrigger = createTrigger({
     const { vehicleTokenIds,  operator, fuelLiters, triggerFrequency, verificationToken } = context.propsValue;
     const { developerJwt } = context.auth;
 
-    // Build trigger condition
-    const triggerCondition = getNumberExpression(operator, fuelLiters);
+
+    // WebhookDefinition objesi oluştur
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainFuelSystemAbsoluteLevel,
+      trigger: {
+        field: TriggerField.PowertrainFuelSystemAbsoluteLevel as NumericTriggerField,
+        operator,
+        value: fuelLiters,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
 
     // Step 1: Create webhook configuration
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainFuelSystemAbsoluteLevel',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),

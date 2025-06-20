@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient } from '@activepieces/pieces-common';
-import { WebhookInfo, WebhookPayload } from '../../models';
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, BooleanOperator, vehicleEventTriggerToText } from '../../models';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions';
 import { getHeaders, handleFailures } from '../../helpers';
 import { verificationTokenInput } from '../common';
@@ -68,20 +68,31 @@ export const ignitionTrigger = createTrigger({
       verificationToken,
     } = context.propsValue;
     const { developerJwt } = context.auth;
-    const triggerValue = ignitionState.toLowerCase() === 'on' ? 1 : 0;
 
-    // Step 1: Create webhook configuration
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.IsIgnitionOn,
+      trigger: {
+        field: TriggerField.IsIgnitionOn,
+        operator: BooleanOperator.Is,
+        value: ignitionState.toLowerCase() === 'on' ? "ON" : "OFF",
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Ignition trigger: ${ignitionState.toUpperCase()}`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'isIgnitionOn',
-        trigger: `valueNumber = ${triggerValue}`,
-        setup: triggerFrequency,
-        description: `Ignition trigger: ${ignitionState.toUpperCase()}`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),

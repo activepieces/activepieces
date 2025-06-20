@@ -1,6 +1,7 @@
 // Type-safe WebhookDefinition ve trigger gereksinimleri için enum/union tipleri
 
 import { Operator } from "../helpers";
+import { getNumberExpression } from '../helpers/trigger-helpers';
 
 export enum TriggerField {
   Speed = 'speed',
@@ -30,8 +31,11 @@ export type NumericTriggerField =
   | TriggerField.ChassisAxleRow2WheelRightTirePressure;
 
 export type BooleanTriggerField =
-  | TriggerField.IsIgnitionOn
   | TriggerField.PowertrainTractionBatteryChargingIsCharging;
+
+
+  export type OnOffTriggerField =
+  | TriggerField.IsIgnitionOn;
 
 export type NumericOperator = Operator
 
@@ -51,7 +55,13 @@ export type BooleanTrigger = {
   value: boolean;
 };
 
-export type VehicleEventTrigger = NumericTrigger | BooleanTrigger;
+export type OnOffTrigger = {
+  field: OnOffTriggerField;
+  operator: BooleanOperator;
+  value: "ON" | "OFF";
+};
+
+export type VehicleEventTrigger = NumericTrigger | BooleanTrigger | OnOffTrigger;
 
 export interface WebhookDefinition {
   service: "Telemetry";
@@ -88,4 +98,18 @@ export interface WebhookPayload {
 
 export interface WebhookVerificationRequest {
   verification: string
+}
+
+export function vehicleEventTriggerToText(trigger: VehicleEventTrigger): string {
+  if ('value' in trigger && typeof trigger.value === 'number') {
+    // NumericTrigger
+    return getNumberExpression(trigger.operator as Operator, trigger.value);
+  } else if ('value' in trigger && typeof trigger.value === 'boolean') {
+    // BooleanTrigger
+    return `valueNumber = ${trigger.value ? 1 : 0}`;
+  } else if ('value' in trigger && typeof trigger.value === 'string') {
+    // OnOffTrigger
+    return `valueNumber = ${trigger.value}`;
+  }
+  throw new Error('Unknown trigger type');
 }

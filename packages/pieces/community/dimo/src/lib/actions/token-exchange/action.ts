@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { getHeaders, handleFailures } from "../../helpers";
 import { httpClient,HttpMethod } from "@activepieces/pieces-common";
-import { dimoTokenExchangeApiUrl } from "./constant";
+import { dimoTokenExchangeApiUrl, exchangeTokenEndpoint } from "./constant";
 import { TokenExchangeResponse } from "./type";
 import { dimoAuth } from '../../../index';
 
@@ -40,7 +40,7 @@ export const tokenExchangeApiAction = createAction({
 
         const response = await httpClient.sendRequest<TokenExchangeResponse>({
             method : HttpMethod.POST,
-            url : dimoTokenExchangeApiUrl,
+            url : exchangeTokenEndpoint,
             body : {
                 vehicleTokenId,
                 privileges,

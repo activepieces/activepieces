@@ -1,8 +1,8 @@
 import { httpClient } from "@activepieces/pieces-common";
 import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { WebhookInfo, WebhookPayload } from "../../models";
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from "../../models";
 import { dimoAuth } from '../../../index';
-import { getHeaders, getNumberExpression, handleFailures } from "../../helpers";
+import { getHeaders, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
 
@@ -51,27 +51,36 @@ export const chargeLevelTrigger = createTrigger({
   async onEnable(context) {
     const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } = context.propsValue;
     const { developerJwt } = context.auth;
-    if (!developerJwt) {
-      throw new Error('Developer JWT is required for charge level trigger. Please provide a Developer JWT in the authentication configuration.');
-    }
+
+
     // Validate charge percentage
     if (chargePercentage < 0 || chargePercentage > 100) {
       throw new Error('Charge percentage must be between 0 and 100');
     }
-    // Build trigger condition
-    const triggerCondition = getNumberExpression(operator, chargePercentage);
-    // Step 1: Create webhook configuration
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
+      trigger: {
+        field: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent as NumericTriggerField,
+        operator,
+        value: chargePercentage,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Charge level trigger: ${operator} ${chargePercentage}%`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainTractionBatteryStateOfChargeCurrent',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Charge level trigger: ${operator} ${chargePercentage}%`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),

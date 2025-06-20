@@ -10,7 +10,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { WebhookInfo, WebhookPayload } from '../../models';
+import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
 
@@ -67,18 +67,31 @@ export const odometerTrigger = createTrigger({
       verificationToken,
     } = context.propsValue;
     const { developerJwt } = context.auth;
-    const triggerCondition = getNumberExpression(operator, odometerValue);
+
+    const webhookDef: WebhookDefinition = {
+      service: 'Telemetry',
+      data: TriggerField.PowertrainTransmissionTravelledDistance,
+      trigger: {
+        field: TriggerField.PowertrainTransmissionTravelledDistance as NumericTriggerField,
+        operator,
+        value: odometerValue,
+      },
+      setup: triggerFrequency as 'Realtime' | 'Hourly',
+      description: `Odometer trigger: ${operator} ${odometerValue} km`,
+      targetUri: context.webhookUrl,
+      status: 'Active',
+    };
     const webhookResponse = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
       body: {
-        service: 'Telemetry',
-        data: 'powertrainTransmissionTravelledDistance',
-        trigger: triggerCondition,
-        setup: triggerFrequency,
-        description: `Odometer trigger: ${operator} ${odometerValue} km`,
-        target_uri: context.webhookUrl,
-        status: 'Active',
+        service: webhookDef.service,
+        data: webhookDef.data,
+        trigger: vehicleEventTriggerToText(webhookDef.trigger),
+        setup: webhookDef.setup,
+        description: webhookDef.description,
+        target_uri: webhookDef.targetUri,
+        status: webhookDef.status,
         verification_token: verificationToken
       },
       headers: getHeaders({ developerJwt }, 'developer'),
