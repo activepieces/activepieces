@@ -15,11 +15,12 @@ import dayjs from 'dayjs';
 
 const polling: Polling<
   PiecePropValueSchema<typeof jiraCloudAuth>,
-  { jql?: string; sanitizeJql?: boolean }
+  { jql?: string; sanitizeJql?: boolean; timestampField?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { jql, sanitizeJql } = propsValue;
+    const { jql, sanitizeJql, timestampField } = propsValue;
+
     const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
       lastFetchEpochMS
     ).format('YYYY-MM-DD HH:mm')}'`;
@@ -30,7 +31,7 @@ const polling: Polling<
       sanitizeJql: sanitizeJql ?? false,
     });
     return issues.map((issue) => ({
-      epochMilliSeconds: Date.parse(issue.fields.updated),
+      epochMilliSeconds: Date.parse(issue.fields[timestampField || 'updated']),
       data: issue,
     }));
   },
@@ -52,6 +53,19 @@ export const updatedIssue = createTrigger({
       displayName: 'Sanitize JQL',
       required: false,
       defaultValue: true,
+    }),
+    timestampField: Property.StaticDropdown({
+      displayName: 'Tracking Field',
+      description: 'Select the timestamp field to track changes for polling',
+      required: false,
+      options: {
+        options: [
+          { label: "Any Update", value: "updated" },
+          { label: "Status Change", value: "statuscategorychangedate" },
+          { label: "Resolution Date", value: "resolutiondate" },
+        ]
+      },
+      defaultValue: 'updated',
     }),
   },
   sampleData: {},
