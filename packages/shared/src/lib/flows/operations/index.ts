@@ -162,7 +162,9 @@ export const UpdateFlowStatusRequest = Type.Object({
 })
 export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
 
-export const ChangePublishedVersionIdRequest = Type.Object({})
+export const ChangePublishedVersionIdRequest = Type.Object({
+    status: Type.Optional(Type.Enum(FlowStatus)),
+})
 export type ChangePublishedVersionIdRequest = Static<
     typeof ChangePublishedVersionIdRequest
 >

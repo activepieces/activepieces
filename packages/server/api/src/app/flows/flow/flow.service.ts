@@ -39,9 +39,9 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+import { triggerHooks } from '../trigger'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
-const ENABLE_FLOW_ON_PUBLISH = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
 
 const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
@@ -269,43 +269,48 @@ export const flowService = (log: FastifyBaseLogger) => ({
         try {
             switch (operation.type) {
                 case FlowOperationType.LOCK_AND_PUBLISH:
-                {
-                    await this.updatedPublishedVersionId({
-                        id,
-                        userId,
-                        projectId,
-                        platformId,
-                    })
-                    break
-                }
+                    {
+                        await this.updatedPublishedVersionId({
+                            id,
+                            userId,
+                            projectId,
+                            platformId,
+                        })
+                        await this.updateStatus({
+                            id,
+                            projectId,
+                            newStatus: operation.request.status ?? FlowStatus.ENABLED,
+                        })
+                        break
+                    }
 
                 case FlowOperationType.CHANGE_STATUS:
-                {
-                    await this.updateStatus({
-                        id,
-                        projectId,
-                        newStatus: operation.request.status,
-                    })
-                    break
-                }
+                    {
+                        await this.updateStatus({
+                            id,
+                            projectId,
+                            newStatus: operation.request.status,
+                        })
+                        break
+                    }
 
                 case FlowOperationType.CHANGE_FOLDER:
-                {
-                    await flowRepo().update(id, {
-                        folderId: operation.request.folderId,
-                    })
-                    break
-                }
+                    {
+                        await flowRepo().update(id, {
+                            folderId: operation.request.folderId,
+                        })
+                        break
+                    }
 
                 case FlowOperationType.UPDATE_METADATA:
-                {
-                    await this.updateMetadata({
-                        id,
-                        projectId,
-                        metadata: operation.request.metadata,
-                    })
-                    break
-                }
+                    {
+                        await this.updateMetadata({
+                            id,
+                            projectId,
+                            metadata: operation.request.metadata,
+                        })
+                        break
+                    }
                 default: {
                     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                         flowId: id,
@@ -448,10 +453,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         )
 
-        const { scheduleOptions, webhookHandshakeConfiguration } = await flowSideEffects(log).preUpdatePublishedVersionId({
-            flowToUpdate,
-            flowVersionToPublish,
-        })
+        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
+            await triggerHooks.disable({
+                flowVersion: await flowVersionService(log).getOneOrThrow(
+                    flowToUpdate.publishedVersionId,
+                ),
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+            }, log)
+        }
 
         return transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
@@ -464,13 +474,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            if (ENABLE_FLOW_ON_PUBLISH) {
-                flowToUpdate.status = FlowStatus.ENABLED
-            }
-            flowToUpdate.schedule = scheduleOptions
-            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            flowToUpdate.status = FlowStatus.DISABLED
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-
             return {
                 ...updatedFlow,
                 version: lockedFlowVersion,

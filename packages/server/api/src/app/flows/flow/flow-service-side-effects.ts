@@ -1,10 +1,3 @@
-import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
-import { system } from '../../helper/system/system'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { sampleDataService } from '../step-run/sample-data.service'
-import { triggerHooks } from '../trigger'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     FileType,
@@ -17,6 +10,11 @@ import {
     ScheduleType,
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
+import { triggerHooks } from '../trigger'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { FastifyBaseLogger } from 'fastify'
+import { sampleDataService } from '../step-run/sample-data.service'
+import { EntityManager } from 'typeorm'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
@@ -77,57 +75,6 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async preUpdatePublishedVersionId({
-        flowToUpdate,
-        flowVersionToPublish,
-    }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
-        const ENABLE_FLOW_ON_PUBLISH = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
-
-        if (
-            flowToUpdate.status === FlowStatus.ENABLED &&
-      flowToUpdate.publishedVersionId
-        ) {
-            await triggerHooks.disable({
-                flowVersion: await flowVersionService(log).getOneOrThrow(
-                    flowToUpdate.publishedVersionId,
-                ),
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-            }, log)
-        }
-
-        if (flowToUpdate.status === FlowStatus.ENABLED || ENABLE_FLOW_ON_PUBLISH) {
-            const enableResult = await triggerHooks.enable({
-                flowVersion: flowVersionToPublish,
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-            }, log)
-
-            const scheduleOptions = enableResult?.result.scheduleOptions
-            const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
-            if (isNil(scheduleOptions)) {
-                return {
-                    scheduleOptions: null,
-                    webhookHandshakeConfiguration,
-                }
-            }
-
-            return {
-                scheduleOptions: {
-                    ...scheduleOptions,
-                    type: ScheduleType.CRON_EXPRESSION,
-                    failureCount: 0,
-                },
-                webhookHandshakeConfiguration,
-            }
-        }
-        else {
-            return {
-                scheduleOptions: null,
-                webhookHandshakeConfiguration: null,
-            }
-        }
-    },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
         if (
@@ -173,9 +120,7 @@ type PreUpdateStatusParams = PreUpdateParams & {
     entityManager: EntityManager | undefined
 }
 
-type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
-    flowVersionToPublish: FlowVersion
-}
+type PreUpdatePublishedVersionIdParams = PreUpdateParams
 
 type PreUpdateReturn = {
     scheduleOptions: FlowScheduleOptions | null
