@@ -1,11 +1,21 @@
 import React from 'react';
 
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { Action, ActionType, isNil, Trigger, TriggerType } from '@activepieces/shared';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
+import {
+  Action,
+  ActionType,
+  isNil,
+  Trigger,
+  TriggerType,
+} from '@activepieces/shared';
+
+import {
+  PieceStepMetadata,
+  StepMetadata,
+} from '../../../../features/pieces/lib/types';
 
 import { BaseCard } from './base-card';
-import { PieceStepMetadata, StepMetadata } from '../../../../features/pieces/lib/types';
-import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
 type PieceCardProps = {
   piece: StepMetadata;
@@ -37,8 +47,12 @@ const PieceCard: React.FC<PieceCardProps> = ({
     />
   );
 
-  const title = `${piece.displayName}${actionOrTriggerDisplayName ? ` (${actionOrTriggerDisplayName})` : ''}`;
-  const version = isPiece ? (piece as PieceStepMetadata).pieceVersion : undefined;
+  const title = `${piece.displayName}${
+    actionOrTriggerDisplayName ? ` (${actionOrTriggerDisplayName})` : ''
+  }`;
+  const version = isPiece
+    ? (piece as PieceStepMetadata).pieceVersion
+    : undefined;
 
   return (
     <BaseCard
@@ -51,7 +65,10 @@ const PieceCard: React.FC<PieceCardProps> = ({
   );
 };
 
-function getPieceDisplayName(step: Action | Trigger, pieceModel: PieceMetadataModel) {
+function getPieceDisplayName(
+  step: Action | Trigger,
+  pieceModel: PieceMetadataModel,
+) {
   if (!isNil(step.settings.actionName)) {
     return pieceModel?.actions[step.settings.actionName]?.displayName;
   }
@@ -61,4 +78,4 @@ function getPieceDisplayName(step: Action | Trigger, pieceModel: PieceMetadataMo
   return null;
 }
 
-export { PieceCard }; 
+export { PieceCard };

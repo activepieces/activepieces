@@ -20,11 +20,7 @@ export const AgentsPage = () => {
     ApFlagId.AGENTS_ENABLED,
   );
 
-  const {
-    data: agentsPage,
-    isLoading,
-    refetch,
-  } = agentHooks.useList();
+  const { data: agentsPage, isLoading, refetch } = agentHooks.useList();
 
   const agents = agentsPage?.data || [];
 

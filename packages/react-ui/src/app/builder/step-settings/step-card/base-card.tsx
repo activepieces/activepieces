@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Skeleton } from '@/components/ui/skeleton';
 
 type BaseCardProps = {
@@ -24,11 +25,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base flex justify-center">
           <div className="flex-grow">
-            {title != null ? (
-              title
-            ) : (
-              <Skeleton className="h-5 w-32 rounded" />
-            )}
+            {title != null ? title : <Skeleton className="h-5 w-32 rounded" />}
           </div>
           {version && (
             <div className="text-xs text-muted-foreground flex justify-center items-center">
@@ -51,4 +48,4 @@ const BaseCard: React.FC<BaseCardProps> = ({
   );
 };
 
-export { BaseCard }; 
+export { BaseCard };

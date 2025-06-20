@@ -33,8 +33,8 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
-import { useStepSettingsContext } from './step-settings-context';
 import { StepCardInfo } from './step-card';
+import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -142,8 +142,6 @@ const StepSettingsContainer = () => {
       return result;
     },
   });
-
-
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();

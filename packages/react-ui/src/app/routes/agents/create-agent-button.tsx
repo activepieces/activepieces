@@ -25,16 +25,19 @@ export const CreateAgentButton = ({
   const createAgentMutation = agentHooks.useCreate();
 
   const handleButtonClick = () => {
-    createAgentMutation.mutate({
-      displayName: 'Fresh Agent',
-      description:
-        'I am a fresh agent, Jack of all trades, master of none (yet)',
-    }, {
-      onSuccess: (newAgent) => {
-        onAgentCreated(newAgent);
-        setOpen(false);
+    createAgentMutation.mutate(
+      {
+        displayName: 'Fresh Agent',
+        description:
+          'I am a fresh agent, Jack of all trades, master of none (yet)',
       },
-    });
+      {
+        onSuccess: (newAgent) => {
+          onAgentCreated(newAgent);
+          setOpen(false);
+        },
+      },
+    );
   };
 
   const handleConfigureClick = () => {

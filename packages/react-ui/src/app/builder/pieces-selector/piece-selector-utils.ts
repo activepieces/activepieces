@@ -387,7 +387,9 @@ const isAgentPiece = (action: Action) => {
 };
 
 const getAgentId = (action: Action) => {
-  return 'input' in action.settings && 'agentId' in action.settings.input ? action.settings.input.agentId as string : null;
+  return 'input' in action.settings && 'agentId' in action.settings.input
+    ? (action.settings.input.agentId as string)
+    : null;
 };
 
 export const pieceSelectorUtils = {
@@ -403,6 +405,6 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
-  isAgentPiece, 
+  isAgentPiece,
   getAgentId,
 };

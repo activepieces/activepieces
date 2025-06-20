@@ -1,5 +1,11 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ListAgentsQueryParams, CreateAgentRequest, UpdateAgentRequest, RunAgentRequest, Agent } from '@activepieces/shared';
+
+import {
+  ListAgentsQueryParams,
+  CreateAgentRequest,
+  UpdateAgentRequest,
+  RunAgentRequest,
+} from '@activepieces/shared';
 
 import { agentsApi } from './agents-api';
 
@@ -27,8 +33,13 @@ export const agentHooks = {
 
   useUpdate: () => {
     return useMutation({
-      mutationFn: ({ id, request }: { id: string; request: UpdateAgentRequest }) =>
-        agentsApi.update(id, request),
+      mutationFn: ({
+        id,
+        request,
+      }: {
+        id: string;
+        request: UpdateAgentRequest;
+      }) => agentsApi.update(id, request),
     });
   },
 
@@ -44,4 +55,4 @@ export const agentHooks = {
         agentsApi.run(id, request),
     });
   },
-}; 
+};

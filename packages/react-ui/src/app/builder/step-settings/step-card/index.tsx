@@ -1,10 +1,11 @@
 import React from 'react';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { StepMetadata } from '../../../../features/pieces/lib/types';
-import { PieceMetadataModel } from '@activepieces/pieces-framework';
+
 import { AgentCard } from './agent-card';
 import { PieceCard } from './piece-card';
 

@@ -28,14 +28,6 @@ interface AgentFormValues {
   systemPrompt: string;
 }
 
-type AgentUpdateFields = {
-  displayName?: string;
-  description?: string;
-  systemPrompt?: string;
-  outputType?: string;
-  outputFields?: any[];
-};
-
 export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
@@ -74,7 +66,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
       if (systemPrompt !== agent.systemPrompt) {
         updateAgentMutation.mutate(
           { id: agent.id, request: { systemPrompt } },
-          { onSuccess: () => refetch() }
+          { onSuccess: () => refetch() },
         );
       }
     }, 1000);
@@ -90,7 +82,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
     setDisplayName(value);
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { displayName: value } },
-      { onSuccess: () => refetch() }
+      { onSuccess: () => refetch() },
     );
   };
 
@@ -98,7 +90,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
     setDescription(value);
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { description: value } },
-      { onSuccess: () => refetch() }
+      { onSuccess: () => refetch() },
     );
   };
 
@@ -112,7 +104,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
     if (!agent?.id) return;
     updateAgentMutation.mutate(
       { id: agent.id, request: { outputType, outputFields } },
-      { onSuccess: () => refetch() }
+      { onSuccess: () => refetch() },
     );
   };
 

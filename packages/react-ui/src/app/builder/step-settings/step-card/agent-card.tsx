@@ -1,9 +1,11 @@
 import React from 'react';
 
-import { BaseCard } from './base-card';
-import { Action, Trigger } from '@activepieces/shared';
-import { agentHooks } from '../../../routes/agents/agent-hooks';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { Action, Trigger } from '@activepieces/shared';
+
+import { agentHooks } from '../../../routes/agents/agent-hooks';
+
+import { BaseCard } from './base-card';
 
 type AgentCardProps = {
   step: Action | Trigger;
@@ -12,7 +14,6 @@ type AgentCardProps = {
 };
 
 const AgentCard: React.FC<AgentCardProps> = ({ step, onClick, agentId }) => {
-
   const { data: agent } = agentHooks.useGet(agentId);
 
   const title = agent?.displayName;
@@ -21,7 +22,13 @@ const AgentCard: React.FC<AgentCardProps> = ({ step, onClick, agentId }) => {
 
   return (
     <BaseCard
-      image={<ImageWithFallback src={agentImage} alt={title} className="w-12 h-12 " />}
+      image={
+        <ImageWithFallback
+          src={agentImage}
+          alt={title}
+          className="w-12 h-12 "
+        />
+      }
       title={title}
       description={description}
       onClick={onClick}
@@ -29,4 +36,4 @@ const AgentCard: React.FC<AgentCardProps> = ({ step, onClick, agentId }) => {
   );
 };
 
-export { AgentCard }; 
+export { AgentCard };
