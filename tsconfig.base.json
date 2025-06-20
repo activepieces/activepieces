@@ -923,12 +923,6 @@
       ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@avalant/piece-promptx-claude": [
-        "packages/pieces/community/promptx-claude/src/index.ts"
-      ],
-      "@avalant/piece-promptx-openai": [
-        "packages/pieces/community/promptx-openai/src/index.ts"
-      ],
       "@avalant/piece-facebook-messenger": [
         "packages/pieces/community/facebook-messenger/src/index.ts"
       ],
@@ -937,6 +931,15 @@
       ],
       "@avalant/piece-microsoft-outlook-email": [
         "packages/pieces/community/microsoft-outlook-email/src/index.ts"
+      ],
+      "@avalant/piece-promptx-agent": [
+        "packages/pieces/community/promptx-agent/src/index.ts"
+      ],
+      "@avalant/piece-promptx-claude": [
+        "packages/pieces/community/promptx-claude/src/index.ts"
+      ],
+      "@avalant/piece-promptx-openai": [
+        "packages/pieces/community/promptx-openai/src/index.ts"
       ],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
