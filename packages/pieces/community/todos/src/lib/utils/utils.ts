@@ -98,7 +98,7 @@ type ApprovalParms = {
 export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) {
   const requestBody: CreateTodoRequestBody = {
     title: context.propsValue.title,
-    description: context.propsValue.description ?? undefined,
+    description: context.propsValue.description ?? '',
     statusOptions: context.propsValue.statusOptions.map((option: any) => ({
       name: option.name,
       description: option.description,
