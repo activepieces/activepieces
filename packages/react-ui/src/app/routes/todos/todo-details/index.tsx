@@ -29,6 +29,7 @@ type TodoDetailsProps = {
   agentId?: string;
   onStatusChange?: (status: Todo['status'], source: 'agent' | 'manual') => void;
   className?: string;
+  hideTitle?: boolean;
 };
 
 export const TodoDetails = ({
@@ -37,6 +38,7 @@ export const TodoDetails = ({
   agentId,
   onStatusChange,
   className,
+  hideTitle = false,
 }: TodoDetailsProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -114,23 +116,25 @@ export const TodoDetails = ({
       )}
       {!isLoading && todo && (
         <ScrollArea className="flex-1 px-0">
-          <div className="flex flex-col py-5 gap-2">
+          <div className="flex flex-col py-2 gap-2">
             <div className="flex items-center gap-2">
               {onClose && (
                 <Button variant="ghost" size="icon" onClick={onClose}>
                   <X className="h-5 w-5" />
                 </Button>
               )}
-              <div className="text-2xl font-bold flex items-center gap-4">
-                <div className="max-w-[40ch] truncate">{todo?.title}</div>
-                {todo && (
-                  <TodoDetailsStatus
-                    todo={todo}
-                    isUpdatingStatus={isUpdatingStatus}
-                    onStatusChange={handleStatusChange}
-                  />
-                )}
-              </div>
+              {!hideTitle && (
+                <div className="text-2xl font-bold flex items-center gap-4">
+                  <div className="max-w-[40ch] truncate">{todo?.title}</div>
+                  {todo && (
+                    <TodoDetailsStatus
+                      todo={todo}
+                      isUpdatingStatus={isUpdatingStatus}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )}
+                </div>
+              )}
             </div>
             {todo && (
               <>

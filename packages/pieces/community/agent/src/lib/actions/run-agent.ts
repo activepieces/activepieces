@@ -15,7 +15,7 @@ export const runAgent = createAction({
     },
   },
   props: {
-    agents: Property.Dropdown({
+    agentId: Property.Dropdown({
       displayName: 'Agent',
       description: 'Select agent created',
       required: true,
@@ -47,7 +47,7 @@ export const runAgent = createAction({
   async run(context) {
     const serverToken = context.server.token;
     const userPrompt = context.propsValue.prompt;
-    const agentId = context.propsValue.agents;
+    const agentId = context.propsValue.agentId;
 
     if (context.executionType === ExecutionType.BEGIN) {
       const stateId = `__agent_todo_id_${apId()}`
@@ -67,6 +67,7 @@ export const runAgent = createAction({
       });
       const request: RunAgentRequest = {
         prompt: userPrompt,
+        callbackUrl: actionLink,
       }
       const response = await fetch(`${context.server.apiUrl}v1/agents/${agentId}/todos`, {
         method: 'POST',
