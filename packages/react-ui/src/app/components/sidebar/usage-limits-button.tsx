@@ -1,9 +1,11 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
+import { ClipboardCheck, Sparkles } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
+import { Separator } from '@/components/ui/separator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -40,6 +42,7 @@ const UsageLimitsButton = React.memo(() => {
 
   return (
     <div className="flex flex-col gap-2 w-full px-2">
+      <Separator className="my-1" />
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-3">
@@ -47,11 +50,13 @@ const UsageLimitsButton = React.memo(() => {
               name={t('Tasks')}
               value={project.usage.tasks}
               max={project.plan.tasks}
+              icon={<ClipboardCheck className="w-4 h-4 mr-1" />}
             />
             <UsageProgress
               name={t('AI Credits')}
               value={project.usage.aiCredits}
               max={project.plan.aiCredits}
+              icon={<Sparkles className="w-4 h-4  mr-1" />}
             />
           </div>
         </div>
@@ -75,6 +80,7 @@ const UsageLimitsButton = React.memo(() => {
           </div>
         </div>
       </div>
+      <Separator className="my-1" />
     </div>
   );
 });
@@ -83,13 +89,17 @@ type UsageProgressProps = {
   value: number;
   max: number | undefined | null;
   name: string;
+  icon: React.ReactNode;
 };
 
-const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
+const UsageProgress = ({ value, max, name, icon }: UsageProgressProps) => {
   return (
     <div className="flex items-center flex-col justify-between gap-2  w-full">
       <div className="w-full flex text-xs justify-between">
-        <span className="text-muted-foreground">{name}</span>
+        <span className="text-muted-foreground flex items-center gap-1">
+          {icon}
+          {name}
+        </span>
         <div className="text-xs">
           <span>
             {formatUtils.formatNumber(value)}

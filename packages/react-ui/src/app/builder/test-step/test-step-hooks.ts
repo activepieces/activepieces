@@ -1,49 +1,130 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { useFormContext, UseFormReturn } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/utils';
 import {
   Action,
   ApErrorParams,
   ErrorCode,
-  FileType,
-  FlowOperationType,
-  FlowVersion,
-  isNil,
   parseToJsonIfPossible,
-  PopulatedFlow,
   StepRunResponse,
   Trigger,
   TriggerEventWithPayload,
+  FileType,
+  isNil,
+  FlowOperationType,
+  TriggerType,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
 
-const useRequiredStateToTestSteps = () => {
-  const form = useFormContext<Trigger>();
-  const builderState = useBuilderStateContext((state) => ({
-    flow: state.flow,
-    flowVersion: state.flowVersion,
-    setSampleData: state.setSampleData,
-    setSampleDataInput: state.setSampleDataInput,
-    applyOperation: state.applyOperation,
-    flowVersionId: state.flowVersion.id,
-    projectId: state.flow.projectId,
-  }));
-  return { form, builderState };
-};
-const testStepHooks = {
+export const testStepHooks = {
+  useUpdateSampleData: (
+    stepName: string,
+    onSuccess?: (step: Trigger | Action) => void,
+  ) => {
+    const projectId = authenticationSession.getProjectId()!;
+    const queryClient = useQueryClient();
+    const {
+      setSampleData,
+      setSampleDataInput,
+      applyOperation,
+      flowVersionId,
+      step,
+    } = useBuilderStateContext((state) => {
+      return {
+        sampleDataInput: state.sampleDataInput[stepName],
+        setSampleData: state.setSampleData,
+        setSampleDataInput: state.setSampleDataInput,
+        applyOperation: state.applyOperation,
+        flowVersionId: state.flowVersion.id,
+        step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
+      };
+    });
+
+    return useMutation({
+      mutationFn: async ({
+        response,
+      }: {
+        response: { output?: unknown; success: boolean };
+      }) => {
+        let sampleDataFileId: string | undefined = undefined;
+        if (isNil(step)) {
+          console.error(`Step ${stepName} not found`);
+          toast(INTERNAL_ERROR_TOAST);
+          return;
+        }
+        if (response.success && !isNil(response.output)) {
+          const sampleFile = await sampleDataApi.save({
+            flowVersionId,
+            stepName: step.name,
+            payload: response.output,
+            projectId,
+            fileType: FileType.SAMPLE_DATA,
+          });
+          sampleDataFileId = sampleFile.id;
+        }
+
+        const sampleDataInputFile = await sampleDataApi.save({
+          flowVersionId,
+          stepName: step.name,
+          payload: step.settings,
+          projectId,
+          fileType: FileType.SAMPLE_DATA_INPUT,
+        });
+
+        const stepCopy: Action | Trigger = JSON.parse(JSON.stringify(step));
+        stepCopy.settings.inputUiInfo = {
+          ...step.settings.inputUiInfo,
+          sampleDataFileId,
+          sampleDataInputFileId: sampleDataInputFile.id,
+          currentSelectedData: undefined,
+          lastTestDate: dayjs().toISOString(),
+        };
+
+        const type =
+          step.type === TriggerType.PIECE
+            ? FlowOperationType.UPDATE_TRIGGER
+            : FlowOperationType.UPDATE_ACTION;
+        if (type === FlowOperationType.UPDATE_TRIGGER) {
+          applyOperation({
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: stepCopy as Trigger,
+          });
+        } else {
+          applyOperation({
+            type: FlowOperationType.UPDATE_ACTION,
+            request: stepCopy as Action,
+          });
+        }
+
+        setSampleData(step.name, response.output);
+        setSampleDataInput(step.name, step.settings);
+
+        return stepCopy;
+      },
+      onSuccess: (step) => {
+        sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
+        if (step) {
+          onSuccess?.(step);
+        }
+      },
+    });
+  },
   useSimulateTrigger: ({
     setErrorMessage,
     onSuccess,
@@ -53,6 +134,10 @@ const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
+    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+      form.getValues().name,
+    );
+
     return useMutation<TriggerEventWithPayload[], Error, AbortSignal>({
       mutationFn: async (abortSignal: AbortSignal) => {
         setErrorMessage?.(undefined);
@@ -65,7 +150,6 @@ const testStepHooks = {
         if (!webhookSimulation) {
           await triggerEventsApi.startWebhookSimulation(flowId);
         }
-        // TODO REFACTOR: replace this with a websocket
         let attempt = 0;
         while (attempt < 1000) {
           if (abortSignal.aborted) {
@@ -79,10 +163,8 @@ const testStepHooks = {
           const newIds = newData.data.map((triggerEvent) => triggerEvent.id);
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
-              await updateTriggerSampleData({
-                data: newData.data[0],
-                form,
-                builderState,
+              await updateSampleData({
+                response: { success: true, output: newData.data[0].payload },
               });
             }
             return newData.data;
@@ -112,13 +194,19 @@ const testStepHooks = {
   useSaveMockData: ({ onSuccess }: { onSuccess: () => void }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
+    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+      form.getValues().name,
+    );
+
     return useMutation({
       mutationFn: async (mockData: unknown) => {
         const data = await triggerEventsApi.saveTriggerMockdata(
           flowId,
           mockData,
         );
-        await updateTriggerSampleData({ data, form, builderState });
+        await updateSampleData({
+          response: { success: true, output: data.payload },
+        });
         return data;
       },
       onSuccess,
@@ -133,17 +221,17 @@ const testStepHooks = {
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
+    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+      form.getValues().name,
+    );
+
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
-        const { data } = await triggerEventsApi.pollTrigger({
-          flowId,
-        });
+        const { data } = await triggerEventsApi.pollTrigger({ flowId });
         if (data.length > 0) {
-          await updateTriggerSampleData({
-            builderState,
-            data: data[0],
-            form,
+          await updateSampleData({
+            response: { success: true, output: data[0].payload },
           });
         }
         return data;
@@ -180,14 +268,6 @@ const testStepHooks = {
       },
     });
   },
-  useUpdateTriggerSampleData: () => {
-    const { form, builderState } = useRequiredStateToTestSteps();
-    return useMutation({
-      mutationFn: async (data: TriggerEventWithPayload) => {
-        await updateTriggerSampleData({ data, form, builderState });
-      },
-    });
-  },
   useTestAction: ({
     currentStep,
     setErrorMessage,
@@ -200,13 +280,11 @@ const testStepHooks = {
     onSuccess: (() => void) | undefined;
   }) => {
     const socket = useSocket();
-    const {
-      flowVersionId,
-      projectId,
-      setSampleData,
-      setSampleDataInput,
-      applyOperation,
-    } = useRequiredStateToTestSteps().builderState;
+    const { flowVersionId } = useRequiredStateToTestSteps().builderState;
+    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+      currentStep.name,
+    );
+
     return useMutation<StepRunResponse, Error, StepRunResponse | undefined>({
       mutationFn: async (preExistingSampleData?: StepRunResponse) => {
         const testStepResponse =
@@ -215,68 +293,25 @@ const testStepHooks = {
             flowVersionId,
             stepName: currentStep.name,
           }));
-        let sampleDataFileId: string | undefined = undefined;
-        if (testStepResponse.success && !isNil(testStepResponse.output)) {
-          const sampleFile = await sampleDataApi.save({
-            flowVersionId,
-            stepName: currentStep.name,
-            payload: testStepResponse.output,
-            projectId,
-            fileType: FileType.SAMPLE_DATA,
-          });
-          sampleDataFileId = sampleFile.id;
-        }
-        const sampleDataInputFile = await sampleDataApi.save({
-          flowVersionId,
-          stepName: currentStep.name,
-          payload: currentStep.settings,
-          projectId,
-          fileType: FileType.SAMPLE_DATA_INPUT,
+
+        await updateSampleData({
+          response: testStepResponse,
         });
-        return {
-          ...testStepResponse,
-          sampleDataFileId,
-          sampleDataInputFileId: sampleDataInputFile.id,
-        };
+
+        return testStepResponse;
       },
-      onSuccess: ({
-        success,
-        input,
-        output,
-        sampleDataFileId,
-        sampleDataInputFileId,
-        standardOutput,
-        standardError,
-      }) => {
+      onSuccess: ({ success, standardOutput, standardError }) => {
+        setErrorMessage?.(undefined);
+        setConsoleLogs?.(standardOutput ?? standardError ?? null);
         if (success) {
-          setErrorMessage?.(undefined);
-          const newInputUiInfo: Action['settings']['inputUiInfo'] = {
-            ...currentStep.settings.inputUiInfo,
-            sampleDataFileId,
-            sampleDataInputFileId,
-            currentSelectedData: undefined,
-            lastTestDate: dayjs().toISOString(),
-          };
-          const currentStepCopy: Action = JSON.parse(
-            JSON.stringify(currentStep),
-          );
-          currentStepCopy.settings.inputUiInfo = newInputUiInfo;
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: currentStepCopy,
-          });
+          onSuccess?.();
         } else {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
-              JSON.stringify(output) ||
-                t('Failed to run test step and no error message was returned'),
+              t('Failed to run test step, please ensure settings are correct.'),
             ),
           );
         }
-        setSampleData(currentStep.name, output);
-        setSampleDataInput(currentStep.name, input);
-        setConsoleLogs?.(standardOutput || standardError);
-        onSuccess?.();
       },
       onError: (error) => {
         console.error(error);
@@ -286,55 +321,12 @@ const testStepHooks = {
   },
 };
 
-async function updateTriggerSampleData({
-  data,
-  form,
-  builderState,
-}: {
-  data: TriggerEventWithPayload;
-  form: UseFormReturn<Trigger>;
-  builderState: {
-    flow: PopulatedFlow;
-    flowVersion: FlowVersion;
-    setSampleData: (stepName: string, payload: unknown) => void;
-    setSampleDataInput: (stepName: string, payload: unknown) => void;
-  };
-}) {
-  let sampleDataFileId: string | undefined = undefined;
-  const formValues = form.getValues();
-  const { flow, flowVersion, setSampleData, setSampleDataInput } = builderState;
-  const sampleDataInputFile = await sampleDataApi.save({
-    flowVersionId: flowVersion.id,
-    stepName: formValues.name,
-    payload: formValues.settings?.input ?? {},
-    projectId: flow.projectId,
-    fileType: FileType.SAMPLE_DATA_INPUT,
-  });
-
-  if (!isNil(data.payload)) {
-    const sampleDataFile = await sampleDataApi.save({
-      flowVersionId: flowVersion.id,
-      stepName: formValues.name,
-      payload: data.payload,
-      projectId: flow.projectId,
-      fileType: FileType.SAMPLE_DATA,
-    });
-    sampleDataFileId = sampleDataFile.id;
-  }
-
-  form.setValue(
-    'settings.inputUiInfo',
-    {
-      ...formValues.settings.inputUiInfo,
-      sampleDataFileId,
-      sampleDataInputFileId: sampleDataInputFile.id,
-      currentSelectedData: undefined,
-      lastTestDate: dayjs().toISOString(),
-    },
-    { shouldValidate: true },
-  );
-  setSampleData(formValues.name, data.payload);
-  setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
-}
-
-export default testStepHooks;
+const useRequiredStateToTestSteps = () => {
+  const form = useFormContext<Trigger>();
+  const builderState = useBuilderStateContext((state) => ({
+    flow: state.flow,
+    flowVersion: state.flowVersion,
+    flowVersionId: state.flowVersion.id,
+  }));
+  return { form, builderState };
+};
