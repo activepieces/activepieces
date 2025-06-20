@@ -21,6 +21,7 @@ import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
+import { SaveSampleDataRequest } from '../sample-data'
 
 
 export enum FlowOperationType {
@@ -43,6 +44,7 @@ export enum FlowOperationType {
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
+    SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -341,6 +343,12 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.MOVE_BRANCH),
             request: MoveBranchRequest,
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
+            request: SaveSampleDataRequest,
         },
     ),
 ])
