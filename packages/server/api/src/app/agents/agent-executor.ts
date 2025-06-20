@@ -17,7 +17,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     execute: async (params: ExecuteAgent) => {
         const { agent } = params
         const todo = await todoService(log).create({
-            content: params.prompt,
+            description: params.prompt,
             title: await generateTitle(params.prompt, agent),
             statusOptions: AGENT_STATUS_OPTIONS,
             createdByUserId: params.userId,

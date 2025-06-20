@@ -119,6 +119,8 @@ import { MakeStepNameOptionalSqlite1750025280435 } from './migration/sqlite/1750
 import { AIUsageSqlite1750074241300 } from './migration/sqlite/1750074241300-AIUsageSqlite'
 import { RemoveUniqueOnFlowSqlite1750093133906 } from './migration/sqlite/1750093133906-RemoveUniqueOnFlowSqlite'
 import { ChangeTodoActivityContentFormatSqlite1750364494659 } from './migration/sqlite/1750364494659-ChangeTodoActivityContentFormatSqlite'
+import { RevertDescriptionTodoNamingSqlite1750391313307 } from './migration/sqlite/1750391313307-RevertDescriptionTodoNamingSqlite'
+import { RegenerateIssuesTable1750391974657 } from './migration/sqlite/1750391974657-RegenerateIssuesTable'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -255,6 +257,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MakeStepNameOptionalSqlite1750025280435,
         RemoveUniqueOnFlowSqlite1750093133906,
         ChangeTodoActivityContentFormatSqlite1750364494659,
+        RevertDescriptionTodoNamingSqlite1750391313307,
+        RegenerateIssuesTable1750391974657,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

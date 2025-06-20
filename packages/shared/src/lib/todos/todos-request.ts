@@ -25,7 +25,7 @@ export type ListTodoAssigneesRequestQuery = Static<typeof ListTodoAssigneesReque
 
 export const UpdateTodoRequestBody = Type.Object({
     title: Type.Optional(Type.String()),
-    content: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
     status: Type.Optional(StatusOption),
     statusOptions: Type.Optional(StatusOptionsSchema),
     assigneeId: Type.Optional(ApId),
@@ -36,7 +36,7 @@ export type UpdateTodoRequestBody = Static<typeof UpdateTodoRequestBody>
 
 export const CreateTodoRequestBody = Type.Object({
     title: Type.String(),
-    content: Type.String(),
+    description: Type.String(),
     statusOptions: StatusOptionsSchema,
     flowId: ApId,
     runId: Type.Optional(ApId),
