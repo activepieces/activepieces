@@ -1,5 +1,5 @@
 import { Pick, Static, Type } from '@sinclair/typebox'
-import { File, FileType } from '../../file'
+import { File } from '../../file'
 
 export enum SampleDataFileType {
     INPUT = 'INPUT',
