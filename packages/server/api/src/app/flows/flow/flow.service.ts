@@ -36,10 +36,10 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
+import { triggerHooks } from '../trigger'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-import { triggerHooks } from '../trigger'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
@@ -269,48 +269,48 @@ export const flowService = (log: FastifyBaseLogger) => ({
         try {
             switch (operation.type) {
                 case FlowOperationType.LOCK_AND_PUBLISH:
-                    {
-                        await this.updatedPublishedVersionId({
-                            id,
-                            userId,
-                            projectId,
-                            platformId,
-                        })
-                        await this.updateStatus({
-                            id,
-                            projectId,
-                            newStatus: operation.request.status ?? FlowStatus.ENABLED,
-                        })
-                        break
-                    }
+                {
+                    await this.updatedPublishedVersionId({
+                        id,
+                        userId,
+                        projectId,
+                        platformId,
+                    })
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status ?? FlowStatus.ENABLED,
+                    })
+                    break
+                }
 
                 case FlowOperationType.CHANGE_STATUS:
-                    {
-                        await this.updateStatus({
-                            id,
-                            projectId,
-                            newStatus: operation.request.status,
-                        })
-                        break
-                    }
+                {
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status,
+                    })
+                    break
+                }
 
                 case FlowOperationType.CHANGE_FOLDER:
-                    {
-                        await flowRepo().update(id, {
-                            folderId: operation.request.folderId,
-                        })
-                        break
-                    }
+                {
+                    await flowRepo().update(id, {
+                        folderId: operation.request.folderId,
+                    })
+                    break
+                }
 
                 case FlowOperationType.UPDATE_METADATA:
-                    {
-                        await this.updateMetadata({
-                            id,
-                            projectId,
-                            metadata: operation.request.metadata,
-                        })
-                        break
-                    }
+                {
+                    await this.updateMetadata({
+                        id,
+                        projectId,
+                        metadata: operation.request.metadata,
+                    })
+                    break
+                }
                 default: {
                     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                         flowId: id,

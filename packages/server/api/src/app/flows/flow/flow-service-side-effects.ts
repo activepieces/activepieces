@@ -4,26 +4,18 @@ import {
     Flow,
     FlowScheduleOptions,
     FlowStatus,
-    FlowVersion,
     isNil,
     ScheduleOptions,
     ScheduleType,
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
-import { triggerHooks } from '../trigger'
-import { flowVersionService } from '../flow-version/flow-version.service'
 import { FastifyBaseLogger } from 'fastify'
-import { sampleDataService } from '../step-run/sample-data.service'
 import { EntityManager } from 'typeorm'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { sampleDataService } from '../step-run/sample-data.service'
+import { triggerHooks } from '../trigger'
 
-
-type FlowSideEffects = {
-    preUpdateStatus: (params: PreUpdateStatusParams) => Promise<PreUpdateReturn>
-    preUpdatePublishedVersionId: (params: PreUpdatePublishedVersionIdParams) => Promise<PreUpdateReturn>
-    preDelete: (params: PreDeleteParams) => Promise<void>
-}
-
-export const flowSideEffects = (log: FastifyBaseLogger): FlowSideEffects => ({
+export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
         flowToUpdate,
         newStatus,
@@ -85,7 +77,7 @@ export const flowSideEffects = (log: FastifyBaseLogger): FlowSideEffects => ({
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
-      isNil(flowToDelete.publishedVersionId)
+            isNil(flowToDelete.publishedVersionId)
         ) {
             return
         }
@@ -126,8 +118,6 @@ type PreUpdateStatusParams = PreUpdateParams & {
     newStatus: FlowStatus
     entityManager: EntityManager | undefined
 }
-
-type PreUpdatePublishedVersionIdParams = PreUpdateParams
 
 type PreUpdateReturn = {
     scheduleOptions: FlowScheduleOptions | null
