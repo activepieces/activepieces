@@ -4,6 +4,7 @@ import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
+import { SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
@@ -21,7 +22,6 @@ import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-import { SaveSampleDataRequest } from '../sample-data'
 
 
 export enum FlowOperationType {
