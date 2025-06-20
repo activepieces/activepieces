@@ -1,4 +1,3 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Bot } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +9,7 @@ import { Agent, ApFlagId } from '@activepieces/shared';
 
 import { AgentBuilder } from './agent-builder';
 import { AgentCard } from './agent-card';
-import { agentsApi } from './agents-api';
+import { agentHooks } from './agent-hooks';
 import { CreateAgentButton } from './create-agent-button';
 
 export const AgentsPage = () => {
@@ -25,10 +24,7 @@ export const AgentsPage = () => {
     data: agentsPage,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ['agents'],
-    queryFn: () => agentsApi.list(),
-  });
+  } = agentHooks.useList();
 
   const agents = agentsPage?.data || [];
 
@@ -45,12 +41,12 @@ export const AgentsPage = () => {
     setIsOpen(true);
   };
 
-  const deleteAgentMutation = useMutation({
-    mutationFn: (agentId: string) => agentsApi.delete(agentId),
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const deleteAgentMutation = agentHooks.useDelete();
+
+  const handleDeleteAgent = async (agentId: string) => {
+    await deleteAgentMutation.mutateAsync(agentId);
+    refetch();
+  };
 
   if (isLoading) {
     return <LoadingScreen mode="container" />;
@@ -109,7 +105,7 @@ export const AgentsPage = () => {
                   title={agent.displayName}
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
-                  onDelete={() => deleteAgentMutation.mutateAsync(agent.id)}
+                  onDelete={() => handleDeleteAgent(agent.id)}
                 />
               </div>
             ))}

@@ -23,7 +23,6 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
@@ -35,6 +34,7 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
+import { StepCardInfo } from './step-card';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -143,11 +143,7 @@ const StepSettingsContainer = () => {
     },
   });
 
-  const actionOrTriggerDisplayName = selectedStep.settings.actionName
-    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
-    : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
+
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
@@ -199,14 +195,12 @@ const StepSettingsContainer = () => {
           <ResizablePanel defaultSize={55}>
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
-                {stepMetadata && (
-                  <PieceCardInfo
+                {stepMetadata && !isNil(pieceModel) && (
+                  <StepCardInfo
                     piece={stepMetadata}
-                    customizedInputs={
-                      selectedStep.settings?.inputUiInfo?.customizedInputs
-                    }
-                    actionOrTriggerDisplayName={actionOrTriggerDisplayName}
-                  ></PieceCardInfo>
+                    step={modifiedStep}
+                    pieceModel={pieceModel}
+                  ></StepCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>

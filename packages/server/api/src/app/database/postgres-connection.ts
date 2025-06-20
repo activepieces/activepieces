@@ -225,6 +225,8 @@ import { MakeStepNameOptional1750025401754 } from './migration/postgres/17500254
 import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
+import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
+import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -387,6 +389,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MakeStepNameOptional1750025401754,
         RemoveUniqueOnFlow1750093037011,
         ChangeTodoActivityContentFormat1750354589729,
+        RevertDescriptionTodoNaming1750389164014,
+        RegenerateIssuesTable1750392148590,
 
     ]
 

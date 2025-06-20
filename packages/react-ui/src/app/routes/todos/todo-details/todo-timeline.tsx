@@ -51,7 +51,7 @@ export const TodoTimeline = ({ todo }: TodoTimelineProps) => {
         content: [
           {
             type: ContentBlockType.MARKDOWN,
-            markdown: todo.content ?? '',
+            markdown: todo.description ?? '',
           },
         ],
         timestamp: new Date(todo.created),

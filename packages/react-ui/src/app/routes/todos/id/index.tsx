@@ -170,7 +170,7 @@ function TodoTestingPage() {
           <ScrollArea className="h-full">
             <ApMarkdown
               className="break-words"
-              markdown={task.content ?? ''}
+              markdown={task.description ?? ''}
               variant={MarkdownVariant.BORDERLESS}
             />
           </ScrollArea>

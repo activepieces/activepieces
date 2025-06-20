@@ -98,7 +98,7 @@ export enum TodoEnvironment {
 export const Todo = Type.Object({
     ...BaseModelSchema,
     title: Type.String(),
-    content: Type.String(),
+    description: Type.String(),
     status: StatusOption,
     createdByUserId: Nullable(Type.String()),
     statusOptions: Type.Array(StatusOption),
