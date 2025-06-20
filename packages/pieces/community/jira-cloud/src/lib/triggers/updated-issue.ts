@@ -15,11 +15,11 @@ import dayjs from 'dayjs';
 
 const polling: Polling<
   PiecePropValueSchema<typeof jiraCloudAuth>,
-  { jql?: string; sanitizeJql?: boolean; timestampField?: string }
+  { jql?: string; sanitizeJql?: boolean; watchBy?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { jql, sanitizeJql, timestampField } = propsValue;
+    const { jql, sanitizeJql, watchBy } = propsValue;
 
     const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
       lastFetchEpochMS
@@ -31,7 +31,7 @@ const polling: Polling<
       sanitizeJql: sanitizeJql ?? false,
     });
     return issues.map((issue) => ({
-      epochMilliSeconds: Date.parse(issue.fields[timestampField || 'updated']),
+      epochMilliSeconds: Date.parse(issue.fields[watchBy || 'updated']),
       data: issue,
     }));
   },
@@ -54,9 +54,9 @@ export const updatedIssue = createTrigger({
       required: false,
       defaultValue: true,
     }),
-    timestampField: Property.StaticDropdown({
-      displayName: 'Tracking Field',
-      description: 'Select the timestamp field to track changes for polling',
+    watchBy: Property.StaticDropdown({
+      displayName: 'Watch By',
+      description: 'Field to watch for trigger',
       required: false,
       options: {
         options: [
