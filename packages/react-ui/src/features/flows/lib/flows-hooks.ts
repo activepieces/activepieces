@@ -2,10 +2,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
 import {
+  ApFlagId,
   FlowOperationType,
+  FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
   ListFlowsRequest,
@@ -39,12 +42,20 @@ export const flowsHooks = {
     setVersion: (version: FlowVersion) => void;
     setIsPublishing: (isPublishing: boolean) => void;
   }) => {
+    const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
+      ApFlagId.ENABLE_FLOW_ON_PUBLISH,
+    );
+
     return useMutation({
       mutationFn: async () => {
         setIsPublishing(true);
         return flowsApi.update(flowId, {
           type: FlowOperationType.LOCK_AND_PUBLISH,
-          request: {},
+          request: {
+            status: enableFlowOnPublish
+              ? FlowStatus.ENABLED
+              : FlowStatus.DISABLED,
+          },
         });
       },
       onSuccess: (flow) => {
