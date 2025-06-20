@@ -1,88 +1,103 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../../index';
-import { StoredWebhookData, WebhookCreationResponse } from '../common/models';
+import { objectTypeIdDropdown } from '../common/props';
+import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
+import { isNil } from '@activepieces/shared';
 
-// We'll get this from the context in the handler functions
-// import { attioAuth } from '../../../index';
+const TRIGGER_KEY = 'new-record-trigger';
 
 export const recordCreatedTrigger = createTrigger({
-  auth: attioAuth,
-  name: 'record_created',
-  displayName: 'Record Created',
-  description: 'Triggers when a new record is created in Attio (people, companies, deals, etc.)',
-  props: {},
-  type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    webhook_id: 'a7f8e9d2-1b3c-4e5f-9a8b-7c6d5e4f3a2b',
-    events: [
-      {
-        event_type: 'record.created',
-        id: {
-          workspace_id: '2d4e6f8a-9b1c-3e5f-7a9b-1c3e5f7a9b2d',
-          object_id: '8f2a4c6e-5d7b-9f1a-3c5e-7f9a1c3e5d7b',
-          record_id: '6e8a2c4f-7b9d-1f3a-5c7e-9f1a3c5e7b9d',
-        },
-        actor: {
-          type: 'workspace-member',
-          id: '4c6e8a2f-9d1b-3f5a-7c9e-1f3a5c7e9d1b',
-        },
-      },
-    ],
-  },
+	auth: attioAuth,
+	name: 'record_created',
+	displayName: 'Record Created',
+	description: 'Triggers when a new record such as person,company or deal is created.',
+	props: {
+		objectTypeId: objectTypeIdDropdown({
+			displayName: 'Object',
+			required: true,
+		}),
+	},
+	type: TriggerStrategy.WEBHOOK,
+	sampleData: {},
+	async onEnable(context) {
+		const response = await attioApiCall<{ data: WebhookResponse }>({
+			accessToken: context.auth,
+			method: HttpMethod.POST,
+			resourceUri: '/webhooks',
+			body: {
+				data: {
+					target_url: context.webhookUrl,
+					subscriptions: [
+						{
+							event_type: 'record.created',
+							filter: {
+								$and: [
+									{
+										field: 'id.object_id',
+										operator: 'equals',
+										value: context.propsValue.objectTypeId,
+									},
+								],
+							},
+						},
+					],
+				},
+			},
+		});
 
-  async onEnable(context) {
-    try {
-      const response = await makeRequest(
-        context.auth,
-        HttpMethod.POST,
-        '/webhooks',
-        {
-          data: {
-            target_url: context.webhookUrl,
-            subscriptions: [
-              {
-                event_type: 'record.created',
-                filter: null,
-              }
-            ]
-          }
-        }
-      ) as WebhookCreationResponse;
+		await context.store.put<{ webhookId: string; WebhookSecret: string }>(TRIGGER_KEY, {
+			webhookId: response.data.id.webhook_id,
+			WebhookSecret: response.data.secret,
+		});
+	},
+	async onDisable(context) {
+		const webhookData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
+			TRIGGER_KEY,
+		);
+		if (!isNil(webhookData) && webhookData.webhookId) {
+			await attioApiCall({
+				accessToken: context.auth,
+				method: HttpMethod.DELETE,
+				resourceUri: `/webhooks/${webhookData.webhookId}`,
+			});
+		}
+	},
+	async test(context) {
+		const response = await attioApiCall<{data:Array<Record<string,any>>}>({
+			accessToken:context.auth,
+			method:HttpMethod.POST,
+			resourceUri:`/objects/${context.propsValue.objectTypeId}/records/query`,
+			body:{
+				limit:5,
+				offset:0
+			}
+		})
 
-      if (!response?.id?.webhook_id) {
-        throw new Error('Failed to create webhook: Invalid response format');
-      }
+		return response.data;
+	},
+	async run(context) {
+		const triggerData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
+			TRIGGER_KEY,
+		);
 
-      await context.store.put<StoredWebhookData>('webhookData', {
-        webhookId: response.id.webhook_id,
-      });
-    } catch (error) {
-      throw new Error(`Failed to enable record created trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
+		const webhookSecret = triggerData?.WebhookSecret;
+		const webhookSignatureHeader = context.payload.headers['attio-signature'];
+		const rawBody = context.payload.rawBody;
 
-  async onDisable(context) {
-    try {
-      const webhookData = await context.store.get<StoredWebhookData>('webhookData');
-      if (webhookData?.webhookId) {
-        await makeRequest(
-          context.auth,
-          HttpMethod.DELETE,
-          `/webhooks/${webhookData.webhookId}`,
-          undefined
-        );
-      }
-    } catch (error) {
-      console.warn(`Failed to disable record created trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
+		if (!verifyWebhookSignature(webhookSecret, webhookSignatureHeader, rawBody)) {
+			return [];
+		}
 
-  async run(context) {
-    if (context.payload.body) {
-      return [context.payload.body];
-    }
-    return [];
-  },
+		const payload = context.payload.body as ObjectWebhookPayload;
+		const recordId = payload.events[0].id.record_id;
+
+		const response = await attioApiCall<{ data: Record<string, any> }>({
+			accessToken: context.auth,
+			method: HttpMethod.GET,
+			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
+		});
+		return [response.data];
+	},
 });
