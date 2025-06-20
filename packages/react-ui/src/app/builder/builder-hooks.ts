@@ -738,9 +738,7 @@ export const useIsFocusInsideListMapperModeInput = ({
 };
 export const useFocusOnStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
-  const setSelectedStep = useBuilderStateContext(
-    (state) => state.setSelectedStep,
-  );
+  const setSelectedStep = useBuilderStateContext((state) => state.selectStepByName);
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
     previousStatus ?? FlowRunStatus.RUNNING,
