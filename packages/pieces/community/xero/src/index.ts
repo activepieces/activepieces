@@ -27,6 +27,7 @@ export const xeroAuth = PieceAuth.OAuth2({
     'offline_access',
     'accounting.contacts',
     'accounting.transactions',
+    'accounting.settings.read',
   ],
 });
 
