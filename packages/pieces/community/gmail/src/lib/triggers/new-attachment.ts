@@ -1,22 +1,16 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  PiecePropValueSchema,
-  FilesService,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { GmailLabel } from '../common/models';
-import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
-import { parseStream, convertAttachment } from '../common/data';
-import { google } from 'googleapis';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { OAuth2Client } from 'googleapis-common';
+import { google } from 'googleapis';
+import dayjs from 'dayjs';
+import { gmailAuth } from '../../';
+import { GmailProps } from '../common/props';
+import { parseStream, convertAttachment } from '../common/data';
 
-export const gmailNewEmailTrigger = createTrigger({
+export const gmailNewAttachmentTrigger = createTrigger({
   auth: gmailAuth,
-  name: 'gmail_new_email_received',
-  displayName: 'New Email',
-  description: 'Triggers when new mail is found in your Gmail inbox',
+  name: 'gmail_new_attachment',
+  displayName: 'New Attachment',
+  description: 'Fires when an email with an attachment arrives.',
   props: {
     subject: GmailProps.subject,
     from: GmailProps.from,
@@ -35,11 +29,11 @@ export const gmailNewEmailTrigger = createTrigger({
   async run(context) {
     const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
 
-    const items = await pollRecentMessages({
+    const items = await pollMessagesWithAttachments({
       auth: context.auth,
       props: context.propsValue,
       files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+      lastFetchEpochMS,
     });
 
     const newLastEpochMilliSeconds = items.reduce(
@@ -54,47 +48,33 @@ export const gmailNewEmailTrigger = createTrigger({
   async test(context) {
     const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
 
-    const items = await pollRecentMessages({
+    const items = await pollMessagesWithAttachments({
       auth: context.auth,
       props: context.propsValue,
       files: context.files,
-      lastFetchEpochMS: lastFetchEpochMS,
+      lastFetchEpochMS,
     });
 
     return getFirstFiveOrAll(items.map((item) => item.data));
   },
 });
 
-interface PropsValue {
-  from: string | undefined;
-  to: string | undefined;
-  subject: string | undefined;
-  label: GmailLabel | undefined;
-  category: string | undefined;
-}
-
-async function pollRecentMessages({
+async function pollMessagesWithAttachments({
   auth,
   props,
   files,
   lastFetchEpochMS,
 }: {
-  auth: PiecePropValueSchema<typeof gmailAuth>;
-  props: PropsValue;
-  files: FilesService;
+  auth: any;
+  props: any;
+  files: any;
   lastFetchEpochMS: number;
-}): Promise<
-  {
-    epochMilliSeconds: number;
-    data: unknown;
-  }[]
-> {
+}) {
   const authClient = new OAuth2Client();
   authClient.setCredentials(auth);
 
   const gmail = google.gmail({ version: 'v1', auth: authClient });
 
-  // construct query
   const query = [];
   const maxResults = lastFetchEpochMS === 0 ? 5 : 100;
   const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
@@ -104,10 +84,9 @@ async function pollRecentMessages({
   if (props.subject) query.push(`subject:(${props.subject})`);
   if (props.label) query.push(`label:${props.label.name}`);
   if (props.category) query.push(`category:${props.category}`);
-  if (afterUnixSeconds != null && afterUnixSeconds > 0)
-    query.push(`after:${afterUnixSeconds}`);
+  if (afterUnixSeconds > 0) query.push(`after:${afterUnixSeconds}`);
+  query.push('has:attachment');
 
-  // List Messages
   const messagesResponse = await gmail.users.messages.list({
     userId: 'me',
     q: query.join(' '),
@@ -132,21 +111,23 @@ async function pollRecentMessages({
       )
     );
 
-    pollingResponse.push({
-      epochMilliSeconds: dayjs(parsedMailResponse.date).valueOf(),
-      data: {
-        message: {
-          ...parsedMailResponse,
-          attachments: await convertAttachment(
-            parsedMailResponse.attachments,
-            files
-          ),
+    if (parsedMailResponse.attachments.length > 0) {
+      pollingResponse.push({
+        epochMilliSeconds: dayjs(parsedMailResponse.date).valueOf(),
+        data: {
+          message: {
+            ...parsedMailResponse,
+            attachments: await convertAttachment(
+              parsedMailResponse.attachments,
+              files
+            ),
+          },
+          thread: {
+            ...threadResponse,
+          },
         },
-        thread: {
-          ...threadResponse,
-        },
-      },
-    });
+      });
+    }
   }
 
   return pollingResponse;
