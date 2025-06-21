@@ -2,6 +2,7 @@ import React from 'react';
 
 import { TodoDetails } from '@/app/routes/todos/todo-details';
 import { Action, isNil, StepOutput } from '@activepieces/shared';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;
@@ -18,9 +19,11 @@ const FlowStepAgent = React.memo((props: FlowStepAgentProps) => {
       : null;
 
   return (
-    <div className="px-4">
-      {!isNil(todoId) && <TodoDetails todoId={todoId} hideTitle={true} />}
-    </div>
+    <ScrollArea className="h-full p-4">
+      <div className="px-4 py-2 flex flex-col">
+        {!isNil(todoId) && <TodoDetails todoId={todoId} simpleTitle={true} />}
+      </div>
+    </ScrollArea>
   );
 });
 

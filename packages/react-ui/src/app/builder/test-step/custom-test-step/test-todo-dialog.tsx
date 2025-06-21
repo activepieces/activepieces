@@ -81,10 +81,9 @@ function TodoTestingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl  p-0 overflow-hidden">
+      <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
         <TodoDetails
           todoId={todo.id}
-          className="h-[90vh] py-3 px-6"
           onStatusChange={handleStatusChange}
         />
       </DialogContent>

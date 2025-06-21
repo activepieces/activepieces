@@ -22,6 +22,7 @@ import { TodoCreateComment } from './todo-create-comment';
 import { TodoCreateTodo } from './todo-create-todo';
 import { TodoDetailsStatus } from './todo-details-status';
 import { TodoTimeline } from './todo-timeline';
+import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 
 type TodoDetailsProps = {
   todoId: string | null;
@@ -29,7 +30,7 @@ type TodoDetailsProps = {
   agentId?: string;
   onStatusChange?: (status: Todo['status'], source: 'agent' | 'manual') => void;
   className?: string;
-  hideTitle?: boolean;
+  simpleTitle?: boolean;
 };
 
 export const TodoDetails = ({
@@ -38,7 +39,7 @@ export const TodoDetails = ({
   agentId,
   onStatusChange,
   className,
-  hideTitle = false,
+  simpleTitle = false,
 }: TodoDetailsProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -88,6 +89,8 @@ export const TodoDetails = ({
     setCreatedTodoId(todo.id);
   };
 
+  const { data: comments, isLoading: isLoadingComments, refetch: refetchComments } = todoActivitiesHook.useComments(todoId);
+
   const handleStatusChange = async (
     status: Todo['status'],
     source: 'agent' | 'manual',
@@ -103,7 +106,7 @@ export const TodoDetails = ({
   };
 
   return (
-    <div className={cn('flex flex-col w-full h-[100vh]', className)}>
+    <div className={cn('flex flex-col w-full ', className)}>
       {isLoading && <LoadingScreen mode="container"></LoadingScreen>}
       {!isLoading && isNil(todo) && !isNil(agentId) && (
         <TodoCreateTodo
@@ -123,7 +126,7 @@ export const TodoDetails = ({
                   <X className="h-5 w-5" />
                 </Button>
               )}
-              {!hideTitle && (
+              {!simpleTitle && (
                 <div className="text-2xl font-bold flex items-center gap-4">
                   <div className="max-w-[40ch] truncate">{todo?.title}</div>
                   {todo && (
@@ -135,10 +138,15 @@ export const TodoDetails = ({
                   )}
                 </div>
               )}
+              {simpleTitle && (
+                <div className="text-lg font-bold flex items-center gap-4">
+                  <div className="max-w-[40ch] truncate">{todo?.title}</div>
+                </div>
+              )}
             </div>
             {todo && (
               <>
-                <TodoTimeline todo={todo} />
+                <TodoTimeline todo={todo} comments={comments?.data ?? []} isLoading={isLoadingComments} refetchComments={refetchComments} />
                 <TodoCreateComment todo={todo} />
               </>
             )}
