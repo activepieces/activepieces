@@ -38,7 +38,7 @@ export const deviceDefinitionApiAction = createAction({
         countryCode,
         vin,
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(response);
     return {
@@ -99,7 +99,7 @@ export const deviceDefinitionsSearchAction = createAction({
     const response = await httpClient.sendRequest<DeviceDefinitionsSearchResponse>({
       method: HttpMethod.GET,
       url,
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(response);
     return response.body;

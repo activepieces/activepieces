@@ -85,7 +85,7 @@ export const batteryChargingTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
 
     handleFailures(webhookResponse);
@@ -101,7 +101,7 @@ export const batteryChargingTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders({ developerJwt }, 'developer'),
+            headers: getHeaders(developerJwt),
           });
             handleFailures(res);
         })
@@ -110,7 +110,7 @@ export const batteryChargingTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }
@@ -127,7 +127,7 @@ export const batteryChargingTrigger = createTrigger({
       await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
     }
   },

@@ -8,13 +8,8 @@ export const dimoAuth = PieceAuth.CustomAuth({
     developerJwt: PieceAuth.SecretText({
       displayName: "Developer JWT",
       description: "Your developer JWT. Generate using 'generate-developer-token-auth-api' action or get it from your license details page at DIMO Developer Console.",
-      required: false,
-    }),
-    vehicleJwt: PieceAuth.SecretText({
-      displayName: "Vehicle JWT",
-      description: "Your vehicle JWT. Generate using 'vehicle-jwt-token-exchange-api' action.",
-      required: false,
-    }),
+      required: true,
+    })
   },
 });
 

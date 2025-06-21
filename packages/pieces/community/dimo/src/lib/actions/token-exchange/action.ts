@@ -44,7 +44,7 @@ export const tokenExchangeApiAction = createAction({
                 privileges,
                 nftContractAddress : dimoNftContractAddress
             },
-            headers : getHeaders({ developerJwt }, 'developer'),
+            headers : getHeaders(developerJwt),
         })
 
         handleFailures(response)

@@ -112,7 +112,7 @@ export const tirePressureTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
@@ -128,7 +128,7 @@ export const tirePressureTrigger = createTrigger({
               webhookId,
               tokenId: Number(tokenId),
             }),
-            headers: getHeaders({ developerJwt }, 'developer'),
+            headers: getHeaders(developerJwt),
           });
           handleFailures(res);
         })
@@ -137,7 +137,7 @@ export const tirePressureTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }
@@ -158,7 +158,7 @@ export const tirePressureTrigger = createTrigger({
           url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
             webhookId: webhookInfo.webhookId,
           }),
-          headers: getHeaders({ developerJwt }, 'developer'),
+          headers: getHeaders(developerJwt),
         });
       }
     } catch (error) {
