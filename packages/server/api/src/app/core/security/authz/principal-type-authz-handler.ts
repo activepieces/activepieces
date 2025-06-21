@@ -1,7 +1,7 @@
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-        ErrorCode,
+    ErrorCode,
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'

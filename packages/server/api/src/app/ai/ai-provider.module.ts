@@ -22,15 +22,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             getUpstream(request, _base) {
                 const params = request.params as Record<string, string> | null
                 const provider = params?.['provider']
-                const providerConfig = getProviderConfig(provider)
-                if (isNil(providerConfig)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-                        params: {
-                            provider: provider ?? 'unknown',
-                        },
-                    })
-                }
+                const providerConfig = getProviderConfigOrThrow(provider)
                 return providerConfig.baseUrl
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -39,9 +31,11 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
 
-                let buffer = Buffer.from('')
+                let buffer = Buffer.from('');
 
-                response.pipe(new Writable({
+                // Types are not properly defined, pipe does not exist but the stream pipe does
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (response as any).stream.pipe(new Writable({
                     write(chunk, encoding, callback) {
                         buffer = Buffer.concat([buffer, chunk]);
                         (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
@@ -103,15 +97,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const userPlatformId = request.principal.platform.id
             const params = request.params as Record<string, string>
             const provider = params['provider'] as string
-            const providerConfig = SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-            if (!providerConfig) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-                    params: {
-                        provider: params['provider'],
-                    },
-                })
-            }
+            const providerConfig = getProviderConfigOrThrow(provider)
 
             const model = aiProviderService.extractModelId(provider, request)
             if (!model || !aiProviderService.isModelSupported(provider, model)) {
@@ -149,9 +135,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
-    if (isNil(provider)) {
-        return undefined
+function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProvider {
+    const providerConfig = !isNil(provider) ? SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider) : undefined
+    if (isNil(providerConfig)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            params: {
+                provider: provider ?? 'unknown',
+            },
+        })
     }
-    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+    return providerConfig
 }
