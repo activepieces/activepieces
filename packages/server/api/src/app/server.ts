@@ -31,7 +31,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     const fileSizeLimit =  Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
     const app = fastify({
         querystringParser: qs.parse,
-        logger: system.globalLogger() as FastifyBaseLogger,
+        loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf

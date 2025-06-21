@@ -120,9 +120,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx test-ee",
-          "nx test-ce",
-          "nx test-cloud"
+          "nx test-ee server-api",
+          "nx test-ce server-api",
+          "nx test-cloud server-api"
         ],
         "parallel": true
       }
