@@ -33,7 +33,7 @@ import {
 
 import { cn, useElementSize } from '../../lib/utils';
 
-import { BuilderHeader } from './builder-header';
+import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';

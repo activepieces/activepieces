@@ -126,6 +126,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {

@@ -124,5 +124,13 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
 
 const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name)
+    return allSystemJobs.find(job => {
+        if (isNil(job)) {
+            return false
+        }
+        if (!isNil(jobId)) {
+            return job.name === name && job.id === jobId
+        }
+        return job.name === name
+    })
 }

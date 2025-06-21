@@ -107,11 +107,15 @@ export const projectService = {
 
         return project
     },
-    async exists(projectId: ProjectId): Promise<boolean> {
-        return projectRepo().existsBy({
-            id: projectId,
-            deleted: IsNull(),
+    async exists({ projectId, isSoftDeleted }: ExistsParams): Promise<boolean> {
+        const project = await projectRepo().findOne({
+            where: {
+                id: projectId,
+                deleted: isSoftDeleted ? Not(IsNull()) : IsNull(),
+            },
+            withDeleted: true,
         })
+        return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
@@ -220,6 +224,11 @@ type GetAllForUserParams = {
 type GetOneByOwnerAndPlatformParams = {
     ownerId: UserId
     platformId: string
+}
+
+type ExistsParams = {
+    projectId: ProjectId
+    isSoftDeleted?: boolean
 }
 
 
