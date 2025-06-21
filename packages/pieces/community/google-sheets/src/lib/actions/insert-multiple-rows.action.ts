@@ -11,9 +11,10 @@ import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
+import { z } from 'zod';
 
 
 type RowValueType = Record<string, any>
@@ -52,6 +53,14 @@ export const insertMultipleRowsAction = createAction({
 			displayName: 'Values',
 			description: 'The values to insert.',
 			required: true,
+			schema: z.union([
+				z.object({
+					values: z.string(),
+				}),
+				z.object({
+					values: z.array(z.record(z.string(), z.unknown())),
+				}),
+			]),
 			refreshers: ['sheetId', 'spreadsheetId', 'input_type'],
 			props: async ({ auth, sheetId, spreadsheetId, input_type }) => {
 				const sheet_id = Number(sheetId);

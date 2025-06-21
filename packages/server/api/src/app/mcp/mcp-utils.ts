@@ -64,6 +64,9 @@ export function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
         case PropertyType.DROPDOWN:
             schema = z.string()
             break
+        case PropertyType.DYNAMIC:
+            schema = property.schema ? property.schema as z.ZodTypeAny : z.unknown()
+            break
         default:
             schema = z.unknown()
     }
