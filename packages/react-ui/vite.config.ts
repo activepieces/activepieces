@@ -25,6 +25,7 @@ export default defineConfig({
     },
     port: 4200,
     host: '0.0.0.0',
+    allowedHosts: ['localhost', 'constantly-sweet-cardinal.ngrok-free.app'],
   },
 
   preview: {
