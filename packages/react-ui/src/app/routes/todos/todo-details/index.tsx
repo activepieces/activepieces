@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
+import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import { cn } from '@/lib/utils';
 import {
@@ -22,7 +23,6 @@ import { TodoCreateComment } from './todo-create-comment';
 import { TodoCreateTodo } from './todo-create-todo';
 import { TodoDetailsStatus } from './todo-details-status';
 import { TodoTimeline } from './todo-timeline';
-import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 
 type TodoDetailsProps = {
   todoId: string | null;
@@ -89,7 +89,11 @@ export const TodoDetails = ({
     setCreatedTodoId(todo.id);
   };
 
-  const { data: comments, isLoading: isLoadingComments, refetch: refetchComments } = todoActivitiesHook.useComments(todoId);
+  const {
+    data: comments,
+    isLoading: isLoadingComments,
+    refetch: refetchComments,
+  } = todoActivitiesHook.useComments(todoId);
 
   const handleStatusChange = async (
     status: Todo['status'],
@@ -146,7 +150,12 @@ export const TodoDetails = ({
             </div>
             {todo && (
               <>
-                <TodoTimeline todo={todo} comments={comments?.data ?? []} isLoading={isLoadingComments} refetchComments={refetchComments} />
+                <TodoTimeline
+                  todo={todo}
+                  comments={comments?.data ?? []}
+                  isLoading={isLoadingComments}
+                  refetchComments={refetchComments}
+                />
                 <TodoCreateComment todo={todo} />
               </>
             )}

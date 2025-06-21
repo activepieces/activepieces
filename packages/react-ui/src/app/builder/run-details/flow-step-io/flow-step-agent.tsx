@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { TodoDetails } from '@/app/routes/todos/todo-details';
-import { Action, isNil, StepOutput } from '@activepieces/shared';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Action, isNil, StepOutput } from '@activepieces/shared';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;

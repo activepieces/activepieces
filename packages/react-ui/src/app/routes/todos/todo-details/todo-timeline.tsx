@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
-import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 import {
   TodoChanged,
   WebsocketClientEvent,
@@ -13,8 +12,8 @@ import {
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
-import { TodoTimelineStatus } from './todo-timeline-status';
 import { TodoTimelineCommentSkeleton } from './todo-timeline-comment-skeleton';
+import { TodoTimelineStatus } from './todo-timeline-status';
 
 interface TodoTimelineProps {
   todo: PopulatedTodo;
@@ -23,10 +22,13 @@ interface TodoTimelineProps {
   refetchComments: () => void;
 }
 
-export const TodoTimeline = ({ todo, comments, isLoading, refetchComments }: TodoTimelineProps) => {
-
+export const TodoTimeline = ({
+  todo,
+  comments,
+  isLoading,
+  refetchComments,
+}: TodoTimelineProps) => {
   const socket = useSocket();
-
 
   const formatComment = (activity: TodoActivityWithUser): ActivityItem => {
     const avatarUrl = todoUtils.getAuthorPictureUrl(activity);
@@ -65,8 +67,6 @@ export const TodoTimeline = ({ todo, comments, isLoading, refetchComments }: Tod
     },
     ...(comments ?? []).map(formatComment),
   ]);
-
-
 
   useEffect(() => {
     const handleTodoChanged = (event: TodoChanged) => {

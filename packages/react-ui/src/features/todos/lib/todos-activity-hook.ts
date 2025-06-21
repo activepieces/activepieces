@@ -12,7 +12,7 @@ export const todoActivitiesHook = {
           limit: 100,
           type: undefined,
         }),
-      enabled: !!todoId,  
+      enabled: !!todoId,
     });
   },
 };
