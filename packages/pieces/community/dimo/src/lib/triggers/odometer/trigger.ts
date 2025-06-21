@@ -105,7 +105,7 @@ export const odometerTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
@@ -118,7 +118,7 @@ export const odometerTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders({ developerJwt }, 'developer'),
+            headers: getHeaders(developerJwt),
           });
           handleFailures(res);
         })
@@ -127,7 +127,7 @@ export const odometerTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }
@@ -149,7 +149,7 @@ export const odometerTrigger = createTrigger({
       url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
         webhookId: webhookInfo.webhookId,
       }),
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(res);
     await context.store.delete('webhook_info');

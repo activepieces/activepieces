@@ -3,14 +3,16 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { commonQueries, TELEMETR_API_BASE_URL } from './constant';
 import { dimoAuth } from '../../../index';
 import { getHeaders } from '../../helpers';
+import { getVehicleToken } from '../token-exchange/helper';
 
 // Ortak GraphQL request helper
-async function sendTelemetryGraphQLRequest(query: string, vehicleJwt: string) {
+async function sendTelemetryGraphQLRequest(query: string, tokenId: number, developerJwt: string) {
+  const vehicleJwt = await getVehicleToken(developerJwt, tokenId);
   const response = await httpClient.sendRequest({
     method: HttpMethod.POST,
     url: TELEMETR_API_BASE_URL,
     body: { query },
-    headers: getHeaders({ vehicleJwt }, 'vehicle'),
+    headers: getHeaders(vehicleJwt),
   });
   if (response.body.errors) {
     throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
@@ -29,17 +31,25 @@ export const telemetryApiCustomQueryAction = createAction({
       description: 'Enter your GraphQL query here',
       required: true,
     }),
+    tokenId: Property.Number({
+      displayName: 'Vehicle Token ID',
+      description: 'The ERC-721 token ID of the vehicle',
+      required: true,
+    }),
   },
   async run(context) {
-    const { customQuery } = context.propsValue;
-    const { vehicleJwt } = context.auth;
+    const { customQuery, tokenId } = context.propsValue;
+    const { developerJwt } = context.auth;
     if (!customQuery) {
       throw new Error('Custom GraphQL query is required.');
     }
-    if (!vehicleJwt) {
-      throw new Error('vehicleJwt is required for Telemetry API.');
+    if (!tokenId) {
+      throw new Error('tokenId is required for Telemetry API.');
     }
-    return await sendTelemetryGraphQLRequest(customQuery, vehicleJwt);
+    if (!developerJwt) {
+      throw new Error('developerJwt is required for Telemetry API.');
+    }
+    return await sendTelemetryGraphQLRequest(customQuery, tokenId, developerJwt);
   },
 });
 
@@ -57,10 +67,11 @@ export const availableSignalsAction = createAction({
   },
   async run(context) {
     const { tokenId } = context.propsValue;
-    const { vehicleJwt } = context.auth;
-    if (!vehicleJwt) throw new Error('vehicleJwt is required');
+    const { developerJwt } = context.auth;
+    if (!tokenId) throw new Error('tokenId is required');
+    if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.avaiableSignals.query.replace(/\$tokenId/g, String(tokenId));
-    return await sendTelemetryGraphQLRequest(query, vehicleJwt);
+    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
 
@@ -88,13 +99,14 @@ export const signalsAction = createAction({
   },
   async run(context) {
     const { tokenId, startDate, endDate } = context.propsValue;
-    const { vehicleJwt } = context.auth;
-    if (!vehicleJwt) throw new Error('vehicleJwt is required');
+    const { developerJwt } = context.auth;
+    if (!tokenId) throw new Error('tokenId is required');
+    if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.signals.query
       .replace(/\$tokenId/g, String(tokenId))
       .replace(/\$startDate/g, startDate)
       .replace(/\$endDate/g, endDate);
-    return await sendTelemetryGraphQLRequest(query, vehicleJwt);
+    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
 
@@ -122,13 +134,14 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
   },
   async run(context) {
     const { tokenId, startDate, endDate } = context.propsValue;
-    const { vehicleJwt } = context.auth;
-    if (!vehicleJwt) throw new Error('vehicleJwt is required');
+    const { developerJwt } = context.auth;
+    if (!tokenId) throw new Error('tokenId is required');
+    if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.getDailyAvgSpeedOfVehicle.query
       .replace(/\$tokenId/g, String(tokenId))
       .replace(/\$startDate/g, startDate)
       .replace(/\$endDate/g, endDate);
-    return await sendTelemetryGraphQLRequest(query, vehicleJwt);
+    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
 
@@ -161,14 +174,15 @@ export const getMaxSpeedOfVehicleAction = createAction({
   },
   async run(context) {
     const { tokenId, startDate, endDate, interval } = context.propsValue;
-    const { vehicleJwt } = context.auth;
-    if (!vehicleJwt) throw new Error('vehicleJwt is required');
+    const { developerJwt } = context.auth;
+    if (!tokenId) throw new Error('tokenId is required');
+    if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.getMaxSpeedOfVehicle.query
       .replace(/\$tokenId/g, String(tokenId))
       .replace(/\$startDate/g, startDate)
       .replace(/\$endDate/g, endDate)
       .replace(/\$interval/g, interval);
-    return await sendTelemetryGraphQLRequest(query, vehicleJwt);
+    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
 
@@ -186,10 +200,11 @@ export const getVinVcLatestAction = createAction({
   },
   async run(context) {
     const { tokenId } = context.propsValue;
-    const { vehicleJwt } = context.auth;
-    if (!vehicleJwt) throw new Error('vehicleJwt is required');
+    const { developerJwt } = context.auth;
+    if (!tokenId) throw new Error('tokenId is required');
+    if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.getVinVcLatest.query.replace(/\$tokenId/g, String(tokenId));
-    return await sendTelemetryGraphQLRequest(query, vehicleJwt);
+    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
 

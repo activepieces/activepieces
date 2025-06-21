@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { CREATE_VC_ENDPOINT } from "./constant";
 import { getHeaders, handleFailures } from "../../helpers";
 import { dimoAuth } from "../../../index";
+import { getVehicleToken } from "../token-exchange/helper";
 // import { vehicleAuth } from '../../../index';
 
 export const attestationApiAction = createAction({
@@ -21,10 +22,13 @@ export const attestationApiAction = createAction({
     run : async (ctx) => {
         const {vehicleTokenId} = ctx.propsValue
 
+        // Vehicle JWT gerektiren yerde getVehicleToken kullan
+        const vehicleJwt = await getVehicleToken(ctx.auth.developerJwt, vehicleTokenId);
+
         const response = await httpClient.sendRequest<AttestationResponse>({
           method: HttpMethod.POST,
           url: CREATE_VC_ENDPOINT.replace("{0}", vehicleTokenId.toString()),
-          headers : getHeaders(ctx.auth as { developerJwt?: string; vehicleJwt?: string }, 'vehicle'),
+          headers : getHeaders(vehicleJwt),
         })
 
         handleFailures(response)

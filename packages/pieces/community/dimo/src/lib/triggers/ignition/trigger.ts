@@ -95,7 +95,7 @@ export const ignitionTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
 
     handleFailures(webhookResponse);
@@ -114,7 +114,7 @@ export const ignitionTrigger = createTrigger({
               webhookId,
               tokenId: Number(tokenId),
             }),
-            headers: getHeaders({ developerJwt }, 'developer'),
+            headers: getHeaders(developerJwt),
           });
           handleFailures(res);
         })
@@ -123,7 +123,7 @@ export const ignitionTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }
@@ -141,7 +141,7 @@ export const ignitionTrigger = createTrigger({
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
           webhookId: webhookInfo.webhookId,
         }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }

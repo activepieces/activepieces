@@ -80,7 +80,7 @@ export const fuelRelativeTrigger = createTrigger({
         status: webhookDef.status,
         verification_token: verificationToken || 'token',
       },
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(webhookResponse);
     if (!webhookResponse.body.id) {
@@ -93,7 +93,7 @@ export const fuelRelativeTrigger = createTrigger({
           const res = await httpClient.sendRequest({
             method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
             url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders({ developerJwt }, 'developer'),
+            headers: getHeaders(developerJwt),
           });
           handleFailures(res);
         })
@@ -102,7 +102,7 @@ export const fuelRelativeTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
         url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
     }
@@ -120,7 +120,7 @@ export const fuelRelativeTrigger = createTrigger({
       const res = await httpClient.sendRequest({
         method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
         url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders({ developerJwt }, 'developer'),
+        headers: getHeaders(developerJwt),
       });
       handleFailures(res);
   },

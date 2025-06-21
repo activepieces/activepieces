@@ -3,11 +3,8 @@ import { ErrorResponse } from "../models";
 
 // Accepts: { developerJwt, vehicleJwt }, and a 'use' param ('developer' | 'vehicle')
 export const getHeaders = (
-  auth: { developerJwt?: string; vehicleJwt?: string },
-  use: 'developer' | 'vehicle' = 'developer'
+    token : string,
 ) => {
-  const token = use === 'vehicle' ? auth.vehicleJwt : auth.developerJwt;
-  if (!token) throw new Error(`Missing required ${use === 'vehicle' ? 'Vehicle JWT' : 'Developer JWT'} in authentication.`);
   return {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",

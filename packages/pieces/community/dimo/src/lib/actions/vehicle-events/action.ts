@@ -74,7 +74,7 @@ export const vehicleEventsUnifiedAction = createAction({
       method,
       url,
       ...(body ? { body } : {}),
-      headers: getHeaders({ developerJwt }, 'developer'),
+      headers: getHeaders(developerJwt),
     });
     handleFailures(response);
     if (
