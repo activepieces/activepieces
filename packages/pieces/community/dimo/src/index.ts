@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { attestationApiAction, deviceDefinitionApiAction, deviceDefinitionsSearchAction, generateDeveloperTokenAction, identityApiAction, telemetryApiAction, tokenExchangeApiAction, vehicleEventsUnifiedAction } from "./lib/actions";
+import { attestationApiAction, deviceDefinitionApiAction, deviceDefinitionsSearchAction, generateDeveloperTokenAction, identityApiActions, telemetryApiActions, tokenExchangeApiAction, vehicleEventsUnifiedAction } from "./lib/actions";
 import { batteryChargingTrigger, batteryPowerTrigger, chargeLevelTrigger, fuelAbsoluteTrigger, fuelRelativeTrigger, ignitionTrigger, odometerTrigger, speedTrigger, tirePressureTrigger } from "./lib/triggers";
 
 export const dimoAuth = PieceAuth.CustomAuth({
@@ -33,10 +33,10 @@ export const dimo = createPiece({
     generateDeveloperTokenAction,
     deviceDefinitionApiAction,
     deviceDefinitionsSearchAction,
-    identityApiAction,
-    telemetryApiAction,
     tokenExchangeApiAction,
     vehicleEventsUnifiedAction,
+    ...identityApiActions,
+    ...telemetryApiActions
   ],
   triggers: [batteryChargingTrigger,batteryPowerTrigger,chargeLevelTrigger,fuelAbsoluteTrigger,fuelRelativeTrigger,ignitionTrigger, odometerTrigger,speedTrigger,tirePressureTrigger],
 });

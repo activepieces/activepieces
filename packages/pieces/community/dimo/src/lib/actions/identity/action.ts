@@ -1,128 +1,310 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { IDENTITY_BASE_URL,commonQueries } from './constant';
-import { handleFailures } from '../../helpers';
+import { IDENTITY_BASE_URL, commonQueries } from './constant';
 
-export const identityApiAction = createAction({
-  requireAuth : false,
-  name: 'identity-api-query',
-  displayName: 'Identity API (GraphQL)',
-  description: 'Query DIMO Identity API using GraphQL - open catalog of vehicles, devices, and rewards (no authentication required)',
+// Ortak GraphQL request helper
+async function sendGraphQLRequest(query: string) {
+  const response = await httpClient.sendRequest({
+    method: HttpMethod.POST,
+    url: IDENTITY_BASE_URL,
+    body: { query },
+    headers: { 'Content-Type': 'application/json' },
+  });
+  // handleFailures fonksiyonu bulunamadı, basit hata kontrolü ekliyoruz
+  if (response.body.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
+  }
+  return response.body.data;
+}
+
+export const identityApiCustomQueryAction = createAction({
+  requireAuth: false,
+  name: 'identity-api-custom-query',
+  displayName: 'Identity API (Custom GraphQL)',
+  description: 'Query DIMO Identity API using a custom GraphQL query (no authentication required)',
   props: {
-    queryType: Property.StaticDropdown({
-      displayName: 'Query Type',
-      description: 'Choose a pre-built query or write custom GraphQL',
-      required: true,
-      defaultValue: 'custom',
-      options: {
-        options: [
-          { label: 'Custom GraphQL Query', value: 'custom' },
-          ...Object.entries(commonQueries).map(([key, val]) => ({ label: val.label, value: key }))
-        ],
-      },
-    }),
     customQuery: Property.LongText({
       displayName: 'Custom GraphQL Query',
       description: 'Enter your GraphQL query here',
-      required: false,
+      required: true,
     }),
+  },
+  async run(context) {
+    const { customQuery } = context.propsValue;
+    if (!customQuery) {
+      throw new Error('Custom GraphQL query is required.');
+    }
+    return await sendGraphQLRequest(customQuery);
+  },
+});
+
+export const generalInfoAction = createAction({
+  requireAuth: false,
+  name: 'identity-general-info',
+  displayName: 'Identity: General Info',
+  description: 'Get total vehicle count',
+  props: {},
+  async run() {
+    return await sendGraphQLRequest(commonQueries.generalInfo.query);
+  },
+});
+
+export const getDeveloperLicenseInfoAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-developer-license-info',
+  displayName: 'Identity: Get Developer License Info',
+  description: 'Get developer license info by tokenId',
+  props: {
+    devLicenseTokenId: Property.Number({
+      displayName: 'Developer License Token ID',
+      description: 'Token ID of the developer license',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getDeveloperLicenseInfo.query.replace(/<devLicenseTokenId>/g, String(context.propsValue.devLicenseTokenId));
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getVehicleByDevLicenseAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-vehicle-by-dev-license',
+  displayName: 'Identity: Get Vehicle By Dev License',
+  description: 'Get vehicles by developer license 0x address',
+  props: {
+    devLicense0x: Property.ShortText({
+      displayName: 'Dev License 0x',
+      description: '0x address for developer license',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getVehicleByDevLicense.query.replace(/<devLicense0x>/g, context.propsValue.devLicense0x);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getTotalVehicleCountForOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-total-vehicle-count-for-owner',
+  displayName: 'Identity: Get Total Vehicle Count For Owner',
+  description: 'Get total vehicle count for an owner',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getTotalVehicleCountForOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getVehicleMMYByOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-vehicle-mmy-by-owner',
+  displayName: 'Identity: Get Vehicle MMY By Owner',
+  description: 'Get vehicle MMY by owner address',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getVehicleMMYByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getVehicleMMYByTokenIdAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-vehicle-mmy-by-tokenid',
+  displayName: 'Identity: Get Vehicle MMY By TokenId',
+  description: 'Get vehicle MMY by tokenId',
+  props: {
     vehicleTokenId: Property.Number({
       displayName: 'Vehicle Token ID',
       description: 'The ERC-721 token ID of the vehicle',
-      required: false,
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getVehicleMMYByTokenId.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getSacdForVehicleAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-sacd-for-vehicle',
+  displayName: 'Identity: Get SACD For Vehicle',
+  description: 'Get SACD for a vehicle by tokenId',
+  props: {
+    vehicleTokenId: Property.Number({
+      displayName: 'Vehicle Token ID',
+      description: 'The ERC-721 token ID of the vehicle',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getSacdForVehicle.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getRewardsByOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-rewards-by-owner',
+  displayName: 'Identity: Get Rewards By Owner',
+  description: 'Get rewards by owner address',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getRewardsByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getRewardHistoryByOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-reward-history-by-owner',
+  displayName: 'Identity: Get Reward History By Owner',
+  description: 'Get reward history by owner address',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getRewardHistoryByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getDeviceDefinitionByTokenIdAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-device-definition-by-tokenid',
+  displayName: 'Identity: Get Device Definition By TokenId',
+  description: 'Get device definition by vehicle tokenId',
+  props: {
+    vehicleTokenId: Property.Number({
+      displayName: 'Vehicle Token ID',
+      description: 'The ERC-721 token ID of the vehicle',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getDeviceDefinitionByTokenId.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getDeviceDefinitionByDefinitionIdAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-device-definition-by-definitionid',
+  displayName: 'Identity: Get Device Definition By DefinitionId',
+  description: 'Get device definition by definitionId',
+  props: {
+    deviceDefinitionId: Property.ShortText({
+      displayName: 'Device Definition ID',
+      description: 'ID of the device definition',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getDeviceDefinitionByDefinitionId.query.replace(/<deviceDefinitionId>/g, context.propsValue.deviceDefinitionId);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getOwnerVehiclesAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-owner-vehicles',
+  displayName: 'Identity: Get Owner Vehicles',
+  description: 'Get vehicles owned by an address',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getOwnerVehicles.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+export const getDeveloperSharedVehiclesFromOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-developer-shared-vehicles-from-owner',
+  displayName: 'Identity: Get Developer Shared Vehicles From Owner',
+  description: 'Get vehicles shared with a developer license from an owner',
+  props: {
+    devLicense0x: Property.ShortText({
+      displayName: 'Dev License 0x',
+      description: '0x address for developer license',
+      required: true,
     }),
     ownerAddress: Property.ShortText({
       displayName: 'Owner Address',
       description: '0x Ethereum address of the owner',
-      required: false,
-    }),
-    devLicenseTokenId: Property.Number({
-      displayName: 'Developer License Token ID',
-      description: 'Token ID of the developer license',
-      required: false,
-    }),
-    first: Property.Number({
-      displayName: 'First (Limit)',
-      description: 'Number of records to return (default: 10)',
-      required: false,
-      defaultValue: 10,
-    }),
-    deviceDefinitionId: Property.ShortText({
-      displayName: 'Device Definition ID',
-      description: 'ID of the device definition',
-      required: false,
-    }),
-    devLicense0x: Property.ShortText({
-      displayName: 'Dev License 0x',
-      description: '0x address for developer license',
-      required: false,
+      required: true,
     }),
   },
   async run(context) {
-    const { queryType, customQuery, vehicleTokenId, ownerAddress, devLicenseTokenId, first, deviceDefinitionId, devLicense0x } = context.propsValue;
-
-    let graphqlQuery = '';
-
-    if (queryType === 'custom') {
-      if (!customQuery) {
-        throw new Error('Custom GraphQL query is required when Query Type is "Custom GraphQL Query"');
-      }
-      graphqlQuery = customQuery;
-    } else {
-
-      const queryEntry = commonQueries[queryType as keyof typeof commonQueries]; ;
-      if (!queryEntry) {
-        throw new Error(`Query '${queryType}' is not defined in commonQueries.`);
-      }
-
-      graphqlQuery = queryEntry.query;
-
-      // Parametreleri otomatik replace et
-      if (graphqlQuery.includes('<vehicleTokenId>') && vehicleTokenId !== undefined) {
-        graphqlQuery = graphqlQuery.replace(/<vehicleTokenId>/g, String(vehicleTokenId));
-      }
-      if (graphqlQuery.includes('<ownerAddress>') && ownerAddress) {
-        graphqlQuery = graphqlQuery.replace(/<ownerAddress>/g, ownerAddress);
-      }
-      if (graphqlQuery.includes('<devLicenseTokenId>') && devLicenseTokenId !== undefined) {
-        graphqlQuery = graphqlQuery.replace(/<devLicenseTokenId>/g, String(devLicenseTokenId));
-      }
-      if (graphqlQuery.includes('<deviceDefinitionId>') && deviceDefinitionId) {
-        graphqlQuery = graphqlQuery.replace(/<deviceDefinitionId>/g, deviceDefinitionId);
-      }
-      if (graphqlQuery.includes('<devLicense0x>') && devLicense0x) {
-        graphqlQuery = graphqlQuery.replace(/<devLicense0x>/g, devLicense0x);
-      }
-      if (graphqlQuery.includes('first: 100') && first) {
-        graphqlQuery = graphqlQuery.replace(/first: 100/g, `first: ${first}`);
-      }
-      if (graphqlQuery.includes('first: 10') && first) {
-        graphqlQuery = graphqlQuery.replace(/first: 10/g, `first: ${first}`);
-      }
-    }
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${IDENTITY_BASE_URL}`,
-        body: {
-          query: graphqlQuery,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      handleFailures(response);
-
-      if (response.body.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
-      }
-
-      return response.body.data;
-
-    } catch (error) {
-      throw new Error(`Identity API request failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const query = commonQueries.getDeveloperSharedVehiclesFromOwner.query
+      .replace(/<devLicense0x>/g, context.propsValue.devLicense0x)
+      .replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
   },
 });
+
+export const getDCNsByOwnerAction = createAction({
+  requireAuth: false,
+  name: 'identity-get-dcns-by-owner',
+  displayName: 'Identity: Get DCNs By Owner',
+  description: 'Get DCNs by owner address',
+  props: {
+    ownerAddress: Property.ShortText({
+      displayName: 'Owner Address',
+      description: '0x Ethereum address of the owner',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const query = commonQueries.getDCNsByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    return await sendGraphQLRequest(query);
+  },
+});
+
+
+export const identityApiActions = [
+  identityApiCustomQueryAction,
+  generalInfoAction,
+  getDeveloperLicenseInfoAction,
+  getVehicleByDevLicenseAction,
+  getTotalVehicleCountForOwnerAction,
+  getVehicleMMYByOwnerAction,
+  getVehicleMMYByTokenIdAction,
+  getSacdForVehicleAction,
+  getRewardsByOwnerAction,
+  getRewardHistoryByOwnerAction,
+  getDeviceDefinitionByTokenIdAction,
+  getDeviceDefinitionByDefinitionIdAction,
+  getOwnerVehiclesAction,
+  getDeveloperSharedVehiclesFromOwnerAction,
+  getDCNsByOwnerAction,
+]

@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { getHeaders, handleFailures } from "../../helpers";
 import { httpClient,HttpMethod } from "@activepieces/pieces-common";
-import { dimoTokenExchangeApiUrl, exchangeTokenEndpoint } from "./constant";
+import { dimoNftContractAddress, exchangeTokenEndpoint } from "./constant";
 import { TokenExchangeResponse } from "./type";
 import { dimoAuth } from '../../../index';
 
@@ -28,8 +28,6 @@ export const tokenExchangeApiAction = createAction({
                     { label: 'All-time location (4)', value: 4 },
                     { label: 'View VIN credentials (5)', value: 5 },
                     { label: 'Live data streams (6)', value: 6 },
-                    { label: 'Raw data (7)', value: 7 },
-                    { label: 'Approximate location (8)', value: 8 },
                   ],
             }
         })
@@ -42,8 +40,9 @@ export const tokenExchangeApiAction = createAction({
             method : HttpMethod.POST,
             url : exchangeTokenEndpoint,
             body : {
-                vehicleTokenId,
+                tokenId : vehicleTokenId,
                 privileges,
+                nftContractAddress : dimoNftContractAddress
             },
             headers : getHeaders({ developerJwt }, 'developer'),
         })
