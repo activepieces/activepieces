@@ -225,6 +225,7 @@ import { AddStepToIssuesTable1750017637712 } from './migration/postgres/17500176
 import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
 import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
+import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -471,6 +472,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
                 AddPlanNameOnPlatformPlan1748549003744,
+                AddPlatformIdToAiUsage1750526457504,
               
        
             )
