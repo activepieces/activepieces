@@ -45,13 +45,13 @@ export const odometerTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: verificationTokenInput,
-    customWebhookUrl: Property.ShortText({
-      displayName: 'Webhook URL',
-      description:
-        'The URL where the webhook will send data. This is automatically set by the platform.',
-      required: false
-    })
+    verificationToken: verificationTokenInput
+    // customWebhookUrl: Property.ShortText({
+    //   displayName: 'Webhook URL',
+    //   description:
+    //     'The URL where the webhook will send data. This is automatically set by the platform.',
+    //   required: false
+    // })
   },
   sampleData: {
     tokenId: 17,
@@ -75,10 +75,10 @@ export const odometerTrigger = createTrigger({
 
 
     console.log(`Original webhook URL: ${context.webhookUrl}`);
-    const triggerWebhookId = context.webhookUrl.substring(
-      context.webhookUrl.lastIndexOf('/') + 1)
+    // const triggerWebhookId = context.webhookUrl.substring(
+    //   context.webhookUrl.lastIndexOf('/') + 1)
 
-      const triggerWebhookUrl = `${context.propsValue.customWebhookUrl}/v1/webhooks/${triggerWebhookId}`;
+    //   const triggerWebhookUrl = `${context.propsValue.customWebhookUrl}/api/v1/webhooks/${triggerWebhookId}`;
     const webhookDef: WebhookDefinition = {
       service: 'Telemetry',
       data: TriggerField.PowertrainTransmissionTravelledDistance,
@@ -101,7 +101,7 @@ export const odometerTrigger = createTrigger({
         trigger: vehicleEventTriggerToText(webhookDef.trigger),
         setup: webhookDef.setup,
         description: webhookDef.description,
-        target_uri: triggerWebhookUrl,
+        target_uri: context.webhookUrl,
         status: webhookDef.status,
         verification_token: verificationToken
       },
@@ -136,6 +136,16 @@ export const odometerTrigger = createTrigger({
       verificationToken,
     });
   },
+    async onHandshake(context) {
+    console.log('Handshake triggered for odometer webhook');
+      return {
+        body : context.propsValue.verificationToken,
+        headers : {
+          'Content-Type': 'text/plain',
+        },
+        status: 200,
+      }
+  },
   async onDisable(context) {
     const { developerJwt } = context.auth;
     const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
@@ -153,16 +163,6 @@ export const odometerTrigger = createTrigger({
     });
     handleFailures(res);
     await context.store.delete('webhook_info');
-  },
-  async onHandshake(context) {
-
-      return {
-        body : context.propsValue.verificationToken,
-        headers : {
-          'Content-Type': 'text/plain',
-        },
-        status: 200,
-      }
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;
