@@ -6,7 +6,6 @@ import {
     ErrorCode,
     FilteredPieceBehavior,
     isNil,
-    LocalesEnum,
     Platform,
     PlatformId,
     PlatformPlanLimits,
@@ -16,7 +15,6 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-import { licenseKeysService } from '../ee/license-keys/license-keys-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -68,7 +66,6 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
@@ -123,7 +120,6 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
-            ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
@@ -179,11 +175,8 @@ export const platformService = {
 
 async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
     const plan = await getPlan(platform)
-    const licenseKey = await licenseKeysService(system.globalLogger()).getKey(plan.licenseKey)
     return {
         ...platform,
-        licenseExpiresAt: licenseKey?.expiresAt,
-        hasLicenseKey: !isNil(licenseKey),
         plan,
     }
 }

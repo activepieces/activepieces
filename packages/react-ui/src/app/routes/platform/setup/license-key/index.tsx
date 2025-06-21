@@ -96,12 +96,12 @@ const LicenseKeyPage = () => {
   };
 
   const expired =
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs());
+    platform?.plan?.licenseExpiresAt &&
+    dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs());
   const expiresSoon =
     !expired &&
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
+    platform?.plan?.licenseExpiresAt &&
+    dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
 
   return (
     <div className="flex-col w-full max-w-2xl">
@@ -115,7 +115,7 @@ const LicenseKeyPage = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        {platform.hasLicenseKey && (
+        {platform.plan.licenseKey && (
           <div className="relative">
             <Input
               value={'....................'}
@@ -139,7 +139,7 @@ const LicenseKeyPage = () => {
         />
       </div>
 
-      {platform.licenseExpiresAt && (
+      {platform.plan.licenseExpiresAt && (
         <div className="rounded-lg p-3 mt-5">
           <div className="flex items-center space-x-2">
             <CalendarDays className="w-5 h-5" />
@@ -148,7 +148,7 @@ const LicenseKeyPage = () => {
               <p className="text-xs">
                 {t('Valid until')}{' '}
                 {formatUtils.formatDateOnly(
-                  dayjs(platform.licenseExpiresAt).toDate(),
+                  dayjs(platform.plan.licenseExpiresAt).toDate(),
                 )}
                 {(expiresSoon || expired) && (
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-300">
@@ -162,7 +162,7 @@ const LicenseKeyPage = () => {
         </div>
       )}
 
-      {platform.licenseExpiresAt && <Separator className="my-5" />}
+      {platform.plan.licenseExpiresAt && <Separator className="my-5" />}
 
       <div className="rounded-lg p-4">
         <h2 className="text-lg font-semibold mb-5">{t('Features')}</h2>
