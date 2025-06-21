@@ -1,67 +1,66 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { deepgramAuth } from '../common/auth';
-import { createDeepgramClient } from '../common/client';
+import { BASE_URL, TEXT_TO_SPEECH_MODELS } from '../common/constants';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const textToSpeechAction = createAction({
-  auth: deepgramAuth,
-  name: 'text_to_speech',
-  displayName: 'Text to Speech',
-  description: 'Converts text to audio file',
-  props: {
-    text: Property.LongText({
-      displayName: 'Text',
-      required: true,
-      description: 'Text to convert to speech (5000 character limit)'
-    }),
-    voice: Property.StaticDropdown({
-      displayName: 'Voice',
-      required: true,
-      options: {
-        options: [
-          { label: 'Aurora (Female)', value: 'aura-asteria-en' },
-          { label: 'Orion (Male)', value: 'aura-orion-en' },
-          { label: 'Stella (Female)', value: 'aura-stella-en' },
-          { label: 'Athena (Female)', value: 'aura-athena-en' }
-        ],
-      },
-    }),
-    speed: Property.Number({
-      displayName: 'Speed',
-      required: false,
-      defaultValue: 1.0,
-      description: 'Speed factor (0.25 to 4.0)'
-    }),
-    format: Property.StaticDropdown({
-      displayName: 'Output Format',
-      required: false,
-      options: {
-        options: [
-          { label: 'MP3', value: 'mp3' },
-          { label: 'WAV', value: 'wav' }
-        ],
-      },
-      defaultValue: 'mp3'
-    })
-  },
-  async run(context) {
-    const { text, voice, speed, format = 'mp3' } = context.propsValue;
-    const client = createDeepgramClient(context.auth);
-    
-    const response = await client.post('/speak', {
-      body: { text },
-      queryParams: {
-        model: voice,
-        ...(speed && { speed: speed.toString() }),
-        encoding: format
-      },
-      responseType: 'arraybuffer'
-    });
-    
-    return {
-      audio: response.body,
-      mimeType: `audio/${format}`,
-      voice,
-      textLength: text.length
-    };
-  },
+	auth: deepgramAuth,
+	name: 'text_to_speech',
+	displayName: 'Text to Speech',
+	description: 'Converts text to audio file.',
+	props: {
+		text: Property.LongText({
+			displayName: 'Text',
+			required: true,
+		}),
+		model: Property.StaticDropdown({
+			displayName: 'Voice',
+			required: true,
+			options: {
+				options: TEXT_TO_SPEECH_MODELS,
+			},
+		}),
+		encoding: Property.StaticDropdown({
+			displayName: 'Output Format',
+			required: false,
+			defaultValue: 'mp3',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'linear16', value: 'linear16' },
+					{ label: 'flac', value: 'flac' },
+					{ label: 'mulaw', value: 'mulaw' },
+					{ label: 'alaw', value: 'alaw' },
+					{ label: 'mp3', value: 'mp3' },
+					{ label: 'opus', value: 'opus' },
+					{ label: 'aac', value: 'aac' },
+				],
+			},
+		}),
+	},
+	async run(context) {
+		const { text, model, encoding } = context.propsValue;
+
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.POST,
+			url: BASE_URL + '/speak',
+			body: { text },
+			headers: {
+				Authorization: `Token ${context.auth}`,
+				'Content-Type': 'application/json',
+			},
+			queryParams: {
+				model,
+				encoding: encoding || 'mp3',
+			},
+			responseType: 'arraybuffer',
+		});
+
+		return {
+			file: await context.files.write({
+				fileName: `audio.${encoding}`,
+				data: Buffer.from(response.body),
+			}),
+		};
+	},
 });
