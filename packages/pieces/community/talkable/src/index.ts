@@ -18,6 +18,7 @@ import {
   unsubscribePerson,
   updatePerson,
   updateReferralStatus,
+  claimOffer,
 } from './lib/actions';
 
 const markdownDescription = `
@@ -67,6 +68,7 @@ export const talkable = createPiece({
     refund,
     getLoyaltyRedeemActions,
     updateReferralStatus,
+    claimOffer,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.talkable.com/api/v2',
       auth: talkableAuth,
@@ -77,3 +79,4 @@ export const talkable = createPiece({
   ],
   triggers: [],
 });
+
