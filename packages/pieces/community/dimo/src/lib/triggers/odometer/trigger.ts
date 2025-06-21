@@ -2,7 +2,6 @@ import { httpClient } from '@activepieces/pieces-common';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import {
   getHeaders,
-  getNumberExpression,
   handleFailures,
 } from '../../helpers';
 import {
@@ -46,7 +45,13 @@ export const odometerTrigger = createTrigger({
         ],
       },
     }),
-    verificationToken: verificationTokenInput
+    verificationToken: verificationTokenInput,
+    customWebhookUrl: Property.ShortText({
+      displayName: 'Webhook URL',
+      description:
+        'The URL where the webhook will send data. This is automatically set by the platform.',
+      required: false
+    })
   },
   sampleData: {
     tokenId: 17,
@@ -68,6 +73,12 @@ export const odometerTrigger = createTrigger({
     } = context.propsValue;
     const { developerJwt } = context.auth;
 
+
+    console.log(`Original webhook URL: ${context.webhookUrl}`);
+    const triggerWebhookId = context.webhookUrl.substring(
+      context.webhookUrl.lastIndexOf('/') + 1)
+
+      const triggerWebhookUrl = `${context.propsValue.customWebhookUrl}/v1/webhooks/${triggerWebhookId}`;
     const webhookDef: WebhookDefinition = {
       service: 'Telemetry',
       data: TriggerField.PowertrainTransmissionTravelledDistance,
@@ -90,7 +101,7 @@ export const odometerTrigger = createTrigger({
         trigger: vehicleEventTriggerToText(webhookDef.trigger),
         setup: webhookDef.setup,
         description: webhookDef.description,
-        target_uri: webhookDef.targetUri,
+        target_uri: triggerWebhookUrl,
         status: webhookDef.status,
         verification_token: verificationToken
       },

@@ -22,7 +22,7 @@ export const attestationApiAction = createAction({
         const {vehicleTokenId} = ctx.propsValue
 
         const response = await httpClient.sendRequest<AttestationResponse>({
-          method: HttpMethod.GET,
+          method: HttpMethod.POST,
           url: CREATE_VC_ENDPOINT.replace("{0}", vehicleTokenId.toString()),
           headers : getHeaders(ctx.auth as { developerJwt?: string; vehicleJwt?: string }, 'vehicle'),
         })
