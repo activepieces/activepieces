@@ -1,7 +1,8 @@
+import { Writable } from 'stream'
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { BillingUsageType, platformUsageService } from '../ee/platform/platform-usage-service'
+import { FastifyRequest } from 'fastify'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
@@ -14,25 +15,61 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         upstream: '',
         disableRequestLogging: false,
         replyOptions: {
+            rewriteRequestHeaders: (_request, headers) => {
+                headers['accept-encoding'] = 'identity'
+                return headers
+            },
             getUpstream(request, _base) {
                 const params = request.params as Record<string, string> | null
                 const provider = params?.['provider']
-                const providerConfig = getProviderConfig(provider)
-                if (isNil(providerConfig)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-                        params: {
-                            provider: provider ?? 'unknown',
-                        },
-                    })
-                }
+                const providerConfig = getProviderConfigOrThrow(provider)
                 return providerConfig.baseUrl
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
+                request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
                 const projectId = request.principal.projectId
-                await platformUsageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_CREDITS })
-                await reply.send(response)
+                const { provider } = request.params as { provider: string }
+
+                let buffer = Buffer.from('');
+
+                // Types are not properly defined, pipe does not exist but the stream pipe does
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (response as any).stream.pipe(new Writable({
+                    write(chunk, encoding, callback) {
+                        buffer = Buffer.concat([buffer, chunk]);
+                        (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
+                        callback()
+                    },
+                    async final(callback) {
+                        reply.raw.end()
+
+                        try {
+                            if (reply.statusCode >= 400) {
+                                app.log.error({
+                                    response,
+                                    body: buffer.toString(),
+                                }, 'Error response from AI provider')
+                                return
+                            }
+
+                            const completeResponse = JSON.parse(buffer.toString())
+                            const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
+                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
+                        }
+                        catch (error) {
+                            app.log.error({
+                                error,
+                                provider,
+                                projectId,
+                                response: buffer.toString(),
+                            }, 'Error processing AI provider response')
+                        }
+                        finally {
+                            callback()
+                        }
+                    },
+                }))
             },
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -60,12 +97,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const userPlatformId = request.principal.platform.id
             const params = request.params as Record<string, string>
             const provider = params['provider'] as string
-            const providerConfig = SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-            if (!providerConfig) {
+            const providerConfig = getProviderConfigOrThrow(provider)
+
+            const model = aiProviderService.extractModelId(provider, request)
+            if (!model || !aiProviderService.isModelSupported(provider, model)) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
                     params: {
-                        provider: params['provider'],
+                        provider,
+                        model: model ?? 'unknown',
                     },
                 })
             }
@@ -88,13 +128,22 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 delete request.headers['authorization']
             }
         },
-        
+        preValidation: (request, _reply, done) => {
+            (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody = request.body as Record<string, unknown>
+            done()
+        },
     })
 }
 
-function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
-    if (isNil(provider)) {
-        return undefined
+function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProvider {
+    const providerConfig = !isNil(provider) ? SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider) : undefined
+    if (isNil(providerConfig)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+            params: {
+                provider: provider ?? 'unknown',
+            },
+        })
     }
-    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+    return providerConfig
 }

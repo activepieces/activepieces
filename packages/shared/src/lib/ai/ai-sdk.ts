@@ -1,4 +1,5 @@
 import { createAnthropic } from '@ai-sdk/anthropic'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createReplicate } from '@ai-sdk/replicate'
 import { ImageModel, LanguageModel } from 'ai'
@@ -47,6 +48,17 @@ export function createAIProvider<T extends LanguageModel | ImageModel>({
                 throw new Error(`Provider ${providerName} does not support language models`)
             }
             return provider.imageModel(modelInstance.modelId) as unknown as T
+        }
+        case 'google': {
+            const googleVersion = 'v1beta'
+            const provider = createGoogleGenerativeAI({
+                apiKey,
+                baseURL: `${baseURL}/${googleVersion}`,
+            })
+            if (isImageModel) {
+                throw new Error(`Provider ${providerName} does not support image models`)
+            }
+            return provider(modelInstance.modelId) as T
         }
         default:
             throw new Error(`Provider ${providerName} is not supported`)

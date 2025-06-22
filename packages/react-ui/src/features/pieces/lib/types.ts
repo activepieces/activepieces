@@ -1,5 +1,6 @@
 import {
   ActionBase,
+  ErrorHandlingOptionsParam,
   PieceAuthProperty,
   PieceMetadataModelSummary,
   TriggerBase,
@@ -27,17 +28,10 @@ export type PieceStepMetadata = BaseStepMetadata & {
   packageType: PackageType;
   pieceType: PieceType;
   auth: PieceAuthProperty | undefined;
-  errorHandlingOptions?: {
-    continueOnFailure: {
-      hide: boolean;
-    };
-    retryOnFailure: {
-      hide: boolean;
-    };
-  };
+  errorHandlingOptions?: ErrorHandlingOptionsParam;
 };
 
-type PrimitiveStepMetadata = BaseStepMetadata & {
+export type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
     | ActionType.CODE
     | ActionType.LOOP_ON_ITEMS
@@ -54,6 +48,10 @@ export type StepMetadataWithSuggestions =
   | PrimitiveStepMetadata;
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
+
+export type StepMetadataWithStepName = StepMetadata & {
+  stepDisplayName: string;
+};
 
 export type PieceSelectorOperation =
   | {

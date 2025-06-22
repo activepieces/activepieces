@@ -3,6 +3,7 @@ import { Agent } from '../agents'
 import { BaseModelSchema, Nullable } from '../common'
 import { PopulatedFlow } from '../flows'
 import { UserWithMetaInformation } from '../user'
+import { RichContentBlock } from './content'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
@@ -88,6 +89,7 @@ export const StatusOption = Type.Object({
 
 export type StatusOption = Static<typeof StatusOption>
 
+
 export enum TodoEnvironment {
     TEST = 'test',
     PRODUCTION = 'production',
@@ -96,7 +98,7 @@ export enum TodoEnvironment {
 export const Todo = Type.Object({
     ...BaseModelSchema,
     title: Type.String(),
-    description: Nullable(Type.String()),
+    description: Type.String(),
     status: StatusOption,
     createdByUserId: Nullable(Type.String()),
     statusOptions: Type.Array(StatusOption),
@@ -132,7 +134,7 @@ export const TodoActivity = Type.Object({
     todoId: Type.String(),
     userId: Nullable(Type.String()),
     agentId: Nullable(Type.String()),
-    content: Type.String(),
+    content: Type.Array(RichContentBlock),
 })
 
 export type TodoActivity = Static<typeof TodoActivity>

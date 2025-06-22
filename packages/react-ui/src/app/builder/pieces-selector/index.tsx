@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
   StepMetadata,
   PieceSelectorOperation,
@@ -84,7 +84,7 @@ const PieceSelector = ({
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
-    piecesHooks.useAllStepsMetadata({
+    stepsHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
       type: isTrigger ? 'trigger' : 'action',
     });

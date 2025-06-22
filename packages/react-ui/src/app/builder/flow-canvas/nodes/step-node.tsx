@@ -6,8 +6,8 @@ import React, { useMemo } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -53,7 +53,7 @@ const ApStepCanvasNode = React.memo(
       state.pieceSelectorStep,
     ]);
     const openPieceSelector = pieceSelectorStep === step.name;
-    const { stepMetadata } = piecesHooks.useStepMetadata({
+    const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
 
@@ -146,64 +146,66 @@ const ApStepCanvasNode = React.memo(
               asChild={true}
             >
               <div
-                className="flex h-full w-full"
+                className="flex items-center justify-center h-full w-full gap-3"
                 onClick={(e) => {
                   if (!openPieceSelector) {
                     handleStepClick(e);
                   }
                 }}
               >
-                <div className="flex h-full items-center justify-between gap-3 w-full">
-                  <div className="flex items-center justify-center min-w-[46px] h-full">
-                    <div className={isSkipped ? 'opacity-80' : ''}>
-                      <PieceIcon
-                        logoUrl={
-                          step.settings?.inputUiInfo?.customizedInputs
-                            ?.logoUrl ?? stepMetadata?.logoUrl
-                        }
-                        displayName={stepMetadata?.displayName}
-                        showTooltip={false}
-                        size={'lg'}
-                      ></PieceIcon>
+                <div
+                  className={cn('flex items-center justify-center h-full ', {
+                    'opacity-80': isSkipped,
+                  })}
+                >
+                  <ImageWithFallback
+                    src={stepMetadata?.logoUrl}
+                    alt={stepMetadata?.displayName}
+                    className="w-12 h-12"
+                  />
+                </div>
+                <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+                  <div className=" flex items-center justify-between min-w-0 w-full">
+                    <div
+                      className={cn('text-sm truncate grow shrink ', {
+                        'text-accent-foreground/70': isSkipped,
+                      })}
+                    >
+                      {stepIndex}. {step.displayName}
                     </div>
-                  </div>
-                  <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                    <div className=" flex items-center justify-between min-w-0 w-full">
-                      <div
-                        className={cn('text-sm truncate grow shrink ', {
-                          'text-accent-foreground/70': isSkipped,
-                        })}
-                      >
-                        {stepIndex}. {step.displayName}
-                      </div>
 
-                      {(!readonly || !isTrigger) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 size-7 "
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.target) {
-                              const rightClickEvent = new MouseEvent(
-                                'contextmenu',
-                                {
-                                  bubbles: true,
-                                  cancelable: true,
-                                  view: window,
-                                  button: 2,
-                                  clientX: e.clientX,
-                                  clientY: e.clientY,
-                                },
-                              );
-                              e.target.dispatchEvent(rightClickEvent);
-                            }
-                          }}
-                        >
-                          <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
-                        </Button>
-                      )}
+                    {(!readonly || !isTrigger) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 size-7 "
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (e.target) {
+                            const rightClickEvent = new MouseEvent(
+                              'contextmenu',
+                              {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window,
+                                button: 2,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                              },
+                            );
+                            e.target.dispatchEvent(rightClickEvent);
+                          }
+                        }}
+                      >
+                        <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between w-full items-center">
+                    <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                      {stepMetadata?.displayName}
                     </div>
 
                     <div className="flex justify-between w-full items-center">

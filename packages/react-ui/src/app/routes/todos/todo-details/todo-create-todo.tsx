@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PopulatedTodo } from '@activepieces/shared';
 
-import { agentsApi } from '../../agents/agents-api';
+import { agentsApi } from '../../../../features/agents/lib/agents-api';
 
 import { TodoTextarea } from './todo-textarea';
 

@@ -1,5 +1,4 @@
 import { PopoverTrigger } from '@radix-ui/react-popover';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Agent } from '@activepieces/shared';
 
-import { agentsApi } from './agents-api';
+import { agentHooks } from './lib/agent-hooks';
 
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
@@ -23,21 +22,22 @@ export const CreateAgentButton = ({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const createAgentMutation = useMutation({
-    mutationFn: () =>
-      agentsApi.create({
+  const createAgentMutation = agentHooks.useCreate();
+
+  const handleButtonClick = () => {
+    createAgentMutation.mutate(
+      {
         displayName: 'Fresh Agent',
         description:
           'I am a fresh agent, Jack of all trades, master of none (yet)',
-      }),
-    onSuccess: (newAgent) => {
-      onAgentCreated(newAgent);
-      setOpen(false);
-    },
-  });
-
-  const handleButtonClick = () => {
-    createAgentMutation.mutate();
+      },
+      {
+        onSuccess: (newAgent) => {
+          onAgentCreated(newAgent);
+          setOpen(false);
+        },
+      },
+    );
   };
 
   const handleConfigureClick = () => {

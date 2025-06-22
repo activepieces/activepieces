@@ -9,6 +9,8 @@ import { CardList } from '@/components/custom/card-list';
 import { useSocket } from '@/components/socket-provider';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { getCoreActions } from '@/features/pieces/lib/pieces-hook';
+import { CORE_STEP_METADATA } from '@/features/pieces/lib/steps-hooks';
 import {
   ActionType,
   CodeAction,
@@ -22,8 +24,6 @@ import {
 } from '@activepieces/shared';
 
 import { Textarea } from '../../../components/ui/textarea';
-import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
 import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
 import { SidebarHeader } from '../sidebar-header';
