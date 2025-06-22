@@ -55,8 +55,7 @@ export const TodoDetails = ({
       const wasUnresolved =
         previousStatus.current.name === UNRESOLVED_STATUS.name;
       const isNowResolved =
-        updatedTodo.status.name !== UNRESOLVED_STATUS.name &&
-        updatedTodo.status.continueFlow !== false;
+        updatedTodo.status.name !== UNRESOLVED_STATUS.name;
 
       if (wasUnresolved && isNowResolved) {
         onStatusChange?.(updatedTodo.status, 'agent');
