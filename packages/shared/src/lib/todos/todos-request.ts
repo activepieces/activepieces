@@ -9,7 +9,6 @@ export const ListTodosQueryParams = Type.Object({
     projectId: ApId,
     flowId: Type.Optional(ApId),
     cursor: Type.Optional(Type.String()),
-    agentId: Type.Optional(ApId),
     limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
     assigneeId: Type.Optional(ApId),
     statusOptions: Type.Optional(Type.Array(Type.String())),

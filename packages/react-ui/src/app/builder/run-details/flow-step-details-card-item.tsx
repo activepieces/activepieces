@@ -11,7 +11,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
@@ -83,7 +83,7 @@ const FlowStepDetailsCardItem = ({
     stepOutput.output.iterations[loopsIndexes[stepName]]
       ? Object.keys(stepOutput.output.iterations[loopsIndexes[stepName]])
       : [];
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: step,
   });
   const [isOpen, setIsOpen] = React.useState(true);

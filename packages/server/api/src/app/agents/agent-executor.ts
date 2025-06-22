@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentbuiltInToolsNames, agentOutputUtils, assertEqual, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentOutputUtils, AgentTaskStatus, AgentTestResult, assertEqual, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText } from 'ai'
 import dayjs from 'dayjs'
@@ -121,9 +121,12 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             projectId: params.agent.projectId,
         })
 
-        const success = blocks.some((block) => block.type === ContentBlockType.TOOL_CALL && block.name === agentbuiltInToolsNames.markAsComplete)
-        await markCompleted(success, todoId, log, params.socket, params.agent)
-        await callbackIfUrlIsProvided(params, todoId, blocks)
+        const agentResult = agentOutputUtils.findAgentResult({
+            todoId,
+            content: blocks,
+        })
+        await markCompleted(agentResult.status, todoId, log, params.socket, params.agent)
+        await callbackIfUrlIsProvided(params, agentResult)
         log.info({
             agentId: params.agent.id,
             mcpId: params.agent.mcpId,
@@ -136,8 +139,8 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
 
 
 
-async function markCompleted(success: boolean, todoId: string, log: FastifyBaseLogger, socket: Socket, agent: Agent) {
-    if (!success) {
+async function markCompleted(agentStatus: AgentTaskStatus, todoId: string, log: FastifyBaseLogger, socket: Socket, agent: Agent) {
+    if (agentStatus === AgentTaskStatus.FAILED) {
         await todoService(log).update({
             id: todoId,
             status: AGENT_REJECTED_STATUS_OPTION,
@@ -155,16 +158,15 @@ async function markCompleted(success: boolean, todoId: string, log: FastifyBaseL
     }
 }
 
-async function callbackIfUrlIsProvided(params: ExecuteAgent, todoId: string, blocks: RichContentBlock[]) {
+async function callbackIfUrlIsProvided(params: ExecuteAgent, agentResult: AgentTestResult) {
     if (isNil(params.callbackUrl)) {
         return
     }
-    const agentResult = agentOutputUtils.findAgentResult({
-        todoId,
-        content: blocks,
-    })
     await fetch(params.callbackUrl, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify(agentResult),
     })
 }

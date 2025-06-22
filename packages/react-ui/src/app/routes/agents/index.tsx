@@ -7,10 +7,11 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { Agent, ApFlagId } from '@activepieces/shared';
 
-import { AgentBuilder } from './agent-builder';
-import { AgentCard } from './agent-card';
-import { agentHooks } from './agent-hooks';
-import { CreateAgentButton } from './create-agent-button';
+import { AgentCard } from '../../../features/agents/agent-card';
+import { CreateAgentButton } from '../../../features/agents/create-agent-button';
+import { agentHooks } from '../../../features/agents/lib/agent-hooks';
+
+import { AgentBuilder } from './builder';
 
 export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);

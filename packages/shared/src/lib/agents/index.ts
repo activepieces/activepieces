@@ -27,10 +27,15 @@ export const AgentOutputField = Type.Object({
 export type AgentOutputField = Static<typeof AgentOutputField>
 
 
+export enum AgentTaskStatus {
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
+}
+
 export const AgentTestResult = Type.Object({
     todoId: Type.String(),
+    status: Type.Enum(AgentTaskStatus),
     output: Type.Unknown(),
-    steps: Type.Array(RichContentBlock),
 })
 
 export type AgentTestResult = Static<typeof AgentTestResult>

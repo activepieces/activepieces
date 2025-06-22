@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/tooltip';
 import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
 
+import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
-import { agentHooks } from '../agent-hooks';
 
 import { AgentSettingsOutput } from './agent-settings-output';
 import { AgentTestRunButton } from './agent-test-run-button';

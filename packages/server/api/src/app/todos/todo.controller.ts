@@ -10,7 +10,7 @@ const DEFAULT_CURSOR = null
 
 export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListTodosRequest, async (request) => {
-        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title, agentId } = request.query
+        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title } = request.query
         return todoService(request.log).list({
             platformId,
             projectId,
@@ -19,7 +19,6 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             cursor: cursor ?? DEFAULT_CURSOR,
             statusOptions,
             title,
-            agentId,
         })
     })
 
