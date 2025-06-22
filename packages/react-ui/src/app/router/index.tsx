@@ -1,4 +1,3 @@
-import { useEffect, useMemo } from 'react';
 import {
   Navigate,
   RouterProvider,
@@ -22,22 +21,14 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { authenticationSession } from '@/lib/authentication-session';
-import { combinePaths, parentWindow } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
-import { ApTablesPage } from '../routes/ap-tables';
-import { ApTableEditorPage } from '../routes/ap-tables/id';
+import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -46,7 +37,8 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import McpPage from '../routes/mcp';
+import McpServersPage from '../routes/mcp-servers';
+import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -63,12 +55,13 @@ import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
-import AppearancePage from '../routes/settings/appearance';
 import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
+import { ApTablesPage } from '../routes/tables';
+import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
@@ -139,6 +132,16 @@ const routes = [
       </PageTitle>
     ),
   },
+  ...ProjectRouterWrapper({
+    path: '/agents',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Agents">
+          <AgentsPage />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
   {
     path: '/chats/:flowId',
     element: (
@@ -327,18 +330,7 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.appearance,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Appearance">
-          <ProjectSettingsLayout>
-            <AppearancePage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
+
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.general,
     element: (
@@ -397,7 +389,19 @@ const routes = [
   }),
 
   ...ProjectRouterWrapper({
-    path: '/mcp',
+    path: '/mcps',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_MCP}>
+          <PageTitle title="MCP">
+            <McpServersPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/mcps/:mcpId',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
@@ -417,7 +421,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
   {
     path: '/404',
     element: (
@@ -671,75 +674,12 @@ const routes = [
   },
 ];
 
+export const memoryRouter = createMemoryRouter(routes);
+const browserRouter = createBrowserRouter(routes);
+
 const ApRouter = () => {
   const { embedState } = useEmbedding();
-  const projectId = authenticationSession.getProjectId();
-  const router = useMemo(() => {
-    return embedState.isEmbedded
-      ? createMemoryRouter(routes, {
-          initialEntries: [window.location.pathname],
-        })
-      : createBrowserRouter(routes);
-  }, [embedState.isEmbedded]);
-
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
-
-    const handleVendorRouteChange = (
-      event: MessageEvent<ActivepiecesVendorRouteChanged>,
-    ) => {
-      if (
-        event.source === parentWindow &&
-        event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
-      ) {
-        const targetRoute = event.data.data.vendorRoute;
-        const targetRouteRequiresProjectId =
-          targetRoute.includes('/runs') ||
-          targetRoute.includes('/flows') ||
-          targetRoute.includes('/connections');
-        if (!targetRouteRequiresProjectId) {
-          router.navigate(targetRoute);
-        } else {
-          router.navigate(
-            combinePaths({
-              secondPath: targetRoute,
-              firstPath: `/projects/${projectId}`,
-            }),
-          );
-        }
-      }
-    };
-
-    window.addEventListener('message', handleVendorRouteChange);
-
-    return () => {
-      window.removeEventListener('message', handleVendorRouteChange);
-    };
-  }, [embedState.isEmbedded, router.navigate]);
-
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
-    router.subscribe((state) => {
-      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
-        /\/projects\/[^/]+/,
-        '',
-      );
-      parentWindow.postMessage(
-        {
-          type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
-          data: {
-            route: pathNameWithoutProjectOrProjectId + state.location.search,
-          },
-        },
-        '*',
-      );
-    });
-  }, [router, embedState.isEmbedded]);
-
+  const router = embedState.isEmbedded ? memoryRouter : browserRouter;
   return <RouterProvider router={router}></RouterProvider>;
 };
 

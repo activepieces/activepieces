@@ -1787,6 +1787,69 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Sanket6652",
+      "name": "Sanket6652",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119039046?v=4",
+      "profile": "https://github.com/Sanket6652",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Ani-4x",
+      "name": "Animesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/174266491?v=4",
+      "profile": "https://github.com/Ani-4x",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "DerekJDev",
+      "name": "Derek Johnson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13419128?v=4",
+      "profile": "https://tarvent.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mamiefurax",
+      "name": "MamieFurax",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3955802?v=4",
+      "profile": "https://github.com/mamiefurax",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jadhavharshh",
+      "name": "Harsh Jadhav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182950168?v=4",
+      "profile": "https://github.com/jadhavharshh",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lucaslimasouza",
+      "name": "Lucas Lima de Souza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1576846?v=4",
+      "profile": "http://twitter.com/lucaslima_souza",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "BenjaminAlan",
+      "name": "Benjamin Benouarka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42831606?v=4",
+      "profile": "https://github.com/BenjaminAlan",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

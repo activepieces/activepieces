@@ -6,10 +6,10 @@ import {
   CardList,
   CardListItem,
   CardListItemSkeleton,
-} from '@/components/ui/card-list';
+} from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
   StepMetadata,
   HandleSelectCallback,
@@ -33,7 +33,7 @@ export const StepsCardList: React.FC<StepsCardListProps> = ({
   const [openCreateTodoGuideDialog, setOpenCreateTodoGuideDialog] =
     useState(false);
   const { data: actionsOrTriggers, isLoading: isLoadingSelectedPieceMetadata } =
-    piecesHooks.usePieceActionsOrTriggers({
+    stepsHooks.usePieceActionsOrTriggers({
       stepMetadata: selectedPieceMetadata,
     });
 
