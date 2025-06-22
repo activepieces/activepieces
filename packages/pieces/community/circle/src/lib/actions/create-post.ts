@@ -1,6 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { circleSoAuth, circleSoBaseUrl, listSpacesDropdown } from "../common";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { circleAuth } from "../common/auth";
+import { BASE_URL, spaceIdDropdown } from "../common";
 
 // Interface for the TipTap body structure (simplified for payload)
 interface TipTapPayloadBody {
@@ -37,12 +38,12 @@ interface CreatePostPayload {
 }
 
 export const createPost = createAction({
-    auth: circleSoAuth,
+    auth: circleAuth,
     name: 'create_post',
     displayName: 'Create Post',
-    description: 'Create a new post in a specific space.',
+    description: 'Creates a new post in a specific space.',
     props: {
-        space_id: listSpacesDropdown,
+        space_id: spaceIdDropdown,
         name: Property.ShortText({
             displayName: 'Post Name/Title',
             description: 'The title of the post.',
@@ -160,9 +161,9 @@ export const createPost = createAction({
             payload.user_email = user_email;
         }
 
-        const response = await httpClient.sendRequest<any>({
+        const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${circleSoBaseUrl}/posts`,
+            url: `${BASE_URL}/posts`,
             body: payload,
             headers: {
                 "Authorization": `Bearer ${context.auth}`,
