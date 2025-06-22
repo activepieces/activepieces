@@ -1,6 +1,7 @@
-import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing } from '@activepieces/shared'
+import { ActivepiecesError, DALLE2PricingPerImage, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, isNil } from '@activepieces/shared'
+import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
-import { AIProviderStrategy, Usage } from './types'
+import { AIProviderStrategy, StreamingParser, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
 
 export const openaiProvider: AIProviderStrategy = {
@@ -10,18 +11,18 @@ export const openaiProvider: AIProviderStrategy = {
     },
 
     calculateUsage: (request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage => {
+        const body = request.body as { size: string, n?: string, quality?: string }
         const apiResponse = response as {
             usage: 
             | { input_tokens: number, output_tokens: number }
             | { prompt_tokens: number, completion_tokens: number }
         } 
-        const body = request.body as { size: string, n?: string, quality?: string }
         const { provider } = request.params as { provider: string }
 
         const providerConfig = getProviderConfig(provider)!
         const model = openaiProvider.extractModelId(request)!
         const size = body.size
-        const imageCount = parseInt(body.n as string ?? '1')
+        const imageCount = parseInt(body.n ?? '1')
         const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
 
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
@@ -68,6 +69,54 @@ export const openaiProvider: AIProviderStrategy = {
         return {
             cost: imageCost * imageCount,
             model,
+        }
+    },
+
+    isStreaming: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        const body = request.body as { stream?: boolean }
+        const isStreaming = body.stream ?? false
+
+        if (isStreaming && !request.url.includes('chat/completions')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                params: {
+                    message: 'OpenAI streaming is only supported for chat/completions API',
+                },
+            })
+        }
+
+        const streamOptions = request.body as { stream_options?: { include_usage?: boolean } }
+        if (isStreaming && !streamOptions?.stream_options?.include_usage) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                params: {
+                    message: 'OpenAI streaming requires "stream_options": {"include_usage": true} in the request body',
+                },
+            })
+        }
+
+        return isStreaming
+    },
+
+    streamingParser: (): StreamingParser => {
+        let response: Record<string, unknown> = {}
+        const parser = createParser({
+            onEvent(event) {
+                if (event.data === '[DONE]' || event.data.trim() === '') {
+                    return
+                }
+
+                const data = JSON.parse(event.data)
+                if (!isNil(data.usage)) {
+                    response = data
+                }
+            },
+        })
+        return {
+            onChunk: (chunk: string): void => {
+                parser.feed(chunk)
+            },
+            onEnd: () => response,
         }
     },
 } 

@@ -1,13 +1,12 @@
 import { Writable } from 'stream'
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
-import { createParser, EventSourceMessage, type EventSourceParser } from 'eventsource-parser'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
+import { StreamingParser, Usage } from './providers/types'
 
 export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
@@ -29,80 +28,60 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
-                request.body = (request as FastifyRequestWithOriginalBody).originalBody
+                request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
-
-                const isStream = request.url.includes('openai/v1/responses') && (request.body as { stream?: boolean }).stream
-                let buffer = Buffer.from('');
-                let parser: EventSourceParser
-                const events: EventSourceMessage[] = []
-
-                if (isStream) {
-                    parser = createParser({
-                        async onEvent(event) {
-                            events.push(event)
-                            try {
-                                if (['response.completed', 'response.incomplete'].includes(event.event ?? '')) {
-                                    const completeResponse = JSON.parse(event.data).response
-                                    const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                                    await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
-                                } else if (['response.error', 'response.failed'].includes(event.event ?? '')) {
-                                    app.log.error({
-                                        event,
-                                        body: request.body,
-                                        response: buffer.toString(),
-                                    }, 'Error response from stream AI provider')
-                                }
-                            } catch (error) {
-                                app.log.error({
-                                    error,
-                                    event,
-                                    body: request.body,
-                                    response: events,
-                                }, 'Error parsing response from stream AI provider')
-                            }
-                        }
-                    });
+                const isStreaming = aiProviderService.isStreaming(provider, request)
+                let streamingParser: StreamingParser
+                if (isStreaming) {
+                    streamingParser = aiProviderService.streamingParser(provider)
                 }
+
+                let buffer = Buffer.from('');
 
                 // Types are not properly defined, pipe does not exist but the stream pipe does
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (response as any).stream.pipe(new Writable({
                     write(chunk, encoding, callback) {
-                        if (isStream) {
-                            parser.feed(chunk.toString())
-                        } else {
-                            buffer = Buffer.concat([buffer, chunk]);
-                        }
-
+                        buffer = Buffer.concat([buffer, chunk]);
                         (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
+                        if (isStreaming) {
+                            streamingParser.onChunk(chunk.toString())
+                        }
                         callback()
                     },
                     async final(callback) {
                         reply.raw.end()
-                        if (reply.statusCode >= 400) {
-                            app.log.error({
-                                provider,
-                                projectId,
-                                body: request.body,
-                                response: buffer.toString(),
-                            }, 'Error response from AI provider')
-                            return callback();
-                        }
-                        if (isStream) return callback();
 
                         try {
-                            const completeResponse = JSON.parse(buffer.toString())
-                            const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
+                            if (reply.statusCode >= 400) {
+                                app.log.error({
+                                    projectId,
+                                    request,
+                                    response: buffer.toString(),
+                                }, 'Error response from AI provider')
+                                return
+                            }
+
+                            let usage: Usage
+                            if (isStreaming) {
+                                const finalResponse = streamingParser.onEnd()
+                                if (!finalResponse) {
+                                    throw new Error('No final response from AI provider')
+                                }
+                                usage = aiProviderService.calculateUsage(provider, request, finalResponse)
+                            }
+                            else {
+                                const completeResponse = JSON.parse(buffer.toString())
+                                usage = aiProviderService.calculateUsage(provider, request, completeResponse)
+                            }
+                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model: usage.model, cost: usage.cost })
                         }
                         catch (error) {
                             app.log.error({
                                 error,
-                                provider,
                                 projectId,
-                                body: request.body,
+                                request,
                                 response: buffer.toString(),
                             }, 'Error processing AI provider response')
                         }
@@ -114,7 +93,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        preHandler: async (request, reply) => {
+        preHandler: async (request, _reply) => {
             if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
@@ -124,15 +103,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            if ((request.body as { stream?: boolean }).stream && !request.url.includes('openai/v1/responses')) {
-                return reply.status(StatusCodes.BAD_REQUEST).send({
-                    message: 'stream is only supported for openai/v1/responses API',
+            const provider = (request.params as { provider: string }).provider
+            if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    params: {
+                        message: 'Streaming is not supported for this provider',
+                    },
                 })
             }
-
-            const params = request.params as Record<string, string>
-            const provider = params['provider'] as string
-            const providerConfig = getProviderConfigOrThrow(provider)
 
             const model = aiProviderService.extractModelId(provider, request)
             if (!model || !aiProviderService.isModelSupported(provider, model)) {
@@ -156,7 +135,10 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            const platformId = await aiProviderService.getAIProviderPlatformId(request.principal.platform.id)
+            const userPlatformId = request.principal.platform.id
+            const providerConfig = getProviderConfigOrThrow(provider)
+
+            const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
             const apiKey = await aiProviderService.getApiKey(provider, platformId)
 
             if (providerConfig.auth.bearer) {
@@ -175,7 +157,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
         },
         preValidation: (request, _reply, done) => {
-            (request as FastifyRequestWithOriginalBody).originalBody = request.body as Record<string, unknown>
+            (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody = request.body as Record<string, unknown>
             done()
         },
     })
@@ -193,5 +175,3 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
     }
     return providerConfig
 }
-
-type FastifyRequestWithOriginalBody = FastifyRequest & { originalBody: Record<string, unknown> }

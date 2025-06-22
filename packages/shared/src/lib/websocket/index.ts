@@ -9,6 +9,7 @@ export enum WebsocketClientEvent {
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
     TODO_CHANGED = 'TODO_CHANGED',
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
+    TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
     
 }
 
@@ -18,12 +19,21 @@ export const TodoChanged = Type.Object({
 
 export type TodoChanged = Static<typeof TodoChanged>
 
+
 export const TodoActivityChanged = Type.Object({
-    activityId: Type.String(),
-    content: Type.Array(RichContentBlock),
+    activityId: Type.String(),  
+    todoId: Type.String(),
+    content: Type.Array(RichContentBlock),      
+
 })
 
 export type TodoActivityChanged = Static<typeof TodoActivityChanged>
+
+export const TodoActivityCreated = Type.Object({
+    todoId: Type.String(),
+})
+
+export type TodoActivityCreated = Static<typeof TodoActivityCreated>
 
 export enum WebsocketServerEvent {
     TEST_STEP_RUN = 'TEST_STEP_RUN',

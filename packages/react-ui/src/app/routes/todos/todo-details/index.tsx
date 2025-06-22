@@ -17,6 +17,7 @@ import {
   UNRESOLVED_STATUS,
   isNil,
   PopulatedTodo,
+  TodoActivityCreated,
 } from '@activepieces/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
@@ -75,11 +76,19 @@ export const TodoDetails = ({
       await refetch();
     }
   };
+
+  const handleTodoActivityCreated = async (event: TodoActivityCreated) => {
+    if (event.todoId === todoId) {
+      await refetchComments();
+    }
+  };
+
   useEffect(() => {
     socket.on(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
-
+    socket.on(WebsocketClientEvent.TODO_ACTIVITY_CREATED, handleTodoActivityCreated);
     return () => {
       socket.off(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
+      socket.off(WebsocketClientEvent.TODO_ACTIVITY_CREATED, handleTodoActivityCreated);
     };
   }, [socket, refetch, todoId]);
 

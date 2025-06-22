@@ -10,6 +10,7 @@ export type SupportedAIProvider = {
     displayName: string
     markdown: string
     logoUrl: string
+    streaming: boolean
     auth: {
         headerName: string
         bearer: boolean
@@ -103,6 +104,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'Authorization',
             bearer: true,
         },
+        streaming: true,
         languageModels: [
             {
                 displayName: 'GPT-4o',
@@ -239,6 +241,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'x-api-key',
             bearer: false,
         },
+        streaming: false,
         languageModels: [
             {
                 displayName: 'Claude 3.5 Sonnet',
@@ -311,6 +314,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'Authorization',
             bearer: true,
         },
+        streaming: false,
         languageModels: [],
         imageModels: [
             {
@@ -343,6 +347,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'x-goog-api-key',
             bearer: false,
         },
+        streaming: false,
         languageModels: [
             {
                 displayName: 'Gemini 2.5 Pro',
