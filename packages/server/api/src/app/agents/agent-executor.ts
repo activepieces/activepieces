@@ -105,6 +105,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 socket: params.socket,
                 projectId: params.agent.projectId,
                 activityId: comment.id,
+                todoId,
                 content: blocks,
             })
         }
@@ -198,7 +199,7 @@ async function initializeOpenAIModel(agent: Agent, model: string) {
     return createOpenAI({
         baseURL: baseUrl,
         apiKey,
-    }).responses(model)
+    }).chat(model)
 }
 
 async function createEmptyComment(params: ExecuteAgent, todoId: string, log: FastifyBaseLogger) {
