@@ -22,6 +22,7 @@ import {
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
+    SampleDataFileType,
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -142,6 +143,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 })
             }
         }
+    },
+    async existsBy(runId: FlowRunId): Promise<boolean> {
+        return flowRunRepo().existsBy({ id: runId })
     },
     async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
         const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
@@ -271,7 +275,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
-            fileType: FileType.SAMPLE_DATA,
+            type: SampleDataFileType.OUTPUT,
         })
         return this.start({
             projectId,

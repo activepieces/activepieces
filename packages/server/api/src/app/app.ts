@@ -5,7 +5,7 @@ import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, Flow
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifySocketIO from 'fastify-socket.io'
+import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
 import { agentModule } from './agents/agent-module'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -43,7 +43,6 @@ import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -75,7 +74,6 @@ import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
-import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
@@ -187,7 +185,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
-            url: request.url,
+            url: request.routeOptions.url!,
         })
         if (!route) {
             return reply.code(404).send({
@@ -295,7 +293,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
@@ -324,7 +321,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:

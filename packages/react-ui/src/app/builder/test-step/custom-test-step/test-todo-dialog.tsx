@@ -66,7 +66,6 @@ function TodoTestingDialog({
       const output = formatTodoResult(response);
       updateSampleData({
         response: { output, success: true },
-        step: currentStep,
       });
       onOpenChange(false);
     },
@@ -82,12 +81,8 @@ function TodoTestingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl  p-0 overflow-hidden">
-        <TodoDetails
-          todoId={todo.id}
-          className="h-[90vh] py-3 px-6"
-          onStatusChange={handleStatusChange}
-        />
+      <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
+        <TodoDetails todoId={todo.id} onStatusChange={handleStatusChange} />
       </DialogContent>
     </Dialog>
   );

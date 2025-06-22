@@ -34,7 +34,6 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         },
         stepName: {
             type: String,
-            nullable: true,
         },
     },
     indices: [
@@ -46,7 +45,7 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
     ],
     relations: {
         flow: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'flow',
             cascade: true,
             onDelete: 'CASCADE',

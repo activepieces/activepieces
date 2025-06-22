@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { useFormContext } from 'react-hook-form';
@@ -7,11 +6,10 @@ import { useFormContext } from 'react-hook-form';
 import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/utils';
 import {
   Action,
@@ -21,10 +19,10 @@ import {
   StepRunResponse,
   Trigger,
   TriggerEventWithPayload,
-  FileType,
   isNil,
   FlowOperationType,
-  TriggerType,
+  flowStructureUtil,
+  SampleDataFileType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -36,80 +34,66 @@ export const testStepHooks = {
     stepName: string,
     onSuccess?: (step: Trigger | Action) => void,
   ) => {
-    const projectId = authenticationSession.getProjectId()!;
     const queryClient = useQueryClient();
-    const { setSampleData, setSampleDataInput, applyOperation, flowVersionId } =
+    const { setSampleData, flowVersionId, applyOperation, flowId, step } =
       useBuilderStateContext((state) => {
         return {
           sampleDataInput: state.sampleDataInput[stepName],
           setSampleData: state.setSampleData,
-          setSampleDataInput: state.setSampleDataInput,
-          applyOperation: state.applyOperation,
           flowVersionId: state.flowVersion.id,
+          step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
+          flowId: state.flow.id,
+          applyOperation: state.applyOperation,
         };
       });
 
     return useMutation({
       mutationFn: async ({
         response,
-        step,
       }: {
         response: { output?: unknown; success: boolean };
-        step: Action | Trigger;
       }) => {
-        let sampleDataFileId: string | undefined = undefined;
-        if (response.success && !isNil(response.output)) {
-          const sampleFile = await sampleDataApi.save({
-            flowVersionId,
-            stepName: step.name,
-            payload: response.output,
-            projectId,
-            fileType: FileType.SAMPLE_DATA,
-          });
-          sampleDataFileId = sampleFile.id;
-        }
-
-        const sampleDataInputFile = await sampleDataApi.save({
-          flowVersionId,
-          stepName: step.name,
-          payload: step.settings,
-          projectId,
-          fileType: FileType.SAMPLE_DATA_INPUT,
-        });
-
-        const stepCopy: Action | Trigger = JSON.parse(JSON.stringify(step));
-        stepCopy.settings.inputUiInfo = {
-          ...step.settings.inputUiInfo,
-          sampleDataFileId,
-          sampleDataInputFileId: sampleDataInputFile.id,
-          currentSelectedData: undefined,
-          lastTestDate: dayjs().toISOString(),
-        };
-
-        const type =
-          step.type === TriggerType.PIECE
-            ? FlowOperationType.UPDATE_TRIGGER
-            : FlowOperationType.UPDATE_ACTION;
-        if (type === FlowOperationType.UPDATE_TRIGGER) {
-          applyOperation({
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: stepCopy as Trigger,
-          });
-        } else {
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: stepCopy as Action,
-          });
+        if (isNil(step)) {
+          console.error(`Step ${stepName} not found`);
+          toast(INTERNAL_ERROR_TOAST);
+          return;
         }
 
         setSampleData(step.name, response.output);
-        setSampleDataInput(step.name, step.settings);
-
-        return stepCopy;
+        if (response.success && !isNil(response.output)) {
+          const updatedFlowVersion = await flowsApi.update(flowId, {
+            type: FlowOperationType.SAVE_SAMPLE_DATA,
+            request: {
+              stepName,
+              payload: response.output,
+              type: SampleDataFileType.OUTPUT,
+            },
+          });
+          const modifiedStep = flowStructureUtil.getStep(
+            stepName,
+            updatedFlowVersion.version.trigger,
+          );
+          if (!isNil(modifiedStep)) {
+            if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
+              applyOperation({
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: modifiedStep as Trigger,
+              });
+            } else {
+              applyOperation({
+                type: FlowOperationType.UPDATE_ACTION,
+                request: modifiedStep as Action,
+              });
+            }
+          }
+          return modifiedStep;
+        }
       },
       onSuccess: (step) => {
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
-        onSuccess?.(step);
+        if (step) {
+          onSuccess?.(step);
+        }
       },
     });
   },
@@ -151,10 +135,8 @@ export const testStepHooks = {
           const newIds = newData.data.map((triggerEvent) => triggerEvent.id);
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
-              const formValues = form.getValues();
               await updateSampleData({
                 response: { success: true, output: newData.data[0].payload },
-                step: formValues as unknown as Action,
               });
             }
             return newData.data;
@@ -194,10 +176,8 @@ export const testStepHooks = {
           flowId,
           mockData,
         );
-        const formValues = form.getValues();
         await updateSampleData({
           response: { success: true, output: data.payload },
-          step: formValues as unknown as Action,
         });
         return data;
       },
@@ -222,10 +202,8 @@ export const testStepHooks = {
         setErrorMessage(undefined);
         const { data } = await triggerEventsApi.pollTrigger({ flowId });
         if (data.length > 0) {
-          const formValues = form.getValues();
           await updateSampleData({
             response: { success: true, output: data[0].payload },
-            step: formValues as unknown as Action,
           });
         }
         return data;
@@ -290,7 +268,6 @@ export const testStepHooks = {
 
         await updateSampleData({
           response: testStepResponse,
-          step: currentStep,
         });
 
         return testStepResponse;

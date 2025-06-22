@@ -67,7 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
-    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '2000',
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:

@@ -56,11 +56,6 @@ const TestTriggerSection = React.memo(
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
-    const { flowVersion } = useBuilderStateContext((state) => {
-      return {
-        flowVersion: state.flowVersion,
-      };
-    });
     const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
       useState(false);
 
@@ -86,11 +81,14 @@ const TestTriggerSection = React.memo(
       };
     });
 
+    const onTestSuccess = async () => {
+      form.setValue(`settings.inputUiInfo.lastTestDate`, dayjs().toISOString());
+      await refetch();
+    };
+
     const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
       testStepHooks.useSaveMockData({
-        onSuccess: () => {
-          refetch();
-        },
+        onSuccess: onTestSuccess,
       });
 
     const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
@@ -102,16 +100,14 @@ const TestTriggerSection = React.memo(
     } = testStepHooks.useSimulateTrigger({
       setErrorMessage,
       onSuccess: async () => {
-        await refetch();
+        await onTestSuccess();
         setIsWebhookTestingDialogOpen(false);
       },
     });
     const { mutate: pollTrigger, isPending: isPollingTesting } =
       testStepHooks.usePollTrigger({
         setErrorMessage,
-        onSuccess: () => {
-          refetch();
-        },
+        onSuccess: onTestSuccess,
       });
 
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
@@ -164,6 +160,7 @@ const TestTriggerSection = React.memo(
     const showSimulationSection = isSimulation && isSimulating;
     const showFirstTimeTestingSectionForSimulation =
       !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
+
     const showFirstTimeTestingSectionForPolling =
       !isTestedBefore &&
       !sampleDataSelected &&
@@ -215,7 +212,6 @@ const TestTriggerSection = React.memo(
                           output: triggerEvent.payload,
                           success: true,
                         },
-                        step: flowVersion!.trigger,
                       });
                     }
                   }}
@@ -288,9 +284,7 @@ const TestTriggerSection = React.memo(
           <McpToolTestingDialog
             open={isMcpToolTestingDialogOpen}
             onOpenChange={setIsMcpToolTestingDialogOpen}
-            onTestingSuccess={() => {
-              refetch();
-            }}
+            onTestingSuccess={onTestSuccess}
           />
         )}
       </div>
