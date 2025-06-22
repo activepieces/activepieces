@@ -152,10 +152,19 @@ function findLastStepWithStatus(
     : undefined;
   return Object.entries(steps).reduce((res, [stepName, step]) => {
     if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
-      return findLatestStepInLoop(step as LoopStepOutput, runStatus);
+      const latestStepInLoop = findLatestStepInLoop(
+        step as LoopStepOutput,
+        runStatus,
+      );
+      if (!isNil(latestStepInLoop)) {
+        return latestStepInLoop;
+      }
     }
-    if (!isNil(stepStatus) && step.status === stepStatus) {
-      return res;
+    if (!isNil(stepStatus)) {
+      if (step.status === stepStatus) {
+        return stepName;
+      }
+      return null;
     }
     return stepName;
   }, null as null | string);

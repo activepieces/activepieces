@@ -2,14 +2,13 @@ import { useState } from 'react';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { getCoreActions } from '@/features/pieces/lib/pieces-hook';
 import {
   HandleSelectCallback,
   PieceStepMetadata,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { ActionType, TriggerType } from '@activepieces/shared';
-
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 
 import { CreateTodoGuide } from './dialog-guides/create-todo-guide';
 

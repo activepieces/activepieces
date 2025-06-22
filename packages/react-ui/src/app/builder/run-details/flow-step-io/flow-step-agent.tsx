@@ -12,11 +12,7 @@ type FlowStepAgentProps = {
 const FlowStepAgent = React.memo((props: FlowStepAgentProps) => {
   const { stepDetails } = props;
 
-  const castedOutput = stepDetails?.output as Record<string, unknown>;
-  const todoId =
-    !isNil(castedOutput) && 'todoId' in castedOutput
-      ? (castedOutput.todoId as string)
-      : null;
+  const todoId = getTodoId(stepDetails?.output ?? stepDetails?.errorMessage);
 
   return (
     <ScrollArea className="h-full p-4">
@@ -29,3 +25,15 @@ const FlowStepAgent = React.memo((props: FlowStepAgentProps) => {
 
 FlowStepAgent.displayName = 'FlowStepAgent';
 export { FlowStepAgent };
+
+function getTodoId(output: unknown) {
+  const castedOutput =
+    typeof output === 'object'
+      ? output
+      : typeof output === 'string'
+      ? JSON.parse(output)
+      : null;
+  return !isNil(castedOutput) && 'todoId' in castedOutput
+    ? (castedOutput.todoId as string)
+    : null;
+}
