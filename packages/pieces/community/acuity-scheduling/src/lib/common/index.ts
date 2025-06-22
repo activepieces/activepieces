@@ -7,11 +7,6 @@ import {
 
 export const API_URL = 'https://acuityscheduling.com/api/v1';
 
-export interface AcuityAuthProps {
-	username: string;
-	password: string;
-}
-
 export async function fetchAvailableDates(
 	accessToken: string,
 	appointmentTypeId: number,

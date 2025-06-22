@@ -7,9 +7,8 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, getAppointmentDetails, AcuityAuthProps } from '../common';
+import { API_URL, getAppointmentDetails } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
-import test from 'node:test';
 
 const TRIGGER_KEY = 'trigger_new_appointment';
 
