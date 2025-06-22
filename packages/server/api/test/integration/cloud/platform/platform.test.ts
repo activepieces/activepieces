@@ -1,7 +1,6 @@
 import {
     CopilotProviderType,
     FilteredPieceBehavior,
-    LocalesEnum,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
@@ -32,8 +31,10 @@ describe('Platform API', () => {
         it('patches a platform by id', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
+                plan: {
                     embeddingEnabled: false,
+                },
+                platform: {
                 },
             })
             const testToken = await generateMockToken({
@@ -61,7 +62,6 @@ describe('Platform API', () => {
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
                 emailAuthEnabled: false,
-                defaultLocale: LocalesEnum.ENGLISH,
             }
             // act
             const response = await app?.inject({
@@ -99,10 +99,7 @@ describe('Platform API', () => {
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
-            expect(responseBody.analyticsEnabled).toBe(false)
             expect(responseBody.cloudAuthEnabled).toBe(false)
-            expect(responseBody.embeddingEnabled).toBe(false)
-            expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
         })
 
         it('fails if user is not owner', async () => {
@@ -163,8 +160,6 @@ describe('Platform API', () => {
                             idpMetadata: faker.internet.password(),
                         },
                     },
-                    flowIssuesEnabled: false,
-                    alertsEnabled: false,
                     copilotSettings: {
                         providers: {
                             [CopilotProviderType.OPENAI]: {
@@ -198,7 +193,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(38)
+            expect(Object.keys(responseBody).length).toBe(20)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -212,8 +207,6 @@ describe('Platform API', () => {
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
-            expect(responseBody.alertsEnabled).toBe(false)
-            expect(responseBody.flowIssuesEnabled).toBe(false)
         })
 
 

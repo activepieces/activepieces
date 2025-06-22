@@ -29,7 +29,7 @@ import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -67,9 +67,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
+          {row.original.plan.aiCredits
+            ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>
       );
@@ -134,7 +134,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled;
+  const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
 
   const [searchParams] = useSearchParams();

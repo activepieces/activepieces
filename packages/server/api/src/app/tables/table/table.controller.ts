@@ -2,7 +2,7 @@ import { GitPushOperationType } from '@activepieces/ee-shared'
 import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
+import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { tableService } from './table.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -41,10 +41,11 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.delete('/:id', DeleteRequest, async (request, reply) => {
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_TABLE,
-            id: request.params.id,
+            idOrExternalId: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
-            log: request.log,
+            platformId: request.principal.platform.id,
+            log: request.log,   
         })
         await tableService.delete({
             projectId: request.principal.projectId,

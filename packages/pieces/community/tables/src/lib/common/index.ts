@@ -64,12 +64,11 @@ export const tablesCommon = {
   }),
 
   async getTableFields({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }) {
-    const convertedTableId = await this.convertTableExternalIdToId(tableId, context);
     const fieldsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/fields`,
       queryParams: {
-        tableId: convertedTableId,
+        tableId,
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

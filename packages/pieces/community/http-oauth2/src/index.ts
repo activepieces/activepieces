@@ -7,6 +7,7 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
   tokenUrl: '{tokenUrl}',
   required: true,
   scope: '{scopes}'.split(' '),
+  grantType: 'both_client_credentials_and_authorization_code',
   props: {
     authUrl: Property.ShortText({
       displayName: 'Authorize URL',
@@ -29,7 +30,7 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
 export const httpOauth2ClientCredentials = createPiece({
   displayName: "HTTP (OAuth2)",
   auth: httpOauth2Auth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.56.0',
   logoUrl: "https://cdn.activepieces.com/pieces/http.png",
   authors: [
     'mhshiba'

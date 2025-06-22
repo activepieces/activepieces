@@ -33,6 +33,8 @@ afterAll(async () => {
 const setupWithGlobalConnections = () => {
     return mockAndSaveBasicSetup({
         platform: {
+        },
+        plan: {
             globalConnectionsEnabled: true,
         },
     })

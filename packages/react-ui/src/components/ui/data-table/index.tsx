@@ -10,7 +10,6 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
-import { v4 as uuid } from 'uuid';
 
 import {
   Table,
@@ -21,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { isNil, SeekPage } from '@activepieces/shared';
+import { apId, isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
 import {
@@ -199,7 +198,7 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
-    getRowId: () => uuid(),
+    getRowId: () => apId(),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
@@ -352,7 +351,12 @@ export function DataTable<
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      <div className="flex items-center justify-start">
+                      <div
+                        className={cn('flex items-center', {
+                          'justify-end': cell.column.id === 'actions',
+                          'justify-start': cell.column.id !== 'actions',
+                        })}
+                      >
                         <div
                           onClick={(e) => {
                             if (cell.column.id === 'select') {

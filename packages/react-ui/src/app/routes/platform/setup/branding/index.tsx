@@ -11,7 +11,7 @@ export const BrandingPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="BRANDING"
-      locked={!platform.customAppearanceEnabled}
+      locked={!platform.plan.customAppearanceEnabled}
       lockTitle={t('Brand Activepieces')}
       lockDescription={t(
         'Give your users an experience that looks like you by customizing the color, logo and more',

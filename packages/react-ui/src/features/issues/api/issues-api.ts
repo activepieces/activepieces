@@ -4,16 +4,16 @@ import {
   ListIssuesParams,
   PopulatedIssue,
   UpdateIssueRequestBody,
-} from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+  SeekPage,
+} from '@activepieces/shared';
 
 export const issuesApi = {
   list(request: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
     return api.get<SeekPage<PopulatedIssue>>('/v1/issues', request);
   },
-  resolve(issueId: string) {
+  archive(issueId: string) {
     const body: UpdateIssueRequestBody = {
-      status: IssueStatus.RESOLEVED,
+      status: IssueStatus.ARCHIVED,
     };
 
     return api.post<void>(`/v1/issues/${issueId}`, body);

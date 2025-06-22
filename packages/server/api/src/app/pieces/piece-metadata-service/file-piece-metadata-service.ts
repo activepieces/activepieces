@@ -18,8 +18,8 @@ import { system } from '../../helper/system/system'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
-import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
+import { pieceListUtils } from './utils'
 import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
@@ -46,7 +46,7 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 }
             })
 
-            const pieces = await pieceMetadataServiceHooks.get().filterPieces({
+            const pieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: originalPiecesMetadata,
                 suggestionType: params.suggestionType,
@@ -120,7 +120,7 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async getExactPieceVersion({ projectId, platformId, name, version }): Promise<string> {
+        async resolveExactVersion({ projectId, platformId, name, version }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {

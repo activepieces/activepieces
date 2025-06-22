@@ -1,12 +1,12 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
     isNil,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
+    resolveValueFromProps,
 } from '@activepieces/shared'
 import axios, { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,16 +33,20 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     break
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
+                    if (request.scope) {
+                        body.scope = resolveValueFromProps(request.props, request.scope)
+                    }
+                    if (request.props) {
+                        Object.entries(request.props).forEach(([key, value]) => {
+                            body[key] = value
+                        })
+                    }
                     break
             }
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-            if (request.props && grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
-                Object.entries(request.props).forEach(([key, value]) => {
-                    body[key] = value
-                })
-            }
+           
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
@@ -98,6 +102,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     clientId: request.clientId,
                     tokenUrl: request.tokenUrl,
                     redirectUrl: request.redirectUrl ?? '',
+                    message: e instanceof AxiosError ? e.response?.data.error_description : 'unknown error',
                 },
             })
         }
@@ -120,7 +125,15 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 break
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
-                body.grant_type = grantType
+                body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
+                if (appConnection.scope) {
+                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
+                }
+                if (appConnection.props) {
+                    Object.entries(appConnection.props).forEach(([key, value]) => {
+                        body[key] = value
+                    })
+                }
                 break
             }
             default:

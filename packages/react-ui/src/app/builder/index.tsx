@@ -33,7 +33,7 @@ import {
 
 import { cn, useElementSize } from '../../lib/utils';
 
-import { BuilderHeader } from './builder-header';
+import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
@@ -124,7 +124,7 @@ const BuilderPage = () => {
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
-  const { versions, refetch: refetchPiece } =
+  const { pieceModel, refetch: refetchPiece } =
     piecesHooks.useMostRecentAndExactPieceVersion({
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
@@ -133,9 +133,6 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
 
-  const pieceModel = versions
-    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
-    : undefined;
   const socket = useSocket();
 
   const { mutate: fetchAndUpdateRun } = useMutation({
@@ -226,7 +223,10 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-            <ShowPoweredBy position="absolute" show={platform?.showPoweredBy} />
+            <ShowPoweredBy
+              position="absolute"
+              show={platform?.plan.showPoweredBy}
+            />
             <DataSelector
               parentHeight={middlePanelSize.height}
               parentWidth={middlePanelSize.width}

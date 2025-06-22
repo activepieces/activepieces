@@ -1,4 +1,4 @@
-import { JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { ApQueueJob, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -33,6 +33,17 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             token,
         })
         if (!job) {
+            return null
+        }
+        const runDeleted = await isRunDeleted(job, queueName, request.log)
+        if (runDeleted) {
+            await flowConsumer(request.log).update({
+                jobId: job.id,
+                queueName,
+                status: JobStatus.COMPLETED,
+                token,
+                message: 'Run deleted',
+            })
             return null
         }
         const isStale = await isStaleFlow(job.data, queueName, request.log)
@@ -96,6 +107,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request) => {
         const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
 
+        const flowVersionExists = await flowVersionService(request.log).exists(flowVersionId)
+        if (!flowVersionExists) {
+            return []
+        }
         const filterPayloads = await dedupeService.filterUniquePayloads(
             flowVersionId,
             payloads,
@@ -110,6 +125,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 httpRequestId,
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,
+                executeTrigger: false,
             }),
         )
         return Promise.all(createFlowRuns)
@@ -126,7 +142,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         const data = request.body
         await flowRunService(request.log).start({
             payload: null,
-            flowRunId: data.runId,
+            existingFlowRunId: data.runId,
+            executeTrigger: false,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
             projectId: data.projectId,
             flowVersionId: data.flowVersionId,
@@ -139,6 +156,26 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+
+async function isRunDeleted(
+    job: Omit<ApQueueJob, 'engineToken'>,
+    queueName: QueueName,
+    log: FastifyBaseLogger,
+): Promise<boolean> {
+    if (queueName !== QueueName.ONE_TIME) {
+        return false
+    }
+
+    const skipDeletionCheckForFirstAttemptExecutionSpeed = job.attempsStarted === 0
+    if (skipDeletionCheckForFirstAttemptExecutionSpeed) {
+        return false
+    }   
+
+    const { runId } = job.data as OneTimeJobData
+
+    const runExists = await flowRunService(log).existsBy(runId)
+    return !runExists
+}
 
 async function isStaleFlow(job: JobData, queueName: QueueName, log: FastifyBaseLogger): Promise<boolean> {
     if (queueName !== QueueName.SCHEDULED) {
@@ -176,7 +213,7 @@ async function removeScheduledJob(job: ScheduledJobData, log: FastifyBaseLogger)
     }, log)
 }
 
-async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
+async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData, attempsStarted: number }) {
     const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, job.data)
     const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
@@ -188,6 +225,7 @@ async function enrichEngineToken(token: string, queueName: QueueName, job: { id:
         data: job.data,
         id: job.id,
         engineToken,
+        attempsStarted: job.attempsStarted,
     }
 }
 

@@ -1,6 +1,5 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
-const { fontFamily } = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -102,7 +101,7 @@ module.exports = {
         xss: 'calc(var(--radius) - 10px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
+        inter: ['Inter', 'sans-serif'],
       },
       fontSize: {
         'xss': '0.65rem',
@@ -124,6 +123,14 @@ module.exports = {
           },
           '100%': {
             opacity: 1,
+          },
+        },
+        highlight: {
+          '0%': {
+            backgroundColor: 'hsl(var(--primary-100))',
+          },
+          '100%': {
+            backgroundColor: 'hsl(var(--secondary))',
           },
         },
         typing: {
@@ -151,6 +158,7 @@ module.exports = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
+        highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'

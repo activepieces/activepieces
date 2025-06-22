@@ -1,12 +1,13 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, McpPieceWithConnection, McpWithPieces, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, McpWithTools, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifySocketIO from 'fastify-socket.io'
+import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
+import { agentModule } from './agents/agent-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -23,6 +24,7 @@ import { analyticsModule } from './ee/analytics/analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
+import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { auditLogService } from './ee/audit-logs/audit-event-service'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
@@ -30,12 +32,10 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
-import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { emailService } from './ee/helper/email/email-service'
@@ -43,26 +43,22 @@ import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { adminPlatformModule } from './ee/platform/admin-platform.controller'
-import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
-import { projectMemberModule } from './ee/project-members/project-member.module'
-import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
-import { projectReleaseModule } from './ee/project-release/project-release.module'
-import { projectRoleModule } from './ee/project-role/project-role.module'
+import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
+import { projectMemberModule } from './ee/projects/project-members/project-member.module'
+import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
+import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
-import { todoCommentModule } from './ee/todos/comment/todos-comment.module'
-import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
-import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
@@ -78,15 +74,14 @@ import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
-import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
-import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
+import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
@@ -143,8 +138,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
                     'global-connection': AppConnectionWithoutSensitiveData,
-                    'mcp': McpWithPieces,
-                    'mcp-piece': McpPieceWithConnection,
+                    'mcp': McpWithTools,
                 },
             },
             info: {
@@ -191,7 +185,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
-            url: request.url,
+            url: request.routeOptions.url!,
         })
         if (!route) {
             return reply.code(404).send({
@@ -236,6 +230,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoModule)
     await app.register(adminPlatformModule)
     await app.register(changelogModule)
+    await app.register(agentModule)
+    await app.register(todoActivityModule)
     
     app.get(
         '/redirect',
@@ -272,7 +268,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
-            await app.register(platformBillingModule)
+            await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
@@ -289,22 +285,19 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
-            await app.register(todoCommentModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
@@ -320,18 +313,14 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
-            await app.register(todoCommentModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.set(platformRunHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
@@ -394,13 +383,5 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
         app.log.warn(
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
-    }
-    const oldestPlatform = await platformService.getOldestPlatform()
-    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
-    if (!isNil(oldestPlatform) && !isNil(key)) {
-        await platformService.update({
-            id: oldestPlatform.id,
-            licenseKey: key,
-        })
     }
 }
