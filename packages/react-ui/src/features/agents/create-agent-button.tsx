@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Agent } from '@activepieces/shared';
 
-import { agentHooks } from './agent-hooks';
+import { agentHooks } from './lib/agent-hooks';
 
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
