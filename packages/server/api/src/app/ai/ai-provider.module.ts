@@ -66,6 +66,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                             let usage: Usage
                             if (isStreaming) {
                                 const finalResponse = streamingParser.onEnd()
+                                if (!finalResponse) {
+                                    throw new Error('No final response from AI provider')
+                                }
                                 usage = aiProviderService.calculateUsage(provider, request, finalResponse)
                             }
                             else {
