@@ -198,7 +198,7 @@ async function initializeOpenAIModel(agent: Agent, model: string) {
     return createOpenAI({
         baseURL: baseUrl,
         apiKey,
-    }).chat(model)
+    }).responses(model)
 }
 
 async function createEmptyComment(params: ExecuteAgent, todoId: string, log: FastifyBaseLogger) {
