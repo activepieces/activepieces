@@ -166,8 +166,8 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
-      "@activepieces/piece-circle-so": [
-        "packages/pieces/community/circle-so/src/index.ts"
+      "@activepieces/piece-circle": [
+        "packages/pieces/community/circle/src/index.ts"
       ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
