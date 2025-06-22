@@ -85,16 +85,6 @@ export const openaiProvider: AIProviderStrategy = {
             })
         }
 
-        const streamOptions = request.body as { stream_options?: { include_usage?: boolean } }
-        if (isStreaming && !streamOptions?.stream_options?.include_usage) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
-                params: {
-                    message: 'OpenAI streaming requires "stream_options": {"include_usage": true} in the request body',
-                },
-            })
-        }
-
         return isStreaming
     },
 
