@@ -36,12 +36,12 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
+import { triggerHooks } from '../trigger'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
-const ENABLE_FLOW_ON_PUBLISH = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
 
 const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
@@ -120,7 +120,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
         const queryWhere: Record<string, unknown> = { projectId }
-        
+
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
         }
@@ -275,6 +275,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         userId,
                         projectId,
                         platformId,
+                    })
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status ?? FlowStatus.ENABLED,
                     })
                     break
                 }
@@ -448,10 +453,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         )
 
-        const { scheduleOptions, webhookHandshakeConfiguration } = await flowSideEffects(log).preUpdatePublishedVersionId({
-            flowToUpdate,
-            flowVersionToPublish,
-        })
+        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
+            await triggerHooks.disable({
+                flowVersion: await flowVersionService(log).getOneOrThrow(
+                    flowToUpdate.publishedVersionId,
+                ),
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+            }, log)
+        }
 
         return transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
@@ -464,13 +474,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            if (ENABLE_FLOW_ON_PUBLISH) {
-                flowToUpdate.status = FlowStatus.ENABLED
-            }
-            flowToUpdate.schedule = scheduleOptions
-            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            flowToUpdate.status = FlowStatus.DISABLED
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-
             return {
                 ...updatedFlow,
                 version: lockedFlowVersion,
@@ -579,7 +584,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id: flowId,
             projectId,
         })
-        
+
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
     },

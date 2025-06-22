@@ -341,6 +341,9 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         event.data.request.request.stepName
       }".`;
     }
+    case FlowOperationType.SAVE_SAMPLE_DATA: {
+      return `Saved sample data for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`;
+    }
     case FlowOperationType.DUPLICATE_BRANCH: {
       return `Duplicated branch number ${
         event.data.request.request.branchIndex + 1

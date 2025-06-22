@@ -1,4 +1,4 @@
-import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
+import { ContentBlockType, CreateTodoActivityRequestBody, isNil, ListTodoActivitiesQueryParams, PrincipalType, RichContentBlock } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { todoActivitiesService as todoActivityService } from './todos-activity.service'
 
@@ -19,7 +19,7 @@ export const todoActivityController: FastifyPluginAsyncTypebox = async (app) => 
     app.post('/:todoId/activities', CreateTodoCommentRequest, async (request) => {
         const { content } = request.body
         return todoActivityService(request.log).create({
-            content,
+            content: convertMarkdownToContentBlocks(content)!,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             userId: request.principal.id,
@@ -30,7 +30,17 @@ export const todoActivityController: FastifyPluginAsyncTypebox = async (app) => 
     })
 }
 
-
+function convertMarkdownToContentBlocks(markdown: string | undefined): RichContentBlock[] | undefined {
+    if (isNil(markdown)) {
+        return undefined
+    }
+    return [
+        {
+            type: ContentBlockType.MARKDOWN,
+            markdown,
+        },
+    ]
+}
 const ListTodoCommentsRequest = {
     schema: {
         params: Type.Object({

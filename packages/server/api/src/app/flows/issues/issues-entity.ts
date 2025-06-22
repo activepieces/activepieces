@@ -34,7 +34,6 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         },
         stepName: {
             type: String,
-            nullable: true,
         },
     },
     indices: [
