@@ -3,6 +3,11 @@ import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
 import { isNil } from '@activepieces/shared';
@@ -19,6 +24,7 @@ interface McpPieceActionsDialogProps {
     connectionExternalId: string | null,
   ) => void;
   showValidationErrors?: boolean;
+  isActionValidForMcpTool: (actionName: string) => boolean;
 }
 
 export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
@@ -29,6 +35,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   selectedConnectionExternalId,
   setSelectedConnectionExternalId,
   showValidationErrors = false,
+  isActionValidForMcpTool,
 }) => {
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
@@ -36,7 +43,11 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   const allSelected =
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
-    piece.suggestedActions.every((a) => selectedActions.includes(a.name));
+    piece.suggestedActions.every((a) => {
+      return (
+        isActionValidForMcpTool(a.name) === selectedActions.includes(a.name)
+      );
+    });
   const someSelected = selectedActions.length > 0 && !allSelected;
 
   const pieceHasAuth = selectedPiece && !isNil(selectedPiece.auth);
@@ -71,35 +82,52 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
       <ScrollArea className="flex-grow overflow-y-auto rounded-md">
         <div className="flex flex-col gap-2">
           {piece.suggestedActions &&
-            piece.suggestedActions.map((action) => (
-              <div
-                key={action.name}
-                className="flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent cursor-pointer"
-                onClick={() => onSelectAction(action.name)}
-              >
-                <Checkbox
-                  checked={selectedActions.includes(action.name)}
-                  onCheckedChange={() => onSelectAction(action.name)}
-                  className="mt-1"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div className="flex gap-2">
-                  <img src={piece.logoUrl} alt="" className="w-5 h-5 mt-1" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">
-                        {action.displayName}
-                      </span>
-                    </div>
-                    {action.description && (
-                      <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {action.description}
+            piece.suggestedActions.map((action) => {
+              const isValid = isActionValidForMcpTool(action.name);
+              const actionContent = (
+                <div
+                  key={action.name}
+                  className={`flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent ${
+                    isValid ? 'opacity-100 cursor-pointer' : 'opacity-50'
+                  }`}
+                  onClick={() => onSelectAction(action.name)}
+                >
+                  <Checkbox
+                    checked={selectedActions.includes(action.name)}
+                    onCheckedChange={() => onSelectAction(action.name)}
+                    disabled={!isValid}
+                    className="mt-1"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="flex gap-2">
+                    <img src={piece.logoUrl} alt="" className="w-5 h-5 mt-1" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">
+                          {action.displayName}
+                        </span>
                       </div>
-                    )}
+                      {action.description && (
+                        <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          {action.description}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+
+              return isValid ? (
+                actionContent
+              ) : (
+                <Tooltip key={action.name}>
+                  <TooltipTrigger asChild>{actionContent}</TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('Action is not valid for MCP tool')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           {piece.suggestedActions && piece.suggestedActions.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               {t('No actions available')}

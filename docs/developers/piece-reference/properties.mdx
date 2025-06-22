@@ -344,7 +344,11 @@ Property.MultiSelectDropdown({
 
 ### Dynamic Properties
 
-This property is used to construct forms dynamically based on API responses or user input.
+This property is used to construct forms dynamically based on API responses or user input. 
+
+<Tip>
+  The schema must match the properties returned by the props function for MCP tool integration.
+</Tip>
 
 **Example:**
 
@@ -360,6 +364,10 @@ Property.DynamicProperties({
   description: 'Dynamic Form',
   displayName: 'Dynamic Form',
   required: true,
+  schema: z.object({
+    prop1: z.string(),
+    prop2: z.number()
+  }),
   refreshers: ['authentication'],
   props: async (propsValue) => {
     const authentication = propsValue['authentication'];

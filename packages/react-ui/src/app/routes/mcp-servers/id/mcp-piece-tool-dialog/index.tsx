@@ -25,6 +25,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { PropertyType } from '@activepieces/pieces-framework';
 import type { McpWithTools } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
@@ -88,7 +89,19 @@ export function McpPieceDialog({
     setSelectedPiece(piece);
   };
 
+  const isActionValidForMcpTool = (actionName: string) => {
+    const actionMetadata = selectedPiece?.suggestedActions?.find(
+      (a) => a.name === actionName,
+    );
+    return !Object.values(actionMetadata?.props || {}).some(
+      (prop) => prop.type === PropertyType.DYNAMIC && isNil(prop.schema),
+    );
+  };
+
   const handleActionSelect = (action: string) => {
+    if (!isActionValidForMcpTool(action)) {
+      return;
+    }
     setSelectedActions((prev) => {
       const newSelected = prev.includes(action)
         ? prev.filter((a) => a !== action)
@@ -100,7 +113,11 @@ export function McpPieceDialog({
   const handleSelectAll = (checked: boolean) => {
     if (checked && selectedPiece) {
       setSelectedActions(
-        selectedPiece.suggestedActions?.map((a) => a.name) ?? [],
+        selectedPiece.suggestedActions
+          ?.map((a) => {
+            return isActionValidForMcpTool(a.name) ? a.name : null;
+          })
+          .filter((a) => a !== null) ?? [],
       );
     } else {
       setSelectedActions([]);
@@ -117,7 +134,7 @@ export function McpPieceDialog({
           flowId: tool.flowId,
         })) || [];
 
-      if (!selectedPiece || selectedActions.length === 0) return;
+      if (!selectedPiece) return;
 
       const existingToolIndex = currentTools.findIndex(
         (tool) =>
@@ -224,6 +241,7 @@ export function McpPieceDialog({
             selectedActions={selectedActions}
             onSelectAction={handleActionSelect}
             onSelectAll={handleSelectAll}
+            isActionValidForMcpTool={isActionValidForMcpTool}
             selectedConnectionExternalId={selectedConnectionExternalId}
             setSelectedConnectionExternalId={setSelectedConnectionExternalId}
             showValidationErrors={showValidationErrors}
