@@ -1,57 +1,70 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   Action,
   ActionType,
   LocalesEnum,
+  PieceCategory,
+  PlatformWithoutSensitiveData,
   SuggestionType,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
-
 import { piecesApi } from './pieces-api';
-import { getCoreActions } from './pieces-hook';
-import { stepUtils } from './step-utils';
+import { CORE_ACTIONS, CORE_STEP_METADATA, stepUtils } from './step-utils';
 import {
-  PieceSelectorItem,
-  PrimitiveStepMetadata,
+  PieceGroup,
+  PieceStepMetadata,
   StepMetadata,
   StepMetadataWithStepName,
   StepMetadataWithSuggestions,
 } from './types';
 
-export const CORE_STEP_METADATA: Record<
-  Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
-  PrimitiveStepMetadata
-> = {
-  [ActionType.CODE]: {
-    displayName: t('Code'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-    description: t('Powerful Node.js & TypeScript code with npm'),
-    type: ActionType.CODE as const,
-  },
-  [ActionType.LOOP_ON_ITEMS]: {
-    displayName: t('Loop on Items'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
-    description: 'Iterate over a list of items',
-    type: ActionType.LOOP_ON_ITEMS as const,
-  },
-  [ActionType.ROUTER]: {
-    displayName: 'Router',
-    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-    description: t('Split your flow into branches depending on condition(s)'),
-    type: ActionType.ROUTER,
-  },
-  [TriggerType.EMPTY]: {
-    displayName: t('Empty Trigger'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-    description: t('Empty Trigger'),
-    type: TriggerType.EMPTY as const,
-  },
+const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
+
+const isPopularPieces = (
+  stepMetadata: StepMetadataWithSuggestions,
+  platform: PlatformWithoutSensitiveData,
+) => {
+  if (
+    stepMetadata.type !== TriggerType.PIECE &&
+    stepMetadata.type !== ActionType.PIECE
+  ) {
+    return false;
+  }
+  const popularPieces = [
+    '@activepieces/piece-gmail',
+    '@activepieces/piece-google-sheets',
+    '@activepieces/piece-openai',
+    '@activepieces/piece-schedule',
+    '@activepieces/piece-webhook',
+    '@activepieces/piece-http',
+    '@activepieces/piece-forms',
+    '@activepieces/piece-slack',
+  ];
+  const pinnedPieces = platform.pinnedPieces ?? [];
+  return [...popularPieces, ...pinnedPieces].includes(
+    (stepMetadata as PieceStepMetadata).pieceName,
+  );
+};
+
+const isFlowController = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
+  }
+  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
+    stepMetadata.type as ActionType,
+  );
+};
+
+const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI);
+  }
+  return false;
 };
 
 export const stepsHooks = {
@@ -67,7 +80,7 @@ export const stepsHooks = {
       isLoading: query.isLoading,
     };
   },
-  useStepsMetadata: (props: UseStepsMetadata) => {
+  useStepsMetadata: (props: (Action | Trigger)[]) => {
     const { i18n } = useTranslation();
     return useQueries({
       queries: props.map((step) => {
@@ -91,31 +104,34 @@ export const stepsHooks = {
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
           locale: i18n.language as LocalesEnum,
         });
-        const piecesMetadata = pieces
-          .filter(
-            (piece) =>
-              (type === 'action' && piece.actions > 0) ||
-              (type === 'trigger' && piece.triggers > 0),
-          )
-          .map((piece) => {
-            const metadata = stepUtils.mapPieceToMetadata(piece, type);
-            return {
-              ...metadata,
-              suggestedActions: piece.suggestedActions,
-              suggestedTriggers: piece.suggestedTriggers,
-            };
-          });
+
+        const filteredPiecesBySuggestionType = pieces.filter(
+          (piece) =>
+            (type === 'action' && piece.actions > 0) ||
+            (type === 'trigger' && piece.triggers > 0),
+        );
+
+        const piecesMetadata = filteredPiecesBySuggestionType.map((piece) => {
+          const metadata = stepUtils.mapPieceToMetadata(piece, type);
+          const actionsWithoutHidden = piece.suggestedActions?.filter(
+            (step) => !hiddenActionsOrTriggers.includes(step.name),
+          );
+          const triggersWithoutHidden = piece.suggestedTriggers?.filter(
+            (step) => !hiddenActionsOrTriggers.includes(step.name),
+          );
+          return {
+            ...metadata,
+            suggestedActions: actionsWithoutHidden,
+            suggestedTriggers: triggersWithoutHidden,
+          };
+        });
+
         switch (type) {
           case 'action': {
-            const filtersPrimitive: Omit<
-              PrimitiveStepMetadata,
-              'stepDisplayName'
-            >[] = [
-              CORE_STEP_METADATA[ActionType.CODE],
-              CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
-              CORE_STEP_METADATA[ActionType.ROUTER],
-            ].filter((step) => passSearch(searchQuery, step));
-            return [...filtersPrimitive, ...piecesMetadata];
+            const filteredCoreActions = CORE_ACTIONS.filter((step) =>
+              passSearch(searchQuery, step),
+            );
+            return [...filteredCoreActions, ...piecesMetadata];
           }
           case 'trigger':
             return [...piecesMetadata];
@@ -130,50 +146,56 @@ export const stepsHooks = {
       isLoading: query.isLoading,
     };
   },
-  usePieceActionsOrTriggers: ({
-    stepMetadata,
-  }: {
-    stepMetadata?: StepMetadata;
-  }) => {
-    const { i18n } = useTranslation();
-    return useQuery<PieceSelectorItem[], Error>({
-      queryKey: [
-        'pieceMetadata',
-        stepMetadata?.type,
-        stepMetadata?.displayName,
-      ],
-      queryFn: async (): Promise<PieceSelectorItem[]> => {
-        try {
-          if (!stepMetadata) {
-            return [];
-          }
-          switch (stepMetadata.type) {
-            case TriggerType.PIECE:
-            case ActionType.PIECE: {
-              const pieceMetadata = await piecesApi.get({
-                name: stepMetadata.pieceName,
-                locale: i18n.language as LocalesEnum,
-              });
-              return Object.values(
-                stepMetadata.type === TriggerType.PIECE
-                  ? pieceMetadata.triggers
-                  : pieceMetadata.actions,
-              );
-            }
-            case ActionType.CODE:
-            case ActionType.LOOP_ON_ITEMS:
-            case ActionType.ROUTER:
-              return getCoreActions(stepMetadata.type);
-            default:
-              return [];
-          }
-        } catch (e) {
-          console.error(e);
-          toast(INTERNAL_ERROR_TOAST);
-          return [];
-        }
-      },
-    });
+  usePiecesGroups: (
+    props: UseMetadataProps,
+  ): {
+    isLoading: boolean;
+    data: PieceGroup[];
+  } => {
+    const { metadata, isLoading: isLoadingPieces } =
+      stepsHooks.useAllStepsMetadata(props);
+    const { platform } = platformHooks.useCurrentPlatform();
+    if (!metadata || isLoadingPieces) {
+      return {
+        isLoading: true,
+        data: [],
+      };
+    }
+    const { searchQuery, type } = props;
+    const isTrigger = type === 'trigger';
+    const piecesMetadata =
+      searchQuery?.length > 0
+        ? filterOutPiecesWithNoSuggestions(metadata)
+        : metadata;
+
+    if (searchQuery.length > 0 && piecesMetadata.length > 0) {
+      return {
+        isLoading: false,
+        data: [{ title: 'Search Results', pieces: piecesMetadata }],
+      };
+    }
+    const flowControllerPieces = piecesMetadata.filter(
+      (p) => isFlowController(p) && !isTrigger,
+    );
+    const universalAiPieces = piecesMetadata.filter(
+      (p) => isUniversalAiPiece(p) && !isTrigger,
+    );
+    const popularPieces = piecesMetadata.filter((p) =>
+      isPopularPieces(p, platform),
+    );
+    const other = piecesMetadata.filter((p) => !popularPieces.includes(p));
+
+    const groups: PieceGroup[] = [
+      { title: 'Popular', pieces: popularPieces },
+      { title: 'Flow Control', pieces: flowControllerPieces },
+      { title: 'Universal AI', pieces: universalAiPieces },
+      { title: 'Other', pieces: other },
+    ];
+
+    return {
+      isLoading: false,
+      data: groups.filter((group) => group.pieces.length > 0),
+    };
   },
 };
 function passSearch(
@@ -188,15 +210,36 @@ function passSearch(
     .includes(searchQuery?.toLowerCase());
 }
 
-type UseStepsMetadata = (Action | Trigger)[];
-
 type UseStepMetadata = {
   step: Action | Trigger;
   enabled?: boolean;
 };
 
 type UseMetadataProps = {
-  searchQuery?: string;
+  searchQuery: string;
   enabled?: boolean;
   type: 'action' | 'trigger';
+};
+
+export const filterOutPiecesWithNoSuggestions = (
+  metadata: StepMetadataWithSuggestions[],
+) => {
+  return metadata.filter((step) => {
+    const isActionWithSuggestions =
+      step.type === ActionType.PIECE &&
+      step.suggestedActions &&
+      step.suggestedActions.length > 0;
+
+    const isTriggerWithSuggestions =
+      step.type === TriggerType.PIECE &&
+      step.suggestedTriggers &&
+      step.suggestedTriggers.length > 0;
+
+    const isNotPieceType =
+      step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE;
+
+    return (
+      isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
+    );
+  });
 };

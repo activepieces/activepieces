@@ -20,7 +20,7 @@ import {
   FlowOperationRequest,
 } from '@activepieces/shared';
 
-export const CreateFlowButton = () => {
+export const CreateMcpFlowButton = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { metadata } = stepsHooks.useAllStepsMetadata({
@@ -28,53 +28,53 @@ export const CreateFlowButton = () => {
     type: 'trigger',
   });
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
-    mutationFn: async () => {
-      const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId()!,
-        displayName: t('Untitled'),
-      });
-      return flow;
-    },
-    onSuccess: async (flow) => {
-      const triggerMetadata = metadata?.find(
-        (m) =>
-          (m as PieceStepMetadataWithSuggestions).pieceName ===
-          '@activepieces/piece-mcp',
-      );
+  // const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
+  //   mutationFn: async () => {
+  //     const flow = await flowsApi.create({
+  //       projectId: authenticationSession.getProjectId()!,
+  //       displayName: t('Untitled'),
+  //     });
+  //     return flow;
+  //   },
+  //   onSuccess: async (flow) => {
+  //     const triggerMetadata = metadata?.find(
+  //       (m) =>
+  //         // m.type === TriggerType.PIECE ||
 
-      const trigger = (
-        triggerMetadata as PieceStepMetadataWithSuggestions
-      )?.suggestedTriggers?.find((t: any) => t.name === 'mcp_tool');
+  //         // m.pieceName ===
+  //         // '@activepieces/piece-mcp',
+  //         true
+  //     );
 
-      assertNotNullOrUndefined(trigger, 'Trigger not found');
+  //     const trigger = (
+  //       triggerMetadata as PieceStepMetadataWithSuggestions
+  //     )?.suggestedTriggers?.find((t: any) => t.name === 'mcp_tool');
 
-      const stepData = pieceSelectorUtils.getDefaultStep({
-        stepName: 'trigger',
-        stepMetadata: triggerMetadata as StepMetadata,
-        actionOrTrigger: trigger,
-      });
+  //     assertNotNullOrUndefined(trigger, 'Trigger not found');
 
-      await applyOperation(flow, {
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: stepData as Trigger,
-      });
+  //     const stepData = pieceSelectorUtils.getDefaultStep({
+  //     });
 
-      toast({
-        description: t('Flow created successfully'),
-        duration: 3000,
-      });
-      navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to create flow'),
-        duration: 5000,
-      });
-    },
-  });
+  //     await applyOperation(flow, {
+  //       type: FlowOperationType.UPDATE_TRIGGER,
+  //       request: stepData as Trigger,
+  //     });
+
+  //     toast({
+  //       description: t('Flow created successfully'),
+  //       duration: 3000,
+  //     });
+  //     navigate(`/flows/${flow.id}`);
+  //   },
+  //   onError: () => {
+  //     toast({
+  //       variant: 'destructive',
+  //       title: t('Error'),
+  //       description: t('Failed to create flow'),
+  //       duration: 5000,
+  //     });
+  //   },
+  // });
 
   const applyOperation = async (
     flow: PopulatedFlow,
@@ -100,12 +100,12 @@ export const CreateFlowButton = () => {
 
   return (
     <div
-      onClick={() => createFlow()}
+      // onClick={() => createFlow()}
       className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg border-dashed border-muted-foreground/50"
     >
       <Plus className="w-[40px] h-[40px] text-muted-foreground" />
       <div className="mt-2 text-center text-md">
-        {isCreateFlowPending ? t('Creating...') : t('Create New Flow')}
+        {/* {isCreateFlowPending ? t('Creating...') : t('Create New Flow')} */}
       </div>
     </div>
   );

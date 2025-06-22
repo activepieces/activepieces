@@ -2,16 +2,11 @@ import { useRef } from 'react';
 
 import {
   PieceSelectorItem,
+  PieceSelectorPieceItem,
   PieceStepMetadata,
   StepMetadata,
-  StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
-import {
-  ActionBase,
-  PiecePropertyMap,
-  PropertyType,
-  TriggerBase,
-} from '@activepieces/pieces-framework';
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import {
   Action,
   ActionType,
@@ -22,12 +17,11 @@ import {
   Trigger,
   TriggerType,
   deepMergeAndCast,
-  PieceCategory,
   BranchExecutionType,
   RouterExecutionType,
   spreadIfDefined,
   isNil,
-  PlatformWithoutSensitiveData,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -48,86 +42,27 @@ function toKey(stepMetadata: StepMetadata): string {
   }
 }
 
-const isCorePiece = (piece: StepMetadata) =>
-  piece.type !== TriggerType.PIECE && piece.type !== ActionType.PIECE
-    ? true
-    : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
-
-const isAiPiece = (piece: StepMetadata) =>
-  piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
-    ? piece.categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
-    : false;
-
-const isAppPiece = (piece: StepMetadata) =>
-  !isAiPiece(piece) && !isCorePiece(piece);
-
-const isPopularPieces = (
-  stepMetadata: StepMetadataWithSuggestions,
-  platform: PlatformWithoutSensitiveData,
-) => {
-  if (
-    stepMetadata.type !== TriggerType.PIECE &&
-    stepMetadata.type !== ActionType.PIECE
-  ) {
-    return false;
-  }
-  const popularPieces = [
-    '@activepieces/piece-gmail',
-    '@activepieces/piece-google-sheets',
-    '@activepieces/piece-openai',
-    '@activepieces/piece-schedule',
-    '@activepieces/piece-webhook',
-    '@activepieces/piece-http',
-    '@activepieces/piece-forms',
-    '@activepieces/piece-slack',
-  ];
-  const pinnedPieces = platform.pinnedPieces ?? [];
-  return [...popularPieces, ...pinnedPieces].includes(
-    (stepMetadata as PieceStepMetadata).pieceName,
-  );
-};
-
-const isFlowController = (stepMetadata: StepMetadata) => {
-  if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
-  }
-  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
-    stepMetadata.type as ActionType,
-  );
-};
-
-const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
-  if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI);
-  }
-  return false;
-};
-
 const isPieceActionOrTrigger = (
   pieceSelectorItem: PieceSelectorItem,
-): pieceSelectorItem is TriggerBase | ActionBase => {
-  return !('type' in pieceSelectorItem);
+): pieceSelectorItem is PieceSelectorPieceItem => {
+  return (
+    pieceSelectorItem.type === ActionType.PIECE ||
+    (flowStructureUtil.isTrigger(pieceSelectorItem.type) &&
+      pieceSelectorItem.type === TriggerType.PIECE)
+  );
 };
 
-const isStepInitiallyValid = (
-  stepMetadata: StepMetadata,
-  actionOrTrigger: PieceSelectorItem,
-) => {
-  switch (stepMetadata.type) {
+const isStepInitiallyValid = (pieceSelectorItem: PieceSelectorItem) => {
+  switch (pieceSelectorItem.type) {
     case ActionType.CODE:
       return true;
     case ActionType.PIECE:
     case TriggerType.PIECE: {
-      const isPieceStep = isPieceActionOrTrigger(actionOrTrigger);
-      if (!isPieceStep) {
-        console.error('Invalid piece selector item', actionOrTrigger);
-        return false;
-      }
       const inputValidity = checkPieceInputValidity(
-        getInitalStepInput(stepMetadata, actionOrTrigger),
-        actionOrTrigger.props,
+        getInitalStepInput(pieceSelectorItem),
+        pieceSelectorItem.actionOrTrigger.props,
       );
-      return inputValidity && !actionOrTrigger.requireAuth;
+      return inputValidity && !pieceSelectorItem.actionOrTrigger.requireAuth;
     }
     case ActionType.LOOP_ON_ITEMS:
     case ActionType.ROUTER:
@@ -136,18 +71,14 @@ const isStepInitiallyValid = (
   }
 };
 
-const getInitalStepInput = (
-  stepMetadata: StepMetadata,
-  actionOrTrigger: PieceSelectorItem,
-) => {
-  const isPieceStep = isPieceActionOrTrigger(actionOrTrigger);
-  if (!isPieceStep) {
+const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
+  if (!isPieceActionOrTrigger(pieceSelectorItem)) {
     return {};
   }
   return formUtils.getDefaultValueForStep(
     {
-      ...spreadIfDefined('auth', stepMetadata.auth),
-      ...actionOrTrigger.props,
+      ...spreadIfDefined('auth', pieceSelectorItem.pieceMetadata.auth),
+      ...pieceSelectorItem.actionOrTrigger.props,
     },
     {},
   );
@@ -155,13 +86,11 @@ const getInitalStepInput = (
 
 const getDefaultStep = ({
   stepName,
-  stepMetadata,
-  actionOrTrigger,
+  pieceSelectorItem,
   settings,
 }: {
   stepName: string;
-  stepMetadata: StepMetadata;
-  actionOrTrigger: PieceSelectorItem;
+  pieceSelectorItem: PieceSelectorItem;
   settings?: Record<string, unknown>;
 }): Action | Trigger => {
   const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
@@ -173,12 +102,14 @@ const getDefaultStep = ({
     },
   };
 
-  const input = getInitalStepInput(stepMetadata, actionOrTrigger);
-  const isValid = isStepInitiallyValid(stepMetadata, actionOrTrigger);
+  const input = getInitalStepInput(pieceSelectorItem);
+  const isValid = isStepInitiallyValid(pieceSelectorItem);
   const common = {
     name: stepName,
     valid: isValid,
-    displayName: actionOrTrigger.displayName,
+    displayName: isPieceActionOrTrigger(pieceSelectorItem)
+      ? pieceSelectorItem.actionOrTrigger.displayName
+      : pieceSelectorItem.displayName,
     skip: false,
     settings: {
       inputUiInfo: {
@@ -187,7 +118,7 @@ const getDefaultStep = ({
     },
   };
 
-  switch (stepMetadata.type) {
+  switch (pieceSelectorItem.type) {
     case ActionType.CODE:
       return deepMergeAndCast<CodeAction>(
         {
@@ -254,15 +185,20 @@ const getDefaultStep = ({
         common,
       );
     case ActionType.PIECE: {
+      if (!isPieceActionOrTrigger(pieceSelectorItem)) {
+        throw new Error(
+          `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
+        );
+      }
       return deepMergeAndCast<PieceAction>(
         {
           type: ActionType.PIECE,
           settings: settings ?? {
-            pieceName: stepMetadata.pieceName,
-            pieceType: stepMetadata.pieceType,
-            packageType: stepMetadata.packageType,
-            actionName: actionOrTrigger.name,
-            pieceVersion: stepMetadata.pieceVersion,
+            pieceName: pieceSelectorItem.pieceMetadata.pieceName,
+            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
+            packageType: pieceSelectorItem.pieceMetadata.packageType,
+            actionName: pieceSelectorItem.actionOrTrigger.name,
+            pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
             errorHandlingOptions,
           },
@@ -271,15 +207,20 @@ const getDefaultStep = ({
       );
     }
     case TriggerType.PIECE: {
+      if (!isPieceActionOrTrigger(pieceSelectorItem)) {
+        throw new Error(
+          `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
+        );
+      }
       return deepMergeAndCast<PieceTrigger>(
         {
           type: TriggerType.PIECE,
           settings: settings ?? {
-            pieceName: stepMetadata.pieceName,
-            pieceType: stepMetadata.pieceType,
-            packageType: stepMetadata.packageType,
-            triggerName: actionOrTrigger.name,
-            pieceVersion: stepMetadata.pieceVersion,
+            pieceName: pieceSelectorItem.pieceMetadata.pieceName,
+            pieceType: pieceSelectorItem.pieceMetadata.pieceType,
+            packageType: pieceSelectorItem.pieceMetadata.packageType,
+            triggerName: pieceSelectorItem.actionOrTrigger.name,
+            pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
           },
         },
@@ -287,7 +228,7 @@ const getDefaultStep = ({
       );
     }
     default:
-      throw new Error('Unsupported type: ' + stepMetadata.type);
+      throw new Error('Unsupported type: ' + pieceSelectorItem.type);
   }
 };
 
@@ -348,12 +289,6 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
 
 export const pieceSelectorUtils = {
   getDefaultStep,
-  isCorePiece,
-  isAiPiece,
-  isAppPiece,
   toKey,
-  isPopularPieces,
-  isFlowController,
-  isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
 };

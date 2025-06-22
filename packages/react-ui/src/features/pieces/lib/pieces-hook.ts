@@ -1,16 +1,13 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
-import { ActionType, flowPieceUtil, LocalesEnum } from '@activepieces/shared';
+import { flowPieceUtil, LocalesEnum } from '@activepieces/shared';
 
 import { piecesApi } from './pieces-api';
-import { CORE_STEP_METADATA } from './steps-hooks';
-import { PieceSelectorItem } from './types';
 
 export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
@@ -99,43 +96,6 @@ export const piecesHooks = {
     };
   },
 };
-
-export function getCoreActions(
-  type: ActionType.LOOP_ON_ITEMS | ActionType.CODE | ActionType.ROUTER,
-): PieceSelectorItem[] {
-  switch (type) {
-    case ActionType.CODE:
-      return [
-        {
-          name: 'code',
-          displayName: t('Custom Javascript Code'),
-          description: CORE_STEP_METADATA.CODE.description,
-          type: ActionType.CODE as const,
-        },
-      ];
-    case ActionType.LOOP_ON_ITEMS:
-      return [
-        {
-          name: 'loop',
-          displayName: t('Loop on Items'),
-          description: CORE_STEP_METADATA.LOOP_ON_ITEMS.description,
-          type: ActionType.LOOP_ON_ITEMS as const,
-        },
-      ];
-
-    case ActionType.ROUTER:
-      return [
-        {
-          name: 'router',
-          displayName: t('Router'),
-          description: t(
-            'Split your flow into branches depending on condition(s)',
-          ),
-          type: ActionType.ROUTER as const,
-        },
-      ];
-  }
-}
 
 type UsePieceAndMostRecentPatchProps = {
   name: string;

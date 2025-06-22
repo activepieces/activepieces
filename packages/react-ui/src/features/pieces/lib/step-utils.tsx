@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { agentsApi } from '@/features/agents/lib/agents-api';
 import {
   ErrorHandlingOptionsParam,
@@ -16,12 +18,47 @@ import {
 } from '@activepieces/shared';
 
 import { piecesApi } from './pieces-api';
-import { CORE_STEP_METADATA } from './steps-hooks';
 import {
   PieceStepMetadata,
+  PrimitiveStepMetadata,
   StepMetadata,
   StepMetadataWithStepName,
 } from './types';
+
+export const CORE_STEP_METADATA: Record<
+  Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
+  PrimitiveStepMetadata
+> = {
+  [ActionType.CODE]: {
+    displayName: t('Code'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+    description: t('Powerful Node.js & TypeScript code with npm'),
+    type: ActionType.CODE as const,
+  },
+  [ActionType.LOOP_ON_ITEMS]: {
+    displayName: t('Loop on Items'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+    description: 'Iterate over a list of items',
+    type: ActionType.LOOP_ON_ITEMS as const,
+  },
+  [ActionType.ROUTER]: {
+    displayName: t('Router'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    description: t('Split your flow into branches depending on condition(s)'),
+    type: ActionType.ROUTER as const,
+  },
+  [TriggerType.EMPTY]: {
+    displayName: t('Empty Trigger'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+    description: t('Empty Trigger'),
+    type: TriggerType.EMPTY as const,
+  },
+};
+export const CORE_ACTIONS = [
+  CORE_STEP_METADATA[ActionType.CODE],
+  CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
+  CORE_STEP_METADATA[ActionType.ROUTER],
+] as const;
 
 export const stepUtils = {
   getKeys(step: Action | Trigger, locale: LocalesEnum): (string | undefined)[] {
@@ -29,11 +66,8 @@ export const stepUtils = {
       step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
     const pieceName = isPieceStep ? step.settings.pieceName : undefined;
     const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
-    const customLogoUrl = isPieceStep
-      ? 'customLogoUrl' in step
-        ? step.customLogoUrl
-        : undefined
-      : undefined;
+    const customLogoUrl =
+      'customLogoUrl' in step ? step.customLogoUrl : undefined;
     const agentId = getAgentId(step);
     return [pieceName, pieceVersion, customLogoUrl, agentId, locale];
   },

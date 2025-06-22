@@ -9,8 +9,7 @@ import { CardList } from '@/components/custom/card-list';
 import { useSocket } from '@/components/socket-provider';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { getCoreActions } from '@/features/pieces/lib/pieces-hook';
-import { CORE_STEP_METADATA } from '@/features/pieces/lib/steps-hooks';
+import { CORE_STEP_METADATA } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
   CodeAction,
@@ -169,8 +168,7 @@ export const CopilotSidebar = () => {
           : flowStructureUtil.findUnusedName(flowVersion.trigger);
       const codeAction = pieceSelectorUtils.getDefaultStep({
         stepName,
-        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
-        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
+        pieceSelectorItem: CORE_STEP_METADATA[ActionType.CODE],
       }) as CodeAction;
       codeAction.settings = {
         input: message.content.inputs,

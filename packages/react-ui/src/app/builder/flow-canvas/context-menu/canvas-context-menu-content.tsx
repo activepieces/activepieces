@@ -66,7 +66,7 @@ export const CanvasContextMenuContent = ({
     flowVersion,
     exitStepSettings,
     readonly,
-    setPieceSelectorStep,
+    setOpenedPieceSelectorId,
   ] = useBuilderStateContext((state) => [
     state.selectedNodes,
     state.applyOperation,
@@ -74,7 +74,7 @@ export const CanvasContextMenuContent = ({
     state.flowVersion,
     state.exitStepSettings,
     state.readonly,
-    state.setPieceSelectorStep,
+    state.setOpenedPieceSelectorId,
   ]);
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
@@ -141,7 +141,7 @@ export const CanvasContextMenuContent = ({
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
-            setPieceSelectorStep(selectedNodes[0]);
+            setOpenedPieceSelectorId(selectedNodes[0]);
           }}
           className="flex items-center gap-2"
         >
