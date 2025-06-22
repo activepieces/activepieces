@@ -56,16 +56,17 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                         try {
                             if (reply.statusCode >= 400) {
                                 app.log.error({
-                                    response,
-                                    body: buffer.toString(),
+                                    projectId,
+                                    request,
+                                    response: buffer.toString(),
                                 }, 'Error response from AI provider')
                                 return
                             }
 
                             let usage: Usage
                             if (isStreaming) {
-                                const completeResponse = streamingParser.onEnd()
-                                usage = aiProviderService.calculateUsage(provider, request, completeResponse)
+                                const finalResponse = streamingParser.onEnd()
+                                usage = aiProviderService.calculateUsage(provider, request, finalResponse)
                             }
                             else {
                                 const completeResponse = JSON.parse(buffer.toString())
@@ -76,8 +77,8 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                         catch (error) {
                             app.log.error({
                                 error,
-                                provider,
                                 projectId,
+                                request,
                                 response: buffer.toString(),
                             }, 'Error processing AI provider response')
                         }
