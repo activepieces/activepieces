@@ -1,315 +1,156 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { acuitySchedulingAuth } from '../../index';
-import { API_URL, fetchAvailableDates, fetchAvailableTimes, fetchAppointmentTypes, AcuityAuthProps, fetchCalendars, fetchAddons, fetchLabels } from '../common';
+import { API_URL } from '../common';
+import {
+	addonIdsDropdown,
+	appointmentTypeIdDropdown,
+	calendarIdDropdown,
+	labelIdDropdown,
+} from '../common/props';
 
-interface CreateAppointmentProps {
-  appointmentTypeID: number;
-  desiredMonth: string;
-  timezone: string;
-  calendarID?: number;
-  availableDateTimeSlot: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  adminBooking?: boolean;
-  noEmail?: boolean;
-  phone?: string;
-  certificate?: string;
-  notes?: string;
-  smsOptIn?: boolean;
-  fields?: Array<{ id: number; value: string }>;
-  addonIDs?: Array<{ id: number }>;
-  labels?: number;
-}
+export const createAppointmentAction = createAction({
+	auth: acuitySchedulingAuth,
+	name: 'create_appointment',
+	displayName: 'Create Appointment',
+	description: 'Creates a new appointment.',
+	props: {
+		datetime: Property.DateTime({
+			displayName: 'DateTime',
+			description: 'Date and time of the appointment.',
+			required: true,
+		}),
+		appointmentTypeID: appointmentTypeIdDropdown({
+			displayName: 'Appointment Type',
+			description: 'Select the type of appointment.',
+			required: true,
+		}),
+		firstName: Property.ShortText({
+			displayName: 'First Name',
+			description: "Client's first name.",
+			required: true,
+		}),
+		lastName: Property.ShortText({
+			displayName: 'Last Name',
+			description: "Client's last name.",
+			required: true,
+		}),
+		email: Property.ShortText({
+			displayName: 'Email',
+			description: "Client's email address. (Optional if booking as admin).",
+			required: false,
+		}),
+		phone: Property.ShortText({
+			displayName: 'Phone',
+			description: "Client's phone number.",
+			required: false,
+		}),
+		timezone: Property.ShortText({
+			displayName: 'Timezone',
+			description:
+				"Client's timezone (e.g., America/New_York). Required for accurate availability checking.",
+			required: true,
+			defaultValue: 'UTC',
+		}),
+		adminBooking: Property.Checkbox({
+			displayName: 'Book as Admin',
+			description:
+				'Set to true to book as an admin. Disables availability/attribute validations, allows setting notes, and makes Calendar ID required.',
+			required: false,
+			defaultValue: false,
+		}),
+		calendarID: calendarIdDropdown({
+			displayName: 'Calendar ID',
+			description:
+				'Numeric ID of the calendar. Required if booking as admin. If not provided, Acuity tries to find an available calendar automatically for non-admin bookings.',
+			required: false,
+		}),
+		noEmail: Property.Checkbox({
+			displayName: 'Suppress Confirmation Email/SMS',
+			description: 'If true, confirmation emails or SMS will not be sent.',
+			required: false,
+			defaultValue: false,
+		}),
+		certificate: Property.ShortText({
+			displayName: 'Certificate Code',
+			description: 'Package or coupon certificate code.',
+			required: false,
+		}),
+		notes: Property.LongText({
+			displayName: 'Notes',
+			description: 'Appointment notes. Only settable if booking as admin.',
+			required: false,
+		}),
+		smsOptIn: Property.Checkbox({
+			displayName: 'SMS Opt-In',
+			description:
+				'Indicates whether the client has explicitly given permission to receive SMS messages.',
+			required: false,
+			defaultValue: false,
+		}),
+		addonIDs: addonIdsDropdown({
+			displayName: 'Addons',
+			description:
+				'Select addons for the appointment. Addons are filtered by selected Appointment Type if available.',
+			required: false,
+		}),
+		labelId: labelIdDropdown({
+			displayName: 'Label',
+			description: 'Apply a label to the appointment. The API currently supports one label.',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const props = context.propsValue;
 
-export const createAppointment = createAction({
-  auth: acuitySchedulingAuth,
-  name: 'create_appointment',
-  displayName: 'Create Appointment',
-  description: 'Create a new appointment.',
-  props: {
-    appointmentTypeID: Property.Dropdown({
-      displayName: 'Appointment Type',
-      description: 'Select the type of appointment.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-        return {
-          disabled: false,
-          options: await fetchAppointmentTypes(auth as AcuityAuthProps),
-        };
-      },
-    }),
-    timezone: Property.ShortText({
-      displayName: 'Timezone',
-      description: "Client's timezone (e.g., America/New_York). Required for accurate availability checking.",
-      required: true,
-      defaultValue: 'UTC',
-    }),
-    desiredMonth: Property.ShortText({
-      displayName: 'Desired Month (YYYY-MM)',
-      description: 'Enter the month you want to check for availability (e.g., 2024-01).',
-      required: true,
-      defaultValue: new Date().toISOString().slice(0, 7), // Current month as default
-    }),
-    availableDateTimeSlot: Property.Dropdown({
-      displayName: 'Available Date & Time Slot',
-      description: 'Select an available date and time slot for the appointment.',
-      required: true,
-      refreshers: ['appointmentTypeID', 'desiredMonth', 'timezone', 'calendarID'],
-      options: async ({ auth, propsValue }) => {
-        const props = propsValue as Pick<CreateAppointmentProps, 'appointmentTypeID' | 'desiredMonth' | 'timezone' | 'calendarID'>;
+		const queryParams: Record<string, string> = {};
+		if (props.adminBooking) {
+			queryParams['admin'] = 'true';
+		}
+		if (props.noEmail) {
+			queryParams['noEmail'] = 'true';
+		}
 
-        if (!props.appointmentTypeID || !props.desiredMonth || !props.timezone) {
-          return {
-            disabled: true,
-            placeholder: 'Please select Appointment Type, Timezone, and Desired Month first',
-            options: [],
-          };
-        }
+		const body: Record<string, unknown> = {
+			datetime: props.datetime,
+			appointmentTypeID: props.appointmentTypeID,
+			firstName: props.firstName,
+			lastName: props.lastName,
+			email: props.email,
+		};
 
-        try {
-          const availableDates = await fetchAvailableDates(
-            auth as { username: string; password: string },
-            props.appointmentTypeID,
-            props.desiredMonth,
-            props.timezone,
-            props.calendarID
-          );
+		if (props.calendarID) body['calendarID'] = props.calendarID;
+		if (props.phone) body['phone'] = props.phone;
+		if (props.timezone) body['timezone'] = props.timezone;
+		if (props.certificate) body['certificate'] = props.certificate;
+		if (props.adminBooking && props.notes) body['notes'] = props.notes;
+		if (props.smsOptIn) body['smsOptIn'] = props.smsOptIn;
 
-          if (!Array.isArray(availableDates) || availableDates.length === 0) {
-            return {
-              disabled: true,
-              placeholder: 'No available dates found for the selected month',
-              options: [],
-            };
-          }
+		if (props.addonIDs && props.addonIDs.length > 0) {
+			body['addonIDs'] = props.addonIDs;
+		}
+		if (props.labelId) {
+			body['labelID'] = [{ id: props.labelId }];
+		}
 
-          const allTimeSlots = await Promise.all(
-            availableDates.map(async (date: string) => {
-              const times = await fetchAvailableTimes(
-                auth as { username: string; password: string },
-                props.appointmentTypeID,
-                date,
-                props.timezone,
-                props.calendarID
-                // No ignoreAppointmentIDs for create new appointment
-              );
-              return times.map((time: { time: string; datetime: string }) => ({
-                label: `${date} ${time.time}`,
-                value: time.datetime,
-              }));
-            })
-          );
+		if (props.adminBooking && !props.calendarID) {
+			throw new Error('Calendar ID is required when booking as admin.');
+		}
+		if (props.adminBooking && props.email === '') {
+			delete body['email'];
+		}
 
-          const options = allTimeSlots.flat().filter(Boolean);
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.POST,
+			url: `${API_URL}/appointments`,
+			queryParams: queryParams,
+			body: body,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth.access_token,
+			},
+		});
 
-          if (options.length === 0) {
-            return {
-              disabled: true,
-              placeholder: 'No available time slots found',
-              options: [],
-            };
-          }
-
-          return {
-            disabled: false,
-            options,
-          };
-        } catch (error) {
-          console.error('Error fetching availability:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error fetching available slots. Please check your inputs.',
-            options: [],
-          };
-        }
-      },
-    }),
-    firstName: Property.ShortText({
-      displayName: 'First Name',
-      description: "Client's first name.",
-      required: true,
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
-      description: "Client's last name.",
-      required: true,
-    }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: "Client's email address. (Optional if booking as admin)",
-      required: true,
-    }),
-    adminBooking: Property.Checkbox({
-      displayName: 'Book as Admin',
-      description: 'Set to true to book as an admin. Disables availability/attribute validations, allows setting notes, and makes Calendar ID required.',
-      required: false,
-      defaultValue: false,
-    }),
-    calendarID: Property.Dropdown({
-      displayName: 'Calendar ID',
-      description: 'Numeric ID of the calendar. Required if booking as admin. If not provided, Acuity tries to find an available calendar automatically for non-admin bookings.',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-        return {
-          disabled: false,
-          options: await fetchCalendars(auth as AcuityAuthProps),
-        };
-      },
-    }),
-    noEmail: Property.Checkbox({
-      displayName: 'Suppress Confirmation Email/SMS',
-      description: 'If true, confirmation emails or SMS will not be sent.',
-      required: false,
-      defaultValue: false,
-    }),
-    phone: Property.ShortText({
-      displayName: 'Phone',
-      description: "Client's phone number. May be required based on your Acuity account settings. Optional for admins.",
-      required: false,
-    }),
-    certificate: Property.ShortText({
-      displayName: 'Certificate Code',
-      description: 'Package or coupon certificate code.',
-      required: false,
-    }),
-    notes: Property.LongText({
-      displayName: 'Notes',
-      description: 'Appointment notes. Only settable if booking as admin.',
-      required: false,
-    }),
-    smsOptIn: Property.Checkbox({
-      displayName: 'SMS Opt-In',
-      description: 'Indicates whether the client has explicitly given permission to receive SMS messages.',
-      required: false,
-      defaultValue: false,
-    }),
-    fields: Property.Array({
-      displayName: 'Form Fields',
-      description: 'Custom form field values for the appointment.',
-      required: false,
-      properties: {
-        id: Property.Number({
-          displayName: 'Field ID',
-          description: 'Numeric ID of the form field.',
-          required: true,
-        }),
-        value: Property.ShortText({
-          displayName: 'Field Value',
-          description: 'Value for the form field. For checkbox lists, use a comma-delimited string with spaces (e.g., "Option 1, Option 2").',
-          required: true,
-        }),
-      },
-    }),
-    addonIDs: Property.MultiSelectDropdown({
-      displayName: 'Addons',
-      description: 'Select addons for the appointment. Addons are filtered by selected Appointment Type if available.',
-      required: false,
-      refreshers: ['appointmentTypeID'],
-      options: async ({ auth, propsValue }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-        const currentProps = propsValue as Pick<CreateAppointmentProps, 'appointmentTypeID'>;
-        return {
-          disabled: false,
-          options: await fetchAddons(auth as AcuityAuthProps, currentProps.appointmentTypeID),
-        };
-      },
-    }),
-    labels: Property.Dropdown({
-      displayName: 'Label',
-      description: 'Apply a label to the appointment. The API currently supports one label.',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-        return {
-          disabled: false,
-          options: await fetchLabels(auth as AcuityAuthProps),
-        };
-      },
-    }),
-  },
-  async run(context) {
-    const props = context.propsValue as CreateAppointmentProps;
-    const { username, password } = context.auth;
-
-    const queryParams: Record<string, string> = {};
-    if (props.adminBooking) {
-      queryParams['admin'] = 'true';
-    }
-    if (props.noEmail) {
-      queryParams['noEmail'] = 'true';
-    }
-
-    const body: Record<string, unknown> = {
-      datetime: props.availableDateTimeSlot,
-      appointmentTypeID: props.appointmentTypeID,
-      firstName: props.firstName,
-      lastName: props.lastName,
-      email: props.email,
-    };
-
-    if (props.calendarID) body['calendarID'] = props.calendarID;
-    if (props.phone) body['phone'] = props.phone;
-    if (props.timezone) body['timezone'] = props.timezone;
-    if (props.certificate) body['certificate'] = props.certificate;
-    if (props.adminBooking && props.notes) body['notes'] = props.notes;
-    if (props.smsOptIn) body['smsOptIn'] = props.smsOptIn;
-
-    if (props.fields && props.fields.length > 0) {
-      body['fields'] = props.fields;
-    }
-    if (props.addonIDs && props.addonIDs.length > 0) {
-      body['addonIDs'] = props.addonIDs;
-    }
-    if (props.labels) {
-      body['labelID'] = props.labels;
-    }
-
-    if (props.adminBooking && !props.calendarID) {
-      throw new Error("Calendar ID is required when booking as admin.");
-    }
-    if (props.adminBooking && props.email === '') {
-      delete body['email'];
-    }
-
-    return await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${API_URL}/appointments`,
-      queryParams: queryParams,
-      body: body,
-      headers: {
-        Authorization: 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
-      },
-    });
-  },
+		return response.body;
+	},
 });

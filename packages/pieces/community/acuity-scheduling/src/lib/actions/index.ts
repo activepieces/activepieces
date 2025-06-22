@@ -4,4 +4,4 @@ export * from './create-client';
 export * from './update-client';
 export * from './add-blocked-time';
 export * from './find-appointments';
-export * from './list-clients';
+export * from './find-client';
