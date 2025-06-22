@@ -11,7 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
@@ -82,7 +82,7 @@ const StepSettingsContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
@@ -193,12 +193,8 @@ const StepSettingsContainer = () => {
           <ResizablePanel defaultSize={55}>
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
-                {stepMetadata && !isNil(pieceModel) && (
-                  <StepCardInfo
-                    piece={stepMetadata}
-                    step={modifiedStep}
-                    pieceModel={pieceModel}
-                  ></StepCardInfo>
+                {stepMetadata && (
+                  <StepCardInfo step={modifiedStep}></StepCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { TodoDetails } from '@/app/routes/todos/todo-details';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Action, isNil, StepOutput } from '@activepieces/shared';
 
 type FlowStepAgentProps = {
@@ -11,18 +12,28 @@ type FlowStepAgentProps = {
 const FlowStepAgent = React.memo((props: FlowStepAgentProps) => {
   const { stepDetails } = props;
 
-  const castedOutput = stepDetails?.output as Record<string, unknown>;
-  const todoId =
-    !isNil(castedOutput) && 'todoId' in castedOutput
-      ? (castedOutput.todoId as string)
-      : null;
+  const todoId = getTodoId(stepDetails?.output ?? stepDetails?.errorMessage);
 
   return (
-    <div className="px-4">
-      {!isNil(todoId) && <TodoDetails todoId={todoId} hideTitle={true} />}
-    </div>
+    <ScrollArea className="h-full p-4">
+      <div className="px-4 py-2 flex flex-col">
+        {!isNil(todoId) && <TodoDetails todoId={todoId} simpleTitle={true} />}
+      </div>
+    </ScrollArea>
   );
 });
 
 FlowStepAgent.displayName = 'FlowStepAgent';
 export { FlowStepAgent };
+
+function getTodoId(output: unknown) {
+  const castedOutput =
+    typeof output === 'object'
+      ? output
+      : typeof output === 'string'
+      ? JSON.parse(output)
+      : null;
+  return !isNil(castedOutput) && 'todoId' in castedOutput
+    ? (castedOutput.todoId as string)
+    : null;
+}

@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { Like } from 'typeorm'
+import { IsNull, Like } from 'typeorm'
 import { agentsService } from '../agents/agents-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
@@ -113,13 +113,9 @@ export const todoService = (log: FastifyBaseLogger) => ({
         let query = todoRepo().createQueryBuilder('todo').where({
             platformId: params.platformId,
             projectId: params.projectId,
+            agentId: IsNull(),
             ...spreadIfDefined('flowId', params.flowId),
         })
-        if (!isNil(params.agentId)) {
-            query = query.andWhere({
-                agentId: params.agentId,
-            })
-        }
         if (!isNil(params.assigneeId)) {
             query = query.andWhere({
                 assigneeId: params.assigneeId,
@@ -212,7 +208,6 @@ type GetParams = {
 
 type ListParams = {
     platformId: PlatformId
-    agentId?: string
     projectId: ProjectId
     flowId?: FlowId
     assigneeId?: UserId
