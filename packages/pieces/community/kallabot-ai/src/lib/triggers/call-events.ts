@@ -3,12 +3,12 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined, MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/shared';
 
 const webhookInstructions = `**Setup Instructions:**
-1. Copy the webhook URL below
-2. In your Kallabot AI agent configuration, go to Actions/Webhooks settings  
-3. Enable webhooks and paste the webhook URL
+1. Copy the webhook URL below.
+2. In your Kallabot AI agent configuration, go to Actions/Webhooks settings  .
+3. Enable webhooks and paste the webhook URL.
 4. Your agent will now send call data to this webhook when a call ends.`;
 
 const testInstructions = `
@@ -21,7 +21,9 @@ If you want to generate sample data without triggering the flow, append \`/test\
 export const callEventsTrigger = createTrigger({
   name: 'catch_webhook',
   displayName: 'Call Events Webhook',
-  description: 'Receives webhook data when call events occur from Kallabot AI agents.',
+  description:
+    'Receives webhook data when call events occur from Kallabot AI agents.',
+  requireAuth: false,
   props: {
     webhookUrl: Property.MarkDown({
       value: `**Webhook URL:**
@@ -50,26 +52,30 @@ export const callEventsTrigger = createTrigger({
     cost: 0.25,
     status: 'completed',
     call_type: 'outbound',
-    recording_url: 'https://api.twilio.com/2010-04-01/Accounts/AC123/Recordings/RE123.wav',
+    recording_url:
+      'https://api.twilio.com/2010-04-01/Accounts/AC123/Recordings/RE123.wav',
     recording_sid: 'RE1234567890abcdef1234567890abcdef',
     transcription: {
       conversation: [
         {
           speaker: 'agent',
-          message: 'Hello! This is regarding your recent order cancellation. How can I help you today?',
-          timestamp: '2024-01-15T10:30:05Z'
+          message:
+            'Hello! This is regarding your recent order cancellation. How can I help you today?',
+          timestamp: '2024-01-15T10:30:05Z',
         },
         {
           speaker: 'customer',
-          message: 'Hi, yes I cancelled my order because I found a better price elsewhere.',
-          timestamp: '2024-01-15T10:30:15Z'
-        }
+          message:
+            'Hi, yes I cancelled my order because I found a better price elsewhere.',
+          timestamp: '2024-01-15T10:30:15Z',
+        },
       ],
       sentiment: 'neutral',
-      summary: 'Customer cancelled order due to price. Interested in price matching discussion.'
+      summary:
+        'Customer cancelled order due to price. Interested in price matching discussion.',
     },
     created_at: '2024-01-15T10:30:00Z',
-    webhook_url: 'https://your-webhook-url.com/endpoint'
+    webhook_url: 'https://your-webhook-url.com/endpoint',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
@@ -80,8 +86,8 @@ export const callEventsTrigger = createTrigger({
   },
   async run(context) {
     const payloadBody = context.payload.body as any;
-    
+
     // Return the webhook payload data
     return [payloadBody];
   },
-}); 
+});

@@ -29,7 +29,7 @@ export const kallabotAi = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/kallabot-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['abdulrahmanmajid'],
-  auth: PieceAuth.None(),
+  auth: kallabotAuth,
   actions: [makeCallAction, getCallDetailsAction],
   triggers: [callEventsTrigger],
   description: 'AI-powered voice agents and conversational interfaces.',
