@@ -44,4 +44,8 @@ export const replicateProvider: AIProviderStrategy = {
             model,
         }
     },
+
+    isStreaming: (_request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        return false
+    },
 } 

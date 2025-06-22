@@ -6,6 +6,7 @@ import { FastifyRequest } from 'fastify'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
+import { StreamingParser, Usage } from './providers/types'
 
 export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
@@ -30,6 +31,11 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
                 const projectId = request.principal.projectId
                 const { provider } = request.params as { provider: string }
+                const isStreaming = aiProviderService.isStreaming(provider, request)
+                let streamingParser: StreamingParser
+                if (isStreaming) {
+                    streamingParser = aiProviderService.streamingParser(provider)
+                }
 
                 let buffer = Buffer.from('');
 
@@ -39,6 +45,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                     write(chunk, encoding, callback) {
                         buffer = Buffer.concat([buffer, chunk]);
                         (reply.raw as NodeJS.WritableStream).write(chunk, encoding)
+                        if (isStreaming) {
+                            streamingParser.onChunk(chunk.toString())
+                        }
                         callback()
                     },
                     async final(callback) {
@@ -53,9 +62,16 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 return
                             }
 
-                            const completeResponse = JSON.parse(buffer.toString())
-                            const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost })
+                            let usage: Usage
+                            if (isStreaming) {
+                                const completeResponse = streamingParser.onEnd()
+                                usage = aiProviderService.calculateUsage(provider, request, completeResponse)
+                            }
+                            else {
+                                const completeResponse = JSON.parse(buffer.toString())
+                                usage = aiProviderService.calculateUsage(provider, request, completeResponse)
+                            }
+                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model: usage.model, cost: usage.cost })
                         }
                         catch (error) {
                             app.log.error({
@@ -83,6 +99,27 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
+            const provider = (request.params as { provider: string }).provider
+            if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    params: {
+                        message: 'Streaming is not supported for this provider',
+                    },
+                })
+            }
+
+            const model = aiProviderService.extractModelId(provider, request)
+            if (!model || !aiProviderService.isModelSupported(provider, model)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                    params: {
+                        provider,
+                        model: model ?? 'unknown',
+                    },
+                })
+            }
+
             const projectId = request.principal.projectId
             const exceededLimit = await projectLimitsService(request.log).aiCreditsExceededLimit(projectId, 0)
             if (exceededLimit) {
@@ -95,20 +132,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
 
             const userPlatformId = request.principal.platform.id
-            const params = request.params as Record<string, string>
-            const provider = params['provider'] as string
             const providerConfig = getProviderConfigOrThrow(provider)
-
-            const model = aiProviderService.extractModelId(provider, request)
-            if (!model || !aiProviderService.isModelSupported(provider, model)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
-                    params: {
-                        provider,
-                        model: model ?? 'unknown',
-                    },
-                })
-            }
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
             const apiKey = await aiProviderService.getApiKey(provider, platformId)

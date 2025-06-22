@@ -60,4 +60,9 @@ export const googleProvider: AIProviderStrategy = {
             model,
         }
     },
+
+    isStreaming: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        const url = request.url
+        return url.includes(':streamGenerateContent')
+    },
 } 
