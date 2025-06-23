@@ -22,6 +22,7 @@ export const canvaAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
   required: true,
   pkce: true,
+  // pkceMethod: 'S256', // Canva requires S256 method for PKCE - enable after PKCE framework PR
   scope: [
     'design:content:read',
     'design:content:write',
