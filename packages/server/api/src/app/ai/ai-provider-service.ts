@@ -129,21 +129,22 @@ export const aiProviderService = {
             return
         }
         
-        const overage = platformAICreditUsage - aiCreditLimit
+        const overage = Math.round(platformAICreditUsage - platformBilling.includedAiCredits)
         const hasOverage = overage > 0
-        
+
         if (hasOverage) {
             await systemJobsSchedule(system.globalLogger()).upsertJob({
                 job: {
                     name: SystemJobName.AI_USAGE_REPORT,
                     data: {
                         platformId: params.platformId,
+                        overage: overage.toString(),
                     },
-                    jobId: `ai-credit-usage-report-${params.platformId}-${apDayjs().endOf('month').unix()}`,
+                    jobId: `ai-credit-usage-report-${params.platformId}-${apDayjs().unix()}`,
                 },
                 schedule: {
                     type: 'one-time',
-                    date: apDayjs(),
+                    date: apDayjs().add(1, 'seconds'),
                 },
             })
         }

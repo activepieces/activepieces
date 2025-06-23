@@ -53,7 +53,7 @@ export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSch
 export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
     const testMode = stripeKey?.startsWith('sk_test')
     return testMode
-        ? 'price_1RTRhOQN93Aoq4f8F6wt47v3'
+        ? 'price_1RcktVQN93Aoq4f8JjdYKXBp'
         : 'price_live_ai_credits_monthly'
 }
 

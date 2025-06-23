@@ -21,6 +21,7 @@ import {
     spreadIfDefined,
     UserStatus,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -35,6 +36,7 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
+import { stripeHelper } from '../platform/platform-plan/stripe-helper'
 import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
@@ -221,8 +223,10 @@ async function enrichProject(
     })
 
 
+    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
     const { projectTasksUsage } = await platformUsageService(log).getTasksUsage(project.id)
     const { projectAICreditUsage } = await platformUsageService(log).getAICreditUsage(project.platformId, project.id)
+    const { endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
     return {
         ...project,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
@@ -231,7 +235,7 @@ async function enrichProject(
         usage: {
             aiCredits: projectAICreditUsage,
             tasks: projectTasksUsage,
-            nextLimitResetDate: platformUsageService(log).getCurrentBillingPeriodEnd(),
+            nextLimitResetDate: dayjs.unix(endDate).toISOString(),
         },
         analytics: {
             activeFlows,

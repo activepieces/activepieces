@@ -179,14 +179,6 @@ export function AICreditUsage({
                     </span>
                   )}
                 </div>
-                {overageCreditsUsed > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    <span>Estimated additional cost: </span>
-                    <span className="font-medium text-foreground">
-                      ${(overageCreditsUsed * 0.01).toFixed(2)}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -235,7 +227,7 @@ export function AICreditUsage({
             </div>
 
             <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
-              {t('$0.01 per additional credit beyond plan limit')}
+              {t('$1 per 1000 additional credit beyond plan limit')}
             </div>
           </>
         )}

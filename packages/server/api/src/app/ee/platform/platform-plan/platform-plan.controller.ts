@@ -1,19 +1,21 @@
 import { CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import dayjs from 'dayjs'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
+import { aiProviderService } from '../../../ai/ai-provider-service'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
-import { stripeHelper, TASKS_PRICE_ID } from './stripe-helper'
+import { stripeHelper } from './stripe-helper'
 
 
 async function getNextBillingInfo(
     stripe: Stripe, 
-    subscriptionId: string | null, 
+    subscriptionId?: string, 
     defaultBillingDate?: string,
 ) {
     if (isNil(subscriptionId)) {
@@ -24,17 +26,12 @@ async function getNextBillingInfo(
     }
 
     try {
-        const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        const upcomingInvoice = await stripe.invoices.createPreview({
             subscription: subscriptionId,
         })
-        const containsTasks = upcomingInvoice.lines.data.some(
-            line => line.price?.id === TASKS_PRICE_ID,
-        )
-        
+
         const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-        const actualNextBillingDate = containsTasks || isNil(upcomingInvoice.next_payment_attempt)
-            ? defaultBillingDate
-            : new Date(upcomingInvoice.next_payment_attempt * 1000).toISOString()
+        const actualNextBillingDate = new Date(upcomingInvoice.period_end * 1000).toISOString()
         
         return { nextBillingAmount, actualNextBillingDate }
     }
@@ -47,6 +44,18 @@ async function getNextBillingInfo(
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+
+
+    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
+        const platformId = request.principal.platform.id
+        const projectId = request.principal.projectId
+
+        await aiProviderService.increaseProjectAIUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.2, platformId })
+
+        return {
+            message: 'AI credit usage increased',
+        }
+    })
     
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -58,15 +67,12 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             platformUsageService(request.log).getPlatformUsage(platform.id),
         ])
 
-        let subscription: Stripe.Subscription | null = null
-        if (platformBilling.stripeSubscriptionId) {
-            subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId)
-        }
+        const { endDate: nextBillingDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
 
         const { nextBillingAmount, actualNextBillingDate } = await getNextBillingInfo(
             stripe, 
-            platformBilling.stripeSubscriptionId ?? null, 
-            subscription ? new Date(subscription.current_period_end * 1000).toISOString() : undefined,
+            platformBilling.stripeSubscriptionId,
+            dayjs.unix(nextBillingDate).toISOString(),
         )
         
         const response: PlatformBillingInformation = {
@@ -74,7 +80,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             usage,
             nextBillingDate: actualNextBillingDate,
             nextBillingAmount,
-            cancelAt: subscription?.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : undefined,
+            cancelAt: cancelDate ? dayjs.unix(cancelDate).toISOString() : undefined,
         }
         
         return response

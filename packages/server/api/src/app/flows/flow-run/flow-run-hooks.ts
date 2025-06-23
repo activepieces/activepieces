@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { emailService } from '../../ee/helper/email/email-service'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
+import { stripeHelper } from '../../ee/platform/platform-plan/stripe-helper'
 import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
@@ -51,7 +52,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
     if (!tasksPerMonth) {
         return
     }
-    const resetDate = platformUsageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
+    const { startDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
     const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 
@@ -61,7 +62,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
             await emailService(log).sendQuotaAlert({
                 templateName,
                 projectId,
-                resetDate: dayjs(resetDate).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+                resetDate: dayjs.unix(startDate).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
             })
         }
     }

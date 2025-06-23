@@ -87,7 +87,6 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'aiCredit' })
         const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'aiCredit' })
 
-        
         return aiCreditPlatformLimit || aiCreditPorjectLimit
     },
 })
@@ -140,23 +139,30 @@ async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): P
 }
 
 async function platformReachedLimit(params: LimitReachedFromPlatformBillingParams): Promise<boolean> {
-    const enterprise = edition === ApEdition.ENTERPRISE
-    if (enterprise) {
+    if (edition === ApEdition.ENTERPRISE) {
         return false
     }
 
     const { platformId, platformUsage, usageType, log } = params
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-    const overageEnabled = !isNil(platformBilling.aiCreditsLimit)
-
-    const platformLimit = usageType === 'tasks' ? platformBilling.tasksLimit : overageEnabled ? platformBilling.aiCreditsLimit : platformBilling.includedAiCredits
+    const isOverageEnabled = !isNil(platformBilling.aiCreditsLimit)
+    
+    const platformLimit = usageType === 'tasks'
+        ? platformBilling.tasksLimit
+        : platformBilling.aiCreditsLimit ?? platformBilling.includedAiCredits
 
     if (isNil(platformLimit)) {
         return false
     }
-    return platformUsage >= platformLimit
+
+    const totalLimit = usageType === 'aiCredit' && isOverageEnabled
+        ? platformLimit + platformBilling.includedAiCredits
+        : platformLimit
+
+    return platformUsage >= totalLimit
 }
+
 
 type LimitReachedFromProjectPlanParams = {
     projectId: string
