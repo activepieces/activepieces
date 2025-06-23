@@ -63,8 +63,8 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     },
     indices: [
         {
-            name: 'idx_app_connection_project_ids_and_external_id',
-            columns: ['projectIds', 'externalId'],
+            name: 'idx_app_connection_external_id',
+            columns: ['externalId'],
         },
         {
             name: 'idx_app_connection_platform_id',
