@@ -201,14 +201,22 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+    failureMode: Property.StaticDropdown({
+      displayName: 'On Failure',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Retry on all errors (4xx, 5xx)', value: 'all' },
+          { label: 'Continue flow', value: 'continue' },
+          { label: 'Retry on internal errors (5xx)', value: '5xx' },
+        ],
+      },
     }),
   },
   errorHandlingOptions: {
     continueOnFailure: { hide: true },
-    retryOnFailure: { defaultValue: true },
+    retryOnFailure: { hide: true },
   },
   async run(context) {
     const {
@@ -219,7 +227,7 @@ export const httpSendRequestAction = createAction({
       body,
       body_type,
       timeout,
-      failsafe,
+      failureMode,
       use_proxy,
       authType,
       authFields,
@@ -294,11 +302,19 @@ export const httpSendRequestAction = createAction({
       }
       return await httpClient.sendRequest(request);
     } catch (error) {
-      if (failsafe) {
-        return (error as HttpError).errorMessage();
+      switch (failureMode) {
+        case 'all': {
+          throw error;
+        } case '5xx':
+          if ((error as HttpError).response.status >= 500 && (error as HttpError).response.status < 600) {
+            throw error;
+          }
+          return (error as HttpError).errorMessage();
+        case 'continue':
+          return (error as HttpError).errorMessage();
+        default:
+          throw error;
       }
-
-      throw error;
     }
   },
 });
