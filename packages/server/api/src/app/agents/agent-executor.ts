@@ -74,7 +74,8 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 }
                 const metadata = await agentToolInstance.getMetadata(chunk.toolName)
                 blocks.push({
-                    type: ContentBlockType.TOOL_CALL,
+                    type: ContentBlockType.TOOL_CALL,   
+                    toolCallId: chunk.toolCallId,
                     toolCallType: isNil(metadata.logoUrl) ? ToolCallType.FLOW : ToolCallType.PIECE,
                     displayName: metadata.displayName,
                     name: chunk.toolName,
@@ -85,11 +86,12 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 })
             }
             else if (chunk.type === 'tool-result') {
-                const lastBlock = blocks.pop() as ToolCallContentBlock
+                const lastBlock = blocks.find((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId) as ToolCallContentBlock
                 assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
                 assertEqual(lastBlock.type, ContentBlockType.TOOL_CALL, 'Last block must be a tool call', 'TOOL_CALL')
                 blocks.push({
                     type: ContentBlockType.TOOL_CALL,
+                    toolCallId: lastBlock.toolCallId,
                     toolCallType: lastBlock.toolCallType,
                     displayName: lastBlock.displayName,
                     name: lastBlock.name,

@@ -33,6 +33,7 @@ export const ToolCallContentBlock = Type.Object({
     status: Type.Enum(ToolCallStatus),
     input: Nullable(Type.Unknown()),
     output: Nullable(Type.Unknown()),
+    toolCallId: Type.String(),
     startTime: Type.String(),
     endTime: Type.Optional(Type.String()),
 })
