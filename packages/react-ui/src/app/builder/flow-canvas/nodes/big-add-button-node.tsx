@@ -16,11 +16,12 @@ import { ApBigAddButtonNode } from '../utils/types';
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
-    const [pieceSelectorOpen, setPieceSelectorOpen] = useState(false);
-    const [readonly, activeDraggingStep] = useBuilderStateContext((state) => [
-      state.readonly,
-      state.activeDraggingStep,
-    ]);
+    const [readonly, activeDraggingStep, isPieceSelectorOpened] =
+      useBuilderStateContext((state) => [
+        state.readonly,
+        state.activeDraggingStep,
+        state.openedPieceSelectorId === id,
+      ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,
@@ -29,8 +30,7 @@ const ApBigAddButtonCanvasNode = React.memo(
         ...data,
       },
     });
-    const showDropIndicator = !isNil(activeDraggingStep);
-
+    const isShowingDropIndicator = !isNil(activeDraggingStep);
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
         setIsStepInsideDropzone(event.over?.id === draggableId);
@@ -64,23 +64,22 @@ const ApBigAddButtonCanvasNode = React.memo(
                   }}
                   id={id}
                   className={cn('rounded bg-accent relative', {
-                    'bg-primary/80': showDropIndicator || pieceSelectorOpen,
+                    'bg-primary/80':
+                      isShowingDropIndicator || isPieceSelectorOpened,
                     'shadow-add-button':
-                      isIsStepInsideDropzone || pieceSelectorOpen,
+                      isIsStepInsideDropzone || isPieceSelectorOpened,
                     'transition-all':
                       isIsStepInsideDropzone ||
-                      pieceSelectorOpen ||
-                      showDropIndicator,
+                      isPieceSelectorOpened ||
+                      isShowingDropIndicator,
                   })}
                 >
-                  {!showDropIndicator && (
+                  {!isShowingDropIndicator && (
                     <PieceSelector
                       operation={flowCanvasUtils.createAddOperationFromAddButtonData(
                         data,
                       )}
-                      open={pieceSelectorOpen}
-                      onOpenChange={setPieceSelectorOpen}
-                      asChild={true}
+                      id={id}
                     >
                       <span>
                         <Button
@@ -90,7 +89,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                           <Plus
                             className={cn('w-6 h-6 text-accent-foreground ', {
                               'opacity-0':
-                                showDropIndicator || pieceSelectorOpen,
+                                isShowingDropIndicator || isPieceSelectorOpened,
                             })}
                           />
                         </Button>
@@ -98,7 +97,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     </PieceSelector>
                   )}
                 </div>
-                {showDropIndicator && (
+                {isShowingDropIndicator && (
                   <div
                     style={{
                       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
