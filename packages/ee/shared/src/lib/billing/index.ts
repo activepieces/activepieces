@@ -16,7 +16,6 @@ export enum ApSubscriptionStatus {
     CANCELED = 'canceled',
 }
 
-export const MAXIMUM_ALLOWED_TASKS = 1000_000
 export const DEFAULT_BUSINESS_SEATS = 5
 
 export const PRICE_PER_EXTRA_USER = 10

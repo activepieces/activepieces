@@ -228,6 +228,8 @@ import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037
 import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
 import { AddBillingCycleDates1750704192423 } from './migration/postgres/1750704192423-addBillingCycleDates'
 import { MakeBillingCycleDatesNotNullable1750714315579 } from './migration/postgres/1750714315579-makeBillingCycleDatesNotNullable'
+import { ReplaceTasksLimitWithIncludedTasks1750720173459 } from './migration/postgres/1750720173459-replaceTasksLimitWithIncludedTasks'
+import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgres/1750722071472-renameIncludedTasksToTasksLimit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -477,6 +479,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformIdToAiUsage1750526457504,
                 AddBillingCycleDates1750704192423,
                 MakeBillingCycleDatesNotNullable1750714315579,
+                ReplaceTasksLimitWithIncludedTasks1750720173459,
+                RenameIncludedTasksToTasksLimit1750722071472
               
        
             )

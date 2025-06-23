@@ -18,9 +18,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        includedTasks: {
-            type: Number,
-        },
         tasksLimit: {
             type: Number,
             nullable: true,

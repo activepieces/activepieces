@@ -5,9 +5,8 @@ export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscri
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
-    includedTasks: 1000,
     aiCreditsLimit: undefined,
-    includedAiCredits: 100,
+    includedAiCredits: 200,
     activeFlowsLimit: 2,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -37,7 +36,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
-    includedTasks: 1000000,
+    tasksLimit: undefined,
     aiCreditsLimit: undefined,
     includedAiCredits: 500,
     activeFlowsLimit: 10,
@@ -70,7 +69,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
-    includedTasks: 1000000,
+    tasksLimit: undefined,
     aiCreditsLimit: undefined,
     includedAiCredits: 1000,
     activeFlowsLimit: 50,
@@ -107,7 +106,7 @@ export const OPENSOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     todosEnabled: true,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    includedTasks: 0,
+    tasksLimit: undefined,
     includedAiCredits: 0,
     environmentsEnabled: false,
     analyticsEnabled: false,
@@ -117,7 +116,6 @@ export const OPENSOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    tasksLimit: undefined,
     manageProjectsEnabled: false,
     projectRolesEnabled: false,
     customDomainsEnabled: false,

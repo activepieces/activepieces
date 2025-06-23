@@ -15,7 +15,6 @@ import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
-import { stripeHelper } from '../../platform/platform-plan/stripe-helper'
 import { platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
 
@@ -44,7 +43,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         return {
             ...projectPlan,
             tasks: projectPlan.tasks ?? platformBilling?.tasksLimit,
-            aiCredits: projectPlan.aiCredits,
+            aiCredits: projectPlan.aiCredits ?? platformBilling?.includedAiCredits,
         }
     },
 
@@ -93,8 +92,8 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
         const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
 
-        const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'aiCredit' })
-        const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'aiCredit' })
+        const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'ai_credits' })
+        const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'ai_credits' })
 
         return aiCreditPlatformLimit || aiCreditPorjectLimit
     },
@@ -165,7 +164,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
         return false
     }
 
-    const totalLimit = usageType === 'aiCredit' && isOverageEnabled
+    const totalLimit = usageType === 'ai_credits' && isOverageEnabled
         ? platformLimit + platformBilling.includedAiCredits
         : platformLimit
 
@@ -176,14 +175,14 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 type LimitReachedFromProjectPlanParams = {
     projectId: string
     manageProjectsEnabled: boolean
-    usageType: 'tasks' | 'aiCredit'
+    usageType: 'tasks' | 'ai_credits'
     log: FastifyBaseLogger
     projectUsage: number
 }
 
 type LimitReachedFromPlatformBillingParams = {
     platformId: string
-    usageType: 'tasks' | 'aiCredit' 
+    usageType: 'tasks' | 'ai_credits' 
     log: FastifyBaseLogger
     platformUsage: number
 }

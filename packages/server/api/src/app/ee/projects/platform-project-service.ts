@@ -1,6 +1,5 @@
 import {
     ApSubscriptionStatus,
-    MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
@@ -69,7 +68,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             const project = await projectService.getOneOrThrow(projectId)
             const isCustomerProject = isCustomerPlatform(project.platformId)
             if (isSubscribed || isCustomerProject) {
-                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
+                const newTasks = request.plan.tasks ?? undefined
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
@@ -172,10 +171,6 @@ type GetAllParams = {
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
-}
-
-function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
-    return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
 }
 
 async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {

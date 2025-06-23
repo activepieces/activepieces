@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PlanName } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 export function TasksUsage({
   platformSubscription,
@@ -21,10 +21,10 @@ export function TasksUsage({
   const { plan, usage } = platformSubscription;
   const isFreePlan = plan.plan === PlanName.FREE;
   const currentTasks = usage.tasks || 0;
-  const tasksLimit = plan.tasksLimit ?? 100;
+  const includedTasks = plan.tasksLimit 
   const usagePercentage =
-    isFreePlan && tasksLimit > 0
-      ? Math.round((currentTasks / tasksLimit) * 100)
+    !isNil(includedTasks) && includedTasks > 0
+      ? Math.round((currentTasks / includedTasks) * 100)
       : 0;
 
   return (
@@ -65,9 +65,9 @@ export function TasksUsage({
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
                 {currentTasks.toLocaleString()}{' '}
-                {!isFreePlan
+                {isNil(includedTasks)
                   ? '/ Unlimited'
-                  : `/ ${tasksLimit.toLocaleString()}`}
+                  : `/ ${includedTasks.toLocaleString()}`}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {isFreePlan ? t('Plan Limit') : t('Fair Usage')}
