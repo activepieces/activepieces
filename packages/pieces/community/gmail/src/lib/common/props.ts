@@ -180,7 +180,7 @@ export const GmailProps = {
     }),
   message: Property.Dropdown({
     displayName: 'Message',
-    description: 'Select the message to reply to',
+    description: 'Select a message from the list or enter a message ID manually',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -202,7 +202,7 @@ export const GmailProps = {
           return {
             disabled: false,
             options: [],
-            placeholder: 'No messages found',
+            placeholder: 'No recent messages found. You can enter a message ID manually.',
           };
         }
 
@@ -250,16 +250,16 @@ export const GmailProps = {
         };
       } catch (error) {
         return {
-          disabled: true,
+          disabled: false,
           options: [],
-          placeholder: 'Error loading messages',
+          placeholder: 'Error loading recent messages. You can enter a message ID manually.',
         };
       }
     },
   }),
   thread: Property.Dropdown({
     displayName: 'Thread',
-    description: 'Select the email thread to modify',
+    description: 'Select a thread from the list or enter a thread ID manually',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -281,7 +281,7 @@ export const GmailProps = {
           return {
             disabled: false,
             options: [],
-            placeholder: 'No threads found',
+            placeholder: 'No recent threads found. You can enter a thread ID manually.',
           };
         }
 
@@ -331,9 +331,9 @@ export const GmailProps = {
         };
       } catch (error) {
         return {
-          disabled: true,
+          disabled: false,
           options: [],
-          placeholder: 'Error loading threads',
+          placeholder: 'Error loading recent threads. You can enter a thread ID manually.',
         };
       }
     },
