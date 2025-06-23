@@ -166,7 +166,8 @@ async function addFlowToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool(mcpTool.flowId!, mcpTool.id, McpToolType.FLOW)
+    const flowToolName = mcpTool.flow ? mcpTool.flow.version.displayName : mcpTool.flowId!
+    const toolName = mcpToolNaming.fixTool(flowToolName, mcpTool.id, McpToolType.FLOW)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse
