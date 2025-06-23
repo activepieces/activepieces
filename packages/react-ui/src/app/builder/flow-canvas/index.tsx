@@ -22,7 +22,7 @@ import {
   doesSelectionRectangleExist,
   NODE_SELECTION_RECT_CLASS_NAME,
   useBuilderStateContext,
-  useFocusedFailedStep,
+  useFocusOnStep,
   useHandleKeyPressOnCanvas,
   useResizeCanvas,
 } from '../builder-hooks';
@@ -108,7 +108,7 @@ export const FlowCanvas = React.memo(
     const containerRef = useRef<HTMLDivElement>(null);
 
     useShowChevronNextToSelection();
-    useFocusedFailedStep();
+    useFocusOnStep();
     useHandleKeyPressOnCanvas();
     useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const storeApi = useStoreApi();

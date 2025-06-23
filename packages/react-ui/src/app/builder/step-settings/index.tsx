@@ -11,7 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
@@ -23,7 +23,6 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
@@ -34,6 +33,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
+import { StepCardInfo } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -82,7 +82,7 @@ const StepSettingsContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
@@ -143,12 +143,6 @@ const StepSettingsContainer = () => {
     },
   });
 
-  const actionOrTriggerDisplayName = selectedStep.settings.actionName
-    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
-    : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
-
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
@@ -200,13 +194,7 @@ const StepSettingsContainer = () => {
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
                 {stepMetadata && (
-                  <PieceCardInfo
-                    piece={stepMetadata}
-                    customizedInputs={
-                      selectedStep.settings?.inputUiInfo?.customizedInputs
-                    }
-                    actionOrTriggerDisplayName={actionOrTriggerDisplayName}
-                  ></PieceCardInfo>
+                  <StepCardInfo step={modifiedStep}></StepCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>

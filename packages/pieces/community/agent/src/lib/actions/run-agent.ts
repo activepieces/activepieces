@@ -1,5 +1,11 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { Agent, AgentTestResult, apId, ExecutionType, PauseType, RunAgentRequest, SeekPage, Todo } from '@activepieces/shared';
+import { Agent, AgentTestResult, AgentTaskStatus, apId, ExecutionType, PauseType, RunAgentRequest, SeekPage, Todo } from '@activepieces/shared';
+
+
+enum EscalationMode {
+  STOP = 'stop',
+  IGNORE = 'ignore',
+}
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -15,7 +21,7 @@ export const runAgent = createAction({
     },
   },
   props: {
-    agents: Property.Dropdown({
+    agentId: Property.Dropdown({
       displayName: 'Agent',
       description: 'Select agent created',
       required: true,
@@ -43,17 +49,33 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
+    escalation: Property.StaticDropdown<EscalationMode>({
+      displayName: 'Escalation',
+      description: 'The behavior when the agent fails to complete the task.',
+      required: true,
+      options: {
+        options: [
+          {
+            label: 'Stop the flow',
+            value: EscalationMode.STOP,
+          },
+          {
+            label: 'Ignore and continue',
+            value: EscalationMode.IGNORE,
+          },
+        ],
+      },
+      defaultValue: EscalationMode.STOP,
+    }),
   },
   async run(context) {
     const serverToken = context.server.token;
     const userPrompt = context.propsValue.prompt;
-    const agentId = context.propsValue.agents;
+    const agentId = context.propsValue.agentId;
 
     if (context.executionType === ExecutionType.BEGIN) {
-      const stateId = `__agent_todo_id_${apId()}`
       const actionLink = context.generateResumeUrl({
         queryParams: {
-          stateId: stateId,
         },
       });
       context.run.pause({
@@ -67,6 +89,7 @@ export const runAgent = createAction({
       });
       const request: RunAgentRequest = {
         prompt: userPrompt,
+        callbackUrl: actionLink,
       }
       const response = await fetch(`${context.server.apiUrl}v1/agents/${agentId}/todos`, {
         method: 'POST',
@@ -77,17 +100,16 @@ export const runAgent = createAction({
         body: JSON.stringify(request)
       });
       const todo = await response.json() as Todo
-      await context.store.put(stateId, todo.id)
       return {
         todoId: todo.id,
       }
     } else {
-      const todoId = await context.store.get<string>(context.resumePayload.queryParams['stateId'])
-      const output: AgentTestResult = {
-        todoId: todoId!,
-        output: (context.resumePayload.body as { output: string })['output'],
+      const result = context.resumePayload.body as AgentTestResult
+
+      if (result.status == AgentTaskStatus.FAILED && context.propsValue.escalation == EscalationMode.STOP) {
+        throw new Error(JSON.stringify(result))
       }
-      return output
+      return result
     }
   },
 });
