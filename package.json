@@ -276,7 +276,7 @@
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
     "string-strip-html": "8.5.0",
-    "stripe": "14.3.0",
+    "stripe": "18.2.1",
     "tailwind-merge": "2.4.0",
     "tailwindcss-animate": "1.0.7",
     "tinycolor2": "1.6.0",

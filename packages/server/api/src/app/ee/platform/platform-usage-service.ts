@@ -1,11 +1,11 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment,  FlowStatus, isNil, PlatformUsage, UserStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull, MoreThanOrEqual } from 'typeorm'
 import { aiUsageRepo } from '../../ai/ai-provider-service'
 import { getRedisConnection } from '../../database/redis-connection'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { apDayjs } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { mcpRepo } from '../../mcp/mcp-service'
 import { projectRepo, projectService } from '../../project/project-service'
@@ -20,7 +20,6 @@ const redisKeyGenerator = (entityId: string, entityType: 'project' | 'platform',
 }
 
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
-
     async getActiveFlows(platformId: string): Promise<number> {
         const projectIds = await getProjectIds(platformId)
         const activeFlows = await flowRepo().count({
@@ -81,9 +80,11 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             return { projectTasksUsage: 0, platformTasksUsage: 0 }
         }
 
+        const { startDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates()
+
         const redisConnection = getRedisConnection()
-        const projectTasksRedisKey = redisKeyGenerator(entityId, 'project', this.getCurrentBillingPeriodStart())
-        const platformTasksRedisKey = redisKeyGenerator(entityId, 'platform', this.getCurrentBillingPeriodStart())
+        const projectTasksRedisKey = redisKeyGenerator(entityId, 'project', dayjs.unix(startDate).toISOString())
+        const platformTasksRedisKey = redisKeyGenerator(entityId, 'platform', dayjs.unix(startDate).toISOString())
 
         const projectTasksUsage = await redisConnection.get(projectTasksRedisKey)
         const platformTasksUsage = await redisConnection.get(platformTasksRedisKey)
@@ -109,26 +110,26 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any
         }
-        
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        const startOfBillingCycle = subscription.current_period_start
-        
+
+        const { startDate: startOfBillingCycle } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(subscriptionId)
+
         const platformAICreditUsageRecords = await aiUsageRepo().find({
             where: {
                 platformId,
-                created: MoreThanOrEqual(startOfBillingCycle.toString()),
+                created: MoreThanOrEqual(dayjs.unix(startOfBillingCycle).toISOString()),
             },
         })
-        const platformAICreditUsage = platformAICreditUsageRecords.reduce((acc, usage) => acc + usage.cost, 0) * 1000
+
+        const platformAICreditUsage = platformAICreditUsageRecords.reduce((acc, usage) => Number(acc) + Number(usage.cost), 0) * 1000
         
         if (projectId) {
             const projectAICreditUsageRecords = await aiUsageRepo().find({
                 where: {
                     projectId,
-                    created: MoreThanOrEqual(startOfBillingCycle.toString()),
+                    created: MoreThanOrEqual(dayjs.unix(startOfBillingCycle).toISOString()),
                 },
             })
-            const projectAICreditUsage = projectAICreditUsageRecords.reduce((acc, usage) => acc + usage.cost, 0) * 1000
+            const projectAICreditUsage = projectAICreditUsageRecords.reduce((acc, usage) => Number(acc) + Number(usage.cost), 0) * 1000
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return { platformAICreditUsage, projectAICreditUsage } as any
@@ -145,24 +146,18 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             return { projectTasksUsage: 0, platformTasksUsage: 0 }
         }
 
-        const redisConnection = getRedisConnection()
 
-        const projectRedisKey = redisKeyGenerator(projectId, 'project', this.getCurrentBillingPeriodStart())
+        const { startDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates()
+
+        const redisConnection = getRedisConnection()
+        const projectRedisKey = redisKeyGenerator(projectId, 'project', dayjs.unix(startDate).toISOString())
         const projectTasksUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
 
         const platformId = await projectService.getPlatformId(projectId)
-        const platformRedisKey = redisKeyGenerator(platformId, 'platform', this.getCurrentBillingPeriodStart())
+        const platformRedisKey = redisKeyGenerator(platformId, 'platform', dayjs.unix(startDate).toISOString())
         const platformTasksUsage = await redisConnection.incrby(platformRedisKey, incrementBy)
 
         return { projectTasksUsage, platformTasksUsage }
-    },
-
-    getCurrentBillingPeriodStart(): string {
-        return apDayjs().startOf('month').toISOString()
-    },
-
-    getCurrentBillingPeriodEnd(): string {
-        return apDayjs().endOf('month').toISOString()
     },
 })
 
