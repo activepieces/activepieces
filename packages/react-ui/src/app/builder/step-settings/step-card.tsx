@@ -3,7 +3,7 @@ import React from 'react';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadata } from '@/features/pieces/lib/types';
+import { PieceStepMetadata } from '@/lib/types';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
 
 type StepCardInfoProps = {

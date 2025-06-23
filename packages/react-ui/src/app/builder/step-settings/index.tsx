@@ -23,8 +23,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
+import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
-import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
