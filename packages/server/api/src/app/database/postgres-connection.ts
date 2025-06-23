@@ -42,6 +42,7 @@ import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-sw
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
+import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -391,6 +392,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeTodoActivityContentFormat1750354589729,
         RevertDescriptionTodoNaming1750389164014,
         RegenerateIssuesTable1750392148590,
+        RemoveProjectIdFromIndex1750712746125,
 
     ]
 
