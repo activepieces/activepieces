@@ -86,10 +86,10 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 })
             }
             else if (chunk.type === 'tool-result') {
-                const lastBlock = blocks.find((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId) as ToolCallContentBlock
+                const lastBlockIndex = blocks.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
+                const lastBlock = blocks[lastBlockIndex] as ToolCallContentBlock
                 assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-                assertEqual(lastBlock.type, ContentBlockType.TOOL_CALL, 'Last block must be a tool call', 'TOOL_CALL')
-                blocks.push({
+                blocks[lastBlockIndex] = {
                     type: ContentBlockType.TOOL_CALL,
                     toolCallId: lastBlock.toolCallId,
                     toolCallType: lastBlock.toolCallType,
@@ -101,7 +101,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                     endTime: new Date().toISOString(),
                     input: lastBlock.input,
                     output: chunk.result,
-                })
+                }
             }
             await todoSideEfffects(log).notifyActivity({
                 socket: params.socket,
