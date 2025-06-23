@@ -15,13 +15,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
-import { apDayjs } from '../helper/dayjs-helper'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
-import { systemJobsSchedule } from '../helper/system-jobs'
-import { SystemJobName } from '../helper/system-jobs/common'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -110,46 +105,6 @@ export const aiProviderService = {
     },
 
 
-    async increaseProjectAIUsage(params: IncreaseProjectAIUsageParams): Promise<void> {
-        await aiUsageRepo().insert({
-            id: apId(),
-            projectId: params.projectId,
-            platformId: params.platformId,
-            provider: params.provider,
-            model: params.model,
-            cost: params.cost,
-        })
-        
-        const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(params.platformId)
-        const { platformAICreditUsage } = await platformUsageService(system.globalLogger()).getAICreditUsage(params.platformId)
-        
-        const aiCreditLimit = platformBilling.aiCreditsLimit
-        const shouldReportUsage = !isNil(aiCreditLimit)
-        if (!shouldReportUsage) {
-            return
-        }
-        
-        const overage = Math.round(platformAICreditUsage - platformBilling.includedAiCredits)
-        const hasOverage = overage > 0
-
-        if (hasOverage) {
-            await systemJobsSchedule(system.globalLogger()).upsertJob({
-                job: {
-                    name: SystemJobName.AI_USAGE_REPORT,
-                    data: {
-                        platformId: params.platformId,
-                        overage: overage.toString(),
-                    },
-                    jobId: `ai-credit-usage-report-${params.platformId}-${apDayjs().unix()}`,
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: apDayjs().add(1, 'seconds'),
-                },
-            })
-        }
-    },
-
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.calculateUsage(request, response)
@@ -188,14 +143,4 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
         return undefined
     }
     return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-}
-
-
-
-type IncreaseProjectAIUsageParams = {
-    platformId: string
-    projectId: string
-    provider: string
-    model: string
-    cost: number
 }

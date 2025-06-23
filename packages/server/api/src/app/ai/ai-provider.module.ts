@@ -3,6 +3,7 @@ import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
 import { aiProviderService } from './ai-provider-service'
@@ -61,7 +62,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
                             const completeResponse = JSON.parse(buffer.toString())
                             const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model, cost, platformId: request.principal.platform.id })
+                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, provider, model, cost, platformId: request.principal.platform.id })
                         }
                         catch (error) {
                             app.log.error({

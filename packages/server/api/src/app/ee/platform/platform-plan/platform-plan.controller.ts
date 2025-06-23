@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
-import { aiProviderService } from '../../../ai/ai-provider-service'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
@@ -50,10 +49,12 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const platformId = request.principal.platform.id
         const projectId = request.principal.projectId
 
-        await aiProviderService.increaseProjectAIUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.2, platformId })
+        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
 
         return {
             message: 'AI credit usage increased',
+            platformAiCreditUsage,
+            projectAiCreditUsage,
         }
     })
     
@@ -64,7 +65,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         const [platformBilling, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            platformUsageService(request.log).getPlatformUsage(platform.id),
+            platformUsageService(request.log).getAllPlatformUsage(platform.id),
         ])
 
         const { endDate: nextBillingDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
@@ -95,7 +96,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { limit } = request.body
         
         const [usage, platformBilling] = await Promise.all([
-            platformUsageService(request.log).getPlatformUsage(platformId),
+            platformUsageService(request.log).getAllPlatformUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
         assertNotNullOrUndefined(platformBilling, 'Plan is not set')

@@ -224,9 +224,9 @@ async function enrichProject(
 
 
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-    const { projectTasksUsage } = await platformUsageService(log).getTasksUsage(project.id)
-    const { projectAICreditUsage } = await platformUsageService(log).getAICreditUsage(project.platformId, project.id)
-    const { endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+    const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
+    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(

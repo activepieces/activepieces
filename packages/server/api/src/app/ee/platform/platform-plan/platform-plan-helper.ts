@@ -38,7 +38,7 @@ export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void>
     const { platformId, metric } = params
 
     const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-    const platformUsage = await platformUsageService(system.globalLogger()).getPlatformUsage(platformId)
+    const platformUsage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
 
     const limitKey = METRIC_TO_LIMIT_MAPPING[metric]
     const usageKey = METRIC_TO_USAGE_MAPPING[metric]

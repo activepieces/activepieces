@@ -5,6 +5,8 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
+import { systemJobsSchedule } from '../../../helper/system-jobs'
+import { SystemJobName } from '../../../helper/system-jobs/common'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
@@ -163,6 +165,22 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 deleted: true,
             })
         }
+
+        const platformBilling = await platformPlanRepo().findOneBy({ stripeSubscriptionId: subscriptionId })
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_USAGE_REPORT,
+                data: {
+                    platformId: platformBilling?.platformId || '',
+                    overage: '0',
+                },
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs().add(1, 'seconds'),
+            },
+        })
+
 
         const updateParams: Stripe.SubscriptionUpdateParams = {
             items,

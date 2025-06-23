@@ -15,6 +15,7 @@ import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
+import { stripeHelper } from '../../platform/platform-plan/stripe-helper'
 import { platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
 
@@ -60,7 +61,11 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const platformId = await projectService.getPlatformId(projectId)
             const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-            const { projectTasksUsage, platformTasksUsage } = await platformUsageService(log).getTasksUsage(projectId)
+            const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+
+            const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate })
+            const platformTasksUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
 
             const tasksPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformTasksUsage, log, usageType: 'tasks' })
             const tasksPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' })
@@ -82,7 +87,11 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-        const { projectAICreditUsage, platformAICreditUsage } = await platformUsageService(log).getAICreditUsage(platformId, projectId)
+        const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+
+        const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
+        const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
 
         const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'aiCredit' })
         const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'aiCredit' })
