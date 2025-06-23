@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import {
   CardList,
   CardListItem,
@@ -8,19 +7,18 @@ import {
 } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import {
-  StepMetadata,
-  PieceSelectorOperation,
-  HandleSelectCallback,
-  StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/lib/types';
 import { isNil } from '@activepieces/shared';
 
-import { cn } from '../../../lib/utils';
+import { cn, wait } from '../../../lib/utils';
+import { useBuilderStateContext } from '../builder-hooks';
 
 import { NoResultsFound } from './no-results-found';
-import { PieceSearchSuggestions } from './piece-search-suggestions';
+import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 
 type PieceGroup = {
   title: string;
@@ -29,30 +27,20 @@ type PieceGroup = {
 
 type PiecesCardListProps = {
   debouncedQuery: string;
-  selectedPieceMetadata: StepMetadata | undefined;
-  setSelectedMetadata: (metadata: StepMetadata) => void;
   operation: PieceSelectorOperation;
-  handleSelect: HandleSelectCallback;
   pieceGroups: PieceGroup[];
   isLoadingPieces: boolean;
   piecesIsLoaded: boolean;
   noResultsFound: boolean;
-  closePieceSelector: () => void;
-  hiddenActionsOrTriggers: string[];
+  initiallySelectedPieceMetadataName?: string;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = (props) => {
-  const {
-    debouncedQuery,
-    isLoadingPieces,
-    noResultsFound,
-    operation,
-    closePieceSelector,
-  } = props;
+  const { debouncedQuery, isLoadingPieces, noResultsFound, operation } = props;
 
   return (
     <CardList
-      className={cn(' w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+      className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
         'w-full md:w-full': debouncedQuery.length > 0 || noResultsFound,
       })}
       listClassName="gap-0"
@@ -67,32 +55,27 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = (props) => {
         <PieceCardListWrapper {...props} />
       )}
 
-      {noResultsFound && (
-        <NoResultsFound
-          operation={operation}
-          closePieceSelector={closePieceSelector}
-        />
-      )}
+      {noResultsFound && <NoResultsFound operation={operation} />}
     </CardList>
   );
 };
 
 const PieceCardListWrapper = ({
   pieceGroups,
-  hiddenActionsOrTriggers,
-  selectedPieceMetadata,
   debouncedQuery,
-  setSelectedMetadata,
-  handleSelect,
+  operation,
+  initiallySelectedPieceMetadataName,
 }: PiecesCardListProps) => {
   useEffect(() => {
-    if (!isNil(selectedPieceMetadata)) {
-      document
-        .getElementById(selectedPieceMetadata.displayName)
-        ?.scrollIntoView({
-          behavior: 'instant',
-          block: 'nearest',
-        });
+    if (!isNil(initiallySelectedPieceMetadataName)) {
+      const element = document.getElementById(
+        initiallySelectedPieceMetadataName,
+      );
+      element?.scrollIntoView({
+        behavior: 'instant',
+        block: 'nearest',
+      });
+      element?.click();
     }
   }, []);
   return pieceGroups.map((group, index) => (
@@ -108,103 +91,84 @@ const PieceCardListWrapper = ({
         </div>
       )}
 
-      {group.pieces.map((pieceMetadata) => (
-        <div
-          id={pieceMetadata.displayName}
-          key={pieceSelectorUtils.toKey(pieceMetadata)}
-        >
-          <PieceCardListItem
-            hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-            pieceMetadata={pieceMetadata}
-            selectedPieceMetadata={selectedPieceMetadata}
-            debouncedQuery={debouncedQuery}
-            setSelectedMetadata={setSelectedMetadata}
-            handleSelect={handleSelect}
-          />
-        </div>
+      {group.pieces.map((pieceMetadata, index) => (
+        <PieceCardListItem
+          key={index}
+          pieceMetadata={pieceMetadata}
+          debouncedQuery={debouncedQuery}
+          operation={operation}
+        />
       ))}
     </React.Fragment>
   ));
 };
 
-const PieceCardListItem = React.forwardRef<
-  HTMLDivElement,
-  {
-    pieceMetadata: StepMetadataWithSuggestions;
-    selectedPieceMetadata: StepMetadata | undefined;
-    debouncedQuery: string;
-    setSelectedMetadata: (metadata: StepMetadata) => void;
-    handleSelect: HandleSelectCallback;
-    hiddenActionsOrTriggers: string[];
-  }
->(
-  (
-    {
-      pieceMetadata,
-      selectedPieceMetadata,
-      debouncedQuery,
-      setSelectedMetadata,
-      handleSelect,
-      hiddenActionsOrTriggers,
-    },
-    ref,
-  ) => {
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+type PieceCardListItemProps = {
+  pieceMetadata: StepMetadataWithSuggestions;
+  debouncedQuery: string;
+  operation: PieceSelectorOperation;
+};
 
-    const handleMouseEnter = (element: HTMLDivElement) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        if (element.matches(':hover')) {
-          setSelectedMetadata(pieceMetadata);
+const PieceCardListItem = ({
+  pieceMetadata,
+  debouncedQuery,
+  operation,
+}: PieceCardListItemProps) => {
+  const isMobile = useIsMobile();
+  const showSuggestions = debouncedQuery.length > 0 || isMobile;
+  const isMouseOver = useRef(false);
+  const selectPieceMetatdata = async () => {
+    isMouseOver.current = true;
+    await wait(250);
+    if (isMouseOver.current) {
+      setHoveredPieceMetadata(pieceMetadata);
+    }
+  };
+  const [hoveredPieceMetadata, setHoveredPieceMetadata] =
+    useBuilderStateContext((state) => [
+      state.hoveredPieceMetadata,
+      state.setHoveredPieceMetadata,
+    ]);
+  return (
+    <>
+      <CardListItem
+        className="flex-col p-3 gap-1 items-start"
+        selected={
+          hoveredPieceMetadata?.displayName === pieceMetadata.displayName &&
+          debouncedQuery.length === 0
         }
-      }, 150);
-    };
-
-    const handleMouseLeave = () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-    const isMobile = useIsMobile();
-    const showSuggestions = debouncedQuery.length > 0 || isMobile;
-    return (
-      <div onMouseLeave={handleMouseLeave} ref={ref}>
-        <CardListItem
-          className="flex-col p-3 gap-1 items-start"
-          selected={
-            pieceMetadata.displayName === selectedPieceMetadata?.displayName
-          }
-          interactive={!showSuggestions}
-          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-        >
-          <div className="flex gap-2 items-center h-full">
-            <PieceIcon
-              logoUrl={pieceMetadata.logoUrl}
-              displayName={pieceMetadata.displayName}
-              showTooltip={false}
-              size={'sm'}
-            />
-            <div className="flex-grow h-full flex items-center justify-left text-sm">
-              {pieceMetadata.displayName}
-            </div>
+        interactive={!showSuggestions}
+        onMouseEnter={selectPieceMetatdata}
+        onClick={selectPieceMetatdata}
+        onMouseLeave={() => {
+          isMouseOver.current = false;
+        }}
+        id={pieceMetadata.displayName}
+      >
+        <div className="flex gap-2 items-center h-full">
+          <PieceIcon
+            logoUrl={pieceMetadata.logoUrl}
+            displayName={pieceMetadata.displayName}
+            showTooltip={false}
+            size={'sm'}
+          />
+          <div className="flex-grow h-full flex items-center justify-left text-sm">
+            {pieceMetadata.displayName}
           </div>
-        </CardListItem>
+        </div>
+      </CardListItem>
 
-        {showSuggestions && (
-          <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-            <PieceSearchSuggestions
-              hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-              pieceMetadata={pieceMetadata}
-              handleSelectOperationSuggestion={handleSelect}
-            />
-          </div>
-        )}
-      </div>
-    );
-  },
-);
+      {showSuggestions && (
+        <div>
+          <PieceActionsOrTriggersList
+            stepMetadataWithSuggestions={pieceMetadata}
+            hidePieceIcon={true}
+            operation={operation}
+          />
+        </div>
+      )}
+    </>
+  );
+};
 
 PieceCardListItem.displayName = 'PieceCardListItem';

@@ -3,10 +3,12 @@ import { SearchX, WandSparkles } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { PieceSelectorOperation } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { PieceSelectorOperation } from '@/lib/types';
 import { ApFlagId, FlowOperationType, supportUrl } from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 import { AskAiButton } from './ask-ai';
 
@@ -30,15 +32,16 @@ const RequestPieceButton = () => {
 
 const NoResultsFound = ({
   operation,
-  closePieceSelector,
 }: {
   operation: PieceSelectorOperation;
-  closePieceSelector: () => void;
 }) => {
   const isCopilotEnabled = platformHooks.isCopilotEnabled();
   const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const [setOpenedPieceSelectorId] = useBuilderStateContext((state) => [
+    state.setOpenedPieceSelectorId,
+  ]);
   const isEmbedding = useEmbedding().embedState.isEmbedded;
   const showRequestPieceButton = showCommunityLinks && !isEmbedding;
   const isUpdateTriggerOperation =
@@ -53,7 +56,7 @@ const NoResultsFound = ({
         <AskAiButton
           varitant={'default'}
           operation={operation}
-          onClick={closePieceSelector}
+          onClick={() => setOpenedPieceSelectorId(null)}
         ></AskAiButton>
         {showRequestPieceButton && (
           <>

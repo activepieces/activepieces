@@ -13,10 +13,13 @@ import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.readonly,
-  ]);
+  const [activeDraggingStep, readonly, isOpen] = useBuilderStateContext(
+    (state) => [
+      state.activeDraggingStep,
+      state.readonly,
+      state.openedPieceSelectorId === props.edgeId,
+    ],
+  );
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -25,8 +28,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       ...props,
     },
   });
-
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
   const showDropIndicator = !isNil(activeDraggingStep);
 
@@ -66,9 +67,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       {!showDropIndicator && !readonly && (
         <PieceSelector
           operation={flowCanvasUtils.createAddOperationFromAddButtonData(props)}
-          open={actionMenuOpen}
-          onOpenChange={setActionMenuOpen}
-          asChild={true}
+          id={props.edgeId}
         >
           <div
             style={{
@@ -82,7 +81,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
               className={cn('rounded-xss cursor-pointer transition-all z-50', {
-                'shadow-add-button': actionMenuOpen,
+                'shadow-add-button': isOpen,
               })}
             >
               <div
@@ -93,11 +92,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 className={cn(
                   'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': actionMenuOpen,
+                    'bg-primary ': isOpen,
                   },
                 )}
               >
-                {!actionMenuOpen && (
+                {!isOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-white" />
                 )}
               </div>

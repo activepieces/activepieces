@@ -37,7 +37,6 @@ export type PrimitiveStepMetadata = BaseStepMetadata & {
     | ActionType.LOOP_ON_ITEMS
     | ActionType.ROUTER
     | TriggerType.EMPTY;
-  auth?: undefined;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -82,18 +81,26 @@ export type AskAiButtonOperations = Exclude<
   PieceSelectorOperation,
   { type: FlowOperationType.UPDATE_TRIGGER }
 >;
-export type PieceSelectorItem =
-  | ActionBase
-  | TriggerBase
-  | {
-      displayName: string;
-      name: string;
-      type: ActionType.LOOP_ON_ITEMS | ActionType.ROUTER | ActionType.CODE;
-      description: string;
-    };
 
-export type HandleSelectCallback = (
-  piece: StepMetadata,
-  item: PieceSelectorItem,
-  type?: string,
-) => void;
+export type PieceSelectorPieceItem =
+  | {
+      actionOrTrigger: TriggerBase;
+      type: TriggerType.PIECE;
+      pieceMetadata: PieceStepMetadata;
+    }
+  | ({
+      actionOrTrigger: ActionBase;
+      type: ActionType.PIECE;
+      pieceMetadata: PieceStepMetadata;
+    } & {
+      auth?: PieceAuthProperty;
+    });
+
+export type PieceSelectorItem = PieceSelectorPieceItem | PrimitiveStepMetadata;
+
+export type HandleSelectActionOrTrigger = (item: PieceSelectorItem) => void;
+
+export type PieceGroup = {
+  title: string;
+  pieces: StepMetadataWithSuggestions[];
+};
