@@ -1,5 +1,9 @@
 import { createPiece, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { list } from "./lib/actions/list";
+import { createRow } from './lib/actions/createRow';
+import { updateRow } from './lib/actions/updateRow';
+import {deleteRow} from './lib/actions/deleteRow';
+import { runCustomSql } from './lib/actions/runCustomSql';
 
 export const dbBuilderAuth = PieceAuth.CustomAuth({
   required: true,
@@ -10,7 +14,7 @@ export const dbBuilderAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const baseUrl = 'http://172.29.144.1:6060/node-service/api';
+    const baseUrl = `${process.env['AP_NODE_SERVICE_URL']}/node-service/api`;
     const orgId = auth.orgId;
 
     try {
@@ -46,6 +50,6 @@ export const dbBuilder = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/db-builder.png',
   authors: [],
-  actions: [list],
+  actions: [list,createRow,updateRow,deleteRow, runCustomSql],
   triggers: [],
 });

@@ -1,10 +1,12 @@
-import { createAction, Property} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const list = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'list',
-  displayName: 'list',
-  description: 'get list of rows from selected table',
+  displayName: 'List Rows',
+  description: 'Get list of rows from a selected table',
   props: {
     tableName: Property.Dropdown({
       displayName: 'Table Name',
@@ -20,7 +22,7 @@ export const list = createAction({
         }
 
         const orgId = auth.orgId;
-        const baseUrl = 'http://172.29.144.1:6060/node-service/api';
+        const baseUrl = `${process.env['AP_NODE_SERVICE_URL']}/node-service/api`;
 
         try {
           const res = await fetch(`${baseUrl}/dbBuilder/${orgId}/tableList`);
@@ -45,27 +47,27 @@ export const list = createAction({
       required: true,
       defaultValue: false,
     }),
-limit: Property.Number({
-  displayName: 'Row Limit (number only)',
-  required: false,
-  defaultValue: 50,
-}),
-
+    limit: Property.Number({
+      displayName: 'Row Limit (number only)',
+      required: false,
+      defaultValue: 50,
+    }),
   },
 
   async run({ auth, propsValue }) {
     const orgId = (auth as { orgId: string }).orgId;
-    const baseUrl = 'http://172.29.144.1:6060/node-service/api';
-    const { tableName, limit } = propsValue;
+    const baseUrl = `${process.env['AP_NODE_SERVICE_URL']}/node-service/api`;
+    const { tableName, returnAll, limit } = propsValue;
 
     try {
-      const res = await fetch(`${baseUrl}/dbBuilder/${orgId}/listRows`, {
-        method: 'POST',
+      let url = `${baseUrl}/dbBuilder/${orgId}/list/${tableName}`;
+      if (!returnAll && limit) {
+        url += `?limit=${limit}`;
+      }
+
+      const res = await fetch(url, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tableName,
-          limit: propsValue.returnAll ? undefined : limit,
-        }),
       });
 
       if (!res.ok) {
