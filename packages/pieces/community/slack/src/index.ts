@@ -73,10 +73,10 @@ export const slackAuth = PieceAuth.OAuth2({
     'chat:write.customize',
     'links:read',
     'links:write',
-		'emoji:read',
-		'users.profile:read'
-        'channels:write.invites'
-        'groups:write.invites'
+    'emoji:read',
+    'users.profile:read',
+    'channels:write.invites',
+    'groups:write.invites'
   ],
 });
 
