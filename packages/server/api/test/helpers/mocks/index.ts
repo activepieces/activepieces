@@ -60,11 +60,11 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
+import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
-import { apDayjs } from 'packages/server/api/src/app/helper/dayjs-helper'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -225,8 +225,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         todosEnabled: platformPlan?.todosEnabled ?? false,
         alertsEnabled: platformPlan?.alertsEnabled ?? false,
-        stripeSubscriptionEndDate: apDayjs().endOf("month").unix(),
-        stripeSubscriptionStartDate: apDayjs().startOf("month").unix(),
+        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
+        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {

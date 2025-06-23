@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RenameIncludedTasksToTasksLimit1750722071472 implements MigrationInterface {
     name = 'RenameIncludedTasksToTasksLimit1750722071472'
@@ -7,11 +7,11 @@ export class RenameIncludedTasksToTasksLimit1750722071472 implements MigrationIn
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
                 RENAME COLUMN "includedTasks" TO "tasksLimit"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ALTER COLUMN "tasksLimit" DROP NOT NULL
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -19,11 +19,11 @@ export class RenameIncludedTasksToTasksLimit1750722071472 implements MigrationIn
             ALTER TABLE "platform_plan"
             ALTER COLUMN "tasksLimit"
             SET NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
                 RENAME COLUMN "tasksLimit" TO "includedTasks"
-        `);
+        `)
     }
 
 }

@@ -480,7 +480,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddBillingCycleDates1750704192423,
                 MakeBillingCycleDatesNotNullable1750714315579,
                 ReplaceTasksLimitWithIncludedTasks1750720173459,
-                RenameIncludedTasksToTasksLimit1750722071472
+                RenameIncludedTasksToTasksLimit1750722071472,
               
        
             )
