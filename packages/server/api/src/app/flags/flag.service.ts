@@ -91,6 +91,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.ENABLE_FLOW_ON_PUBLISH,
+                value: system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
                 created,

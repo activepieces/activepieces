@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
   PieceStepMetadataWithSuggestions,
   StepMetadata,
@@ -23,7 +23,7 @@ import {
 export const CreateFlowButton = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { metadata } = piecesHooks.useAllStepsMetadata({
+  const { metadata } = stepsHooks.useAllStepsMetadata({
     searchQuery: '',
     type: 'trigger',
   });

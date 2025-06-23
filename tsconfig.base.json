@@ -30,6 +30,9 @@
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
+      "@activepieces/piece-acuity-scheduling": [
+        "packages/pieces/community/acuity-scheduling/src/index.ts"
+      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
@@ -86,6 +89,9 @@
       ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
+      ],
+      "@activepieces/piece-attio": [
+        "packages/pieces/community/attio/src/index.ts"
       ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
@@ -160,6 +166,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-circle": [
+        "packages/pieces/community/circle/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
@@ -211,6 +220,9 @@
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
+      "@activepieces/piece-crisp": [
+        "packages/pieces/community/crisp/src/index.ts"
+      ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
       ],
@@ -229,6 +241,9 @@
       ],
       "@activepieces/piece-datocms": [
         "packages/pieces/community/datocms/src/index.ts"
+      ],
+      "@activepieces/piece-deepgram": [
+        "packages/pieces/community/deepgram/src/index.ts"
       ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
@@ -638,6 +653,9 @@
       ],
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
+      ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
