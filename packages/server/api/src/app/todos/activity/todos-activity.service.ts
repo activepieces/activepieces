@@ -19,7 +19,7 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
             ...params,
         })
         const savedActivity = await repo().save(activity)
-        await todoSideEfffects(log).notify({
+        await todoSideEfffects(log).notifyActivityCreated({
             socket: params.socket,
             todoId: params.todoId,
             projectId: params.projectId,
@@ -31,10 +31,12 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
         await repo().update(activity.id, {
             ...spreadIfDefined('content', params.content),
         })
-        await todoSideEfffects(log).notify({
+        await todoSideEfffects(log).notifyActivity({
             socket: params.socket,
-            todoId: activity.todoId,
             projectId: params.projectId,
+            activityId: params.id,
+            todoId: activity.todoId,
+            content: params.content,
         })
         return this.getOneOrThrow({ id: params.id })
     },

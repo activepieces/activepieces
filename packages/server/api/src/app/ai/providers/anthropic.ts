@@ -34,4 +34,9 @@ export const anthropicProvider: AIProviderStrategy = {
             model,
         }
     },
+
+    isStreaming: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        const body = request.body as { stream?: boolean }
+        return body.stream ?? false
+    },
 } 

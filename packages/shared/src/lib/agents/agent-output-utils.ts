@@ -6,7 +6,7 @@ export const agentOutputUtils = {
     findAgentResult(params: FindAgentResultParams): AgentTestResult {
         const markAsComplete = params.content.find((block): block is ToolCallContentBlock =>
             block.type === ContentBlockType.TOOL_CALL &&
-            block.displayName === agentbuiltInToolsNames.markAsComplete,
+            block.name === agentbuiltInToolsNames.markAsComplete,
         )
     
         return {
