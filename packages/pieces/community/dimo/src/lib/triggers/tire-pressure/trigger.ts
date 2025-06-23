@@ -7,13 +7,13 @@ import {
 import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import {
   getHeaders,
-  getNumberExpression,
   handleFailures,
 } from '../../helpers';
 import { getTirePressurePositionLabel, TirePressurePosition } from './type';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const tirePressureTrigger = createTrigger({
   auth: dimoAuth,
@@ -22,6 +22,9 @@ export const tirePressureTrigger = createTrigger({
   description:
     'Triggers when vehicle tire pressure meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

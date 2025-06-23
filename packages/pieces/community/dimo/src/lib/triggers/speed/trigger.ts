@@ -9,6 +9,7 @@ import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '.
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const speedTrigger = createTrigger({
   auth: dimoAuth,
@@ -17,6 +18,9 @@ export const speedTrigger = createTrigger({
   description:
     'Triggers when vehicle speed meets specified conditions (requires Developer JWT)',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

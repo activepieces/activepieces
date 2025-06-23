@@ -5,6 +5,7 @@ import { getHeaders,  handleFailures } from "../../helpers";
 import { dimoAuth } from '../../../index';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
+import { WebhookHandshakeStrategy } from "@activepieces/shared";
 
 export const fuelAbsoluteTrigger = createTrigger({
   auth: dimoAuth,
@@ -12,6 +13,9 @@ export const fuelAbsoluteTrigger = createTrigger({
   displayName: 'Fuel System Absolute Level Trigger',
   description: 'Triggers when vehicle fuel system absolute level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration : {
+    strategy : WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

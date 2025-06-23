@@ -5,9 +5,13 @@ import { getHeaders, handleFailures } from '../../helpers';
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const batteryChargingTrigger = createTrigger({
   auth: dimoAuth,
+  handshakeConfiguration : {
+    strategy : WebhookHandshakeStrategy.NONE,
+  },
   name: 'battery-is-charging-trigger',
   displayName: 'Battery Is Charging Trigger',
   description: 'Triggers when vehicle battery charging status changes (True/False) - requires Developer JWT',
