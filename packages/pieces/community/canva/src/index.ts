@@ -17,7 +17,15 @@ import { getFolder } from './lib/actions/get-folder';
 import { getAsset } from './lib/actions/get-asset';
 
 export const canvaAuth = PieceAuth.OAuth2({
-  description: 'Authentication for Canva API',
+  description: `Authentication for Canva API
+
+📋 **Required Scopes** (enable these in your Canva integration settings):
+✅ **design:content** - Read & Write (for creating, editing, importing, and exporting designs)
+✅ **design:meta** - Read (for finding and listing designs)  
+✅ **asset** - Read & Write (for uploading and managing assets)
+✅ **folder** - Read & Write (for organizing designs and moving items)
+
+🔗 Configure scopes at: https://canva.com/developers/integrations → Your Integration → Configuration → Scopes`,
   authUrl: 'https://www.canva.com/api/oauth/authorize',
   tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
   required: true,
@@ -26,6 +34,7 @@ export const canvaAuth = PieceAuth.OAuth2({
   scope: [
     'design:content:read',
     'design:content:write',
+    'design:meta:read',
     'asset:read',
     'asset:write',
     'folder:read',
