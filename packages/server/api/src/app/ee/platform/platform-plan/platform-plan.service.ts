@@ -1,10 +1,10 @@
-import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPENSOURCE_PLAN, PlanName, PlatformPlanWithOnlyLimits, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import Stripe from 'stripe'
 
 import { repoFactory } from '../../../core/db/repo-factory'
+import { apDayjs } from '../../../helper/dayjs-helper'
 import { distributedLock } from '../../../helper/lock'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
@@ -72,22 +72,24 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return updatedPlatformPlan
     },
 
-    async updateSubscriptionStatus(subscription: Partial<Stripe.Subscription>): Promise<PlatformPlan> {
-        const stripeCustomerId = subscription.customer as string
-        const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId })
+    async updateByCustomerId({ subscriptionId, status, customerId, startDate, endDate, cancelDate }: UpdateByCustomerId): Promise<PlatformPlan> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
 
         log.info({
             platformPlanId: platformPlan.id,
-            subscriptionId: subscription.id,
-            subscriptionStatus: subscription.status,
+            subscriptionId,
+            subscriptionStatus: status,
         }, 'Updating subscription id for platform plan')
 
         await platformPlanRepo().update(platformPlan.id, {
-            stripeSubscriptionId: subscription.id,
-            stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
+            stripeSubscriptionId: subscriptionId,
+            stripeSubscriptionStatus: status as ApSubscriptionStatus,
+            stripeSubscriptionStartDate: startDate,
+            stripeSubscriptionEndDate: endDate,
+            stripeSubscriptionCancelDate: cancelDate,
         })
 
-        return platformPlanRepo().findOneByOrFail({ stripeCustomerId })
+        return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
     },
 
     getPlanLimits,
@@ -99,17 +101,22 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
     const plan = getInitialPlanByEdition()
 
+    const defaultStartDate = apDayjs().startOf('month').unix()
+    const defaultEndDate = apDayjs().endOf('month').unix()
+
     const platformPlan: Omit<PlatformPlan, 'created' | 'updated'> = {
         id: apId(),
         platformId,
         stripeCustomerId: stripeCustomerId ?? undefined,
+        stripeSubscriptionStartDate: defaultStartDate,
+        stripeSubscriptionEndDate: defaultEndDate,
         ...plan,
     }
 
     return platformPlanRepo().save(platformPlan)
 }
 
-function getInitialPlanByEdition(): PlatformPlanLimits {
+function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     switch (edition) {
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
@@ -129,4 +136,14 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
         platformId,
     )
     return stripeCustomerId
+}
+
+
+type UpdateByCustomerId = {
+    customerId: string
+    subscriptionId: string
+    status: ApSubscriptionStatus
+    startDate: number
+    endDate: number
+    cancelDate?: number
 }

@@ -119,6 +119,10 @@ export const PlatformPlan = Type.Object({
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
+    stripeSubscriptionStartDate: Type.Number(),
+    stripeSubscriptionEndDate: Type.Number(),
+    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    
 
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),

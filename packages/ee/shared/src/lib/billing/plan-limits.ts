@@ -1,6 +1,8 @@
 import { PlatformPlanLimits } from '@activepieces/shared'
 
-export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
+export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
+
+export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
     includedTasks: 1000,
@@ -33,7 +35,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanLimits = {
     ssoEnabled: false,
 }
 
-export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
+export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     includedTasks: 1000000,
     aiCreditsLimit: undefined,
@@ -66,7 +68,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanLimits = {
 }
 
 
-export const BUSINESS_CLOUD_PLAN: PlatformPlanLimits = {
+export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
     includedTasks: 1000000,
     aiCreditsLimit: undefined,
@@ -99,7 +101,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanLimits = {
 
 }
 
-export const OPENSOURCE_PLAN: PlatformPlanLimits = {
+export const OPENSOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,
@@ -110,6 +112,7 @@ export const OPENSOURCE_PLAN: PlatformPlanLimits = {
     environmentsEnabled: false,
     analyticsEnabled: false,
     showPoweredBy: false,
+
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,

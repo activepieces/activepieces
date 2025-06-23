@@ -226,6 +226,8 @@ import { MakeStepNameOptional1750025401754 } from './migration/postgres/17500254
 import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
+import { AddBillingCycleDates1750704192423 } from './migration/postgres/1750704192423-addBillingCycleDates'
+import { MakeBillingCycleDatesNotNullable1750714315579 } from './migration/postgres/1750714315579-makeBillingCycleDatesNotNullable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -473,6 +475,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLimitsOnPlatformPlan1747921788059,
                 AddPlanNameOnPlatformPlan1748549003744,
                 AddPlatformIdToAiUsage1750526457504,
+                AddBillingCycleDates1750704192423,
+                MakeBillingCycleDatesNotNullable1750714315579,
               
        
             )

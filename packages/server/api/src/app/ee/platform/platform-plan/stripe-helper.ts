@@ -194,36 +194,22 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         await stripe.subscriptions.update(subscriptionId, updateParams)
     },
 
-    async getSubscriptionCycleDates(subscriptionId?: string): Promise<{ startDate: number, endDate: number, cancelDate?: number }> {
-        const stripe = stripeHelper(log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+    async getSubscriptionCycleDates(subscription: Stripe.Subscription): Promise<{ startDate: number, endDate: number, cancelDate?: number }> {
+        const defaultStartDate = apDayjs().startOf('month').unix()
+        const defaultEndDate = apDayjs().endOf('month').unix()
+        const defaultCancelDate = undefined
 
-
-        const startDate = apDayjs().startOf('month').unix()
-        const endDate = apDayjs().endOf('month').unix()
-        if (isNil(subscriptionId)) {
-            return { startDate, endDate }
+        if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
+            return { startDate: defaultStartDate, endDate: defaultEndDate, cancelDate: defaultCancelDate }
         }
 
-        const platformBilling = await platformPlanRepo().findOneBy({ stripeSubscriptionId: subscriptionId })
-        if (isNil(platformBilling) || isNil(platformBilling.stripeSubscriptionId) || platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
-            return { startDate, endDate }
-        }
-
-        const subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId, {
-            expand: ['items.data.price'],
-        })
-
-        const mainPlanItem = subscription.items.data.find(
+        const relevantSubscriptionItem = subscription.items.data.find(
             item => Object.values(STRIPE_PLAN_PRICE_IDS).includes(item.price.id),
         )
 
-
-        if (isNil(mainPlanItem)) {
-            return { startDate, endDate }
-        }
-
-        const relevantSubscriptionItem = mainPlanItem
+        if (isNil(relevantSubscriptionItem)) {
+            return { startDate: defaultStartDate, endDate: defaultEndDate, cancelDate: defaultCancelDate }
+        }  
 
         return { startDate: relevantSubscriptionItem.current_period_start, endDate: relevantSubscriptionItem.current_period_end, cancelDate: subscription.cancel_at ?? undefined }
     },
@@ -294,7 +280,7 @@ async function updateSubscriptionSchedule(
     logger: FastifyBaseLogger,
 ): Promise<void> {
 
-    const { startDate: currentPeriodStart, endDate: currentPeriodEnd } = await stripeHelper(logger).getSubscriptionCycleDates(subscription.id)
+    const { startDate: currentPeriodStart, endDate: currentPeriodEnd } = await stripeHelper(logger).getSubscriptionCycleDates(subscription)
 
     const isFreeDowngrade = newPlan === PlanName.FREE
 

@@ -1,4 +1,4 @@
-import { DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -33,14 +33,19 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     case 'customer.subscription.created':
                     case 'customer.subscription.updated': {
                         const subscription = webhook.data.object as Stripe.Subscription
-            
-                        const platformPlan = await platformPlanService(request.log).updateSubscriptionStatus({
-                            id: subscription.id,
-                            status: subscription.status,
+
+                        const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
+
+                        const platformPlan = await platformPlanService(request.log).updateByCustomerId({
+                            subscriptionId: subscription.id,
+                            customerId: subscription.customer.toString(),
+                            status: subscription.status as ApSubscriptionStatus,
+                            startDate,
+                            endDate,
+                            cancelDate,
                         })
             
                         const newPlan = getPlanFromSubscription(subscription)
-
                         const extraUsers = subscription.items.data.find(item => item.price.id === USER_PRICE_ID)?.quantity ?? 0
 
                         request.log.info('Processing subscription event', {

@@ -32,6 +32,16 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
+        stripeSubscriptionStartDate: {
+            type: Number,
+        },
+        stripeSubscriptionEndDate: {
+            type: Number,
+        },
+        stripeSubscriptionCancelDate: {
+            type: Number,
+            nullable: true,
+        },
         environmentsEnabled: {
             type: Boolean,
         },

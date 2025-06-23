@@ -36,7 +36,6 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { stripeHelper } from '../platform/platform-plan/stripe-helper'
 import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
@@ -224,7 +223,7 @@ async function enrichProject(
 
 
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-    const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+    const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
     const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {

@@ -15,7 +15,6 @@ import { projectRepo, projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
-import { stripeHelper } from './platform-plan/stripe-helper'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
@@ -31,7 +30,7 @@ const getDailyUsageRedisKey = (
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async getAllPlatformUsage(platformId: string): Promise<PlatformUsage> {
         const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-        const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+        const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
 
         const platformTasksUsage = await this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
         const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }) 

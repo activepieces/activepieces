@@ -62,7 +62,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
             const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
-            const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+            const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
 
             const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate })
             const platformTasksUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
@@ -88,7 +88,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
         const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        const { startDate, endDate } = await stripeHelper(system.globalLogger()).getSubscriptionCycleDates(platformBilling.stripeSubscriptionId)
+        const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
 
         const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
         const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
