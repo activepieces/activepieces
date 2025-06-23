@@ -12,6 +12,7 @@ import {
 import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const odometerTrigger = createTrigger({
   auth: dimoAuth,
@@ -20,6 +21,9 @@ export const odometerTrigger = createTrigger({
   description:
     'Triggers when vehicle odometer meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy : WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
@@ -46,12 +50,6 @@ export const odometerTrigger = createTrigger({
       },
     }),
     verificationToken: verificationTokenInput
-    // customWebhookUrl: Property.ShortText({
-    //   displayName: 'Webhook URL',
-    //   description:
-    //     'The URL where the webhook will send data. This is automatically set by the platform.',
-    //   required: false
-    // })
   },
   sampleData: {
     tokenId: 17,
@@ -75,10 +73,10 @@ export const odometerTrigger = createTrigger({
 
 
     console.log(`Original webhook URL: ${context.webhookUrl}`);
-    // const triggerWebhookId = context.webhookUrl.substring(
-    //   context.webhookUrl.lastIndexOf('/') + 1)
+    const triggerWebhookId = context.webhookUrl.substring(
+      context.webhookUrl.lastIndexOf('/') + 1)
 
-    //   const triggerWebhookUrl = `${context.propsValue.customWebhookUrl}/api/v1/webhooks/${triggerWebhookId}`;
+      const triggerWebhookUrl = `https://constantly-sweet-cardinal.ngrok-free.app/api/v1/webhooks/${triggerWebhookId}`;
     const webhookDef: WebhookDefinition = {
       service: 'Telemetry',
       data: TriggerField.PowertrainTransmissionTravelledDistance,
@@ -89,7 +87,8 @@ export const odometerTrigger = createTrigger({
       },
       setup: triggerFrequency as 'Realtime' | 'Hourly',
       description: `Odometer trigger: ${operator} ${odometerValue} km`,
-      targetUri: context.webhookUrl,
+      // targetUri: context.webhookUrl,
+      targetUri: triggerWebhookUrl,
       status: 'Active',
     };
     const webhookResponse = await httpClient.sendRequest({
@@ -101,7 +100,7 @@ export const odometerTrigger = createTrigger({
         trigger: vehicleEventTriggerToText(webhookDef.trigger),
         setup: webhookDef.setup,
         description: webhookDef.description,
-        target_uri: context.webhookUrl,
+        target_uri: webhookDef.targetUri,
         status: webhookDef.status,
         verification_token: verificationToken
       },

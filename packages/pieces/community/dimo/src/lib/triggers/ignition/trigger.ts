@@ -9,6 +9,7 @@ import { VEHICLE_EVENTS_OPERATIONS } from '../../actions';
 import { getHeaders, handleFailures } from '../../helpers';
 import { verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const ignitionTrigger = createTrigger({
   auth: dimoAuth,
@@ -17,6 +18,9 @@ export const ignitionTrigger = createTrigger({
   description:
     'Triggers when vehicle ignition status changes (ON/OFF) - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration  :{
+    strategy : WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

@@ -5,6 +5,7 @@ import { dimoAuth } from '../../../index';
 import { getHeaders, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
+import { WebhookHandshakeStrategy } from "@activepieces/shared";
 
 export const chargeLevelTrigger = createTrigger({
   auth: dimoAuth,
@@ -12,6 +13,9 @@ export const chargeLevelTrigger = createTrigger({
   displayName: 'Charge Level Trigger',
   description: 'Triggers when vehicle battery charge level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

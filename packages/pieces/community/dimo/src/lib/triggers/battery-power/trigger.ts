@@ -5,6 +5,7 @@ import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEv
 import { getHeaders, handleFailures } from "../../helpers";
 import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
 import { operatorStaticDropdown, verificationTokenInput } from "../common";
+import { WebhookHandshakeStrategy } from "@activepieces/shared";
 
 export const batteryPowerTrigger = createTrigger({
   auth: dimoAuth,
@@ -12,6 +13,9 @@ export const batteryPowerTrigger = createTrigger({
   displayName: 'Battery Current Power Trigger',
   description: 'Triggers when vehicle battery current power meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy : WebhookHandshakeStrategy.NONE,
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',

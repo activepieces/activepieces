@@ -5,6 +5,7 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from '../../models';
 import { operatorStaticDropdown, verificationTokenInput } from '../common';
 import { dimoAuth } from '../../../index';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const fuelRelativeTrigger = createTrigger({
   auth: dimoAuth,
@@ -12,6 +13,8 @@ export const fuelRelativeTrigger = createTrigger({
   displayName: 'Fuel System Relative Level Trigger',
   description: 'Triggers when vehicle fuel system relative level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration : {
+    strategy : WebhookHandshakeStrategy.NONE},
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
