@@ -3,7 +3,7 @@ import { ResetPasswordForm } from '@/features/authentication/components/reset-pa
 
 const ResetPasswordPage = () => {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-2">
+    <div className="mx-auto flex h-screen flex-col items-center justify-center gap-2">
       <FullLogo />
       <ResetPasswordForm />
     </div>

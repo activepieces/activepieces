@@ -7,8 +7,6 @@ import { objectProcessor } from './object'
 import { textProcessor } from './text'
 import { ProcessorFn } from './types'
 
-
-
 export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
     JSON: jsonProcessor,
     OBJECT: objectProcessor,

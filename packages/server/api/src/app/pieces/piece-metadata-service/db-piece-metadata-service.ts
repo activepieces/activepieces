@@ -1,19 +1,20 @@
 
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { localPieceCache } from './helper/local-piece-cache'
-import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
+import { pieceListUtils } from './utils'
 import { toPieceMetadataModelSummary } from '.'
 
 const repo = repoFactory(PieceMetadataEntity)
@@ -38,12 +39,13 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 }
             })
             const piecesWithTags = await enrichTags(params.platformId, latestVersionOfEachPiece, params.includeTags)
-            const filteredPieces = await pieceMetadataServiceHooks.get().filterPieces({
+            const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
-            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
+            const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
+            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
@@ -60,19 +62,27 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 ))
                 return piece.name === name && strictlyLessThan
             })
+            const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
+                piece,
+                projectId,
+                platformId,
+            })
+            if (isFiltered) {
+                return undefined
+            }
             return piece
         },
-        async getOrThrow({ projectId, version, name, platformId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ projectId, version, name, platformId, locale }): Promise<PieceMetadataModel> {
             const piece = await this.get({ projectId, version, name, platformId })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        message: `piece_metadata_not_found projectId=${projectId}`,
+                        message: `piece_metadata_not_found projectId=${projectId} pieceName=${name}`,
                     },
                 })
             }
-            return piece
+            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
         },
         async getVersions({ name, projectId, release, platformId }): Promise<ListVersionsResponse> {
             const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
@@ -97,7 +107,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 created: existingMetadata.created,
             })
         },
-        async getExactPieceVersion({ name, version, projectId, platformId }): Promise<string> {
+        async resolveExactVersion({ name, version, projectId, platformId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {

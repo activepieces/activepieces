@@ -24,6 +24,7 @@ export const imageToPdf = createAction({
 	async run(context) {
 		try {
 			const image = context.propsValue.image;
+			const imageExtension = image.extension?.toLowerCase();
 
 			const pdfDoc = await PDFDocument.create();
 			const page = pdfDoc.addPage();
@@ -36,12 +37,12 @@ export const imageToPdf = createAction({
 
 			let result: PDFImage | null = null;
 
-			if (image.extension === 'png') {
+			if (imageExtension === 'png') {
 				result = await pdfDoc.embedPng(image.data);
-			} else if (image.extension === 'jpg' || image.extension === 'jpeg') {
+			} else if (imageExtension === 'jpg' || imageExtension === 'jpeg') {
 				result = await pdfDoc.embedJpg(image.data);
 			} else {
-				throw new Error(`Unsupported image format: ${image.extension}`);
+				throw new Error(`Unsupported image format: ${imageExtension}`);
 			}
 
 			if (result === null) {

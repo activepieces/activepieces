@@ -13,20 +13,29 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
   StepMetadata,
   PieceSelectorOperation,
   HandleSelectCallback,
   StepMetadataWithSuggestions,
+  PieceSelectorItem,
+  PieceStepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Action,
   ActionType,
+  BranchExecutionType,
+  BranchOperator,
+  flowOperations,
   FlowOperationType,
   flowStructureUtil,
   isNil,
+  RouterExecutionType,
+  StepLocationRelativeToParent,
+  TodoType,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -50,6 +59,8 @@ type PieceGroup = {
   pieces: StepMetadataWithSuggestions[];
 };
 
+const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
+
 const PieceSelector = ({
   children,
   open,
@@ -71,23 +82,17 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [
-    applyOperation,
-    selectStepByName,
-    flowVersion,
-    setSampleData,
-    setAskAiButtonProps,
-  ] = useBuilderStateContext((state) => [
-    state.applyOperation,
-    state.selectStepByName,
-    state.flowVersion,
-    state.setSampleData,
-    state.setAskAiButtonProps,
-  ]);
+  const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
+    useBuilderStateContext((state) => [
+      state.applyOperation,
+      state.selectStepByName,
+      state.flowVersion,
+      state.setAskAiButtonProps,
+    ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
-    piecesHooks.useAllStepsMetadata({
+    stepsHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
       type: isTrigger ? 'trigger' : 'action',
     });
@@ -181,12 +186,209 @@ const PieceSelector = ({
     setSelectedTag(PieceTagEnum.ALL);
   };
 
-  const handleSelect: HandleSelectCallback = (
+  const handleAddAction = (
+    stepName: string,
+    stepMetadata: StepMetadata,
+    parentStep: Action | Trigger,
+    actionOrTrigger: PieceSelectorItem,
+    settings?: Record<string, unknown>,
+    valid?: boolean,
+  ) => {
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: stepName,
+      stepMetadata,
+      actionOrTrigger,
+      settings: settings,
+    });
+
+    applyOperation({
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        parentStep: parentStep.name,
+        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        action: {
+          ...stepData,
+          valid: valid ?? stepData.valid,
+        } as Action,
+      },
+    });
+  };
+
+  const handleAddCreateTodoAction = (
+    stepMetadata: StepMetadata,
+    actionOrTrigger: PieceSelectorItem,
+    type?: string,
+  ) => {
+    if (operation.type !== FlowOperationType.ADD_ACTION) {
+      return;
+    }
+    const routerAction = {
+      name: 'router',
+      displayName: 'Check Todo Status',
+      description: 'Split your flow into branches depending on todo status',
+      type: ActionType.ROUTER,
+    } as PieceSelectorItem;
+
+    const routerStepMetadata = {
+      displayName: 'Check Todo Status',
+      logoUrl: stepMetadata.logoUrl,
+      description: 'Split your flow into branches depending on todo status',
+      type: ActionType.ROUTER,
+    } as StepMetadata;
+
+    const newStepNames = pieceSelectorUtils.getStepNames(
+      stepMetadata,
+      flowVersion,
+      3,
+    );
+
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: newStepNames[0],
+      stepMetadata,
+      actionOrTrigger,
+    });
+
+    applyOperation({
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        ...operation.actionLocation,
+        action: stepData as Action,
+      },
+    });
+    flowOperations.apply(flowVersion, {
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        ...operation.actionLocation,
+        action: stepData as Action,
+      },
+    });
+    selectStepByName(stepData.name);
+
+    switch (type) {
+      case TodoType.INTERNAL: {
+        const routerInternalSettings = {
+          branches: [
+            {
+              conditions: [
+                [
+                  {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: `{{ ${stepData.name}['status'] }}`,
+                    secondValue: 'Accepted',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+              branchType: BranchExecutionType.CONDITION,
+              branchName: 'Accepted',
+            },
+            {
+              branchType: BranchExecutionType.FALLBACK,
+              branchName: 'Rejected',
+            },
+          ],
+          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+          inputUiInfo: {
+            customizedInputs: {
+              logoUrl: stepMetadata.logoUrl,
+              description: routerStepMetadata.description,
+            },
+          },
+        };
+
+        handleAddAction(
+          newStepNames[1],
+          routerStepMetadata,
+          stepData,
+          routerAction,
+          routerInternalSettings,
+          true,
+        );
+        break;
+      }
+      case TodoType.EXTERNAL: {
+        const waitForApprovalAction = (
+          stepMetadata as PieceStepMetadataWithSuggestions
+        )?.suggestedActions?.find(
+          (action: any) => action.name === 'wait_for_approval',
+        ) as PieceSelectorItem;
+
+        const waitForApprovalStepName = newStepNames[1];
+
+        const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
+          stepName: waitForApprovalStepName,
+          stepMetadata,
+          actionOrTrigger: waitForApprovalAction,
+        });
+
+        const waitForApprovalStepDataSettings = {
+          ...waitForApprovalStepData.settings,
+          input: {
+            ...waitForApprovalStepData.settings.input,
+            taskId: `{{ ${stepData.name}['id'] }}`,
+          },
+        };
+
+        handleAddAction(
+          waitForApprovalStepName,
+          stepMetadata,
+          stepData,
+          waitForApprovalAction,
+          waitForApprovalStepDataSettings,
+          true,
+        );
+
+        const routerExternalSettings = {
+          branches: [
+            {
+              conditions: [
+                [
+                  {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: `{{ ${waitForApprovalStepData.name}['status'] }}`,
+                    secondValue: 'Accepted',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+              branchType: BranchExecutionType.CONDITION,
+              branchName: 'Accepted',
+            },
+            {
+              branchType: BranchExecutionType.FALLBACK,
+              branchName: 'Rejected',
+            },
+          ],
+          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+          inputUiInfo: {
+            customizedInputs: {
+              logoUrl: stepMetadata.logoUrl,
+              description: routerStepMetadata.description,
+            },
+          },
+        };
+
+        handleAddAction(
+          newStepNames[2],
+          routerStepMetadata,
+          waitForApprovalStepData,
+          routerAction,
+          routerExternalSettings,
+          true,
+        );
+        break;
+      }
+    }
+  };
+
+  const handleSelect: HandleSelectCallback = async (
     stepMetadata,
     actionOrTrigger,
+    type?: string,
   ) => {
     resetField();
     onOpenChange(false);
+
     const newStepName = pieceSelectorUtils.getStepName(
       stepMetadata,
       flowVersion,
@@ -200,7 +402,6 @@ const PieceSelector = ({
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
-        setSampleData(stepData.name, undefined);
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData as Trigger,
@@ -209,6 +410,13 @@ const PieceSelector = ({
         break;
       }
       case FlowOperationType.ADD_ACTION: {
+        if (
+          stepData.settings.pieceName === '@activepieces/piece-todos' &&
+          type
+        ) {
+          handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
+          break;
+        }
         applyOperation({
           type: FlowOperationType.ADD_ACTION,
           request: {
@@ -263,11 +471,13 @@ const PieceSelector = ({
             valid: stepData.valid,
           },
         });
+        break;
       }
     }
+
     setAskAiButtonProps(null);
   };
-  const isMobile = pieceSelectorUtils.useIsMobile();
+  const isMobile = useIsMobile();
   return (
     <Popover
       open={open}
@@ -335,7 +545,6 @@ const PieceSelector = ({
             />
             <Separator orientation="horizontal" />
           </div>
-
           {!isMobile && (
             <div
               className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
@@ -355,6 +564,7 @@ const PieceSelector = ({
                 handleSelect={handleSelect}
                 pieceGroups={pieceGroups}
                 isLoadingPieces={isLoadingPieces}
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
               />
 
               {debouncedQuery.length === 0 &&
@@ -363,6 +573,7 @@ const PieceSelector = ({
                   <>
                     <Separator orientation="vertical" className="h-full" />
                     <StepsCardList
+                      hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                       selectedPieceMetadata={selectedPieceMetadata}
                       handleSelect={handleSelect}
                     />
@@ -384,6 +595,7 @@ const PieceSelector = ({
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                 selectedPieceMetadata={selectedPieceMetadata}
                 setSelectedMetadata={setSelectedMetadata}
                 operation={operation}

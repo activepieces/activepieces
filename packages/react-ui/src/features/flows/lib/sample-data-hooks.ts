@@ -1,26 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, QueryClient } from '@tanstack/react-query';
 
-import { flowStructureUtil, FlowVersion } from '@activepieces/shared';
+import {
+  flowStructureUtil,
+  FlowVersion,
+  SampleDataFileType,
+} from '@activepieces/shared';
 
 import { sampleDataApi } from './sample-data-api';
 
-const getSampleData = async (
-  flowVersion: FlowVersion,
-  stepName: string,
-  projectId: string,
-) => {
-  try {
-    return await sampleDataApi.get({
-      flowId: flowVersion!.flowId,
-      flowVersionId: flowVersion!.id,
-      stepName: stepName,
-      projectId: projectId,
-    });
-  } catch (error) {
-    console.error(error);
-    return undefined;
-  }
-};
 export const sampleDataHooks = {
   useSampleDataForFlow: (
     flowVersion: FlowVersion | undefined,
@@ -41,6 +28,7 @@ export const sampleDataHooks = {
                 flowVersion!,
                 step.name,
                 projectId!,
+                SampleDataFileType.OUTPUT,
               ),
             };
           }),
@@ -53,4 +41,64 @@ export const sampleDataHooks = {
       },
     });
   },
+  useSampleDataInputForFlow: (
+    flowVersion: FlowVersion | undefined,
+    projectId: string | undefined,
+  ) => {
+    return useQuery({
+      queryKey: ['sampleDataInput', flowVersion?.id],
+      enabled: !!flowVersion,
+      staleTime: 0,
+      retry: 4,
+      refetchOnWindowFocus: false,
+      queryFn: async () => {
+        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
+        const singleStepSampleDataInput = await Promise.all(
+          steps.map(async (step) => {
+            return {
+              [step.name]: step.settings.inputUiInfo?.sampleDataInputFileId
+                ? await getSampleData(
+                    flowVersion!,
+                    step.name,
+                    projectId!,
+                    SampleDataFileType.INPUT,
+                  )
+                : undefined,
+            };
+          }),
+        );
+        const sampleDataInput: Record<string, unknown> = {};
+        singleStepSampleDataInput.forEach((stepData) => {
+          Object.assign(sampleDataInput, stepData);
+        });
+        return sampleDataInput;
+      },
+    });
+  },
+  invalidateSampleData: (flowVersionId: string, queryClient: QueryClient) => {
+    queryClient.invalidateQueries({ queryKey: ['sampleData', flowVersionId] });
+    queryClient.invalidateQueries({
+      queryKey: ['sampleDataInput', flowVersionId],
+    });
+  },
 };
+
+async function getSampleData(
+  flowVersion: FlowVersion,
+  stepName: string,
+  projectId: string,
+  type: SampleDataFileType,
+): Promise<unknown> {
+  return sampleDataApi
+    .get({
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
+      stepName,
+      projectId,
+      type,
+    })
+    .catch((error) => {
+      console.error(error);
+      return undefined;
+    });
+}

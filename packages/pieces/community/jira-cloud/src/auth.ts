@@ -49,9 +49,10 @@ You can generate your API token from:
         valid: true,
       };
     } catch (e) {
+      const message = ((e as HttpError).response?.body as any)?.message;
       return {
         valid: false,
-        error: ((e as HttpError).response.body as any).message,
+        error: message ?? 'Invalid credentials',
       };
     }
   },

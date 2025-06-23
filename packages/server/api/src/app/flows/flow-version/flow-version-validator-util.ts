@@ -20,7 +20,11 @@ import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
-const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettings)
+const loopSettingsValidator = TypeCompiler.Compile(Type.Intersect([LoopOnItemsActionSettings, Type.Object({
+    items: Type.String({
+        minLength: 1,
+    }),
+})]))
 const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
 
 type ValidationResult = {
@@ -42,7 +46,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     case ActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.Check(
                             clonedRequest.request.action.settings,
-                        )
+                        ) 
                         break
                     case ActionType.PIECE: {
                         const result = await validateAction(
@@ -250,10 +254,11 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.CUSTOM_AUTH:
             case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
+            case PropertyType.COLOR:
                 propsSchema[name] = Type.String()
                 break
             case PropertyType.ARRAY:
-                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])
+                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String(), Type.Record(Type.String(), Type.Unknown())])
                 break
             case PropertyType.OBJECT:
                 propsSchema[name] = Type.Union([
@@ -274,6 +279,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.DYNAMIC:
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
+                break
+            case PropertyType.CUSTOM:
+                propsSchema[name] = Type.Unknown()
                 break
         }
 

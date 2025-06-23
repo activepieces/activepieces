@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { NotificationStatus, Nullable, PiecesFilterType, SAFE_STRING_PATTERN } from "@activepieces/shared";
+import { NotificationStatus, Nullable, PiecesFilterType, SAFE_STRING_PATTERN, Metadata } from "@activepieces/shared";
 
 export const UpdateProjectPlatformRequest = Type.Object({
     notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
@@ -8,11 +8,12 @@ export const UpdateProjectPlatformRequest = Type.Object({
         pattern: SAFE_STRING_PATTERN,
     })),
     externalId: Type.Optional(Type.String()),
+    metadata: Type.Optional(Metadata),
     plan: Type.Optional(Type.Object({
         tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
-        aiTokens: Type.Optional(Type.Number({})),
+        aiCredits: Type.Optional(Type.Number({})),
     })),
 })
 
@@ -23,6 +24,7 @@ export const CreatePlatformProjectRequest = Type.Object({
         pattern: SAFE_STRING_PATTERN,
     }),
     externalId: Nullable(Type.String()),
+    metadata: Nullable(Metadata),
 })
 
 export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>;

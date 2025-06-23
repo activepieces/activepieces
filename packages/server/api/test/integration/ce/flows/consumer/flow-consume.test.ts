@@ -46,7 +46,11 @@ afterAll(async () => {
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
+        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            plan: {
+                tasksLimit: 1000,
+            },
+        })
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
@@ -144,13 +148,14 @@ describe('flow execution', () => {
             synchronousHandlerId: null,
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
-        }, engineToken)
+        }, 1, engineToken)
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
+      
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
@@ -158,6 +163,7 @@ describe('flow execution', () => {
             .findOneByOrFail({
                 id: flowRun.logsFileId,
             })
+
         const decompressedData = await fileCompressor.decompress({
             data: file.data,
             compression: file.compression,

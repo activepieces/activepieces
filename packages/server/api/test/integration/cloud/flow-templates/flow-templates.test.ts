@@ -1,5 +1,6 @@
 import {
     apId,
+    PlatformPlan,
     PlatformRole,
     PrincipalType,
     TemplateType,
@@ -34,7 +35,7 @@ describe('Flow Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
             const { mockPlatform, mockUser, mockPlatformTemplate } =
-                await createMockPlatformTemplate({ platformId: apId() })
+                await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -51,8 +52,9 @@ describe('Flow Templates', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
@@ -76,6 +78,57 @@ describe('Flow Templates', () => {
             const responseBody = response?.json()
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
+        })
+    })
+
+    describe('Create Flow Template', () => {
+        it('should create a flow template', async () => {
+            // arrange
+            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+                platform: {
+                },
+                plan: {
+                    manageTemplatesEnabled: true,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const mockTemplate = createMockTemplate({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                type: TemplateType.PLATFORM,
+            })
+
+            const createTemplateRequest = {
+                description: mockTemplate.description,
+                template: mockTemplate.template,
+                blogUrl: mockTemplate.blogUrl,
+                type: TemplateType.PLATFORM,
+                tags: mockTemplate.tags,
+                metadata: {
+                    foo: 'bar',
+                },
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/flow-templates',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: createTemplateRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.metadata).toEqual({ foo: 'bar' })
         })
     })
 
@@ -142,11 +195,14 @@ describe('Flow Templates', () => {
     })
 })
 
-async function createMockPlatformTemplate({ platformId }: { platformId: string }) {
+async function createMockPlatformTemplate({ platformId, plan }: { platformId: string, plan?: Partial<PlatformPlan> }) {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         platform: {
             id: platformId,
+        },
+        plan: {
             manageTemplatesEnabled: true,
+            ...plan,
         },
     })
 

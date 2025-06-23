@@ -9,7 +9,7 @@ export enum DataSelectorSizeState {
   DOCKED,
 }
 
-type DataSelectorSizeTogglersPorps = {
+type DataSelectorSizeTogglersProps = {
   state: DataSelectorSizeState;
   setListSizeState: (state: DataSelectorSizeState) => void;
 };
@@ -17,7 +17,7 @@ type DataSelectorSizeTogglersPorps = {
 export const DataSelectorSizeTogglers = ({
   state,
   setListSizeState: setDataSelectorSizeState,
-}: DataSelectorSizeTogglersPorps) => {
+}: DataSelectorSizeTogglersProps) => {
   const handleClick = (newState: DataSelectorSizeState) => {
     setDataSelectorSizeState(newState);
   };

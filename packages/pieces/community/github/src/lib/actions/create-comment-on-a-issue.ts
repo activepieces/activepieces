@@ -1,8 +1,7 @@
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
-import { Octokit } from '@octokit/rest';
-
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
@@ -27,12 +26,15 @@ export const githubCreateCommentOnAIssue = createAction({
     const issue_number = propsValue.issue_number;
     const { owner, repo } = propsValue.repository!;
 
-    const client = new Octokit({ auth: auth.access_token });
-    return await client.rest.issues.createComment({
-      owner,
-      repo,
-      issue_number,
-      body: propsValue.comment,
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
+      method: HttpMethod.POST,
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/comments`,
+      body: {
+        body: propsValue.comment,
+      },
     });
+
+    return response;
   },
 });

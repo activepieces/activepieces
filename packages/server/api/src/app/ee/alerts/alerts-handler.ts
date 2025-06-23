@@ -25,10 +25,6 @@ async function scheduleSendingReminder(params: IssueRemindersParams, log: Fastif
     if (params.issueCount === 1) {
         const project = await projectService.getOneOrThrow(projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {
-            return
-        }
-        
         const reminderKey = `reminder:${projectId}`
         const isEmailScheduled = await getRedisConnection().get(reminderKey)
         if (isEmailScheduled) {
@@ -91,7 +87,7 @@ async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): 
         return
     }
 
-    const flowRunsUrl = await domainHelper.getPublicUrl({
+    const flowRunsUrl = await domainHelper.getInternalUrl({
         platformId,
         path: `runs/${flowRunId}`,
     })

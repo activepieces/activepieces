@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubLockIssueAction = createAction({
   auth: githubAuth,
@@ -15,7 +15,9 @@ export const githubLockIssueAction = createAction({
       description: 'The number of the issue to be locked',
       required: true,
     }),
-    lock_reason: Property.Dropdown<"off-topic" | "too heated" | "resolved" | "spam" | undefined>({
+    lock_reason: Property.Dropdown<
+      'off-topic' | 'too heated' | 'resolved' | 'spam' | undefined
+    >({
       displayName: 'Lock Reason',
       description: 'The reason for locking the issue',
       required: false,
@@ -36,13 +38,14 @@ export const githubLockIssueAction = createAction({
     const { issue_number, lock_reason } = propsValue;
     const { owner, repo } = propsValue.repository!;
 
-    const client = new Octokit({ auth: auth.access_token });
-    return await client.rest.issues.lock({
-      owner,
-      repo,
-      issue_number,
-      lock_reason,
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
+      method: HttpMethod.PUT,
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/lock`,
+      body: {
+        lock_reason,
+      },
     });
-
+    return response;
   },
 });

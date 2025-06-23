@@ -3,11 +3,25 @@ import {
   httpClient,
   HttpMessageBody,
   HttpMethod,
-  HttpRequest,
 } from '@activepieces/pieces-common';
 import { DustAuthType } from '..';
+import { DustAPI } from '@dust-tt/client';
 
-export const DUST_BASE_URL = 'https://dust.tt/api/v1/w';
+export const DUST_BASE_URL = {
+  us: 'https://dust.tt/api/v1/w',
+  eu: 'https://eu.dust.tt/api/v1/w',
+};
+
+export const createClient = (auth: DustAuthType) => {
+  return new DustAPI(
+    { url: auth.region === 'eu' ? 'https://eu.dust.tt' : 'https://dust.tt' },
+    {
+      workspaceId: auth.workspaceId,
+      apiKey: auth.apiKey,
+    },
+    console
+  );
+};
 
 export const assistantProp = Property.Dropdown({
   displayName: 'Agent',
@@ -21,30 +35,22 @@ export const assistantProp = Property.Dropdown({
         placeholder: 'Please authenticate first',
       };
     }
-    const { workspaceId, apiKey } = auth as DustAuthType;
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${DUST_BASE_URL}/${workspaceId}/assistant/agent_configurations`,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-    };
-    const response = await httpClient.sendRequest(request);
-    const options = response.body['agentConfigurations']
-      ?.filter(
-        (agentConfiguration: { status: string }) =>
-          agentConfiguration.status === 'active'
-      )
-      ?.map(
-        (agentConfiguration: { name: string; sId: string; scope: string }) => {
-          return {
-            label: `[${agentConfiguration['scope']}] ${agentConfiguration['name']}`,
-            value: agentConfiguration['sId'],
-          };
-        }
-      )
-      ?.sort((a: { label: string }, b: { label: string }) =>
+    const client = createClient(auth as DustAuthType);
+    const response = await client.getAgentConfigurations({});
+
+    if (response.isErr()) {
+      throw new Error(`API Error: ${response.error.message}`);
+    }
+
+    const options = response.value
+      .filter((agentConfiguration) => agentConfiguration.status === 'active')
+      .map((agentConfiguration) => {
+        return {
+          label: `[${agentConfiguration['scope']}] ${agentConfiguration['name']}`,
+          value: agentConfiguration['sId'],
+        };
+      })
+      .sort((a: { label: string }, b: { label: string }) =>
         a['label'].localeCompare(b['label'])
       );
     return {
@@ -76,7 +82,9 @@ export async function getConversationContent(
   const getConversation = async (conversationId: string) => {
     return httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${DUST_BASE_URL}/${auth.workspaceId}/assistant/conversations/${conversationId}`,
+      url: `${DUST_BASE_URL[auth.region || 'us']}/${
+        auth.workspaceId
+      }/assistant/conversations/${conversationId}`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,
@@ -107,10 +115,9 @@ export async function getConversationContent(
         `Could not load conversation ${conversationId} after ${timeout}s - ${conversationStatus} - consider increasing timeout value`
       );
     } else {
+      const error = getConversationError(conversation.body);
       throw new Error(
-        `Could not load conversation ${conversationId} - ${conversationStatus}: ${
-          conversation.body['conversation']['content']?.at(-1)?.at(0)?.error
-        }`
+        `Could not load conversation ${conversationId} - ${conversationStatus}: ${error.message} (${error.code})`
       );
     }
   }
@@ -120,4 +127,11 @@ export async function getConversationContent(
 
 function getConversationStatus(conversation: HttpMessageBody): string {
   return conversation['conversation']['content']?.at(-1)?.at(0)?.status;
+}
+
+function getConversationError(conversation: HttpMessageBody): {
+  code: string;
+  message: string;
+} {
+  return conversation['conversation']['content']?.at(-1)?.at(0)?.error;
 }

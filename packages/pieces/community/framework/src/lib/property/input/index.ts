@@ -19,6 +19,8 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
+import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
+import { ColorProperty } from './color-property';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -36,6 +38,7 @@ export const InputProperty = Type.Union([
   JsonProperty,
   DateTimeProperty,
   FileProperty,
+  ColorProperty,
 ]);
 
 export type InputProperty =
@@ -53,7 +56,10 @@ export type InputProperty =
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
-  | FileProperty<boolean>;
+  | FileProperty<boolean>
+  | CustomProperty<boolean>
+  | ColorProperty<boolean>;
+
 
 type Properties<T> = Omit<
   T,
@@ -229,4 +235,36 @@ export const Property = {
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
+  Custom<R extends boolean>(
+    request: Omit<Properties<CustomProperty<R>>, 'code'> & {
+      /** 
+       * This is designed to be self-contained and operates independently of any
+       * external libraries or imported dependencies. All necessary logic and
+       * functionality are implemented within this function itself.
+       * 
+       * You can return a cleanup function that will be called when the component is unmounted in the frontend.
+       * */
+      code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
+    }
+  ): R extends true ? CustomProperty<true> : CustomProperty<false> {
+    const code = request.code.toString();
+    return {
+      ...request,
+      code,
+      valueSchema: undefined,
+      type: PropertyType.CUSTOM,
+    } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;
+  },
+  Color<R extends boolean>(
+    request: Properties<ColorProperty<R>>
+  ): R extends true ? ColorProperty<true> : ColorProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.COLOR,
+    } as unknown as R extends true
+      ? ColorProperty<true>
+      : ColorProperty<false>;
+  },
 };
+

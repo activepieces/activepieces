@@ -1,5 +1,6 @@
 import {
   ActionBase,
+  ErrorHandlingOptionsParam,
   PieceAuthProperty,
   PieceMetadataModelSummary,
   TriggerBase,
@@ -27,9 +28,10 @@ export type PieceStepMetadata = BaseStepMetadata & {
   packageType: PackageType;
   pieceType: PieceType;
   auth: PieceAuthProperty | undefined;
+  errorHandlingOptions?: ErrorHandlingOptionsParam;
 };
 
-type PrimitiveStepMetadata = BaseStepMetadata & {
+export type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
     | ActionType.CODE
     | ActionType.LOOP_ON_ITEMS
@@ -45,6 +47,10 @@ export type StepMetadataWithSuggestions =
   | PrimitiveStepMetadata;
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
+
+export type StepMetadataWithStepName = StepMetadata & {
+  stepDisplayName: string;
+};
 
 export type PieceSelectorOperation =
   | {
@@ -88,4 +94,5 @@ export type PieceSelectorItem =
 export type HandleSelectCallback = (
   piece: StepMetadata,
   item: PieceSelectorItem,
+  type?: string,
 ) => void;

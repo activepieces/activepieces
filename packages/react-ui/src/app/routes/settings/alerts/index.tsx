@@ -3,7 +3,7 @@ import { AlertFrequencyCard } from '@/app/routes/settings/alerts/alerts-frequenc
 
 export default function AlertsPage() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="w-full flex flex-col items-center justify-center gap-4">
       <AlertFrequencyCard />
       <AlertsEmailsCard />
     </div>

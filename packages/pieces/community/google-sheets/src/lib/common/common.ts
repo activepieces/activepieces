@@ -80,7 +80,7 @@ async function getGoogleSheetRows({
 	}
 	const rowsResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}${range}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}${range}`)}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: accessToken,
@@ -90,7 +90,7 @@ async function getGoogleSheetRows({
 
 	const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}!A1:ZZZ1`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A1:ZZZ1`)}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: accessToken,

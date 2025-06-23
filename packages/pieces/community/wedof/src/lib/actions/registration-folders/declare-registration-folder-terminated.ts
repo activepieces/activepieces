@@ -21,6 +21,7 @@ export const declareRegistrationFolderTerminated = createAction({
       displayName: 'Sortie de formation le',
       description: 'Date au format YYYY-MM-DD.',
       required: false,
+      defaultValue: dayjs(new Date()).format('YYYY-MM-DD'),
     }),
     code: Property.Dropdown({
       displayName: 'Raison de la sortie de formation',
@@ -63,6 +64,7 @@ export const declareRegistrationFolderTerminated = createAction({
       description:
         "La durée d'une éventuelle absence en heures. 0 si aucune absence.",
       required: false,
+      defaultValue: 0,
     }),
   },
   async run(context) {

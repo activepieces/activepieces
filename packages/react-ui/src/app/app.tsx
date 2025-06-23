@@ -3,13 +3,17 @@ import {
   SetErrorFunction,
 } from '@sinclair/typebox/errors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
@@ -25,6 +29,7 @@ if (!typesFormatsAdded) {
 }
 
 export function App() {
+  const { i18n } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
@@ -32,10 +37,15 @@ export function App() {
           <EmbeddingFontLoader>
             <TelemetryProvider>
               <TooltipProvider>
-                <ThemeProvider storageKey="vite-ui-theme">
-                  <ApRouter />
-                  <Toaster />
-                </ThemeProvider>
+                <React.Fragment key={i18n.language}>
+                  <ThemeProvider storageKey="vite-ui-theme">
+                    <SidebarProvider>
+                      <ApRouter />
+                      <Toaster />
+                      <ChangelogProvider />
+                    </SidebarProvider>
+                  </ThemeProvider>
+                </React.Fragment>
               </TooltipProvider>
             </TelemetryProvider>
           </EmbeddingFontLoader>

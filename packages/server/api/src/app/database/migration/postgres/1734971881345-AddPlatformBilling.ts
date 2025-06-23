@@ -34,7 +34,7 @@ export class AddPlatformBilling1734971881345 implements MigrationInterface {
             ALTER TABLE "platform_billing" DROP CONSTRAINT "fk_platform_billing_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_platform_billing_platform_id"
+            DROP INDEX "idx_platform_billing_platform_id"
         `)
         await queryRunner.query(`
             DROP TABLE "platform_billing"

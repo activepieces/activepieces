@@ -13,7 +13,7 @@ export const createAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-associations',
 	displayName: 'Create Associations',
-	description: 'Creates assosiations between objects',
+	description: 'Creates associations between objects',
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',

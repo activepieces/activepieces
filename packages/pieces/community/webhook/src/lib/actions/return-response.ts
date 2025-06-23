@@ -12,6 +12,11 @@ enum ResponseType {
   REDIRECT = 'redirect',
 }
 
+enum FlowExecution {
+  STOP = 'stop',
+  RESPOND = 'respond',
+}
+
 export const returnResponse = createAction({
   name: 'return_response',
   displayName: 'Return Response',
@@ -85,17 +90,30 @@ export const returnResponse = createAction({
         return fields;
       },
     }),
+    respond: Property.StaticDropdown({
+      displayName: 'Flow Execution',
+      required: false,
+      defaultValue: FlowExecution.STOP,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Stop', value: FlowExecution.STOP },
+          { label: 'Respond and Continue', value: FlowExecution.RESPOND },
+        ],
+      },
+    }),
   },
 
   async run(context) {
-    const { fields, responseType } = context.propsValue;
+    const { fields, responseType, respond } = context.propsValue;
     const bodyInput = fields ['body'];
-    const headers = fields['headers'];
+    const headers = fields['headers']?? {};
     const status = fields['status'];
     
+ 
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
-      headers: (headers as Record<string, string>) ?? {},
+      headers,
     };
 
     switch (responseType) {
@@ -108,12 +126,30 @@ export const returnResponse = createAction({
       case ResponseType.REDIRECT:
         response.status = StatusCodes.MOVED_PERMANENTLY;
         response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
+        response.body = bodyInput;
         break;
     }
+    
+    switch(respond){
+      case FlowExecution.STOP:
+        {
+          context.run.stop({
+            response,
+          });
+          break;
+        }
+      case FlowExecution.RESPOND:
+        {
+          context.run.respond({
+            response,
+          });
+          break;
+        }
+        case undefined:
+          break;
+    }
+ 
 
-    context.run.stop({
-      response: response,
-    });
     return response;
   },
 });

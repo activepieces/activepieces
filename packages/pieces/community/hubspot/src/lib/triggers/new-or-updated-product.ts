@@ -68,7 +68,7 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-product',
 	displayName: 'Product Recently Created or Updated',
-	description: 'Triggers when a product recenty created or updated.',
+	description: 'Triggers when a product recently created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

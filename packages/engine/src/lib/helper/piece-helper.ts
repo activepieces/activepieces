@@ -1,10 +1,11 @@
 import {
     DropdownProperty,
-    DropdownState,
     DynamicProperties,
+    ExecutePropsResult,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
+    pieceTranslation,
     PropertyType,
     StaticPropsValue,
 } from '@activepieces/pieces-framework'
@@ -21,16 +22,19 @@ import {
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
+import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
+    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             piecesSource,
         })
-
+        if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
+            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
+        }
         try {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
@@ -54,31 +58,54 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                connections: utils.createConnectionManager({
+                    projectId: params.projectId,
+                    engineToken: params.engineToken,
+                    apiUrl: constants.internalApiUrl,
+                    target: 'properties',
+                }),
             }
 
-            if (property.type === PropertyType.DYNAMIC) {
-                const dynamicProperty = property as DynamicProperties<boolean>
-                return await dynamicProperty.props(resolvedInput, ctx)
+            switch (property.type) {
+                case PropertyType.DYNAMIC: {
+                    const dynamicProperty = property as DynamicProperties<boolean>
+                    const props = await dynamicProperty.props(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DYNAMIC,
+                        options: props,
+                    }
+                }
+                case PropertyType.MULTI_SELECT_DROPDOWN: {
+                    const multiSelectProperty = property as MultiSelectDropdownProperty<
+                    unknown,
+                    boolean
+                    >
+                    const options = await multiSelectProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.MULTI_SELECT_DROPDOWN,
+                        options,
+                    }
+                }
+                case PropertyType.DROPDOWN: {
+                    const dropdownProperty = property as DropdownProperty<unknown, boolean>
+                    const options = await dropdownProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DROPDOWN,
+                        options,
+                    }
+                }
             }
-
-            if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                const multiSelectProperty = property as MultiSelectDropdownProperty<
-                unknown,
-                boolean
-                >
-                return await multiSelectProperty.options(resolvedInput, ctx)
-            }
-
-            const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return await dropdownProperty.options(resolvedInput, ctx)
         }
         catch (e) {
             console.error(e)
             return {
-                disabled: true,
-                options: [],
-                placeholder: 'Throws an error, reconnect or refresh the page',
-            } as DropdownState<unknown>
+                type: property.type,
+                options: {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Throws an error, reconnect or refresh the page',
+                },
+            }
         }
     },
 
@@ -88,6 +115,10 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+        const server = {
+            apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
+            publicUrl: params.publicApiUrl,
+        }
         if (piece.auth?.validate === undefined) {
             return {
                 valid: true,
@@ -102,24 +133,28 @@ export const pieceHelper = {
                         username: con.username,
                         password: con.password,
                     },
+                    server,
                 })
             }
             case PropertyType.SECRET_TEXT: {
                 const con = params.auth as SecretTextConnectionValue
                 return piece.auth.validate({
                     auth: con.secret_text,
+                    server,
                 })
             }
             case PropertyType.CUSTOM_AUTH: {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                    server,
                 })
             }
             case PropertyType.OAUTH2: {
                 const con = params.auth as OAuth2ConnectionValueWithApp
                 return piece.auth.validate({
                     auth: con,
+                    server,
                 })
             }
             default: {
@@ -131,12 +166,19 @@ export const pieceHelper = {
     async extractPieceMetadata({ piecesSource, params }: { piecesSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
-
+        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, piecesSource })
+        const i18n = await pieceTranslation.initializeI18n(pieceAlias)
+        const fullMetadata = piece.metadata()
         return {
-            ...piece.metadata(),
+            ...fullMetadata,
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,
+            i18n,
         }
     },
 }
+
+
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }
+

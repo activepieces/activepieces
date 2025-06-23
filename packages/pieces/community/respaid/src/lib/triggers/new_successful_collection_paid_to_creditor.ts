@@ -30,7 +30,7 @@ export const newSuccessfulCollectionPaidToCreditor = createTrigger({
         "invoice_number": "INV123",
         "amount": 1000,
         "currency": "usd",
-        "paid_at": "Issue with invoice"
+        "paid_at": "2025-03-02T00:00:00+0000"
     },
     type: TriggerStrategy.WEBHOOK,
     onEnable: respaidTriggersCommon.onEnable('new_successful_collection_paid_to_creditor'),

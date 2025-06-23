@@ -78,6 +78,7 @@ export const UpsertTemplateDialog = ({
         description: formValue.description,
         id: template?.id,
         tags: formValue.tags,
+        metadata: template?.metadata,
       });
     },
     onSuccess: () => {

@@ -11,7 +11,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         build-essential \
         git \
         poppler-utils \
-        poppler-data && \
+        poppler-data \
+        procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 RUN npm i -g npm@9.9.3 pnpm@9.15.0
@@ -21,7 +22,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 ENV NX_DAEMON=false
-
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -49,7 +49,7 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui 
+RUN npx nx run-many --target=build --projects=react-ui
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
@@ -81,7 +81,6 @@ COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/
 
 RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
 
-# 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
 # Copy frontend files to Nginx document root directory from build stage

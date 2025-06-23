@@ -6,7 +6,7 @@ export const numberProcessor: ProcessorFn = (_property, value) => {
         return value
     }
     if (value === '') {
-        return NaN
+        return undefined
     }
     return Number(value)
 }

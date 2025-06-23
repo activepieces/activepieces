@@ -3,13 +3,14 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '../pieces'
+import { PackageType, PiecePackage, PieceType } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -27,11 +28,44 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteStepOperation
+    | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
+
+export const enum EngineSocketEvent {
+    ENGINE_RESULT = 'engine-result',
+    ENGINE_ERROR = 'engine-error',
+    ENGINE_STDOUT = 'engine-stdout',
+    ENGINE_STDERR = 'engine-stderr',
+    ENGINE_READY = 'engine-ready',
+    ENGINE_OPERATION = 'engine-operation',
+}
+
+export const EngineResult = Type.Object({
+    result: Type.Unknown(),
+})
+
+export const EngineError = Type.Object({
+    error: Type.Unknown(),
+})
+
+export const EngineStdout = Type.Object({
+    message: Type.String(),
+})
+
+export const EngineStderr = Type.Object({
+    message: Type.String(),
+})
+
+
+export type EngineResult = Static<typeof EngineResult>
+export type EngineError = Static<typeof EngineError>
+export type EngineStdout = Static<typeof EngineStdout>
+export type EngineStderr = Static<typeof EngineStderr>
+
 
 export type BaseEngineOperation = {
     projectId: ProjectId
@@ -46,12 +80,22 @@ export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage
+export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation &  {
+export type ExecuteStepOperation = BaseEngineOperation & {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+    runEnvironment: RunEnvironment
+}
+
+export type ExecuteToolOperation = BaseEngineOperation & {
+    actionName: string
+    pieceName: string
+    pieceVersion: string
+    pieceType: PieceType
+    packageType: PackageType
+    input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -68,7 +112,9 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
+    tasks: number
     runEnvironment: RunEnvironment
+    executionState: ExecutionState
     serverHandlerId: string | null
     httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
@@ -82,12 +128,12 @@ export enum ProgressUpdateType {
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
+    executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    tasks: number
     resumePayload: ResumePayload
-} & ExecutionState
+}
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
@@ -103,8 +149,16 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
 }
 
 
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
+
 export type TriggerPayload<T = unknown> = {
     body: T
+    rawBody?: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>
 }
@@ -170,6 +224,7 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
 
 export type ExecuteActionResponse = {
     success: boolean
+    input: unknown
     output: unknown
     message?: string
 }

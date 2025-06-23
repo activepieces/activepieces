@@ -3,12 +3,13 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -34,7 +35,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -75,7 +76,7 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-export function InviteUserDialog() {
+export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -130,7 +131,8 @@ export function InviteUserDialog() {
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
     enabled:
-      !isNil(platform.projectRolesEnabled) && platform.projectRolesEnabled,
+      !isNil(platform.plan.projectRolesEnabled) &&
+      platform.plan.projectRolesEnabled,
   });
 
   const roles = rolesData?.data ?? [];
@@ -139,7 +141,7 @@ export function InviteUserDialog() {
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.projectRolesEnabled
+      type: platform.plan.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
@@ -178,14 +180,18 @@ export function InviteUserDialog() {
         }}
       >
         <DialogTrigger asChild>
-          <Button
-            variant={'outline'}
-            size="sm"
-            className="flex items-center justify-center gap-2 w-full"
-          >
-            <Plus className="size-4" />
-            <span>{t('Invite User')}</span>
-          </Button>
+          {children ? (
+            children
+          ) : (
+            <Button
+              variant={'outline'}
+              size="sm"
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <Plus className="size-4" />
+              <span>{t('Invite User')}</span>
+            </Button>
+          )}
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -243,7 +249,7 @@ export function InviteUserDialog() {
                                 {t('Entire Platform')}
                               </SelectItem>
                             )}
-                            {platform.projectRolesEnabled && (
+                            {platform.plan.projectRolesEnabled && (
                               <SelectItem value={InvitationType.PROJECT}>
                                 {project.displayName} (Current)
                               </SelectItem>
@@ -301,6 +307,11 @@ export function InviteUserDialog() {
                   </FormMessage>
                 )}
                 <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant={'outline'}>
+                      {t('Cancel')}
+                    </Button>
+                  </DialogClose>
                   <Button type="submit" loading={isPending}>
                     {t('Invite')}
                   </Button>
@@ -347,4 +358,4 @@ export function InviteUserDialog() {
       </Dialog>
     )
   );
-}
+};

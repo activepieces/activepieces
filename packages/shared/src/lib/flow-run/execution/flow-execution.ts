@@ -28,17 +28,13 @@ export const DelayPauseMetadata = Type.Object({
 
 export type DelayPauseMetadata = Static<typeof DelayPauseMetadata>
 
-export const WebhookPauseMetadata = Type.Object({
-    type: Type.Literal(PauseType.WEBHOOK),
-    requestId: Type.String(),
-    response: Type.Unknown(),
-    handlerId: Type.Optional(Type.String({})),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+export const RespondResponse = Type.Object({
+    status: Type.Optional(Type.Number()),
+    body: Type.Optional(Type.Unknown()),
+    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
-export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
-export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
-export type PauseMetadata = Static<typeof PauseMetadata>
+export type RespondResponse = Static<typeof RespondResponse>
 
 export const StopResponse = Type.Object({
     status: Type.Optional(Type.Number()),
@@ -47,6 +43,19 @@ export const StopResponse = Type.Object({
 })
 
 export type StopResponse = Static<typeof StopResponse>
+
+export const WebhookPauseMetadata = Type.Object({
+    type: Type.Literal(PauseType.WEBHOOK),
+    requestId: Type.String(),
+    response: RespondResponse,
+    handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+})
+export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
+
+export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
+export type PauseMetadata = Static<typeof PauseMetadata>
+
 
 export const FlowError = Type.Object({
     stepName: Type.String(),
@@ -61,7 +70,7 @@ const BaseExecutionResponse = {
     tasks: Type.Optional(Type.Number()),
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
-    stopResponse: Type.Optional(StopResponse),
+    response: Type.Optional(Type.Union([RespondResponse, PauseMetadata])),
 }
 
 export const FlowRunResponse = Type.Union([
@@ -99,10 +108,13 @@ export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
     return isFlowUserTerminalState(status) || status === FlowRunStatus.INTERNAL_ERROR
 }
 
+export const FAILED_STATES = [
+    FlowRunStatus.FAILED,
+    FlowRunStatus.INTERNAL_ERROR,
+    FlowRunStatus.QUOTA_EXCEEDED,
+    FlowRunStatus.TIMEOUT,
+    FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+]   
 export const isFailedState = (status: FlowRunStatus): boolean => {
-    return status === FlowRunStatus.FAILED
-        || status === FlowRunStatus.INTERNAL_ERROR
-        || status === FlowRunStatus.QUOTA_EXCEEDED
-        || status === FlowRunStatus.TIMEOUT
-        || status === FlowRunStatus.MEMORY_LIMIT_EXCEEDED
+    return FAILED_STATES.includes(status)
 }

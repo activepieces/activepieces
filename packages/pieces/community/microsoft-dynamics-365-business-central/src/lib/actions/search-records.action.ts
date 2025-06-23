@@ -8,7 +8,7 @@ export const searchRecordsAction = createAction({
   auth: businessCentralAuth,
   name: 'search-records',
   displayName: 'Search Records',
-  description: 'Retrives a list of records.',
+  description: 'Retrieves a list of records.',
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

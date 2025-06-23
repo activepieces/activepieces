@@ -75,7 +75,6 @@ const systemPropValidators: {
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
-    [AppSystemProp.LICENSE_KEY]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
@@ -92,6 +91,8 @@ const systemPropValidators: {
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
     [AppSystemProp.REDIS_TYPE]: enumValidator(Object.values(RedisType)),
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: numberValidator,
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: numberValidator,
     [AppSystemProp.REDIS_SSL_CA_FILE]: stringValidator,
     [AppSystemProp.REDIS_DB]: numberValidator,
     [AppSystemProp.REDIS_HOST]: stringValidator,
@@ -130,7 +131,7 @@ const systemPropValidators: {
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
-
+    [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
@@ -145,9 +146,27 @@ const systemPropValidators: {
     // Cloudflare
     [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
     // Secret Manager
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
+
+    // Tables
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
+
+    // MCP
+    [AppSystemProp.MAX_MCPS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
+        const days = parseInt(value)
+        if (isNaN(days) || days < 0) {
+            return 'Value must be a non-negative number'
+        }
+        return true
+    },
 }
 
 
@@ -206,7 +225,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
+            message: 'AP_ENCRYPTION_KEY is missing or invalid. It must be a 32-character hexadecimal string (representing 16 bytes). You can generate one using the command: `openssl rand -hex 16`',
             docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
         }))
     }

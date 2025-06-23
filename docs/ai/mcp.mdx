@@ -1,0 +1,51 @@
+---
+title: "MCP"
+icon: 'brain'
+description: "Give AI access to your tools through Activepieces"
+---
+
+## What is an MCP?
+
+LLMs produce text by default, but they're evolving to be able to use tools too. Say you want to ask Claude what meetings you have tomorrow, it can happen if you give it access to your calendar.
+
+**These tools live in an MCP Server that has a URL**. You provide your LLM (or MCP Client) with this URL so it can access your tools.
+
+There are many [MCP clients](https://github.com/punkpeye/awesome-mcp-clients) you can use for this purpose, and the most popular ones today are Claude Desktop, Cursor and Windsurf.
+
+**Official docs:** [https://modelcontextprotocol.io/introduction](https://modelcontextprotocol.io/introduction)
+
+## MCPs on Activepieces
+
+To use MCPs on Activepieces, we'll let you connect any of our [open source MCP tools](https://www.activepieces.com/mcp), and give you an MCP Server URL. Then, you'll configure your LLM to work with it.
+
+## Use Activepieces MCP Server
+
+1. **You need to run Activepieces.** It can run on our cloud or you can self-host it in your machine or infrastructure.
+
+   ***Both options are for free, and all our MCP tools are open source.***
+
+<CardGroup cols={2}>
+  <Card title="Activepieces Cloud (Easy)" icon="cloud" color="#00FFFF" href="https://cloud.activepieces.com/sign-up">
+Use our cloud to run your MCP tools, or to just give it a test drive
+  </Card>
+
+  <Card title="Self-hosting" icon="download" color="#248fe0" href="/install/overview">
+    Deploy Activepieces using Docker or one of the other methods
+  </Card>
+
+</CardGroup>
+
+2. **Connect your tools.** Go to AI → MCP in your Activepieces Dashboard, and start connecting the tools that you want to give AI access to.
+
+3. **Follow the instructions.** Click on your choice of MCP client (Claude Desktop, Cursor or Windsurf) and follow the instructions.
+
+4. **Chat with your LLM with superpowers 🚀**
+
+
+## Things to try out with the MCP
+
+- Cancel all my meetings for tomorrow
+- What tasks do I have to do today?
+- Tweet this idea for me
+
+And many more!

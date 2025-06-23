@@ -32,14 +32,14 @@ export default function TeamPage() {
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       cloudOnlyFeature={true}
       lockTitle={t('Unlock Team Permissions')}
       lockDescription={t(
         'You can invite users to your Platform for free in the community edition. For advanced roles and permissions request trial',
       )}
     >
-      <div className="flex flex-col items-center justify-center gap-4">
+      <div className="w-full flex flex-col items-center justify-center gap-4">
         <Card className="w-full">
           <CardHeader>
             <CardTitle>{t('Project Members')}</CardTitle>
@@ -71,7 +71,7 @@ export default function TeamPage() {
                 ))}
             </div>
             <Separator />
-            <div className="text-2xl font-bold tracking-tight">
+            <div className="text-2xl font-semibold tracking-tight">
               {t('Pending Invitations')}
             </div>
             <div className="flex min-h-[35px] flex-col gap-4">

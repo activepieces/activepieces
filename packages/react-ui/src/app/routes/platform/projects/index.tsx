@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -29,7 +29,7 @@ import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -67,9 +67,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
+          {row.original.plan.aiCredits
+            ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>
       );
@@ -134,7 +134,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled;
+  const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
 
   const [searchParams] = useSearchParams();
@@ -366,9 +366,16 @@ export default function ProjectsPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <TableTitle>{t('Projects')}</TableTitle>
+          <TableTitle description={t('Manage your automation projects')}>
+            {t('Projects')}
+          </TableTitle>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No projects found')}
+          emptyStateTextDescription={t(
+            'Start by creating projects to manage your automation teams',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
             await setCurrentProject(queryClient, project);
             navigate('/');

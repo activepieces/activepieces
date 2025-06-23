@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { Metadata } from '../common/metadata'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -26,8 +27,7 @@ export enum NotificationStatus {
 
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
-    teamMembers: Type.Number(),
-    aiTokens: Type.Number(),
+    aiCredits: Type.Number(),
     nextLimitResetDate: Type.String(),
 })
 
@@ -48,7 +48,7 @@ export const ProjectPlan = Type.Object({
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
     tasks: Nullable(Type.Number()),
-    aiTokens: Nullable(Type.Number()),
+    aiCredits: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
@@ -62,6 +62,7 @@ export const Project = Type.Object({
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
+    metadata: Nullable(Metadata),
 })
 
 const projectAnalytics = Type.Object(
@@ -89,6 +90,7 @@ export const UpdateProjectRequestInCommunity = Type.Object({
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
+    metadata: Type.Optional(Metadata),
 })
 
 export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>
@@ -101,3 +103,10 @@ export const ProjectMetaData = Type.Object({
 })
 
 export type ProjectMetaData = Static<typeof ProjectMetaData>
+
+export const ProjectWithLimitsWithPlatform = Type.Object({
+    platformName: Type.String(),
+    projects: Type.Array(ProjectWithLimits),
+})
+
+export type ProjectWithLimitsWithPlatform = Static<typeof ProjectWithLimitsWithPlatform>

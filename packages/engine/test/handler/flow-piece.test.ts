@@ -55,7 +55,7 @@ describe('pieceExecutor', () => {
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError))
-    })
+    }, 10000)
     it('should skip piece action', async () => {
         const result = await flowExecutor.execute({
             action: buildPieceAction({

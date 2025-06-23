@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
+import { githubApiCall, githubCommon } from '../common';
 import { githubAuth } from '../../';
-import { Octokit } from '@octokit/rest';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubRegisterTrigger = ({
   name,
@@ -26,21 +26,25 @@ export const githubRegisterTrigger = ({
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
       const { repo, owner } = context.propsValue.repository!;
-      const client = new Octokit({ auth: context.auth.access_token });
-      const response = await client.rest.repos.createWebhook({
-        owner,
-        repo,
-        active: true,
-        events: [name],
-        config: {
-          url: context.webhookUrl,
-          content_type: 'json',
-          insecure_ssl: '0',
+
+      const response = await githubApiCall<{ id: number }>({
+        accessToken: context.auth.access_token,
+        method: HttpMethod.POST,
+        resourceUri: `/repos/${owner}/${repo}/hooks`,
+        body: {
+          name: 'web',
+          active: true,
+          events: [name],
+          config: {
+            url: context.webhookUrl,
+            content_type: 'json',
+            insecure_ssl: '0',
+          },
         },
       });
 
       await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
-        webhookId: response.data.id,
+        webhookId: response.body.id,
         owner: owner,
         repo: repo,
       });
@@ -50,13 +54,11 @@ export const githubRegisterTrigger = ({
         `github_${name}_trigger`
       );
       if (response !== null && response !== undefined) {
-        const client = new Octokit({ auth: context.auth.access_token });
-        await client.rest.repos.deleteWebhook({
-          owner: response.owner,
-          repo: response.repo,
-          hook_id: response.webhookId,
+        await githubApiCall({
+          accessToken: context.auth.access_token,
+          method: HttpMethod.DELETE,
+          resourceUri: `/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
         });
-
       }
     },
     async run(context) {

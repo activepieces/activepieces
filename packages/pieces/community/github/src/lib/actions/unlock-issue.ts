@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubUnlockIssueAction = createAction({
   auth: githubAuth,
@@ -20,11 +20,12 @@ export const githubUnlockIssueAction = createAction({
     const { issue_number } = propsValue;
     const { owner, repo } = propsValue.repository!;
 
-    const client = new Octokit({ auth: auth.access_token });
-    return await client.rest.issues.unlock({
-      owner,
-      repo,
-      issue_number,
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
+      method: HttpMethod.DELETE,
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/lock`,
     });
+
+    return response;
   },
 });

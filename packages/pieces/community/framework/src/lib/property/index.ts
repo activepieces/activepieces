@@ -1,17 +1,18 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
+import { PropertyType } from './input/property-type';
+import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
-export { DropdownState } from './input/dropdown/common';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
 export { PieceAuth } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
-export { DropdownOption } from './input/dropdown/common';
+export { DropdownOption,DropdownState } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
 export { PieceAuthProperty } from './authentication';
 export { ShortTextProperty } from './input/text-property';
@@ -36,7 +37,8 @@ export { CustomAuthProperty } from './authentication/custom-auth-prop';
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
-
+export {CustomProperty} from './input/custom-property'
+export type {CustomPropertyCodeFunctionParams} from './input/custom-property'
 export const PiecePropertyMap = Type.Record(Type.String(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;
@@ -58,3 +60,9 @@ export type StaticPropsValue<T extends PiecePropertyMap> = {
   [P in keyof T]: PiecePropValueSchema<T[P]>;
 };
 
+
+  
+export type ExecutePropsResult<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC> = {
+  type: T
+  options: T extends PropertyType.DROPDOWN ? DropdownState<unknown> : T extends PropertyType.MULTI_SELECT_DROPDOWN ? DropdownState<unknown> : InputPropertyMap
+}

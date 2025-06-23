@@ -5,6 +5,7 @@ import {
     FlowVersion,
     Folder,
     Project,
+    TableWebhook,
     TriggerEvent,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
@@ -21,6 +22,7 @@ export type FlowSchema = Flow & {
     folder?: Folder
     events: TriggerEvent[]
     publishedVersion?: FlowVersion
+    tableWebhooks: TableWebhook[]
 }
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
@@ -41,18 +43,26 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowStatus.DISABLED,
         },
+        handshakeConfiguration: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
         schedule: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
         externalId: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         publishedVersionId: {
             ...ApIdSchema,
             nullable: true,
             unique: true,
+        },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [
@@ -113,6 +123,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_flow_published_version',
             },
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
+            inverseSide: 'flow',
         },
     },
 })

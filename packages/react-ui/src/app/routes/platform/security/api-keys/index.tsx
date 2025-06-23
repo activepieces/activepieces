@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, Trash } from 'lucide-react';
+import { Key, Plus, Trash } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
@@ -63,7 +63,7 @@ const ApiKeysPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="API"
-      locked={!platform.apiKeysEnabled}
+      locked={!platform.plan.apiKeysEnabled}
       lockTitle={t('Enable API Keys')}
       lockDescription={t(
         'Create and manage API keys to access Activepieces APIs.',
@@ -90,6 +90,11 @@ const ApiKeysPage = () => {
           </div>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No API keys found')}
+          emptyStateTextDescription={t(
+            'Start by creating an API key to communicate with Activepieces APIs',
+          )}
+          emptyStateIcon={<Key className="size-14" />}
           page={data}
           isLoading={isLoading}
           columns={columns}

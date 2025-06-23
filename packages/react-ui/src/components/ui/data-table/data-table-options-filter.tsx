@@ -8,6 +8,8 @@ import { DateTimePickerWithRange } from '../date-time-picker-range';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 
+import { CURSOR_QUERY_PARAM } from '.';
+
 interface DataTableFacetedFilterProps<TData, TValue> {
   type: 'select' | 'input' | 'date';
   column?: Column<TData, TValue>;
@@ -15,7 +17,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: React.ComponentType<{ className?: string }> | string;
   }[];
 }
 
@@ -36,7 +38,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           newParams.delete(column?.id as string);
           newParams.delete(`${column?.id}After`);
           newParams.delete(`${column?.id}Before`);
-          newParams.delete('cursor');
+          newParams.delete(CURSOR_QUERY_PARAM);
           if (!filterValue) {
             return newParams;
           }
@@ -92,7 +94,7 @@ export function DataTableFacetedFilter<TData, TValue>({
       );
     }
     case 'select': {
-      const filterValue = column?.getFilterValue() as string[];
+      const filterValue = searchParams.getAll(column?.id as string) as string[];
       const selectedValues = new Set(filterValue);
       return (
         <DataTableSelectPopover

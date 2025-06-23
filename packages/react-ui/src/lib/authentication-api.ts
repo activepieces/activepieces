@@ -34,7 +34,7 @@ export const authenticationApi = {
       providerName,
     });
   },
-  me() {
+  getCurrentProjectRole() {
     return api.get<ProjectRole | null>('/v1/project-members/role');
   },
   claimThirdPartyRequest(request: ClaimTokenRequest) {

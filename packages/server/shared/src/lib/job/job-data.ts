@@ -1,11 +1,13 @@
 import {
     ExecutionType,
     FlowVersion,
-    GetFlowVersionForWorkerRequestType,
+    PackageType,
     PiecePackage,
+    PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerHookType,
+    TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
@@ -69,8 +71,8 @@ export const OneTimeJobData = Type.Object({
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
+    executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
-    retryPayload: Type.Optional(Type.Any()),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
@@ -79,14 +81,12 @@ export const WebhookJobData = Type.Object({
     projectId: Type.String(),
     schemaVersion: Type.Number(),
     requestId: Type.String(),
-    synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
     payload: Type.Any(),
+    runEnvironment: Type.Enum(RunEnvironment),
     flowId: Type.String(),
     saveSampleData: Type.Boolean(),
-    flowVersionToRun: Type.Optional(Type.Union([
-        Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
-        Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
-    ])),
+    flowVersionIdToRun: Type.String(),
+    execute: Type.Boolean(),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
@@ -97,6 +97,7 @@ export enum UserInteractionJobType {
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
 export const ExecuteValidateAuthJobData = Type.Object({
@@ -118,8 +119,23 @@ export const ExecuteActionJobData = Type.Object({
     stepName: Type.String(),
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
+    runEnvironment: Type.Enum(RunEnvironment),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
+
+export const ExecuteToolJobData = Type.Object({
+    requestId: Type.String(),
+    webserverId: Type.String(),
+    jobType: Type.Literal(UserInteractionJobType.EXECUTE_TOOL),
+    projectId: Type.String(),
+    actionName: Type.String(),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+    packageType: Type.Enum(PackageType),
+    pieceType: Type.Enum(PieceType),
+    input: Type.Record(Type.String(), Type.Unknown()),
+})
+export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
 export const ExecuteTriggerHookJobData = Type.Object({
     requestId: Type.String(),
@@ -129,6 +145,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     test: Type.Boolean(),
     webserverId: Type.String(),
     hookType: Type.Enum(TriggerHookType),
+    triggerPayload: Type.Optional(TriggerPayload),
 })
 export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
 
@@ -161,6 +178,7 @@ export const UserInteractionJobData = Type.Union([
     ExecuteValidateAuthJobData,
     ExecuteActionJobData,
     ExecuteTriggerHookJobData,
+    ExecuteToolJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
 ])
@@ -169,6 +187,7 @@ export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
     Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteActionJobData, ['webserverId', 'requestId']),
+    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId']),

@@ -68,7 +68,7 @@ export const newOrUpdatedLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-line-item',
 	displayName: 'Line Item Recently Created or Updated',
-	description: 'Triggers when a line item recenty created or updated.',
+	description: 'Triggers when a line item recently created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

@@ -24,15 +24,40 @@ export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveD
 export enum GitPushOperationType {
     PUSH_FLOW = 'PUSH_FLOW',
     DELETE_FLOW = 'DELETE_FLOW',
+    PUSH_TABLE = 'PUSH_TABLE',
+    DELETE_TABLE = 'DELETE_TABLE',
+    PUSH_EVERYTHING = 'PUSH_EVERYTHING',
 }
 
-export const PushGitRepoRequest = Type.Object({
-    type: Type.Enum(GitPushOperationType),
+export const PushFlowsGitRepoRequest = Type.Object({
+    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_FLOW), Type.Literal(GitPushOperationType.DELETE_FLOW)]),
     commitMessage: Type.String({
         minLength: 1,
     }),
     flowIds: Type.Array(Type.String())
 })
+
+export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
+
+export const PushTablesGitRepoRequest = Type.Object({
+    type: Type.Union([Type.Literal(GitPushOperationType.PUSH_TABLE), Type.Literal(GitPushOperationType.DELETE_TABLE)]),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
+    tableIds: Type.Array(Type.String())
+})
+
+export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>
+
+export const PushEverythingGitRepoRequest = Type.Object({
+    type: Type.Literal(GitPushOperationType.PUSH_EVERYTHING),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
+})
+export type PushEverythingGitRepoRequest = Static<typeof PushEverythingGitRepoRequest>
+
+export const PushGitRepoRequest = Type.Union([PushFlowsGitRepoRequest, PushTablesGitRepoRequest, PushEverythingGitRepoRequest])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 

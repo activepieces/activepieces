@@ -1,5 +1,6 @@
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
+import { McpId } from '../mcp/mcp'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
@@ -73,7 +74,7 @@ type RequestTrialClicked = {
     location: string
 }
 
-type KeyActiviated = {
+type KeyActivated = {
     date: string
     key: string
 }
@@ -107,7 +108,7 @@ type FlowShared = {
     projectId: ProjectId
 }
 
-type OpenedFromDasahboard = {
+type OpenedFromDashboard = {
     location: 'sidenav' | 'tasks-progress'
 }
 type CopilotGeneratedCode = {
@@ -138,12 +139,18 @@ type AiProviderConfiguredOrUsed = {
     projectId: string
     platformId: string
 }
+
+type McpToolCalled = {
+    mcpId: McpId
+    toolName: string
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
-    KEY_ACTIVIATED = 'key.activated',
+    KEY_ACTIVATED = 'key.activated',
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
     UPGRADE_CLICKED = 'upgrade.clicked',
@@ -171,6 +178,7 @@ export enum TelemetryEventName {
     TRIGGER_FAILURES_EXCEEDED = 'trigger.failures.exceeded',
     AI_PROVIDER_USED = 'ai.provider.used',
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
+    MCP_TOOL_CALLED = 'mcp.tool.called',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -185,7 +193,7 @@ export type TelemetryEvent =
   TelemetryEventName.REQUEST_TRIAL_CLICKED,
   RequestTrialClicked
   >
-  | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVIATED, KeyActiviated>
+  | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVATED, KeyActivated>
   | BaseTelemetryEvent<
   TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
   RequestTrialSubmitted
@@ -216,7 +224,7 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
   | BaseTelemetryEvent<
   TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
-  OpenedFromDasahboard
+  OpenedFromDashboard
   >
   | BaseTelemetryEvent<
   TelemetryEventName.COPILOT_GENERATED_CODE,
@@ -242,3 +250,4 @@ export type TelemetryEvent =
   TelemetryEventName.AI_PROVIDER_CONFIGURED,
   AiProviderConfiguredOrUsed
   >
+  | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>

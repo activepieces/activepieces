@@ -13,7 +13,6 @@ import { requestApprovalDirectMessageAction } from './lib/actions/request-approv
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
-import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
@@ -28,11 +27,26 @@ import { findUserByHandleAction } from './lib/actions/find-user-by-handle';
 import { setUserStatusAction } from './lib/actions/set-user-status';
 import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
+import { newCommand } from './lib/triggers/new-command';
+import { getFileAction } from './lib/actions/get-file';
+import { newMessageTrigger } from './lib/triggers/new-message';
+import { newMessageInChannelTrigger } from './lib/triggers/new-message-in-channel';
+import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
+import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
+import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
+import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
+import { setChannelTopicAction } from './lib/actions/set-channel-topic';
+import { getMessageAction } from './lib/actions/get-message';
+import { findUserByIdAction } from './lib/actions/find-user-by-id';
+import { newUserTrigger } from './lib/triggers/new-user';
+import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
+import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
+import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
   authUrl:
-    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read',
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites'
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
@@ -55,6 +69,14 @@ export const slackAuth = PieceAuth.OAuth2({
     'files:read',
     'users:read.email',
     'reactions:write',
+    'usergroups:read',
+    'chat:write.customize',
+    'links:read',
+    'links:write',
+    'emoji:read',
+    'users.profile:read',
+    'channels:write.invites',
+    'groups:write.invites'
   ],
 });
 
@@ -111,15 +133,21 @@ export const slack = createPiece({
     requestActionDirectMessageAction,
     requestActionMessageAction,
     uploadFile,
+    getFileAction,
     searchMessages,
     findUserByEmailAction,
     findUserByHandleAction,
+    findUserByIdAction,
     updateMessage,
     createChannelAction,
     updateProfileAction,
     getChannelHistory,
     setUserStatusAction,
     markdownToSlackFormat,
+    retrieveThreadMessages,
+    setChannelTopicAction,
+    getMessageAction,
+    inviteUserToChannelAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
@@ -150,7 +178,20 @@ export const slack = createPiece({
       },
     }),
   ],
-  triggers: [newMessage, newMention, newReactionAdded, channelCreated],
+  triggers: [
+    newMessageTrigger,
+    newMessageInChannelTrigger,
+    newDirectMessageTrigger,
+    newMention,
+    newMentionInDirectMessageTrigger,
+    newReactionAdded,
+    channelCreated,
+    newCommand,
+    newCommandInDirectMessageTrigger,
+    newUserTrigger,
+    newSavedMessageTrigger,
+    newTeamCustomEmojiTrigger,
+  ],
 });
 
 type PayloadBody = {

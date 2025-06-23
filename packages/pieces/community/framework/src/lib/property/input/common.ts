@@ -3,6 +3,7 @@ import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
 
 
+
 export const BasePropertySchema = Type.Object({
     displayName: Type.String(),
     description: Type.Optional(Type.String())
@@ -49,5 +50,8 @@ export type TPropertyValue<
     ? string
     : U extends PropertyType.FILE
     ? ApFile
+    : U extends PropertyType.COLOR
+    ? string
     : unknown;
 };
+

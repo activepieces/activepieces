@@ -1,0 +1,47 @@
+---
+title: 'Separate Workers from App'
+description: ''
+icon: 'robot'
+---
+
+Benefits of separating workers from the main application (APP):
+
+- **Availability**: The application remains lightweight, allowing workers to be scaled independently.
+- **Security**: Workers lack direct access to Redis and the database, minimizing impact in case of a security breach.
+
+
+<Steps>
+  <Step title="Create Worker Token">
+    To create a worker token, use the local CLI command to generate the JWT and sign it with your `AP_JWT_SECRET` used for the app server. Follow these steps:
+    1. Open your terminal and navigate to the root of the repository.
+    2. Run the command: `npm run workers token`.
+    3. When prompted, enter the JWT secret (this should be the same as the `AP_JWT_SECRET` used for the app server).
+    4. The generated token will be displayed in your terminal, copy it and use it in the next step.
+    ![Workers Token](../../resources/worker-token.png)
+  </Step>
+  <Step title="Configure Environment Variables">
+    Define the following environment variables in the `.env` file on the worker machine:
+    - Set `AP_CONTAINER_TYPE` to `WORKER`
+    - Specify `AP_FRONTEND_URL`
+    - Provide `AP_WORKER_TOKEN`
+  </Step>
+  <Step title="Configure Persistent Volume">
+    Configure a persistent volume for the worker to cache flows and pieces. This is important as first uncached execution of pieces and flows are very slow. Having a persistent volume significantly improves execution speed.
+    
+    Add the following volume mapping to your docker configuration:
+    ```yaml
+    volumes:
+      - <your path>:/usr/src/app/cache
+    ```
+  </Step>
+  <Step title="Launch Worker Machine">
+    Launch the worker machine and supply it with the generated token.
+  </Step>
+  <Step title="Verify Worker Operation">
+    Verify that the workers are visible in the Platform Admin Console under Infra -> Workers.
+    ![Workers Infrastructure](../../resources/workers.png)
+  </Step>
+  <Step title="Configure App Container Type">
+    On the APP machine, set `AP_CONTAINER_TYPE` to `APP`.
+  </Step>
+</Steps>

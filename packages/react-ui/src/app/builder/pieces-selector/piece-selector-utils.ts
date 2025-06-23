@@ -28,8 +28,8 @@ import {
   RouterExecutionType,
   spreadIfDefined,
   isNil,
-  Platform,
   flowStructureUtil,
+  PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -42,8 +42,7 @@ function toKey(stepMetadata: StepMetadata): string {
   switch (stepMetadata.type) {
     case ActionType.PIECE:
     case TriggerType.PIECE: {
-      const pieceMetadata: PieceStepMetadata =
-        stepMetadata as PieceStepMetadata;
+      const pieceMetadata: PieceStepMetadata = stepMetadata;
       return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
     }
     default:
@@ -56,6 +55,17 @@ const isCorePiece = (piece: StepMetadata) =>
     ? true
     : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
 
+const getStepNames = (
+  piece: StepMetadata,
+  flowVersion: FlowVersion,
+  count: number,
+) => {
+  if (piece.type === TriggerType.PIECE) {
+    return ['trigger'];
+  }
+  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count);
+};
+
 const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
@@ -65,9 +75,7 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
 
 const isAiPiece = (piece: StepMetadata) =>
   piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
-    ? (piece as PieceStepMetadata).categories.includes(
-        PieceCategory.ARTIFICIAL_INTELLIGENCE,
-      )
+    ? piece.categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
     : false;
 
 const isAppPiece = (piece: StepMetadata) =>
@@ -88,7 +96,7 @@ const isPieceStepMetadata = (
 
 const isPopularPieces = (
   stepMetadata: StepMetadataWithSuggestions,
-  platform: Platform,
+  platform: PlatformWithoutSensitiveData,
 ) => {
   if (
     stepMetadata.type !== TriggerType.PIECE &&
@@ -114,9 +122,7 @@ const isPopularPieces = (
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return (stepMetadata as PieceStepMetadata).categories.includes(
-      PieceCategory.FLOW_CONTROL,
-    );
+    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
   }
   return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
     stepMetadata.type as ActionType,
@@ -125,14 +131,15 @@ const isFlowController = (stepMetadata: StepMetadata) => {
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return (stepMetadata as PieceStepMetadata).categories.includes(
-      PieceCategory.UNIVERSAL_AI,
-    );
+    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI);
   }
   return false;
 };
 
-const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: Platform) => {
+const isUtilityCorePiece = (
+  stepMetadata: StepMetadata,
+  platform: PlatformWithoutSensitiveData,
+) => {
   if (stepMetadata.type === ActionType.CODE) {
     return true;
   }
@@ -148,18 +155,18 @@ const getDefaultStep = ({
   stepName,
   stepMetadata,
   actionOrTrigger,
+  settings,
 }: {
   stepName: string;
   stepMetadata: StepMetadata;
   actionOrTrigger: PieceSelectorItem;
+  settings?: Record<string, unknown>;
 }): Action | Trigger => {
-  const errorHandlingOptions = {
+  const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
-      hide: true,
       value: false,
     },
     retryOnFailure: {
-      hide: true,
       value: false,
     },
   };
@@ -202,7 +209,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<CodeAction>(
         {
           type: ActionType.CODE,
-          settings: {
+          settings: settings ?? {
             sourceCode: {
               code: defaultCode,
               packageJson: '{}',
@@ -211,7 +218,7 @@ const getDefaultStep = ({
             inputUiInfo: {
               customizedInputs: {},
             },
-            errorHandlingOptions: errorHandlingOptions,
+            errorHandlingOptions,
           },
         },
         common,
@@ -220,7 +227,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.LOOP_ON_ITEMS,
-          settings: {
+          settings: settings ?? {
             items: '',
             inputUiInfo: {
               customizedInputs: {},
@@ -233,7 +240,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.ROUTER,
-          settings: {
+          settings: settings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
@@ -267,14 +274,14 @@ const getDefaultStep = ({
       return deepMergeAndCast<PieceAction>(
         {
           type: ActionType.PIECE,
-          settings: {
+          settings: settings ?? {
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
             actionName: actionOrTrigger.name,
             pieceVersion: stepMetadata.pieceVersion,
             input,
-            errorHandlingOptions: errorHandlingOptions,
+            errorHandlingOptions,
           },
         },
         common,
@@ -284,7 +291,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<PieceTrigger>(
         {
           type: TriggerType.PIECE,
-          settings: {
+          settings: settings ?? {
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
@@ -372,13 +379,11 @@ const useAdjustPieceListHeightToAvailableSpace = (
   };
 };
 
-const useIsMobile = () => {
-  return (window.innerWidth || document.documentElement.clientWidth) < 768;
-};
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
   getStepName,
+  getStepNames,
   isAiPiece,
   isAppPiece,
   toKey,
@@ -387,5 +392,4 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
-  useIsMobile,
 };

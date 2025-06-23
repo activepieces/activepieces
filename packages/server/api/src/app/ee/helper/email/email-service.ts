@@ -2,13 +2,13 @@ import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { issuesService } from '../../../flows/issues/issues-service'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
-import { issuesService } from '../../issues/issues-service'
-import { projectRoleService } from '../../project-role/project-role.service'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
@@ -90,8 +90,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled || platform.embeddingEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
             return
         }
 

@@ -119,7 +119,10 @@ const BranchSingleCondition = ({
                   <TextInputWithMentions
                     disabled={readonly}
                     placeholder={t('First value')}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      form.trigger();
+                    }}
                     initialValue={field.value}
                   ></TextInputWithMentions>
                   <FormMessage />
@@ -143,12 +146,15 @@ const BranchSingleCondition = ({
                       e !== null &&
                       !singleValueConditions.includes(e as BranchOperator)
                     ) {
+                      //TODO: fix this
+                      //@ts-expect-ignore
                       form.setValue(
                         `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
-                        '',
+                        '' as any,
                       );
                     }
                     field.onChange(e);
+                    form.trigger();
                   }}
                 />
                 <FormMessage />
@@ -165,7 +171,10 @@ const BranchSingleCondition = ({
                     placeholder={t('Second value')}
                     disabled={readonly}
                     initialValue={field.value || ''}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      form.trigger();
+                    }}
                   ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>

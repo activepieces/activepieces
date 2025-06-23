@@ -3,7 +3,7 @@ import * as path from 'path'
 import { cwd } from 'node:process'
 import { readPackageJson, readProjectJson } from './files'
 import { exec } from './exec'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
@@ -50,15 +50,23 @@ export async function findPiece(pieceName: string): Promise<string | null> {
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
     const projectJson = await readProjectJson(pieceFolder);
 
-    await exec(`npx nx build ${projectJson.name} --skip-cache && cd ${path.resolve('dist/packages' + pieceFolder.split('/packages')[1])}`);
-    const compiledPath = path.resolve('dist/packages' + pieceFolder.split('/packages')[1]);
+    await buildPackage(projectJson.name);
+     
+    const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
 
-    const { stdout } = await exec('cd ' + compiledPath + ' && npm pack --json');
+    const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
     return {
         outputFolder: compiledPath,
         outputFile: path.join(compiledPath, tarFileName)
     };
+}
+
+export async function buildPackage(projectName:string) {
+    await exec(`npx nx build ${projectName} --skip-cache`);
+    return {
+        outputFolder: `dist/packages/${projectName}`,
+    }
 }
 
 export async function publishPieceFromFolder(
@@ -71,7 +79,7 @@ export async function publishPieceFromFolder(
     const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
 
-    await exec(`npx nx build ${projectJson.name} --skip-cache`);
+    await buildPackage(projectJson.name);
 
     const { outputFile } = await buildPiece(pieceFolder);
     const formData = new FormData();
@@ -92,12 +100,12 @@ export async function publishPieceFromFolder(
         });
         console.info(chalk.green(`Piece '${packageJson.name}' published.`));
     } catch (error) {
-        const axiosError = error as AxiosError;
-        if (axiosError.response) {
-            if (axiosError.response.status === 409) {
+     
+        if (axios.isAxiosError(error)) {
+            if (error.response.status === 409) {
                 console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
-            } else if (Math.floor(axiosError.response.status / 100) !== 2) {
-                console.info(chalk.red(`Error publishing piece '${packageJson.name}', ` + JSON.stringify(axiosError.response.data)));
+            } else if (Math.floor(error.response.status / 100) !== 2) {
+                console.info(chalk.red(`Error publishing piece '${packageJson.name}',  ${error}` ));
                 if (failOnError) {
                     console.info(chalk.yellow(`Terminating process due to publish failure for piece '${packageJson.name}' (fail-on-error is enabled)`));
                     process.exit(1);
@@ -161,3 +169,8 @@ export const assertPieceExists = async (pieceName: string | null) => {
       process.exit(1);
     }
   };
+
+
+  export const removeStartingSlashes = (str: string) => {
+    return str.startsWith('/') ? str.slice(1) : str;
+  }

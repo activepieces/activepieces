@@ -108,7 +108,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
-              useMentionTextInput={true}
+              useMentionTextInput={false}
               allowDynamicValues={true}
               disabled={props.readonly}
               markdownVariables={markdownVariables}

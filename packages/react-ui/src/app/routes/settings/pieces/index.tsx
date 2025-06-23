@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash } from 'lucide-react';
+import { CheckIcon, Package, Trash } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -21,7 +21,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil, PieceType } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 
@@ -128,7 +128,7 @@ const ProjectPiecesPage = () => {
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
-        {!platform.managePiecesEnabled && (
+        {!platform.plan.managePiecesEnabled && (
           <LockedAlert
             title={t('Control Pieces')}
             description={t(
@@ -144,6 +144,11 @@ const ProjectPiecesPage = () => {
         )}
         <TableTitle>{t('Pieces')}</TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No pieces found')}
+          emptyStateTextDescription={t(
+            'Add a piece to your project that you want to use in your automations',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[
             {
@@ -161,7 +166,7 @@ const ProjectPiecesPage = () => {
           }}
           isLoading={isLoading}
           hidePagination={true}
-          bulkActions={platform.managePiecesEnabled ? bulkActions : []}
+          bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
         />
       </div>
     </div>

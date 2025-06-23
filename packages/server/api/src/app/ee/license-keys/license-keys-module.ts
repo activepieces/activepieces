@@ -12,19 +12,23 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
         const platforms = await platformService.getAll()
         for (const platform of platforms) {
-            if (isNil(platform.licenseKey) || isEmpty(platform.licenseKey)) {
+            const platformWithPlan = await platformService.getOneWithPlan(platform.id)
+            if (isNil(platformWithPlan)) {
+                continue
+            }
+            if (isNil(platformWithPlan.plan.licenseKey) || isEmpty(platformWithPlan.plan.licenseKey)) {
                 continue
             }
             try {
                 const key = await licenseKeysService(app.log).verifyKeyOrReturnNull({
-                    platformId: platform.id,
-                    license: platform.licenseKey,
+                    platformId: platformWithPlan.id,
+                    license: platformWithPlan.plan.licenseKey,
                 })
                 if (isNil(key)) {
-                    await licenseKeysService(app.log).downgradeToFreePlan(platform.id)
+                    await licenseKeysService(app.log).downgradeToFreePlan(platformWithPlan.id)
                     continue
                 }
-                await licenseKeysService(app.log).applyLimits(platform.id, key)
+                await licenseKeysService(app.log).applyLimits(platformWithPlan.id, key)
             }
             catch (e) {
                 exceptionHandler.handle(e, app.log)

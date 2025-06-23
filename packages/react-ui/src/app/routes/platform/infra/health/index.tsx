@@ -3,10 +3,10 @@ import { CheckCircle, WifiOff, Frown } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
+import { TableTitle } from '@/components/custom/table-title';
 import { useSocket } from '@/components/socket-provider';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId } from '@activepieces/shared';
@@ -63,9 +63,16 @@ export default function WorkersPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <TableTitle>{t('System Health Status')}</TableTitle>
+    <div className="flex flex-col w-full gap-4">
+      <TableTitle
+        description={t('Check the status of your platform and its components')}
+      >
+        {t('System Health Status')}
+      </TableTitle>
       <DataTable
+        emptyStateTextTitle={t('No issues detected')}
+        emptyStateTextDescription={t('All systems are running smoothly')}
+        emptyStateIcon={<CheckCircle className="size-14" />}
         hidePagination={true}
         columns={[
           {

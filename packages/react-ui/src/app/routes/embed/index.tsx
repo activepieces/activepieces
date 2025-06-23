@@ -1,22 +1,25 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { flushSync } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useEffectOnce } from 'react-use';
 
-import { LoadingScreen } from '@/app/components/loading-screen';
+import { memoryRouter } from '@/app/router';
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
+import { combinePaths, parentWindow } from '@/lib/utils';
 import {
-  _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
   ActivepiecesClientConfigurationFinished,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
-  ActivepiecesClientShowConnectionIframe,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
+  ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
 const notifyVendorPostAuthentication = () => {
@@ -24,62 +27,128 @@ const notifyVendorPostAuthentication = () => {
     type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
     data: {},
   };
-  window.parent.postMessage(authenticationSuccessEvent, '*');
+  parentWindow.postMessage(authenticationSuccessEvent, '*');
   const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
     type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
     data: {},
   };
-  window.parent.postMessage(configurationFinishedEvent, '*');
+  parentWindow.postMessage(configurationFinishedEvent, '*');
+};
+
+const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
+  const handleVendorRouteChange = (
+    event: MessageEvent<ActivepiecesVendorRouteChanged>,
+  ) => {
+    if (
+      event.source === parentWindow &&
+      event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
+    ) {
+      const targetRoute = event.data.data.vendorRoute;
+      const targetRouteRequiresProjectId =
+        targetRoute.includes('/runs') ||
+        targetRoute.includes('/flows') ||
+        targetRoute.includes('/connections');
+      if (!targetRouteRequiresProjectId) {
+        memoryRouter.navigate(targetRoute);
+      } else {
+        memoryRouter.navigate(
+          combinePaths({
+            secondPath: targetRoute,
+            firstPath: `/projects/${projectId}`,
+          }),
+        );
+      }
+    }
+  };
+  window.addEventListener('message', handleVendorRouteChange);
+};
+
+const handleClientNavigation = () => {
+  memoryRouter.subscribe((state) => {
+    const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
+      /\/projects\/[^/]+/,
+      '',
+    );
+    parentWindow.postMessage(
+      {
+        type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+        data: {
+          route: pathNameWithoutProjectOrProjectId + state.location.search,
+        },
+      },
+      '*',
+    );
+  });
 };
 
 const EmbedPage = React.memo(() => {
-  const navigate = useNavigate();
-  const { setEmbedState } = useEmbedding();
+  const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
-    mutationFn: managedAuthApi.generateApToken,
+    mutationFn: async ({
+      externalAccessToken,
+      locale,
+    }: {
+      externalAccessToken: string;
+      locale: string;
+    }) => {
+      const data = await managedAuthApi.generateApToken({
+        externalAccessToken,
+      });
+      await i18n.changeLanguage(locale);
+      return data;
+    },
   });
+  const { setTheme } = useTheme();
+  const { i18n } = useTranslation();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
-      event.source === window.parent &&
+      event.source === parentWindow &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      const token =
-        event.data.data.jwtToken || getExternalTokenFromSearchQuery();
-      if (token) {
+      if (event.data.data.jwtToken) {
+        if (event.data.data.mode) {
+          setTheme(event.data.data.mode);
+        }
         mutateAsync(
           {
-            externalAccessToken: token,
+            externalAccessToken: event.data.data.jwtToken,
+            locale: event.data.data.locale ?? 'en',
           },
           {
             onSuccess: (data) => {
-              authenticationSession.saveResponse(data);
-              setEmbedState({
-                hideSideNav: event.data.data.hideSidebar,
-                isEmbedded: true,
-                hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
-                hideFlowNameInBuilder:
-                  event.data.data.hideFlowNameInBuilder || false,
-                prefix: event.data.data.prefix,
-                disableNavigationInBuilder:
-                  event.data.data.disableNavigationInBuilder,
-                hideFolders: event.data.data.hideFolders || false,
-                sdkVersion: event.data.data.sdkVersion,
-                fontUrl: event.data.data.fontUrl,
-                fontFamily: event.data.data.fontFamily,
-              });
-
-              //previously initialRoute was optional
+              authenticationSession.saveResponse(data, true);
               const initialRoute = event.data.data.initialRoute ?? '/';
-              if (initialRoute.startsWith('/embed/connections')) {
-                const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
-                  {
-                    type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
-                    data: {},
-                  };
-                window.parent.postMessage(showConnectionIframeEvent, '*');
-                document.body.style.background = 'transparent';
-              }
-              navigate(initialRoute);
+              //must use it to ensure that the correct router in RouterProvider is used before navigation
+              flushSync(() => {
+                setEmbedState({
+                  hideSideNav: event.data.data.hideSidebar,
+                  isEmbedded: true,
+                  hideFlowNameInBuilder:
+                    event.data.data.hideFlowNameInBuilder ?? false,
+                  disableNavigationInBuilder:
+                    event.data.data.disableNavigationInBuilder !== false,
+                  hideFolders: event.data.data.hideFolders ?? false,
+                  sdkVersion: event.data.data.sdkVersion,
+                  fontUrl: event.data.data.fontUrl,
+                  fontFamily: event.data.data.fontFamily,
+                  useDarkBackground:
+                    initialRoute.startsWith('/embed/connections'),
+                  hideExportAndImportFlow:
+                    event.data.data.hideExportAndImportFlow ?? false,
+                  hideHomeButtonInBuilder:
+                    event.data.data.disableNavigationInBuilder ===
+                    'keep_home_button_only'
+                      ? false
+                      : event.data.data.disableNavigationInBuilder,
+                  emitHomeButtonClickedEvent:
+                    event.data.data.emitHomeButtonClickedEvent ?? false,
+                  homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
+                  hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
+                });
+              });
+              memoryRouter.navigate(initialRoute);
+              handleVendorNavigation({ projectId: data.projectId });
+              handleClientNavigation();
               notifyVendorPostAuthentication();
             },
             onError: (error) => {
@@ -87,7 +156,7 @@ const EmbedPage = React.memo(() => {
                 type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
                 data: error,
               };
-              window.parent.postMessage(errorEvent, '*');
+              parentWindow.postMessage(errorEvent, '*');
             },
           },
         );
@@ -97,25 +166,18 @@ const EmbedPage = React.memo(() => {
     }
   };
 
-  const getExternalTokenFromSearchQuery = () => {
-    return new URLSearchParams(window.location.search).get(
-      _AP_JWT_TOKEN_QUERY_PARAM_NAME,
-    );
-  };
-
   useEffectOnce(() => {
     const event: ActivepiecesClientInit = {
       type: ActivepiecesClientEventName.CLIENT_INIT,
       data: {},
     };
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
     };
   });
-
-  return <LoadingScreen />;
+  return <LoadingScreen brightSpinner={embedState.useDarkBackground} />;
 });
 
 EmbedPage.displayName = 'EmbedPage';

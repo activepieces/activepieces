@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { Metadata } from '../common/metadata'
 import { UserWithMetaInformation } from '../user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
@@ -25,6 +26,7 @@ export enum AppConnectionType {
     SECRET_TEXT = 'SECRET_TEXT',
     BASIC_AUTH = 'BASIC_AUTH',
     CUSTOM_AUTH = 'CUSTOM_AUTH',
+    NO_AUTH = 'NO_AUTH',
 }
 
 export type SecretTextConnectionValue = {
@@ -48,7 +50,7 @@ export type BaseOAuth2ConnectionValue = {
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
     data: Record<string, unknown>
-    props?: Record<string, unknown>
+    props?: Record<string, string>
     grant_type?: OAuth2GrantType
 }
 
@@ -72,6 +74,10 @@ export type OAuth2ConnectionValueWithApp = {
     redirect_url: string
 } & BaseOAuth2ConnectionValue
 
+export type NoAuthConnectionValue = {
+    type: AppConnectionType.NO_AUTH
+}
+
 export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
         T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
@@ -79,7 +85,8 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
                 T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
                     T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
                         T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
-                            never
+                            T extends AppConnectionType.NO_AUTH ? NoAuthConnectionValue :
+                                never
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     externalId: string
@@ -93,6 +100,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     ownerId: string
     owner: UserWithMetaInformation | null
     value: AppConnectionValue<Type>
+    metadata: Metadata | null
 }
 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
@@ -101,6 +109,7 @@ export type CloudAuth2Connection = AppConnection<AppConnectionType.CLOUD_OAUTH2>
 export type PlatformOAuth2Connection = AppConnection<AppConnectionType.PLATFORM_OAUTH2>
 export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
+export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
 
 export const AppConnectionWithoutSensitiveData = Type.Object({
     ...BaseModelSchema,
@@ -114,6 +123,8 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
     owner: Nullable(UserWithMetaInformation),
+    metadata: Nullable(Metadata),
+    flowIds: Nullable(Type.Array(ApId)),
 }, {
     description: 'App connection is a connection to an external app.',
 })
@@ -126,3 +137,14 @@ export const AppConnectionOwners = Type.Object({
 })
 
 export type AppConnectionOwners = Static<typeof AppConnectionOwners>
+/**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
+export const resolveValueFromProps = (props: Record<string, string> | undefined, value: string)=>{
+    let resolvedScope = value
+    if (!props) {
+        return resolvedScope
+    }
+    Object.entries(props).forEach(([key, value]) => {
+        resolvedScope = resolvedScope.replace(`{${key}}`, String(value))
+    })
+    return resolvedScope
+}

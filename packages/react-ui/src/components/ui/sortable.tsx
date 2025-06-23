@@ -259,6 +259,7 @@ interface SortableItemProps extends SlotProps {
   asChild?: boolean;
 }
 
+/** Child must be a div */
 const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
   ({ value, asTrigger, asChild, className, ...props }, ref) => {
     const {
@@ -325,6 +326,7 @@ const SortableDragHandle = React.forwardRef<
         'cursor-grab data-[state=dragging]:cursor-grabbing',
         className,
       )}
+      type="button"
       {...attributes}
       {...listeners}
       {...props}

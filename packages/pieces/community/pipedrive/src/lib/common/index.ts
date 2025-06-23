@@ -8,7 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { GetField, PaginatedResponse, RequestParams } from './types';
-import { isNil, pickBy } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 export const pipedriveCommon = {
 	subscribeWebhook: async (
@@ -25,6 +25,7 @@ export const pipedriveCommon = {
 				event_object: object,
 				event_action: action,
 				subscription_url: webhookUrl,
+				version: '1.0',
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
@@ -122,7 +123,7 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 	const qs = query ? query : {};
 
 	qs.start = 0;
-	qs.limit = 100;
+	qs.limit = 500;
 
 	const resultData: T[] = [];
 	let hasMoreItems = true;
@@ -136,9 +137,11 @@ export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
 			query: qs,
 			body,
 		});
+
 		if (isNil(response.data)) {
 			break;
 		}
+
 		resultData.push(...response.data);
 		qs.start = response.additional_data.pagination.next_start;
 		hasMoreItems = response.additional_data.pagination.more_items_in_collection;

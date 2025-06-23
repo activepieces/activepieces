@@ -44,6 +44,8 @@ import { listActivitiesAndTasks } from './lib/actions/list-activities-and-tasks'
 import { createTask } from './lib/actions/create-task';
 import { createActivitie } from './lib/actions/create-activitie';
 import { sendFile } from './lib/actions/send-file';
+import {me} from "./lib/actions/me";
+import {myOrganism} from "./lib/actions/my-organism";
 import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
 import {updateCertificationFolder} from "./lib/actions/certification-folders/update-certification-folder";
 import { updateCompletionRate } from './lib/actions/registration-folders/update-completion-rate';
@@ -57,6 +59,19 @@ import { getCertificationFolderSurvey } from './lib/actions/certification-folder
 import { listCertificationFolderSurveys } from './lib/actions/certification-folder-survey/list-certification-folder-surveys';
 import { createCertificationPartnerAudit } from './lib/actions/certification-partner-audit/create-certification-partner-audit';
 import { createGeneralAudit } from './lib/actions/certification-partner-audit/create-general-audit';
+import { getPartnership } from './lib/actions/certification-partner/get-partnership';
+import { updatePartnership } from './lib/actions/certification-partner/update-partnership';
+import { deletePartnership } from './lib/actions/certification-partner/delete-partnership';
+import { listPartnerships } from './lib/actions/certification-partner/list-partnership';
+import { createPartnership } from './lib/actions/certification-partner/create-partnership';
+import { resetPartnership } from './lib/actions/certification-partner/reset-partnership';
+import { certificationPartnerProcessing } from './lib/triggers/certification-partner/certificationPartner-processing';
+import { certificationPartnerAborted } from './lib/triggers/certification-partner/certificationPartner-aborted';
+import { certificationPartnerActive } from './lib/triggers/certification-partner/certificationPartner-active';
+import { certificationPartnerRefused } from './lib/triggers/certification-partner/certificationPartner-refused';
+import { certificationPartnerRevoked } from './lib/triggers/certification-partner/certificationPartner-revoked';
+import { certificationPartnerSuspended } from './lib/triggers/certification-partner/certificationPartner-suspended';
+
 
 export const wedofAuth = PieceAuth.SecretText({
     displayName: 'Clé API',
@@ -123,16 +138,26 @@ export const wedof = createPiece({
     abortCertificationFolder,
     getCertificationFolderDocuments,
     updateCertificationFolder,
+    ////////////// general ////////////
     listActivitiesAndTasks,
     createTask,
     createActivitie,
     sendFile,
+    me,
+    myOrganism,
     ///////////// certificationFoldersSurvey ///////
     getCertificationFolderSurvey,
     listCertificationFolderSurveys,
     ///////////// certificationPartnerAudit ////////
     createCertificationPartnerAudit,
-    createGeneralAudit
+    createGeneralAudit,
+    //////////// certificationPartner //////////////
+    getPartnership,
+    updatePartnership,
+    deletePartnership,
+    listPartnerships,
+    createPartnership,
+    resetPartnership
   ],
   triggers: [
     ////////////// registrationFolders ////////////
@@ -159,6 +184,13 @@ export const wedof = createPiece({
     certificationFolderSurveyLongTermExperienceAnswered,
     certificationFolderSurveyLongTermExperienceAvailable,
     certificationFolderSurveySixMonthExperienceAnswered,
-    certificationFolderSurveySixMonthExperienceAvailable
+    certificationFolderSurveySixMonthExperienceAvailable,
+    //////////// certificationPartner /////////////////
+    certificationPartnerAborted,
+    certificationPartnerProcessing,
+    certificationPartnerActive,
+    certificationPartnerRefused,
+    certificationPartnerRevoked,
+    certificationPartnerSuspended
   ],
 });

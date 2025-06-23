@@ -56,7 +56,7 @@ const VerifyEmail = () => {
     return <Navigate to="/sign-in" replace />;
   }
   return (
-    <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
+    <div className="mx-auto h-screen w-screen flex flex-col items-center justify-center gap-2">
       <FullLogo />
 
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
@@ -67,14 +67,14 @@ const VerifyEmail = () => {
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
                   {t(
-                    'email has been verified. You will be redirected to sign in...',
+                    'Email has been verified. You will be redirected to sign in...',
                   )}
                 </span>
               </>
             )}
             {isPending && !isExpired && (
               <>
-                <LoadingSpinner className="w-16 h-16" />
+                <LoadingSpinner className="w-6 h-6" />
                 <span className="text-left w-fit">
                   {t('Verifying email...')}
                 </span>
@@ -84,9 +84,14 @@ const VerifyEmail = () => {
             {isExpired && (
               <>
                 <MailX className="w-16 h-16" />
-                <span className="text-left w-fit">
-                  {t('invitation has expired, redirecting to sign in...')}
-                </span>
+                <div className="text-left w-fit">
+                  <div>
+                    {t(
+                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
+                    )}
+                  </div>
+                  <div>{t('Redirecting to sign in...')}</div>
+                </div>
               </>
             )}
           </div>

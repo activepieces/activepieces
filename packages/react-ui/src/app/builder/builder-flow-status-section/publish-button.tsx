@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
@@ -8,53 +7,45 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import {
-  FlowOperationType,
-  FlowVersionState,
-  Permission,
-} from '@activepieces/shared';
+import { FlowVersionState, Permission } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 const PublishButton = () => {
   const { checkAccess } = useAuthorization();
-  const [flowVersion, flow, setFlow, setVersion, isSaving, readonly] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.flow,
-      state.setFlow,
-      state.setVersion,
-      state.saving,
-      state.readonly,
-    ]);
+  const [
+    flowVersion,
+    flow,
+    setFlow,
+    setVersion,
+    isSaving,
+    readonly,
+    setIsPublishing,
+    isPublishing,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.flow,
+    state.setFlow,
+    state.setVersion,
+    state.saving,
+    state.readonly,
+    state.setIsPublishing,
+    state.isPublishing,
+  ]);
   const isViewingDraft =
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const isPublishedVersion = flowVersion.id === flow.publishedVersionId;
-  const { mutate: publish, isPending: isPublishingPending } = useMutation({
-    mutationFn: async () => {
-      return flowsApi.update(flow.id, {
-        type: FlowOperationType.LOCK_AND_PUBLISH,
-        request: {},
-      });
-    },
-    onSuccess: (flow) => {
-      toast({
-        title: t('Success'),
-        description: t('Flow has been published.'),
-      });
-      setFlow(flow);
-      setVersion(flow.version);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
+  const { mutate: publish } = flowsHooks.usePublishFlow({
+    flowId: flow.id,
+    setFlow,
+    setVersion,
+    setIsPublishing,
   });
-  if (!permissionToEditFlow || !isViewingDraft || readonly) {
+  if (!permissionToEditFlow || !isViewingDraft || (readonly && !isPublishing)) {
     return null;
   }
   return (
@@ -63,7 +54,7 @@ const PublishButton = () => {
         <TooltipTrigger asChild className="disabled:pointer-events-auto">
           <Button
             size={'sm'}
-            loading={isSaving || isPublishingPending}
+            loading={isSaving || isPublishing}
             disabled={isPublishedVersion || !flowVersion.valid}
             onClick={() => publish()}
           >

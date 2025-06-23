@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
@@ -28,9 +29,17 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
+
+  formatDateOnlyOrFail(date: Date, fallback: string) {
+    try {
+      return this.formatDateOnly(date);
+    } catch (error) {
+      return fallback;
+    }
+  },
   formatDateOnly(date: Date) {
     return Intl.DateTimeFormat('en-US', {
-      month: 'short',
+      month: 'numeric',
       day: 'numeric',
       year: 'numeric',
     }).format(date);
@@ -52,15 +61,15 @@ export const formatUtils = {
       return `Today at ${timeFormat.format(date)}`;
     } else if (isYesterday) {
       return `Yesterday at ${timeFormat.format(date)}`;
-    } else {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
     }
+    return Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -239,3 +248,74 @@ export const determineDefaultRoute = (
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const NEW_TABLE_QUERY_PARAM = 'newTable';
+export const NEW_MCP_QUERY_PARAM = 'newMcp';
+export const parentWindow: Window = window.opener ?? window.parent;
+export const cleanLeadingSlash = (url: string) => {
+  return url.startsWith('/') ? url.slice(1) : url;
+};
+
+export const cleanTrailingSlash = (url: string) => {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+export const combinePaths = ({
+  firstPath,
+  secondPath,
+}: {
+  firstPath: string;
+  secondPath: string;
+}) => {
+  const cleanedFirstPath = cleanTrailingSlash(firstPath);
+  const cleanedSecondPath = cleanLeadingSlash(secondPath);
+  return `${cleanedFirstPath}/${cleanedSecondPath}`;
+};
+
+const getBlobType = (extension: 'json' | 'txt' | 'csv') => {
+  switch (extension) {
+    case 'csv':
+      return 'text/csv';
+    case 'json':
+      return 'application/json';
+    case 'txt':
+      return 'text/plain';
+    default:
+      return `text/plain`;
+  }
+};
+
+type downloadFileProps =
+  | {
+      obj: string;
+      fileName: string;
+      extension: 'json' | 'txt' | 'csv';
+    }
+  | {
+      obj: JSZip;
+      fileName: string;
+      extension: 'zip';
+    };
+export const downloadFile = async ({
+  obj,
+  fileName,
+  extension,
+}: downloadFileProps) => {
+  const blob =
+    extension === 'zip'
+      ? await obj.generateAsync({ type: 'blob' })
+      : //utf-8 with bom
+        new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
+          type: getBlobType(extension),
+        });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${fileName}.${extension}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+export const wait = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};

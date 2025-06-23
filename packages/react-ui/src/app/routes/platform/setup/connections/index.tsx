@@ -1,13 +1,14 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Pencil } from 'lucide-react';
+import { CheckIcon, Trash, Globe } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,17 +21,12 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { TableTitle } from '@/components/ui/table-title';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
-import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
-import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
+import {
+  globalConnectionsMutations,
+  globalConnectionsQueries,
+} from '@/features/connections/lib/global-connections-hooks';
+import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -63,7 +59,6 @@ const GlobalConnectionsTable = () => {
     Array<AppConnectionWithoutSensitiveData>
   >([]);
   const { checkAccess } = useAuthorization();
-  const { toast } = useToast();
   const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -152,22 +147,16 @@ const GlobalConnectionsTable = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {t('External ID')}: {row.original.externalId || '-'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <CopyTextTooltip
+            title={t('External ID')}
+            text={row.original.externalId || ''}
+          >
+            <div className="text-left">{row.original.displayName}</div>
+          </CopyTextTooltip>
         );
       },
     },
@@ -220,28 +209,19 @@ const GlobalConnectionsTable = () => {
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2 justify-end">
-            <Tooltip>
-              <EditGlobalConnectionDialog
-                connectionId={row.original.id}
-                currentName={row.original.displayName}
-                projectIds={row.original.projectIds}
-                onEdit={() => {
-                  refetch();
-                }}
-              >
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-              </EditGlobalConnectionDialog>
-              <TooltipContent>{t('Edit')}</TooltipContent>
-            </Tooltip>
-
+            <EditGlobalConnectionDialog
+              connectionId={row.original.id}
+              currentName={row.original.displayName}
+              projectIds={row.original.projectIds}
+              userHasPermissionToEdit={true}
+              onEdit={() => {
+                refetchGlobalConnections();
+              }}
+            />
             <ReconnectButtonDialog
               connection={row.original}
               onConnectionCreated={() => {
-                refetch();
+                refetchGlobalConnections();
               }}
               hasPermission={true}
             />
@@ -251,43 +231,35 @@ const GlobalConnectionsTable = () => {
     },
   ];
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['globalConnections', location.search],
+  const searchParams = new URLSearchParams(location.search);
+  const {
+    data: globalConnections,
+    isLoading: isLoadingGlobalConnections,
+    refetch: refetchGlobalConnections,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: {
+      cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+      limit: searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10,
+      status:
+        (searchParams.getAll(STATUS_QUERY_PARAM) as
+          | AppConnectionStatus[]
+          | undefined) ?? [],
+    },
+    extraKeys: [location.search],
     staleTime: 0,
     gcTime: 0,
-    queryFn: () => {
-      const searchParams = new URLSearchParams(location.search);
-      return globalConnectionsApi.list({
-        cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
-        limit: searchParams.get(LIMIT_QUERY_PARAM)
-          ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-          : 10,
-        status:
-          (searchParams.getAll(STATUS_QUERY_PARAM) as
-            | AppConnectionStatus[]
-            | undefined) ?? [],
-      });
-    },
   });
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => globalConnectionsApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const bulkDeleteGlobalConnections =
+    globalConnectionsMutations.useBulkDeleteGlobalConnections(
+      refetchGlobalConnections,
+    );
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -303,7 +275,7 @@ const GlobalConnectionsTable = () => {
                 entityName="connections"
                 mutationFn={async () => {
                   try {
-                    await bulkDeleteMutation.mutateAsync(
+                    await bulkDeleteGlobalConnections.mutateAsync(
                       selectedRows.map((row) => row.id),
                     );
                     resetSelection();
@@ -336,7 +308,7 @@ const GlobalConnectionsTable = () => {
               isGlobalConnection={true}
               onConnectionCreated={() => {
                 setRefresh(refresh + 1);
-                refetch();
+                refetchGlobalConnections();
               }}
             >
               <Button variant="default" size="sm">
@@ -347,14 +319,14 @@ const GlobalConnectionsTable = () => {
         },
       },
     ],
-    [bulkDeleteMutation, selectedRows, refresh],
+    [bulkDeleteGlobalConnections, selectedRows, refresh],
   );
 
   return (
     <div className="flex-col w-full">
       <LockedFeatureGuard
         featureKey="GLOBAL_CONNECTIONS"
-        locked={!platform.globalConnectionsEnabled}
+        locked={!platform.plan.globalConnectionsEnabled}
         lockTitle={t('Enable Global Connections')}
         lockDescription={t(
           'Manage platform-wide connections to external systems.',
@@ -369,9 +341,14 @@ const GlobalConnectionsTable = () => {
           {t('Global Connections')}
         </TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No global connections found')}
+          emptyStateTextDescription={t(
+            'Create a global connection that can be shared to multiple projects',
+          )}
+          emptyStateIcon={<Globe className="size-14" />}
           columns={columns}
-          page={data}
-          isLoading={isLoading}
+          page={globalConnections}
+          isLoading={isLoadingGlobalConnections}
           filters={filters}
           bulkActions={bulkActions}
         />

@@ -24,7 +24,7 @@ afterAll(async () => {
     await app?.close()
 })
 
-const setupEnabledPlatform = () => mockAndSaveBasicSetup({ platform: { embeddingEnabled: true } })
+const setupEnabledPlatform = () => mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
 
 describe('Signing Key API', () => {
     describe('Add Signing Key API', () => {

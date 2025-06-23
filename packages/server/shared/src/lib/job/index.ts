@@ -53,6 +53,7 @@ export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,
     engineToken: Type.String(),
+    attempsStarted: Type.Number(),
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>
@@ -96,6 +97,7 @@ export function getEngineTimeout(operationType: EngineOperationType, flowTimeout
     switch (operationType) {
         case EngineOperationType.EXECUTE_STEP:
         case EngineOperationType.EXECUTE_FLOW:
+        case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:

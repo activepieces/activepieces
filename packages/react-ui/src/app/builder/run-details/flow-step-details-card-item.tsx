@@ -4,14 +4,14 @@ import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { CardListItem } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
-import { CardListItem } from '@/components/ui/card-list';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
@@ -83,7 +83,7 @@ const FlowStepDetailsCardItem = ({
     stepOutput.output.iterations[loopsIndexes[stepName]]
       ? Object.keys(stepOutput.output.iterations[loopsIndexes[stepName]])
       : [];
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: step,
   });
   const [isOpen, setIsOpen] = React.useState(true);
@@ -131,8 +131,12 @@ const FlowStepDetailsCardItem = ({
               </Button>
             )}
             <img
+              alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
-              src={stepMetadata?.logoUrl}
+              src={
+                step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
+                stepMetadata?.logoUrl
+              }
             />
             <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
               stepIndex + 1

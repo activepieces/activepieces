@@ -16,7 +16,7 @@ const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: st
 }
 
 export const licenseKeysService = (log: FastifyBaseLogger) => ({
-    async  requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<string> {
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<LicenseKeyEntity> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
             headers: {
@@ -35,7 +35,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             handleUnexpectedSecretsManagerError(log, errorMessage)
         }
         const responseBody = await response.json()
-        return responseBody.key
+        return responseBody
     },
     async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
         try {
@@ -58,7 +58,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             }
             if (request.platformId) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                    name: TelemetryEventName.KEY_ACTIVIATED,
+                    name: TelemetryEventName.KEY_ACTIVATED,
                     payload: {
                         date: dayjs().toISOString(),
                         key: request.key,
@@ -128,23 +128,26 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         await platformService.update({
             id: platformId,
-            ssoEnabled: key.ssoEnabled,
-            environmentsEnabled: key.environmentsEnabled,
-            showPoweredBy: key.showPoweredBy,
-            embeddingEnabled: key.embeddingEnabled,
-            auditLogEnabled: key.auditLogEnabled,
-            customAppearanceEnabled: key.customAppearanceEnabled,
-            globalConnectionsEnabled: key.globalConnectionsEnabled,
-            customRolesEnabled: key.customRolesEnabled,
-            manageProjectsEnabled: key.manageProjectsEnabled,
-            managePiecesEnabled: key.managePiecesEnabled,
-            manageTemplatesEnabled: key.manageTemplatesEnabled,
-            apiKeysEnabled: key.apiKeysEnabled,
-            customDomainsEnabled: key.customDomainsEnabled,
-            projectRolesEnabled: key.projectRolesEnabled,
-            flowIssuesEnabled: key.flowIssuesEnabled,
-            alertsEnabled: key.alertsEnabled,
-            analyticsEnabled: key.analyticsEnabled,
+            plan: {
+                licenseKey: key.key,
+                licenseExpiresAt: key.expiresAt,
+                ssoEnabled: key.ssoEnabled,
+                environmentsEnabled: key.environmentsEnabled,
+                showPoweredBy: key.showPoweredBy,
+                embeddingEnabled: key.embeddingEnabled,
+                auditLogEnabled: key.auditLogEnabled,
+                customAppearanceEnabled: key.customAppearanceEnabled,
+                globalConnectionsEnabled: key.globalConnectionsEnabled,
+                customRolesEnabled: key.customRolesEnabled,
+                manageProjectsEnabled: key.manageProjectsEnabled,
+                managePiecesEnabled: key.managePiecesEnabled,
+                manageTemplatesEnabled: key.manageTemplatesEnabled,
+                apiKeysEnabled: key.apiKeysEnabled,
+                customDomainsEnabled: key.customDomainsEnabled,
+                projectRolesEnabled: key.projectRolesEnabled,
+                alertsEnabled: key.alertsEnabled,
+                analyticsEnabled: key.analyticsEnabled,
+            },
         })
     },
 })

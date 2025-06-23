@@ -21,6 +21,7 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
+import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -38,6 +39,9 @@ import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
+import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
+import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -166,16 +170,63 @@ import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration
 import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
+import { TablesProduct1734355488179 } from './migration/postgres/1734355488179-TablesProduct'
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { FieldAndRecordAndCellProjectId1734969829406 } from './migration/postgres/1734969829406-FieldAndRecordAndCell_ProjectId'
 import { AddPlatformBilling1734971881345 } from './migration/postgres/1734971881345-AddPlatformBilling'
+import { AddCellUniqueIndex1735057498882 } from './migration/postgres/1735057498882-AddCellUniqueIndex'
 import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/1735267452262-AddEnvironmentsEnabled'
 import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
 import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
 import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-RestrictPieces'
+import { ProjectIdNullableInTemplate1741357285896 } from './migration/postgres/1741357285896-ProjectIdNullableInTemplate'
+import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
+import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
+import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857701-AddManualTaskTable'
+import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
+import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
+import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
+import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
+import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
+import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
+import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
+import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
+import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
+import { RenameTodoPostiveVariantName1745272231418 } from './migration/postgres/1745272231418-RenameTodoPostiveVariantName'
+import { AddConnectionIdsToFlowVersion1745530653784 } from './migration/postgres/1745530653784-AddConnectionIdsToFlowVersion'
+import { AddExternalIdForTablesAndFields1746356907629 } from './migration/postgres/1746356907629-AddExternalIdForTablesAndFields'
+import { MakeExternalIdNotNullable1746531094548 } from './migration/postgres/1746531094548-MakeExternalIdNotNullable'
+import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746543299109-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
+import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
+import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
+import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
+import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
+import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
+import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
+import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
+import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
+import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
+import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
+import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
+import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
+import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
+import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
+import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
+import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
+import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
+import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -287,13 +338,60 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
+        TablesProduct1734355488179,
         RemoveWorkerType1734439097357,
+        FieldAndRecordAndCellProjectId1734969829406,
+        AddCellUniqueIndex1735057498882,
         AddCopilotSettings1734479886363,
         AddExternalIdForFlow1735262417593,
         AddEnvironmentsEnabled1735267452262,
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
+        CreateTableWebhooks1741669458075,
+        AddDataColumnToFieldEntity1742395892304,
+        AddManualTaskTable1742304857701,
+        ChangeManualTasksToTodo1742432827826,
+        AddMCP1743128816786,
+        RenameApprovalUrlToResolveUrl1742991137557,
+        AddMetadataFields1743780156664,
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
+        AddLastChangelogDismissed1744053592923,
+        AddMcpPiece1744822233873,
+        RenameTodoPostiveVariantName1745272231418,
+        AddConnectionIdsToFlowVersion1745530653784,
+        MakeExternalIdNotNullable1746531094548,
+        AddExternalIdForTablesAndFields1746356907629,
+        ChangeMcpPieceForeignKey1746543299109,
+        AddHandshakeConfigurationToFlow1746848208563,
+        AddOrderToFolder1747095861746,
+        AddI18nColumnToPieceMetadata1746714836833,
+        ChangeExternalIdsForTables1747346473001,
+        RenameProjectBillingToPlatformPLan1747819919988,
+        UpgradePieceVersionsToLatest1748253670449,
+        AddAgentsModule1748456786940,
+        ChangeManualTasksCommentsToTodoComments1742433144687,
+        AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639,
+        DeprecateApproval1748648340742,
+        AddMcpToolEntity1748352614033,
+        AddMcpRunEntity1748358415599,
+        AIProviderRedactorPostgres1748871900624,
+        MigrateMcpFlowsToBeTools1748996336492,
+        AddMcpToolFlowCascadeDelete1749128866314,
+        AIUsagePostgres1750090291551,
+        AddAgents1749405724276,
+        AddAgentOutput1749859119064,
+        AddAgentsLimitToPlatformPlan1749917984363,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddStepToIssuesTable1750017637712,
+        MakeStepNameOptional1750025401754,
+        RemoveUniqueOnFlow1750093037011,
+        ChangeTodoActivityContentFormat1750354589729,
+        RevertDescriptionTodoNaming1750389164014,
+        RegenerateIssuesTable1750392148590,
+
     ]
 
     const edition = system.getEdition()
@@ -349,7 +447,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
-                
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
@@ -372,6 +470,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformBilling1734971881345,
                 CreateProjectReleaseTable1734418823028,
                 RemoveUnusedProjectBillingFields1736607721367,
+                ProjectIdNullableInTemplate1741357285896,
+                UpdateNotifyStatusOnEmbedding1741963410825,
+                AddManualTaskCommentTable1742305104390,
+                AddMetadataFieldToFlowTemplates1744780800000,
+                AddLimitsOnPlatformPlan1747921788059,
+       
             )
             break
         case ApEdition.COMMUNITY:

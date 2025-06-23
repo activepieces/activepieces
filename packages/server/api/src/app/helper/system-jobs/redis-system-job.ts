@@ -7,7 +7,7 @@ import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './
 import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
-const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
@@ -89,11 +89,12 @@ async function removeDeprecatedJobs() {
     const deprecatedJobs = [
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
+        'usage-report',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
-    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && deprecatedJobs.includes(f.name))
+    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
     for (const job of deprecatedJobsFromQueue) {
-        await systemJobsQueue.removeJobScheduler(job.key)
+        await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
     }
 }
 
@@ -123,5 +124,13 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
 
 const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name)
+    return allSystemJobs.find(job => {
+        if (isNil(job)) {
+            return false
+        }
+        if (!isNil(jobId)) {
+            return job.name === name && job.id === jobId
+        }
+        return job.name === name
+    })
 }

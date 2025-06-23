@@ -4,6 +4,7 @@ import {
   FlowRunId,
   PopulatedFlow,
   ProjectId,
+  RespondResponse,
   ResumePayload,
   SeekPage,
   TriggerPayload,
@@ -15,7 +16,7 @@ import {
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
-import { StopResponse, DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -29,6 +30,7 @@ type BaseContext<
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
+  connections: ConnectionsManager;
 };
 
 type AppWebhookTriggerHookContext<
@@ -62,7 +64,6 @@ type WebhookTriggerHookContext<
   webhookUrl: string;
   payload: TriggerPayload;
 };
-
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
@@ -72,7 +73,9 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
+      server: ServerContext;
+    }
   : never;
 
 export type TestOrRunHookContext<
@@ -84,10 +87,16 @@ export type TestOrRunHookContext<
 };
 
 export type StopHookParams = {
-  response: StopResponse;
+  response: RespondResponse;
+};
+
+export type RespondHookParams = {
+  response: RespondResponse;
 };
 
 export type StopHook = (params?: StopHookParams) => void;
+
+export type RespondHook = (params?: RespondHookParams) => void;
 
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
@@ -117,6 +126,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {
@@ -129,6 +139,7 @@ export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
   pause: PauseHook;
+  respond: RespondHook;
 }
 
 export type OnStartContext<
@@ -145,14 +156,14 @@ export type BaseActionContext<
   ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
-  connections: ConnectionsManager;
   tags: TagsManager;
   server: ServerContext;
   files: FilesService;
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    sync?: boolean
   }) => string;
 };
 

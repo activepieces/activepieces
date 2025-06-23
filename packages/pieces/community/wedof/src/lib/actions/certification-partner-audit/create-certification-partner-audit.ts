@@ -11,7 +11,7 @@ export const createCertificationPartnerAudit = createAction({
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
-      description: "Permet de n'obtenir que les partenariats liés à la certification considérée",
+      description: "Permet de n'obtenir que les modèles liés à la certification considérée",
       required: true,
     }),
     siret: Property.ShortText({

@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../../';
-import { githubCommon } from '../common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubCreateIssueAction = createAction({
   auth: githubAuth,
@@ -27,14 +27,26 @@ export const githubCreateIssueAction = createAction({
     const { title, assignees, labels, description } = propsValue;
     const { owner, repo } = propsValue.repository!;
 
-    const client = new Octokit({ auth: auth.access_token });
-    return await client.rest.issues.create({
-      owner,
-      repo,
+    const issueFields: Record<string, any> = {
       title,
       body: description,
-      labels,
-      assignees,
+    };
+
+    if (labels) {
+      issueFields['labels'] = labels;
+    }
+
+    if (assignees) {
+      issueFields['assignees'] = assignees;
+    }
+
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
+      method: HttpMethod.POST,
+      resourceUri: `/repos/${owner}/${repo}/issues`,
+      body: issueFields,
     });
+
+    return response;
   },
 });

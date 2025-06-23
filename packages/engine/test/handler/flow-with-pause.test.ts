@@ -1,4 +1,4 @@
-import { BranchOperator, LoopStepOutput, RouterExecutionType } from '@activepieces/shared'
+import { BranchOperator, LoopStepOutput, RouterExecutionType, RouterStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
@@ -41,22 +41,22 @@ const flawWithTwoPause = buildPieceAction({
 
 const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
     name: 'loop',
-    loopItems: '{{ [1] }}',
+    loopItems: '{{ [false, true ] }}',
     firstLoopAction: buildRouterWithOneCondition({
         conditions: [
             {
-                operator: BranchOperator.BOOLEAN_IS_FALSE,
-                firstValue: '{{ false }}',
+                operator: BranchOperator.BOOLEAN_IS_TRUE,
+                firstValue: '{{ loop.item }}',
             },
+            
         ],
         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
         children: [
             simplePauseFlow,
         ],
     }),
-
-
 })
+
 describe('flow with pause', () => {
 
     it('should pause and resume successfully with loops and branch', async () => {
@@ -76,9 +76,16 @@ describe('flow with pause', () => {
         })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
 
-        const resumeResult = await flowExecutor.execute({
+        // Verify that the first iteration (true) triggered the branch condition
+        const loopOutputBeforeResume = pauseResult.steps.loop as LoopStepOutput
+        expect(loopOutputBeforeResume.output?.iterations.length).toBe(2)
+        expect(loopOutputBeforeResume.output?.item).toBe(true)
+        expect(Object.keys(loopOutputBeforeResume.output?.iterations[0] ?? {})).toContain('router')
+        
+
+        const resumeResultTwo = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
-            executionState: pauseResult.setCurrentPath(StepExecutionPath.empty()),
+            executionState: pauseResult.setCurrentPath(StepExecutionPath.empty()).setVerdict(ExecutionVerdict.RUNNING, undefined),
             constants: generateMockEngineConstants({
                 resumePayload: {
                     queryParams: {
@@ -89,10 +96,16 @@ describe('flow with pause', () => {
                 },
             }),
         })
-        expect(resumeResult.verdict).toBe(ExecutionVerdict.RUNNING)
-        expect(Object.keys(resumeResult.steps)).toEqual(['loop'])
-        const loopOut = resumeResult.steps.loop as LoopStepOutput
-        expect(Object.keys(loopOut.output?.iterations[0] ?? {})).toEqual(['router', 'approval', 'echo_step'])
+        
+        expect(resumeResultTwo.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(Object.keys(resumeResultTwo.steps)).toEqual(['loop'])
+        
+        const loopOut = resumeResultTwo.steps.loop as LoopStepOutput
+        expect(Object.keys(loopOut.output?.iterations[1] ?? {})).toEqual(['router', 'approval', 'echo_step'])
+        expect((loopOut.output?.iterations[0].router as RouterStepOutput).output?.branches[0].evaluation).toBe(false)
+        expect((loopOut.output?.iterations[1].router as RouterStepOutput).output?.branches[0].evaluation).toBe(true)
+        
+
     })
 
     it('should pause and resume with two different steps in same flow successfully', async () => {

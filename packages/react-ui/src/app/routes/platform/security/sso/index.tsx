@@ -96,7 +96,7 @@ const SSOPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="SSO"
-      locked={!platform.ssoEnabled}
+      locked={!platform.plan.ssoEnabled}
       lockTitle={t('Enable Single Sign On')}
       lockDescription={t(
         'Let your users sign in with your current SSO provider or give them self serve sign up access',
@@ -155,11 +155,13 @@ const SSOPage = () => {
             providerDescription={t('Allow logins through email and password.')}
             providerIcon={<MailIcon className="w-[32px] h-[32px]" />}
             button={
-              <Switch
-                checked={emailAuthEnabled}
-                onCheckedChange={() => toggleEmailAuthentication()}
-                disabled={isPending}
-              />
+              <div className="mr-7">
+                <Switch
+                  checked={emailAuthEnabled}
+                  onCheckedChange={() => toggleEmailAuthentication()}
+                  disabled={isPending}
+                />
+              </div>
             }
           />
         </div>

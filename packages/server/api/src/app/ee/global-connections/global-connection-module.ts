@@ -8,6 +8,7 @@ import {
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
@@ -19,7 +20,7 @@ import { securityHelper } from '../../helper/security-helper'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.globalConnectionsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
@@ -73,6 +74,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
+            externalIds: undefined,
         })
 
         return {
@@ -108,11 +110,13 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         body: UpsertGlobalConnectionRequestBody,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
@@ -121,24 +125,28 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         body: UpdateGlobalConnectionValueRequestBody,
         params: Type.Object({
             id: ApId,
         }),
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
 const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         querystring: ListGlobalConnectionsRequestQuery,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
@@ -147,13 +155,15 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
+        tags: ['global-connections'],
         params: Type.Object({
             id: ApId,
         }),
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Never(),
         },

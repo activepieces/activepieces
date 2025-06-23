@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { ActionType, FileLocation, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -12,11 +12,20 @@ const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_ST
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
 let lastRequestHash: string | undefined = undefined
+let isGraceShutdownSignalReceived = false
 const MAXIMUM_UPDATE_THRESHOLD = 15000
 const DEBOUNCE_THRESHOLD = 5000
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
+
+process.on('SIGTERM', () => {
+    isGraceShutdownSignalReceived = true
+})
+
+process.on('SIGINT', () => {
+    isGraceShutdownSignalReceived = true
+})
 
 export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
@@ -25,7 +34,7 @@ export const progressService = {
                 clearTimeout(lastScheduledUpdateId)
             }
 
-            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD)
+            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD) || isGraceShutdownSignalReceived
             if (shouldUpdateNow || params.updateImmediate) {
                 await sendUpdateRunRequest(params)
                 return
@@ -34,6 +43,16 @@ export const progressService = {
             lastScheduledUpdateId = setTimeout(async () => {
                 await sendUpdateRunRequest(params)
             }, DEBOUNCE_THRESHOLD)
+        })
+    },
+    sendFlowResponse: async (engineConstants: EngineConstants, request: SendFlowResponseRequest): Promise<void> => {
+        await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${engineConstants.engineToken}`,
+            },
+            body: JSON.stringify(request),
         })
     },
 }
@@ -60,6 +79,7 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
+            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -124,4 +144,25 @@ type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     updateImmediate?: boolean
+}
+
+export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
+    if (!steps) {
+        return undefined
+    }
+
+    const failedStep = Object.entries(steps).find(([_, step]) => {
+        const stepOutput = step as StepOutput
+        if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+            const loopOutput = stepOutput as LoopStepOutput
+            return loopOutput.output?.iterations.some(iteration => 
+                Object.values(iteration).some(iterationStep => 
+                    (iterationStep as StepOutput).status === StepOutputStatus.FAILED,
+                ),
+            )
+        }
+        return stepOutput.status === StepOutputStatus.FAILED
+    })
+
+    return failedStep?.[0]
 }

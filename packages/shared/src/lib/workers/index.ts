@@ -15,6 +15,7 @@ export const MachineInformation = Type.Object({
         used: Type.Number(),
         percentage: Type.Number(),
     }),
+    workerId: Type.Optional(Type.String()),
     workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),

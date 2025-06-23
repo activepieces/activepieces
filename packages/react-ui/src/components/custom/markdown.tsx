@@ -11,18 +11,24 @@ import { MarkdownVariant } from '@activepieces/shared';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
+
 function applyVariables(markdown: string, variables: Record<string, string>) {
-  return markdown
-    .replaceAll('<br>', '\n')
-    .replaceAll(/\{\{(.*?)\}\}/g, (_, variableName) => {
-      return variables[variableName] ?? '';
-    });
+  if (typeof markdown !== 'string') {
+    return '';
+  }
+  let result = markdown.split('<br>').join('\n');
+  result = result.replace(/\{\{(.*?)\}\}/g, (_, variableName) => {
+    return variables[variableName] ?? '';
+  });
+  return result;
 }
 
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
   variant?: MarkdownVariant;
+  className?: string;
+  loading?: string;
 };
 
 const Container = ({
@@ -39,7 +45,8 @@ const Container = ({
           variant === MarkdownVariant.WARNING,
         'bg-success-100 text-success-300 border-none':
           variant === MarkdownVariant.TIP,
-        'p-0 bg-background border-none': variant === MarkdownVariant.BORDERLESS,
+        'p-0 bg-transparent border-none':
+          variant === MarkdownVariant.BORDERLESS,
       })}
     >
       {variant !== MarkdownVariant.BORDERLESS && (
@@ -63,7 +70,7 @@ const Container = ({
 };
 
 const ApMarkdown = React.memo(
-  ({ markdown, variables, variant }: MarkdownProps) => {
+  ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -82,17 +89,29 @@ const ApMarkdown = React.memo(
       },
     });
 
+    if (loading && loading.length > 0) {
+      return (
+        <Container variant={variant}>
+          <div className="flex items-center gap-2">{loading}</div>
+        </Container>
+      );
+    }
+
     if (!markdown) {
       return null;
     }
-    const markdownProcessed = applyVariables(markdown, variables ?? {})
+
+    let markdownProcessed = applyVariables(markdown, variables ?? {});
+    markdownProcessed = markdownProcessed
       .split('\n')
       .map((line) => line.trim())
       .join('\n');
+    markdownProcessed = markdownProcessed.split('\n').join('\n\n');
+
     return (
       <Container variant={variant}>
         <ReactMarkdown
-          className="flex-grow w-full"
+          className={cn('flex-grow w-full ', className)}
           remarkPlugins={[gfm]}
           components={{
             code(props) {
@@ -126,13 +145,13 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node, ...props }) => (
               <h1
-                className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-5xl"
+                className="scroll-m-20 text-xl font-extrabold tracking-tight lg:text-3xl"
                 {...props}
               />
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 text-xl text-3xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-lg text-xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
@@ -144,15 +163,15 @@ const ApMarkdown = React.memo(
             ),
             p: ({ node, ...props }) => (
               <p
-                className="leading-7 [&:not(:first-child)]:mt-4 w-full"
+                className="leading-7 [&:not(:first-child)]:mt-2 w-full"
                 {...props}
               />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="mt-4 ml-6 list-disc [&>li]:mt-4" {...props} />
+              <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-4" {...props} />
+              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-2" {...props} />
             ),
             li: ({ node, ...props }) => <li {...props} />,
             a: ({ node, ...props }) => (
@@ -169,6 +188,10 @@ const ApMarkdown = React.memo(
                 {...props}
               />
             ),
+            hr: ({ node, ...props }) => (
+              <hr className="my-4 border-t border-border/50" {...props} />
+            ),
+            img: ({ node, ...props }) => <img className="my-8" {...props} />,
             b: ({ node, ...props }) => <b {...props} />,
             em: ({ node, ...props }) => <em {...props} />,
           }}

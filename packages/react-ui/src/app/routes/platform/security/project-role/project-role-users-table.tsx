@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Ellipsis } from 'lucide-react';
+import { Ellipsis, User } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { TableTitle } from '@/components/custom/table-title';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,9 +17,7 @@ import {
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { platformProjectMembersApi } from '@/features/team/lib/platform-project-members-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
@@ -35,7 +34,7 @@ export const ProjectRoleUsersTable = () => {
       assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required');
       return projectRoleApi.get(projectRoleId);
     },
-    enabled: platform.projectRolesEnabled && !isNil(projectRoleId),
+    enabled: platform.plan.projectRolesEnabled && !isNil(projectRoleId),
   });
 
   const { data, isLoading } = useQuery({
@@ -45,13 +44,12 @@ export const ProjectRoleUsersTable = () => {
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
-      return platformProjectMembersApi.list({
-        projectRoleId: projectRoleId,
+      return projectRoleApi.listProjectMembers(projectRoleId!, {
         cursor: cursor ?? undefined,
         limit: limit,
       });
     },
-    enabled: platform.projectRolesEnabled,
+    enabled: platform.plan.projectRolesEnabled,
   });
 
   const columns: ColumnDef<RowDataWithActions<ProjectMemberWithUser>>[] = [
@@ -111,7 +109,7 @@ export const ProjectRoleUsersTable = () => {
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       lockTitle={t('Project Role Management')}
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',
@@ -145,9 +143,9 @@ export const ProjectRoleUsersTable = () => {
             </Breadcrumb>
 
             {!isNil(projectRole?.name) ? (
-              <TableTitle>{`${projectRole?.name} ${t('Role')} ${t(
-                'Users',
-              )}`}</TableTitle>
+              <TableTitle
+                description={t('View the users assigned to this role')}
+              >{`${projectRole?.name} ${t('Role')} ${t('Users')}`}</TableTitle>
             ) : (
               <Skeleton className="h-6 w-40" />
             )}
@@ -163,6 +161,11 @@ export const ProjectRoleUsersTable = () => {
         </div>
 
         <DataTable
+          emptyStateTextTitle={t('No users found')}
+          emptyStateTextDescription={t(
+            'Starting by assigning users to this role',
+          )}
+          emptyStateIcon={<User className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading || isProjectRoleLoading}

@@ -28,12 +28,15 @@ const FlowBuilderPage = () => {
   const { data: sampleData, isLoading: isSampleDataLoading } =
     sampleDataHooks.useSampleDataForFlow(flow?.version, flow?.projectId);
 
+  const { data: sampleDataInput, isLoading: isSampleDataInputLoading } =
+    sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
+
   if (isError) {
     console.error('Error fetching flow', flowId);
     return <Navigate to="/" />;
   }
 
-  if (isLoading || isSampleDataLoading) {
+  if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
       <div className="bg-background flex h-screen w-screen items-center justify-center ">
         <LoadingSpinner size={50}></LoadingSpinner>
@@ -50,6 +53,7 @@ const FlowBuilderPage = () => {
         readonly={false}
         run={null}
         sampleData={sampleData ?? {}}
+        sampleDataInput={sampleDataInput ?? {}}
       >
         <BuilderPage />
       </BuilderStateProvider>

@@ -17,6 +17,7 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
             platformRole: user.platformRole,
             status: user.status,
             externalId: user.externalId,
+            lastChangelogDismissed: user.lastChangelogDismissed,
             created: user.created,
             updated: user.updated,
             platformId: user.platformId,

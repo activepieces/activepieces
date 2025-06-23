@@ -4,11 +4,11 @@ import { t } from 'i18next';
 import { InfoIcon, Network, Server, ServerOff } from 'lucide-react';
 
 import { CircularIcon } from '@/components/custom/circular-icon';
+import { TableTitle } from '@/components/custom/table-title';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
-import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
+import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
 import {
@@ -82,8 +82,10 @@ export default function WorkersPage() {
   });
 
   return (
-    <div className="flex flex-col w-full">
-      <TableTitle>{t('Workers Machine')}</TableTitle>
+    <div className="flex flex-col w-full gap-4">
+      <TableTitle description={t('Check the health of your worker machines')}>
+        {t('Workers Machine')}
+      </TableTitle>
       {showDemoData && (
         <Alert variant="default" className="mt-4">
           <div className="flex items-center gap-2">
@@ -97,6 +99,11 @@ export default function WorkersPage() {
         </Alert>
       )}
       <DataTable
+        emptyStateTextTitle={t('No workers found')}
+        emptyStateTextDescription={t(
+          "You don't have any worker machines yet. Spin up new machines to execute your automations",
+        )}
+        emptyStateIcon={<Server className="size-14" />}
         hidePagination={true}
         columns={[
           {
