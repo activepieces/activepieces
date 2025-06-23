@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createGoogleSheetClient, googleSheetsCommon } from '../common/common';
+import { createGoogleSheetClient } from '../common/common';
 import { googleSheetsAuth } from '../..';
+import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
@@ -8,8 +9,8 @@ export const createWorksheetAction = createAction({
   displayName: 'Create Worksheet',
   description:'Create a blank worksheet with a title.',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
+    includeTeamDrives: includeTeamDrivesProp(),
+    spreadsheetId: spreadsheetIdProp('Spreadsheet',''),
     title:Property.ShortText({
         displayName:'Title',
         description:'The title of the new worksheet.',
@@ -22,17 +23,18 @@ export const createWorksheetAction = createAction({
    
   },
   async run(context){
+    const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
 	const googleSheetClient = await createGoogleSheetClient(context.auth);
 
     const sheet = await googleSheetClient.spreadsheets.batchUpdate({
-        spreadsheetId:context.propsValue.spreadsheet_id,
+        spreadsheetId:spreadsheetId,
         requestBody:{
             requests:[
                 {
                     addSheet:{
                         properties:{
-                            title:context.propsValue.title
+                            title:title
                         },
                     },
                     
@@ -41,7 +43,7 @@ export const createWorksheetAction = createAction({
         }
     });
     const addHeadersResponse = await googleSheetClient.spreadsheets.values.append({
-        spreadsheetId:context.propsValue.spreadsheet_id,
+        spreadsheetId,
         range:`${context.propsValue.title}!A1`,
         valueInputOption:'RAW',
         requestBody:{

@@ -30,12 +30,16 @@ export const jotformAuth = PieceAuth.CustomAuth({
       options: {
         options: [
           {
-            label: 'US (jotform.com)',
+            label: 'US (api.jotform.com)',
             value: 'us',
           },
           {
-            label: 'EU (eu.jotform.com)',
+            label: 'EU (eu-api.jotform.com)',
             value: 'eu',
+          },
+          {
+            label: 'HIPAA (hipaa-api.jotform.com)',
+            value: 'hipaa',
           },
         ],
       },
@@ -50,7 +54,7 @@ export const jotform = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jotform.svg',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud", "PFernandez98"],
   auth: jotformAuth,
   actions: [
     createCustomApiCallAction({

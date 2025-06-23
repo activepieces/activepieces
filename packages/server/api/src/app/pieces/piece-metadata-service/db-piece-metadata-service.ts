@@ -87,24 +87,6 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                     return record
                 }, {} as ListVersionsResponse)
         },
-        async delete({ projectId, id }): Promise<void> {
-            const existingMetadata = await repo().findOneBy({
-                id,
-                projectId: projectId ?? IsNull(),
-            })
-            if (isNil(existingMetadata)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        message: `piece_metadata_not_found id=${id}`,
-                    },
-                })
-            }
-            await repo().delete({
-                id,
-                projectId: projectId ?? IsNull(),
-            })
-        },
         async updateUsage({ id, usage }): Promise<void> {
             const existingMetadata = await repo().findOneByOrFail({
                 id,

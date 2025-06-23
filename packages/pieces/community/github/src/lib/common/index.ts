@@ -1,5 +1,5 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { Octokit } from 'octokit';
+import { Octokit } from '@octokit/rest';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
@@ -92,7 +92,8 @@ export const githubCommon = {
 
 async function getUserRepo(authProp: OAuth2PropertyValue) {
   const client = new Octokit({ auth: authProp.access_token });
-  return await client.paginate(client.rest.repos.listForAuthenticatedUser, {
+
+  return await client.paginate("GET /user/repos", {
     per_page: 100,
   });
 }
@@ -103,7 +104,7 @@ async function getAssignee(
   repo: string
 ) {
   const client = new Octokit({ auth: authProp.access_token });
-  return await client.paginate(client.rest.issues.listAssignees, {
+  return await client.paginate('GET /repos/{owner}/{repo}/assignees', {
     owner,
     repo,
     per_page: 100,
@@ -116,10 +117,10 @@ async function listIssueLabels(
   repo: string
 ) {
   const client = new Octokit({ auth: authProp.access_token });
-  return await client.paginate(client.rest.issues.listLabelsForRepo, {
+  return await client.paginate('GET /repos/{owner}/{repo}/labels', {
     owner,
     repo,
-    per_page: 100,
+    per_page: 100
   });
 }
 

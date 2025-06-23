@@ -60,7 +60,6 @@ To achieve this, the backend will generate a signed token that contains all the 
     | externalProjectId | Unique identification of the user's project in **your** software |
     | firstName         | First name of the user                           |
     | lastName          | Last name of the user                            |
-    | email             | Email address of the user                        |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
     | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
@@ -90,9 +89,8 @@ To achieve this, the backend will generate a signed token that contains all the 
         firstName: "John",
         lastName: "Doe",
         role: "EDITOR",
-        email: "john@example.com",
         piecesFilterType: "NONE",
-        exp: currentTime + (5 * 60), // 5 minutes from now
+        exp: currentTime + (60 * 60), // 1 hour from now
       },
       process.env.ACTIVEPIECES_SIGNING_KEY,
       {

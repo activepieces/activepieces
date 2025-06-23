@@ -12,7 +12,7 @@ export enum OtpState {
 export const OtpModel = Type.Object({
     ...BaseModelSchema,
     type: Type.Enum(OtpType),
-    userId: ApId,
+    identityId: ApId,
     value: Type.String(),
     state: Type.Enum(OtpState),
 });

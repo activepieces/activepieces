@@ -12,8 +12,8 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
   ActionType,
@@ -40,6 +40,7 @@ import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { project } = projectHooks.useCurrentProject();
   const [
     readonly,
     exitStepSettings,
@@ -68,29 +69,21 @@ const StepSettingsContainer = () => {
     step: selectedStep,
   });
 
-  const { toast } = useToast();
-
   const debouncedTrigger = useMemo(() => {
     return debounce((newTrigger: Trigger) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: newTrigger,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
+      applyOperation({
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: newTrigger,
+      });
     }, 200);
   }, [applyOperation]);
 
   const debouncedAction = useMemo(() => {
     return debounce((newAction: Action) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_ACTION,
-          request: newAction,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
+      applyOperation({
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      });
     }, 200);
   }, [applyOperation]);
 
@@ -311,6 +304,7 @@ const StepSettingsContainer = () => {
                       type={modifiedStep.type}
                       flowId={flowVersion.flowId}
                       flowVersionId={flowVersion.id}
+                      projectId={project?.id}
                       isSaving={saving}
                     ></TestStepContainer>
                   )}

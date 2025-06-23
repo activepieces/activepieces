@@ -1,8 +1,10 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
+    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
@@ -79,6 +81,18 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         return appConnectionsWithoutSensitiveData
     },
     )
+    app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
+        const owners = await appConnectionService(request.log).getOwners({
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+        })
+        return {
+            data: owners,
+            next: null,
+            previous: null,
+        }
+    },
+    )
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
@@ -153,6 +167,22 @@ const ListAppConnectionsRequest = {
         },
     },
 }
+const ListAppConnectionOwnersRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_APP_CONNECTION,
+    },
+    schema: {
+        querystring: ListAppConnectionOwnersRequestQuery,
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List app connection owners',
+        response: {
+            [StatusCodes.OK]: SeekPage(AppConnectionOwners),
+        },
+    },
+}
+
 
 
 const DeleteAppConnectionRequest = {

@@ -62,6 +62,12 @@ export const baserowCommon = {
                     }.`,
                   });
                   break;
+                case BaserowFieldType.DURATION:
+                  fields[field.name] = Property.Number({
+                    displayName: field.name,
+                    required: false,
+                  });
+                  break;
                 case BaserowFieldType.LINK_TO_TABLE:
                   fields[field.name] = Property.Array({
                     displayName: field.name,
@@ -119,6 +125,7 @@ export const baserowCommon = {
                     required: false,
                   });
                   break;
+                case BaserowFieldType.EMAIL:
                 case BaserowFieldType.PHONE_NUMBER:
                   fields[field.name] = Property.ShortText({
                     displayName: field.name,

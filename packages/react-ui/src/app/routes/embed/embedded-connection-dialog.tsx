@@ -141,7 +141,7 @@ const EmbeddedConnectionDialogContent = ({
   }, [connectionName, connections]);
 
   if (isLoadingPiece || isLoadingConnections) {
-    return <LoadingScreen />;
+    return <LoadingScreen useDarkBackground={true} />;
   }
 
   if (!pieceModel) {

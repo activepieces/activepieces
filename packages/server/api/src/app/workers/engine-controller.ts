@@ -1,17 +1,16 @@
-import { GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
@@ -94,7 +93,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
         })
         let uploadUrl: string | undefined
-        const updateLogs = !isNil(executionStateContentLength)
+        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
             uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
                 flowRunId: runId,
@@ -118,8 +117,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        const projectId = request.principal.projectId
-        await disableFlowIfQuotaExceeded(projectId, runWithoutSteps.flowId, runDetails.status, request.log)
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
         const response: UpdateRunProgressResponse = {
             uploadUrl,
@@ -132,9 +129,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        const exceededLimit = await tasksLimit(request.log).exceededLimit({
-            projectId: request.principal.projectId,
-        })
+        const exceededLimit = await usageService(request.log).tasksExceededLimit(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
@@ -195,20 +190,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-async function disableFlowIfQuotaExceeded(projectId: ProjectId, flowId: FlowId, status: FlowRunStatus, log: FastifyBaseLogger): Promise<void> {
-    if (status === FlowRunStatus.QUOTA_EXCEEDED) {
-        log.info({
-            projectId,
-            flowId,
-        }, 'Disabling flow due to quota exceeded')
-        await flowService(log).updateStatus({
-            id: flowId,
-            projectId,
-            newStatus: FlowStatus.DISABLED,
-        })
-    }
-}
-
 async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined, log: FastifyBaseLogger): Promise<void> {
     if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
         await engineResponseWatcher(log).publish(
@@ -224,6 +205,7 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
         case FlowRunStatus.TIMEOUT:
         case FlowRunStatus.PAUSED:
         case FlowRunStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         case FlowRunStatus.STOPPED:
         case FlowRunStatus.SUCCEEDED:
             await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.COMPLETED, token: enginePrincipal.queueToken!, message: 'Flow succeeded' })
@@ -320,6 +302,7 @@ async function getFlowResponse(
                 headers: {},
             }
         case FlowRunStatus.FAILED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams } from 'react-router-dom';
 
-import { DatePickerWithRange } from '../date-picker-range';
+import { DateTimePickerWithRange } from '../date-time-picker-range';
 
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
@@ -82,7 +82,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 
   switch (type) {
     case 'input': {
-      const filterValue = (column?.getFilterValue() || '') as string;
+      const filterValue = searchParams.get(column?.id as string) || '';
       return (
         <DataTableInputPopover
           title={title}
@@ -109,7 +109,7 @@ export function DataTableFacetedFilter<TData, TValue>({
       const to = searchParams.get(`${column?.id}Before`);
 
       return (
-        <DatePickerWithRange
+        <DateTimePickerWithRange
           presetType="past"
           onChange={handleFilterChange}
           from={from ?? undefined}

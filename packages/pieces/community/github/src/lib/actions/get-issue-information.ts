@@ -1,4 +1,4 @@
-import { Octokit } from 'octokit';
+import { Octokit } from '@octokit/rest';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubCommon } from '../common';

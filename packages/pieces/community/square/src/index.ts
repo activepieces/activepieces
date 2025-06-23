@@ -35,7 +35,7 @@ export const square = createPiece({
   events: {
     verify: ({ webhookSecret, payload, appWebhookUrl }) => {
       const signature = payload.headers['x-square-hmacsha256-signature'];
-      const hmac = crypto.createHmac('sha256', webhookSecret);
+      const hmac = crypto.createHmac('sha256', webhookSecret as string);
       hmac.update(appWebhookUrl + payload.rawBody);
       const hash = hmac.digest('base64');
       return hash === signature;

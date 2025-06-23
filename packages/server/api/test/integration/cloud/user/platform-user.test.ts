@@ -11,10 +11,9 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockOtp,
-    createMockUser,
-    mockBasicSetup,
-    setupMockApiKeyServiceAccount,
+    mockAndSaveBasicSetup,
+    mockAndSaveBasicSetupWithApiKey,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -34,12 +33,7 @@ describe('Enterprise User API', () => {
 
         it('Allows service accounts', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
+            const { mockOwner, mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             // act
             const response = await app?.inject({
@@ -68,17 +62,15 @@ describe('Enterprise User API', () => {
 
         it('Failed if own other platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
-            const { mockOwner: mockOwner2, mockPlatform: mockPlatform2 } = setupMockApiKeyServiceAccount()
-            const mockUser = createMockUser({
-                platformId: mockPlatform.id,
-                status: UserStatus.ACTIVE,
-                platformRole: PlatformRole.MEMBER,
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockOwner2, mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
             })
-
-
-            await databaseConnection().getRepository('user').save([mockOwner, mockOwner2, mockUser])
-            await databaseConnection().getRepository('platform').save([mockPlatform, mockPlatform2])
 
             const mockUserToken = await generateMockToken({
                 id: mockOwner2.id,
@@ -105,18 +97,14 @@ describe('Enterprise User API', () => {
 
         it('Fail if not admin', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
-
-            const mockUser = createMockUser({
-                platformId: mockPlatform.id,
-                status: UserStatus.ACTIVE,
-                platformRole: PlatformRole.MEMBER,
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
             })
-
-            await databaseConnection()
-                .getRepository('user')
-                .save([mockOwner, mockUser])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
@@ -142,19 +130,14 @@ describe('Enterprise User API', () => {
 
         it('Allows service accounts to activate', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            const mockUser = createMockUser({
-                platformId: mockPlatform.id,
-                status: UserStatus.INACTIVE,
+            const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.INACTIVE,
+                },
             })
-
-            await databaseConnection()
-                .getRepository('user')
-                .save([mockOwner, mockUser])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
 
             // act
             const response = await app?.inject({
@@ -182,15 +165,46 @@ describe('Enterprise User API', () => {
 
     describe('Delete user endpoint', () => {
 
-        it('Removes OTP for deleted user', async () => {
+        it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
 
-            const mockEditor = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection().getRepository('user').save([mockEditor])
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
 
-            const mockOtp = createMockOtp({ userId: mockEditor.id })
-            await databaseConnection().getRepository('otp').save(mockOtp)
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Allows platform owner to delete user', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -201,20 +215,17 @@ describe('Enterprise User API', () => {
             })
 
             // act
-            await app?.inject({
+            const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/users/${mockEditor.id}`,
+                url: `/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockOwnerToken}`,
                 },
             })
 
             // assert
-            const otp = await databaseConnection().getRepository('otp').findOneBy({ id: mockOtp.id })
-            expect(otp).toBe(null)
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
-
-   
 
     })
 })

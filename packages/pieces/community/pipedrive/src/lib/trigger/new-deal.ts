@@ -15,7 +15,7 @@ export const newDeal = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_deal',
 	displayName: 'New Deal',
-	description: 'Triggers when a new deal is created',
+	description: 'Triggers when a new deal is created.',
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {

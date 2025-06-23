@@ -42,7 +42,35 @@ export const triggers = [
             name: 'John Smith',
             contactNumber: '+9779834509123',
         },
-    }
+    },
+    {
+        name: 'newCallLog',
+        displayName: 'New Call Log',
+        description: 'Trigger when a new call log is recorded.',
+        action: 'new_call_log',
+        sampleData: {
+            id: '101',
+            callFrom: "+11234567890",
+            callTo: "+11234567891",
+            direction: "Outgoing",
+            duration : "0hr 01min 30sec",
+            outcome:"Completed",
+            callRecording: "http://example.com/recording.mp3",
+        },
+    },
+    {
+        name: 'OutboundSMS/MMS',
+        displayName: 'Outbound MMS/SMS',
+        description: 'Trigger when a new MMS/SMS is sent.',
+        action: 'outbound_sms_or_mms',
+        sampleData: {
+            "id": "YiW2nyxqtJPYqkRKbrcJQ7",
+            "from_number": "+16466813538",
+            "to_number": "+12517327005",
+            "content": "Last testing",
+            "media_link": "https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING"
+        },
+    },
 ].map(trigger => {
     return createTrigger({
         name: trigger.name,

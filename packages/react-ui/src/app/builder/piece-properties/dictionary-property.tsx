@@ -37,13 +37,20 @@ export const DictionaryProperty = ({
     };
   });
   const valuesArrayRef = useRef(valuesArray);
+  // To allow keys that have the same prefix to be added in any order
+  const valuesArrayRefUnique = valuesArrayRef.current
+    .toReversed()
+    .filter(
+      (el, index, self) => self.findIndex((t) => t.key === el.key) === index,
+    )
+    .toReversed();
   const haveValuesChangedFromOutside =
-    valuesArrayRef.current.length !== valuesArray.length ||
+    valuesArrayRefUnique.length !== valuesArray.length ||
     valuesArray.reduce((acc, _, index) => {
       return (
         acc ||
-        valuesArrayRef.current[index].key !== valuesArray[index].key ||
-        valuesArrayRef.current[index].value !== valuesArray[index].value
+        valuesArrayRefUnique[index].key !== valuesArray[index].key ||
+        valuesArrayRefUnique[index].value !== valuesArray[index].value
       );
     }, false);
 

@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { UserMeta } from '../user'
+import { UserWithMetaInformation } from '../user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
 
@@ -9,6 +9,7 @@ export type AppConnectionId = string
 
 export enum AppConnectionStatus {
     ACTIVE = 'ACTIVE',
+    MISSING = 'MISSING',
     ERROR = 'ERROR',
 }
 
@@ -90,6 +91,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     platformId: string
     status: AppConnectionStatus
     ownerId: string
+    owner: UserWithMetaInformation | null
     value: AppConnectionValue<Type>
 }
 
@@ -111,8 +113,16 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     scope: Type.Enum(AppConnectionScope),
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
-    owner: Nullable(UserMeta),
+    owner: Nullable(UserWithMetaInformation),
 }, {
     description: 'App connection is a connection to an external app.',
 })
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
+
+export const AppConnectionOwners = Type.Object({
+    firstName: Type.String(),
+    lastName: Type.String(),
+    email: Type.String(),
+})
+
+export type AppConnectionOwners = Static<typeof AppConnectionOwners>

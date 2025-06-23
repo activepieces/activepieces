@@ -3,7 +3,7 @@ import {
 } from '@activepieces/ee-shared'
 import { DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -11,23 +11,23 @@ import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockApiKey,
-    createMockPlatform,
-    createMockProject,
     createMockProjectMember,
-    createMockUser,
     createMockUserInvitation,
+    mockAndSaveBasicSetupWithApiKey,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {
-    emailService.sendInvitation = jest.fn()
+    emailService(mockLog).sendInvitation = jest.fn()
 })
 
 afterAll(async () => {
@@ -491,32 +491,13 @@ async function createBasicEnvironment({ platform }: { platform?: Partial<Platfor
     mockOwnerToken: string
     mockMember: User
 }> {
-    const mockOwner = createMockUser()
-    await databaseConnection().getRepository('user').save(mockOwner)
-
-    const mockPlatform = createMockPlatform({
-        ownerId: mockOwner.id,
-        projectRolesEnabled: true,
-        ...platform,
+    const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
+        platform: {
+            ...platform,
+            projectRolesEnabled: true,
+        },
     })
-    await databaseConnection().getRepository('platform').save(mockPlatform)
 
-    const mockProject = createMockProject({
-        ownerId: mockOwner.id,
-        platformId: mockPlatform.id,
-    })
-    await databaseConnection().getRepository('project').save(mockProject)
-
-    const mockApiKey = createMockApiKey({
-        platformId: mockPlatform.id,
-    })
-    await databaseConnection().getRepository('api_key').save(mockApiKey)
-
-
-    await databaseConnection().getRepository('user').update(mockOwner.id, {
-        platformId: mockPlatform.id,
-        platformRole: PlatformRole.ADMIN,
-    })
     const mockOwnerToken = await generateMockToken({
         id: mockOwner.id,
         type: PrincipalType.USER,
@@ -526,11 +507,12 @@ async function createBasicEnvironment({ platform }: { platform?: Partial<Platfor
         },
     })
 
-    const mockMember = createMockUser({
-        platformId: mockPlatform.id,
-        platformRole: PlatformRole.MEMBER,
+    const { mockUser: mockMember } = await mockBasicUser({
+        user: {
+            platformId: mockPlatform.id,
+            platformRole: PlatformRole.MEMBER,
+        },
     })
-    await databaseConnection().getRepository('user').save(mockMember)
 
     return {
         mockOwner,

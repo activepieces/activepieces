@@ -46,11 +46,6 @@ type ListVersionsParams = {
     platformId: string | undefined
 }
 
-type DeleteParams = {
-    id: string
-    projectId?: string
-}
-
 type CreateParams = {
     pieceMetadata: PieceMetadata
     platformId?: string
@@ -78,7 +73,6 @@ export type PieceMetadataService = {
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
-    delete(params: DeleteParams): Promise<void>
     updateUsage(params: UpdateUsage): Promise<void>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }

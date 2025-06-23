@@ -3,12 +3,13 @@ import { faker } from '@faker-js/faker'
 
 
 export const flowGenerator = {
-    simpleActionAndTrigger(): PopulatedFlow {
-        return flowGenerator.randomizeMetadata(flowVersionGenerator.simpleActionAndTrigger())
+    simpleActionAndTrigger(externalId?: string): PopulatedFlow {
+        return flowGenerator.randomizeMetadata(externalId, flowVersionGenerator.simpleActionAndTrigger())
     },
-    randomizeMetadata(version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
+    randomizeMetadata(externalId: string | undefined, version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
         const flowId = apId()
         const result = {
+            externalId,
             version: {
                 ...version,
                 trigger: randomizeTriggerMetadata(version.trigger),

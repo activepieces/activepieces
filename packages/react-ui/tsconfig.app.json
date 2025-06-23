@@ -41,5 +41,5 @@
     "src/**/*.spec.jsx",
     "src/**/*.test.jsx"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "i18next-parser.config.js"]
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "i18next-parser.config.js", "src/app/builder/builder-flow-status-section/index.tsx"]
 }

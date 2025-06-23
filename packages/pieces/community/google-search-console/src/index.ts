@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { urlInspection } from './lib/actions/url-inspection';
 import { searchAnalytics } from './lib/actions/search-analytics';
@@ -7,6 +7,8 @@ import { submitSitemap } from './lib/actions/submit-a-sitemap';
 import { listSites } from './lib/actions/list-sites';
 import { addSite } from './lib/actions/add-a-site';
 import { deleteSite } from './lib/actions/delete-a-site';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+
 
 export const googleSearchConsoleAuth = PieceAuth.OAuth2({
   description: `
@@ -41,7 +43,7 @@ export const googleSearchConsolePiece = createPiece({
   minimumSupportedRelease: '0.30.0',
   auth: googleSearchConsoleAuth,
   logoUrl: 'https://cdn.activepieces.com/pieces/google-search-console.png',
-  authors: ['Gushkool'],
+  authors: ['Gushkool','kishanprmr'],
   triggers: [],
   actions: [
     searchAnalytics,
@@ -51,6 +53,13 @@ export const googleSearchConsolePiece = createPiece({
     addSite,
     deleteSite,
     urlInspection,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://www.googleapis.com/webmasters/v3',
+      auth: googleSearchConsoleAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
 });
 //TODO : remove this comment, add Gushkool's email to local git configuration

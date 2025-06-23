@@ -1,7 +1,7 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowLeft, Info, SearchX } from 'lucide-react';
+import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { InputWithIcon } from '@/components/ui/Input-with-icon';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
@@ -176,11 +176,12 @@ const SelectFlowTemplateDialog = ({
           </DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
-          <CarouselContent className="min-h-[300px] h-[70vh] max-h-[680px] ">
+          <CarouselContent className="min-h-[300px] h-[70vh] max-h-[820px] ">
             <CarouselItem key="templates">
               <div>
                 <div className="p-1 ">
-                  <Input
+                  <InputWithIcon
+                    icon={<Search className="w-4 h-4" />}
                     type="text"
                     value={search}
                     onChange={handleSearchChange}
@@ -202,7 +203,7 @@ const SelectFlowTemplateDialog = ({
                           {t('No templates found, try adjusting your search')}
                         </div>
                       )}
-                      <ScrollArea className="min-h-[260px] h-[calc(70vh-80px)] max-h-[680px]   overflow-y-auto px-1">
+                      <ScrollArea className="min-h-[260px] h-[calc(70vh-80px)] max-h-[740px]   overflow-y-auto px-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {filteredTemplates?.map((template) => (
                             <TemplateCard

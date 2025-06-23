@@ -1,11 +1,14 @@
 import { TSchema, Type } from '@sinclair/typebox';
+import { t } from 'i18next';
 
 import {
   CONNECTION_REGEX,
+  CustomAuthProperty,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadata,
   PieceMetadataModel,
+  PieceMetadataModelSummary,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
@@ -27,6 +30,13 @@ import {
   RouterBranchesSchema,
   SampleDataSetting,
   RouterExecutionType,
+  UpsertOAuth2Request,
+  UpsertCloudOAuth2Request,
+  UpsertPlatformOAuth2Request,
+  UpsertAppConnectionRequestBody,
+  UpsertCustomAuthRequest,
+  UpsertBasicAuthRequest,
+  UpsertSecretTextRequest,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -89,6 +99,85 @@ function buildInputSchemaForStep(
     }
     default:
       throw new Error('Unsupported type: ' + type);
+  }
+}
+
+function buildConnectionSchema(
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+) {
+  const auth = piece.auth;
+  if (isNil(auth)) {
+    return Type.Object({
+      request: Type.Composite([
+        Type.Omit(UpsertAppConnectionRequestBody, ['externalId']),
+      ]),
+    });
+  }
+  const connectionSchema = Type.Object({
+    externalId: Type.String({
+      pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
+      minLength: 1,
+      errorMessage: t('Name can only contain letters, numbers and underscores'),
+    }),
+  });
+
+  switch (auth.type) {
+    case PropertyType.SECRET_TEXT:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertSecretTextRequest, ['externalId', 'displayName']),
+          connectionSchema,
+        ]),
+      });
+    case PropertyType.BASIC_AUTH:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertBasicAuthRequest, ['externalId', 'displayName']),
+          connectionSchema,
+        ]),
+      });
+    case PropertyType.CUSTOM_AUTH:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertCustomAuthRequest, [
+            'externalId',
+            'value',
+            'displayName',
+          ]),
+          connectionSchema,
+          Type.Object({
+            value: Type.Object({
+              props: formUtils.buildSchema(
+                (piece.auth as CustomAuthProperty<any>).props,
+              ),
+            }),
+          }),
+        ]),
+      });
+    case PropertyType.OAUTH2:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(
+            Type.Union([
+              UpsertOAuth2Request,
+              UpsertCloudOAuth2Request,
+              UpsertPlatformOAuth2Request,
+            ]),
+            ['externalId', 'displayName'],
+          ),
+          connectionSchema,
+        ]),
+      });
+    default:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertAppConnectionRequestBody, [
+            'externalId',
+            'displayName',
+          ]),
+          connectionSchema,
+        ]),
+      });
   }
 }
 
@@ -408,6 +497,7 @@ export const formUtils = {
     return Type.Object(propsSchema);
   },
   getDefaultValueForStep,
+  buildConnectionSchema,
 };
 
 export function getDefaultValueForStep(

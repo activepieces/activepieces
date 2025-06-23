@@ -1,8 +1,13 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import {
+  Property,
+  OAuth2PropertyValue,
+  DropdownOption,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType,
+  QueryParams,
 } from '@activepieces/pieces-common';
 
 export const googleBusinessCommon = {
@@ -61,31 +66,49 @@ export const googleBusinessCommon = {
       const authProp: OAuth2PropertyValue = propsValue[
         'auth'
       ] as OAuth2PropertyValue;
-      const response = await httpClient.sendRequest<{
-        locations: { title: string; name: string }[];
-      }>({
-        url: `https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations`,
-        queryParams: {
+
+      const options: DropdownOption<string>[] = [];
+
+      let nextPageToken: string | undefined;
+
+      do {
+        const qs: QueryParams = {
           pageSize: '100',
           read_mask: 'title,name',
-        },
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: authProp.access_token,
-        },
-      });
+        };
+        if (nextPageToken) {
+          qs.pageToken = nextPageToken;
+        }
+
+        const response = await httpClient.sendRequest<{
+          locations: { title: string; name: string }[];
+          nextPageToken?: string;
+        }>({
+          url: `https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations`,
+          queryParams: qs,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp.access_token,
+          },
+        });
+
+        nextPageToken = response.body.nextPageToken;
+        if (response.body.locations && Array.isArray(response.body.locations)) {
+
+          for (const location of response.body.locations) {
+            options.push({
+              label: location.title,
+              value: location.name,
+            });
+          }
+
+        }
+      } while (nextPageToken);
 
       return {
         disabled: false,
-        options: response.body.locations.map(
-          (location: { title: string; name: string }) => {
-            return {
-              label: location.title,
-              value: location.name,
-            };
-          }
-        ),
+        options,
       };
     },
   }),

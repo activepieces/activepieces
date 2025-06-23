@@ -83,7 +83,6 @@ const ApStepCanvasNode = React.memo(
   ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
-      setAllowCanvasPanning,
       isSelected,
       isDragging,
       selectedStep,
@@ -97,7 +96,6 @@ const ApStepCanvasNode = React.memo(
       pieceSelectorStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
-      state.setAllowCanvasPanning,
       !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
       state.activeDraggingStep === data.step?.name,
       state.selectedStep,
@@ -148,7 +146,8 @@ const ApStepCanvasNode = React.memo(
     const showRunningIcon =
       isNil(stepOutputStatus) &&
       run?.status === FlowRunStatus.RUNNING &&
-      !hasSkippedParent(step.name, flowVersion.trigger);
+      !hasSkippedParent(step.name, flowVersion.trigger) &&
+      !isSkipped;
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -175,16 +174,10 @@ const ApStepCanvasNode = React.memo(
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
-            'bg-accent/70': isSkipped,
+            'bg-accent/90': isSkipped,
           },
         )}
         onClick={(e) => handleStepClick(e)}
-        onMouseEnter={() => {
-          setAllowCanvasPanning(false);
-        }}
-        onMouseLeave={() => {
-          setAllowCanvasPanning(true);
-        }}
         key={step.name}
         ref={openPieceSelector ? null : setNodeRef}
         {...(!openPieceSelector ? attributes : {})}
@@ -251,7 +244,11 @@ const ApStepCanvasNode = React.memo(
                   </div>
                   <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                     <div className=" flex items-center justify-between min-w-0 w-full">
-                      <div className="text-sm truncate grow shrink ">
+                      <div
+                        className={cn('text-sm truncate grow shrink ', {
+                          'text-accent-foreground/70': isSkipped,
+                        })}
+                      >
                         {stepIndex}. {step.displayName}
                       </div>
 
@@ -295,7 +292,7 @@ const ApStepCanvasNode = React.memo(
                             size="4"
                           ></StepStatusIcon>
                         )}
-                        {showRunningIcon && !isSkipped && (
+                        {showRunningIcon && (
                           <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
                         )}
                         {isSkipped && (
@@ -308,7 +305,7 @@ const ApStepCanvasNode = React.memo(
                             </TooltipContent>
                           </Tooltip>
                         )}
-                        {!step.valid && (
+                        {!step.valid && !isSkipped && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="mr-3">

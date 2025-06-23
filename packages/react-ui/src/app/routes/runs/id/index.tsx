@@ -11,7 +11,7 @@ import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 const FlowRunPage = () => {
-  const { runId } = useParams();
+  const { runId, projectId } = useParams();
 
   const { data, isLoading } = useQuery<
     {
@@ -37,7 +37,7 @@ const FlowRunPage = () => {
   });
 
   const { data: sampleData, isLoading: isSampleDataLoading } =
-    sampleDataHooks.useSampleDataForFlow(data?.flow?.version);
+    sampleDataHooks.useSampleDataForFlow(data?.flow?.version, projectId);
 
   if (isLoading || isSampleDataLoading) {
     return (

@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
@@ -12,12 +12,13 @@ import {
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
+import { authenticationUtils } from '../../authentication/authentication-utils'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -33,12 +34,15 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
             return
         }
-        rejectedPromiseHandler(saveEvent({
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-            userId: request.principal.id,
-            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, params, log), log)
+        rejectedPromiseHandler((async () => {
+            const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+            await saveEvent({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                userId,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, params, log)
+        })(), log)
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {
         rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {
@@ -50,7 +54,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             }, params, log), log)
         }), log)
     },
-    async list({ platformId, cursorRequest, limit, userId, action, projectId }: ListParams): Promise<SeekPage<ApplicationEvent>> {
+    async list({ platformId, cursorRequest, limit, userId, action, projectId, createdBefore, createdAfter }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: AuditEventEntity,
@@ -67,12 +71,24 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere({ userId })
         }
         if (!isNil(action)) {
-            queryBuilder.andWhere({ action })
+            queryBuilder.andWhere({ action: In(action) })
         }
         
         if (!isNil(projectId)) {
             queryBuilder.andWhere({ projectId: In(projectId) })
         }
+
+        if (createdAfter) {
+            queryBuilder.andWhere('audit_event.created >= :createdAfter', {
+                createdAfter,
+            })
+        }
+        if (createdBefore) {
+            queryBuilder.andWhere('audit_event.created <= :createdBefore', {
+                createdBefore,
+            })
+        }
+
         const paginationResponse = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
@@ -90,13 +106,16 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
     const user = info.userId ? await userService.getOneOrFail({
         id: info.userId,
     }) : undefined
+    const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({
+        id: user.identityId,
+    }) : undefined
     const project = info.projectId ? await projectService.getOne(info.projectId) : undefined
     const eventToSave: unknown = {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         userId: info.userId,
-        userEmail: user?.email,
+        userEmail: identity?.email,
         projectId: info.projectId,
         projectDisplayName: project?.displayName,
         platformId: info.platformId,
@@ -133,6 +152,8 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     userId?: string
-    action?: string
+    action?: string[]
     projectId?: string[]
+    createdBefore?: string
+    createdAfter?: string
 }

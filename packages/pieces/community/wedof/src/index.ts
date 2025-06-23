@@ -55,6 +55,8 @@ import { certificationFolderSurveySixMonthExperienceAnswered } from './lib/trigg
 import { certificationFolderSurveySixMonthExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-available';
 import { getCertificationFolderSurvey } from './lib/actions/certification-folder-survey/get-certification-folder-survey';
 import { listCertificationFolderSurveys } from './lib/actions/certification-folder-survey/list-certification-folder-surveys';
+import { createCertificationPartnerAudit } from './lib/actions/certification-partner-audit/create-certification-partner-audit';
+import { createGeneralAudit } from './lib/actions/certification-partner-audit/create-general-audit';
 
 export const wedofAuth = PieceAuth.SecretText({
     displayName: 'Clé API',
@@ -127,7 +129,10 @@ export const wedof = createPiece({
     sendFile,
     ///////////// certificationFoldersSurvey ///////
     getCertificationFolderSurvey,
-    listCertificationFolderSurveys
+    listCertificationFolderSurveys,
+    ///////////// certificationPartnerAudit ////////
+    createCertificationPartnerAudit,
+    createGeneralAudit
   ],
   triggers: [
     ////////////// registrationFolders ////////////

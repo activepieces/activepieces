@@ -11,8 +11,8 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
-import { flowJobExecutor } from 'server-worker'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { flowJobExecutor, flowWorker } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -21,39 +21,32 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-
     await app.listen({
         host: '0.0.0.0',
         port: 3000,
     })
-
+    mockLog = app.log
 })
 
 afterAll(async () => {
+    if (app) {
+        await app.close()
+    }
     await databaseConnection().destroy()
-    await app?.close()
 })
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
-        const mockUser = createMockUser()
-        await databaseConnection().getRepository('user').save([mockUser])
-
-        const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-        await databaseConnection().getRepository('platform').save([mockPlatform])
-
-        const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
-        await databaseConnection().getRepository('project').save([mockProject])
+        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
@@ -63,7 +56,7 @@ describe('flow execution', () => {
 
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
-            updatedBy: mockUser.id,
+            updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
                 type: TriggerType.PIECE,
@@ -138,7 +131,11 @@ describe('flow execution', () => {
             platformId: mockPlatform.id,
             projectId: mockProject.id,
         })
-        await flowJobExecutor.executeFlow({
+        await flowWorker(mockLog).init({
+            workerToken: await accessTokenManager.generateWorkerToken(),
+        })
+
+        await flowJobExecutor(mockLog).executeFlow({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             environment: RunEnvironment.PRODUCTION,
@@ -165,9 +162,8 @@ describe('flow execution', () => {
             data: file.data,
             compression: file.compression,
         })
-        expect(
-            JSON.parse(decompressedData.toString('utf-8')).executionState,
-        ).toEqual({
+        const executionState = JSON.parse(decompressedData.toString('utf-8')).executionState
+        expect(executionState).toEqual({
             steps: {
                 webhook: {
                     type: 'PIECE_TRIGGER',

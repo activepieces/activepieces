@@ -14,7 +14,18 @@ export const SignUpRequest = Type.Object({
     }),
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
-    referringUserId: Type.Optional(ApId),
 })
 
 export type SignUpRequest = Static<typeof SignUpRequest>
+
+export const SwitchPlatformRequest = Type.Object({
+    platformId: ApId,
+})
+
+export type SwitchPlatformRequest = Static<typeof SwitchPlatformRequest>
+
+export const SwitchProjectRequest = Type.Object({
+    projectId: ApId,
+})
+
+export type SwitchProjectRequest = Static<typeof SwitchProjectRequest>

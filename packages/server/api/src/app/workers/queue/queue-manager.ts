@@ -43,9 +43,9 @@ type BaseAddParams<JT extends JobType, JD extends JobData> = {
     data: JD
 }
 
-type RepeatingJobAddParams<JT extends JobType.REPEATING> = BaseAddParams<JT, RepeatingJobData> & {
+type RepeatingJobAddParams<JT extends JobType.REPEATING> = Omit<BaseAddParams<JT, RepeatingJobData> & {
     scheduleOptions: ScheduleOptions
-}
+}, 'id'>
 
 type RenewWebhookJobAddParams<JT extends JobType.REPEATING> = BaseAddParams<JT, RenewWebhookJobData> & {
     scheduleOptions: ScheduleOptions

@@ -8,7 +8,6 @@ import {
   ListProjectRequestForUserQueryParams,
   ProjectWithLimits,
   SeekPage,
-  SwitchProjectResponse,
 } from '@activepieces/shared';
 
 export const projectApi = {
@@ -23,14 +22,6 @@ export const projectApi = {
   },
   update: async (projectId: string, request: UpdateProjectPlatformRequest) => {
     return api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request);
-  },
-  getTokenForProject: async (projectId: string) => {
-    return api.post<SwitchProjectResponse>(
-      `/v1/users/projects/${projectId}/token`,
-      {
-        projectId,
-      },
-    );
   },
   create: async (request: CreatePlatformProjectRequest) => {
     return api.post<ProjectWithLimits>('/v1/projects', request);

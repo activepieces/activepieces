@@ -12,7 +12,11 @@ Benefits of separating workers from the main application (APP):
 
 <Steps>
   <Step title="Create Worker Token">
-    Create a worker token by executing `npm run workers token` at the root of the repository. You will be prompted to enter a JWT secret, after which the token will be generated.
+    To create a worker token, use the local CLI command to generate the JWT and sign it with your `AP_JWT_SECRET` used for the app server. Follow these steps:
+    1. Open your terminal and navigate to the root of the repository.
+    2. Run the command: `npm run workers token`.
+    3. When prompted, enter the JWT secret (this should be the same as the `AP_JWT_SECRET` used for the app server).
+    4. The generated token will be displayed in your terminal, copy it and use it in the next step.
     ![Workers Token](../../resources/worker-token.png)
   </Step>
   <Step title="Configure Environment Variables">

@@ -200,10 +200,10 @@ export const registrationFolderUpdated = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const name =
-      'Activepieces - RegistrationFolderUpdated - ' +
-      context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
-
+    const flows = await context.flows.list();
+    const flow = flows.data.find((flow) => flow.id === context.flows.current.id);
+    const name = `<a href="${context.webhookUrl.split('/').slice(0, 3).join('/')}/projects/${context.project.id}/flows/${context.flows.current.id}">${flow?.version.displayName}</a>`;
+    
     const message = {
       url: context.webhookUrl,
       events: ['registrationFolder.updated'],
@@ -235,8 +235,7 @@ export const registrationFolderUpdated = createTrigger({
 
   async onDisable(context) {
     const id = await context.store.get('_webhookId');
-
-    await httpClient.sendRequest({
+      await httpClient.sendRequest({
       method: HttpMethod.DELETE,
       url: wedofCommon.baseUrl + '/webhooks/' + id,
       headers: {

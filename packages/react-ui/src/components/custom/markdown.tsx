@@ -55,7 +55,9 @@ const Container = ({
           )}
         </>
       )}
-      <AlertDescription>{children}</AlertDescription>
+      <AlertDescription className="flex-grow w-full">
+        {children}
+      </AlertDescription>
     </Alert>
   );
 };
@@ -90,6 +92,7 @@ const ApMarkdown = React.memo(
     return (
       <Container variant={variant}>
         <ReactMarkdown
+          className="flex-grow w-full"
           remarkPlugins={[gfm]}
           components={{
             code(props) {

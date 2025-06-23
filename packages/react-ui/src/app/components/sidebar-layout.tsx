@@ -23,7 +23,8 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 
 function SidebarItem({ className, items, ...props }: SidebarNavProps) {
   const location = useLocation();
-
+  const linkActive = (item: SidebarItem) =>
+    location.pathname.startsWith(item.href);
   return (
     <nav
       className={cn(
@@ -38,13 +39,18 @@ function SidebarItem({ className, items, ...props }: SidebarNavProps) {
           to={item.href}
           className={cn(
             buttonVariants({ variant: 'ghost' }),
-            location.pathname.toLowerCase() === item.href.toLowerCase()
+            linkActive(item)
               ? 'bg-muted hover:bg-muted'
               : 'hover:bg-transparent hover:underline',
             'justify-start',
           )}
         >
-          <div className="flex items-center justify-center gap-2">
+          <div
+            className={cn(
+              'flex items-center justify-center gap-2',
+              linkActive(item) ? 'text-primary fill-primary' : '',
+            )}
+          >
             {item.icon}
             {item.title}
           </div>

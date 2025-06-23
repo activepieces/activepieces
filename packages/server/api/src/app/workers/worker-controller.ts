@@ -139,7 +139,7 @@ async function enrichEngineToken(token: string, queueName: QueueName, job: { id:
 }
 
 async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Promise<{
-    projectId: string | undefined
+    projectId: string
     platformId: string
 }> {
     switch (queueName) {
@@ -158,7 +158,7 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
                 case UserInteractionJobType.EXECUTE_VALIDATION:
                 case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                     return {
-                        projectId: userInteractionJob.projectId,
+                        projectId: userInteractionJob.projectId!,
                         platformId: userInteractionJob.platformId,
                     }
                 default:

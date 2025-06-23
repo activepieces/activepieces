@@ -1,5 +1,5 @@
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { UserInteractionJobType } from '@activepieces/server-shared'
+import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -15,10 +15,8 @@ import {
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
-import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
 import { sampleDataService } from '../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -56,7 +54,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         ListPiecesRequest,
         async (req): Promise<PieceMetadataModelSummary[]> => {
-            const latestRelease = await flagService.getCurrentRelease()
+            const latestRelease = await apVersionUtil.getCurrentRelease()
             const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
@@ -145,13 +143,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.delete('/:id', DeletePieceRequest, async (req): Promise<void> => {
-        return pieceMetadataService(req.log).delete({
-            projectId: req.principal.projectId,
-            id: req.params.id,
-        })
-    },
-    )
 }
 
 const ListPiecesRequest = {
@@ -197,13 +188,7 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
 }
-const DeletePieceRequest = {
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-    },
-}
+
 
 const ListVersionsRequest = {
     config: {

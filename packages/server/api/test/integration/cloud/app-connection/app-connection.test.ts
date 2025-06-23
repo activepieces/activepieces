@@ -1,12 +1,11 @@
 import {
-    apId,
     DefaultProjectRole,
     PackageType,
     PlatformRole,
     PrincipalType,
     ProjectRole,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -15,17 +14,18 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
-    createMockPlatform,
-    createMockProject,
     createMockProjectMember,
-    createMockUser,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
@@ -40,19 +40,13 @@ describe('AppConnection API', () => {
             DefaultProjectRole.EDITOR,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
@@ -71,8 +65,8 @@ describe('AppConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-            
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -110,19 +104,13 @@ describe('AppConnection API', () => {
 
         it('Fails if user role is VIEWER', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
 
@@ -140,8 +128,7 @@ describe('AppConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -191,19 +178,13 @@ describe('AppConnection API', () => {
             DefaultProjectRole.VIEWER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 

@@ -7,6 +7,12 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from
 import { projectRoleService } from './project-role.service'
 
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
+    
+    app.get('/:id', GetProjectRoleRequest, async (req) => {
+        return projectRoleService.getOneOrThrowById({
+            id: req.params.id,
+        })
+    })
 
     app.get('/', ListProjectRolesRequest, async (req) => {
         return projectRoleService.list({
@@ -45,6 +51,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return projectRole
     })
+
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
@@ -64,6 +71,14 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: req.principal.platform.id,
         })
     })
+}
+
+const GetProjectRoleRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
 }
 
 const ListProjectRolesRequest = {

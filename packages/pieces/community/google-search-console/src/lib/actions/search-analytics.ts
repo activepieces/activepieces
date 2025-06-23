@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleSearchConsoleAuth, createAuthClient } from '../../';
 import { commonProps } from '../common';
+import dayjs from 'dayjs';
+
 
 export const searchAnalytics = createAction({
   auth: googleSearchConsoleAuth,
@@ -78,8 +80,8 @@ export const searchAnalytics = createAction({
     const res = await webmasters.searchanalytics.query({
       siteUrl: context.propsValue.siteUrl,
       requestBody: {
-        startDate: context.propsValue.startDate,
-        endDate: context.propsValue.endDate,
+        startDate: dayjs(context.propsValue.startDate).format('YYYY-MM-DD'),
+        endDate: dayjs(context.propsValue.endDate).format('YYYY-MM-DD'),
         dimensions: context.propsValue.dimensions as string[],
         dimensionFilterGroups: filters.map((filter: any) => ({
           dimension: filter.dimension,

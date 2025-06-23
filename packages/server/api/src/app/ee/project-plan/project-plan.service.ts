@@ -17,12 +17,9 @@ export const projectLimitsService = {
         if (existingPlan) {
             await projectPlanRepo().update(existingPlan.id, {
                 tasks: planLimits.tasks,
-                teamMembers: planLimits.teamMembers,
                 name: planLimits.nickname,
                 pieces: planLimits.pieces,
                 piecesFilterType: planLimits.piecesFilterType,
-                minimumPollingInterval: planLimits.minimumPollingInterval,
-                connections: planLimits.connections,
                 aiTokens: planLimits.aiTokens,
             })
         }
@@ -36,12 +33,6 @@ export const projectLimitsService = {
     },
     async getPlanByProjectId(projectId: string): Promise<ProjectPlan | null> {
         return projectPlanRepo().findOneBy({ projectId })
-    },
-    async increaseTask(projectId: string, tasks: number): Promise<ProjectPlan> {
-        await projectPlanRepo().increment({
-            projectId,
-        }, 'tasks', tasks)
-        return projectPlanRepo().findOneByOrFail({ projectId })
     },
     async getOrCreateDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimits): Promise<ProjectPlan> {
         const existingPlan = await projectPlanRepo().findOneBy({ projectId })
@@ -75,9 +66,6 @@ async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimit
         pieces: flowPlanLimit.pieces,
         piecesFilterType: flowPlanLimit.piecesFilterType,
         tasks: flowPlanLimit.tasks,
-        teamMembers: flowPlanLimit.teamMembers,
-        minimumPollingInterval: flowPlanLimit.minimumPollingInterval,
-        connections: flowPlanLimit.connections, 
         aiTokens: flowPlanLimit.aiTokens,
         name: flowPlanLimit.nickname,
     }, ['projectId'])

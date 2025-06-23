@@ -8,6 +8,7 @@ import { replace } from './lib/actions/replace';
 import { split } from './lib/actions/split';
 import { stripHtmlContent } from './lib/actions/strip-html';
 import { slugifyAction } from './lib/actions/slugify';
+import { defaultValue } from './lib/actions/default-value';
 
 export const textHelper = createPiece({
   displayName: 'Text Helper',
@@ -22,6 +23,7 @@ export const textHelper = createPiece({
     'AbdulTheActivePiecer',
     'abuaboud',
     'AdamSelene',
+    'Anmol-Gup',
   ],
   categories: [PieceCategory.CORE],
   actions: [
@@ -33,6 +35,7 @@ export const textHelper = createPiece({
     htmlToMarkdown,
     stripHtmlContent,
     slugifyAction,
+    defaultValue,
   ],
   triggers: [],
 });

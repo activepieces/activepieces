@@ -17,7 +17,7 @@ import { PieceCategory } from '@activepieces/shared';
 export const gristAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
-	Log in to your Grist account.avigate to the account menu at the top right, and select **Profile Settings** to manage or create your API Key.
+	Log in to your Grist account. Navigate to the account menu at the top right, and select **Profile Settings** to manage or create your API Key.
 	In the **Domain URL** field, enter the domain URL of your Grist instance.For example,if you have team site it will be "https://team.getgist.com".`,
   props: {
     apiKey: PieceAuth.SecretText({

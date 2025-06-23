@@ -23,6 +23,7 @@ type ConfirmationDeleteDialogProps = {
   mutationFn: () => Promise<void>;
   onError?: (error: Error) => void;
   isDanger?: boolean;
+  buttonText?: string;
 };
 
 export function ConfirmationDeleteDialog({
@@ -32,6 +33,7 @@ export function ConfirmationDeleteDialog({
   mutationFn,
   entityName,
   onError,
+  buttonText,
   isDanger = false,
 }: ConfirmationDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,7 +77,7 @@ export function ConfirmationDeleteDialog({
             }}
           >
             {isDanger && <TriangleAlert className="size-4 mr-2" />}
-            {t('Remove')}
+            {buttonText || t('Remove')}
           </Button>
         </DialogFooter>
       </DialogContent>

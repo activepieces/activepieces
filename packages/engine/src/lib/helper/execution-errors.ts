@@ -44,7 +44,7 @@ export class StorageLimitError extends ExecutionError {
     public maxStorageSizeInBytes: number
 
     constructor(key: string, maxStorageSizeInBytes: number, cause?: unknown) {
-        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the storage value is larger than ${Math.floor(maxStorageSizeInBytes)} MB`), ExecutionErrorType.USER, cause)
+        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the value you are trying to read/write is larger than ${Math.floor(maxStorageSizeInBytes / 1024)} KB`), ExecutionErrorType.USER, cause)
         this.maxStorageSizeInBytes = maxStorageSizeInBytes
     }
 }

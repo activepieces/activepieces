@@ -1,32 +1,25 @@
 import { t } from 'i18next';
-import { useEffect, useRef } from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
 
+import { flowUtilConsts } from './utils/consts';
+
 const StepDragOverlay = ({
   step,
   lefSideBarContainerWidth,
+  cursorPosition,
 }: {
   step: Action | Trigger;
   lefSideBarContainerWidth: number;
+  cursorPosition: { x: number; y: number };
 }) => {
-  const shadowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (shadowRef.current) {
-        shadowRef.current.style.left = `${
-          event.clientX - 50 - lefSideBarContainerWidth
-        }px`;
-        shadowRef.current.style.top = `${event.clientY - 125}px`;
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
+  const left = `${
+    cursorPosition.x -
+    flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
+    lefSideBarContainerWidth
+  }px`;
+  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`;
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step,
   });
@@ -34,9 +27,14 @@ const StepDragOverlay = ({
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white'
+        'p-4 absolute left-0 top-0  opacity-75  flex items-center justify-center rounded-lg border border-solid border bg-white'
       }
-      ref={shadowRef}
+      style={{
+        left,
+        top,
+        height: `${flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
+        width: `${flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
+      }}
     >
       <img
         id={t('logo')}

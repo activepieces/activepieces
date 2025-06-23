@@ -3,8 +3,7 @@ import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, Q
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { LRUCache } from 'lru-cache'
-import { appNetworkUtils } from '../utils/app-network-utils'
+import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
@@ -12,13 +11,8 @@ const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
-const flowCache = new LRUCache<string, PopulatedFlow>({
-    max: 100,
-    ttl: 1000 * 60 * 5,
-})
-
 export const workerApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
 
     const client = new ApAxiosClient(apiUrl, workerToken)
 
@@ -57,8 +51,27 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
+            const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
+            const limit = pLimit(1)
+            const promises = arrayOfPayloads.map(payloads =>
+                limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
+                    ...request,
+                    payloads,
+                })),
+            )
 
+            const results = await Promise.allSettled(promises)
+            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+
+            if (errors.length > 0) {
+                const errorMessages = errors.map(e => e.reason.message).join(', ')
+                throw new Error(`Failed to start runs: ${errorMessages}`)
+            }
+
+            return results
+                .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
+                .map(r => r.value)
+                .flat()
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
@@ -66,8 +79,27 @@ export const workerApiService = (workerToken: string) => {
     }
 }
 
+function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
+    const batches: unknown[][] = [[]]
+    const ONE_MB = 1024 * 1024
+    let currentSize = 0
+    for (const payload of payloads) {
+        const payloadSize = Buffer.byteLength(JSON.stringify(payload))
+        currentSize += payloadSize
+
+        if (currentSize > ONE_MB) {
+            batches.push([])
+            currentSize = payloadSize
+        }
+
+        batches[batches.length - 1].push(payload)
+    }
+
+    return batches
+}
+
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
     return {
@@ -115,25 +147,17 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
-            const cacheKey = JSON.stringify(request)
-            const cachedFlow = flowCache.get(cacheKey)
-            if (cachedFlow !== undefined) {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
-                return cachedFlow
-            }
+            //TODO: Add caching logic
 
             try {
                 const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
                     params: request,
                 })
-                if (flow !== null) {
-                    flowCache.set(cacheKey, flow)
-                }
+
                 return flow
             }
             catch (e) {
                 if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
-                    flowCache.set(cacheKey, undefined)
                     return null
                 }
                 throw e

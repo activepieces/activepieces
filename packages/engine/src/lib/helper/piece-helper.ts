@@ -47,7 +47,7 @@ export const pieceHelper = {
                 server: {
                     token: params.engineToken,
                     apiUrl: constants.internalApiUrl,
-                    publicUrl: params.publicUrl,
+                    publicUrl: params.publicApiUrl,
                 },
                 project: {
                     id: params.projectId,

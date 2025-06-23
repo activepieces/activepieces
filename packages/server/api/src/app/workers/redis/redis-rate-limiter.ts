@@ -1,4 +1,4 @@
-import { JobType, OneTimeJobData, QueueName, WebhookJobData } from '@activepieces/server-shared'
+import { AppSystemProp, JobType, OneTimeJobData, QueueName, WebhookJobData } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, assertNull, isNil } from '@activepieces/shared'
 import { Job, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
@@ -7,7 +7,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { AddParams } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
 
@@ -81,19 +80,15 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         return queue
     },
 
-    async shouldBeLimited(queueName: QueueName, projectId: string | undefined, jobId: string): Promise<{
+    async shouldBeLimited(projectId: string | undefined, jobId: string): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (isNil(projectId)) {
+        if (isNil(projectId) || !PROJECT_RATE_LIMITER_ENABLED) {
             return {
                 shouldRateLimit: false,
             }
         }
-        if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED) {
-            return {
-                shouldRateLimit: false,
-            }
-        }
+
         const newActiveRuns = (await redis.keys(`${projectKey(projectId)}*`)).length
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             return {

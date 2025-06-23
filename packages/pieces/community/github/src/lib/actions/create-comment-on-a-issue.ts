@@ -1,7 +1,8 @@
-import { Octokit } from 'octokit';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubCommon } from '../common';
+import { Octokit } from '@octokit/rest';
+
 
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,

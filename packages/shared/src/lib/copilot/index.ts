@@ -27,6 +27,7 @@ export const AskCopilotCodeResponse = Type.Object({
     inputs: Type.Record(Type.String(), Type.String()),
     icon: Type.Optional(Type.String()),
     title: Type.String(),
+    textMessage: Type.Optional(Type.String()),
 })
 
 export type AskCopilotCodeResponse = Static<typeof AskCopilotCodeResponse>

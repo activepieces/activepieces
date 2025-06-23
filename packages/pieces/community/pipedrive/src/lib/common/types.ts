@@ -19,10 +19,11 @@ export type FieldsResponse = {
 	additional_data: AdditionalData;
 };
 
-type StageWithPipelineInfo = {
+export type StageWithPipelineInfo = {
 	id: number;
 	name: string;
 	pipeline_id: number;
+	pipeline_name: string;
 };
 
 export type GetStagesResponse = {
@@ -51,10 +52,24 @@ export type ListActivitiesResponse =
 	additional_data: AdditionalData;
 }
 
-export type ListPersonsResponse =
+export type PersonListResponse =
 {
 	success: boolean;
 	data: Record<string, unknown>[];
+	additional_data: AdditionalData;
+}
+ 
+export type PersonCreateResponse =
+{
+	success: boolean;
+	data: Record<string, unknown>;
+	additional_data: AdditionalData;
+}
+
+export type OrganizationCreateResponse =
+{
+	success: boolean;
+	data: Record<string, unknown>;
 	additional_data: AdditionalData;
 }
 
@@ -74,3 +89,15 @@ export type PaginatedResponse<T> =
 
 export type RequestParams = Record<string, string | number | string[] | undefined>;
 
+export type WebhookCreateResponse = {
+	status:string,
+	success:boolean,
+	data:{
+		id:number
+	}
+}
+
+export type LeadListResponse = {
+	success: boolean;
+	data: Record<string, unknown>[];
+}

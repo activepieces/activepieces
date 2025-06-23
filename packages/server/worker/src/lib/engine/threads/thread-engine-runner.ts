@@ -2,7 +2,6 @@ import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { appNetworkUtils } from '../../utils/app-network-utils'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
@@ -26,8 +25,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: await appNetworkUtils.getPublicUrl(),
-            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
         }
 
         return execute(log, input, EngineOperationType.EXECUTE_FLOW)
@@ -53,9 +52,10 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
+                publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
-            publicUrl: await appNetworkUtils.getPublicUrl(),
-            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -95,8 +95,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: await appNetworkUtils.getPublicUrl(),
-            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
@@ -147,8 +147,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: await appNetworkUtils.getPublicUrl(),
-            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
 
@@ -174,8 +174,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: await appNetworkUtils.getPublicUrl(),
-            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_PROPERTY)
@@ -202,7 +202,7 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
 
     const startTime = Date.now()
     if (isNil(engineWorkers)) {
-        engineWorkers = new EngineWorker(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY, enginePath, {
+        engineWorkers = new EngineWorker(log, Math.max(workerMachine.getSettings().FLOW_WORKER_CONCURRENCY, workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY), enginePath, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,

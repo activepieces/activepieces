@@ -1,0 +1,26 @@
+---
+title: "Cloud Infrastructure"
+icon: "server"
+---
+
+<Warning>
+  The playbooks are private, Please ask your team for an access.
+</Warning>
+
+
+Our infrastructure stack consists of several key components that help us monitor, deploy, and manage our services effectively.
+
+## Hosting Providers
+
+We use two main hosting providers:
+
+- **DigitalOcean**: Hosts our databases including Redis and PostgreSQL
+- **Hetzner**: Provides the machines that run our services
+
+## Grafana (Loki) for Logs
+
+We use Grafana Loki to collect and search through logs from all our services in one centralized place.
+
+## Kamal for Deployment
+
+Kamal is a deployment tool that helps us deploy our Docker containers to production with zero downtime.

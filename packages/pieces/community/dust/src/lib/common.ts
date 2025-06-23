@@ -89,7 +89,7 @@ export async function getConversationContent(
   let retries = 0;
   const maxRetries = timeout / 10;
   while (
-    !['succeeded', 'errored'].includes(
+    !['succeeded', 'failed'].includes(
       getConversationStatus(conversation.body)
     ) &&
     retries < maxRetries

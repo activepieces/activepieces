@@ -9,7 +9,7 @@ export default createAction({
   props: {
     playlist_id: spotifyCommon.playlist_id(true),
     offset: Property.Number({
-      displayName: 'Limit',
+      displayName: 'Offset',
       required: false,
     }),
     limit: Property.Number({

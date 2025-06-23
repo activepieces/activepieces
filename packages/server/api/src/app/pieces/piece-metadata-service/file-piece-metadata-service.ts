@@ -1,6 +1,6 @@
 
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { filePiecesUtils } from '@activepieces/server-shared'
+import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 
 import {
     ActivepiecesError,
@@ -15,7 +15,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
@@ -113,11 +112,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 projectId,
             })
         },
-
-        async delete(): Promise<void> {
-            throw new Error('Deleting pieces is not supported in development mode')
-        },
-
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
         },

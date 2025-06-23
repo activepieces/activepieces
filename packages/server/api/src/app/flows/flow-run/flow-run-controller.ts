@@ -92,6 +92,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRunService(req.log).bulkRetry({
             projectId: req.principal.projectId,
             flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
             strategy: req.body.strategy,
             status: req.body.status,
             flowId: req.body.flowId,

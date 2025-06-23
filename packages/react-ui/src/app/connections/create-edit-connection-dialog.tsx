@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { AssignConnectionToProjectsControl } from '@/components/ui/assign-global-connection-to-projects';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,7 +32,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
   CustomAuthProperty,
@@ -47,16 +47,19 @@ import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   ErrorCode,
-  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
-import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
-import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import {
   newConnectionUtils,
   ConnectionNameAlreadyExists,
-} from './new-connection-utils';
+  isConnectionNameUnique,
+  NoProjectSelected,
+} from '../../features/connections/lib/utils';
+import { formUtils } from '../builder/piece-properties/form-utils';
+
+import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
+import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
@@ -84,21 +87,26 @@ const CreateOrEditConnectionDialog = React.memo(
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
-    const formSchema = newConnectionUtils.buildConnectionSchema(piece);
+    const formSchema = formUtils.buildConnectionSchema(piece);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
       predefinedConnectionName,
     );
     const form = useForm<{
-      request: UpsertAppConnectionRequestBody;
+      request: UpsertAppConnectionRequestBody & {
+        projectIds: string[];
+      };
     }>({
       defaultValues: {
-        request: newConnectionUtils.createDefaultValues(
-          piece,
-          externalId,
-          displayName,
-        ),
+        request: {
+          ...newConnectionUtils.createDefaultValues(
+            piece,
+            externalId,
+            displayName,
+          ),
+          projectIds: reconnectConnection?.projectIds ?? [],
+        },
       },
       mode: 'onChange',
       reValidateMode: 'onChange',
@@ -114,33 +122,25 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-
+        const isConenctionNameUnique = await isConnectionNameUnique(
+          isGlobalConnection,
+          formValues.displayName,
+        );
+        if (
+          !isConenctionNameUnique &&
+          reconnectConnection?.displayName !== formValues.displayName
+        ) {
+          throw new ConnectionNameAlreadyExists();
+        }
         if (isGlobalConnection) {
-          const connections = await globalConnectionsApi.list({
-            limit: 10000,
-          });
-          const existingConnection = connections.data.find(
-            (connection) => connection.displayName === formValues.displayName,
-          );
-          if (!isNil(existingConnection) && isNil(reconnectConnection)) {
-            throw new ConnectionNameAlreadyExists();
+          if (formValues.projectIds.length === 0) {
+            throw new NoProjectSelected();
           }
           return globalConnectionsApi.upsert({
             ...formValues,
-            projectIds: [],
+            projectIds: formValues.projectIds,
             scope: AppConnectionScope.PLATFORM,
           });
-        }
-
-        const connections = await appConnectionsApi.list({
-          projectId: authenticationSession.getProjectId()!,
-          limit: 10000,
-        });
-        const existingConnection = connections.data.find(
-          (connection) => connection.displayName === formValues.displayName,
-        );
-        if (!isNil(existingConnection) && isNil(reconnectConnection)) {
-          throw new ConnectionNameAlreadyExists();
         }
         return appConnectionsApi.upsert(formValues);
       },
@@ -155,7 +155,11 @@ const CreateOrEditConnectionDialog = React.memo(
       onError: (err) => {
         if (err instanceof ConnectionNameAlreadyExists) {
           form.setError('request.displayName', {
-            message: t('Name is already used'),
+            message: err.message,
+          });
+        } else if (err instanceof NoProjectSelected) {
+          form.setError('request.projectIds', {
+            message: err.message,
           });
         } else if (api.isError(err)) {
           const apError = err.response?.data as ApErrorParams;
@@ -243,6 +247,12 @@ const CreateOrEditConnectionDialog = React.memo(
                     </FormItem>
                   )}
                 ></FormField>
+                {isGlobalConnection && (
+                  <AssignConnectionToProjectsControl
+                    control={form.control}
+                    name="request.projectIds"
+                  />
+                )}
                 {auth?.type === PropertyType.SECRET_TEXT && (
                   <SecretTextConnectionSettings
                     authProperty={piece.auth as SecretTextProperty<boolean>}
@@ -258,12 +268,15 @@ const CreateOrEditConnectionDialog = React.memo(
                     authProperty={piece.auth as CustomAuthProperty<any>}
                   />
                 )}
+
                 {auth?.type === PropertyType.OAUTH2 && (
-                  <OAuth2ConnectionSettings
-                    authProperty={piece.auth as OAuth2Property<OAuth2Props>}
-                    piece={piece}
-                    reconnectConnection={reconnectConnection}
-                  />
+                  <div className="mt-3.5">
+                    <OAuth2ConnectionSettings
+                      authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+                      piece={piece}
+                      reconnectConnection={reconnectConnection}
+                    />
+                  </div>
                 )}
 
                 <DialogFooter>
