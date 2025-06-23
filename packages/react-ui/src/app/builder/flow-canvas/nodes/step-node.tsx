@@ -7,7 +7,6 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -20,6 +19,7 @@ import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
 
 import { ApStepNodeStatus } from './step-node-status';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 
 const getPieceSelectorOperationType = (step: Step) => {
   if (flowStructureUtil.isTrigger(step.type)) {

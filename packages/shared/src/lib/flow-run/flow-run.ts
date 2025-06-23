@@ -37,7 +37,8 @@ export const FlowRun = Type.Object({
     finishTime: Type.Optional(Type.String()),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
-    //NOTE: steps can be null when the run is older than AP_EXECUTION_DATA_RETENTION_DAYS 
+    // The steps data may be missing if the flow has not started yet,
+    // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
     failedStepName: Type.Optional(Type.String()),
 })
