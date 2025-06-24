@@ -1,18 +1,30 @@
-import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 import { OAuth2GrantType, PieceCategory } from "@activepieces/shared";
 import { createEmployee, deleteEmployee, updateEmployee, getEmployee, listEmployees } from './lib/actions/employee';
 import { startTimer, stopTimer, getTimerStatus } from "./lib/actions/timer";
 import { newTimeTrack, newTask, newEmployee } from "./lib/triggers";
 import { createTask, deleteTask, updateTask, getTask, getListOfTasks } from "./lib/actions/tasks";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { GAUZY_BASE_URL } from "./lib/common";
+import { getBaseUrl } from "./lib/common/auth";
 
 export const gauzyAuth = PieceAuth.OAuth2({
   required: true,
   grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-  authUrl: `${GAUZY_BASE_URL}/api/auth/auth0`,
-  tokenUrl: `${GAUZY_BASE_URL}/api/oauth/token`,
+  authUrl: 'https://{environment}.gauzy.co/api/integration/activepieces/authorize',
+  tokenUrl: 'https://{environment}.gauzy.co/api/integration/activepieces/oauth2/token',
   scope: ['gauzy:all'],
+  props: {
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      required: true,
+      options: {
+        options: [
+          { label: 'Demo', value: 'apidemo' },
+          { label: 'Production', value: 'api' },
+        ],
+      },
+    }),
+  },
 });
 
 export const everGauzy = createPiece({
@@ -49,8 +61,7 @@ export const everGauzy = createPiece({
     // Custom API Call
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const authObj = auth as OAuth2PropertyValue;
-        return authObj.props?.["baseUrl"] as string || GAUZY_BASE_URL;
+        return getBaseUrl(auth as OAuth2PropertyValue);
       },
       auth: gauzyAuth,
       authMapping: async (auth) => ({
