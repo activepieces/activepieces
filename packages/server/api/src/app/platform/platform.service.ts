@@ -1,7 +1,5 @@
-import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    ApEdition,
     apId,
     ErrorCode,
     FilteredPieceBehavior,
@@ -174,18 +172,12 @@ export const platformService = {
 }
 
 async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
-    const plan = await getPlan(platform)
+    const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
+
     return {
         ...platform,
         plan,
     }
-}
-async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return OPENSOURCE_PLAN
-    }
-    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {

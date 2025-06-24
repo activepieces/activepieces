@@ -4,6 +4,7 @@ import { EllipsisVertical } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -202,7 +203,9 @@ export const flowsTableColumns = ({
               refetch();
             }}
           >
-            <EllipsisVertical className="h-10 w-10" />
+            <Button variant="ghost" size="icon" className="mr-8">
+              <EllipsisVertical className="h-4 w-4" />
+            </Button>
           </FlowActionMenu>
         </div>
       );

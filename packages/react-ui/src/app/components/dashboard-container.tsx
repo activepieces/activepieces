@@ -3,8 +3,10 @@ import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
+import mcpDark from '@/assets/img/custom/mcp-dark.svg';
+import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -42,6 +44,7 @@ export function DashboardContainer({
   hideHeader,
   removeBottomPadding,
 }: DashboardContainerProps) {
+  const { theme } = useTheme();
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
@@ -105,7 +108,13 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: McpSvg,
+    icon: (
+      <img
+        src={theme === 'dark' ? mcpDark : mcpLight}
+        alt="MCP"
+        className="color-foreground"
+      />
+    ),
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,

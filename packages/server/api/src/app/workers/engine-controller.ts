@@ -149,7 +149,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        const exceededLimit = await projectLimitsService(request.log).tasksExceededLimit(request.principal.projectId)
+        const exceededLimit = await projectLimitsService(request.log).checkTasksExceededLimit(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,

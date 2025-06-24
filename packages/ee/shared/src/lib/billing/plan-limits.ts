@@ -1,0 +1,128 @@
+import { PlatformPlanLimits } from '@activepieces/shared'
+
+export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
+
+export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'free',
+    tasksLimit: 1000,
+    aiCreditsLimit: undefined,
+    includedAiCredits: 200,
+    activeFlowsLimit: 2,
+    userSeatsLimit: 1,
+    projectsLimit: 1,
+    tablesLimit: 1,
+    mcpLimit: 1,
+
+    tablesEnabled: true,
+    todosEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    alertsEnabled: false,
+    ssoEnabled: false,
+}
+
+export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'plus',
+    tasksLimit: undefined,
+    aiCreditsLimit: undefined,
+    includedAiCredits: 500,
+    activeFlowsLimit: 10,
+    userSeatsLimit: 1,
+    projectsLimit: 1,
+    mcpLimit: undefined,
+    tablesLimit: undefined,
+
+    tablesEnabled: true,
+    todosEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    alertsEnabled: false,
+    ssoEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+}
+
+
+export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'business',
+    tasksLimit: undefined,
+    aiCreditsLimit: undefined,
+    includedAiCredits: 1000,
+    activeFlowsLimit: 50,
+    userSeatsLimit: 5,
+    projectsLimit: 10,
+    mcpLimit: undefined,
+    tablesLimit: undefined,
+
+    tablesEnabled: true,
+    todosEnabled: true,
+
+    embeddingEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    alertsEnabled: false,
+    ssoEnabled: false,
+    showPoweredBy: false,
+    auditLogEnabled: false,
+
+}
+
+export const OPENSOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    embeddingEnabled: false,
+    tablesEnabled: true,
+    todosEnabled: true,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    tasksLimit: undefined,
+    includedAiCredits: 0,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    alertsEnabled: false,
+    ssoEnabled: false,
+    stripeCustomerId: undefined,
+    stripeSubscriptionId: undefined,
+    stripeSubscriptionStatus: undefined,
+}

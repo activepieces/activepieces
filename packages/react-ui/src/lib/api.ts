@@ -8,7 +8,7 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
@@ -90,6 +90,13 @@ function request<TResponse>(
 export type HttpError = AxiosError<unknown, AxiosResponse<unknown>>;
 
 export const api = {
+  isApError(error: unknown, errorCode: ErrorCode): error is HttpError {
+    if (!isAxiosError(error)) {
+      return false;
+    }
+    const responseData = error.response?.data as ApErrorParams;
+    return responseData.code === errorCode;
+  },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },

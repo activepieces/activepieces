@@ -1,65 +1,205 @@
-import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import dayjs from 'dayjs'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import Stripe from 'stripe'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
+
+async function getNextBillingInfo(
+    stripe: Stripe, 
+    subscriptionId?: string, 
+    defaultBillingDate?: string,
+) {
+    if (isNil(subscriptionId)) {
+        return {
+            nextBillingAmount: 0,
+            actualNextBillingDate: defaultBillingDate,
+        }
+    }
+
+    try {
+        const upcomingInvoice = await stripe.invoices.createPreview({
+            subscription: subscriptionId,
+        })
+
+        const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
+        const actualNextBillingDate = new Date(upcomingInvoice.period_end * 1000).toISOString()
+        
+        return { nextBillingAmount, actualNextBillingDate }
+    }
+    catch (error) {
+        return {
+            nextBillingAmount: 0, actualNextBillingDate: defaultBillingDate,
+        }
+    }
+}
+
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
+    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
+        const platformId = request.principal.platform.id
+        const projectId = request.principal.projectId
+
+        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
+
+        return {
+            message: 'AI credit usage increased',
+            platformAiCreditUsage,
+            projectAiCreditUsage,
+        }
+    })
+
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const stripe = stripeHelper(request.log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const [platformBilling, usage] = await Promise.all([
+            platformPlanService(request.log).getOrCreateForPlatform(platform.id),
+            platformUsageService(request.log).getAllPlatformUsage(platform.id),
+        ])
+
+        const { stripeSubscriptionEndDate: nextBillingDate, stripeSubscriptionCancelDate: cancelDate } = platformBilling
+
+        const { nextBillingAmount, actualNextBillingDate } = await getNextBillingInfo(
+            stripe, 
+            platformBilling.stripeSubscriptionId,
+            dayjs.unix(nextBillingDate).toISOString(),
+        )
+        
         const response: PlatformBillingInformation = {
-            plan: await platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            usage: await platformUsageService(request.log).getPlatformUsage(platform.id),
-            nextBillingDate: platformUsageService(request.log).getCurrentBillingPeriodEnd(),
+            plan: platformBilling,
+            usage,
+            nextBillingDate: actualNextBillingDate,
+            nextBillingAmount,
+            cancelAt: cancelDate ? dayjs.unix(cancelDate).toISOString() : undefined,
         }
+        
         return response
     })
 
     fastify.post('/portal', {}, async (request) => {
-        return {
-            portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
-        }
+        return stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id })
     })
 
-    fastify.post('/upgrade', UpgradeRequest, async (request, reply) => {
-        const stripe = stripeHelper(request.log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const projectBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = projectBilling.stripeCustomerId
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-        if (projectBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
-            await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Already subscribed',
-            })
-            return
-        }
-
-        await platformPlanService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
-        return {
-            paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
-        }
-    })
-
-    fastify.post('/', UpdateLimitsRequest, async (request) => {
+    fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
         const platformId = request.principal.platform.id
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
-        if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
+        const { limit } = request.body
+        
+        const [usage, platformBilling] = await Promise.all([
+            platformUsageService(request.log).getAllPlatformUsage(platformId),
+            platformPlanService(request.log).getOrCreateForPlatform(platformId),
+        ])
+        assertNotNullOrUndefined(platformBilling, 'Plan is not set')
+        
+        const subscriptionId = platformBilling.stripeSubscriptionId
+        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
+        
+        if (platformBilling.plan === PlanName.FREE) {
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
+                code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Platform does not have an active subscription',
+                    message: 'AI credit usage limits are only available for paid plans',
                 },
             })
         }
-        return platformPlanService(request.log).update({ platformId, tasksLimit: request.body.tasksLimit })
+
+        const totalCreditsUsed = usage.aiCredits || 0
+        const planIncludedCredits = platformBilling?.includedAiCredits || 0
+        const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
+
+        if (!limit) {
+            if (overageCreditsUsed > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Cannot disable usage-based billing while you have ${overageCreditsUsed} overage credits used.`,
+                    },
+                })
+            }
+            
+            return platformPlanService(request.log).update({
+                platformId,
+                aiCreditsLimit: undefined,
+            })
+        }
+        
+        if (overageCreditsUsed > limit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Cannot set usage limit to ${limit.toLocaleString()} credits as you have already used ${overageCreditsUsed.toLocaleString()} overage credits this billing period.`,
+                },
+            })
+        }
+        
+        request.log.info({
+            platformId,
+            previousLimit: platformBilling.aiCreditsLimit,
+            newLimit: limit,
+            currentUsage: {
+                total: totalCreditsUsed,
+                planCredits: Math.min(totalCreditsUsed, planIncludedCredits),
+                overageCredits: overageCreditsUsed,
+            },
+        }, 'Updating AI credit usage limit')
+        
+        return platformPlanService(request.log).update({
+            platformId,
+            aiCreditsLimit: limit,
+        })
+    })
+
+    fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const customerId = platformBilling.stripeCustomerId
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+
+        const { plan } = request.body
+
+        return stripeHelper(request.log).createSubscriptionCheckoutUrl(
+            customerId,
+            { plan },
+        )
+
+    })
+
+    fastify.post('/update-subscription', UpgradeRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const subscriptionId = platformBilling.stripeSubscriptionId
+        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
+
+        const { plan, seats } = request.body
+        const extraUsers =  seats ? seats - DEFAULT_BUSINESS_SEATS : 0
+
+        const currentPlan = platformBilling.plan as PlanName ?? PlanName.FREE
+
+        const upgradeExperience = isUpgradeExperience(currentPlan, plan, platformBilling.userSeatsLimit, seats)
+
+        if (plan !== PlanName.BUSINESS && !isNil(seats)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users are only available for business plan',
+                },
+            })
+        }
+
+        return stripeHelper(request.log).handleSubscriptionUpdate(
+            subscriptionId,
+            plan,
+            extraUsers,
+            request.log,
+            upgradeExperience,
+        )
     })
 }
 
@@ -72,18 +212,30 @@ const InfoRequest = {
     },
 }
 
-const UpdateLimitsRequest = {
+const UpgradeRequest = {
     schema: {
-        body: Type.Object({
-            tasksLimit: Type.Optional(Type.Number()),
-        }),
+        body: UpdateSubscriptionParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
 }
 
-const UpgradeRequest = {
+
+const CreateSubscriptionRequest = {
+    schema: {
+        body: CreateSubscriptionParamsSchema,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+
+const EnableAiCreditUsageRequest = {
+    schema: {
+        body: EnableAiCreditUsageParamsSchema,
+    },
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
