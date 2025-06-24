@@ -11,5 +11,5 @@ export const agent = createPiece({
   description: "Let an AI assistant help you with tasks using tools.",
   actions: [runAgent],
   triggers: [],
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  categories: [PieceCategory.UNIVERSAL_AI],
 });
