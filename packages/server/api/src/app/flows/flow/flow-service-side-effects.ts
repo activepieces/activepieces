@@ -1,39 +1,28 @@
 import {
-    assertNotNullOrUndefined,
     FileType,
     Flow,
     FlowScheduleOptions,
     FlowStatus,
+    FlowVersion,
     isNil,
     ScheduleOptions,
     ScheduleType,
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
-        flowToUpdate,
         newStatus,
-        entityManager,
+        flowToUpdate,
+        publishedFlowVersion,
     }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
-        assertNotNullOrUndefined(
-            flowToUpdate.publishedVersionId,
-            'publishedVersionId',
-        )
-
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flowToUpdate.id,
-            versionId: flowToUpdate.publishedVersionId,
-            entityManager,
-        })
 
         let scheduleOptions: ScheduleOptions | undefined
-        let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
+        const webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
         switch (newStatus) {
             case FlowStatus.ENABLED: {
                 const response = await triggerHooks.enable(
@@ -43,7 +32,6 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                         simulate: false,
                     }, log)
                 scheduleOptions = response?.result.scheduleOptions
-                webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
                 break
             }
             case FlowStatus.DISABLED: {
@@ -110,13 +98,10 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
-type PreUpdateParams = {
+type PreUpdateStatusParams = {
     flowToUpdate: Flow
-}
-
-type PreUpdateStatusParams = PreUpdateParams & {
+    publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
-    entityManager: EntityManager | undefined
 }
 
 type PreUpdateReturn = {
