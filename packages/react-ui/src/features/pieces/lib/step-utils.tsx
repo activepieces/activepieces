@@ -64,13 +64,13 @@ export const CORE_ACTIONS_METADATA = [
 export const TODO_ACTIONS = {
   createTodo: 'createTodo',
   createTodoAndWait: 'createTodoAndWait',
-  wait_for_approval: 'wait_for_approval',
+  waitForApproval: 'wait_for_approval',
 };
 
 export const HIDDEN_ACTIONS = [
   {
     pieceName: '@activepieces/piece-todos',
-    actions: [TODO_ACTIONS.createTodoAndWait, TODO_ACTIONS.wait_for_approval],
+    actions: [TODO_ACTIONS.createTodoAndWait, TODO_ACTIONS.waitForApproval],
   },
 ];
 

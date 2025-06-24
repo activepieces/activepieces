@@ -2,8 +2,7 @@ import { t } from 'i18next';
 import React from 'react';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
-
-import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 
 interface McpPiecesContentProps {
   isPiecesLoading: boolean;

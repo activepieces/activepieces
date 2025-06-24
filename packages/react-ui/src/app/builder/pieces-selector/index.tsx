@@ -10,7 +10,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType } from '@activepieces/shared';
