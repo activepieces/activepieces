@@ -20,7 +20,7 @@ const ApBigAddButtonCanvasNode = React.memo(
       useBuilderStateContext((state) => [
         state.readonly,
         state.activeDraggingStep,
-        state.openedPieceSelectorId === id,
+        state.openedPieceSelectorStepNameOrAddButtonId === id,
       ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({

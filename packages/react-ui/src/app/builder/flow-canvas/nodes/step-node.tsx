@@ -45,7 +45,7 @@ const ApStepCanvasNode = React.memo(
       state.readonly,
       state.flowVersion,
       state.setSelectedBranchIndex,
-      state.openedPieceSelectorId === step.name,
+      state.openedPieceSelectorStepNameOrAddButtonId === step.name,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,

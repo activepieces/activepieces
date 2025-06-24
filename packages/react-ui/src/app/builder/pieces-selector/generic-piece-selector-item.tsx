@@ -1,8 +1,9 @@
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ActionType, TriggerType } from '@activepieces/shared';
+
+import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
