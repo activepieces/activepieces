@@ -1,5 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  AuthenticationType,
+} from '@activepieces/pieces-common';
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid } from '../common/common';
@@ -7,28 +11,26 @@ import { areSheetIdsValid } from '../common/common';
 export const exportSheetAction = createAction({
   name: 'export_sheet',
   displayName: 'Export Sheet',
-  description: 'Export a Google Sheets tab to CSV or TSV format',
+  description: 'Export a Google Sheets tab to CSV or TSV format.',
   auth: googleSheetsAuth,
   props: {
     ...commonProps,
-    format: Property.Dropdown({
+    format: Property.StaticDropdown({
       displayName: 'Export Format',
-      description: 'The format to export the sheet to',
+      description: 'The format to export the sheet to.',
       required: true,
       defaultValue: 'csv',
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            { label: 'Comma Separated Values (.csv)', value: 'csv' },
-            { label: 'Tab Separated Values (.tsv)', value: 'tsv' },
-          ],
-        };
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Comma Separated Values (.csv)', value: 'csv' },
+          { label: 'Tab Separated Values (.tsv)', value: 'tsv' },
+        ],
       },
     }),
     returnAsText: Property.Checkbox({
       displayName: 'Return as Text',
-      description: 'Return the exported data as text instead of a file',
+      description: 'Return the exported data as text instead of a file.',
       required: false,
       defaultValue: false,
     }),
