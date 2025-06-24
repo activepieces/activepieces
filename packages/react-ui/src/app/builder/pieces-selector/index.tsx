@@ -107,6 +107,7 @@ const PieceSelector = ({
                 showDeselect={searchQuery.length > 0}
                 onChange={(e) => {
                   setSearchQuery(e);
+                  setHoveredPieceMetadata(null);
                 }}
               />
             </div>
