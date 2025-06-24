@@ -6,9 +6,9 @@ export const microsoftOutlookAuth = PieceAuth.OAuth2({
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	required: true,
 	scope: [
-		'https://graph.microsoft.com/Mail.ReadWrite', // Needed for modifying emails (createReply)
-		'https://graph.microsoft.com/Mail.Send', // Needed for sending emails
-		'offline_access', // Needed for refresh tokens
+		'https://graph.microsoft.com/Mail.ReadWrite',
+		'https://graph.microsoft.com/Mail.Send', 
+		'offline_access',
 	  ],
 	validate: async ({ auth }) => {
 		try {
