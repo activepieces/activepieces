@@ -5,17 +5,18 @@ import React from 'react';
 import { CardList } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CORE_ACTIONS_METADATA } from '@/features/pieces/lib/step-utils';
-import {
-  PieceSelectorItem,
-  PieceSelectorOperation,
-  StepMetadataWithSuggestions,
-} from '@/lib/types';
 import { ActionType, isNil, TriggerType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { CreateTodoDialog } from './create-todo-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
+
+import {
+  PieceSelectorItem,
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/lib/types';
 
 type PieceActionsOrTriggersListProps = {
   hidePieceIcon: boolean;

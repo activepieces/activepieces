@@ -157,9 +157,10 @@ export type BuilderState = {
   }) => string;
 
   //Piece selector state
-  openedPieceSelectorId: string | null;
-  /**the id is either the step name or the add button id */
-  setOpenedPieceSelectorId: (id: string | null) => void;
+  openedPieceSelectorStepNameOrAddButtonId: string | null;
+  setOpenedPieceSelectorStepNameOrAddButtonId: (
+    stepNameOrAddButtonId: string | null,
+  ) => void;
   hoveredPieceMetadata: StepMetadataWithSuggestions | null;
   setHoveredPieceMetadata: (
     metadata: StepMetadataWithSuggestions | null,
@@ -294,7 +295,9 @@ export const createBuilderStore = (
             state.flowVersion.trigger.type === TriggerType.EMPTY;
 
           return {
-            openedPieceSelectorId: isEmptyTrigger ? 'trigger' : null,
+            openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
+              ? 'trigger'
+              : null,
             selectedStep,
             rightSidebar,
             leftSidebar,
@@ -554,7 +557,7 @@ export const createBuilderStore = (
           applyOperation,
           selectStepByName,
           flowVersion,
-          setOpenedPieceSelectorId,
+          setOpenedPieceSelectorStepNameOrAddButtonId,
         } = get();
 
         const defaultValues = pieceSelectorUtils.getDefaultStepValues({
@@ -647,7 +650,7 @@ export const createBuilderStore = (
             break;
           }
         }
-        setOpenedPieceSelectorId(null);
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
         return defaultValues.name;
       },
       hoveredPieceMetadata: null,
@@ -658,13 +661,13 @@ export const createBuilderStore = (
           hoveredPieceMetadata: metadata,
         }));
       },
-      openedPieceSelectorId: null,
-      setOpenedPieceSelectorId: (id: string | null) => {
+      openedPieceSelectorStepNameOrAddButtonId: null,
+      setOpenedPieceSelectorStepNameOrAddButtonId: (stepNameOrAddButtonId: string | null) => {
         return set((state) => {
           return {
-            openedPieceSelectorId: id,
+            openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,
             rightSidebar:
-              id === 'trigger' ? RightSideBarType.NONE : state.rightSidebar,
+              stepNameOrAddButtonId === 'trigger' ? RightSideBarType.NONE : state.rightSidebar,
           };
         });
       },

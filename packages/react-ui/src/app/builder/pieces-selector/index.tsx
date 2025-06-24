@@ -8,16 +8,17 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 import { PiecesCardList } from './pieces-card-list';
+
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { PieceSelectorOperation } from '@/lib/types';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -50,8 +51,8 @@ const PieceSelector = ({
     hoveredPieceMetadata,
     setHoveredPieceMetadata,
   ] = useBuilderStateContext((state) => [
-    state.openedPieceSelectorId,
-    state.setOpenedPieceSelectorId,
+    state.openedPieceSelectorStepNameOrAddButtonId,
+    state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.hoveredPieceMetadata,
     state.setHoveredPieceMetadata,
   ]);
@@ -120,7 +121,7 @@ const PieceSelector = ({
             }}
           >
             <PiecesCardList
-              debouncedQuery={debouncedQuery}
+              searchQuery={debouncedQuery}
               piecesIsLoaded={piecesIsLoaded}
               noResultsFound={noResultsFound}
               operation={operation}

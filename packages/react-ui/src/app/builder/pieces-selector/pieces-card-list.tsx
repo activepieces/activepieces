@@ -8,10 +8,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  PieceSelectorOperation,
-  StepMetadataWithSuggestions,
-} from '@/lib/types';
 import { isNil } from '@activepieces/shared';
 
 import { cn, wait } from '../../../lib/utils';
@@ -20,13 +16,18 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { NoResultsFound } from './no-results-found';
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 
+import {
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/lib/types';
+
 type PieceGroup = {
   title: string;
   pieces: StepMetadataWithSuggestions[];
 };
 
 type PiecesCardListProps = {
-  debouncedQuery: string;
+  searchQuery: string;
   operation: PieceSelectorOperation;
   pieceGroups: PieceGroup[];
   isLoadingPieces: boolean;
@@ -35,39 +36,16 @@ type PiecesCardListProps = {
   initiallySelectedPieceMetadataName?: string;
 };
 
-export const PiecesCardList: React.FC<PiecesCardListProps> = (props) => {
-  const { debouncedQuery, isLoadingPieces, noResultsFound, operation } = props;
-
-  return (
-    <CardList
-      className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
-        'w-full md:w-full': debouncedQuery.length > 0 || noResultsFound,
-      })}
-      listClassName="gap-0"
-    >
-      {isLoadingPieces && (
-        <div className="flex flex-col gap-2">
-          <CardListItemSkeleton numberOfCards={2} withCircle={false} />
-        </div>
-      )}
-
-      {!isLoadingPieces && !noResultsFound && (
-        <PieceCardListWrapper {...props} />
-      )}
-
-      {noResultsFound && <NoResultsFound operation={operation} />}
-    </CardList>
-  );
-};
-
-const PieceCardListWrapper = ({
-  pieceGroups,
-  debouncedQuery,
-  operation,
+export const PiecesCardList: React.FC<PiecesCardListProps> = ({
+  isLoadingPieces,
   initiallySelectedPieceMetadataName,
-}: PiecesCardListProps) => {
+  searchQuery,
+  noResultsFound,
+  operation,
+  pieceGroups,
+}) => {
   useEffect(() => {
-    if (!isNil(initiallySelectedPieceMetadataName)) {
+    if (!isNil(initiallySelectedPieceMetadataName) && !isLoadingPieces) {
       const element = document.getElementById(
         initiallySelectedPieceMetadataName,
       );
@@ -77,45 +55,64 @@ const PieceCardListWrapper = ({
       });
       element?.click();
     }
-  }, []);
-  return pieceGroups.map((group, index) => (
-    <React.Fragment key={group.title}>
-      {index > 0 && (
-        <div className="my-1">
-          <Separator />
-        </div>
-      )}
-      {pieceGroups.length > 1 && (
-        <div className="text-sm text-muted-foreground mx-2 mt-2">
-          {group.title}
+  }, [isLoadingPieces]);
+  return (
+    <CardList
+      className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+        'w-full md:w-full': searchQuery.length > 0 || noResultsFound,
+      })}
+      listClassName="gap-0"
+    >
+      {isLoadingPieces && (
+        <div className="flex flex-col gap-2">
+          <CardListItemSkeleton numberOfCards={2} withCircle={false} />
         </div>
       )}
 
-      {group.pieces.map((pieceMetadata, index) => (
-        <PieceCardListItem
-          key={index}
-          pieceMetadata={pieceMetadata}
-          debouncedQuery={debouncedQuery}
-          operation={operation}
-        />
-      ))}
-    </React.Fragment>
-  ));
+      {!isLoadingPieces &&
+        !noResultsFound &&
+        pieceGroups.map((group, index) => (
+          <React.Fragment key={group.title}>
+            {index > 0 && (
+              <div className="my-1">
+                <Separator />
+              </div>
+            )}
+            {pieceGroups.length > 1 && (
+              <div className="text-sm text-muted-foreground mx-2 mt-2">
+                {group.title}
+              </div>
+            )}
+
+            {group.pieces.map((pieceMetadata, index) => (
+              <PieceCardListItem
+                key={index}
+                pieceMetadata={pieceMetadata}
+                searchQuery={searchQuery}
+                operation={operation}
+              />
+            ))}
+          </React.Fragment>
+        ))}
+
+      {noResultsFound && <NoResultsFound />}
+    </CardList>
+  );
 };
 
 type PieceCardListItemProps = {
   pieceMetadata: StepMetadataWithSuggestions;
-  debouncedQuery: string;
+  searchQuery: string;
   operation: PieceSelectorOperation;
 };
 
 const PieceCardListItem = ({
   pieceMetadata,
-  debouncedQuery,
+  searchQuery,
   operation,
 }: PieceCardListItemProps) => {
   const isMobile = useIsMobile();
-  const showSuggestions = debouncedQuery.length > 0 || isMobile;
+  const showSuggestions = searchQuery.length > 0 || isMobile;
   const isMouseOver = useRef(false);
   const selectPieceMetatdata = async () => {
     isMouseOver.current = true;
@@ -135,7 +132,7 @@ const PieceCardListItem = ({
         className="flex-col p-3 gap-1 items-start"
         selected={
           hoveredPieceMetadata?.displayName === pieceMetadata.displayName &&
-          debouncedQuery.length === 0
+          searchQuery.length === 0
         }
         interactive={!showSuggestions}
         onMouseEnter={selectPieceMetatdata}

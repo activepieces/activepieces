@@ -17,7 +17,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
     (state) => [
       state.activeDraggingStep,
       state.readonly,
-      state.openedPieceSelectorId === props.edgeId,
+      state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
     ],
   );
 
