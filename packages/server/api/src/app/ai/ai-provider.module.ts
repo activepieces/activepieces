@@ -76,7 +76,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 const completeResponse = JSON.parse(buffer.toString())
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
-                            await aiProviderService.increaseProjectAIUsage({ projectId, provider, model: usage.model, cost: usage.cost })
+                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, platformId: request.principal.platform.id, provider, model: usage.model, cost: usage.cost })
                             const completeResponse = JSON.parse(buffer.toString())
                             const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
                             await platformUsageService(app.log).increaseAiCreditUsage({ projectId, provider, model, cost, platformId: request.principal.platform.id })
@@ -129,7 +129,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
 
             const projectId = request.principal.projectId
-            const exceededLimit = await projectLimitsService(request.log).aiCreditsExceededLimit(projectId, 0)
+            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
             if (exceededLimit) {
                 throw new ActivepiecesError({
                     code: ErrorCode.QUOTA_EXCEEDED,
