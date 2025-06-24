@@ -1850,6 +1850,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "cjwooo",
+      "name": "Chris Wu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4491213?v=4",
+      "profile": "https://www.linkedin.com/in/chris-wu/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
