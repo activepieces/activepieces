@@ -10,7 +10,7 @@ import { appConnectionsQueries } from '@/features/connections/lib/app-connection
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';

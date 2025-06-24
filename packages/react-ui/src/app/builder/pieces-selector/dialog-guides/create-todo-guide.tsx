@@ -17,12 +17,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { TodoType } from '@activepieces/shared';
+
 import {
   HandleSelectCallback,
   PieceSelectorItem,
   StepMetadata,
 } from '@/features/pieces/lib/types';
-import { TodoType } from '@activepieces/shared';
 
 type CreateTodoGuideProps = {
   open: boolean;

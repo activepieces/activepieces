@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
@@ -38,7 +39,7 @@ const PieceSelector = ({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { isLoading: isLoadingPieces, data: pieceGroups } =
-    stepsHooks.usePiecesGroups({
+    piecesHooks.usePiecesGroups({
       searchQuery: debouncedQuery,
       type: isTrigger ? 'trigger' : 'action',
     });

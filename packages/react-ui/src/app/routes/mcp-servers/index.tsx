@@ -18,7 +18,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
