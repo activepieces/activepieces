@@ -5,15 +5,15 @@ function formatErrorMessage(errorMessage: string): string {
   }
 
   // Remove empty lines and trim whitespace
-  const trimmedErrorMessages = errorMessagesSplit
+  const cleanedErrorMessages = errorMessagesSplit
     .map((message) => message.trim().replace(/^\n+|\n+$/g, ''))
     .filter((message) => message !== '');
 
   const indentationStep = '  ';
-  return trimmedErrorMessages.reduce((acc, current, index) => {
+  return cleanedErrorMessages.reduce((acc, current, index) => {
     const indentation = indentationStep.repeat(index);
     const errorLabel =
-      trimmedErrorMessages.length === 1 ? 'Error' : `Error ${index + 1}`;
+      cleanedErrorMessages.length === 1 ? 'Error' : `Error ${index + 1}`;
     return `${acc}${indentation}${errorLabel}: ${current}\n`;
   }, '');
 }
