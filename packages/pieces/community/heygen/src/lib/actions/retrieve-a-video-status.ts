@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
-import { heygenAuth } from '../../index';
+import { heygenApiCall } from '../common/client';
+import { heygenAuth } from '../common/auth';
 
 export const retrieveVideoStatusAction = createAction({
+  auth: heygenAuth,
   name: 'retrieve_video_status',
   displayName: 'Retrieve Video Status/Details',
   description: 'Retrieve the status and details of a video using its ID.',
-  auth: heygenAuth,
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
@@ -16,18 +16,15 @@ export const retrieveVideoStatusAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const apiKey = auth as string;
+    const { videoId } = propsValue;
 
-    const body = {
-      video_id: propsValue.videoId,
-    };
-
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      '/v1/video_status.get',
-      body
-    );
+    const response = await heygenApiCall({
+      apiKey: auth as string,
+      method: HttpMethod.GET,
+      resourceUri: `/video_status.get`,
+      query: { video_id: videoId },
+      apiVersion: 'v1',
+    });
 
     return response;
   },

@@ -1,64 +1,68 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { heygenAuth } from '../../index';
+import { heygenAuth } from '../common/auth';
 
 export const uploadAssetAction = createAction({
-  name: 'upload_asset',
-  displayName: 'Upload Asset',
-  description: 'Uploads an asset (image, video, or audio) to HeyGen.',
   auth: heygenAuth,
+  name: 'upload_asset',
+  displayName: 'Upload an Asset',
+  description: 'Upload media files (images, videos, or audio) to HeyGen. Supports JPEG, PNG, MP4, WEBM, and MPEG files.',
   props: {
     file: Property.File({
       displayName: 'File',
-      description: 'The asset file to upload (image, video, or audio)',
+      description: 'The file to upload (JPEG, PNG, MP4, WEBM, or MPEG).',
       required: true,
     }),
   },
-  async run({ propsValue, auth }) {
-    const { file } = propsValue;
-    const apiKey = auth as string;
+  async run(context) {
+    const { file } = context.propsValue;
 
-    const ext = file.filename.split('.').pop()?.toLowerCase();
-    let contentType: string;
+    const getContentType = (filename: string): string => {
+      const extension = filename.toLowerCase().split('.').pop();
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'mp4':
+          return 'video/mp4';
+        case 'webm':
+          return 'video/webm';
+        case 'mpeg':
+        case 'mpg':
+          return 'video/mpeg';
+        default:
+          throw new Error(`Unsupported file type: ${extension}`);
+      }
+    };
 
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        contentType = 'image/jpeg';
-        break;
-      case 'png':
-        contentType = 'image/png';
-        break;
-      case 'mp4':
-        contentType = 'video/mp4';
-        break;
-      case 'webm':
-        contentType = 'video/webm';
-        break;
-      case 'mp3':
-        contentType = 'audio/mpeg';
-        break;
-      default:
-        throw new Error(`Unsupported file extension: .${ext}`);
-    }
-
-    const formData = new FormData();
-    formData.append('file', Buffer.from(file.base64, 'base64'), {
-      filename: file.filename,
-      contentType: contentType,
+    const fileReference = await context.files.write({
+      fileName: file.filename,
+      data: file.data,
     });
+
+    const contentType = getContentType(file.filename);
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://upload.heygen.com/v1/asset',
       headers: {
-        'X-Api-Key': apiKey,
-        ...formData.getHeaders(),
+        'x-api-key': context.auth as string,
+        'Content-Type': contentType,
       },
-      body: formData,
+      body: file.data,
     });
 
-    return response.body;
+    return {
+      success: true,
+      asset_id: response.body.id,
+      asset_name: response.body.name,
+      file_type: response.body.file_type,
+      folder_id: response.body.folder_id,
+      meta: response.body.meta,
+      image_key: response.body.image_key,
+      file_reference: fileReference,
+    };
   },
 });

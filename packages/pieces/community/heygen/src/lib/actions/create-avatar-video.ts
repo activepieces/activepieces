@@ -1,16 +1,17 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
-import { heygenAuth } from '../../index';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { heygenAuth } from '../common/auth';
+import { heygenApiCall } from '../common/client';
+import { folderDropdown } from '../common/props';
 
 export const createAvatarVideoAction = createAction({
   auth: heygenAuth,
-  name: 'generate_avatar_video',
-  displayName: 'Generate Avatar Video',
-  description: 'Generate a video using a HeyGen avatar with text-to-speech and customization.',
+  name: 'create-avatar-video',
+  displayName: 'Create Avatar Video',
+  description: 'Creates a video using avatars, voices, backgrounds, and text.',
   props: {
     title: Property.ShortText({
-      displayName: 'Title',
+      displayName: 'Video Title',
       required: true,
       description: 'Title of the video.',
     }),
@@ -30,11 +31,7 @@ export const createAvatarVideoAction = createAction({
       required: false,
       description: 'The URL to notify when video rendering is complete.',
     }),
-    folderId: Property.ShortText({
-      displayName: 'Folder ID',
-      required: false,
-      description: 'The ID of the folder to save the video in.',
-    }),
+    folderId: folderDropdown,
     dimensionWidth: Property.Number({
       displayName: 'Video Width',
       required: false,
@@ -77,7 +74,6 @@ export const createAvatarVideoAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-
     const {
       title,
       caption,
@@ -89,8 +85,7 @@ export const createAvatarVideoAction = createAction({
       videoInputs,
     } = propsValue;
 
-    const apiKey = auth as string;
-    const body: Record<string, any> = {
+    const body: Record<string, unknown> = {
       title,
       caption: caption === true,
       dimension: {
@@ -104,12 +99,13 @@ export const createAvatarVideoAction = createAction({
     if (callbackUrl) body['callback_url'] = callbackUrl;
     if (folderId) body['folder_id'] = folderId;
 
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.POST,
-      '/v2/video/generate',
-      body
-    );
+    const response = await heygenApiCall({
+      apiKey: auth as string,
+      method: HttpMethod.POST,
+      resourceUri: '/video/generate',
+      body,
+      apiVersion: 'v2',
+    });
 
     return response;
   },

@@ -1,21 +1,18 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { heygenAuth } from '../../index';
-import { makeRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { heygenAuth } from '../common/auth';
+import { heygenApiCall } from '../common/client';
+import { folderDropdown, brandVoiceDropdown, templateDropdown } from '../common/props';
 
-export const generateVideoFromTemplateAction = createAction({
-  name: 'generate_video_from_template',
-  displayName: 'Generate Video from Template',
-  description: 'Generate a video using a specific HeyGen template.',
+export const createVideoFromTemplateAction = createAction({
   auth: heygenAuth,
+  name: 'create-video-from-template',
+  displayName: 'Create Video from Template',
+  description: 'Create a video using a selected template.',
   props: {
-    templateId: Property.ShortText({
-      displayName: 'Template ID',
-      required: true,
-      description: 'The ID of the template to use for generating the video.',
-    }),
+    templateId: templateDropdown,
     title: Property.ShortText({
-      displayName: 'Title',
+      displayName: 'Video Title',
       required: true,
       description: 'Title of the generated video.',
     }),
@@ -34,16 +31,8 @@ export const generateVideoFromTemplateAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    folderId: Property.ShortText({
-      displayName: 'Folder ID',
-      required: false,
-      description: 'ID of the folder where the video will be stored.',
-    }),
-    brandVoiceId: Property.ShortText({
-      displayName: 'Brand Voice ID',
-      required: false,
-      description: 'ID of the Brand Voice to apply to the video.',
-    }),
+    folderId: folderDropdown,
+    brandVoiceId: brandVoiceDropdown,
     callbackUrl: Property.ShortText({
       displayName: 'Callback URL',
       required: false,
@@ -62,7 +51,7 @@ export const generateVideoFromTemplateAction = createAction({
     variables: Property.Json({
       displayName: 'Template Variables (JSON)',
       required: false,
-      description: 'Dynamic variables to be passed into the template. Must match template variable keys.',
+      description: 'Dynamic variables to pass into the template.',
     }),
   },
   async run({ propsValue, auth }) {
@@ -80,8 +69,8 @@ export const generateVideoFromTemplateAction = createAction({
       variables,
     } = propsValue;
 
-    const apiKey = auth as string;
     const body: Record<string, unknown> = {
+      template_id: templateId,
       title,
       caption: caption === true,
       include_gif: includeGif === true,
@@ -91,22 +80,25 @@ export const generateVideoFromTemplateAction = createAction({
     if (folderId) body['folder_id'] = folderId;
     if (brandVoiceId) body['brand_voice_id'] = brandVoiceId;
     if (callbackUrl) body['callback_url'] = callbackUrl;
+
     if (dimensionWidth && dimensionHeight) {
       body['dimension'] = {
         width: dimensionWidth,
         height: dimensionHeight,
       };
     }
+
     if (variables) {
       body['variables'] = variables;
     }
 
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.POST,
-      `/v2/template/${templateId}/generate`,
-      body
-    );
+    const response = await heygenApiCall({
+      apiKey: auth as string,
+      method: HttpMethod.POST,
+      resourceUri: `/template/${templateId}/generate`,
+      body,
+      apiVersion: 'v2',
+    });
 
     return response;
   },

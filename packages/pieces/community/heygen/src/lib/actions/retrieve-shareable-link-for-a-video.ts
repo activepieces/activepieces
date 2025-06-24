@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
-import { heygenAuth } from '../../index';
+import { heygenApiCall } from '../common/client';
+import { heygenAuth } from '../common/auth';
 
 export const retrieveSharableVideoUrlAction = createAction({
   auth: heygenAuth,
@@ -9,26 +9,22 @@ export const retrieveSharableVideoUrlAction = createAction({
   displayName: 'Retrieve Sharable Video URL',
   description: 'Generates a public URL for a video, allowing it to be shared and accessed publicly.',
   props: {
-    video_id: Property.ShortText({
+    videoId: Property.ShortText({
       displayName: 'Video ID',
+      description: 'The ID of the video to generate a shareable URL for.',
       required: true,
     }),
   },
-  async run(context) {
-    const { video_id } = context.propsValue;
+  async run({ propsValue, auth }) {
+    const { videoId } = propsValue;
 
-    const apiKey = context.auth as string;
-
-    const body = {
-      video_id,
-    };
-
-    const response = await makeRequest(
-      apiKey,
-      HttpMethod.POST,
-      '/v1/video/share',
-      body
-    );
+    const response = await heygenApiCall({
+      apiKey: auth as string,
+      method: HttpMethod.POST,
+      resourceUri: '/video/share',
+      body: { video_id: videoId },
+      apiVersion: 'v1',
+    });
 
     return response;
   },
