@@ -1,38 +1,25 @@
-import { t } from 'i18next';
-import { SearchX, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import {
   CardList,
   CardListItem,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import {
-  StepMetadata,
-  PieceSelectorOperation,
-  HandleSelectCallback,
-  StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { isNil } from '@activepieces/shared';
+
+import { cn, wait } from '../../../lib/utils';
+import { useBuilderStateContext } from '../builder-hooks';
+
+import { NoResultsFound } from './no-results-found';
+import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
+
 import {
-  ApFlagId,
-  FlowOperationType,
-  TriggerType,
-  supportUrl,
-} from '@activepieces/shared';
-
-import { cn } from '../../../lib/utils';
-
-import { AskAiButton } from './ask-ai';
-import { PieceSearchSuggestions } from './piece-search-suggestions';
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/lib/types';
 
 type PieceGroup = {
   title: string;
@@ -40,56 +27,39 @@ type PieceGroup = {
 };
 
 type PiecesCardListProps = {
-  debouncedQuery: string;
-  selectedPieceMetadata: StepMetadata | undefined;
-  setSelectedMetadata: (metadata: StepMetadata) => void;
+  searchQuery: string;
   operation: PieceSelectorOperation;
-  handleSelect: HandleSelectCallback;
   pieceGroups: PieceGroup[];
   isLoadingPieces: boolean;
   piecesIsLoaded: boolean;
   noResultsFound: boolean;
-  closePieceSelector: () => void;
-  hiddenActionsOrTriggers: string[];
+  initiallySelectedPieceMetadataName?: string;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
-  debouncedQuery,
-  selectedPieceMetadata,
-  setSelectedMetadata,
-  handleSelect,
-  pieceGroups,
   isLoadingPieces,
-  piecesIsLoaded,
+  initiallySelectedPieceMetadataName,
+  searchQuery,
   noResultsFound,
   operation,
-  closePieceSelector,
-  hiddenActionsOrTriggers,
+  pieceGroups,
 }) => {
-  const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
-  const isEmbedding = useEmbedding().embedState.isEmbedded;
-  const showRequestPieceButton = showCommunityLinks && !isEmbedding;
-  const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   useEffect(() => {
-    if (
-      piecesIsLoaded &&
-      selectedItemRef.current &&
-      debouncedQuery.length === 0
-    ) {
-      selectedItemRef.current?.scrollIntoView({
-        behavior: 'auto',
+    if (!isNil(initiallySelectedPieceMetadataName) && !isLoadingPieces) {
+      const element = document.getElementById(
+        initiallySelectedPieceMetadataName,
+      );
+      element?.scrollIntoView({
+        behavior: 'instant',
         block: 'nearest',
       });
+      element?.click();
     }
-  }, [piecesIsLoaded, selectedPieceMetadata]);
-
+  }, [isLoadingPieces]);
   return (
     <CardList
-      className={cn(' w-full md:w-[250px] md:min-w-[250px] transition-all ', {
-        'w-full md:w-full': debouncedQuery.length > 0 || noResultsFound,
+      className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+        'w-full md:w-full': searchQuery.length > 0 || noResultsFound,
       })}
       listClassName="gap-0"
     >
@@ -99,7 +69,8 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         </div>
       )}
 
-      {piecesIsLoaded &&
+      {!isLoadingPieces &&
+        !noResultsFound &&
         pieceGroups.map((group, index) => (
           <React.Fragment key={group.title}>
             {index > 0 && (
@@ -113,157 +84,88 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               </div>
             )}
 
-            {group.pieces.map((pieceMetadata) => (
+            {group.pieces.map((pieceMetadata, index) => (
               <PieceCardListItem
-                key={pieceSelectorUtils.toKey(pieceMetadata)}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+                key={index}
                 pieceMetadata={pieceMetadata}
-                selectedPieceMetadata={selectedPieceMetadata}
-                debouncedQuery={debouncedQuery}
-                setSelectedMetadata={setSelectedMetadata}
-                handleSelect={handleSelect}
-                ref={
-                  pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
-                    ? selectedItemRef
-                    : null
-                }
+                searchQuery={searchQuery}
+                operation={operation}
               />
             ))}
           </React.Fragment>
         ))}
 
-      {noResultsFound &&
-        isCopilotEnabled &&
-        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-3">
-              {t('Let our AI assistant help you out')}
-            </div>
-            <AskAiButton
-              varitant={'default'}
-              operation={operation}
-              onClick={closePieceSelector}
-            ></AskAiButton>
-            {showRequestPieceButton && (
-              <>
-                {t('Or')}
-                <Link
-                  to={`${supportUrl}/c/feature-requests/9`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="ghost" size="sm">
-                    {t('Request Piece')}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-
-      {noResultsFound &&
-        (!isCopilotEnabled ||
-          operation.type === FlowOperationType.UPDATE_TRIGGER) && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <SearchX className="w-14 h-14" />
-            <div className="text-sm ">{t('No pieces found')}</div>
-            <div className="text-sm ">{t('Try adjusting your search')}</div>
-            {showRequestPieceButton && (
-              <Link
-                to={`${supportUrl}/c/feature-requests/9`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="h-8 px-2 ">{t('Request Piece')}</Button>
-              </Link>
-            )}
-          </div>
-        )}
+      {noResultsFound && <NoResultsFound />}
     </CardList>
   );
 };
 
-const PieceCardListItem = React.forwardRef<
-  HTMLDivElement,
-  {
-    pieceMetadata: StepMetadataWithSuggestions;
-    selectedPieceMetadata: StepMetadata | undefined;
-    debouncedQuery: string;
-    setSelectedMetadata: (metadata: StepMetadata) => void;
-    handleSelect: HandleSelectCallback;
-    hiddenActionsOrTriggers: string[];
-  }
->(
-  (
-    {
-      pieceMetadata,
-      selectedPieceMetadata,
-      debouncedQuery,
-      setSelectedMetadata,
-      handleSelect,
-      hiddenActionsOrTriggers,
-    },
-    ref,
-  ) => {
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+type PieceCardListItemProps = {
+  pieceMetadata: StepMetadataWithSuggestions;
+  searchQuery: string;
+  operation: PieceSelectorOperation;
+};
 
-    const handleMouseEnter = (element: HTMLDivElement) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        if (element.matches(':hover')) {
-          setSelectedMetadata(pieceMetadata);
+const PieceCardListItem = ({
+  pieceMetadata,
+  searchQuery,
+  operation,
+}: PieceCardListItemProps) => {
+  const isMobile = useIsMobile();
+  const showSuggestions = searchQuery.length > 0 || isMobile;
+  const isMouseOver = useRef(false);
+  const selectPieceMetatdata = async () => {
+    isMouseOver.current = true;
+    await wait(250);
+    if (isMouseOver.current) {
+      setHoveredPieceMetadata(pieceMetadata);
+    }
+  };
+  const [hoveredPieceMetadata, setHoveredPieceMetadata] =
+    useBuilderStateContext((state) => [
+      state.hoveredPieceMetadata,
+      state.setHoveredPieceMetadata,
+    ]);
+  return (
+    <>
+      <CardListItem
+        className="flex-col p-3 gap-1 items-start"
+        selected={
+          hoveredPieceMetadata?.displayName === pieceMetadata.displayName &&
+          searchQuery.length === 0
         }
-      }, 150);
-    };
-
-    const handleMouseLeave = () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-    const isMobile = useIsMobile();
-    return (
-      <div onMouseLeave={handleMouseLeave} ref={ref}>
-        <CardListItem
-          className="flex-col p-3 gap-1 items-start"
-          selected={
-            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-            debouncedQuery.length === 0
-          }
-          interactive={debouncedQuery.length === 0}
-          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-        >
-          <div className="flex gap-2 items-center h-full">
-            <PieceIcon
-              logoUrl={pieceMetadata.logoUrl}
-              displayName={pieceMetadata.displayName}
-              showTooltip={false}
-              size={'sm'}
-            />
-            <div className="flex-grow h-full flex items-center justify-left text-sm">
-              {pieceMetadata.displayName}
-            </div>
+        interactive={!showSuggestions}
+        onMouseEnter={selectPieceMetatdata}
+        onClick={selectPieceMetatdata}
+        onMouseLeave={() => {
+          isMouseOver.current = false;
+        }}
+        id={pieceMetadata.displayName}
+      >
+        <div className="flex gap-2 items-center h-full">
+          <PieceIcon
+            logoUrl={pieceMetadata.logoUrl}
+            displayName={pieceMetadata.displayName}
+            showTooltip={false}
+            size={'sm'}
+          />
+          <div className="flex-grow h-full flex items-center justify-left text-sm">
+            {pieceMetadata.displayName}
           </div>
-        </CardListItem>
+        </div>
+      </CardListItem>
 
-        {(debouncedQuery.length > 0 || isMobile) &&
-          pieceMetadata.type !== TriggerType.EMPTY && (
-            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-              <PieceSearchSuggestions
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                pieceMetadata={pieceMetadata}
-                handleSelectOperationSuggestion={handleSelect}
-              />
-            </div>
-          )}
-      </div>
-    );
-  },
-);
+      {showSuggestions && (
+        <div>
+          <PieceActionsOrTriggersList
+            stepMetadataWithSuggestions={pieceMetadata}
+            hidePieceIcon={true}
+            operation={operation}
+          />
+        </div>
+      )}
+    </>
+  );
+};
 
 PieceCardListItem.displayName = 'PieceCardListItem';

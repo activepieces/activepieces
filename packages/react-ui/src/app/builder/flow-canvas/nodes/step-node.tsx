@@ -7,11 +7,11 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   Step,
-  TriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
 
@@ -20,7 +20,6 @@ import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApStepNode } from '../utils/types';
 
 import { ApStepNodeStatus } from './step-node-status';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 
 const getPieceSelectorOperationType = (step: Step) => {
   if (flowStructureUtil.isTrigger(step.type)) {
@@ -36,23 +35,18 @@ const ApStepCanvasNode = React.memo(
       isSelected,
       isDragging,
       readonly,
-      exitStepSettings,
       flowVersion,
       setSelectedBranchIndex,
-      setPieceSelectorStep,
-      pieceSelectorStep,
+      isPieceSelectorOpened,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
       state.activeDraggingStep === step.name,
       state.readonly,
-      state.exitStepSettings,
       state.flowVersion,
       state.setSelectedBranchIndex,
-      state.setPieceSelectorStep,
-      state.pieceSelectorStep,
+      state.openedPieceSelectorStepNameOrAddButtonId === step.name,
     ]);
-    const openPieceSelector = pieceSelectorStep === step.name;
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -61,10 +55,7 @@ const ApStepCanvasNode = React.memo(
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
     }, [step, flowVersion]);
-
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-
-    const isEmptyTriggerSelected = step.type === TriggerType.EMPTY;
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
@@ -75,9 +66,6 @@ const ApStepCanvasNode = React.memo(
       },
     });
 
-    const initialSelectedPieceDisplayName = isEmptyTriggerSelected
-      ? undefined
-      : stepMetadata?.displayName;
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
@@ -107,9 +95,9 @@ const ApStepCanvasNode = React.memo(
         )}
         onClick={(e) => handleStepClick(e)}
         key={step.name}
-        ref={openPieceSelector ? null : setNodeRef}
-        {...(!openPieceSelector ? attributes : {})}
-        {...(!openPieceSelector ? listeners : {})}
+        ref={isPieceSelectorOpened ? null : setNodeRef}
+        {...(!isPieceSelectorOpened ? attributes : {})}
+        {...(!isPieceSelectorOpened ? listeners : {})}
       >
         <div
           className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
@@ -128,27 +116,21 @@ const ApStepCanvasNode = React.memo(
             },
           )}
         ></div>
-        <div className="px-3 h-full w-full  overflow-hidden">
+        <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
-              initialSelectedPieceDisplayName={initialSelectedPieceDisplayName}
               operation={{
                 type: getPieceSelectorOperationType(step),
                 stepName: step.name,
               }}
-              open={openPieceSelector || isEmptyTriggerSelected}
-              onOpenChange={(open) => {
-                setPieceSelectorStep(open ? step.name : null);
-                if (!open && isEmptyTriggerSelected) {
-                  exitStepSettings();
-                }
-              }}
-              asChild={true}
+              id={step.name}
+              initiallySelectedPieceMetadataName={stepMetadata?.displayName}
+              openSelectorOnClick={false}
             >
               <div
                 className="flex items-center justify-center h-full w-full gap-3"
                 onClick={(e) => {
-                  if (!openPieceSelector) {
+                  if (!isPieceSelectorOpened) {
                     handleStepClick(e);
                   }
                 }}
@@ -207,13 +189,7 @@ const ApStepCanvasNode = React.memo(
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
                     </div>
-
-                    <div className="flex justify-between w-full items-center">
-                      <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                        {stepMetadata?.displayName}
-                      </div>
-                      <ApStepNodeStatus step={step} />
-                    </div>
+                    <ApStepNodeStatus step={step} />
                   </div>
                 </div>
               </div>
