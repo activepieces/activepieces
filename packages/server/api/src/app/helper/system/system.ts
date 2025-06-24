@@ -90,13 +90,19 @@ export const system = {
         if (isNil(globalLogger)) {
             const logLevel: Level = this.get(AppSystemProp.LOG_LEVEL) ?? 'info'
             const logPretty = this.getBoolean(AppSystemProp.LOG_PRETTY) ?? false
-            const lokiUrl = this.get(AppSystemProp.LOKI_URL)
-            const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
-            const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
-            globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
-                url: lokiUrl,
-                password: lokiPassword,
-                username: lokiUsername,
+            // const lokiUrl = this.get(AppSystemProp.LOKI_URL)
+            // const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
+            // const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
+            // globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
+            //     url: lokiUrl,
+            //     password: lokiPassword,
+            //     username: lokiUsername,
+            // })
+            const token = this.get(AppSystemProp.BETTERSTACK_TOKEN)
+            const endpoint = this.get(AppSystemProp.BETTERSTACK_ENDPOINT)
+            globalLogger = pinoLogging.initLogTailLogger(logLevel, logPretty, {
+                token,
+                endpoint,
             })
         }
         return globalLogger
