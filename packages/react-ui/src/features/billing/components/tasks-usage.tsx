@@ -21,7 +21,7 @@ export function TasksUsage({
   const { plan, usage } = platformSubscription;
   const isFreePlan = plan.plan === PlanName.FREE;
   const currentTasks = usage.tasks || 0;
-  const includedTasks = plan.tasksLimit 
+  const includedTasks = plan.tasksLimit;
   const usagePercentage =
     !isNil(includedTasks) && includedTasks > 0
       ? Math.round((currentTasks / includedTasks) * 100)

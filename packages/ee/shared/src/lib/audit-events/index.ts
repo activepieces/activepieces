@@ -303,75 +303,75 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
 }
 
 function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
-  switch (event.data.request.type) {
-    case FlowOperationType.ADD_ACTION:
-      return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.UPDATE_ACTION:
-      return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.DELETE_ACTION:
-      {
-        const request = event.data.request.request
-        const names = request.names
-        return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`;
-      }
-    case FlowOperationType.CHANGE_NAME:
-      return `Renamed flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.displayName}".`;
-    case FlowOperationType.LOCK_AND_PUBLISH:
-      return `Locked and published flow "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.USE_AS_DRAFT:
-      return `Unlocked and unpublished flow "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.MOVE_ACTION:
-      return `Moved action "${event.data.request.request.name}" to after "${event.data.request.request.newParentStep}".`;
-    case FlowOperationType.LOCK_FLOW:
-      return `Locked flow "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.CHANGE_STATUS:
-      return `Changed status of flow "${event.data.flowVersion.displayName}" Flow to "${event.data.request.request.status}".`;
-    case FlowOperationType.DUPLICATE_ACTION:
-      return `Duplicated action "${event.data.request.request.stepName}" in "${event.data.flowVersion.displayName}" Flow.`;
-    case FlowOperationType.IMPORT_FLOW:
-      return `Imported flow in "${event.data.request.request.displayName}" Flow.`;
-    case FlowOperationType.UPDATE_TRIGGER:
-      return `Updated trigger in "${event.data.flowVersion.displayName}" Flow to "${event.data.request.request.displayName}".`;
-    case FlowOperationType.CHANGE_FOLDER:
-      return `Moved flow "${event.data.flowVersion.displayName}" to folder id ${event.data.request.request.folderId}.`;
-    case FlowOperationType.DELETE_BRANCH: {
-      return `Deleted branch number ${
-        event.data.request.request.branchIndex + 1
-      } in flow "${event.data.flowVersion.displayName}" for the step "${
-        event.data.request.request.stepName
-      }".`;
+    switch (event.data.request.type) {
+        case FlowOperationType.ADD_ACTION:
+            return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.UPDATE_ACTION:
+            return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.DELETE_ACTION:
+        {
+            const request = event.data.request.request
+            const names = request.names
+            return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`
+        }
+        case FlowOperationType.CHANGE_NAME:
+            return `Renamed flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.displayName}".`
+        case FlowOperationType.LOCK_AND_PUBLISH:
+            return `Locked and published flow "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.USE_AS_DRAFT:
+            return `Unlocked and unpublished flow "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.MOVE_ACTION:
+            return `Moved action "${event.data.request.request.name}" to after "${event.data.request.request.newParentStep}".`
+        case FlowOperationType.LOCK_FLOW:
+            return `Locked flow "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.CHANGE_STATUS:
+            return `Changed status of flow "${event.data.flowVersion.displayName}" Flow to "${event.data.request.request.status}".`
+        case FlowOperationType.DUPLICATE_ACTION:
+            return `Duplicated action "${event.data.request.request.stepName}" in "${event.data.flowVersion.displayName}" Flow.`
+        case FlowOperationType.IMPORT_FLOW:
+            return `Imported flow in "${event.data.request.request.displayName}" Flow.`
+        case FlowOperationType.UPDATE_TRIGGER:
+            return `Updated trigger in "${event.data.flowVersion.displayName}" Flow to "${event.data.request.request.displayName}".`
+        case FlowOperationType.CHANGE_FOLDER:
+            return `Moved flow "${event.data.flowVersion.displayName}" to folder id ${event.data.request.request.folderId}.`
+        case FlowOperationType.DELETE_BRANCH: {
+            return `Deleted branch number ${
+                event.data.request.request.branchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
+        }
+        case FlowOperationType.SAVE_SAMPLE_DATA: {
+            return `Saved sample data for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
+        }
+        case FlowOperationType.DUPLICATE_BRANCH: {
+            return `Duplicated branch number ${
+                event.data.request.request.branchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
+        }
+        case FlowOperationType.ADD_BRANCH:
+            return `Added branch number ${
+                event.data.request.request.branchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
+        case FlowOperationType.SET_SKIP_ACTION:
+        {
+            const request = event.data.request.request
+            const names = request.names
+            return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`
+        }
+        case FlowOperationType.UPDATE_METADATA:
+            return `Updated metadata for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.MOVE_BRANCH:
+            return `Moved branch number ${
+                event.data.request.request.sourceBranchIndex + 1
+            } to ${
+                event.data.request.request.targetBranchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
     }
-    case FlowOperationType.SAVE_SAMPLE_DATA: {
-      return `Saved sample data for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`;
-    }
-    case FlowOperationType.DUPLICATE_BRANCH: {
-      return `Duplicated branch number ${
-        event.data.request.request.branchIndex + 1
-      } in flow "${event.data.flowVersion.displayName}" for the step "${
-        event.data.request.request.stepName
-      }".`;
-    }
-    case FlowOperationType.ADD_BRANCH:
-      return `Added branch number ${
-        event.data.request.request.branchIndex + 1
-      } in flow "${event.data.flowVersion.displayName}" for the step "${
-        event.data.request.request.stepName
-      }".`;
-    case FlowOperationType.SET_SKIP_ACTION:
-      {
-        const request = event.data.request.request
-        const names = request.names
-        return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
-      }
-    case FlowOperationType.UPDATE_METADATA:
-      return `Updated metadata for flow "${event.data.flowVersion.displayName}".`;
-    case FlowOperationType.MOVE_BRANCH:
-      return `Moved branch number ${
-        event.data.request.request.sourceBranchIndex + 1
-      } to ${
-        event.data.request.request.targetBranchIndex + 1
-      } in flow "${event.data.flowVersion.displayName}" for the step "${
-        event.data.request.request.stepName
-      }".`;
-  }
 }

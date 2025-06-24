@@ -3,6 +3,7 @@ import { t } from 'i18next';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
 import {
@@ -18,7 +19,6 @@ import {
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
-import { api } from '@/lib/api';
 
 export const flowsHooks = {
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
