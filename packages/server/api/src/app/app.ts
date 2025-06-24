@@ -5,7 +5,7 @@ import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, Flow
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifySocketIO from 'fastify-socket.io'
+import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
 import { agentModule } from './agents/agent-module'
 import { aiProviderModule } from './ai/ai-provider.module'
@@ -185,7 +185,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
-            url: request.url,
+            url: request.routeOptions.url!,
         })
         if (!route) {
             return reply.code(404).send({

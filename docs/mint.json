@@ -210,8 +210,7 @@
           "group": "Sample Data",
           "icon": "database",
           "pages": [
-            "endpoints/sample-data/get",
-            "endpoints/sample-data/save"
+            "endpoints/sample-data/get"
           ]
         },
         {

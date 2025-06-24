@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import { DataTable } from '@/components/ui/data-table';
 import { mcpRunApi } from '@/features/mcp/lib/mcp-run-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { McpRun, McpRunStatus } from '@activepieces/shared';
 
 import McpRunDetails from './mcp-run-details';
@@ -16,7 +16,7 @@ export const McpHistoryPage = () => {
   const { mcpId, projectId } = useParams();
   const [searchParams] = useSearchParams();
   const { metadata, isLoading: isPiecesLoading } =
-    piecesHooks.useAllStepsMetadata({
+    stepsHooks.useAllStepsMetadata({
       searchQuery: '',
       type: 'action',
     });

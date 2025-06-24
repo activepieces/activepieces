@@ -16,12 +16,12 @@
         "tsConfig": "packages/server/api/tsconfig.app.json",
         "assets": ["packages/server/api/src/assets"],
         "webpackConfig": "packages/server/api/webpack.config.js",
-        "generatePackageJson": true,
         "babelUpwardRootMode": true,
         "sourceMap": true
       },
       "configurations": {
         "production": {
+          "generatePackageJson": true,
           "optimization": true,
           "extractLicenses": true,
           "inspect": false
@@ -120,9 +120,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx test-ee",
-          "nx test-ce",
-          "nx test-cloud"
+          "nx test-ee server-api",
+          "nx test-ce server-api",
+          "nx test-cloud server-api"
         ],
         "parallel": true
       }

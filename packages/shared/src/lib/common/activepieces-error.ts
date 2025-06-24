@@ -66,6 +66,7 @@ export type ApErrorParams =
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AIProviderModelNotSupportedParams
+    | AIRequestNotSupportedParams
     | AICreditLimitExceededParams
     | SessionExpiredParams
     | InvalidLicenseKeyParams
@@ -393,6 +394,10 @@ export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MOD
     model: string
 }>
 
+export type AIRequestNotSupportedParams = BaseErrorParams<ErrorCode.AI_REQUEST_NOT_SUPPORTED, {
+    message: string
+}>
+
 export type FeatureDisabledErrorParams = BaseErrorParams<
 ErrorCode.FEATURE_DISABLED,
 {
@@ -475,6 +480,7 @@ export enum ErrorCode {
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     AI_MODEL_NOT_SUPPORTED = 'AI_MODEL_NOT_SUPPORTED',
+    AI_REQUEST_NOT_SUPPORTED = 'AI_REQUEST_NOT_SUPPORTED',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
