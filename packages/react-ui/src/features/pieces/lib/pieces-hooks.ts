@@ -148,7 +148,7 @@ export const piecesHooks = {
     const popularPieces = piecesMetadata.filter((p) =>
       isPopularPieces(p, platform),
     );
-    const other = piecesMetadata.filter((p) => !popularPieces.includes(p));
+    const other = piecesMetadata.filter((p) => !popularPieces.includes(p) && !flowControllerPieces.includes(p) && !universalAiPieces.includes(p));
 
     const groups: PieceGroup[] = [
       { title: t('Popular'), pieces: popularPieces },
