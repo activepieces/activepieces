@@ -55,8 +55,7 @@ export const TodoDetails = ({
     if (updatedTodo && previousStatus.current) {
       const wasUnresolved =
         previousStatus.current.name === UNRESOLVED_STATUS.name;
-      const isNowResolved =
-        updatedTodo.status.name !== UNRESOLVED_STATUS.name;
+      const isNowResolved = updatedTodo.status.name !== UNRESOLVED_STATUS.name;
 
       if (wasUnresolved && isNowResolved) {
         onStatusChange?.(updatedTodo.status, 'agent');
@@ -85,10 +84,16 @@ export const TodoDetails = ({
 
   useEffect(() => {
     socket.on(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
-    socket.on(WebsocketClientEvent.TODO_ACTIVITY_CREATED, handleTodoActivityCreated);
+    socket.on(
+      WebsocketClientEvent.TODO_ACTIVITY_CREATED,
+      handleTodoActivityCreated,
+    );
     return () => {
       socket.off(WebsocketClientEvent.TODO_CHANGED, handleTodoChanged);
-      socket.off(WebsocketClientEvent.TODO_ACTIVITY_CREATED, handleTodoActivityCreated);
+      socket.off(
+        WebsocketClientEvent.TODO_ACTIVITY_CREATED,
+        handleTodoActivityCreated,
+      );
     };
   }, [socket, refetch, todoId]);
 
