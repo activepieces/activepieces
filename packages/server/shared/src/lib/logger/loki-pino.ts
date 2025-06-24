@@ -1,7 +1,7 @@
 import { Level, Logger, pino, TransportTargetOptions } from 'pino'
 import 'pino-loki'
 
-export type LokiCredentials = {        
+export type LokiCredentials = {
     url: string | undefined
     username: string | undefined
     password: string | undefined
@@ -26,6 +26,9 @@ export const createLokiTransport = (level: Level, targets: TransportTargetOption
                         batching: true,
                         interval: 5,
                         host: lokiUrl,
+                        labels: {
+                            app: 'automationx',
+                        },
                         basicAuth:
                             lokiUsername && lokiPassword
                                 ? {
@@ -39,4 +42,4 @@ export const createLokiTransport = (level: Level, targets: TransportTargetOption
             ],
         },
     })
-} 
+}
