@@ -273,14 +273,18 @@ export const testStepHooks = {
         return testStepResponse;
       },
       onSuccess: ({ success, standardOutput, standardError }) => {
+        const errorMessage = standardOutput ?? standardError;
         setErrorMessage?.(undefined);
-        setConsoleLogs?.(standardOutput ?? standardError ?? null);
+        setConsoleLogs?.(errorMessage ?? null);
         if (success) {
           onSuccess?.();
         } else {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
-              t('Failed to run test step, please ensure settings are correct.'),
+              errorMessage ??
+                t(
+                  'Failed to run test step, please ensure settings are correct.',
+                ),
             ),
           );
         }

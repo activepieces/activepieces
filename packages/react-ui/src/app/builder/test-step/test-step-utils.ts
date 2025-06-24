@@ -4,10 +4,15 @@ function formatErrorMessage(errorMessage: string): string {
     return errorMessage;
   }
 
+  const filteredParts = errorMessagesSplit.filter((part) => part.trim() !== '');
+
   const indentationStep = '  ';
-  return errorMessagesSplit.reduce((acc, current, index) => {
+  return filteredParts.reduce((acc, current, index) => {
     const indentation = indentationStep.repeat(index);
-    return `${acc}${indentation}Error ${index + 1}: ${current.trim()}\n`;
+    const cleanedPart = current.trim().replace(/^\n+|\n+$/g, '');
+    const errorLabel =
+      filteredParts.length === 1 ? 'Error' : `Error ${index + 1}`;
+    return `${acc}${indentation}${errorLabel}: ${cleanedPart}\n`;
   }, '');
 }
 

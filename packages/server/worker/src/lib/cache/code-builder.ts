@@ -153,7 +153,7 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
+    const errorMessage = `Compilation Error ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
 
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
