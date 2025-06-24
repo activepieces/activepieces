@@ -1,9 +1,11 @@
 import { t } from 'i18next';
+import { InfoIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import ActivepiecesCreateTodoGuide from '@/assets/img/custom/ActivepiecesCreateTodoGuide.png';
 import ActivepiecesTodo from '@/assets/img/custom/ActivepiecesTodo.png';
 import ExternalChannelTodo from '@/assets/img/custom/External_Channel_Todo.png';
+import { CardListItem } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,32 +19,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import {
-  CORE_STEP_METADATA,
-  TODO_ACTIONS,
-} from '@/features/pieces/lib/step-utils';
-import {
-  PieceSelectorItem,
-  PieceSelectorOperation,
-  PieceSelectorPieceItem,
-  PieceStepMetadataWithSuggestions,
-} from '@/lib/types';
-import {
-  ActionType,
-  BranchExecutionType,
-  BranchOperator,
-  FlowOperationType,
-  isNil,
-  RouterActionSettings,
-  RouterExecutionType,
-  StepLocationRelativeToParent,
-  TodoType,
-} from '@activepieces/shared';
+import { useNewWindow } from '@/lib/navigation-utils';
+import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { isNil, TodoType } from '@activepieces/shared';
 
-import { BuilderState, useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
 
+import {
+  createRouterStep,
+  createTodoStep,
+  createWaitForApprovalStep,
+} from './create-todo-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 
 type CreateTodoGuideProps = {
@@ -51,163 +39,125 @@ type CreateTodoGuideProps = {
   hidePieceIcon: boolean;
 };
 
-const getTodoActionName = (todoType: TodoType) => {
-  switch (todoType) {
-    case TodoType.INTERNAL:
-      return TODO_ACTIONS.createTodoAndWait;
-    case TodoType.EXTERNAL:
-      return TODO_ACTIONS.wait_for_approval;
-  }
-};
+const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
+  const image =
+    todoType === TodoType.INTERNAL
+      ? ActivepiecesCreateTodoGuide
+      : ExternalChannelTodo;
+  const alt =
+    todoType === TodoType.INTERNAL ? 'Todos flow' : 'External channel flow';
+  const title =
+    todoType === TodoType.INTERNAL
+      ? t('Preview (Activepieces Todos)')
+      : t('Preview (External channel)');
+  const description =
+    todoType === TodoType.INTERNAL
+      ? t('Users will manage tasks directly in our interface')
+      : t(
+          'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
+        );
+  return (
+    <div className="overflow-hidden p-3 w-full h-full">
+      <div className="flex flex-col items-center h-[480px]">
+        <h3 className="text-md font-medium mb-3 text-center">{title}</h3>
 
-const getActionFromPieceMetadata = (
-  pieceMetadata: PieceStepMetadataWithSuggestions,
-  actionName: string,
-) => {
-  const result = pieceMetadata.suggestedActions?.find(
-    (action) => action.name === actionName,
+        <div className="w-full h-[350px]  rounded mb-2 flex items-center justify-center bg-muted/50 relative">
+          <img src={image} alt={alt} className="w-full h-full object-contain" />
+          <div className="absolute -bottom-1 left-0 right-0 h-28 bg-gradient-to-t from-white dark:from-background to-transparent"></div>
+        </div>
+
+        <p className="text-sm text-muted-foreground italic text-center mb-2">
+          {description}
+        </p>
+      </div>
+    </div>
   );
-  if (isNil(result)) {
-    toast(INTERNAL_ERROR_TOAST);
-    console.error(`Action ${actionName} not found in piece metadata`);
-    return null;
-  }
-  return result;
 };
 
-const createRouterStep = ({
-  parentStepName,
-  logoUrl,
-  handleAddingOrUpdatingStep,
-}: {
-  parentStepName: string;
-  logoUrl: string;
-  handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'];
-}) => {
-  const routerInternalSettings: RouterActionSettings = {
-    branches: [
-      {
-        conditions: [
-          [
-            {
-              operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-              firstValue: `{{ ${parentStepName}['status'] }}`,
-              secondValue: 'Accepted',
-              caseSensitive: false,
-            },
-          ],
-        ],
-        branchType: BranchExecutionType.CONDITION,
-        branchName: 'Accepted',
-      },
-      {
-        branchType: BranchExecutionType.FALLBACK,
-        branchName: 'Rejected',
-      },
-    ],
-    executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-    inputUiInfo: {},
-  };
-  return handleAddingOrUpdatingStep({
-    pieceSelectorItem: {
-      ...CORE_STEP_METADATA[ActionType.ROUTER],
-      displayName: t('Check Todo Status'),
-    },
-    operation: {
-      type: FlowOperationType.ADD_ACTION,
-      actionLocation: {
-        parentStep: parentStepName,
-        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-      },
-    },
-    selectStepAfter: false,
-    settings: routerInternalSettings,
-    customLogoUrl: logoUrl,
-  });
-};
-
-const createTodoStep = ({
-  pieceMetadata,
-  operation,
+const TodoTypeOption = ({
   todoType,
-  handleAddingOrUpdatingStep,
+  setTodoType,
+  setHoveredOption,
+  selectedTodoType,
 }: {
-  pieceMetadata: PieceStepMetadataWithSuggestions;
-  operation: PieceSelectorOperation;
   todoType: TodoType;
-  handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'];
+  setTodoType: (todoType: TodoType) => void;
+  setHoveredOption: (todoType: TodoType | null) => void;
+  selectedTodoType: TodoType;
 }) => {
-  const actionName = getTodoActionName(todoType);
-  const createTodoAction = getActionFromPieceMetadata(
-    pieceMetadata,
-    actionName,
-  );
-  if (isNil(createTodoAction)) {
-    return null;
-  }
-  return handleAddingOrUpdatingStep({
-    pieceSelectorItem: {
-      actionOrTrigger: createTodoAction,
-      type: ActionType.PIECE,
-      pieceMetadata: pieceMetadata,
-    },
-    operation,
-    selectStepAfter: true,
-  });
-};
+  const selected = todoType === selectedTodoType;
+  const title =
+    todoType === TodoType.INTERNAL
+      ? t('Internal Todos')
+      : t('External Channel (Slack, Teams, Email, ...)');
+  const description =
+    todoType === TodoType.INTERNAL
+      ? t('Users will manage tasks directly in our interface')
+      : t(
+          'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
+        );
+  const openNewWindow = useNewWindow();
+  return (
+    <CardListItem
+      className={cn(
+        `p-4 rounded-lg border  block hover:border-primary/50 hover:bg-muted/50`,
+        selected && 'border-primary bg-primary/5',
+      )}
+      onClick={() => setTodoType(todoType)}
+      interactive={true}
+      onMouseEnter={() => setHoveredOption(todoType)}
+      onMouseLeave={() => setHoveredOption(null)}
+    >
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-md font-medium flex items-center gap-2">
+          {title}
+          {todoType === TodoType.INTERNAL && (
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <InfoIcon className="w-4 h-4" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="w-[550px]">
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-sm select-none">
+                      {t('Users will manage tasks directly in our interface')}
+                    </span>{' '}
+                    <span
+                      className="text-sm text-primary underline cursor-pointer"
+                      onClick={() => openNewWindow('/todos')}
+                    >
+                      {t('here')}
+                    </span>
+                  </div>
 
-const createWaitForApprovalStep = ({
-  pieceMetadata,
-  parentStepName,
-  handleAddingOrUpdatingStep,
-}: {
-  pieceMetadata: PieceStepMetadataWithSuggestions;
-  parentStepName: string;
-  handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'];
-}) => {
-  const waitForApprovalAction = getActionFromPieceMetadata(
-    pieceMetadata,
-    TODO_ACTIONS.wait_for_approval,
+                  <div className="bg-muted rounded p-1">
+                    <img
+                      src={ActivepiecesTodo}
+                      alt="Todo UI"
+                      className="w-full h-auto rounded"
+                    />
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </h4>
+        <div className="flex-shrink-0 w-5 h-5">
+          <div
+            className={cn(
+              `w-5 h-5 rounded-full grid place-items-center border border-muted-foreground`,
+              selected && 'border-primary',
+            )}
+          >
+            {selected && (
+              <div className="w-3 h-3 rounded-full bg-primary"></div>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </CardListItem>
   );
-  if (isNil(waitForApprovalAction)) {
-    return null;
-  }
-  const pieceSelectorItem: PieceSelectorItem = {
-    actionOrTrigger: waitForApprovalAction,
-    type: ActionType.PIECE,
-    pieceMetadata: pieceMetadata,
-  };
-  const waitForApprovalStep = {
-    pieceSelectorItem,
-    operation: {
-      type: FlowOperationType.ADD_ACTION,
-      actionLocation: {
-        parentStep: parentStepName,
-        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-      },
-    },
-    selectStepAfter: false,
-  } as const;
-  const waitForApprovalStepName =
-    handleAddingOrUpdatingStep(waitForApprovalStep);
-  const defaultValues = pieceSelectorUtils.getDefaultStepValues({
-    stepName: waitForApprovalStepName,
-    pieceSelectorItem: {
-      actionOrTrigger: waitForApprovalAction,
-      type: ActionType.PIECE,
-      pieceMetadata: pieceMetadata,
-    },
-  });
-  defaultValues.settings.input.taskId = `{{ ${parentStepName}['id'] }}`;
-  return handleAddingOrUpdatingStep({
-    pieceSelectorItem,
-    operation: {
-      type: FlowOperationType.UPDATE_ACTION,
-      stepName: waitForApprovalStepName,
-    },
-    selectStepAfter: false,
-    settings: defaultValues.settings,
-  });
 };
 
 const CreateTodoDialog = ({
@@ -216,8 +166,7 @@ const CreateTodoDialog = ({
   hidePieceIcon,
 }: CreateTodoGuideProps) => {
   const [todoType, setTodoType] = useState<TodoType>(TodoType.INTERNAL);
-  const [hoveredOption, setHoveredOption] = useState<TodoType | null>(null);
-  const displayImageType = hoveredOption || todoType;
+  const [hoveredTodoType, setHoveredTodoType] = useState<TodoType | null>(null);
   const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
     state.handleAddingOrUpdatingStep,
   ]);
@@ -271,9 +220,7 @@ const CreateTodoDialog = ({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
-            <DialogTitle className="text-xl">
-              {t('Create Todo Guide')}
-            </DialogTitle>
+            <DialogTitle className="text-xl">{t('Create Todo')}</DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto pr-1">
@@ -282,144 +229,28 @@ const CreateTodoDialog = ({
                 <h3 className="text-lg font-medium">
                   {t('Where would you like the todo to be reviewed?')}
                 </h3>
-
                 <div className="space-y-4">
-                  <div
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      todoType === TodoType.INTERNAL
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                    }`}
-                    onClick={() => setTodoType(TodoType.INTERNAL)}
-                    onMouseEnter={() => setHoveredOption(TodoType.INTERNAL)}
-                    onMouseLeave={() => setHoveredOption(null)}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-md font-medium flex items-center gap-2">
-                        {t('Activepieces Todos')}
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs cursor-help">
-                              i
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="w-[550px]">
-                            <div className="space-y-2">
-                              <p className="text-sm">
-                                {t(
-                                  'Users will manage tasks directly in Activepieces',
-                                )}
-                              </p>
-                              <div className="bg-muted rounded p-1">
-                                <img
-                                  src={ActivepiecesTodo}
-                                  alt="Activepieces Todo UI"
-                                  className="w-full h-auto rounded"
-                                />
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </h4>
-                      <div className="flex-shrink-0 w-5 h-5">
-                        <div
-                          className={`w-5 h-5 rounded-full grid place-items-center border ${
-                            todoType === TodoType.INTERNAL
-                              ? 'border-primary'
-                              : 'border-muted-foreground'
-                          }`}
-                        >
-                          {todoType === TodoType.INTERNAL && (
-                            <div className="w-3 h-3 rounded-full bg-primary"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t(
-                        'Users will manage and respond to todos directly within the Activepieces interface. Ideal for internal teams.',
-                      )}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      todoType === TodoType.EXTERNAL
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                    }`}
-                    onClick={() => setTodoType(TodoType.EXTERNAL)}
-                    onMouseEnter={() => setHoveredOption(TodoType.EXTERNAL)}
-                    onMouseLeave={() => setHoveredOption(null)}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-md font-medium">
-                        {t('External Channel (Slack, Teams, Email, ...)')}
-                      </h4>
-                      <div className="flex-shrink-0 w-5 h-5">
-                        <div
-                          className={`w-5 h-5 rounded-full grid place-items-center border ${
-                            todoType === TodoType.EXTERNAL
-                              ? 'border-primary'
-                              : 'border-muted-foreground'
-                          }`}
-                        >
-                          {todoType === TodoType.EXTERNAL && (
-                            <div className="w-3 h-3 rounded-full bg-primary"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t(
-                        'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
-                      )}
-                    </p>
-                  </div>
+                  <TodoTypeOption
+                    todoType={TodoType.INTERNAL}
+                    setTodoType={setTodoType}
+                    setHoveredOption={setHoveredTodoType}
+                    selectedTodoType={todoType}
+                  />
+                  <TodoTypeOption
+                    todoType={TodoType.EXTERNAL}
+                    setTodoType={setTodoType}
+                    setHoveredOption={setHoveredTodoType}
+                    selectedTodoType={todoType}
+                  />
                 </div>
               </div>
-
               <div className="md:w-1/2 flex flex-col items-center justify-center">
-                <div className="border rounded-lg overflow-hidden p-3 w-full h-full">
-                  <div className="flex flex-col items-center h-[480px]">
-                    <h3 className="text-md font-medium mb-3 text-center">
-                      {displayImageType === TodoType.INTERNAL
-                        ? t('Preview (Activepieces Todos)')
-                        : t('Preview (External channel)')}
-                    </h3>
-
-                    <div className="w-full h-[350px] overflow-hidden rounded mb-2 flex items-center justify-center bg-muted/50 relative">
-                      <img
-                        src={
-                          displayImageType === TodoType.INTERNAL
-                            ? ActivepiecesCreateTodoGuide
-                            : ExternalChannelTodo
-                        }
-                        alt={
-                          displayImageType === TodoType.INTERNAL
-                            ? 'Activepieces Todos flow'
-                            : 'External channel flow'
-                        }
-                        className="w-full h-full object-contain"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-white dark:from-background to-transparent"></div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground italic text-center mb-2">
-                      {displayImageType === TodoType.INTERNAL
-                        ? t(
-                            'Todos allow users to review and resolve tasks directly in our interface',
-                          )
-                        : t(
-                            'You can add the channel before the Wait Step, and configure the logic in the Router step',
-                          )}
-                    </p>
-                  </div>
-                </div>
+                <PreviewImage todoType={hoveredTodoType || todoType} />
               </div>
             </div>
           </div>
 
-          <DialogFooter className="shrink-0 mt-3 pt-3 border-t">
+          <DialogFooter className="shrink-0 mt-3 pt-3">
             <Button
               variant="secondary"
               onClick={() => setOpen(false)}
