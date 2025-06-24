@@ -216,7 +216,7 @@ export const httpSendRequestAction = createAction({
   },
   errorHandlingOptions: {
     continueOnFailure: { hide: true },
-    retryOnFailure: { hide: true },
+    retryOnFailure: { defaultValue: true },
   },
   async run(context) {
     const {
