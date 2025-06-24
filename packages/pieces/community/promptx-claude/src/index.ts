@@ -76,10 +76,10 @@ export const promptxAuth = PieceAuth.CustomAuth({
 });
 export const avalantAnthropicClaude = createPiece({
   displayName: 'PromptX Claude',
-  description: 'Talk to Anthropic Claude AI tweaked for PromptX platform',
+  description: 'Talk to Anthropic Claude AI using your available PromptX credits. Use the many tools Claude AI has to offer using your PromptX credits per request.',
   auth: promptxAuth,
   minimumSupportedRelease: '0.63.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+  logoUrl: 'https://ml.oneweb.tech/public_img_main/images/PromptXAI/PromptXAI_966a5d3196cf4252a86814e8c7bed98b.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
   actions: [

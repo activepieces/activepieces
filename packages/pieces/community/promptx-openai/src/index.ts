@@ -81,10 +81,10 @@ export const promptxAuth = PieceAuth.CustomAuth({
 
 export const avalantOpenai = createPiece({
   displayName: 'PromptX OpenAI',
-  description: 'Talk to OpenAI ChatGPT tweaked for PromptX platform',
+  description: 'Talk directly to OpenAI’s ChatGPT using your available PromptX credits. Use the many tools ChatGPT has to offer using your PromptX credits per request.',
   auth: promptxAuth,
   minimumSupportedRelease: '0.63.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  logoUrl: 'https://ml.oneweb.tech/public_img_main/images/PromptXAI/PromptXAI_0f345f3d9b6743f09e7d3db295973845.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
   actions: [
