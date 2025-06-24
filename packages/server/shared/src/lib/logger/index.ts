@@ -1,7 +1,6 @@
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
-import { BetterStackParams, createLogTailTransport } from './betterstack-pino'
 import { createLokiTransport, LokiCredentials } from './loki-pino'
 
 export const pinoLogging = {
@@ -34,45 +33,6 @@ export const pinoLogging = {
         const lokiLogger = createLokiTransport(level, defaultTargets, loki)
         if (lokiLogger) {
             return lokiLogger
-        }
-
-        // Default logger
-        return pino({
-            level,
-            transport: {
-                targets: defaultTargets,
-            },
-        })
-    },
-    initLogTailLogger: (loggerLevel: Level | undefined, logPretty: boolean, params: BetterStackParams): Logger => {
-        const level: Level = loggerLevel ?? 'info'
-        const pretty = logPretty ?? false
-
-        if (pretty) {
-            return pino({
-                level,
-                transport: {
-                    target: 'pino-pretty',
-                    options: {
-                        translateTime: 'HH:MM:ss Z',
-                        colorize: true,
-                        ignore: 'pid,hostname',
-                    },
-                },
-            })
-        }
-
-        const defaultTargets = [
-            {
-                target: 'pino/file',
-                level,
-                options: {},
-            },
-        ]
-
-        const logTailLogger = createLogTailTransport(level, defaultTargets, params)
-        if (logTailLogger) {
-            return logTailLogger
         }
 
         // Default logger

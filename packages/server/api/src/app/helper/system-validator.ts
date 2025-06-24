@@ -155,8 +155,6 @@ const systemPropValidators: {
     [AppSystemProp.LOGIN_URL]: urlValidator,
     [AppSystemProp.ZERO_SERVICE_URL]: urlValidator,
     [AppSystemProp.BOTX_URL]: urlValidator,
-    [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
-    [AppSystemProp.BETTERSTACK_ENDPOINT]: urlValidator,
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
