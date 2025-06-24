@@ -5,9 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
-import { systemJobsSchedule } from '../../../helper/system-jobs'
-import { SystemJobName } from '../../../helper/system-jobs/common'
-import { platformPlanRepo, platformPlanService } from './platform-plan.service'
+import { platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
@@ -56,17 +54,16 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         
-        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
         const basePriceId = STRIPE_PLAN_PRICE_IDS[params.plan]
-
-        lineItems.push({
-            price: basePriceId,
-            quantity: 1,
-        })
-
-        lineItems.push({
-            price: AI_CREDITS_PRICE_ID,
-        })
+        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+            {
+                price: basePriceId,
+                quantity: 1,
+            },
+            {
+                price: AI_CREDITS_PRICE_ID,
+            },
+        ]
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -106,7 +103,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             expand: ['items.data.price'],
         })
 
-        const items: Stripe.SubscriptionUpdateParams.Item[] = []
 
         const currentPlanItem = currentSubscription.items.data.find(
             item => Object.values(STRIPE_PLAN_PRICE_IDS).includes(item.price.id),
@@ -118,46 +114,24 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             item => item.price.id === USER_PRICE_ID,
         )
 
-        if (currentPlanItem) {
-            items.push({
-                id: currentPlanItem.id,
+        const items: Stripe.SubscriptionUpdateParams.Item[] = [
+            {
+                id: currentPlanItem?.id,
                 price: STRIPE_PLAN_PRICE_IDS[plan],
                 quantity: 1,
-            })
-        }
-        else {
-            items.push({
-                price: STRIPE_PLAN_PRICE_IDS[plan],
-                quantity: 1,
-            })
-        }
-
-        if (currentAICreditsItem) {
-            items.push({
-                id: currentAICreditsItem.id,
+            },
+            {
+                id: currentAICreditsItem?.id,
                 price: AI_CREDITS_PRICE_ID,
-            })
-        }
-        else {
-            items.push({
-                price: AI_CREDITS_PRICE_ID,
-            })
-        }
+            },
+        ]
 
         if (plan === PlanName.BUSINESS && extraUsers > 0) {
-            if (currentUserSeatsItem) {
-                items.push({
-                    id: currentUserSeatsItem.id,
-                    price: USER_PRICE_ID,
-                    quantity: extraUsers,
-                })
-            }
-            else {
-                items.push({
-                    price: USER_PRICE_ID,
-                    quantity: extraUsers,
-                })
-            }
+            items.push({
+                id: currentUserSeatsItem?.id,
+                price: USER_PRICE_ID,
+                quantity: extraUsers,
+            })
         }
         else if (currentUserSeatsItem) {
             items.push({
@@ -165,22 +139,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 deleted: true,
             })
         }
-
-        const platformBilling = await platformPlanRepo().findOneBy({ stripeSubscriptionId: subscriptionId })
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.AI_USAGE_REPORT,
-                data: {
-                    platformId: platformBilling?.platformId || '',
-                    overage: '0',
-                },
-            },
-            schedule: {
-                type: 'one-time',
-                date: apDayjs().add(1, 'seconds'),
-            },
-        })
-
 
         const updateParams: Stripe.SubscriptionUpdateParams = {
             items,
@@ -281,7 +239,6 @@ async function updateSubscriptionSchedule(
 ): Promise<void> {
 
     const { startDate: currentPeriodStart, endDate: currentPeriodEnd } = await stripeHelper(logger).getSubscriptionCycleDates(subscription)
-
     const isFreeDowngrade = newPlan === PlanName.FREE
 
     const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = [
@@ -296,16 +253,13 @@ async function updateSubscriptionSchedule(
     ]
 
     if (!isFreeDowngrade) {
-        const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = []
-
-        nextPhaseItems.push({
-            price: STRIPE_PLAN_PRICE_IDS[newPlan],
-            quantity: 1,
-        })
-
-        nextPhaseItems.push({
-            price: AI_CREDITS_PRICE_ID,
-        })
+        const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
+            {
+                price: STRIPE_PLAN_PRICE_IDS[newPlan],
+                quantity: 1,
+            },
+            { price: AI_CREDITS_PRICE_ID },
+        ]
 
         if (newPlan === PlanName.BUSINESS && extraUsers > 0) {
             nextPhaseItems.push({

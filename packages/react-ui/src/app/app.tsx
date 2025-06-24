@@ -18,7 +18,7 @@ import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
 
-export const queryClient = new QueryClient();
+const queryClient = new QueryClient();
 let typesFormatsAdded = false;
 
 if (!typesFormatsAdded) {

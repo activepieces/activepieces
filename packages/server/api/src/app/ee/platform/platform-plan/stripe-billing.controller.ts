@@ -6,6 +6,7 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
+import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
@@ -35,7 +36,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const subscription = webhook.data.object as Stripe.Subscription
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
-
                         const platformPlan = await platformPlanService(request.log).updateByCustomerId({
                             subscriptionId: subscription.id,
                             customerId: subscription.customer.toString(),
@@ -57,22 +57,26 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                         const planLimits = platformPlanService(request.log).getPlanLimits(newPlan)
 
-                        if (newPlan !== PlanName.FREE) {
-                            if (newPlan === PlanName.BUSINESS && extraUsers > 0) {
-                                planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
-                            }
+                        const isFreePlan = newPlan === PlanName.FREE
+                        const isBusinessPlan = newPlan === PlanName.BUSINESS
+                        const hasExtraUsers = extraUsers > 0
+                        const isUserSeatsUpgraded = isBusinessPlan && hasExtraUsers
 
-                            planLimits.aiCreditsLimit = platformPlan.aiCreditsLimit
-                        }
-                        else {
-                            planLimits.stripeSubscriptionId = undefined
+                        if (!isFreePlan && isUserSeatsUpgraded) {
+                            planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
+                        } 
+
+                        if (isFreePlan || !isUserSeatsUpgraded) {
+                            await platformUsageService(request.log).resetPlatformUsage(platformPlan.platformId)
                         }
 
                         await platformPlanService(request.log).update({ 
-                            platformId: platformPlan.platformId,
                             ...planLimits,
+                            platformId: platformPlan.platformId,
+                            stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
+                            aiCreditsLimit: isFreePlan ? undefined : platformPlan.aiCreditsLimit,
                         })
-            
+
                         break
                     }
                     default:

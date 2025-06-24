@@ -68,6 +68,44 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         return { projectTasksUsage: projectTasksUsageIncremented, platformTasksUsage: platformTasksUsageIncremented }
     },
 
+
+    async resetPlatformUsage(platformId: string): Promise<void> {
+        const redisConnection = getRedisConnection()
+        const today = dayjs()
+        
+        const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
+        await redisConnection.del(platformTasksRedisKey)
+
+        const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
+        await redisConnection.del(platformAiCreditRedisKey)
+
+        const projectIds = await getProjectIds(platformId)
+        for (const projectId of projectIds) {
+            const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
+            await redisConnection.del(projectTasksRedisKey)
+
+            const projectAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
+            await redisConnection.del(projectAiCreditRedisKey)
+        }
+
+        await systemJobsSchedule(system.globalLogger()).upsertJob({
+            job: {
+                name: SystemJobName.AI_USAGE_REPORT,
+                data: {
+                    platformId,
+                    overage: '0',
+                },
+                jobId: `ai-credit-usage-reset-${platformId}-${apDayjs().unix()}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs().add(1, 'seconds'),
+            },
+        })
+
+
+    },
+
     async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
         const incrementBy = cost * 1000
         const edition = system.getEdition()

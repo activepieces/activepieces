@@ -44,6 +44,19 @@ async function getNextBillingInfo(
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
+    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
+        const platformId = request.principal.platform.id
+        const projectId = request.principal.projectId
+
+        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
+
+        return {
+            message: 'AI credit usage increased',
+            platformAiCreditUsage,
+            projectAiCreditUsage,
+        }
+    })
+
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
         const stripe = stripeHelper(request.log).getStripe()
