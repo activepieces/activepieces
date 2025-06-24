@@ -42,6 +42,7 @@ import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-sw
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
+import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -223,6 +224,11 @@ import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-
 import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
 import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
 import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
+import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
+import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
+import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
+import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -376,12 +382,19 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AIProviderRedactorPostgres1748871900624,
         MigrateMcpFlowsToBeTools1748996336492,
         AddMcpToolFlowCascadeDelete1749128866314,
+        AIUsagePostgres1750090291551,
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
         AddAgentsLimitToPlatformPlan1749917984363,
         RemoveDefaultLocaleFromPlatform1749733527371,
         AddStepToIssuesTable1750017637712,
         MakeStepNameOptional1750025401754,
+        RemoveUniqueOnFlow1750093037011,
+        ChangeTodoActivityContentFormat1750354589729,
+        RevertDescriptionTodoNaming1750389164014,
+        RegenerateIssuesTable1750392148590,
+        RemoveProjectIdFromIndex1750712746125,
+
     ]
 
     const edition = system.getEdition()

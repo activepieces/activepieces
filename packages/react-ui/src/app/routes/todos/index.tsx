@@ -344,7 +344,6 @@ function TodosPage() {
           description={t(
             'Manage todos for your project that are created by automations',
           )}
-          beta={true}
         >
           {t('Todos')}
         </TableTitle>

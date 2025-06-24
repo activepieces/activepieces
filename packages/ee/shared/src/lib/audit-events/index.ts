@@ -309,11 +309,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.UPDATE_ACTION:
             return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.DELETE_ACTION:
-        {
-            const request = event.data.request.request
-            const names = request.names
-            return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`
-        }
+            {
+                const request = event.data.request.request
+                const names = request.names
+                return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`
+            }
         case FlowOperationType.CHANGE_NAME:
             return `Renamed flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.displayName}".`
         case FlowOperationType.LOCK_AND_PUBLISH:
@@ -335,40 +335,57 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.CHANGE_FOLDER:
             return `Moved flow "${event.data.flowVersion.displayName}" to folder id ${event.data.request.request.folderId}.`
         case FlowOperationType.DELETE_BRANCH: {
-            return `Deleted branch number ${
-                event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            return `Deleted branch number ${event.data.request.request.branchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`
         }
         case FlowOperationType.DUPLICATE_BRANCH: {
-            return `Duplicated branch number ${
-                event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            return `Duplicated branch number ${event.data.request.request.branchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`
         }
         case FlowOperationType.ADD_BRANCH:
-            return `Added branch number ${
-                event.data.request.request.branchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            return `Added branch number ${event.data.request.request.branchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`
         case FlowOperationType.SET_SKIP_ACTION:
-        {
-            const request = event.data.request.request
-            const names = request.names
-            return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`
-        }
+            {
+                const request = event.data.request.request
+                const names = request.names
+                return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`
+            }
         case FlowOperationType.UPDATE_METADATA:
             return `Updated metadata for flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.MOVE_BRANCH:
-            return `Moved branch number ${
-                event.data.request.request.sourceBranchIndex + 1
-            } to ${
-                event.data.request.request.targetBranchIndex + 1
-            } in flow "${event.data.flowVersion.displayName}" for the step "${
-                event.data.request.request.stepName
-            }".`
+            return `Moved branch number ${event.data.request.request.sourceBranchIndex + 1
+                } to ${event.data.request.request.targetBranchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`
+
+        case FlowOperationType.SAVE_SAMPLE_DATA: {
+            return `Saved sample data for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`;
+        }
+        case FlowOperationType.DUPLICATE_BRANCH: {
+            return `Duplicated branch number ${event.data.request.request.branchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`;
+        }
+        case FlowOperationType.ADD_BRANCH:
+            return `Added branch number ${event.data.request.request.branchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`;
+        case FlowOperationType.SET_SKIP_ACTION:
+            {
+                const request = event.data.request.request
+                const names = request.names
+                return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
+            }
+        case FlowOperationType.UPDATE_METADATA:
+            return `Updated metadata for flow "${event.data.flowVersion.displayName}".`;
+        case FlowOperationType.MOVE_BRANCH:
+            return `Moved branch number ${event.data.request.request.sourceBranchIndex + 1
+                } to ${event.data.request.request.targetBranchIndex + 1
+                } in flow "${event.data.flowVersion.displayName}" for the step "${event.data.request.request.stepName
+                }".`;
     }
 }

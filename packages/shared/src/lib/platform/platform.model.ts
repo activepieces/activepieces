@@ -114,6 +114,7 @@ export const PlatformPlan = Type.Object({
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
@@ -166,8 +167,6 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
-    hasLicenseKey: Type.Optional(Type.Boolean()),
-    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',

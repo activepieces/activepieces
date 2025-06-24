@@ -20,8 +20,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
 import type { PopulatedFlow } from '@activepieces/shared';
+import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
 
@@ -119,7 +119,7 @@ export function McpFlowDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="min-w-[750px] max-w-[750px] h-[800px] max-h-[800px] flex flex-col overflow-hidden">
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
           <DialogDescription>
