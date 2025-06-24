@@ -4,14 +4,18 @@ function formatErrorMessage(errorMessage: string): string {
     return errorMessage;
   }
 
-  const trimmedErrorMessages = errorMessagesSplit.filter((part) => part.trim() !== '');
+  const trimmedErrorMessages = errorMessagesSplit.filter(
+    (part) => part.trim() !== '',
+  );
 
   const indentationStep = '  ';
   return trimmedErrorMessages.reduce((acc, current, index) => {
     const indentation = indentationStep.repeat(index);
-    const errorMessageWithoutEndlines = current.trim().replace(/^\n+|\n+$/g, '');
+    const errorMessageWithoutEndlines = current
+      .trim()
+      .replace(/^\n+|\n+$/g, '');
     const errorLabel =
-    trimmedErrorMessages.length === 1 ? 'Error' : `Error ${index + 1}`;
+      trimmedErrorMessages.length === 1 ? 'Error' : `Error ${index + 1}`;
     return `${acc}${indentation}${errorLabel}: ${errorMessageWithoutEndlines}\n`;
   }, '');
 }
