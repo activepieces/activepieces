@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,

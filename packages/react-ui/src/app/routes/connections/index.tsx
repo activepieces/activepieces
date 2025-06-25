@@ -44,7 +44,7 @@ import {
 } from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

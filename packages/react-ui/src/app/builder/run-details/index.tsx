@@ -26,7 +26,7 @@ import {
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';
 
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
+import { FlowStepDetailsCardItem } from './run-step-card-item';
 import { FlowStepIO } from './flow-step-io';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {

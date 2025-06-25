@@ -40,6 +40,7 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import { stepUtils } from '@/features/pieces/lib/step-utils';
 
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
@@ -72,11 +73,12 @@ const createGraphKey = (flowVersion: FlowVersion) => {
           ? step.settings.branches.map((branch) => branch.branchName).join('-')
           : '0';
       const childrenKey = getChildrenKey(step);
+      const agentId = stepUtils.getAgentId(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesNames}-${childrenKey}`;
+      }-${branchesNames}-${childrenKey}-${agentId}`;
     }, '');
 };
 

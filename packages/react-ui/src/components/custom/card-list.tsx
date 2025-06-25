@@ -31,7 +31,7 @@ export { CardList };
 const cardItemListVariants = cva('flex items-center gap-4 w-full py-4 px-2 ', {
   variants: {
     interactive: {
-      true: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
+      true: 'cursor-pointer transition-all hover:bg-accent hover:text-accent-foreground',
       false: 'cursor-default text-accent-foreground/50 font-semibold',
     },
     selected: {

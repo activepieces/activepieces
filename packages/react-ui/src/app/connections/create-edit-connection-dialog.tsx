@@ -45,7 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import { newConnectionUtils } from '../../features/connections/lib/utils';
-import { formUtils } from '../builder/piece-properties/form-utils';
+import { formUtils } from '../../features/pieces/lib/form-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';

@@ -24,12 +24,13 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type { McpWithTools } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
+
 
 type McpPieceDialogProps = {
   children: React.ReactNode;

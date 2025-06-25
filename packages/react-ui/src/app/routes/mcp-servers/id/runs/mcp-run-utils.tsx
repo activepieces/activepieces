@@ -9,9 +9,10 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { StepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { StepMetadataWithSuggestions } from '@/lib/types';
 import { formatUtils } from '@/lib/utils';
 import { McpRun, McpRunStatus } from '@activepieces/shared';
+
 
 const getToolIcon = (
   item: McpRun,

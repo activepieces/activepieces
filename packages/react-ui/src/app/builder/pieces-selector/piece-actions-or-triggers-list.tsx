@@ -41,7 +41,7 @@ const convertStepMetadataToPieceSelectorItems = (
       const actions = Object.values(
         stepMetadataWithSuggestions.suggestedActions ?? {},
       );
-      const filteredActions = actions.filter(
+      const actionsWithoutHidden = actions.filter(
         (action) =>
           !hiddenActions.some(
             (hidden) =>
@@ -49,7 +49,7 @@ const convertStepMetadataToPieceSelectorItems = (
               hidden.pieceName === stepMetadataWithSuggestions.pieceName,
           ),
       );
-      return filteredActions.map((action) => ({
+      return actionsWithoutHidden.map((action) => ({
         actionOrTrigger: action,
         type: ActionType.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,
@@ -101,41 +101,17 @@ export const PieceActionsOrTriggersList: React.FC<
       <CardList className="min-w-[350px] h-full gap-0" listClassName="gap-0">
         {actionsOrTriggers &&
           actionsOrTriggers.map((item, index) => {
-            switch (item.type) {
-              case ActionType.PIECE: {
-                switch (item.actionOrTrigger.name) {
-                  case 'createTodo': {
-                    return (
-                      <CreateTodoDialog
-                        key={index}
-                        pieceSelectorItem={item}
-                        operation={operation}
-                        hidePieceIcon={hidePieceIcon}
-                      />
-                    );
-                  }
-
-                  default:
-                    return (
-                      <GenericActionOrTriggerItem
-                        key={index}
-                        item={item}
-                        hidePieceIcon={hidePieceIcon}
-                        stepMetadataWithSuggestions={
-                          stepMetadataWithSuggestions
-                        }
-                        onClick={() =>
-                          handleAddingOrUpdatingStep({
-                            pieceSelectorItem: item,
-                            operation,
-                            selectStepAfter: true,
-                          })
-                        }
-                      />
-                    );
-                }
-              }
-              default:
+               const isCreateTodoAction =  item.type === ActionType.PIECE && item.actionOrTrigger.name === 'createTodo';
+               if(isCreateTodoAction) {
+                return (
+                  <CreateTodoDialog
+                    key={index}
+                    pieceSelectorItem={item}
+                    operation={operation}
+                    hidePieceIcon={hidePieceIcon}
+                  />
+                )
+               }
                 return (
                   <GenericActionOrTriggerItem
                     key={index}
@@ -151,7 +127,7 @@ export const PieceActionsOrTriggersList: React.FC<
                     }
                   />
                 );
-            }
+            
           })}
       </CardList>
     </ScrollArea>

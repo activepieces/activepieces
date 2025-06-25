@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   Step,
+  TriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
 
@@ -38,6 +39,7 @@ const ApStepCanvasNode = React.memo(
       flowVersion,
       setSelectedBranchIndex,
       isPieceSelectorOpened,
+      setOpenedPieceSelectorStepNameOrAddButtonId,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -46,11 +48,11 @@ const ApStepCanvasNode = React.memo(
       state.flowVersion,
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
+      state.setOpenedPieceSelectorStepNameOrAddButtonId,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
@@ -66,14 +68,20 @@ const ApStepCanvasNode = React.memo(
       },
     });
 
+
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
+      if(step.type === TriggerType.EMPTY){
+        setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
+      }
       e.preventDefault();
       e.stopPropagation();
     };
+    const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
+    const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
     return (
       <div
         {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
@@ -96,8 +104,8 @@ const ApStepCanvasNode = React.memo(
         onClick={(e) => handleStepClick(e)}
         key={step.name}
         ref={isPieceSelectorOpened ? null : setNodeRef}
-        {...(!isPieceSelectorOpened ? attributes : {})}
-        {...(!isPieceSelectorOpened ? listeners : {})}
+        {...stepNodeDivAttributes}
+        {...stepNodeDivListeners}
       >
         <div
           className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
@@ -124,8 +132,8 @@ const ApStepCanvasNode = React.memo(
                 stepName: step.name,
               }}
               id={step.name}
-              initiallySelectedPieceMetadataName={stepMetadata?.displayName}
               openSelectorOnClick={false}
+              stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div
                 className="flex items-center justify-center h-full w-full gap-3"

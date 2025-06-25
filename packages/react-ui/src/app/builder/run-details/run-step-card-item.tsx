@@ -20,15 +20,15 @@ import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
 import { LoopIterationInput } from './loop-iteration-input';
-type FlowStepDetailsCardProps = {
+type RunStepCardProps = {
   stepName: string;
   depth: number;
 };
 
-const FlowStepDetailsCardItem = ({
+const RunStepCardItem = ({
   stepName,
   depth,
-}: FlowStepDetailsCardProps) => {
+}: RunStepCardProps) => {
   const [
     loopsIndexes,
     step,
@@ -183,16 +183,16 @@ const FlowStepDetailsCardItem = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="p-0">
         {children.map((stepName) => (
-          <FlowStepDetailsCardItem
+          <RunStepCardItem
             stepName={stepName}
             key={stepName}
             depth={depth + 1}
-          ></FlowStepDetailsCardItem>
+          ></RunStepCardItem>
         ))}
       </CollapsibleContent>
     </Collapsible>
   );
 };
 
-FlowStepDetailsCardItem.displayName = 'FlowStepDetailsCard';
-export { FlowStepDetailsCardItem };
+RunStepCardItem.displayName = 'RunStepCardItem';
+export { RunStepCardItem as FlowStepDetailsCardItem };
