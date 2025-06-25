@@ -342,7 +342,8 @@
         "install/architecture/overview",
         "install/architecture/workers",
         "install/architecture/engine",
-        "install/architecture/stack"
+        "install/architecture/stack",
+        "install/architecture/performance"
       ]
     },
     {
@@ -491,8 +492,7 @@
         "about/breaking-changes",
         "about/changelog",
         "about/telemetry",
-        "about/license",
-        "about/performance"
+        "about/license"
       ]
     }
   ],
