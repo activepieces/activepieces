@@ -7,6 +7,7 @@ import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssues } from './lib/actions/search-issues';
 import { newIssue } from './lib/triggers/new-issue';
 import { updatedIssue } from './lib/triggers/updated-issue';
+import { updatedStatusIssue } from './lib/triggers/updated-status-issue';
 import { addCommentToIssueAction } from './lib/actions/add-comment-to-issue';
 import { addAttachmentToIssueAction } from './lib/actions/add-attachment-to-issue';
 import { updateIssueCommentAction } from './lib/actions/update-issue-comment';
@@ -27,7 +28,7 @@ export const jiraCloud = createPiece({
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
-	authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
+	authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'prasanna2000-max'],
 	actions: [
 		createIssueAction,
 		updateIssueAction,
@@ -57,5 +58,5 @@ export const jiraCloud = createPiece({
 			},
 		}),
 	],
-	triggers: [newIssue, updatedIssue],
+	triggers: [newIssue, updatedIssue, updatedStatusIssue],
 });

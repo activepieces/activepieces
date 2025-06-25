@@ -30,16 +30,16 @@ const polling: Polling<
       sanitizeJql: sanitizeJql ?? false,
     });
     return issues.map((issue) => ({
-      epochMilliSeconds: Date.parse(issue.fields.updated),
+      epochMilliSeconds: Date.parse(issue.fields.statuscategorychangedate),
       data: issue,
     }));
   },
 };
 
-export const updatedIssue = createTrigger({
-  name: 'updated_issue',
-  displayName: 'Updated Issue',
-  description: 'Triggers when an issue is updated',
+export const updatedStatusIssue = createTrigger({
+  name: 'updated_status_issue',
+  displayName: 'Updated Status Issue',
+  description: 'Triggers when an issue status is updated',
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {
