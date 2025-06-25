@@ -98,7 +98,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
             await handleCompilationError({
                 codePath,
-                error: error as Record<string, string | undefined>,
+                error,
             })
         }
         finally {
@@ -153,7 +153,10 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const errorMessage = `Compilation Error ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
+    const errorHasStdout = typeof error === 'object' && error && 'stdout' in error
+    const stdoutError = errorHasStdout ? error.stdout : undefined
+    const genericError = `${error ?? 'error compiling'}`
+    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
 
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
@@ -185,5 +188,5 @@ type CompileCodeParams = {
 
 type HandleCompilationErrorParams = {
     codePath: string
-    error: Record<string, string | undefined>
+    error: unknown
 }
