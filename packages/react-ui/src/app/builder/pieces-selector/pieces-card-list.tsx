@@ -16,7 +16,7 @@ import {
 } from '@/lib/types';
 import { FlowOperationType, isNil } from '@activepieces/shared';
 
-import { cn, wait } from '../../../lib/utils';
+import { cn, scrollToElement, wait } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { NoResultsFound } from './no-results-found';
@@ -54,8 +54,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, ope
       }
       const categoryNameOrPieceDisplayNameToScrollTo = selectedPieceGroupType === PieceTagType.ALL ? selectedPieceMetadataInPieceSelector?.displayName : tagCategoryName[selectedPieceGroupType];
       if (!isNil(categoryNameOrPieceDisplayNameToScrollTo)) {
-        console.log('scrolling to', categoryNameOrPieceDisplayNameToScrollTo);
-        scrollToElementAndClickIt(categoryNameOrPieceDisplayNameToScrollTo);
+        scrollToElement(categoryNameOrPieceDisplayNameToScrollTo);
         }
         hasScrolledToElement.current = true;
 
@@ -81,7 +80,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, ope
             {!isLoadingPieces && !noResultsFound && (
              categories.map((category, categoryIndex) => (
                 <React.Fragment key={`${category.title}-${categoryIndex}`} >
-                  {searchQuery.length === 0 && <div className="pl-1.5 text-sm text-muted-foreground" id={category.title}>{category.title}</div>}
+                  {searchQuery.length === 0 && <div className="pl-3 text-sm text-muted-foreground" id={category.title}>{category.title}</div>}
                   {
                     category.metadata.map((pieceMetadata, metadataIndex) => (
                       <PieceCardListItem
@@ -100,6 +99,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, ope
 
           {noResultsFound && <NoResultsFound />}
           </CardList>
+
         {searchQuery.length === 0 &&
           !isLoadingPieces &&
           categories.length > 0 &&
@@ -197,13 +197,3 @@ const PieceCardListItem = ({
 };
 
 PieceCardListItem.displayName = 'PieceCardListItem';
-const scrollToElementAndClickIt = (elementId: string) => {
-  const element = document.getElementById(
-    elementId
-  );
-  element?.scrollIntoView({
-    behavior: 'instant',
-    block: 'start',
-  });
-  element?.click();
-}

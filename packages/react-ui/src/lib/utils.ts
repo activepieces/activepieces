@@ -319,3 +319,13 @@ export const downloadFile = async ({
 export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+export const scrollToElement = (elementId: string) => {
+  const element = document.getElementById(
+    elementId
+  );
+  element?.scrollIntoView({
+    behavior: 'instant',
+    block: 'start',
+  });
+}

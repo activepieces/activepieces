@@ -15,6 +15,7 @@ import PieceSelectorIntro from './piece-selector-intro';
 import { ArrowLeft } from 'lucide-react';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
+import { PieceTagsList } from './piece-tag';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -46,7 +47,7 @@ const PieceSelector = ({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [selectedPieceGroupType, setSelectedPieceGroupType] = useState<PieceTagType | null>(isForReplace && !isForEmptyTrigger? PieceTagType.ALL : null);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
-  const { listHeightRef, popoverTriggerRef, searchInputDivHeight } =
+  const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
   const showPiecesList = selectedPieceGroupType || searchQuery.length > 0;
   return (
@@ -86,10 +87,7 @@ const PieceSelector = ({
         <>
           <div>
             <div
-              className="p-2 flex gap-1 items-center"
-              style={{
-                height: `${searchInputDivHeight}px`,
-              }}
+              className="p-2 flex-col  gap-1 items-center "
             >
               <SearchInput
                 placeholder="Search"
@@ -109,6 +107,7 @@ const PieceSelector = ({
                   }
                 }}
               />
+             {(searchQuery.length > 0 || selectedPieceGroupType !== null) && <PieceTagsList />}
             </div>
 
             <Separator orientation="horizontal" />
