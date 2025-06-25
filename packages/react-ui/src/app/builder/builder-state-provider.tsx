@@ -24,7 +24,6 @@ export function BuilderStateProvider({
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
   projectHooks.useReloadPageIfProjectIdChanged(props.flow.projectId);
-  const [queryParams] = useSearchParams();
   if (!storeRef.current) {
     storeRef.current = createBuilderStore(
       {
@@ -33,7 +32,6 @@ export function BuilderStateProvider({
         sampleData,
         sampleDataInput,
       },
-      queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true',
     );
   }
 

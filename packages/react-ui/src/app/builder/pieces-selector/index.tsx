@@ -10,7 +10,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { SearchInput } from '../../../components/ui/search-input';
 import { PiecesCardList } from './pieces-card-list';
-import { FlowOperationType } from '@activepieces/shared';
+import { FlowOperationType, TriggerType } from '@activepieces/shared';
 import PieceSelectorIntro from './piece-selector-intro';
 import { ArrowLeft } from 'lucide-react';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
@@ -28,20 +28,23 @@ const PieceSelector = ({
   operation,
   id,
   openSelectorOnClick = true,
+
 }: PieceSelectorProps) => {
-  const isForReplace = operation.type === FlowOperationType.UPDATE_ACTION || operation.type === FlowOperationType.UPDATE_TRIGGER;
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [selectedPieceGroupType, setSelectedPieceGroupType] = useState<PieceTagType | null>(isForReplace? PieceTagType.ALL : null);
   const [
     openedPieceSelectorStepNameOrAddButtonId,
     setOpenedPieceSelectorStepNameOrAddButtonId,
     setSelectedPieceMetadataInPieceSelector,
+    isForEmptyTrigger,
   ] = useBuilderStateContext((state) => [
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
+    state.flowVersion.trigger.type === TriggerType.EMPTY,
   ]);
+  const isForReplace = operation.type === FlowOperationType.UPDATE_ACTION || operation.type === FlowOperationType.UPDATE_TRIGGER;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const [selectedPieceGroupType, setSelectedPieceGroupType] = useState<PieceTagType | null>(isForReplace && !isForEmptyTrigger? PieceTagType.ALL : null);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const { listHeightRef, popoverTriggerRef, searchInputDivHeight } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
