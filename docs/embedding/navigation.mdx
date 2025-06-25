@@ -15,15 +15,16 @@ The following snippet listens when the user clicks backward, so it syncs the rou
 </Tip>
 
 ```js
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
 activepieces.configure({
-  prefix: "/",
-  instanceUrl: 'INSTANCE_URL',
-  jwtToken: "GENERATED_JWT_TOKEN",
+  instanceUrl,
+  jwtToken,
   embedding: {
-    containerId: "container",
+    containerId,
     builder: {
       disableNavigation: false,
-      hideLogo: false,
       hideFlowName: false
     },
     dashboard: {
@@ -46,6 +47,7 @@ window.addEventListener("popstate", () => {
   activepieces.navigate({ route });
 });
 ```
+
 ## Navigate Method
 
 If you use `activepieces.navigate({ route: '/flows' })` this will tell the embedded sdk where to navigate to.
@@ -63,4 +65,23 @@ Here is the list for routes the sdk can navigate to:
 | `/tables/{tableId}` | Opens up a table
 | `todos` | Todos table
 | `todos/{todoId}` | Opens up a todo
+
+
+## Navigate to Initial Route
+
+You can call the `navigate` method after initializing the sdk using the `configure` sdk:
+
+```js
+const flowId = '1234';
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'YOUR_GENERATED_JWT_TOKEN';
+activepieces.configure({
+	instanceUrl,
+	jwtToken,
+}).then(() => {
+	activepieces.navigate({
+		route: `/flows/${flowId}`
+	})
+});
+```
 

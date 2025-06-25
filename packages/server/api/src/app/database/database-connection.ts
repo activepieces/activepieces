@@ -9,7 +9,9 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AiProviderEntity } from '../ai/ai-provider-entity'
+import { AgentEntity } from '../agents/agent-entity'
+import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
@@ -30,7 +32,6 @@ import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
-import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -41,7 +42,8 @@ import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpEntity } from '../mcp/mcp-entity'
-import { McpPieceEntity } from '../mcp/mcp-piece-entity'
+import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
+import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -53,6 +55,7 @@ import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
@@ -60,6 +63,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
@@ -87,7 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
-        AiProviderEntity,
+        AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
@@ -97,7 +101,11 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        McpPieceEntity,
+        AgentEntity,
+        TodoActivityEntity,
+        McpToolEntity,
+        McpRunEntity,
+        AIUsageEntity,
     ]
 
     switch (edition) {
@@ -115,13 +123,13 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
-                TodoCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 PlatformPlanEntity,
+           
             )
             break
         case ApEdition.COMMUNITY:

@@ -8,7 +8,7 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import './tip-tap.css';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 
@@ -72,7 +72,7 @@ export const TextInputWithMentions = ({
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );
-  const stepsMetadata = piecesHooks
+  const stepsMetadata = stepsHooks
     .useStepsMetadata(steps)
     .map(({ data: metadata }, index) => {
       if (metadata) {

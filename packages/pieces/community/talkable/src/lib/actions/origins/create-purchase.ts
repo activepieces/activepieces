@@ -113,7 +113,6 @@ export const createPurchase = createAction({
       required: false,
       defaultValue: [
         { price: 10, quantity: 1, product_id: 'SKU1' },
-        { price: 20, quantity: 1, product_id: 'SKU2' },
       ],
     }),
   },

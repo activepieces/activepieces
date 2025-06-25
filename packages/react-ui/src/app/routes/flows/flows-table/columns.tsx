@@ -37,6 +37,7 @@ export const flowsTableColumns = ({
         checked={
           table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
         }
+        variant="secondary"
         onCheckedChange={(value) => {
           const isChecked = !!value;
           table.toggleAllPageRowsSelected(isChecked);
@@ -74,6 +75,7 @@ export const flowsTableColumns = ({
       );
       return (
         <Checkbox
+          variant="secondary"
           checked={isChecked}
           onCheckedChange={(value) => {
             const isChecked = !!value;
@@ -141,15 +143,15 @@ export const flowsTableColumns = ({
     },
   },
   {
-    accessorKey: 'created',
+    accessorKey: 'updated',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
+      <DataTableColumnHeader column={column} title={t('Last modified')} />
     ),
     cell: ({ row }) => {
-      const created = row.original.created;
+      const updated = row.original.updated;
       return (
         <div className="text-left font-medium min-w-[150px]">
-          {formatUtils.formatDate(new Date(created))}
+          {formatUtils.formatDate(new Date(updated))}
         </div>
       );
     },
