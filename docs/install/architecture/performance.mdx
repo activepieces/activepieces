@@ -6,8 +6,10 @@ icon: 'chart-line'
 
 # Performance
 
-On average, Activepieces can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.
+On average, Activepieces (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.
 It can scale up much more with increasing instance resources and/or adding more instances.
+
+> **Note:** These benchmarks are based on running Activepieces in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
 
 ## Benchmarking
 
