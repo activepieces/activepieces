@@ -101,7 +101,7 @@ export type BuilderState = {
   selectedBranchIndex: number | null;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
-  exitRun: (userHasPermissionToEditFlow: boolean) => void;
+  clearRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
@@ -220,9 +220,7 @@ export const createBuilderStore = (
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       rightSidebar:
-        initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+        initiallySelectedStep && !isEmptyTriggerInitiallySelected
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -319,13 +317,12 @@ export const createBuilderStore = (
             },
           };
         }),
-      exitRun: (userHasPermissionToEditFlow: boolean) =>
+      clearRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
           readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
-          rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
@@ -350,6 +347,12 @@ export const createBuilderStore = (
         set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
+          const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(run.status, run.steps);
+          const initiallySelectedStep = run.steps? determineInitiallySelectedStep(
+            lastStepWithStatus,
+            flowVersion,
+          ) : 
+          state.selectedStep ?? 'trigger';
           return {
             loopsIndexes: flowRunUtils.findLoopsState(
               flowVersion,
@@ -359,12 +362,8 @@ export const createBuilderStore = (
             run,
             flowVersion,
             leftSidebar: LeftSideBarType.RUN_DETAILS,
-            rightSidebar: RightSideBarType.PIECE_SETTINGS,
-            selectedStep: run.steps
-              ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
-                state.selectedStep ??
-                'trigger'
-              : 'trigger',
+            rightSidebar: initiallySelectedStep?RightSideBarType.PIECE_SETTINGS:RightSideBarType.NONE,
+            selectedStep: initiallySelectedStep,
             readonly: true,
           };
         }),
@@ -434,6 +433,7 @@ export const createBuilderStore = (
         }),
       setVersion: (flowVersion: FlowVersion) => {
         const initiallySelectedStep = determineInitiallySelectedStep(null,flowVersion);
+        const isEmptyTriggerInitiallySelected = initiallySelectedStep === 'trigger' && flowVersion.trigger.type === TriggerType.EMPTY;
         set((state) => ({
           flowVersion,
           run: null,
@@ -442,7 +442,7 @@ export const createBuilderStore = (
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
-          rightSidebar: initiallySelectedStep?RightSideBarType.PIECE_SETTINGS:RightSideBarType.NONE,
+          rightSidebar: initiallySelectedStep && !isEmptyTriggerInitiallySelected ?RightSideBarType.PIECE_SETTINGS:RightSideBarType.NONE,
           selectedBranchIndex: null,
         }));
       },
@@ -798,11 +798,11 @@ export const useHandleKeyPressOnCanvas = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, exitRun, setFlow] = useBuilderStateContext(
+  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
     (state) => [
       state.flowVersion,
       state.setVersion,
-      state.exitRun,
+      state.clearRun,
       state.setFlow,
     ],
   );
@@ -817,8 +817,7 @@ export const useSwitchToDraft = () => {
       onSuccess: (flow) => {
         setFlow(flow);
         setVersion(flow.version);
-       
-        exitRun(userHasPermissionToEditFlow);
+        clearRun(userHasPermissionToEditFlow);
       },
       onError: () => {
         toast(INTERNAL_ERROR_TOAST);
@@ -937,11 +936,6 @@ function determineInitiallySelectedStep(
   if (failedStepNameInRun) {
     return failedStepNameInRun;
   }
-  if (flowVersion.state === FlowVersionState.LOCKED) {
-    return null;
-  }
-  return (
-    flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid)
-      ?.name ?? 'trigger'
-  );
+  const firstInvalidStep = flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid);
+  return firstInvalidStep?.name ?? 'trigger';
 }
