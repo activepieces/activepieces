@@ -6,8 +6,8 @@ import { smartsheetCommon } from '../common';
 export const findSheetByName = createAction({
   auth: smartsheetAuth,
   name: 'find_sheet_by_name',
-  displayName: 'List and Search Sheets',
-  description: 'Get a comprehensive list of all accessible sheets with advanced filtering, search, and pagination options',
+  displayName: 'Find Sheet(s)',
+  description: 'Fetches existings sheets matching provided filter criteria.',
   props: {
     // Search options
     sheet_name: Property.ShortText({

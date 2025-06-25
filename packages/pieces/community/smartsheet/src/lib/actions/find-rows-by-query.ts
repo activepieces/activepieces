@@ -6,12 +6,12 @@ import { smartsheetCommon } from '../common';
 export const findRowsByQuery = createAction({
   auth: smartsheetAuth,
   name: 'find_rows_by_query',
-  displayName: 'Search Rows by Query',
-  description: 'Search for rows in a specific sheet or across all accessible sheets using text queries with advanced filtering options',
+  displayName: 'Find Row',
+  description: 'Finds rows in a specific sheet or across all accessible sheets using text queries with advanced filtering options.',
   props: {
     search_scope: Property.StaticDropdown({
       displayName: 'Search Scope',
-      description: 'Choose whether to search within a specific sheet or across all accessible sheets',
+      description: 'Choose whether to search within a specific sheet or across all accessible sheets.',
       required: true,
       defaultValue: 'specific_sheet',
       options: {
@@ -22,11 +22,7 @@ export const findRowsByQuery = createAction({
       },
     }),
 
-    sheet_id: {
-      ...smartsheetCommon.sheet_id,
-      required: false,
-      description: 'Sheet ID to search within (required when Search Scope is "Specific Sheet")',
-    },
+    sheet_id: smartsheetCommon.sheet_id(false),
 
     query: Property.ShortText({
       displayName: 'Search Query',

@@ -6,10 +6,10 @@ import { smartsheetCommon } from '../common';
 export const attachFileToRow = createAction({
   auth: smartsheetAuth,
   name: 'attach_file_to_row',
-  displayName: 'Attach File or URL to Row',
-  description: 'Attach a file or URL to a specific row in a Smartsheet with support for various attachment types',
+  displayName: 'Attach File to Row',
+  description: 'Adds a file attachment to a row.',
   props: {
-    sheet_id: smartsheetCommon.sheet_id,
+    sheet_id: smartsheetCommon.sheet_id(),
     row_id: smartsheetCommon.row_id,
 
     attachment_type: Property.StaticDropdown({
