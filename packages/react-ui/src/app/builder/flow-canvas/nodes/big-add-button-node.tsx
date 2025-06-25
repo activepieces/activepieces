@@ -20,11 +20,10 @@ const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
     const [pieceSelectorOpen, setPieceSelectorOpen] = useState(false);
-    const [readonly, activeDraggingStep] =
-      useBuilderStateContext((state) => [
-        state.readonly,
-        state.activeDraggingStep,
-      ]);
+    const [readonly, activeDraggingStep] = useBuilderStateContext((state) => [
+      state.readonly,
+      state.activeDraggingStep,
+    ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,

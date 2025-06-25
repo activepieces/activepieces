@@ -10,31 +10,32 @@ import {
 import {
   isNil,
   MarkdownVariant,
-  agentMarkdownParser,
+  RichContentBlock,
+  ContentBlockType,
+  ToolCallStatus,
+  ToolCallType,
 } from '@activepieces/shared';
 
 interface TodoMarkdownProps {
-  content: string;
+  content: RichContentBlock[];
 }
 
 export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
-  const blocks = agentMarkdownParser.parse(content);
-
   return (
     <div className="space-y-4">
-      {blocks.map((block, index) => {
-        if (block.type === 'text') {
+      {content.map((block, index) => {
+        if (block.type === ContentBlockType.MARKDOWN) {
           return (
             <div key={index} className="prose prose-sm max-w-none">
               <ApMarkdown
-                markdown={block.text}
+                markdown={block.markdown}
                 variant={MarkdownVariant.BORDERLESS}
               />
             </div>
           );
         }
 
-        const isDone = block.status === 'done';
+        const isDone = block.status === ToolCallStatus.COMPLETED;
 
         return (
           <Accordion
@@ -45,7 +46,7 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
           >
             <AccordionItem value={`block-${index}`} className="border-none">
               <AccordionTrigger className="px-4 py-3 flex items-center gap-3 transition-colors">
-                {block.logoUrl ? (
+                {block.toolCallType === ToolCallType.PIECE && block.logoUrl ? (
                   <img
                     src={block.logoUrl}
                     alt="Logo"
@@ -57,7 +58,7 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
                   </div>
                 )}
                 <span className="text-sm font-medium flex-1 text-left">
-                  {block.toolDisplayName}
+                  {block.displayName}
                 </span>
                 {isDone ? (
                   <CircleCheck
@@ -75,17 +76,17 @@ export const TodoMarkdown = ({ content }: TodoMarkdownProps) => {
                       Arguments
                     </div>
                     <pre className="text-xs bg-muted/50 p-3 rounded-md whitespace-pre-wrap break-all">
-                      {JSON.stringify(block.args, null, 2)}
+                      {JSON.stringify(block.input, null, 2)}
                     </pre>
                   </div>
-                  {!isNil(block.result) && (
+                  {!isNil(block.output) && (
                     <div className="space-y-1">
                       <div className="text-xs font-medium text-muted-foreground">
                         Result
                       </div>
                       <div className="bg-muted/50 p-3 rounded-md">
                         <ApMarkdown
-                          markdown={block.result}
+                          markdown={block.output as string}
                           variant={MarkdownVariant.BORDERLESS}
                         />
                       </div>

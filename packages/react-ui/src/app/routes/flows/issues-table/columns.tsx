@@ -20,6 +20,7 @@ export const issuesTableColumns: ColumnDef<
     id: 'select',
     header: ({ table }) => (
       <Checkbox
+        variant="secondary"
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && 'indeterminate')
@@ -29,6 +30,7 @@ export const issuesTableColumns: ColumnDef<
     ),
     cell: ({ row }) => (
       <Checkbox
+        variant="secondary"
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
       />

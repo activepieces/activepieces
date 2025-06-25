@@ -104,7 +104,7 @@ const ProjectSettingsDropdownMenu = () => {
                 buttonVariants({ variant: 'ghost', size: 'sm' }),
                 'gap-x-2 w-full justify-start',
                 {
-                  'bg-secondary text-primary': linkActive(item),
+                  'bg-accent text-primary': linkActive(item),
                 },
               )}
             >
