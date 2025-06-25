@@ -31,7 +31,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { pieces } = piecesHooks.usePieces({});
 
   const { data, isLoading, refetch } = useQuery({
@@ -123,8 +122,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
-    isDropdownOpen,
-    setIsDropdownOpen,
     refresh,
     setSelectedRows,
     setRefresh,

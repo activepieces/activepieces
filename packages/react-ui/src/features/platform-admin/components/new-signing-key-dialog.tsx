@@ -136,7 +136,7 @@ export const NewSigningKeyDialog = ({
             </>
           ) : (
             <Button
-              variant={'secondary'}
+              variant={'accent'}
               onClick={() => {
                 setSigningKey(undefined);
                 setOpen(false);

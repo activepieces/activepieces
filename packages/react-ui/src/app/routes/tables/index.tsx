@@ -112,6 +112,7 @@ const ApTablesPage = () => {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -132,6 +133,7 @@ const ApTablesPage = () => {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;

@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
-import { RichContentBlock } from '../todos/content'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',

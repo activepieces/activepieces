@@ -70,8 +70,6 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         }
     })
 
-    await app.register(serverAdapter.registerPlugin(), {
-        prefix: QUEUE_BASE_PATH,
-        basePath: QUEUE_BASE_PATH,
-    })
+    await app.register(serverAdapter.registerPlugin(), { prefix: QUEUE_BASE_PATH })
+
 }

@@ -54,7 +54,6 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
 
   const updateAgentMutation = agentHooks.useUpdate();
 
-  // Auto-save system prompt with debounce
   useEffect(() => {
     if (!agent?.id) return;
 
@@ -136,7 +135,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
             </div>
             <EditableTextWithPen
               value={description}
-              className="text-sm text-muted-foreground mt-1"
+              className="text-sm text-muted-foreground mt-1 max-w-[400px]"
               readonly={false}
               onValueChange={handleDescriptionChange}
               isEditing={isEditingDescription}

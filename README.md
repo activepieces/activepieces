@@ -417,6 +417,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://twitter.com/lucaslima_souza"><img src="https://avatars.githubusercontent.com/u/1576846?v=4?s=100" width="100px;" alt="Lucas Lima de Souza"/><br /><sub><b>Lucas Lima de Souza</b></sub></a><br /><a href="#plugin-lucaslimasouza" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BenjaminAlan"><img src="https://avatars.githubusercontent.com/u/42831606?v=4?s=100" width="100px;" alt="Benjamin Benouarka"/><br /><sub><b>Benjamin Benouarka</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=BenjaminAlan" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/chris-wu/"><img src="https://avatars.githubusercontent.com/u/4491213?v=4?s=100" width="100px;" alt="Chris Wu"/><br /><sub><b>Chris Wu</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=cjwooo" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 

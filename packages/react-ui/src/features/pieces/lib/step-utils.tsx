@@ -75,6 +75,19 @@ export const HIDDEN_ACTIONS = [
 ];
 
 export const stepUtils = {
+  getKeys(step: Action | Trigger, locale: LocalesEnum): (string | undefined)[] {
+    const isPieceStep =
+      step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
+    const pieceName = isPieceStep ? step.settings.pieceName : undefined;
+    const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
+    const customLogoUrl = isPieceStep
+      ? 'customLogoUrl' in step
+        ? step.customLogoUrl
+        : undefined
+      : undefined;
+    const agentId = stepUtils.getAgentId(step);
+    return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
+  },
   async getMetadata(
     step: Action | Trigger,
     locale: LocalesEnum,

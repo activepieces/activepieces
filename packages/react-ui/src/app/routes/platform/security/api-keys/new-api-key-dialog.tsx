@@ -104,7 +104,7 @@ export const NewApiKeyDialog = ({
             </div>
             <DialogFooter>
               <Button
-                variant={'secondary'}
+                variant={'accent'}
                 onClick={() => {
                   setApiKey(undefined);
                   setOpen(false);
