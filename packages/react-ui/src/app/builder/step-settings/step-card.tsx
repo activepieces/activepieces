@@ -6,12 +6,11 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
 
-type StepCardInfoProps = {
-  onClick?: () => void;
+type StepCardProps = {
   step: Action | Trigger;
 };
 
-const StepCardInfo: React.FC<StepCardInfoProps> = ({ step, onClick }) => {
+const StepCard: React.FC<StepCardProps> = ({ step }) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
@@ -22,10 +21,10 @@ const StepCardInfo: React.FC<StepCardInfoProps> = ({ step, onClick }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
-  const modifiedTitle = `${stepMetadata?.displayName} (${stepMetadata?.stepDisplayName})`;
+  const modifiedTitle = stepMetadata ? `${stepMetadata?.displayName} (${stepMetadata?.stepDisplayName})` : null;
 
   return (
-    <div onClick={onClick} className="flex items-center justify-center gap-4">
+    <div  className="flex items-center justify-center gap-4 min-h-[48px]">
       <div className="flex h-full min-w-[48px] items-center justify-center">
         {stepMetadata?.logoUrl && (
           <ImageWithFallback
@@ -38,10 +37,10 @@ const StepCardInfo: React.FC<StepCardInfoProps> = ({ step, onClick }) => {
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base flex justify-center">
           <div className="flex-grow">
-            {modifiedTitle != null ? (
+            {modifiedTitle ? (
               modifiedTitle
             ) : (
-              <Skeleton className="h-5 w-32 rounded" />
+              <Skeleton className="h-3 w-32 rounded" />
             )}
           </div>
           {pieceVersion && (
@@ -51,12 +50,11 @@ const StepCardInfo: React.FC<StepCardInfoProps> = ({ step, onClick }) => {
           )}
         </div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-          {stepMetadata?.description != null ? (
+          {stepMetadata?.description ? (
             stepMetadata.description
           ) : (
             <div className="flex flex-col gap-1">
-              <Skeleton className="h-4 w-48 rounded" />
-              <Skeleton className="h-4 w-40 rounded" />
+              <Skeleton className="h-2 w-48 rounded" />
             </div>
           )}
         </div>
@@ -65,4 +63,4 @@ const StepCardInfo: React.FC<StepCardInfoProps> = ({ step, onClick }) => {
   );
 };
 
-export { StepCardInfo };
+export { StepCard };
