@@ -7,7 +7,7 @@ import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssues } from './lib/actions/search-issues';
 import { newIssue } from './lib/triggers/new-issue';
 import { updatedIssue } from './lib/triggers/updated-issue';
-import { updatedStatusIssue } from './lib/triggers/updated-status-issue';
+import { updatedIssueStatus } from './lib/triggers/updated-issue-status';
 import { addCommentToIssueAction } from './lib/actions/add-comment-to-issue';
 import { addAttachmentToIssueAction } from './lib/actions/add-attachment-to-issue';
 import { updateIssueCommentAction } from './lib/actions/update-issue-comment';
@@ -58,5 +58,5 @@ export const jiraCloud = createPiece({
 			},
 		}),
 	],
-	triggers: [newIssue, updatedIssue, updatedStatusIssue],
+	triggers: [newIssue, updatedIssue, updatedIssueStatus],
 });

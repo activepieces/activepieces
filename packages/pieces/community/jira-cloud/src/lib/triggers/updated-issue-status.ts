@@ -36,9 +36,9 @@ const polling: Polling<
   },
 };
 
-export const updatedStatusIssue = createTrigger({
-  name: 'updated_status_issue',
-  displayName: 'Updated Status Issue',
+export const updatedIssueStatus = createTrigger({
+  name: 'updated_issue_status',
+  displayName: 'Updated Issue Status',
   description: 'Triggers when an issue status is updated',
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
