@@ -1,8 +1,9 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '../components/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
+
+import { useEmbedding } from '../components/embed-provider';
 
 export const useNewWindow = () => {
   const { embedState } = useEmbedding();
@@ -30,9 +31,9 @@ export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
 export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
 export const useDefaultRedirectPath = () => {
-  const {data: agentsEnabled} = flagsHooks.useFlag(ApFlagId.AGENTS_ENABLED)
-  return agentsEnabled ? '/flows' : '/agents'
-}
+  const { data: agentsEnabled } = flagsHooks.useFlag(ApFlagId.AGENTS_ENABLED);
+  return agentsEnabled ? '/flows' : '/agents';
+};
 
 export const useRedirectAfterLogin = () => {
   const navigate = useNavigate();

@@ -49,7 +49,8 @@ export function DashboardContainer({
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
 
-  const isAgentEnabled = platform.plan.agentsLimit && platform.plan.agentsLimit > 0
+  const isAgentEnabled =
+    platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
 
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
