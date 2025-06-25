@@ -64,6 +64,7 @@ const PlatformPiecesPage = () => {
                 table.getIsAllPageRowsSelected() ||
                 (table.getIsSomePageRowsSelected() && 'indeterminate')
               }
+              variant="secondary"
               onCheckedChange={(value) =>
                 table.toggleAllPageRowsSelected(!!value)
               }
@@ -71,6 +72,7 @@ const PlatformPiecesPage = () => {
           ),
           cell: ({ row }) => (
             <Checkbox
+              variant="secondary"
               checked={row.getIsSelected()}
               onCheckedChange={(value) => {
                 row.toggleSelected(!!value);
@@ -151,7 +153,7 @@ const PlatformPiecesPage = () => {
               (row.original.auth.grantType ===
                 BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
                 row.original.auth.grantType ===
-                  OAuth2GrantType.AUTHORIZATION_CODE ||
+                OAuth2GrantType.AUTHORIZATION_CODE ||
                 isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">

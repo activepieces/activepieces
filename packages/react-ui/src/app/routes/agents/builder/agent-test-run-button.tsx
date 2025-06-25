@@ -15,7 +15,7 @@ export const AgentTestRunButton = ({ agentId }: AgentTestRunButtonProps) => {
   return (
     <div className="relative">
       <Button
-        variant="neutral"
+        variant="secondary"
         size="sm"
         className="flex items-center gap-2"
         onClick={() => setDrawerOpen(true)}
