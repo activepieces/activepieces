@@ -161,8 +161,8 @@ export type BuilderState = {
   setOpenedPieceSelectorStepNameOrAddButtonId: (
     stepNameOrAddButtonId: string | null,
   ) => void;
-  hoveredPieceMetadata: StepMetadataWithSuggestions | null;
-  setHoveredPieceMetadata: (
+  selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null;
+  setSelectedPieceMetadataInPieceSelector: (
     metadata: StepMetadataWithSuggestions | null,
   ) => void;
 };
@@ -653,12 +653,12 @@ export const createBuilderStore = (
         setOpenedPieceSelectorStepNameOrAddButtonId(null);
         return defaultValues.name;
       },
-      hoveredPieceMetadata: null,
-      setHoveredPieceMetadata: (
+      selectedPieceMetadataInPieceSelector: null,
+      setSelectedPieceMetadataInPieceSelector: (
         metadata: StepMetadataWithSuggestions | null,
       ) => {
         return set(() => ({
-          hoveredPieceMetadata: metadata,
+          selectedPieceMetadataInPieceSelector: metadata,
         }));
       },
       openedPieceSelectorStepNameOrAddButtonId: null,

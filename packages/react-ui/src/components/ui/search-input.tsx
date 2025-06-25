@@ -1,8 +1,10 @@
 import { t } from 'i18next';
-import { Search, X } from 'lucide-react';
+import { ArrowLeft, Search, X } from 'lucide-react';
 import * as React from 'react';
 
 import { SelectUtilButton } from '../custom/select-util-button';
+import { Button } from './button';
+import { cn } from '@/lib/utils';
 
 export type SearchInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -10,13 +12,21 @@ export type SearchInputProps = Omit<
 > & {
   onChange: (value: string) => void;
   showDeselect: boolean;
+  showBackButton?: boolean;
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ type, showDeselect, ...props }, ref) => {
+  ({ type, showDeselect, showBackButton, ...props }, ref) => {
     return (
-      <div className="flex-grow flex  items-center gap-2 w-full  bg-background px-3 focus-within:outline-none first:disabled:cursor-not-allowed first:disabled:opacity-50 box-border">
-        <Search className="size-4 shrink-0 opacity-50"></Search>
+      <div className={cn("flex-grow flex  items-center gap-2 w-full  bg-background px-3 focus-within:outline-none first:disabled:cursor-not-allowed first:disabled:opacity-50 box-border", {
+        'pl-1': showBackButton,
+      })}>
+       { showBackButton && <Button variant="ghost" size="icon" onClick={() => props.onChange('')}>
+        <ArrowLeft className="size-4 shrink-0"></ArrowLeft>
+       </Button>}
+       {
+        !showBackButton && <Search className="size-4 shrink-0 opacity-50"></Search>
+       }
         <input
           className="rounded-md bg-transparent  h-8 grow text-sm outline-none placeholder:text-muted-foreground"
           type={type}
@@ -26,7 +36,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         />
         {showDeselect && (
           <SelectUtilButton
-            tooltipText={t('Unset')}
+            tooltipText={t('Clear')}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();

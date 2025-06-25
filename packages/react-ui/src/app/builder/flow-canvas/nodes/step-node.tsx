@@ -124,7 +124,6 @@ const ApStepCanvasNode = React.memo(
                 stepName: step.name,
               }}
               id={step.name}
-              initiallySelectedPieceMetadataName={stepMetadata?.displayName}
               openSelectorOnClick={false}
             >
               <div

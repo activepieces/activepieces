@@ -8,22 +8,18 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { FlowOperationType } from '@activepieces/shared';
-
 import { SearchInput } from '../../../components/ui/search-input';
-
-import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 import { PiecesCardList } from './pieces-card-list';
-
+import { FlowOperationType } from '@activepieces/shared';
+import PieceSelectorIntro from './piece-selector-intro';
+import { ArrowLeft } from 'lucide-react';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { PieceSelectorOperation } from '@/lib/types';
+import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
   id: string;
   operation: PieceSelectorOperation;
-  initiallySelectedPieceMetadataName?: string;
   openSelectorOnClick?: boolean;
 };
 
@@ -31,35 +27,25 @@ const PieceSelector = ({
   children,
   operation,
   id,
-  initiallySelectedPieceMetadataName,
   openSelectorOnClick = true,
 }: PieceSelectorProps) => {
+  const isForReplace = operation.type === FlowOperationType.UPDATE_ACTION || operation.type === FlowOperationType.UPDATE_TRIGGER;
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
-  const { isLoading: isLoadingPieces, data: pieceGroups } =
-    piecesHooks.usePiecesGroups({
-      searchQuery: debouncedQuery,
-      type: isTrigger ? 'trigger' : 'action',
-    });
-  const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
-  const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
+  const [selectedPieceGroupType, setSelectedPieceGroupType] = useState<PieceTagType | null>(isForReplace? PieceTagType.ALL : null);
   const [
-    openedPieceSelectorId,
-    setOpenedPieceSelectorId,
-    hoveredPieceMetadata,
-    setHoveredPieceMetadata,
+    openedPieceSelectorStepNameOrAddButtonId,
+    setOpenedPieceSelectorStepNameOrAddButtonId,
+    setSelectedPieceMetadataInPieceSelector,
   ] = useBuilderStateContext((state) => [
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
-    state.hoveredPieceMetadata,
-    state.setHoveredPieceMetadata,
+    state.setSelectedPieceMetadataInPieceSelector,
   ]);
-  const isMobile = useIsMobile();
-  const isOpen = openedPieceSelectorId === id;
+  const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const { listHeightRef, popoverTriggerRef, searchInputDivHeight } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-
+  const showPiecesList = selectedPieceGroupType || searchQuery.length > 0;
   return (
     <Popover
       open={isOpen}
@@ -67,8 +53,9 @@ const PieceSelector = ({
       onOpenChange={(open) => {
         if (!open) {
           setSearchQuery('');
-          setOpenedPieceSelectorId(null);
-          setHoveredPieceMetadata(null);
+          setOpenedPieceSelectorStepNameOrAddButtonId(null);
+          setSelectedPieceMetadataInPieceSelector(null);
+          setSelectedPieceGroupType(null);
         }
       }}
     >
@@ -77,7 +64,7 @@ const PieceSelector = ({
         asChild={true}
         onClick={() => {
           if (openSelectorOnClick) {
-            setOpenedPieceSelectorId(id);
+            setOpenedPieceSelectorStepNameOrAddButtonId(id);
           }
         }}
       >
@@ -104,10 +91,19 @@ const PieceSelector = ({
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
-                showDeselect={searchQuery.length > 0}
+                showDeselect={false}
+                showBackButton={selectedPieceGroupType !== null }
                 onChange={(e) => {
                   setSearchQuery(e);
-                  setHoveredPieceMetadata(null);
+                  setSelectedPieceMetadataInPieceSelector(null);
+                  if(e === '')
+                  {
+                    setSelectedPieceGroupType(null);
+                  }
+                  else
+                  {
+                    setSelectedPieceGroupType(PieceTagType.ALL);
+                  }
                 }}
               />
             </div>
@@ -119,31 +115,21 @@ const PieceSelector = ({
             style={{
               height: listHeightRef.current + 'px',
             }}
-          >
-            <PiecesCardList
+          > 
+           {
+            !showPiecesList && <PieceSelectorIntro setSelectedPieceGroupType={setSelectedPieceGroupType}/>
+           }
+
+            { showPiecesList &&
+              <PiecesCardList
+              key={debouncedQuery}
               searchQuery={debouncedQuery}
-              piecesIsLoaded={piecesIsLoaded}
-              noResultsFound={noResultsFound}
               operation={operation}
-              pieceGroups={pieceGroups}
-              isLoadingPieces={isLoadingPieces}
-              initiallySelectedPieceMetadataName={
-                initiallySelectedPieceMetadataName
-              }
+              selectedPieceGroupType={selectedPieceGroupType}
             />
-            {debouncedQuery.length === 0 &&
-              piecesIsLoaded &&
-              !noResultsFound &&
-              !isMobile && (
-                <>
-                  <Separator orientation="vertical" className="h-full" />
-                  <PieceActionsOrTriggersList
-                    stepMetadataWithSuggestions={hoveredPieceMetadata}
-                    hidePieceIcon={false}
-                    operation={operation}
-                  />
-                </>
-              )}
+            }
+            
+            
           </div>
         </>
       </PopoverContent>
