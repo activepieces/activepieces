@@ -15,7 +15,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
-        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION) {
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
             const issue = await issuesService(log).add(flowRun)
             log.info(`Created an issue for flow run ${flowRun.id}`)
             if (paidEditions) {

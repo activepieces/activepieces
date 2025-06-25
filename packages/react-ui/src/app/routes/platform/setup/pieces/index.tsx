@@ -64,6 +64,7 @@ const PlatformPiecesPage = () => {
                 table.getIsAllPageRowsSelected() ||
                 (table.getIsSomePageRowsSelected() && 'indeterminate')
               }
+              variant="secondary"
               onCheckedChange={(value) =>
                 table.toggleAllPageRowsSelected(!!value)
               }
@@ -71,6 +72,7 @@ const PlatformPiecesPage = () => {
           ),
           cell: ({ row }) => (
             <Checkbox
+              variant="secondary"
               checked={row.getIsSelected()}
               onCheckedChange={(value) => {
                 row.toggleSelected(!!value);

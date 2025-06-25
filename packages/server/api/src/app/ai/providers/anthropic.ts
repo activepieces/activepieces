@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlatLanguageModelPricing } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
@@ -27,11 +27,16 @@ export const anthropicProvider: AIProviderStrategy = {
             })
         }
 
-        const { input, output } = languageModelConfig.pricing
+        const { input: inputCost, output: outputCost } = languageModelConfig.pricing as FlatLanguageModelPricing
         const { input_tokens, output_tokens } = apiResponse.usage
         return {
-            cost: calculateTokensCost(input_tokens, output_tokens, input, output),
+            cost: calculateTokensCost(input_tokens, inputCost) + calculateTokensCost(output_tokens, outputCost),
             model,
         }
+    },
+
+    isStreaming: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
+        const body = request.body as { stream?: boolean }
+        return body.stream ?? false
     },
 } 

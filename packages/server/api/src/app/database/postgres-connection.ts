@@ -49,6 +49,9 @@ import { AddFailedStepNameFlowRun1750044840070 } from './migration/postgres/1750
 import { AddIssueEntity1750056987397 } from './migration/postgres/1750056987397-add-issue-entity'
 import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
+import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
+import { ChangeContentTodoActivity1750821502601 } from './migration/postgres/1750821502601-change-content-todo-activity'
+import { UpdateAppConnectonIndexes1750821766494 } from './migration/postgres/1750821766494-update-app-connection-indexes'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -62,6 +65,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        UpdateAppConnectonIndexes1750821766494,
+        ChangeContentTodoActivity1750821502601,
+        RegenerateIssuesTable1750392148590,
         AIUsagePostgres1750090291551,
         RemoveUniqueOnFlow1750093037011,
         AddIssueEntity1750056987397,

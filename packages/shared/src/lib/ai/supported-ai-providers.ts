@@ -1,15 +1,16 @@
 import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google'
 import { openai } from '@ai-sdk/openai'
 import { createReplicate } from '@ai-sdk/replicate'
 import { ImageModel, LanguageModel } from 'ai'
 
-// TODO: make pricing not optional and remove all ?.
 export type SupportedAIProvider = {
     provider: string
     baseUrl: string
     displayName: string
     markdown: string
     logoUrl: string
+    streaming: boolean
     auth: {
         headerName: string
         bearer: boolean
@@ -52,10 +53,34 @@ number
 type ImageModelPricing = DALLE3PricingPerImage | DALLE2PricingPerImage | number
 
 // $ per million tokens
-export type LanguageModelPricing = {
+export type FlatLanguageModelPricing = {
     input: number
     output: number
 }
+
+export type TieredLanguageModelPricing = {
+    input: {
+        threshold: number
+        underThresholdRate: number
+        overThresholdRate: number
+    }
+    output: {
+        threshold: number
+        underThresholdRate: number
+        overThresholdRate: number
+    }
+}
+
+export type CategorizedLanguageModelPricing = {
+    input: {
+        default: number
+        audio: number
+    }
+    output: number
+}
+
+
+export type LanguageModelPricing = FlatLanguageModelPricing | TieredLanguageModelPricing | CategorizedLanguageModelPricing
 
 // we define a temp api token here because replicate throws an error if no api token is provided
 const replicate = createReplicate({
@@ -79,6 +104,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'Authorization',
             bearer: true,
         },
+        streaming: true,
         languageModels: [
             {
                 displayName: 'GPT-4o',
@@ -215,6 +241,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'x-api-key',
             bearer: false,
         },
+        streaming: false,
         languageModels: [
             {
                 displayName: 'Claude 3.5 Sonnet',
@@ -287,6 +314,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'Authorization',
             bearer: true,
         },
+        streaming: false,
         languageModels: [],
         imageModels: [
             {
@@ -305,5 +333,73 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: 0.003,
             },
         ],
+    },
+    {
+        provider: 'google',
+        baseUrl: 'https://generativelanguage.googleapis.com',
+        displayName: 'Google Gemini',
+        markdown: `Follow these instructions to get your Google API Key:
+1. Visit the following website: https://console.cloud.google.com/apis/credentials.
+2. Once on the website, locate and click on the option to obtain your Google API Key.
+`,
+        logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+        auth: {
+            headerName: 'x-goog-api-key',
+            bearer: false,
+        },
+        streaming: false,
+        languageModels: [
+            {
+                displayName: 'Gemini 2.5 Pro',
+                instance: google('gemini-2.5-pro'),
+                functionCalling: true,
+                pricing: {
+                    input: {
+                        threshold: 200_000,
+                        underThresholdRate: 1.25,
+                        overThresholdRate: 2.50,
+                    },
+                    output: {
+                        threshold: 200_000,
+                        underThresholdRate: 10.00,
+                        overThresholdRate: 15.00,
+                    },
+                },
+            },
+            {
+                displayName: 'Gemini 2.5 Flash',
+                instance: google('gemini-2.5-flash'),
+                functionCalling: true,
+                pricing: {
+                    input: {
+                        default: 0.30,
+                        audio: 1.00,
+                    },
+                    output: 2.50,
+                },
+            },
+            {
+                displayName: 'Gemini 2.5 Flash-Lite Preview',
+                instance: google('gemini-2.5-flash-lite-preview-06-17'),
+                functionCalling: true,
+                pricing: {
+                    input: {
+                        default: 0.10,
+                        audio: 0.50,
+                    },
+                    output: 0.40,
+                },
+            },
+            {
+                displayName: 'Gemini 2.0 Flash-Lite',
+                instance: google('gemini-2.0-flash-lite'),
+                functionCalling: true,
+                pricing: {
+                    input: 0.075,
+                    output: 0.30,
+                },
+            },
+        ],
+        imageModels: [],
     },
 ]
