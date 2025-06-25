@@ -89,17 +89,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div
-                  className="text-left text-sm text-muted-foreground line-clamp-2"
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    minHeight: '2.5em',
-                  }}
-                >
+                <div className="text-left text-sm text-muted-foreground overflow-hidden line-clamp-2 min-h-[2.5em]">
                   {description}
                 </div>
               )}

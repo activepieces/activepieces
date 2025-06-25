@@ -144,6 +144,13 @@
       ]
     },
     {
+      "group": "Product",
+      "icon": "tool",
+      "pages": [
+        "handbook/product/interface-design"
+      ]
+    },
+    {
       "group": "Endpoints",
       "pages": [
         {
