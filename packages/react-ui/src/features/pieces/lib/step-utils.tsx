@@ -54,7 +54,7 @@ export const CORE_STEP_METADATA: Record<
     description: t('Empty Trigger'),
     type: TriggerType.EMPTY as const,
   },
-};
+} as const;
 export const CORE_ACTIONS_METADATA = [
   CORE_STEP_METADATA[ActionType.CODE],
   CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
