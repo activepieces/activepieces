@@ -12,7 +12,6 @@ import { SearchInput } from '../../../components/ui/search-input';
 import { PiecesCardList } from './pieces-card-list';
 import { FlowOperationType, TriggerType } from '@activepieces/shared';
 import PieceSelectorIntro from './piece-selector-intro';
-import { ArrowLeft } from 'lucide-react';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
 import { PieceTagsList } from './piece-tag';
