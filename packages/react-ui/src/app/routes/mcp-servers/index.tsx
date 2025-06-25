@@ -93,6 +93,7 @@ const McpServersPage = () => {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -113,6 +114,7 @@ const McpServersPage = () => {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
