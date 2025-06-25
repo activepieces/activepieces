@@ -2,9 +2,9 @@
 
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { CheckIcon } from '@radix-ui/react-icons';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { Minus } from 'lucide-react';
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,8 @@ const checkboxVariants = cva(
     variants: {
       variant: {
         primary: 'border-primary data-[state=checked]:bg-primary',
-        secondary: 'border-secondary data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground',
+        secondary:
+          'border-secondary data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground',
       },
     },
     defaultVariants: {

@@ -1,10 +1,5 @@
 import { t } from 'i18next';
-import {
-  CornerUpLeft,
-  Download,
-  Trash2,
-  UploadCloud,
-} from 'lucide-react';
+import { CornerUpLeft, Download, Trash2, UploadCloud } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -75,53 +70,50 @@ export const useFlowsBulkActions = ({
         render: (_, resetSelection) => {
           return (
             <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-              {userHasPermissionToWroteProjectRelease && allowPush && selectedRows.length > 0 && (
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToWroteProjectRelease}
-                >
-                  <PublishedNeededTooltip allowPush={allowPush}>
-                    <PushToGitDialog type="flow" flows={selectedRows}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                      >
-                        <UploadCloud className="h-4 w-4 mr-2" />
-                        {t('Push to Git')}
-                      </Button>
-                    </PushToGitDialog>
-                  </PublishedNeededTooltip>
-                </PermissionNeededTooltip>
-              )}
-              
-              {!embedState.hideFolders && 
-               (userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder) && 
-               selectedRows.length > 0 && (
-                <PermissionNeededTooltip
-                  hasPermission={
-                    userHasPermissionToUpdateFlow ||
-                    userHasPermissionToWriteFolder
-                  }
-                >
-                  <MoveFlowDialog
-                    flows={selectedRows}
-                    onMoveTo={() => {
-                      setRefresh(refresh + 1);
-                      resetSelection();
-                      setSelectedRows([]);
-                      refetch();
-                    }}
+              {userHasPermissionToWroteProjectRelease &&
+                allowPush &&
+                selectedRows.length > 0 && (
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWroteProjectRelease}
                   >
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <PublishedNeededTooltip allowPush={allowPush}>
+                      <PushToGitDialog type="flow" flows={selectedRows}>
+                        <Button variant="outline" size="sm">
+                          <UploadCloud className="h-4 w-4 mr-2" />
+                          {t('Push to Git')}
+                        </Button>
+                      </PushToGitDialog>
+                    </PublishedNeededTooltip>
+                  </PermissionNeededTooltip>
+                )}
+
+              {!embedState.hideFolders &&
+                (userHasPermissionToUpdateFlow ||
+                  userHasPermissionToWriteFolder) &&
+                selectedRows.length > 0 && (
+                  <PermissionNeededTooltip
+                    hasPermission={
+                      userHasPermissionToUpdateFlow ||
+                      userHasPermissionToWriteFolder
+                    }
+                  >
+                    <MoveFlowDialog
+                      flows={selectedRows}
+                      onMoveTo={() => {
+                        setRefresh(refresh + 1);
+                        resetSelection();
+                        setSelectedRows([]);
+                        refetch();
+                      }}
                     >
-                      <CornerUpLeft className="h-4 w-4 mr-2" />
-                      {t('Move To')}
-                    </Button>
-                  </MoveFlowDialog>
-                </PermissionNeededTooltip>
-              )}
-              
+                      <Button variant="outline" size="sm">
+                        <CornerUpLeft className="h-4 w-4 mr-2" />
+                        {t('Move To')}
+                      </Button>
+                    </MoveFlowDialog>
+                  </PermissionNeededTooltip>
+                )}
+
               {selectedRows.length > 0 && (
                 <Button
                   variant="outline"
@@ -140,7 +132,7 @@ export const useFlowsBulkActions = ({
                   {isExportPending ? t('Exporting') : t('Export')}
                 </Button>
               )}
-              
+
               {userHasPermissionToUpdateFlow && selectedRows.length > 0 && (
                 <PermissionNeededTooltip
                   hasPermission={userHasPermissionToUpdateFlow}
@@ -174,10 +166,7 @@ export const useFlowsBulkActions = ({
                     }}
                     entityName={t('flow')}
                   >
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                    >
+                    <Button variant="destructive" size="sm">
                       <Trash2 className="h-4 w-4 mr-2" />
                       {t('Delete')}
                     </Button>

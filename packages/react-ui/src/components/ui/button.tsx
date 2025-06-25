@@ -22,8 +22,7 @@ const buttonVariants = cva(
           'bg-destructive text-background enabled:hover:bg-destructive/90',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        accent:
-          'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
+        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
           'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
         link: 'text-primary underline-offset-4 enabled:hover:underline',

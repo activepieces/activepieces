@@ -153,7 +153,7 @@ const PlatformPiecesPage = () => {
               (row.original.auth.grantType ===
                 BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
                 row.original.auth.grantType ===
-                OAuth2GrantType.AUTHORIZATION_CODE ||
+                  OAuth2GrantType.AUTHORIZATION_CODE ||
                 isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">

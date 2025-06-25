@@ -66,172 +66,172 @@ const GlobalConnectionsTable = () => {
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
   >[] = [
-      {
-        id: 'select',
-        header: ({ table }) => (
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          variant="secondary"
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRows = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRows = [...allRows, ...selectedRows];
+              const uniqueRows = Array.from(
+                new Map(
+                  newSelectedRows.map((item) => [item.id, item]),
+                ).values(),
+              );
+              setSelectedRows(uniqueRows);
+            } else {
+              const filteredRows = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.id === row.id);
+              });
+              setSelectedRows(filteredRows);
+            }
+          }}
+        />
+      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) => selectedRow.id === row.original.id,
+        );
+        return (
           <Checkbox
             variant="secondary"
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              table.getIsSomePageRowsSelected()
-            }
+            checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
-
+              let newSelectedRows = [...selectedRows];
               if (isChecked) {
-                const allRows = table
-                  .getRowModel()
-                  .rows.map((row) => row.original);
-
-                const newSelectedRows = [...allRows, ...selectedRows];
-                const uniqueRows = Array.from(
-                  new Map(
-                    newSelectedRows.map((item) => [item.id, item]),
-                  ).values(),
+                const exists = newSelectedRows.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
                 );
-                setSelectedRows(uniqueRows);
+                if (!exists) {
+                  newSelectedRows.push(row.original);
+                }
               } else {
-                const filteredRows = selectedRows.filter((row) => {
-                  return !table
-                    .getRowModel()
-                    .rows.some((r) => r.original.id === row.id);
-                });
-                setSelectedRows(filteredRows);
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
               }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
             }}
           />
-        ),
-        cell: ({ row }) => {
-          const isChecked = selectedRows.some(
-            (selectedRow) => selectedRow.id === row.original.id,
-          );
-          return (
-            <Checkbox
-              variant="secondary"
-              checked={isChecked}
-              onCheckedChange={(value) => {
-                const isChecked = !!value;
-                let newSelectedRows = [...selectedRows];
-                if (isChecked) {
-                  const exists = newSelectedRows.some(
-                    (selectedRow) => selectedRow.id === row.original.id,
-                  );
-                  if (!exists) {
-                    newSelectedRows.push(row.original);
-                  }
-                } else {
-                  newSelectedRows = newSelectedRows.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  );
-                }
-                setSelectedRows(newSelectedRows);
-                row.toggleSelected(!!value);
+        );
+      },
+      accessorKey: 'select',
+    },
+    {
+      accessorKey: 'pieceName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('App')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            <PieceIconWithPieceName pieceName={row.original.pieceName} />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'displayName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Name')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <CopyTextTooltip
+            title={t('External ID')}
+            text={row.original.externalId || ''}
+          >
+            <div className="text-left">{row.original.displayName}</div>
+          </CopyTextTooltip>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, icon: Icon } =
+          appConnectionUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'updated',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Connected At')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.updated))}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'projectsCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Projects')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">{row.original.projectIds.length}</div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            <EditGlobalConnectionDialog
+              connectionId={row.original.id}
+              currentName={row.original.displayName}
+              projectIds={row.original.projectIds}
+              userHasPermissionToEdit={true}
+              onEdit={() => {
+                refetchGlobalConnections();
               }}
             />
-          );
-        },
-        accessorKey: 'select',
+            <ReconnectButtonDialog
+              connection={row.original}
+              onConnectionCreated={() => {
+                refetchGlobalConnections();
+              }}
+              hasPermission={true}
+            />
+          </div>
+        );
       },
-      {
-        accessorKey: 'pieceName',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('App')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              <PieceIconWithPieceName pieceName={row.original.pieceName} />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'displayName',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Name')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <CopyTextTooltip
-              title={t('External ID')}
-              text={row.original.externalId || ''}
-            >
-              <div className="text-left">{row.original.displayName}</div>
-            </CopyTextTooltip>
-          );
-        },
-      },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
-        ),
-        cell: ({ row }) => {
-          const status = row.original.status;
-          const { variant, icon: Icon } =
-            appConnectionUtils.getStatusIcon(status);
-          return (
-            <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
-                text={formatUtils.convertEnumToHumanReadable(status)}
-                variant={variant}
-              />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updated',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Connected At')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {formatUtils.formatDate(new Date(row.original.updated))}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'projectsCount',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Projects')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">{row.original.projectIds.length}</div>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        cell: ({ row }) => {
-          return (
-            <div className="flex items-center gap-2 justify-end">
-              <EditGlobalConnectionDialog
-                connectionId={row.original.id}
-                currentName={row.original.displayName}
-                projectIds={row.original.projectIds}
-                userHasPermissionToEdit={true}
-                onEdit={() => {
-                  refetchGlobalConnections();
-                }}
-              />
-              <ReconnectButtonDialog
-                connection={row.original}
-                onConnectionCreated={() => {
-                  refetchGlobalConnections();
-                }}
-                hasPermission={true}
-              />
-            </div>
-          );
-        },
-      },
-    ];
+    },
+  ];
 
   const searchParams = new URLSearchParams(location.search);
   const {
