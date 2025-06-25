@@ -491,7 +491,8 @@
         "about/breaking-changes",
         "about/changelog",
         "about/telemetry",
-        "about/license"
+        "about/license",
+        "about/performance"
       ]
     }
   ],
