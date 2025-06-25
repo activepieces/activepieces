@@ -21,6 +21,7 @@ type PieceSelectorProps = {
   id: string;
   operation: PieceSelectorOperation;
   openSelectorOnClick?: boolean;
+  stepToReplacePieceDisplayName?: string;
 };
 
 const PieceSelector = ({
@@ -28,7 +29,7 @@ const PieceSelector = ({
   operation,
   id,
   openSelectorOnClick = true,
-
+  stepToReplacePieceDisplayName,
 }: PieceSelectorProps) => {
   const [
     openedPieceSelectorStepNameOrAddButtonId,
@@ -58,7 +59,7 @@ const PieceSelector = ({
           setSearchQuery('');
           setOpenedPieceSelectorStepNameOrAddButtonId(null);
           setSelectedPieceMetadataInPieceSelector(null);
-          setSelectedPieceGroupType(null);
+          setSelectedPieceGroupType(isForReplace && !isForEmptyTrigger? PieceTagType.ALL : null);
         }
       }}
     >
@@ -127,6 +128,7 @@ const PieceSelector = ({
               searchQuery={debouncedQuery}
               operation={operation}
               selectedPieceGroupType={selectedPieceGroupType}
+              stepToReplacePieceDisplayName={stepToReplacePieceDisplayName}
             />
             }
             

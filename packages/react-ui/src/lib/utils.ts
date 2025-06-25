@@ -320,7 +320,7 @@ export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const scrollToElement = (elementId: string) => {
+export const scrollToElementAndClickIt = (elementId: string) => {
   const element = document.getElementById(
     elementId
   );
@@ -328,4 +328,5 @@ export const scrollToElement = (elementId: string) => {
     behavior: 'instant',
     block: 'start',
   });
+  element?.click();
 }

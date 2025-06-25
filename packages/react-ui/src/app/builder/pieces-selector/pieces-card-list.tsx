@@ -16,7 +16,7 @@ import {
 } from '@/lib/types';
 import { FlowOperationType, isNil } from '@activepieces/shared';
 
-import { cn, scrollToElement, wait } from '../../../lib/utils';
+import { cn, scrollToElementAndClickIt, wait } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { NoResultsFound } from './no-results-found';
@@ -27,10 +27,11 @@ type PiecesCardListProps = {
   searchQuery: string;
   operation: PieceSelectorOperation;
   selectedPieceGroupType: PieceTagType | null;
+  stepToReplacePieceDisplayName?: string;
 };
 
 
-export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, operation,selectedPieceGroupType } ) => {
+export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, operation,selectedPieceGroupType, stepToReplacePieceDisplayName } ) => {
   const isMobile = useIsMobile();
   const [selectedPieceMetadataInPieceSelector] =
     useBuilderStateContext((state) => [
@@ -46,15 +47,12 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, ope
     const hasScrolledToElement = useRef(false);
     const [mouseMoved, setMouseMoved] = useState(false);
     useEffect(() => {
-      if(isNil(selectedPieceGroupType)) {
+      if(hasScrolledToElement.current || isLoadingPieces) {
         return;
       }
-      if(hasScrolledToElement.current) {
-        return;
-      }
-      const categoryNameOrPieceDisplayNameToScrollTo = selectedPieceGroupType === PieceTagType.ALL ? selectedPieceMetadataInPieceSelector?.displayName : tagCategoryName[selectedPieceGroupType];
+      const categoryNameOrPieceDisplayNameToScrollTo = findInitiallyScrolledToCategoryOrPieceDisplayName(selectedPieceGroupType, selectedPieceMetadataInPieceSelector, stepToReplacePieceDisplayName);
       if (!isNil(categoryNameOrPieceDisplayNameToScrollTo)) {
-        scrollToElement(categoryNameOrPieceDisplayNameToScrollTo);
+        scrollToElementAndClickIt(categoryNameOrPieceDisplayNameToScrollTo);
         }
         hasScrolledToElement.current = true;
 
@@ -136,9 +134,9 @@ const PieceCardListItem = ({
   const showSuggestions = searchQuery.length > 0 || isMobile;
   const isMouseOver = useRef(false);
   const selectPieceMetatdata = async () => {
-    if(isDisabled) {
-      return;
-    }
+   if(isDisabled) {
+    return;
+   }
     isMouseOver.current = true;
     await wait(250);
     if (isMouseOver.current) {
@@ -164,7 +162,7 @@ const PieceCardListItem = ({
         interactive={!showSuggestions}
         onMouseEnter={selectPieceMetatdata}
         onMouseMove={selectPieceMetatdata}
-        onClick={selectPieceMetatdata}
+        onClick={()=> setSelectedPieceMetadataInPieceSelector(pieceMetadata)}
         onMouseLeave={() => {
           isMouseOver.current = false;
         }}
@@ -197,3 +195,13 @@ const PieceCardListItem = ({
 };
 
 PieceCardListItem.displayName = 'PieceCardListItem';
+const findInitiallyScrolledToCategoryOrPieceDisplayName = (selectedPieceGroupType: PieceTagType | null, selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null, stepToReplacePieceDisplayName: string | undefined) => {
+   if(isNil(selectedPieceMetadataInPieceSelector) && !isNil(stepToReplacePieceDisplayName) && selectedPieceGroupType === PieceTagType.ALL) {
+    return stepToReplacePieceDisplayName;
+   }
+   if(isNil(selectedPieceGroupType)) {
+    return null;
+   }
+   const categoryNameOrPieceDisplayNameToScrollTo =  selectedPieceGroupType === PieceTagType.ALL ? selectedPieceMetadataInPieceSelector?.displayName : tagCategoryName[selectedPieceGroupType];
+   return categoryNameOrPieceDisplayNameToScrollTo;
+}

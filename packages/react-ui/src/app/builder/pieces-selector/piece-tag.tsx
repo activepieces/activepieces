@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-import { cn, scrollToElement } from '@/lib/utils';
+import { cn, scrollToElementAndClickIt } from '@/lib/utils';
 import { PieceTagType, tagCategoryName } from '@/lib/types';
 import construction from '@/assets/img/custom/construction.png';
 import link from '@/assets/img/custom/link.png';
@@ -59,7 +59,7 @@ const PieceTag = ({
       })}
       onClick={() => {
         const categoryName = tagCategoryName[type];
-        scrollToElement(categoryName);
+        scrollToElementAndClickIt(categoryName);
       }}
     >
       <img className='h-4' src={tagDisplayData.icon} alt={tagDisplayData.name} />

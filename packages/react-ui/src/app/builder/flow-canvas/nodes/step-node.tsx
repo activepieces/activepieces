@@ -53,7 +53,6 @@ const ApStepCanvasNode = React.memo(
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
@@ -68,6 +67,7 @@ const ApStepCanvasNode = React.memo(
         type: flowUtilConsts.DRAGGED_STEP_TAG,
       },
     });
+
 
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -133,6 +133,7 @@ const ApStepCanvasNode = React.memo(
               }}
               id={step.name}
               openSelectorOnClick={false}
+              stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div
                 className="flex items-center justify-center h-full w-full gap-3"
