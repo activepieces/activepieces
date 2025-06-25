@@ -384,7 +384,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AIUsagePostgres1750090291551,
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
-        AddAgentsLimitToPlatformPlan1749917984363,
         RemoveDefaultLocaleFromPlatform1749733527371,
         AddStepToIssuesTable1750017637712,
         MakeStepNameOptional1750025401754,
@@ -477,7 +476,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddManualTaskCommentTable1742305104390,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
-       
+
+                AddAgentsLimitToPlatformPlan1749917984363,
             )
             break
         case ApEdition.COMMUNITY:
