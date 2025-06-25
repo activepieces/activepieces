@@ -14,6 +14,7 @@ import {
   getAiApiKey,
   getStoreData,
   getUsagePlan,
+  PromptXAuthType,
 } from '../common/pmtx-api';
 
 export const askAssistant = createAction({
@@ -27,30 +28,31 @@ export const askAssistant = createAction({
       required: true,
       description: 'The assistant which will generate the completion.',
       refreshers: [],
-      options: async ({ auth }: any) => {
-        const { server, username, password } = auth;
-        const accessToken = await getAccessToken(server, username, password);
-        const openApiKey = await getAiApiKey(server, accessToken as string);
+      options: async ({ auth }) => {
+        const promptxAuth = auth as PromptXAuthType;
+        let accessToken: string;
+        let openApiKey: string;
 
-        if (!openApiKey) {
+        try {
+          accessToken = await getAccessToken(promptxAuth);
+          openApiKey = await getAiApiKey(promptxAuth.server, accessToken);
+        } catch (error) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Unable to fetch OpenAI key. Check connection',
             options: [],
           };
         }
+
         try {
-          const openai = new OpenAI({
-            apiKey: openApiKey as string,
-          });
+          const openai = new OpenAI({ apiKey: openApiKey });
           const assistants = await openai.beta.assistants.list();
-          console.log('assistants ===> ', assistants);
 
           return {
             disabled: false,
-            options: assistants.data.map((assistant: any) => {
+            options: assistants.data.map((assistant) => {
               return {
-                label: assistant.name,
+                label: assistant.name ?? `Assistant ${assistant.id}`,
                 value: assistant.id,
               };
             }),
@@ -76,33 +78,32 @@ export const askAssistant = createAction({
     }),
   },
   async run({ auth, propsValue, store, project, flows }) {
-    const { server, username, password } = auth;
-    const accessToken = await getAccessToken(server, username, password);
-    const usage = await getUsagePlan(server, accessToken as string);
-    //get store data
+    const promptxAuth = auth as PromptXAuthType;
+    const accessToken = await getAccessToken(promptxAuth);
+    const usage = await getUsagePlan(promptxAuth.server, accessToken);
+
+    // Get store data
     const { userId, apiKey } = await getStoreData(
       store,
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
     await propsValidation.validateZod(propsValue, {
       memoryKey: z.string().max(128).optional(),
     });
 
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
+    const openai = new OpenAI({ apiKey: apiKey });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
-    let response: any;
-    let thread: any;
+
+    let response: OpenAI.Beta.Threads.Messages.Message[] | undefined;
+    let thread: { id: string } | null;
 
     if (memoryKey) {
       // Get existing thread ID or create a new thread for this memory key
       thread = await store.get(memoryKey, StoreScope.PROJECT);
       if (!thread) {
         thread = await openai.beta.threads.create();
-
         store.put(memoryKey, thread, StoreScope.PROJECT);
       }
     } else {
@@ -125,19 +126,22 @@ export const askAssistant = createAction({
       assistant_id: assistant,
       max_completion_tokens: Math.floor(maxTokens),
     });
+
     // Wait at least 400ms for inference to finish before checking to save requests
     await sleep(400);
     let inputTokens = 0;
     let outputTokens = 0;
     let totalTokens = 0;
     let model = '';
+    let maxPollAttempts = 5;
+
     while (!response) {
       const runCheck = await openai.beta.threads.runs.retrieve(
         thread.id,
         run.id
       );
-      if (runCheck.status == 'completed') {
-        // get the token usage
+      if (runCheck.status === 'completed') {
+        // Get the token usage
         const usage = runCheck.usage;
         inputTokens = usage?.prompt_tokens ?? 0;
         outputTokens = usage?.completion_tokens ?? 0;
@@ -153,8 +157,12 @@ export const askAssistant = createAction({
         break;
       }
 
+      maxPollAttempts -= 1;
+      if (maxPollAttempts <= 0) break;
+
       await sleep(runCheckDelay);
     }
+
     addTokenUsage(
       {
         userId: `${userId}`,
@@ -168,9 +176,16 @@ export const askAssistant = createAction({
           totalTokens,
         },
       },
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
+
+    if (!response && maxPollAttempts <= 0) {
+      const err = 'Max poll attempts to assistants API breached';
+      console.log(err);
+      return { error: err };
+    }
+
     return response;
   },
 });

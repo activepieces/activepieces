@@ -8,6 +8,7 @@ import {
   getAiApiKey,
   getStoreData,
   getUsagePlan,
+  PromptXAuthType,
 } from '../common/pmtx-api';
 
 export const extractStructuredDataAction = createAction({
@@ -21,26 +22,31 @@ export const extractStructuredDataAction = createAction({
       required: true,
       refreshers: [],
       defaultValue: 'gpt-3.5-turbo',
-      options: async ({ auth }: any) => {
-        const { server, username, password } = auth;
-        const accessToken = await getAccessToken(server, username, password);
-        const openApiKey = await getAiApiKey(server, accessToken as string);
-        if (!openApiKey) {
+      options: async ({ auth }) => {
+        const promptxAuth = auth as PromptXAuthType;
+        let accessToken: string;
+        let openApiKey: string;
+
+        try {
+          accessToken = await getAccessToken(promptxAuth);
+          openApiKey = await getAiApiKey(promptxAuth.server, accessToken);
+        } catch (error) {
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Unable to fetch OpenAI key. Check connection',
             options: [],
           };
         }
+
         try {
-          const openai = new OpenAI({
-            apiKey: openApiKey as string,
-          });
+          const openai = new OpenAI({ apiKey: openApiKey });
           const response = await openai.models.list();
+
           // We need to get only LLM models
           const models = response.data.filter(
             (model) => !notLLMs.includes(model.id)
           );
+
           return {
             disabled: false,
             options: models.map((model) => {
@@ -101,20 +107,20 @@ export const extractStructuredDataAction = createAction({
       },
     }),
   },
-  async run(context) {
-    const { store, project, flows } = context;
-    const { server, username, password } = context.auth;
-    const accessToken = await getAccessToken(server, username, password);
-    const usage = await getUsagePlan(server, accessToken as string);
-    //get store data
+  async run({ auth, store, project, flows, propsValue }) {
+    const promptxAuth = auth as PromptXAuthType;
+    const accessToken = await getAccessToken(promptxAuth);
+    const usage = await getUsagePlan(promptxAuth.server, accessToken);
+
+    // Get store data
     const { userId, apiKey } = await getStoreData(
       store,
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
-    const { model, text } = context.propsValue;
 
-    const paramInputArray = context.propsValue.params as ParamInput[];
+    const { model, text } = propsValue;
+    const paramInputArray = propsValue.params as ParamInput[];
     const functionParams: Record<string, unknown> = {};
     const requiredFunctionParams: string[] = [];
     for (const param of paramInputArray) {
@@ -127,9 +133,7 @@ export const extractStructuredDataAction = createAction({
       }
     }
     const prompt = 'Extract the following data from the provided text';
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
+    const openai = new OpenAI({ apiKey });
     /*
      * Since there is no prop for specifying a max value directly,
      * we'll use the available tokens as the maximum.
@@ -171,8 +175,8 @@ export const extractStructuredDataAction = createAction({
             totalTokens: response.usage?.total_tokens ?? 0,
           },
         },
-        server,
-        accessToken as string
+        promptxAuth.server,
+        accessToken
       );
 
       return JSON.parse(toolCallsResponse[0].function.arguments);

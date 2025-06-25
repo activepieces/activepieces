@@ -6,15 +6,9 @@ import {
 import { askOpenAI } from './lib/actions/ask-chatgpt';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { visionPrompt } from './lib/actions/vision-prompt';
-
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data-from-text';
-import { baseUrlMap, Production, Test } from './lib/common/pmtx-api';
+import { baseUrlMap } from './lib/common/pmtx-api';
 import { PieceCategory } from '@activepieces/shared';
-
-// import { generateImage } from "./lib/actions/generate-image";
-// import { textToSpeech } from "./lib/actions/text-to-speech";
-// import { transcribeAudio } from "./lib/actions/transcribe-audio";
-// import { translateAudio } from "./lib/actions/translate-audio";
 
 export const promptxAuth = PieceAuth.CustomAuth({
   required: true,
@@ -24,26 +18,26 @@ export const promptxAuth = PieceAuth.CustomAuth({
       options: {
         options: [
           {
-            label: Production,
-            value: Production,
+            label: 'Production',
+            value: 'production',
           },
           {
-            label: Test,
-            value: Test,
+            label: 'Test',
+            value: 'staging',
           },
         ],
       },
       required: true,
-      defaultValue: Production,
+      defaultValue: 'production',
     }),
     username: Property.ShortText({
       displayName: 'Username',
-      description: "PromptX username",
+      description: 'PromptX username',
       required: true,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: "PromptX password",
+      description: 'PromptX password',
       required: true,
     }),
   },
@@ -81,21 +75,14 @@ export const promptxAuth = PieceAuth.CustomAuth({
 
 export const avalantOpenai = createPiece({
   displayName: 'PromptX OpenAI',
-  description: 'Talk directly to OpenAI’s ChatGPT using your available PromptX credits. Use the many tools ChatGPT has to offer using your PromptX credits per request.',
+  description:
+    'Talk directly to OpenAI’s ChatGPT using your available PromptX credits. Use the many tools ChatGPT has to offer using your PromptX credits per request.',
   auth: promptxAuth,
   minimumSupportedRelease: '0.63.0',
-  logoUrl: 'https://ml.oneweb.tech/public_img_main/images/PromptXAI/PromptXAI_0f345f3d9b6743f09e7d3db295973845.png',
+  logoUrl:
+    'https://ml.oneweb.tech/public_img_main/images/PromptXAI/PromptXAI_0f345f3d9b6743f09e7d3db295973845.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: [],
-  actions: [
-    askOpenAI,
-    askAssistant,
-    visionPrompt,
-    extractStructuredDataAction,
-    // textToSpeech,
-    // transcribeAudio,
-    // translateAudio,
-    // generateImage,
-  ],
+  authors: ['rupalbarman'],
+  actions: [askOpenAI, askAssistant, visionPrompt, extractStructuredDataAction],
   triggers: [],
 });

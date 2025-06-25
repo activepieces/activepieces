@@ -1,5 +1,17 @@
 import { Store } from '@activepieces/pieces-framework';
 
+export type PromptXAuthType = {
+  server: 'production' | 'staging';
+  username: string;
+  password: string;
+};
+
+export type AccessTokenResponse = {
+  access_token?: string;
+  error?: string;
+  message?: string;
+};
+
 type UrlConfig = {
   loginUrl: string;
   quotaCheckUrl: string;
@@ -7,6 +19,7 @@ type UrlConfig = {
   myProfileUrl: string;
   getAIKeyUrl: string;
 };
+
 type UsagePackage = {
   package_name: string;
   total_tokens_used: number;
@@ -16,6 +29,7 @@ type UsagePackage = {
   limit_credit_usage: number;
   credit_available: number;
 };
+
 type UserInfo = {
   userIAM2ID: string;
   email: string;
@@ -38,11 +52,9 @@ interface AppUsageData {
   component: string;
   usage: Usage;
 }
-export const Production = 'PromptX';
-export const Test = 'Staging';
 
 export const baseUrlMap: Record<string, UrlConfig> = {
-  [Production]: {
+  production: {
     loginUrl: 'https://centerapp.io/center/auth/login',
     quotaCheckUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -52,7 +64,7 @@ export const baseUrlMap: Record<string, UrlConfig> = {
     getAIKeyUrl:
       'https://promptxai.com/zero-service/pmtx-ai-token-api/v1/api-key?key=openAIKey',
   },
-  [Test]: {
+  staging: {
     loginUrl: 'https://test.oneweb.tech/zero-service/pmtx/login',
     quotaCheckUrl:
       'https://test.oneweb.tech/zero-service/pmtx-ai-token-api/v1/quota-check',
@@ -63,11 +75,12 @@ export const baseUrlMap: Record<string, UrlConfig> = {
       'https://test.oneweb.tech/zero-service/pmtx-ai-token-api/v1/api-key?key=openAIKey',
   },
 };
-export const getAccessToken = async (
-  server: string,
-  username: string,
-  password: string
-): Promise<string | null> => {
+
+export const getAccessToken = async ({
+  server,
+  username,
+  password,
+}: PromptXAuthType) => {
   const response = await fetch(baseUrlMap[server].loginUrl, {
     method: 'POST',
     body: new URLSearchParams({
@@ -78,16 +91,22 @@ export const getAccessToken = async (
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   });
-  const data = await response.json();
+  const data: AccessTokenResponse = await response.json();
+
   if (response.status !== 200) {
     throw new Error(data?.error || data?.message);
   }
 
-  return data?.access_token;
+  if (!data.access_token) {
+    throw new Error(data?.error || data?.message);
+  }
+
+  return data.access_token;
 };
+
 export const addTokenUsage = async (
   data: AppUsageData,
-  server: string,
+  server: 'production' | 'staging',
   access_token: string
 ) => {
   try {
@@ -109,7 +128,11 @@ export const addTokenUsage = async (
     throw error;
   }
 };
-export const getUsagePlan = async (server: string, access_token: string) => {
+
+export const getUsagePlan = async (
+  server: 'production' | 'staging',
+  access_token: string
+) => {
   const response = await fetch(baseUrlMap[server]['quotaCheckUrl'], {
     headers: {
       'Content-Type': 'application/json',
@@ -122,7 +145,11 @@ export const getUsagePlan = async (server: string, access_token: string) => {
   const result: UsagePackage = await response.json();
   return result;
 };
-export const getUserProfile = async (server: string, access_token: string) => {
+
+export const getUserProfile = async (
+  server: 'production' | 'staging',
+  access_token: string
+) => {
   const response = await fetch(baseUrlMap[server]['myProfileUrl'], {
     headers: {
       'Content-Type': 'application/json',
@@ -138,12 +165,12 @@ export const getUserProfile = async (server: string, access_token: string) => {
 
 export const getStoreData = async (
   store: Store,
-  server: string,
+  server: 'production' | 'staging',
   access_token: string
 ) => {
-  //get store data
-  let userId: any = await store.get('userId');
-  let apiKey = await getAiApiKey(server, access_token);
+  // Get store data
+  let userId = await store.get('userId');
+  const apiKey = await getAiApiKey(server, access_token);
 
   if (!userId) {
     const userInfo = await getUserProfile(server, access_token);
@@ -156,7 +183,10 @@ export const getStoreData = async (
   };
 };
 
-export const getAiApiKey = async (server: string, access_token: string) => {
+export const getAiApiKey = async (
+  server: 'production' | 'staging',
+  access_token: string
+) => {
   const response = await fetch(baseUrlMap[server]['getAIKeyUrl'], {
     headers: {
       'Content-Type': 'application/json',
@@ -166,9 +196,9 @@ export const getAiApiKey = async (server: string, access_token: string) => {
   if (response.status !== 201) {
     throw new Error(`API error: ${response.statusText}`);
   }
-  const result = await response.json();
-  if (!result?.openAIKey) {
+  const result: { openAIKey?: string } = await response.json();
+  if (!result.openAIKey) {
     throw new Error('No AI Api Key found for Avalant OpenAI');
   }
-  return result?.openAIKey;
+  return result.openAIKey;
 };

@@ -20,6 +20,7 @@ import {
   getAiApiKey,
   getStoreData,
   getUsagePlan,
+  PromptXAuthType,
 } from '../common/pmtx-api';
 
 export const askOpenAI = createAction({
@@ -35,26 +36,32 @@ export const askOpenAI = createAction({
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
       refreshers: [],
       defaultValue: 'gpt-3.5-turbo',
-      options: async ({ auth }: any) => {
-        const { server, username, password } = auth;
-        const accessToken = await getAccessToken(server, username, password);
-        const openApiKey = await getAiApiKey(server, accessToken as string);
-        if (!openApiKey) {
+      options: async ({ auth }) => {
+        const promptxAuth = auth as PromptXAuthType;
+        let accessToken: string;
+        let openApiKey: string;
+
+        try {
+          accessToken = await getAccessToken(promptxAuth);
+          openApiKey = await getAiApiKey(promptxAuth.server, accessToken);
+        } catch (error) {
+          console.error(error);
           return {
             disabled: true,
-            placeholder: 'Enter your API key first',
+            placeholder: 'Unable to fetch OpenAI key. Check connection',
             options: [],
           };
         }
+
         try {
-          const openai = new OpenAI({
-            apiKey: openApiKey as string,
-          });
+          const openai = new OpenAI({ apiKey: openApiKey });
           const response = await openai.models.list();
+
           // We need to get only LLM models
           const models = response.data.filter(
             (model) => !notLLMs.includes(model.id)
           );
+
           return {
             disabled: false,
             options: models.map((model) => {
@@ -128,13 +135,14 @@ export const askOpenAI = createAction({
     }),
   },
   async run({ auth, propsValue, store, flows, project }) {
-    const { server, username, password } = auth;
-    const accessToken = await getAccessToken(server, username, password);
-    //get store data
+    const promptxAuth = auth as PromptXAuthType;
+    const accessToken = await getAccessToken(promptxAuth);
+
+    // Get store data
     const { userId, apiKey } = await getStoreData(
       store,
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
 
     const {
@@ -147,8 +155,10 @@ export const askOpenAI = createAction({
       prompt,
       memoryKey,
     } = propsValue;
-    const usage = await getUsagePlan(server, accessToken as string);
-    //check token is available
+
+    const usage = await getUsagePlan(promptxAuth.server, accessToken);
+
+    // Check token is available
     if (maxTokens && maxTokens > usage.token_available) {
       throw new Error(billingIssueMessage);
     }
@@ -157,11 +167,11 @@ export const askOpenAI = createAction({
       temperature: z.number().min(0).max(1).optional(),
       memoryKey: z.string().max(128).optional(),
     });
-    const openai = new OpenAI({
-      apiKey: `${apiKey}`,
-    });
+
+    const openai = new OpenAI({ apiKey });
 
     let messageHistory: any[] | null = [];
+
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {
       messageHistory = (await store.get(memoryKey, StoreScope.PROJECT)) ?? [];
@@ -233,8 +243,8 @@ export const askOpenAI = createAction({
           totalTokens: completion.usage?.total_tokens ?? 0,
         },
       },
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
 
     return completion.choices[0].message.content;

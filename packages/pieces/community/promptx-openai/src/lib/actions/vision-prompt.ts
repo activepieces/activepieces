@@ -8,6 +8,7 @@ import {
   getAccessToken,
   getStoreData,
   getUsagePlan,
+  PromptXAuthType,
 } from '../common/pmtx-api';
 import { billingIssueMessage } from '../common/common';
 
@@ -98,19 +99,21 @@ export const visionPrompt = createAction({
     }),
   },
   async run({ auth, propsValue, project, flows, store }) {
-    const { server, username, password } = auth;
-    const accessToken = await getAccessToken(server, username, password);
-    //get store data
+    const promptxAuth = auth as PromptXAuthType;
+    const accessToken = await getAccessToken(promptxAuth);
+
+    // Get store data
     const { userId, apiKey } = await getStoreData(
       store,
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
 
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;
-    const usage = await getUsagePlan(server, accessToken as string);
-    //check token is available
+    const usage = await getUsagePlan(promptxAuth.server, accessToken);
+
+    // Check token is available
     if (maxTokens && maxTokens > usage.token_available) {
       throw new Error(billingIssueMessage);
     }
@@ -119,9 +122,7 @@ export const visionPrompt = createAction({
       temperature: z.number().min(0).max(1),
     });
 
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
+    const openai = new OpenAI({ apiKey });
 
     const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
     const roles = rolesArray.map((item: any) => {
@@ -165,7 +166,7 @@ export const visionPrompt = createAction({
       max_completion_tokens: maxTokens,
     });
 
-    // update token usage data for the user
+    // Update token usage data for the user
     await addTokenUsage(
       {
         userId: `${userId}`,
@@ -179,8 +180,8 @@ export const visionPrompt = createAction({
           totalTokens: completion.usage?.total_tokens ?? 0,
         },
       },
-      server,
-      accessToken as string
+      promptxAuth.server,
+      accessToken
     );
 
     return completion.choices[0].message.content;
