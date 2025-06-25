@@ -108,7 +108,7 @@ export const CustomTooltipLink = ({
                 : null}
               <span className="text-sm">{label}</span>
             </div>
-            {(label === 'MCP' || label === 'Agents') && (
+            {(label === 'Agents') && (
               <BetaBadge showTooltip={false} />
             )}
           </div>
