@@ -20,10 +20,10 @@ export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
             schema = z.boolean()
             break
         case McpPropertyType.ARRAY:
-            schema = z.array(z.unknown())
+            schema = z.array(z.string())
             break
         case McpPropertyType.OBJECT:
-            schema = z.record(z.string(), z.unknown())
+            schema = z.record(z.string(), z.string())
             break
         default:
             schema = z.unknown()

@@ -43,6 +43,9 @@ import { AddFailedStepNameFlowRun1750045151951 } from './migration/sqlite/175004
 import { AddIssueEntity1750058424539 } from './migration/sqlite/1750058424539-add-issue-entity'
 import { AIUsageSqlite1750074241300 } from './migration/sqlite/1750074241300-AIUsageSqlite'
 import { RemoveUniqueOnFlowSqlite1750093133906 } from './migration/sqlite/1750093133906-RemoveUniqueOnFlowSqlite'
+import { ChangeContentTodoActivity1750822236348 } from './migration/sqlite/1750822236348-change-content-todo-activity'
+import { RegenerateIssueTable1750822955988 } from './migration/sqlite/1750822955988-regenerate-issue-table'
+import { UpdateAppConnectionIndexes1750823093554 } from './migration/sqlite/1750823093554-update-app-connection-indexes'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -65,6 +68,9 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        UpdateAppConnectionIndexes1750823093554,
+        RegenerateIssueTable1750822955988,
+        ChangeContentTodoActivity1750822236348,
         AIUsageSqlite1750074241300,
         RemoveUniqueOnFlowSqlite1750093133906,
         AddIssueEntity1750058424539,

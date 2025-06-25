@@ -5,10 +5,8 @@ export function getProviderConfig(provider: string): SupportedAIProvider | undef
 }
 
 export function calculateTokensCost(
-    inputTokens: number,
-    outputTokens: number,
-    inputCostPerMillionTokens: number,
-    outputCostPerMillionTokens: number,
+    tokens: number,
+    costPerMillionTokens: number,
 ): number {
-    return (inputTokens / 1000000) * inputCostPerMillionTokens + (outputTokens / 1000000) * outputCostPerMillionTokens
-} 
+    return (tokens / 1000000) * costPerMillionTokens
+}

@@ -1,4 +1,3 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Bot } from 'lucide-react';
 import { useState } from 'react';
@@ -8,10 +7,11 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { Agent, ApFlagId } from '@activepieces/shared';
 
-import { AgentBuilder } from './agent-builder';
-import { AgentCard } from './agent-card';
-import { agentsApi } from './agents-api';
-import { CreateAgentButton } from './create-agent-button';
+import { AgentCard } from '../../../features/agents/agent-card';
+import { CreateAgentButton } from '../../../features/agents/create-agent-button';
+import { agentHooks } from '../../../features/agents/lib/agent-hooks';
+
+import { AgentBuilder } from './builder';
 
 export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,14 +21,7 @@ export const AgentsPage = () => {
     ApFlagId.AGENTS_ENABLED,
   );
 
-  const {
-    data: agentsPage,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ['agents'],
-    queryFn: () => agentsApi.list(),
-  });
+  const { data: agentsPage, isLoading, refetch } = agentHooks.useList();
 
   const agents = agentsPage?.data || [];
 
@@ -45,12 +38,12 @@ export const AgentsPage = () => {
     setIsOpen(true);
   };
 
-  const deleteAgentMutation = useMutation({
-    mutationFn: (agentId: string) => agentsApi.delete(agentId),
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const deleteAgentMutation = agentHooks.useDelete();
+
+  const handleDeleteAgent = async (agentId: string) => {
+    await deleteAgentMutation.mutateAsync(agentId);
+    refetch();
+  };
 
   if (isLoading) {
     return <LoadingScreen mode="container" />;
@@ -109,7 +102,7 @@ export const AgentsPage = () => {
                   title={agent.displayName}
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}
-                  onDelete={() => deleteAgentMutation.mutateAsync(agent.id)}
+                  onDelete={() => handleDeleteAgent(agent.id)}
                 />
               </div>
             ))}

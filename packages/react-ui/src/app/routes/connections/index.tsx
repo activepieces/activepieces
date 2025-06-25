@@ -176,6 +176,7 @@ function AppConnectionsPage() {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -214,6 +215,7 @@ function AppConnectionsPage() {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             disabled={isPlatformConnection}
             onCheckedChange={(value) => {
