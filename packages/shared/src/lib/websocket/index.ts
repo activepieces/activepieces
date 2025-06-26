@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { RichContentBlock } from '../todos/content'
+import { RichContentBlock } from '../agents/response'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
