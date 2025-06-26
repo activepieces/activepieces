@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useCallback,
-  useState,
   useEffect,
   useRef,
 } from 'react';
@@ -27,8 +26,7 @@ import {
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
-  Action,
-  isFlowStateTerminal,
+  FlowRunStatus,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -182,7 +180,10 @@ export const createBuilderStore = (
 ) =>
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
-      ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
+      ? flowRunUtils.findLastStepWithStatus(
+          initialState.run.status,
+          initialState.run.steps,
+        )
       : null;
     const initiallySelectedStep = newFlow
       ? null
@@ -348,7 +349,7 @@ export const createBuilderStore = (
             leftSidebar: LeftSideBarType.RUN_DETAILS,
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
-              ? flowRunUtils.findFailedStepInOutput(run.steps) ??
+              ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
                 state.selectedStep ??
                 'trigger'
               : 'trigger',
@@ -641,7 +642,6 @@ export const useHandleKeyPressOnCanvas = () => {
                 const lastSelectedNode =
                   selectedNodes.length === 1 ? selectedNodes[0] : null;
                 pasteNodes(
-                  actions,
                   flowVersion,
                   {
                     parentStepName: lastSelectedNode ?? lastStep,
@@ -704,21 +704,6 @@ export const useSwitchToDraft = () => {
   };
 };
 
-export const usePasteActionsInClipboard = () => {
-  const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
-  const fetchClipboardOperations = async () => {
-    if (document.hasFocus()) {
-      const fetchedActionsFromClipboard = await getActionsInClipboard();
-      if (fetchedActionsFromClipboard.length > 0) {
-        setActionsToPaste(fetchedActionsFromClipboard);
-      } else {
-        setActionsToPaste([]);
-      }
-    }
-  };
-  return { actionsToPaste, fetchClipboardOperations };
-};
-
 export const useIsFocusInsideListMapperModeInput = ({
   containerRef,
   setIsFocusInsideListMapperModeInput,
@@ -751,27 +736,24 @@ export const useIsFocusInsideListMapperModeInput = ({
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
-export const useFocusedFailedStep = () => {
+export const useFocusOnStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
-  const previousRun = usePrevious(currentRun);
+  const setSelectedStep = useBuilderStateContext(
+    (state) => state.selectStepByName,
+  );
+  const previousStatus = usePrevious(currentRun?.status);
+  const currentStep = flowRunUtils.findLastStepWithStatus(
+    previousStatus ?? FlowRunStatus.RUNNING,
+    currentRun?.steps ?? {},
+  );
+  const lastStep = usePrevious(currentStep);
+
   const { fitView } = useReactFlow();
-  if (
-    (currentRun &&
-      previousRun?.id !== currentRun.id &&
-      isFlowStateTerminal(currentRun.status)) ||
-    (currentRun &&
-      previousRun &&
-      !isFlowStateTerminal(previousRun.status) &&
-      isFlowStateTerminal(currentRun.status))
-  ) {
-    const failedStep = currentRun.steps
-      ? flowRunUtils.findFailedStepInOutput(currentRun.steps)
-      : null;
-    if (failedStep) {
-      setTimeout(() => {
-        fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
-      });
-    }
+  if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
+    setTimeout(() => {
+      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+      setSelectedStep(currentStep);
+    });
   }
 };
 

@@ -209,7 +209,7 @@ const CreateTodoGuide = ({
 
         <DialogFooter className="shrink-0 mt-3 pt-3 border-t">
           <Button
-            variant="secondary"
+            variant="accent"
             onClick={() => setOpen(false)}
             className="mr-2"
           >

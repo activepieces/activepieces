@@ -50,7 +50,6 @@ export const formatUtils = {
 
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
-    const isSameYear = inputDate.isSame(now, 'year');
 
     const timeFormat = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
@@ -62,24 +61,15 @@ export const formatUtils = {
       return `Today at ${timeFormat.format(date)}`;
     } else if (isYesterday) {
       return `Yesterday at ${timeFormat.format(date)}`;
-    } else if (isSameYear) {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
-    } else {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
     }
+    return Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -259,6 +249,7 @@ export const determineDefaultRoute = (
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
+export const NEW_MCP_QUERY_PARAM = 'newMcp';
 export const parentWindow: Window = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;

@@ -1,4 +1,5 @@
 import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
@@ -20,7 +21,11 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
+
+        modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = flagService.isCloudPlatform(platformId)
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
+
+        modifiedFlags[ApFlagId.AGENTS_ENABLED] = !isNil(platformWithPlan.plan.agentsLimit) && platformWithPlan.plan.agentsLimit > 0
         const platform = await platformService.getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(

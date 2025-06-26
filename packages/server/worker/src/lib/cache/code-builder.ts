@@ -1,6 +1,6 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -38,11 +38,6 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-
-enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
 
 export const codeBuilder = (log: FastifyBaseLogger) => ({
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
@@ -103,7 +98,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
             await handleCompilationError({
                 codePath,
-                error: error as Record<string, string | undefined>,
+                error,
             })
         }
         finally {
@@ -158,7 +153,10 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
+    const errorHasStdout = typeof error === 'object' && error && 'stdout' in error
+    const stdoutError = errorHasStdout ? error.stdout : undefined
+    const genericError = `${error ?? 'error compiling'}`
+    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
 
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
@@ -190,5 +188,5 @@ type CompileCodeParams = {
 
 type HandleCompilationErrorParams = {
     codePath: string
-    error: Record<string, string | undefined>
+    error: unknown
 }

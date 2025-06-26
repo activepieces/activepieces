@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
   StepMetadata,
   PieceSelectorOperation,
@@ -92,7 +92,7 @@ const PieceSelector = ({
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
-    piecesHooks.useAllStepsMetadata({
+    stepsHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
       type: isTrigger ? 'trigger' : 'action',
     });
@@ -381,55 +381,6 @@ const PieceSelector = ({
     }
   };
 
-  const handleAddAgentAction = (
-    stepMetadata: StepMetadata,
-    actionOrTrigger: PieceSelectorItem,
-  ) => {
-    if (operation.type !== FlowOperationType.ADD_ACTION) {
-      return;
-    }
-
-    const newStepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      flowVersion,
-    );
-
-    const stepData = pieceSelectorUtils.getDefaultStep({
-      stepName: newStepName,
-      stepMetadata,
-      actionOrTrigger,
-    });
-
-    // Generate random number for the robot icon
-    const randomNumber = Math.floor(Math.random() * 10000) + 1;
-    const customLogoUrl = `https://cdn.activepieces.com/pieces/ai/robots/robot_${randomNumber}.png`;
-
-    // Set custom logo URL for the agent step
-    if (stepData.settings.inputUiInfo?.customizedInputs) {
-      stepData.settings.inputUiInfo.customizedInputs.logoUrl = customLogoUrl;
-    } else if (stepData.settings.inputUiInfo) {
-      stepData.settings.inputUiInfo.customizedInputs = {
-        logoUrl: customLogoUrl,
-      };
-    } else {
-      stepData.settings.inputUiInfo = {
-        customizedInputs: {
-          logoUrl: customLogoUrl,
-        },
-      };
-    }
-
-    applyOperation({
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        ...operation.actionLocation,
-        action: stepData as Action,
-      },
-    });
-
-    selectStepByName(stepData.name);
-  };
-
   const handleSelect: HandleSelectCallback = async (
     stepMetadata,
     actionOrTrigger,
@@ -464,10 +415,6 @@ const PieceSelector = ({
           type
         ) {
           handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
-          break;
-        }
-        if (stepData.settings.pieceName === '@activepieces/piece-agent') {
-          handleAddAgentAction(stepMetadata, actionOrTrigger);
           break;
         }
         applyOperation({

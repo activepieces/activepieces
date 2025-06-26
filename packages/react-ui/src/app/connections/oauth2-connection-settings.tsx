@@ -23,6 +23,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  resolveValueFromProps,
   ApEdition,
   ApFlagId,
   AppConnectionType,
@@ -36,9 +37,9 @@ import {
 } from '@activepieces/shared';
 
 import {
-  oauth2AppsHooks,
+  oauthAppsQueries,
   PieceToClientIdMap,
-} from '../../features/connections/lib/oauth2-apps-hooks';
+} from '../../features/connections/lib/oauth-apps-hooks';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 import { formUtils } from '../builder/piece-properties/form-utils';
 
@@ -46,25 +47,6 @@ type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   authProperty: OAuth2Property<OAuth2Props>;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
-};
-const replaceVariables = (
-  authUrl: string,
-  scope: string,
-  props: Record<string, unknown>,
-) => {
-  let newAuthUrl = authUrl;
-  Object.entries(props).forEach(([key, value]) => {
-    newAuthUrl = newAuthUrl.replace(`{${key}}`, value as string);
-  });
-
-  let newScope = scope;
-  Object.entries(props).forEach(([key, value]) => {
-    newScope = newScope.replace(`{${key}}`, value as string);
-  });
-  return {
-    authUrl: newAuthUrl,
-    scope: newScope,
-  };
 };
 const getOAuth2TypeAndApp = (
   pieceToClientIdMap: PieceToClientIdMap,
@@ -107,7 +89,7 @@ const OAuth2ConnectionSettings = (props: OAuth2ConnectionSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
-    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
 
   if (loadingPieceToClientIdMap || isNil(pieceToClientIdMap)) {
     return <SkeletonList numberOfItems={2} className="h-7"></SkeletonList>;
@@ -294,13 +276,10 @@ const OAuth2ConnectionSettingsForm = ({
   const openPopup = async (
     redirectUrl: string,
     clientId: string,
-    props: Record<string, unknown> | undefined,
+    props: Record<string, string> | undefined,
   ) => {
-    const { authUrl, scope } = replaceVariables(
-      authProperty.authUrl,
-      authProperty.scope.join(' '),
-      props ?? {},
-    );
+    const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
+    const authUrl = resolveValueFromProps(props, authProperty.authUrl);
     const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
       authUrl,
       clientId,

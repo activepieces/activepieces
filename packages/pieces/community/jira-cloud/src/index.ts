@@ -7,6 +7,7 @@ import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssues } from './lib/actions/search-issues';
 import { newIssue } from './lib/triggers/new-issue';
 import { updatedIssue } from './lib/triggers/updated-issue';
+import { updatedIssueStatus } from './lib/triggers/updated-issue-status';
 import { addCommentToIssueAction } from './lib/actions/add-comment-to-issue';
 import { addAttachmentToIssueAction } from './lib/actions/add-attachment-to-issue';
 import { updateIssueCommentAction } from './lib/actions/update-issue-comment';
@@ -17,6 +18,7 @@ import { listIssueCommentsAction } from './lib/actions/list-issue-comments';
 import { findUserAction } from './lib/actions/find-user';
 import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
+import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -26,7 +28,7 @@ export const jiraCloud = createPiece({
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
-	authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
+	authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'prasanna2000-max'],
 	actions: [
 		createIssueAction,
 		updateIssueAction,
@@ -34,6 +36,7 @@ export const jiraCloud = createPiece({
 		searchIssues,
 		assignIssueAction,
 		addAttachmentToIssueAction,
+		getIssueAttachmentAction,
 		addWatcherToIssueAction,
 		addCommentToIssueAction,
 		updateIssueCommentAction,
@@ -55,5 +58,5 @@ export const jiraCloud = createPiece({
 			},
 		}),
 	],
-	triggers: [newIssue, updatedIssue],
+	triggers: [newIssue, updatedIssue, updatedIssueStatus],
 });

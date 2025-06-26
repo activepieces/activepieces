@@ -80,7 +80,7 @@ const chatBubbleMessageVariants = cva('px-1', {
   variants: {
     variant: {
       received: 'bg-background text-foreground rounded-3xl py-2',
-      sent: 'bg-secondary text-secondary-foreground rounded-3xl py-3 px-5',
+      sent: 'bg-accent text-accent-foreground rounded-3xl py-3 px-5',
     },
     layout: {
       default: '',

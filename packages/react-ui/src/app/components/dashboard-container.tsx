@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import { ListTodo, Package, Server, Table2, Workflow } from 'lucide-react';
+import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -47,6 +48,10 @@ export function DashboardContainer({
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
+
+  const isAgentEnabled =
+    platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
+
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -63,17 +68,23 @@ export function DashboardContainer({
     return true;
   };
 
+  const filterAgents = (item: SidebarItem) => {
+    if (item.label === t('Agents')) {
+      return isAgentEnabled;
+    }
+    return true;
+  };
+
   const filterAlerts = (item: SidebarItem) =>
     platform.plan.alertsEnabled || item.label !== t('Alerts');
 
   const releasesLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/releases'),
-    icon: Package,
+    icon: <Package />,
     label: t('Releases'),
     hasPermission:
       project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
-
     showInEmbed: true,
     isSubItem: false,
   };
@@ -81,9 +92,9 @@ export function DashboardContainer({
   const flowsLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
-    icon: Workflow,
+    icon: <Workflow />,
     label: t('Flows'),
-    name: t('Products'),
+    name: !isAgentEnabled ? t('Products') : undefined,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
@@ -95,19 +106,30 @@ export function DashboardContainer({
 
   const mcpLink: SidebarLink = {
     type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/mcp'),
+    to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: Server,
+    icon: McpSvg,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
+  };
+
+  const agentsLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/agents'),
+    label: t('Agents'),
+    icon: <Bot />,
+    showInEmbed: false,
+    hasPermission: true,
+    isSubItem: false,
+    name: t('Products'),
   };
 
   const tablesLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
     label: t('Tables'),
-    icon: Table2,
+    icon: <Table2 />,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
@@ -117,22 +139,24 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/todos'),
     label: t('Todos'),
-    icon: ListTodo,
+    icon: <ListTodo />,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
   };
 
   const items: SidebarItem[] = [
+    agentsLink,
     flowsLink,
-    releasesLink,
-    mcpLink,
     tablesLink,
+    mcpLink,
     todosLink,
+    releasesLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts);
+    .filter(filterAlerts)
+    .filter(filterAgents);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
