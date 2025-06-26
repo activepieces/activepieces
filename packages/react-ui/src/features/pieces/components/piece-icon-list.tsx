@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { piecesHooks } from '../lib/pieces-hook';
+import { stepsHooks } from '../lib/steps-hooks';
 import { StepMetadata } from '../lib/types';
 
 import { PieceIcon } from './piece-icon';
@@ -39,7 +39,7 @@ export function PieceIconList({
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
-  const stepsMetadata: StepMetadata[] = piecesHooks
+  const stepsMetadata: StepMetadata[] = stepsHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
     .filter((data) => !!data) as StepMetadata[];

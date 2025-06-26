@@ -42,7 +42,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
         <div className="flex gap-2 absolute top-2 right-2">
           <Button
             size="icon"
-            variant="secondary"
+            variant="accent"
             onClick={() => {
               const link = document.createElement('a');
               link.href = imageUrl || '';
@@ -56,7 +56,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
           </Button>
           <Button
             size="icon"
-            variant="secondary"
+            variant="accent"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-4 w-4" />

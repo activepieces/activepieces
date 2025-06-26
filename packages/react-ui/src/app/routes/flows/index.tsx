@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronDown,
@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,10 +20,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -33,9 +32,9 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
+import { Permission, PopulatedFlow } from '@activepieces/shared';
 
-import { TableTitle } from '../../../components/ui/table-title';
+import { TableTitle } from '../../../components/custom/table-title';
 
 import { FlowsTable } from './flows-table';
 import { IssuesTable } from './issues-table';
@@ -49,8 +48,6 @@ export enum FlowsPageTabs {
 
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
-  const [searchParams] = useSearchParams();
-  const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,42 +69,6 @@ const FlowsPage = () => {
   useEffect(() => {
     setActiveTab(determineActiveTab());
   }, [location.pathname]);
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['flow-table', searchParams.toString(), projectId],
-    staleTime: 0,
-    queryFn: () => {
-      const name = searchParams.get('name');
-      const status = searchParams.getAll('status') as FlowStatus[];
-      const cursor = searchParams.get('cursor');
-      const limit = searchParams.get('limit')
-        ? parseInt(searchParams.get('limit')!)
-        : 10;
-      const folderId = searchParams.get('folderId') ?? undefined;
-      const connectionExternalId =
-        searchParams.getAll('connectionExternalId') ?? undefined;
-
-      return flowsApi.list({
-        projectId,
-        cursor: cursor ?? undefined,
-        limit,
-        name: name ?? undefined,
-        status,
-        folderId,
-        connectionExternalIds: connectionExternalId,
-      });
-    },
-  });
-
-  const { data: connections, isLoading: isLoadingConnections } = useQuery({
-    queryKey: ['connections', projectId],
-    queryFn: () => {
-      return appConnectionsApi.list({
-        projectId,
-        limit: 10000,
-      });
-    },
-  });
 
   const { embedState } = useEmbedding();
 
@@ -138,9 +99,7 @@ const FlowsPage = () => {
           >
             {t('Flows')}
           </TableTitle>
-          {activeTab === FlowsPageTabs.FLOWS && (
-            <CreateFlowDropdown refetch={refetch} />
-          )}
+          {activeTab === FlowsPageTabs.FLOWS && <CreateFlowDropdown />}
         </div>
         <Tabs
           value={activeTab}
@@ -175,13 +134,7 @@ const FlowsPage = () => {
             <></>
           )}
           <TabsContent value={FlowsPageTabs.FLOWS}>
-            <FlowsTable
-              data={data}
-              isLoading={isLoading}
-              refetch={refetch}
-              connections={connections?.data ?? []}
-              isLoadingConnections={isLoadingConnections}
-            />
+            <FlowsTable />
           </TabsContent>
           <TabsContent value={FlowsPageTabs.HISTORY}>
             <RunsTable />
@@ -198,7 +151,7 @@ const FlowsPage = () => {
 export { FlowsPage };
 
 type CreateFlowDropdownProps = {
-  refetch: () => void;
+  refetch?: () => void;
 };
 
 const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
@@ -275,7 +228,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
               insideBuilder={false}
               onRefresh={() => {
                 setRefresh(refresh + 1);
-                refetch();
+                if (refetch) refetch();
               }}
             >
               <DropdownMenuItem
