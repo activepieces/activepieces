@@ -22,7 +22,7 @@
   "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n",
   "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n",
   "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n",
-  "None": "None",
+  "None": "无",
   "Basic Auth": "Basic Auth",
   "Header Auth": "Header Auth"
 }
