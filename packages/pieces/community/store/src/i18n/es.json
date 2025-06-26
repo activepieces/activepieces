@@ -4,7 +4,7 @@
   "Get": "Get",
   "Put": "Put",
   "Append": "Append",
-  "Remove": "Remove",
+  "Remove": "Eliminar",
   "Add To List": "Add To List",
   "Remove from List": "Remove from List",
   "Get a value from storage": "Get a value from storage",
@@ -22,6 +22,6 @@
   "The storage scope of the value.": "The storage scope of the value.",
   "Separator between added values, use \\n for newlines": "Separator between added values, use \\n for newlines",
   "Project": "Project",
-  "Flow": "Flow",
-  "Run": "Run"
+  "Flow": "Flujo",
+  "Run": "Ejecución"
 }
