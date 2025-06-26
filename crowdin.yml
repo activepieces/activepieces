@@ -1,9 +1,8 @@
-
-"project_id_env": "CROWDIN_PROJECT_ID"
-"api_token_env": "CROWDIN_PERSONAL_TOKEN"
-"base_path": "."
-"base_url": "https://api.crowdin.com"
-"preserve_hierarchy": true
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: .
+base_url: 'https://api.crowdin.com'
+preserve_hierarchy: 1
 files:
   - type: i18next_json
     source: packages/react-ui/public/locales/en/translation.json
