@@ -16,6 +16,8 @@ jobs:
       - name: crowdin action
         uses: crowdin/github-action@v2
         with:
+          # Configuration file
+          config: 'crowdin.yml'
           upload_sources: true
           upload_translations: false
           download_translations: true
@@ -26,7 +28,7 @@ jobs:
           pull_request_base_branch_name: 'main'
         env:
           # A classic GitHub Personal Access Token with the 'repo' scope selected (the user should have write access to the repository).
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
           # A numeric ID, found at https://crowdin.com/project/<projectName>/tools/api
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
