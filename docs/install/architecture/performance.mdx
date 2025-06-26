@@ -1,37 +1,16 @@
 ---
 title: "Performance & Benchmarking"
-description: ""
-icon: 'chart-line'
+icon: "chart-line"
 ---
 
 ## Performance
 
-On average, Activepieces (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.
-It can scale up much more with increasing instance resources and/or adding more instances.
+On average, Activepieces (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.\
+It can scale up much more with increasing instance resources and/or adding more instances.\
+\
+The result of **_5000_** requests with concurrency of **_25_**
 
-## Benchmarking
-
-Here is how to reproduce the benchmark:
-1. Run Activepieces with PostgreSQL and Redis with the following environment variables:
-```env
-AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
-AP_FLOW_WORKER_CONCURRENCY=25
 ```
-2. Create a flow with a Catch Webhook trigger and a webhook Return Response action.
-![Simple Webhook Flow](/resources/screenshots/simple-webhook-flow.png)
-3. Get the webhook URL from the webhook trigger and append `/sync` to it.
-4. Install a benchmark tool like [ab](https://httpd.apache.org/docs/2.4/programs/ab.html):
-```bash
-sudo apt-get install apache2-utils
-```
-
-5. Run the benchmark:
-```bash
-ab -c 25 -n 5000 http://localhost:4200/api/v1/webhooks/GMtpNwDsy4mbJe3369yzy/sync
-```
-
-6. Check the results:
-```bash
 This is ApacheBench, Version 2.3 <$Revision: 1913912 $>
 Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
 Licensed to The Apache Software Foundation, http://www.apache.org/
@@ -87,11 +66,42 @@ Percentage of the requests served within a certain time (ms)
  100%    756 (longest request)
 ```
 
+#### Benchmarking
+
+Here is how to reproduce the benchmark:
+
+1. Run Activepieces with PostgreSQL and Redis with the following environment variables:
+
+```env
+AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+AP_FLOW_WORKER_CONCURRENCY=25
+```
+
+2. Create a flow with a Catch Webhook trigger and a webhook Return Response action.
+   
+
+   ![Simple Webhook Flow](/resources/screenshots/simple-webhook-flow.png)
+3. Get the webhook URL from the webhook trigger and append `/sync` to it.
+4. Install a benchmark tool like [ab](https://httpd.apache.org/docs/2.4/programs/ab.html):
+
+```bash
+sudo apt-get install apache2-utils
+```
+
+5. Run the benchmark:
+
+```bash
+ab -c 25 -n 5000 http://localhost:4200/api/v1/webhooks/GMtpNwDsy4mbJe3369yzy/sync
+```
+
+6. Check the results:
+
 Instance specs used to get the above results:
+
 - 16GB RAM
 - AMD Ryzen 7 8845HS (8 cores, 16 threads)
 - Ubuntu 24.04 LTS
 
 <Tip>
-These benchmarks are based on running Activepieces in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
+  These benchmarks are based on running Activepieces in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
 </Tip>
