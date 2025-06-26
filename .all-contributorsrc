@@ -1850,6 +1850,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "cjwooo",
+      "name": "Chris Wu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4491213?v=4",
+      "profile": "https://www.linkedin.com/in/chris-wu/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "prasanna2000-max",
+      "name": "Prasanna R",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61037314?v=4",
+      "profile": "https://github.com/prasanna2000-max",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

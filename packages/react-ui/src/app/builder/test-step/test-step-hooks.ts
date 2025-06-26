@@ -266,21 +266,25 @@ export const testStepHooks = {
             stepName: currentStep.name,
           }));
 
-        await updateSampleData({
-          response: testStepResponse,
-        });
-
         return testStepResponse;
       },
-      onSuccess: ({ success, standardOutput, standardError }) => {
+      onSuccess: (testStepResponse: StepRunResponse) => {
+        const { success, standardOutput, standardError } = testStepResponse;
+        const errorMessage = standardOutput ?? standardError;
         setErrorMessage?.(undefined);
-        setConsoleLogs?.(standardOutput ?? standardError ?? null);
+        setConsoleLogs?.(errorMessage ?? null);
         if (success) {
+          updateSampleData({
+            response: testStepResponse,
+          });
           onSuccess?.();
         } else {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
-              t('Failed to run test step, please ensure settings are correct.'),
+              errorMessage ??
+                t(
+                  'Failed to run test step, please ensure settings are correct.',
+                ),
             ),
           );
         }

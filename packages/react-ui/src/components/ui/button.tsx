@@ -16,14 +16,13 @@ const buttonVariants = cva(
           'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
         basic:
           'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
-        neutral:
-          'text-background bg-foreground enabled:hover:bg-foreground/80 enabled:hover:text-background',
+        secondary:
+          'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
         destructive:
           'bg-destructive text-background enabled:hover:bg-destructive/90',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        secondary:
-          'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
+        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
           'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
         link: 'text-primary underline-offset-4 enabled:hover:underline',
@@ -113,7 +112,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <LoadingSpinner
             className={
-              variant === 'default' || variant === 'neutral'
+              variant === 'default' || variant === 'secondary'
                 ? 'stroke-background'
                 : 'stroke-foreground'
             }

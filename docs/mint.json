@@ -144,6 +144,13 @@
       ]
     },
     {
+      "group": "Product",
+      "icon": "tool",
+      "pages": [
+        "handbook/product/interface-design"
+      ]
+    },
+    {
       "group": "Endpoints",
       "pages": [
         {
@@ -335,7 +342,8 @@
         "install/architecture/overview",
         "install/architecture/workers",
         "install/architecture/engine",
-        "install/architecture/stack"
+        "install/architecture/stack",
+        "install/architecture/performance"
       ]
     },
     {
