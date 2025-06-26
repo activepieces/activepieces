@@ -1,9 +1,9 @@
 import { isNil } from '../common'
-import { ContentBlockType, RichContentBlock, ToolCallContentBlock } from '../todos/content'
-import { agentbuiltInToolsNames, AgentTaskStatus, AgentTestResult } from './index'
+import { agentbuiltInToolsNames } from './index'
+import { ContentBlockType, RichContentBlock, ToolCallContentBlock, AgentTestResult, AgentTaskStatus } from './response'
 
 export const agentOutputUtils = {
-    findAgentResult(params: AgentRawResponse): AgentTestResult {
+    formatAgentResponse(params: Params): AgentTestResult {
         const markAsComplete = params.content.find(isMarkAsComplete) as ToolCallContentBlock | undefined
         const text = params.content.filter(block => !isMarkAsComplete(block)).map((block) => {
             switch (block.type) {
@@ -27,10 +27,11 @@ export const agentOutputUtils = {
         })
         return {
             todoId: params.todoId,
-            output: markAsComplete?.input,
             status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
+            output: markAsComplete?.input,
             text,
             tools,
+            content: params.content,
         }
     },
 }
@@ -39,7 +40,7 @@ function isMarkAsComplete(block: RichContentBlock): boolean {
     return block.type === ContentBlockType.TOOL_CALL && block.name === agentbuiltInToolsNames.markAsComplete
 }
 
-type AgentRawResponse = {
+type Params = {
     todoId: string
     content: RichContentBlock[]
 }

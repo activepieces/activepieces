@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Nullable } from '../common'
-import { ToolCallStatus } from '../todos/content'
+import { BaseModelSchema } from '../common'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',
@@ -26,29 +25,6 @@ export const AgentOutputField = Type.Object({
 
 export type AgentOutputField = Static<typeof AgentOutputField>
 
-
-export enum AgentTaskStatus {
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
-}
-
-export const AgentTestResult = Type.Object({
-    todoId: Type.String(),
-    status: Type.Enum(AgentTaskStatus),
-    output: Type.Unknown(),
-    text: Type.String(),
-    tools: Type.Array(Type.Object({
-        displayName: Type.String(),
-        logoUrl: Nullable(Type.String()),
-        status: Type.Enum(ToolCallStatus),
-        input: Nullable(Type.Unknown()),
-        output: Nullable(Type.Unknown()),
-        startTime: Type.String(),
-        endTime: Type.Optional(Type.String()),
-    }))
-})
-
-export type AgentTestResult = Static<typeof AgentTestResult>
 
 export const Agent = Type.Object({
     ...BaseModelSchema,
