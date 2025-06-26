@@ -390,7 +390,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AIUsagePostgres1750090291551,
         AddAgents1749405724276,
         AddAgentOutput1749859119064,
-        AddAgentsLimitToPlatformPlan1749917984363,
         RemoveDefaultLocaleFromPlatform1749733527371,
         AddStepToIssuesTable1750017637712,
         MakeStepNameOptional1750025401754,
@@ -489,8 +488,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakeBillingCycleDatesNotNullable1750714315579,
                 ReplaceTasksLimitWithIncludedTasks1750720173459,
                 RenameIncludedTasksToTasksLimit1750722071472,
-              
-       
+                AddAgentsLimitToPlatformPlan1749917984363,
             )
             break
         case ApEdition.COMMUNITY:

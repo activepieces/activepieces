@@ -71,11 +71,17 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.AGENTS_ENABLED,
+                id: ApFlagId.AGENTS_CONFIGURED,
                 value: await aiProviderService.isAgentConfigured(),
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: false,
+                created,
+                updated,
+            },  
             {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,

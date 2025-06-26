@@ -1,5 +1,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId } from '@activepieces/shared';
+
 import { useEmbedding } from '../components/embed-provider';
 
 export const useNewWindow = () => {
@@ -22,14 +25,20 @@ export const useNewWindow = () => {
 };
 
 export const FROM_QUERY_PARAM = 'from';
-export const DEFAULT_REDIRECT_PATH = '/flows';
 /**State param is for oauth2 flow, it is used to redirect to the page after login*/
 export const STATE_QUERY_PARAM = 'state';
 export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
 export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
+
+export const useDefaultRedirectPath = () => {
+  const { data: agentsEnabled } = flagsHooks.useFlag(ApFlagId.AGENTS_ENABLED);
+  return agentsEnabled ? '/flows' : '/agents';
+};
+
 export const useRedirectAfterLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const from = searchParams.get(FROM_QUERY_PARAM) ?? DEFAULT_REDIRECT_PATH;
+  const defaultRedirectPath = useDefaultRedirectPath();
+  const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   return () => navigate(from);
 };

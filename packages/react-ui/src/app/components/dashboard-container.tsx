@@ -51,6 +51,10 @@ export function DashboardContainer({
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
+
+  const isAgentEnabled =
+    platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
+
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -67,10 +71,9 @@ export function DashboardContainer({
     return true;
   };
 
-  // TODO(agents): after we enable agents for everyone.
   const filterAgents = (item: SidebarItem) => {
     if (item.label === t('Agents')) {
-      return platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
+      return isAgentEnabled;
     }
     return true;
   };
@@ -94,7 +97,7 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: <Workflow />,
     label: t('Flows'),
-    name: t('Products'),
+    name: !isAgentEnabled ? t('Products') : undefined,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
@@ -128,6 +131,7 @@ export function DashboardContainer({
     showInEmbed: false,
     hasPermission: true,
     isSubItem: false,
+    name: t('Products'),
   };
 
   const tablesLink: SidebarLink = {
@@ -151,10 +155,10 @@ export function DashboardContainer({
   };
 
   const items: SidebarItem[] = [
-    flowsLink,
     agentsLink,
-    mcpLink,
+    flowsLink,
     tablesLink,
+    mcpLink,
     todosLink,
     releasesLink,
   ]
