@@ -10,8 +10,8 @@ import {
 import {
   isNil,
   MarkdownVariant,
-  RichContentBlock,
   ContentBlockType,
+  RichContentBlock,
   ToolCallStatus,
   ToolCallType,
 } from '@activepieces/shared';
