@@ -4,7 +4,7 @@
   "Get": "Get",
   "Put": "Put",
   "Append": "Append",
-  "Remove": "Remove",
+  "Remove": "Retirer",
   "Add To List": "Add To List",
   "Remove from List": "Remove from List",
   "Get a value from storage": "Get a value from storage",
@@ -21,7 +21,7 @@
   "Ignore if value exists": "Ignore if value exists",
   "The storage scope of the value.": "The storage scope of the value.",
   "Separator between added values, use \\n for newlines": "Separator between added values, use \\n for newlines",
-  "Project": "Project",
+  "Project": "Projet",
   "Flow": "Flow",
   "Run": "Run"
 }
