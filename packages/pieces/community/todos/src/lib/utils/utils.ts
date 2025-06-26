@@ -70,8 +70,12 @@ export const createTodoProps = {
   }),
 }
 
-export function constructTodoUrl(publicUrl: string, todoId: string, status: string, isTest: boolean) {
-  return `${publicUrl}v1/todos/${todoId}/resolve?status=${status}&isTest=${isTest}`;
+export function constructTodoUrl(publicUrl: string, todoId: string, status: string, isTest: boolean, message?: string) {
+  let url = `${publicUrl}v1/todos/${todoId}/resolve?status=${status}&isTest=${isTest}`
+  if (message) {
+    url += `&message=${encodeURIComponent(message)}`
+  }
+  return url;
 }
 
 type ApprovalParms = {

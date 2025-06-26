@@ -66,6 +66,7 @@ export type StatusColor = {
 
 export const CreateAndWaitTodoResult = Type.Object({
     status: Type.String(),
+    message: Type.Optional(Type.String()),
 })
 
 export type CreateAndWaitTodoResult = Static<typeof CreateAndWaitTodoResult>
@@ -85,6 +86,7 @@ export const StatusOption = Type.Object({
     description: Nullable(Type.String()),
     variant: Type.Union([Type.Literal(STATUS_VARIANT.POSITIVE), Type.Literal(STATUS_VARIANT.NEGATIVE), Type.Literal(STATUS_VARIANT.NEUTRAL)]),
     continueFlow: Type.Boolean(),
+    message: Type.Optional(Type.String()),
 })
 
 export type StatusOption = Static<typeof StatusOption>
