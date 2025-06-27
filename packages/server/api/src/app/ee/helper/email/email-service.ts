@@ -198,6 +198,27 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+
+    async sendTrialEndingSoonReminder(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId: platformId,
+            templateData: {
+                name: 'trial-ending-reminder',
+                vars: {
+                    userName: 'Dear Customer',
+                    addPaymentMethodLink: 'https://activepieces.com/billing/add-payment',
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
