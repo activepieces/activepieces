@@ -64,15 +64,8 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun } = params
 
-        if (isNil(flow)) {
-            return {
-                status: StatusCodes.GONE,
-                body: {},
-                headers: {},
-            }
-        }
         if (saveSampleData) {
             rejectedPromiseHandler(savePayload({
                 flow,
@@ -84,7 +77,7 @@ export const webhookHandler = {
             }), logger)
         }
 
-        const disabledFlow = flow.status !== FlowStatus.ENABLED
+        const disabledFlow = flow.status !== FlowStatus.ENABLED && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
 
         if (disabledFlow) {
             return {
@@ -149,6 +142,7 @@ type SyncWebhookParams = {
     saveSampleData: boolean
     projectId: ProjectId
     runEnvironment: RunEnvironment
+    flowVersionToRun: WebhookFlowVersionToRun
     flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string

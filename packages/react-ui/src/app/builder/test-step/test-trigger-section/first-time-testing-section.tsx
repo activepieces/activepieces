@@ -6,12 +6,12 @@ import { isNil } from '@activepieces/shared';
 
 import { TestButtonTooltip } from '../test-step-tooltip';
 
+import { TestType } from './trigger-event-utils';
+
 type FirstTimeTestingSectionProps = {
   isValid: boolean;
-  isSimulation: boolean;
-  isMcpTool: boolean;
-  isPollingTesting: boolean;
-  isMcpToolTestingDialogOpen: boolean;
+  testType: TestType;
+  isTesting: boolean;
   mockData: unknown;
   isSavingMockdata: boolean;
   onSimulateTrigger: () => void;
@@ -22,18 +22,16 @@ type FirstTimeTestingSectionProps = {
 
 export const FirstTimeTestingSection = ({
   isValid,
-  isSimulation,
-  isMcpTool,
-  isPollingTesting,
-  isMcpToolTestingDialogOpen,
+  testType,
   mockData,
   isSavingMockdata,
+  isTesting,
   onSimulateTrigger,
   onPollTrigger,
   onMcpToolTesting,
   onSaveMockAsSampleData,
 }: FirstTimeTestingSectionProps) => {
-  if (isSimulation) {
+  if (testType === 'simulation' || testType === 'webhook' || testType === 'chat-trigger') {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
         <TestButtonTooltip disabled={!isValid}>
@@ -67,7 +65,7 @@ export const FirstTimeTestingSection = ({
     );
   }
 
-  if (isMcpTool) {
+  if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
         <TestButtonTooltip disabled={!isValid}>
@@ -77,7 +75,7 @@ export const FirstTimeTestingSection = ({
             onClick={onMcpToolTesting}
             keyboardShortcut="G"
             onKeyboardShortcut={onMcpToolTesting}
-            loading={isPollingTesting || isMcpToolTestingDialogOpen}
+            loading={isTesting}
             disabled={!isValid}
           >
             <Dot animation={true} variant={'primary'}></Dot>
@@ -97,7 +95,7 @@ export const FirstTimeTestingSection = ({
           onClick={onPollTrigger}
           keyboardShortcut="G"
           onKeyboardShortcut={onPollTrigger}
-          loading={isPollingTesting || isMcpToolTestingDialogOpen}
+          loading={isTesting}
           disabled={!isValid}
         >
           <Dot animation={true} variant={'primary'}></Dot>

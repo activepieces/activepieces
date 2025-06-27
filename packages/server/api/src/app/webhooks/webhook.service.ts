@@ -105,6 +105,7 @@ export const webhookService = {
             synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
             flowVersionIdToRun,
             saveSampleData,
+            flowVersionToRun,
         })
         return {
             status: flowHttpResponse.status,

@@ -379,6 +379,17 @@ const useAdjustPieceListHeightToAvailableSpace = (
   };
 };
 
+const isMcpToolTrigger = (pieceName: string, triggerName: string) => {
+  return pieceName === '@activepieces/piece-mcp' && triggerName === 'mcp_tool';
+};
+
+const isChatTrigger = (pieceName: string, triggerName: string) => {
+  return (
+    pieceName === '@activepieces/piece-forms' &&
+    triggerName === 'chat_submission'
+  );
+};
+
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -386,6 +397,8 @@ export const pieceSelectorUtils = {
   getStepNames,
   isAiPiece,
   isAppPiece,
+  isChatTrigger,
+  isMcpToolTrigger,
   toKey,
   isPopularPieces,
   isUtilityCorePiece,
