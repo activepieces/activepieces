@@ -24,7 +24,6 @@ interface McpPieceActionsDialogProps {
     connectionExternalId: string | null,
   ) => void;
   showValidationErrors?: boolean;
-  isActionValidForMcpTool: (actionName: string) => boolean;
 }
 
 export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
@@ -35,7 +34,6 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   selectedConnectionExternalId,
   setSelectedConnectionExternalId,
   showValidationErrors = false,
-  isActionValidForMcpTool,
 }) => {
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
@@ -44,9 +42,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
     piece.suggestedActions.every((a) => {
-      return (
-        isActionValidForMcpTool(a.name) === selectedActions.includes(a.name)
-      );
+      return selectedActions.includes(a.name);
     });
   const someSelected = selectedActions.length > 0 && !allSelected;
 
@@ -83,19 +79,17 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
         <div className="flex flex-col gap-2">
           {piece.suggestedActions &&
             piece.suggestedActions.map((action) => {
-              const isValid = isActionValidForMcpTool(action.name);
               const actionContent = (
                 <div
                   key={action.name}
                   className={`flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent ${
-                    isValid ? 'opacity-100 cursor-pointer' : 'opacity-50'
+                    'opacity-100 cursor-pointer'
                   }`}
                   onClick={() => onSelectAction(action.name)}
                 >
                   <Checkbox
                     checked={selectedActions.includes(action.name)}
                     onCheckedChange={() => onSelectAction(action.name)}
-                    disabled={!isValid}
                     className="mt-1"
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -117,9 +111,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
                 </div>
               );
 
-              return isValid ? (
-                actionContent
-              ) : (
+              return (
                 <Tooltip key={action.name}>
                   <TooltipTrigger asChild>{actionContent}</TooltipTrigger>
                   <TooltipContent>

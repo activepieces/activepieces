@@ -1,4 +1,4 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+import { ActionBase, InputPropertyMap, PieceMetadataModel, PropertyType } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
@@ -14,10 +14,10 @@ import {
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { EngineHelperResponse } from 'server-worker'
+import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
@@ -26,6 +26,10 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
+import { generateText } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 
 export async function createMcpServer({
     mcpId,
@@ -91,10 +95,28 @@ async function addPieceToServer(
                         .filter(([_key, prop]) => !isNil(prop.defaultValue))
                         .map(([key, prop]) => [key, prop.defaultValue]),
                 )
+
+                const pieceMetadata = await pieceMetadataService(logger).getOrThrow({
+                    name: toolPieceMetadata.pieceName,
+                    version: toolPieceMetadata.pieceVersion,
+                    projectId,
+                    platformId,
+                })
                 const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
+                const resolvedParams = await resolveParametersRecursively({
+                    auth: pieceConnectionExternalId ?? undefined,
+                    initialParams: params,
+                    defaultValues,
+                    actionMetadata,
+                    pieceMetadata,
+                    projectId,
+                    platformId,
+                    logger,
+                    actionName: action,
+                })
+
                 const parsedInputs = {
-                    ...defaultValues,
-                    ...params,
+                    ...resolvedParams,
                     auth: pieceConnectionExternalId,
                 }
                 const result = await userInteractionWatcher(logger)
@@ -147,6 +169,88 @@ async function addPieceToServer(
             },
         )
     }
+}
+
+async function resolveParametersRecursively({
+    auth,
+    initialParams,
+    defaultValues,
+    actionMetadata,
+    pieceMetadata,
+    projectId,
+    platformId,
+    logger,
+    actionName,
+}: ResolveParametersRecursivelyParams): Promise<Record<string, unknown>> {
+    let currentParams = { ...defaultValues, ...initialParams, auth: auth ?? undefined }
+    let hasChanges = true
+    let iterationCount = 0
+    const maxIterations = 10
+    
+    while (hasChanges && iterationCount < maxIterations) {
+        hasChanges = false
+        iterationCount++
+        
+        for (const [propName, prop] of Object.entries(actionMetadata.props)) {
+            if (prop.type === PropertyType.DYNAMIC || 
+                prop.type === PropertyType.DROPDOWN || 
+                prop.type === PropertyType.MULTI_SELECT_DROPDOWN) {
+                
+                const refreshers = 'refreshers' in prop ? prop.refreshers : []
+                const shouldResolve = refreshers.length > 0 && 
+                    refreshers.some(refresher => currentParams[refresher as keyof typeof currentParams] !== undefined)
+
+                if (shouldResolve) {
+                    try {
+                        const piecePackage = await getPiecePackageWithoutArchive(
+                            logger, 
+                            projectId, 
+                            platformId, 
+                            {
+                                packageType: pieceMetadata.packageType,
+                                pieceName: pieceMetadata.name,
+                                pieceVersion: pieceMetadata.version,
+                                pieceType: pieceMetadata.pieceType,
+                            }
+                        )
+                        const propertyResult = await userInteractionWatcher(logger)
+                            .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+                            jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+                            projectId,
+                            propertyName: propName,
+                            actionOrTriggerName: actionName,
+                            input: currentParams,
+                            piece: piecePackage,
+                            sampleData: {}
+                        })
+                        if (propertyResult.status === EngineResponseStatus.OK && 
+                            propertyResult.result.type === PropertyType.DYNAMIC) {
+                            
+                            const dynamicProps = propertyResult.result.options as InputPropertyMap
+                            
+                            const newParams = await mergeUserInputWithSchemaAI(
+                                propName,
+                                currentParams, 
+                                dynamicProps, 
+                                projectId, 
+                                platformId, 
+                                logger
+                            )
+                            
+                            if (JSON.stringify(newParams) !== JSON.stringify(currentParams)) {
+                                currentParams = newParams
+                                hasChanges = true
+                            }
+                        }
+                    } catch (error) {
+                        logger.warn(`Failed to resolve dynamic property ${propName}: ${error}`)
+                    }
+                }
+            }
+        }
+    }
+  
+    return currentParams
 }
 
 async function addFlowToServer(
@@ -253,6 +357,99 @@ async function addFlowToServer(
 
 }
 
+async function mergeUserInputWithSchemaAI(
+    propName: string,
+    input: any, 
+    schema: Record<string, any>, 
+    projectId: string, 
+    platformId: string, 
+    logger: FastifyBaseLogger
+): Promise<any> {
+    try {
+        const baseUrl = await domainHelper.getPublicApiUrl({
+            path: '/v1/ai-providers/proxy/openai/v1/',
+            platformId,
+        })
+        
+        const apiKey = await accessTokenManager.generateEngineToken({
+            platformId,
+            projectId,
+        })
+        
+        const openai = createOpenAI({
+            baseURL: baseUrl,
+            apiKey,
+        })
+
+        const systemPrompt = `You are a JSON generator. Your task is to merge user input with a JSON schema and return ONLY valid JSON.
+
+IMPORTANT: Return ONLY the JSON object, no explanations, no markdown formatting, no code blocks.
+
+Rules:
+- Preserve user values exactly
+- Fill missing fields with sensible defaults
+- For arrays: use [] if empty, populate if context suggests
+- For objects: recursively apply same logic
+- Return only valid JSON matching schema exactly
+
+Schema: ${JSON.stringify(schema, null, 2)}
+Input: ${JSON.stringify(input, null, 2)}
+
+Return ONLY the JSON:`
+
+        const result = await generateText({
+            model: openai('gpt-4o'),
+            prompt: systemPrompt,
+            maxTokens: 2000,
+            temperature: 0.1,
+        })
+
+        const aiResponse = result.text.trim()
+        
+        let parsedResult: any
+        try {
+            parsedResult = JSON.parse(aiResponse)
+        } catch {
+            const jsonMatch = aiResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
+            if (jsonMatch) {
+                try {
+                    parsedResult = JSON.parse(jsonMatch[1])
+                } catch {
+                    throw new Error('Could not parse AI response as JSON, even from code blocks')
+                }
+            } else {
+                const jsonObjectMatch = aiResponse.match(/\{[\s\S]*\}/)
+                if (jsonObjectMatch) {
+                    try {
+                        parsedResult = JSON.parse(jsonObjectMatch[0])
+                    } catch {
+                        throw new Error('Could not parse AI response as JSON')
+                    }
+                } else {
+                    throw new Error('Could not parse AI response as JSON')
+                }
+            }
+        }
+
+        return {
+            ...input,
+            [propName]: parsedResult,   
+        }
+
+    } catch (error) {
+        logger.warn({
+            projectId,
+            platformId,
+            error,
+            input,
+            schema,
+            propName,
+        }, 'AI merging failed, falling back to original logic')
+
+        return input
+    }
+}
+
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
 }
@@ -282,4 +479,16 @@ type CreateMcpServerRequest = {
 
 type CreateMcpServerResponse = {
     server: McpServer
+}
+
+type ResolveParametersRecursivelyParams = {
+    auth?: string
+    initialParams: Record<string, unknown>
+    defaultValues: Record<string, unknown>
+    actionMetadata: ActionBase
+    pieceMetadata: PieceMetadataModel
+    projectId: string
+    platformId: string
+    logger: FastifyBaseLogger
+    actionName: string
 }

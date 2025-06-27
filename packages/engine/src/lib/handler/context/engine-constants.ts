@@ -135,9 +135,9 @@ export class EngineConstants {
 
     public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
         return new EngineConstants(
-            input.flowVersion.flowId,
-            input.flowVersion.id,
-            input.flowVersion.state,
+            input.flowVersion?.flowId ?? 'mcp-flow-id',
+            input.flowVersion?.id ?? 'mcp-flow-version-id',
+            input.flowVersion?.state ?? FlowVersionState.LOCKED,
             'execute-property',
             input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),

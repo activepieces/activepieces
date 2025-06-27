@@ -102,7 +102,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
     actionOrTriggerName: string
-    flowVersion: FlowVersion
+    flowVersion?: FlowVersion
     input: Record<string, unknown>
     sampleData: Record<string, unknown>
     searchValue?: string

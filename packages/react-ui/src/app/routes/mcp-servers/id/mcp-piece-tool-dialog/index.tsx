@@ -89,19 +89,8 @@ export function McpPieceDialog({
     setSelectedPiece(piece);
   };
 
-  const isActionValidForMcpTool = (actionName: string) => {
-    const actionMetadata = selectedPiece?.suggestedActions?.find(
-      (a) => a.name === actionName,
-    );
-    return !Object.values(actionMetadata?.props || {}).some(
-      (prop) => prop.type === PropertyType.DYNAMIC && isNil(prop.schema),
-    );
-  };
 
   const handleActionSelect = (action: string) => {
-    if (!isActionValidForMcpTool(action)) {
-      return;
-    }
     setSelectedActions((prev) => {
       const newSelected = prev.includes(action)
         ? prev.filter((a) => a !== action)
@@ -241,7 +230,6 @@ export function McpPieceDialog({
             selectedActions={selectedActions}
             onSelectAction={handleActionSelect}
             onSelectAll={handleSelectAll}
-            isActionValidForMcpTool={isActionValidForMcpTool}
             selectedConnectionExternalId={selectedConnectionExternalId}
             setSelectedConnectionExternalId={setSelectedConnectionExternalId}
             showValidationErrors={showValidationErrors}

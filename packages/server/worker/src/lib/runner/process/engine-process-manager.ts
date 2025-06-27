@@ -237,7 +237,7 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
         case EngineOperationType.EXECUTE_FLOW:
             return (operation as ExecuteFlowOperation).flowVersion.id
         case EngineOperationType.EXECUTE_PROPERTY:
-            return (operation as ExecutePropsOptions).flowVersion.id
+            return (operation as ExecutePropsOptions).flowVersion?.id ?? 'mcp-flow-version-id'
         case EngineOperationType.EXECUTE_STEP:
             return (operation as ExecuteStepOperation).flowVersion.id
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
