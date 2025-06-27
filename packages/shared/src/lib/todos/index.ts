@@ -66,6 +66,7 @@ export type StatusColor = {
 
 export const CreateAndWaitTodoResult = Type.Object({
     status: Type.String(),
+    message: Type.String(),
 })
 
 export type CreateAndWaitTodoResult = Static<typeof CreateAndWaitTodoResult>
