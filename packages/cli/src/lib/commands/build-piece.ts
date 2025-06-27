@@ -11,17 +11,15 @@ async function buildPieces(pieceName: string) {
 
 export const buildPieceCommand = new Command('build')
     .description('Build pieces without publishing')
-    .argument('[name]', 'Piece folder name')
-    .action(async (name) => {
-        const questions = [];
-        if (!name) {
-            questions.push({
+    .action(async () => {
+        const questions = [
+            {
                 type: 'input',
                 name: 'name',
                 message: 'Enter the piece folder name',
                 placeholder: 'google-drive',
-            });
-        }
+            },
+        ];
         const answers = await inquirer.prompt(questions);
-        await buildPieces(name || answers.name);
+        await buildPieces(answers.name);
     });
