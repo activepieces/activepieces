@@ -182,7 +182,7 @@ async function resolveParametersRecursively({
     let currentParams = { ...initialParams }
     let hasChanges = true
     let iterationCount = 0
-    const maxIterations = 10
+    const maxIterations = 3
     
     while (hasChanges && iterationCount < maxIterations) {
         hasChanges = false
@@ -195,7 +195,7 @@ async function resolveParametersRecursively({
                 
                 const refreshers = 'refreshers' in prop ? prop.refreshers : []
                 const shouldResolve = refreshers.length > 0 && 
-                    refreshers.some(refresher => currentParams[refresher as keyof typeof currentParams] !== undefined)
+                    refreshers.some(refresher => currentParams[refresher] !== undefined)
 
                 if (shouldResolve) {
                     try {
