@@ -32,7 +32,7 @@ export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
 export const useDefaultRedirectPath = () => {
   const { data: agentsEnabled } = flagsHooks.useFlag(ApFlagId.AGENTS_ENABLED);
-  return agentsEnabled ? '/flows' : '/agents';
+  return agentsEnabled ? '/agents' : '/flows';
 };
 
 export const useRedirectAfterLogin = () => {
