@@ -18,7 +18,7 @@ import {
 } from '@/features/billing/lib/billing-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
+import { isNil, PlatformRole } from '@activepieces/shared';
 
 export default function Billing() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -30,12 +30,20 @@ export default function Billing() {
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  const { mutate: getPortalLink } = billingMutations.usePortalLink();
+  const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
 
-  const isSubscriptionActive =
-    platformSubscription?.plan.stripeSubscriptionStatus ===
-    ApSubscriptionStatus.ACTIVE;
+  const status = platformSubscription?.plan?.stripeSubscriptionStatus;
+  const isSubscriptionActive = [ApSubscriptionStatus.ACTIVE].includes(
+    status as ApSubscriptionStatus,
+  );
+
+  const { mutate: redirectToSetupSession } =
+    billingMutations.useGetSetupSessionLink();
+
   const isBusinessPlan = platformSubscription?.plan.plan === PlanName.BUSINESS;
+  const isTrail =
+    platformSubscription?.plan.stripeSubscriptionStatus ===
+    ApSubscriptionStatus.TRIALING;
 
   if (isPlatformSubscriptionLoading || isNil(platformSubscription)) {
     return (
@@ -69,25 +77,38 @@ export default function Billing() {
 
         <div className="flex items-center gap-2">
           {isSubscriptionActive && (
-            <Button variant="outline" onClick={() => getPortalLink()}>
+            <Button variant="outline" onClick={() => redirectToPortalSession()}>
               {t('Access Billing Portal')}
             </Button>
           )}
-          <Button variant="default" onClick={() => setManagePlanOpen(true)}>
-            {t('Upgrade')}
-          </Button>
+          {
+            isTrail ? (
+              <Button variant="default" onClick={() => redirectToPortalSession()}>
+                {t('Add Payment Method')}
+              </Button>
+            ) : (
+              <Button variant="default" onClick={() => setManagePlanOpen(true)}>
+                {t('Upgrade Plan')}
+              </Button>
+            )
+          }
+          
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="text-sm flex items-center gap-1">
-          <span>{t('Current Plan')}</span>
-          <Badge variant="secondary">
+        <div className="text-sm flex items-center gap-2">
+          <Badge variant="secondary" className="rounded-sm text-sm">
             {isNil(platformSubscription.plan.plan)
               ? t('Free')
               : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
                 platformSubscription?.plan.plan.slice(1)}
           </Badge>
+          {isTrail && (
+            <Badge variant="ghost" className="rounded-sm text-sm">
+              Trial
+            </Badge>
+          )}
         </div>
         <div className="flex items-baseline gap-2">
           <div className="text-5xl font-semibold">
@@ -95,15 +116,20 @@ export default function Billing() {
           </div>
           <div className="text-xl text-muted-foreground">/month</div>
         </div>
+
         {platformSubscription?.nextBillingDate &&
           isNil(platformSubscription.cancelAt) && (
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               <span>
-                {t('Next billing date')}{' '}
-                {dayjs(platformSubscription.nextBillingDate).format(
-                  'MMM D, YYYY',
-                )}
+                {isTrail ? t('Trial will end') : t('Next billing date')}{' '}
+                <span className="font-semibold">
+                  {dayjs(
+                    dayjs
+                      .unix(platformSubscription.nextBillingDate)
+                      .toISOString(),
+                  ).format('MMM D, YYYY')}
+                </span>
               </span>
             </div>
           )}
@@ -112,8 +138,12 @@ export default function Billing() {
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             <span>
-              {t('Cancels at')}{' '}
-              {dayjs(platformSubscription.cancelAt).format('MMM D, YYYY')}
+              {t('Subscription will end')}{' '}
+              <span className="font-semibold">
+                {dayjs(
+                  dayjs.unix(platformSubscription.cancelAt).toISOString(),
+                ).format('MMM D, YYYY')}
+              </span>
             </span>
           </div>
         )}

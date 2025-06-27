@@ -35,7 +35,6 @@ export const billingMutations = {
         platformBillingApi.updateSubscription(params),
       onSuccess: (url) => {
         setIsOpen(false);
-        console.log('url', url);
         navigate(url);
         toast({
           title: t('Success'),
@@ -82,6 +81,15 @@ export const billingMutations = {
       onError: () => {
         toast(INTERNAL_ERROR_TOAST);
       },
+    });
+  },
+  useGetSetupSessionLink: () => {
+    return useMutation({
+      mutationFn: async () => {
+        const setupSessionLink = await platformBillingApi.getSetupSessionLink();
+        window.open(setupSessionLink, '_blank');
+      },
+      onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
   useSetAiCreditUsageLimit: (queryClient: QueryClient) => {

@@ -13,6 +13,9 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
+  getSetupSessionLink() {
+    return api.post<string>('/v1/platform-billing/setup');
+  },
   updateSubscription(params: UpdateSubscriptionParams) {
     return api.post<string>('/v1/platform-billing/update-subscription', params);
   },
