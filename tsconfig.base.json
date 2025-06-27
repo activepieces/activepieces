@@ -654,11 +654,11 @@
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
       ],
-      "@activepieces/piece-reddit": [
-        "packages/pieces/community/reddit/src/index.ts"
-      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
@@ -699,6 +699,9 @@
       ],
       "@activepieces/piece-scrapegrapghai": [
         "packages/pieces/community/scrapegrapghai/src/index.ts"
+      ],
+      "@activepieces/piece-scrapeless": [
+        "packages/pieces/community/scrapeless/src/index.ts"
       ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
