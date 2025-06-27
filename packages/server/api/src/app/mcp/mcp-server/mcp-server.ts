@@ -103,10 +103,9 @@ async function addPieceToServer(
                     platformId,
                 })
                 const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
+                const initialParams = { ...defaultValues, ...params, auth: pieceConnectionExternalId ?? undefined }
                 const resolvedParams = await resolveParametersRecursively({
-                    auth: pieceConnectionExternalId ?? undefined,
-                    initialParams: params,
-                    defaultValues,
+                    initialParams,
                     actionMetadata,
                     pieceMetadata,
                     projectId,
@@ -172,9 +171,7 @@ async function addPieceToServer(
 }
 
 async function resolveParametersRecursively({
-    auth,
     initialParams,
-    defaultValues,
     actionMetadata,
     pieceMetadata,
     projectId,
@@ -182,7 +179,7 @@ async function resolveParametersRecursively({
     logger,
     actionName,
 }: ResolveParametersRecursivelyParams): Promise<Record<string, unknown>> {
-    let currentParams = { ...defaultValues, ...initialParams, auth: auth ?? undefined }
+    let currentParams = { ...initialParams }
     let hasChanges = true
     let iterationCount = 0
     const maxIterations = 10
@@ -482,9 +479,7 @@ type CreateMcpServerResponse = {
 }
 
 type ResolveParametersRecursivelyParams = {
-    auth?: string
     initialParams: Record<string, unknown>
-    defaultValues: Record<string, unknown>
     actionMetadata: ActionBase
     pieceMetadata: PieceMetadataModel
     projectId: string
