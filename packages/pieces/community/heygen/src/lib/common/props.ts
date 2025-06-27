@@ -78,7 +78,7 @@ export const templateDropdown = Property.Dropdown({
       };
     }
 
-    const response = await heygenApiCall<{ templates: { id: string; name: string; aspect_ratio: string }[] }>({
+    const response = await heygenApiCall<{ templates: { template_id: string; name: string; aspect_ratio: string }[] }>({
       apiKey: auth as string,
       method: HttpMethod.GET,
       resourceUri: '/templates',
@@ -88,8 +88,8 @@ export const templateDropdown = Property.Dropdown({
     return {
       disabled: false,
       options: response.templates.map((template) => ({
-        label: `${template.name} (${template.aspect_ratio})`,
-        value: template.id,
+        label: template.name,
+        value: template.template_id,
       })),
     };
   },

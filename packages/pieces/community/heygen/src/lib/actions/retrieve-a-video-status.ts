@@ -6,7 +6,7 @@ import { heygenAuth } from '../common/auth';
 export const retrieveVideoStatusAction = createAction({
   auth: heygenAuth,
   name: 'retrieve_video_status',
-  displayName: 'Retrieve Video Status/Details',
+  displayName: 'Retrieve Video Status',
   description: 'Retrieve the status and details of a video using its ID.',
   props: {
     videoId: Property.ShortText({

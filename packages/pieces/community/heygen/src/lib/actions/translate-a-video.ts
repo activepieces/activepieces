@@ -32,18 +32,13 @@ export const translateVideoAction = createAction({
       required: false,
       description: 'Number of speakers in the video (if applicable).',
     }),
+        brandVoiceId: brandVoiceDropdown,
+
     callbackId: Property.ShortText({
       displayName: 'Callback ID',
       required: false,
       description: 'Custom ID returned in webhook callback.',
     }),
-    enableDynamicDuration: Property.Checkbox({
-      displayName: 'Enable Dynamic Duration',
-      required: false,
-      defaultValue: false,
-      description: 'Stretches/shrinks video segments for improved translation flow.',
-    }),
-    brandVoiceId: brandVoiceDropdown,
     callbackUrl: Property.ShortText({
       displayName: 'Callback URL',
       required: false,
@@ -58,7 +53,6 @@ export const translateVideoAction = createAction({
       translateAudioOnly,
       speakerNum,
       callbackId,
-      enableDynamicDuration,
       brandVoiceId,
       callbackUrl,
     } = propsValue;
@@ -69,10 +63,9 @@ export const translateVideoAction = createAction({
     };
 
     if (title) body['title'] = title;
-    if (translateAudioOnly !== undefined) body['translate_audio_only'] = translateAudioOnly;
-    if (speakerNum !== undefined) body['speaker_num'] = speakerNum;
+    if (translateAudioOnly) body['translate_audio_only'] = translateAudioOnly;
+    if (speakerNum) body['speaker_num'] = speakerNum;
     if (callbackId) body['callback_id'] = callbackId;
-    if (enableDynamicDuration !== undefined) body['enable_dynamic_duration'] = enableDynamicDuration;
     if (brandVoiceId) body['brand_voice_id'] = brandVoiceId;
     if (callbackUrl) body['callback_url'] = callbackUrl;
 

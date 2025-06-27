@@ -16,10 +16,10 @@ import { BASE_URL_V1 } from './lib/common/client';
 
 export const heygen = createPiece({
   displayName: 'HeyGen',
-  description: 'Generate and manage AI avatar videos using HeyGen',
+  description: 'Generate and manage AI avatar videos using HeyGen.',
   auth: heygenAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/heygen.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/heygen.jpg',
   authors: ['krushnarout'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [

@@ -31,16 +31,11 @@ export const uploadAssetAction = createAction({
           return 'video/webm';
         case 'mpeg':
         case 'mpg':
-          return 'video/mpeg';
+          return 'audio/mpeg';
         default:
           throw new Error(`Unsupported file type: ${extension}`);
       }
     };
-
-    const fileReference = await context.files.write({
-      fileName: file.filename,
-      data: file.data,
-    });
 
     const contentType = getContentType(file.filename);
 
@@ -54,15 +49,6 @@ export const uploadAssetAction = createAction({
       body: file.data,
     });
 
-    return {
-      success: true,
-      asset_id: response.body.id,
-      asset_name: response.body.name,
-      file_type: response.body.file_type,
-      folder_id: response.body.folder_id,
-      meta: response.body.meta,
-      image_key: response.body.image_key,
-      file_reference: fileReference,
-    };
-  },
+    return response.body; 
+  }
 });

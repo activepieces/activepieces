@@ -3,6 +3,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { heygenApiCall } from '../common/client';
 import { heygenAuth } from '../common/auth';
 
+const TRIGGER_KEY = 'video_generation_failed_trigger';
+
 export const videoGenerationFailedTrigger = createTrigger({
   auth: heygenAuth,
   name: 'video_generation_failed',
@@ -10,33 +12,33 @@ export const videoGenerationFailedTrigger = createTrigger({
   description: 'Triggers when a video generation process fails.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
+
   sampleData: {
-    event: 'video.failed',
-    video_id: 'abc123',
-    title: 'Example Video',
-    status: 'failed',
-    error: 'Processing error occurred',
-    callback_id: 'custom-callback-id',
-    created_at: '2023-01-01T12:00:00Z',
+    event_type: 'avatar_video.fail',
+    event_data: {
+      video_id: 'abc',
+      msg: 'Failed',
+      callback_id: '123',
+    },
   },
 
   async onEnable(context) {
-    const webhook = await heygenApiCall({
+    const webhook = (await heygenApiCall({
       apiKey: context.auth as string,
       method: HttpMethod.POST,
       resourceUri: '/webhook/endpoint.add',
       apiVersion: 'v1',
       body: {
         url: context.webhookUrl,
-        events: ['video.failed'],
+        events: ['avatar_video.fail'],
       },
-    }) as { id: string };
+    })) as { data: { endpoint_id: string } };
 
-    await context.store.put('webhookId', webhook.id);
+    await context.store.put<string>(TRIGGER_KEY, webhook.data.endpoint_id);
   },
 
   async onDisable(context) {
-    const webhookId = await context.store.get('webhookId');
+    const webhookId = await context.store.get<string>(TRIGGER_KEY);
 
     if (webhookId) {
       await heygenApiCall({
@@ -52,11 +54,13 @@ export const videoGenerationFailedTrigger = createTrigger({
   },
 
   async run(context) {
-    const payload = context.payload.body as Record<string, unknown>;
+    const payload = context.payload.body as {
+      event_type: string;
+      event_data: Record<string, any>;
+    };
 
-    if (typeof payload === 'object' && payload !== null && payload['event'] === 'video.failed') {
-      return [payload];
-    }
-    return [];
+    if (payload.event_type !== 'avatar_video.fail') return [];
+
+    return [payload];
   },
 });
