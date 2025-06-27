@@ -120,12 +120,18 @@ export const fuelRelativeTrigger = createTrigger({
     if (!webhookInfo) {
       throw new Error('No webhook info found in store. Trigger may not have been enabled.');
     }
-      const res = await httpClient.sendRequest({
-        method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
-        url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-        headers: getHeaders(developerJwt),
-      });
-      handleFailures(res);
+    const unsubscribeAllVehicles = await httpClient.sendRequest({
+      method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
+      url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
+      headers: getHeaders(developerJwt),
+    });
+    handleFailures(unsubscribeAllVehicles);
+    const res = await httpClient.sendRequest({
+      method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
+      url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
+      headers: getHeaders(developerJwt),
+    });
+    handleFailures(res);
   },
   async onHandshake(context) {
 
