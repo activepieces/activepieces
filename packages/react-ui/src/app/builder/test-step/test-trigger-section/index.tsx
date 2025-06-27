@@ -7,9 +7,8 @@ import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Trigger, isNil } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
-import { TestChatDialog } from '../custom-test-step/test-chat-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../test-step-hooks';
 
@@ -52,10 +51,11 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
+    const { sampleData, sampleDataInput, setChatDrawerOpenSource } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[formValues.name],
         sampleDataInput: state.sampleDataInput[formValues.name],
+        setChatDrawerOpenSource: state.setChatDrawerOpenSource,
       };
     });
 
@@ -140,7 +140,7 @@ const TestTriggerSection = React.memo(
             isSavingMockdata={isSavingMockdata}
             onSimulateTrigger={() => {
               if (testType === 'chat-trigger') {
-                setIsTestingDialogOpen(true);
+                setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
               }
               simulateTrigger(abortControllerRef.current.signal);
             }}
@@ -154,7 +154,11 @@ const TestTriggerSection = React.memo(
             {showSampleDataViewer && (
               <TestSampleDataViewer
                 onRetest={() => {
-                  setIsTestingDialogOpen(true);
+                  if (testType === 'chat-trigger') {
+                    setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+                  } else {
+                    setIsTestingDialogOpen(true);
+                  }
                   if (testType === 'simulation' || testType === 'webhook' || testType === 'chat-trigger') {
                     simulateTrigger(abortControllerRef.current.signal);
                   } else if (testType === 'polling') {
@@ -186,18 +190,6 @@ const TestTriggerSection = React.memo(
                   abortControllerRef={abortControllerRef}
                 />
               )}
-
-            {testType === 'chat-trigger' && (
-              <TestChatDialog
-                open={isTestingDialogOpen}
-                onOpenChange={setIsTestingDialogOpen}
-                onTestingSuccess={onTestSuccess}
-                onClose={() => {
-                  resetSimulation();
-                  setIsTestingDialogOpen(false)
-                }}
-              />
-            )}
 
             {testType === 'mcp-tool' && (
               <McpToolTestingDialog

@@ -4,9 +4,9 @@ import * as React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
-import { Button, ButtonProps } from '../button';
 
 import MessageLoading from './message-loading';
+import { Button, ButtonProps } from '@/components/ui/button';
 
 // ChatBubble
 const chatBubbleVariant = cva('flex gap-2 w-full items-start relative group', {
@@ -127,21 +127,6 @@ const ChatBubbleMessage = React.forwardRef<
 );
 ChatBubbleMessage.displayName = 'ChatBubbleMessage';
 
-// ChatBubbleTimestamp
-interface ChatBubbleTimestampProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  timestamp: string;
-}
-
-const ChatBubbleTimestamp: React.FC<ChatBubbleTimestampProps> = ({
-  timestamp,
-  className,
-  ...props
-}) => (
-  <div className={cn('text-xs mt-2 text-right', className)} {...props}>
-    {timestamp}
-  </div>
-);
 
 // ChatBubbleAction
 type ChatBubbleActionProps = ButtonProps & {
@@ -167,39 +152,12 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
   </Button>
 );
 
-interface ChatBubbleActionWrapperProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'sent' | 'received';
-  className?: string;
-}
-
-const ChatBubbleActionWrapper = React.forwardRef<
-  HTMLDivElement,
-  ChatBubbleActionWrapperProps
->(({ variant, className, children, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'absolute top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity duration-200',
-      variant === 'sent'
-        ? '-left-1 -translate-x-full flex-row-reverse'
-        : '-right-1 translate-x-full',
-      className,
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-));
-ChatBubbleActionWrapper.displayName = 'ChatBubbleActionWrapper';
 
 export {
   ChatBubble,
   ChatBubbleAvatar,
   ChatBubbleMessage,
-  ChatBubbleTimestamp,
   chatBubbleVariant,
   chatBubbleMessageVariants,
   ChatBubbleAction,
-  ChatBubbleActionWrapper,
 };

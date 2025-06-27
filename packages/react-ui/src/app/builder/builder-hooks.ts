@@ -74,6 +74,11 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+export enum ChatDrawerSource {
+  TEST_FLOW = 'test-flow',
+  TEST_STEP = 'test-step',
+}
+
 type InsertMentionHandler = (propertyPath: string) => void;
 export type BuilderState = {
   flow: PopulatedFlow;
@@ -92,6 +97,8 @@ export type BuilderState = {
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
+  chatDrawerOpenSource: ChatDrawerSource | null;
+  setChatDrawerOpenSource: (source: ChatDrawerSource | null) => void;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
@@ -181,25 +188,25 @@ export const createBuilderStore = (
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
-          initialState.run.status,
-          initialState.run.steps,
-        )
+        initialState.run.status,
+        initialState.run.steps,
+      )
       : null;
     const initiallySelectedStep = newFlow
       ? null
       : determineInitiallySelectedStep(
-          failedStepInRun,
-          initialState.flowVersion,
-        );
+        failedStepInRun,
+        initialState.flowVersion,
+      );
 
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-              initialState.flowVersion,
-              initialState.run,
-              {},
-            )
+            initialState.flowVersion,
+            initialState.run,
+            {},
+          )
           : {},
       sampleData: initialState.sampleData,
       sampleDataInput: initialState.sampleDataInput,
@@ -216,12 +223,14 @@ export const createBuilderStore = (
       activeDraggingStep: null,
       rightSidebar:
         initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+          (initiallySelectedStep !== 'trigger' ||
+            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
-
+      chatDrawerOpenSource: null,
+      setChatDrawerOpenSource: (source: ChatDrawerSource | null) =>
+        set({ chatDrawerOpenSource: source }),
       removeStepSelection: () =>
         set({
           selectedStep: null,
@@ -260,7 +269,7 @@ export const createBuilderStore = (
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY
+              state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
@@ -350,8 +359,8 @@ export const createBuilderStore = (
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
-                state.selectedStep ??
-                'trigger'
+              state.selectedStep ??
+              'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -441,7 +450,6 @@ export const createBuilderStore = (
         set((state) => ({
           refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
         })),
-
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (
@@ -517,7 +525,7 @@ export const createBuilderStore = (
             selectedStep: step ? step : state.selectedStep,
             rightSidebar:
               (step && step !== 'trigger') ||
-              state.flowVersion.trigger.type !== TriggerType.EMPTY
+                state.flowVersion.trigger.type !== TriggerType.EMPTY
                 ? RightSideBarType.PIECE_SETTINGS
                 : state.rightSidebar,
           };
@@ -727,7 +735,7 @@ export const useIsFocusInsideListMapperModeInput = ({
         );
       setIsFocusInsideListMapperModeInput(
         isFocusedInside ||
-          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+        (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
       );
     };
     document.addEventListener('focusin', focusInListener);

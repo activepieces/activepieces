@@ -55,7 +55,6 @@ export const flowRunsApi = {
             handleStepFinished,
           );
           socket.off('error', handleError);
-          console.log('clear TEST_STEP_FINISHED listener' + response.id);
 
           resolve(response);
         }
@@ -64,11 +63,9 @@ export const flowRunsApi = {
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
         socket.off('error', handleError);
-        console.log('clear TEST_STEP_FINISHED listener', error);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      console.log('listened to TEST_STEP_FINISHED');
       socket.on('error', handleError);
     });
   },
@@ -83,11 +80,9 @@ function getInitialRun(
         return;
       }
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }

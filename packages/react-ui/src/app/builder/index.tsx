@@ -40,6 +40,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { ChatDrawer } from '@/features/chat/chat-drawer';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -79,6 +80,8 @@ const BuilderPage = () => {
     run,
     canExitRun,
     selectedStep,
+    chatDrawerOpenSource,
+    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.flowVersion,
@@ -87,6 +90,8 @@ const BuilderPage = () => {
     state.run,
     state.canExitRun,
     state.selectedStep,
+    state.chatDrawerOpenSource,
+    state.setChatDrawerOpenSource,
   ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -273,6 +278,12 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
+      
+      <ChatDrawer
+        source={chatDrawerOpenSource}
+        onOpenChange={() => setChatDrawerOpenSource(null)}
+        flowVersion={flowVersion}
+      />
     </div>
   );
 };
