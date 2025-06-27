@@ -7,7 +7,10 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
-import { billingMutations, billingQueries } from '@/features/billing/lib/billing-hooks';
+import {
+  billingMutations,
+  billingQueries,
+} from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -95,7 +98,12 @@ const UsageLimitsButton = React.memo(() => {
             <div className="flex flex-col gap-4">
               <TrialProgress trialEndDate={project.usage.nextLimitResetDate} />
               <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-                <Button variant="default" size="sm" className="w-full" onClick={() => redirectToSetupSession()}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => redirectToSetupSession()}
+                >
                   <CreditCard className="w-4 h-4 mr-2" />
                   {t('Add Payment Method')}
                 </Button>
@@ -124,7 +132,7 @@ const UsageLimitsButton = React.memo(() => {
   );
 });
 
-const TrialProgress = ({ trialEndDate }: {trialEndDate: string}) => {
+const TrialProgress = ({ trialEndDate }: { trialEndDate: string }) => {
   const daysRemaining = getTrialDaysRemaining(trialEndDate);
   const progressPercentage = getTrialProgress(trialEndDate);
 

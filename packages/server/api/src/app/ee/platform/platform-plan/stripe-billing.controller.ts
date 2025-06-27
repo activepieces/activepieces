@@ -6,10 +6,10 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
+import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
-import { emailService } from '../../helper/email/email-service'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -81,32 +81,32 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         break
                     }
                     case 'customer.subscription.trial_will_end': {
-                        const subscription = webhook.data.object as Stripe.Subscription;
-                        const stripe = stripeHelper(request.log).getStripe();
+                        const subscription = webhook.data.object as Stripe.Subscription
+                        const stripe = stripeHelper(request.log).getStripe()
                         assertNotNullOrUndefined(stripe, 'stripe is not set')
 
-                        const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeSubscriptionId: subscription.id });
-                        const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+                        const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeSubscriptionId: subscription.id })
+                        const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
 
                         if (isNil(customer.email)) {
                             request.log.warn('Customer email is missing, cannot send trial ending reminder.', {
                                 customerId: customer.id,
                                 subscriptionId: subscription.id,
-                            });
-                            break;
+                            })
+                            break
                         }
 
                         if (!isNil(subscription.default_payment_method)) {
                             request.log.info('Trial ending soon, payment method already attached. Skipping "add payment method" reminder.', {
                                 subscriptionId: subscription.id,
                                 customerId: customer.id,
-                            });
-                            break;
+                            })
+                            break
                         }
 
-                        emailService(request.log).sendTrialEndingSoonReminder(platformPlan.id, customer.email);
+                        await emailService(request.log).sendTrialEndingSoonReminder(platformPlan.id, customer.email)
 
-                        break;
+                        break
                     }
                     case 'checkout.session.completed': {
                         const session = webhook.data.object as Stripe.Checkout.Session

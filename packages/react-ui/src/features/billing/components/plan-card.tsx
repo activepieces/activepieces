@@ -27,10 +27,11 @@ export const PlanCard = ({
 }: PlanCardProps) => {
   const openNewWindow = useNewWindow();
   const currentPlan = billingInformation?.plan.plan || PlanName.FREE;
-  const isTrial = billingInformation?.plan.stripeSubscriptionStatus !== ApSubscriptionStatus.TRIALING;
-  const isSelected =
-    currentPlan === plan.name && !isTrial;
-      
+  const isTrial =
+    billingInformation?.plan.stripeSubscriptionStatus !==
+    ApSubscriptionStatus.TRIALING;
+  const isSelected = currentPlan === plan.name && !isTrial;
+
   const isPopular = plan.name === PlanName.PLUS && !isSelected;
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =

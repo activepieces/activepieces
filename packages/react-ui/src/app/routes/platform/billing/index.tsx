@@ -18,7 +18,7 @@ import {
 } from '@/features/billing/lib/billing-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformRole } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 export default function Billing() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -81,18 +81,15 @@ export default function Billing() {
               {t('Access Billing Portal')}
             </Button>
           )}
-          {
-            isTrail ? (
-              <Button variant="default" onClick={() => redirectToPortalSession()}>
-                {t('Add Payment Method')}
-              </Button>
-            ) : (
-              <Button variant="default" onClick={() => setManagePlanOpen(true)}>
-                {t('Upgrade Plan')}
-              </Button>
-            )
-          }
-          
+          {isTrail ? (
+            <Button variant="default" onClick={() => redirectToSetupSession()}>
+              {t('Add Payment Method')}
+            </Button>
+          ) : (
+            <Button variant="default" onClick={() => setManagePlanOpen(true)}>
+              {t('Upgrade Plan')}
+            </Button>
+          )}
         </div>
       </div>
 

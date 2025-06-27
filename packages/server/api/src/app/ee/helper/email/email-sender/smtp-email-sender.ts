@@ -128,7 +128,7 @@ const initSmtpClient = (smtp: SMTPInformation | undefined | null): Transporter =
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
-        'trial-ending-reminder': "[ACTION REQUIRED] You're is ending soon",
+        'trial-ending-reminder': '[ACTION REQUIRED] You\'re is ending soon',
         'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
         'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',

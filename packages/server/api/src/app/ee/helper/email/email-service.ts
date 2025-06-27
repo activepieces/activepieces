@@ -206,7 +206,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         await emailSender(log).send({
             emails: [customerEmail],
-            platformId: platformId,
+            platformId,
             templateData: {
                 name: 'trial-ending-reminder',
                 vars: {
