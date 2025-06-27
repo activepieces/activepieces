@@ -25,10 +25,7 @@ type RunStepCardProps = {
   depth: number;
 };
 
-const RunStepCardItem = ({
-  stepName,
-  depth,
-}: RunStepCardProps) => {
+const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   const [
     loopsIndexes,
     step,

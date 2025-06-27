@@ -321,12 +321,10 @@ export const wait = (ms: number) => {
 };
 
 export const scrollToElementAndClickIt = (elementId: string) => {
-  const element = document.getElementById(
-    elementId
-  );
+  const element = document.getElementById(elementId);
   element?.scrollIntoView({
     behavior: 'instant',
     block: 'start',
   });
   element?.click();
-}
+};

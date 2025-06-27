@@ -21,10 +21,12 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
-  const modifiedTitle = stepMetadata ? `${stepMetadata?.displayName} (${stepMetadata?.stepDisplayName})` : null;
+  const modifiedTitle = stepMetadata
+    ? `${stepMetadata?.displayName} (${stepMetadata?.stepDisplayName})`
+    : null;
 
   return (
-    <div  className="flex items-center justify-center gap-4 min-h-[48px]">
+    <div className="flex items-center justify-center gap-4 min-h-[48px]">
       <div className="flex h-full min-w-[48px] items-center justify-center">
         {stepMetadata?.logoUrl && (
           <ImageWithFallback

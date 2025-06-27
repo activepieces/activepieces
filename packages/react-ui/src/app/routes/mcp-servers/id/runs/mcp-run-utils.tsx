@@ -13,7 +13,6 @@ import { StepMetadataWithSuggestions } from '@/lib/types';
 import { formatUtils } from '@/lib/utils';
 import { McpRun, McpRunStatus } from '@activepieces/shared';
 
-
 const getToolIcon = (
   item: McpRun,
   metadata?: StepMetadataWithSuggestions[],

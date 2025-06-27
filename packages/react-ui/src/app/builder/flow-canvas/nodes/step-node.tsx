@@ -68,13 +68,12 @@ const ApStepCanvasNode = React.memo(
       },
     });
 
-
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      if(step.type === TriggerType.EMPTY){
+      if (step.type === TriggerType.EMPTY) {
         setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
       }
       e.preventDefault();

@@ -133,5 +133,5 @@ const getQueryKeyForStepMetadata = (
   const customLogoUrl =
     'customLogoUrl' in step ? step.customLogoUrl : undefined;
   const agentId = stepUtils.getAgentId(step);
-  return [pieceName, pieceVersion, customLogoUrl, agentId, locale,step.type];
+  return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
 };

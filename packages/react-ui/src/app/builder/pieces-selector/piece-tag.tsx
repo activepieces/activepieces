@@ -1,11 +1,11 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { t } from 'i18next';
 
-import { cn, scrollToElementAndClickIt } from '@/lib/utils';
-import { PieceTagType, tagCategoryName } from '@/lib/types';
 import construction from '@/assets/img/custom/construction.png';
 import link from '@/assets/img/custom/link.png';
 import magic from '@/assets/img/custom/magic.png';
-import { t } from 'i18next';
+import { PieceTagType, tagCategoryName } from '@/lib/types';
+import { cn, scrollToElementAndClickIt } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 const tagVariants = cva(
@@ -17,66 +17,69 @@ const tagVariants = cva(
         [PieceTagType.APPS]:
           'bg-yellow-50 text-yellow-800 hover:border-yellow-400 ',
         [PieceTagType.AI_AND_AGENTS]:
-          'bg-purple-50 text-purple-800 hover:border-purple-400 '
+          'bg-purple-50 text-purple-800 hover:border-purple-400 ',
       },
     },
   },
 );
 
 const tagsDisplayData = [
-    {
-        type: PieceTagType.AI_AND_AGENTS,
-        name: t('AI'),
-        icon: magic
-    },
-    {
-        type: PieceTagType.CORE,
-        name: t('Core'),
-        icon: construction
-    },
-    {
-        type: PieceTagType.APPS,
-        name: t('Apps'),
-        icon: link
-    },
-
-] as const
+  {
+    type: PieceTagType.AI_AND_AGENTS,
+    name: t('AI'),
+    icon: magic,
+  },
+  {
+    type: PieceTagType.CORE,
+    name: t('Core'),
+    icon: construction,
+  },
+  {
+    type: PieceTagType.APPS,
+    name: t('Apps'),
+    icon: link,
+  },
+] as const;
 export interface PieceTagProps extends VariantProps<typeof tagVariants> {
   type: PieceTagType.AI_AND_AGENTS | PieceTagType.APPS | PieceTagType.CORE;
 }
 
-const PieceTag = ({
-  type,
-
-}: PieceTagProps) => {
-    const tagDisplayData = tagsDisplayData.find((tag) => tag.type === type);
-    if(isNil(tagDisplayData)){
-        return null;
-    }
+const PieceTag = ({ type }: PieceTagProps) => {
+  const tagDisplayData = tagsDisplayData.find((tag) => tag.type === type);
+  if (isNil(tagDisplayData)) {
+    return null;
+  }
   return (
     <span
-      className={cn(tagVariants({ variant:type }), {
-      })}
+      className={cn(tagVariants({ variant: type }), {})}
       onClick={() => {
         const categoryName = tagCategoryName[type];
         scrollToElementAndClickIt(categoryName);
       }}
     >
-      <img className='h-4' src={tagDisplayData.icon} alt={tagDisplayData.name} />
+      <img
+        className="h-4"
+        src={tagDisplayData.icon}
+        alt={tagDisplayData.name}
+      />
       <span>{tagDisplayData.name}</span>
     </span>
   );
 };
 
 const PieceTagsList = () => {
-    const tags = [PieceTagType.CORE, PieceTagType.APPS, PieceTagType.AI_AND_AGENTS] as const;
-    return (
-        <div className='flex gap-2 overflow-x-auto flex-nowrap h-[38px] py-2'>
-            {tags.map((tag) => (
-                <PieceTag key={tag} type={tag} />
-            ))}
-        </div>
-    )
-}
+  const tags = [
+    PieceTagType.CORE,
+    PieceTagType.APPS,
+    PieceTagType.AI_AND_AGENTS,
+  ] as const;
+  return (
+    <div className="flex gap-2 overflow-x-auto flex-nowrap h-[38px] py-2">
+      {tags.map((tag) => (
+        <PieceTag key={tag} type={tag} />
+      ))}
+    </div>
+  );
+};
 PieceTagsList.displayName = 'PieceTagsList';
 export { PieceTagsList };

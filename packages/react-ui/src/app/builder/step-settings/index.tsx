@@ -194,7 +194,7 @@ const StepSettingsContainer = () => {
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
                 <StepCard step={modifiedStep}></StepCard>
-           
+
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>
                 )}

@@ -5,18 +5,17 @@ import React from 'react';
 import { CardList } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CORE_ACTIONS_METADATA } from '@/features/pieces/lib/step-utils';
+import {
+  PieceSelectorItem,
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/lib/types';
 import { ActionType, isNil, TriggerType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { CreateTodoDialog } from './create-todo-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
-
-import {
-  PieceSelectorItem,
-  PieceSelectorOperation,
-  StepMetadataWithSuggestions,
-} from '@/lib/types';
 
 type PieceActionsOrTriggersListProps = {
   hidePieceIcon: boolean;
@@ -101,33 +100,34 @@ export const PieceActionsOrTriggersList: React.FC<
       <CardList className="min-w-[350px] h-full gap-0" listClassName="gap-0">
         {actionsOrTriggers &&
           actionsOrTriggers.map((item, index) => {
-               const isCreateTodoAction =  item.type === ActionType.PIECE && item.actionOrTrigger.name === 'createTodo';
-               if(isCreateTodoAction) {
-                return (
-                  <CreateTodoDialog
-                    key={index}
-                    pieceSelectorItem={item}
-                    operation={operation}
-                    hidePieceIcon={hidePieceIcon}
-                  />
-                )
-               }
-                return (
-                  <GenericActionOrTriggerItem
-                    key={index}
-                    item={item}
-                    hidePieceIcon={hidePieceIcon}
-                    stepMetadataWithSuggestions={stepMetadataWithSuggestions}
-                    onClick={() =>
-                      handleAddingOrUpdatingStep({
-                        pieceSelectorItem: item,
-                        operation,
-                        selectStepAfter: true,
-                      })
-                    }
-                  />
-                );
-            
+            const isCreateTodoAction =
+              item.type === ActionType.PIECE &&
+              item.actionOrTrigger.name === 'createTodo';
+            if (isCreateTodoAction) {
+              return (
+                <CreateTodoDialog
+                  key={index}
+                  pieceSelectorItem={item}
+                  operation={operation}
+                  hidePieceIcon={hidePieceIcon}
+                />
+              );
+            }
+            return (
+              <GenericActionOrTriggerItem
+                key={index}
+                item={item}
+                hidePieceIcon={hidePieceIcon}
+                stepMetadataWithSuggestions={stepMetadataWithSuggestions}
+                onClick={() =>
+                  handleAddingOrUpdatingStep({
+                    pieceSelectorItem: item,
+                    operation,
+                    selectStepAfter: true,
+                  })
+                }
+              />
+            );
           })}
       </CardList>
     </ScrollArea>

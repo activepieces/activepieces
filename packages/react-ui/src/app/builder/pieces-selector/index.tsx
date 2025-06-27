@@ -8,13 +8,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { SearchInput } from '../../../components/ui/search-input';
-import { PiecesCardList } from './pieces-card-list';
-import { FlowOperationType, TriggerType } from '@activepieces/shared';
-import PieceSelectorIntro from './piece-selector-intro';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
+import { FlowOperationType, TriggerType } from '@activepieces/shared';
+
+import { SearchInput } from '../../../components/ui/search-input';
+
+import PieceSelectorIntro from './piece-selector-intro';
 import { PieceTagsList } from './piece-tag';
+import { PiecesCardList } from './pieces-card-list';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -42,10 +44,15 @@ const PieceSelector = ({
     state.setSelectedPieceMetadataInPieceSelector,
     state.flowVersion.trigger.type === TriggerType.EMPTY,
   ]);
-  const isForReplace = operation.type === FlowOperationType.UPDATE_ACTION || operation.type === FlowOperationType.UPDATE_TRIGGER;
+  const isForReplace =
+    operation.type === FlowOperationType.UPDATE_ACTION ||
+    operation.type === FlowOperationType.UPDATE_TRIGGER;
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [selectedPieceGroupType, setSelectedPieceGroupType] = useState<PieceTagType | null>(isForReplace && !isForEmptyTrigger? PieceTagType.ALL : null);
+  const initiallySelectedPieceGroupType =
+    isForReplace && !isForEmptyTrigger ? PieceTagType.ALL : null;
+  const [selectedPieceGroupType, setSelectedPieceGroupType] =
+    useState<PieceTagType | null>(initiallySelectedPieceGroupType);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
@@ -59,7 +66,7 @@ const PieceSelector = ({
           setSearchQuery('');
           setOpenedPieceSelectorStepNameOrAddButtonId(null);
           setSelectedPieceMetadataInPieceSelector(null);
-          setSelectedPieceGroupType(isForReplace && !isForEmptyTrigger? PieceTagType.ALL : null);
+          setSelectedPieceGroupType(initiallySelectedPieceGroupType);
         }
       }}
     >
@@ -86,28 +93,25 @@ const PieceSelector = ({
       >
         <>
           <div>
-            <div
-              className="p-2 flex-col  gap-1 items-center "
-            >
+            <div className="p-2 flex-col  gap-1 items-center ">
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
                 showDeselect={false}
-                showBackButton={selectedPieceGroupType !== null }
+                showBackButton={selectedPieceGroupType !== null}
                 onChange={(e) => {
                   setSearchQuery(e);
                   setSelectedPieceMetadataInPieceSelector(null);
-                  if(e === '')
-                  {
+                  if (e === '') {
                     setSelectedPieceGroupType(null);
-                  }
-                  else
-                  {
+                  } else {
                     setSelectedPieceGroupType(PieceTagType.ALL);
                   }
                 }}
               />
-             {(searchQuery.length > 0 || selectedPieceGroupType !== null) && <PieceTagsList />}
+              {(searchQuery.length > 0 || selectedPieceGroupType !== null) && (
+                <PieceTagsList />
+              )}
             </div>
 
             <Separator orientation="horizontal" />
@@ -117,22 +121,25 @@ const PieceSelector = ({
             style={{
               height: listHeightRef.current + 'px',
             }}
-          > 
-           {
-            !showPiecesList && <PieceSelectorIntro setSelectedPieceGroupType={setSelectedPieceGroupType}/>
-           }
+          >
+            {!showPiecesList && (
+              <PieceSelectorIntro
+                isForTrigger={
+                  operation.type === FlowOperationType.UPDATE_TRIGGER
+                }
+                setSelectedPieceGroupType={setSelectedPieceGroupType}
+              />
+            )}
 
-            { showPiecesList &&
+            {showPiecesList && (
               <PiecesCardList
-              key={debouncedQuery}
-              searchQuery={debouncedQuery}
-              operation={operation}
-              selectedPieceGroupType={selectedPieceGroupType}
-              stepToReplacePieceDisplayName={stepToReplacePieceDisplayName}
-            />
-            }
-            
-            
+                key={debouncedQuery}
+                searchQuery={debouncedQuery}
+                operation={operation}
+                selectedPieceGroupType={selectedPieceGroupType}
+                stepToReplacePieceDisplayName={stepToReplacePieceDisplayName}
+              />
+            )}
           </div>
         </>
       </PopoverContent>
