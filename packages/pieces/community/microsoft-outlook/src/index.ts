@@ -5,7 +5,7 @@ import { downloadAttachmentAction } from './lib/actions/download-email-attachmen
 import { sendEmailAction } from './lib/actions/send-email';
 import { microsoftOutlookAuth } from './lib/common/auth';
 import { newEmailTrigger } from './lib/triggers/new-email';
-import { replyEmail } from './lib/actions/reply-email';
+import { replyEmailAction } from './lib/actions/reply-email';
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
@@ -16,7 +16,7 @@ export const microsoftOutlook = createPiece({
 	actions: [
 		sendEmailAction,
 		downloadAttachmentAction,
-		replyEmail,
+		replyEmailAction,
 		createCustomApiCallAction({
 			auth: microsoftOutlookAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
