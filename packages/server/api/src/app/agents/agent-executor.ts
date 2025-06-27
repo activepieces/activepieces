@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentOutputUtils, AgentTaskStatus, AgentTestResult, assertEqual, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentOutputUtils, AgentTaskStatus, AgentTestResult, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText } from 'ai'
 import dayjs from 'dayjs'
@@ -74,7 +74,8 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 }
                 const metadata = await agentToolInstance.getMetadata(chunk.toolName)
                 blocks.push({
-                    type: ContentBlockType.TOOL_CALL,
+                    type: ContentBlockType.TOOL_CALL,   
+                    toolCallId: chunk.toolCallId,
                     toolCallType: isNil(metadata.logoUrl) ? ToolCallType.FLOW : ToolCallType.PIECE,
                     displayName: metadata.displayName,
                     name: chunk.toolName,
@@ -85,11 +86,12 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                 })
             }
             else if (chunk.type === 'tool-result') {
-                const lastBlock = blocks.pop() as ToolCallContentBlock
+                const lastBlockIndex = blocks.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
+                const lastBlock = blocks[lastBlockIndex] as ToolCallContentBlock
                 assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-                assertEqual(lastBlock.type, ContentBlockType.TOOL_CALL, 'Last block must be a tool call', 'TOOL_CALL')
-                blocks.push({
+                blocks[lastBlockIndex] = {
                     type: ContentBlockType.TOOL_CALL,
+                    toolCallId: lastBlock.toolCallId,
                     toolCallType: lastBlock.toolCallType,
                     displayName: lastBlock.displayName,
                     name: lastBlock.name,
@@ -99,12 +101,13 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
                     endTime: new Date().toISOString(),
                     input: lastBlock.input,
                     output: chunk.result,
-                })
+                }
             }
             await todoSideEfffects(log).notifyActivity({
                 socket: params.socket,
                 projectId: params.agent.projectId,
                 activityId: comment.id,
+                todoId,
                 content: blocks,
             })
         }
@@ -121,7 +124,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             projectId: params.agent.projectId,
         })
 
-        const agentResult = agentOutputUtils.findAgentResult({
+        const agentResult = agentOutputUtils.formatAgentResponse({
             todoId,
             content: blocks,
         })

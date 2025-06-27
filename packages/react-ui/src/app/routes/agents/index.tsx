@@ -18,7 +18,7 @@ export const AgentsPage = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | undefined>();
 
   const { data: isAgentsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_ENABLED,
+    ApFlagId.AGENTS_CONFIGURED,
   );
 
   const { data: agentsPage, isLoading, refetch } = agentHooks.useList();

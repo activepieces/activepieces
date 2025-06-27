@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
 
 export const updateReferralStatus = createAction({
-  name: 'update_referral_status', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'update-referral-status', // Must be a unique across the piece, this shouldn't be changed.
   auth: talkableAuth,
   displayName: 'Update referral status',
   description: 'You can void or approve referral',

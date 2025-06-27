@@ -17,7 +17,6 @@ import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
-import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentSettingsProps {
   agent?: Agent;
@@ -54,7 +53,6 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
 
   const updateAgentMutation = agentHooks.useUpdate();
 
-  // Auto-save system prompt with debounce
   useEffect(() => {
     if (!agent?.id) return;
 
@@ -132,11 +130,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
-              <div>{agent && <AgentTestRunButton agentId={agent.id} />}</div>
             </div>
             <EditableTextWithPen
               value={description}
-              className="text-sm text-muted-foreground mt-1"
+              className="text-sm text-muted-foreground mt-1 max-w-[400px]"
               readonly={false}
               onValueChange={handleDescriptionChange}
               isEditing={isEditingDescription}

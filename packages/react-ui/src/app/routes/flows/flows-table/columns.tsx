@@ -37,6 +37,7 @@ export const flowsTableColumns = ({
         checked={
           table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
         }
+        variant="secondary"
         onCheckedChange={(value) => {
           const isChecked = !!value;
           table.toggleAllPageRowsSelected(isChecked);
@@ -74,6 +75,7 @@ export const flowsTableColumns = ({
       );
       return (
         <Checkbox
+          variant="secondary"
           checked={isChecked}
           onCheckedChange={(value) => {
             const isChecked = !!value;

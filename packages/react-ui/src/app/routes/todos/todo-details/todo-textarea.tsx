@@ -88,7 +88,7 @@ export const TodoTextarea = ({
                 </ScrollArea>
                 <div className="flex justify-end mx-2 mb-3">
                   <Button
-                    variant="neutral"
+                    variant="secondary"
                     size="icon"
                     onClick={handleSubmit}
                     loading={isSubmitting}
