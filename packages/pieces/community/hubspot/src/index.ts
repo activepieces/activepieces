@@ -100,7 +100,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'settings.users.read',
 		'settings.users.teams.read',
 		'files',
-		'forms'
+		'forms',
+    'scheduler.meetings.meeting-link.read'
 		// 'business_units_view.read'
 	],
 });

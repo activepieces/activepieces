@@ -2,6 +2,6 @@
   "name": "@activepieces/piece-hubspot",
   "version": "0.7.1",
   "dependencies": {
-    "@hubspot/api-client": "12.0.1"
+    "@hubspot/api-client": "12.0.2"
   }
 }
