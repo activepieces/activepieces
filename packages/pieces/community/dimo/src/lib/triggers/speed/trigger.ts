@@ -136,6 +136,12 @@ export const speedTrigger = createTrigger({
         'No webhook info found in store. Trigger may not have been enabled.'
       );
     }
+    const unsubscribeAllVehicles = await httpClient.sendRequest({
+      method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
+      url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
+      headers: getHeaders(developerJwt),
+    });
+    handleFailures(unsubscribeAllVehicles);
     const res = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),

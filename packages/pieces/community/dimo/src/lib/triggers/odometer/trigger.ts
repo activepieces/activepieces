@@ -153,6 +153,15 @@ export const odometerTrigger = createTrigger({
         'No webhook information found in store. Please enable the trigger first.'
       );
     }
+    const unsubscribeAllVehicles = await httpClient.sendRequest({
+      method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
+      url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
+      headers: getHeaders(developerJwt),
+    });
+
+    handleFailures(unsubscribeAllVehicles);
+
+
     const res = await httpClient.sendRequest({
       method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
       url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({
@@ -160,8 +169,11 @@ export const odometerTrigger = createTrigger({
       }),
       headers: getHeaders(developerJwt),
     });
+
     handleFailures(res);
+
     await context.store.delete('webhook_info');
+
   },
   async run(context) {
     const webhookBody = context.payload.body as WebhookPayload;

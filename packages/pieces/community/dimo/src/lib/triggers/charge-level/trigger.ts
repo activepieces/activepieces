@@ -127,6 +127,12 @@ export const chargeLevelTrigger = createTrigger({
       const { developerJwt } = context.auth;
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
       if (webhookInfo?.webhookId && developerJwt) {
+        const unsubscribeAllVehicles = await httpClient.sendRequest({
+          method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
+          url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
+          headers: getHeaders(developerJwt),
+        });
+        handleFailures(unsubscribeAllVehicles);
         // Delete the webhook configuration
         await httpClient.sendRequest({
           method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
