@@ -26,6 +26,13 @@ export const UsageCards = ({
         isBusinessPlan ? 'xl:grid-cols-4' : '2xl:grid-cols-5',
       )}
     >
+      <UsageCard
+        icon={<Workflow className="w-4 h-4" />}
+        title={t('Active flows')}
+        used={usage.activeFlows}
+        total={plan.activeFlowsLimit}
+      />
+
       {!isBusinessPlan && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
@@ -41,6 +48,7 @@ export const UsageCards = ({
         used={usage.projects}
         total={plan.projectsLimit}
       />
+
       <UsageCard
         icon={
           <img
@@ -59,12 +67,6 @@ export const UsageCards = ({
         title={t('Tables')}
         used={usage.tables}
         total={plan.tablesLimit}
-      />
-      <UsageCard
-        icon={<Workflow className="w-4 h-4" />}
-        title={t('Active flows')}
-        used={usage.activeFlows}
-        total={plan.activeFlowsLimit}
       />
     </div>
   );

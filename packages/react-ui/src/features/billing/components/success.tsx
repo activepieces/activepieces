@@ -35,7 +35,6 @@ export const Success = () => {
           iconColor: 'text-emerald-600 dark:text-emerald-400',
           title: t('Successfully Upgraded!'),
           description: t('Subscription updated successfully'),
-          details: t('Your new features are now active and ready to use.'),
         };
       case 'downgrade':
         return {
@@ -43,11 +42,7 @@ export const Success = () => {
           iconBg: 'bg-orange-50 dark:bg-orange-950',
           iconColor: 'text-orange-600 dark:text-orange-400',
           title: t('Plan Downgraded'),
-          // make better description for downgrade
           description: t('Subscription updated successfully'),
-          details: t(
-            'Changes will take effect at the start of your next billing cycle.',
-          ),
         };
       case 'create':
         return {
@@ -56,7 +51,6 @@ export const Success = () => {
           iconColor: 'text-primary',
           title: t('Success!'),
           description: t('Subscription created successfully'),
-          details: t('Your subscription has been created successfully.'),
         };
       default:
         return {
@@ -65,7 +59,6 @@ export const Success = () => {
           iconColor: 'text-primary',
           title: t('Success!'),
           description: t('Subscription updated successfully'),
-          details: t('Your changes have been applied to your account.'),
         };
     }
   };
@@ -90,9 +83,6 @@ export const Success = () => {
               </h1>
               <p className="text-lg text-muted-foreground">
                 {config.description}
-              </p>
-              <p className="text-sm text-muted-foreground/80">
-                {config.details}
               </p>
             </div>
 

@@ -196,9 +196,9 @@ export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiv
 export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.Optional(Type.String()),
-    nextBillingAmount: Type.Optional(Type.Number()),
-    cancelAt: Type.Optional(Type.String()),
+    nextBillingDate: Type.Number(),
+    nextBillingAmount: Type.Number(),
+    cancelAt: Type.Optional(Type.Number()),
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

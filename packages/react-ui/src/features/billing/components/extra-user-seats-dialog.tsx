@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,8 +31,8 @@ export const ExtraSeatsDialog = ({
   platformSubscription,
 }: ExtraSeatsDialogProps) => {
   const { plan } = platformSubscription;
-  const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
 
+  const currentUserLimit = plan.userSeatsLimit ?? DEFAULT_SEATS;
   const [selectedSeats, setSelectedSeats] = useState([currentUserLimit]);
 
   const newSeatCount = selectedSeats[0];
@@ -41,6 +41,10 @@ export const ExtraSeatsDialog = ({
 
   const { mutate: updateUserSeats, isPending } =
     billingMutations.useUpdateSubscription(() => onOpenChange(false));
+
+  useEffect(() => {
+    setSelectedSeats([currentUserLimit]);
+  }, [currentUserLimit]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
