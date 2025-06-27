@@ -440,7 +440,7 @@ export const customCountryInput = Property.ShortText({
   required: false,
 });
 
-// US/Canada States dropdown with custom input support
+
 export const stateDropdown = Property.StaticDropdown({
   displayName: 'State/Province',
   description:
@@ -448,7 +448,7 @@ export const stateDropdown = Property.StaticDropdown({
   required: false,
   options: {
     options: [
-      // US States
+
       { label: 'Alabama (US)', value: 'Alabama' },
       { label: 'Alaska (US)', value: 'Alaska' },
       { label: 'Arizona (US)', value: 'Arizona' },
@@ -499,7 +499,6 @@ export const stateDropdown = Property.StaticDropdown({
       { label: 'West Virginia (US)', value: 'West Virginia' },
       { label: 'Wisconsin (US)', value: 'Wisconsin' },
       { label: 'Wyoming (US)', value: 'Wyoming' },
-      // Canadian Provinces
       { label: 'Alberta (CA)', value: 'Alberta' },
       { label: 'British Columbia (CA)', value: 'British Columbia' },
       { label: 'Manitoba (CA)', value: 'Manitoba' },
@@ -516,7 +515,6 @@ export const stateDropdown = Property.StaticDropdown({
       { label: 'Quebec (CA)', value: 'Quebec' },
       { label: 'Saskatchewan (CA)', value: 'Saskatchewan' },
       { label: 'Yukon (CA)', value: 'Yukon' },
-      // Other common ones
       { label: 'England (UK)', value: 'England' },
       { label: 'Scotland (UK)', value: 'Scotland' },
       { label: 'Wales (UK)', value: 'Wales' },
