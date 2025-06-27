@@ -14,6 +14,7 @@ export type FlowPlanLimits = {
 export enum ApSubscriptionStatus {
     ACTIVE = 'active',
     CANCELED = 'canceled',
+    TRIALING = 'trialing'
 }
 
 export const DEFAULT_BUSINESS_SEATS = 5
@@ -94,6 +95,10 @@ export function getPlanFromPriceId(priceId: string): PlanName {
 
 
 export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
+    if (subscription.status === ApSubscriptionStatus.TRIALING) {
+        return PlanName.PLUS
+    }
+
     if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
         return PlanName.FREE
     }

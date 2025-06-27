@@ -46,6 +46,29 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         return newCustomer.id
     },
+
+    async startTrial(customerId: string, platformId: string) {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const subscription = await stripe.subscriptions.create({
+            customer: customerId,
+            trial_end: apDayjs().add(14, 'days').unix(),
+            items: [
+                { price: STRIPE_PLAN_PRICE_IDS[PlanName.PLUS], quantity: 1 },
+            ],
+            trial_settings: {
+                end_behavior: {
+                    missing_payment_method: 'cancel',
+                },
+            },
+            metadata: {
+                platformId,
+            },
+        })
+
+        return subscription.id
+    },
     
     createSubscriptionCheckoutUrl: async (
         customerId: string,
@@ -53,7 +76,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        
+
         const basePriceId = STRIPE_PLAN_PRICE_IDS[params.plan]
         const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
             {
@@ -77,7 +100,28 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         return session.url!
     },
 
-    createPortalSessionUrl: async ({ platformId }: { platformId: string }): Promise<string> => {
+    createSetupSession: async (platformId: string): Promise<string> => {
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { stripeCustomerId, stripeSubscriptionId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer: stripeCustomerId,
+            mode: 'setup',
+            success_url: `${frontendUrl}/platform/setup/billing/success?action=setup`,
+            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
+            metadata: {
+                action: 'attach_payment_method',
+                subscriptionId: stripeSubscriptionId!,
+            },
+        })
+            
+        return session.url!
+    },
+
+    createPortalSessionUrl: async (platformId: string): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
@@ -90,6 +134,30 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         return session.url
     },
 
+
+    attachPaymentMethod: async (
+        stripe: Stripe,
+        subscriptionId: string,
+        customerId: string,
+        paymentMethodId: string,
+    ): Promise<void> => {
+        await stripe.paymentMethods.attach(paymentMethodId, {
+            customer: customerId,
+        })
+
+        await stripe.customers.update(customerId, {
+            invoice_settings: {
+                default_payment_method: paymentMethodId,
+            },
+        })
+
+        await stripe.subscriptions.update(subscriptionId, {
+            collection_method: 'charge_automatically',
+            default_payment_method: paymentMethodId,
+        })
+
+        log.info('Payment method attached.', { subscriptionId, customerId })
+    },
 
     updateSubscription: async (
         subscriptionId: string,
@@ -157,7 +225,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const defaultEndDate = apDayjs().endOf('month').unix()
         const defaultCancelDate = undefined
 
-        if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
+        if (subscription.status !== ApSubscriptionStatus.ACTIVE && subscription.status !== ApSubscriptionStatus.TRIALING) {
             return { startDate: defaultStartDate, endDate: defaultEndDate, cancelDate: defaultCancelDate }
         }
 

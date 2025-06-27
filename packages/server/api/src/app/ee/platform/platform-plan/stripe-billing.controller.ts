@@ -79,6 +79,25 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                         break
                     }
+                    case 'checkout.session.completed': {
+                        const session = webhook.data.object as Stripe.Checkout.Session
+
+                        const subscriptionId = session.metadata?.subscriptionId as string
+                        const customerId = session.customer as string
+                        const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent as string)
+                        const paymentMethodId = setupIntent.payment_method as string
+
+                        if (session.mode === 'setup' && session.metadata?.action === 'attach_payment_method') {
+                            await stripeHelper(request.log).attachPaymentMethod(
+                                stripe,
+                                subscriptionId,
+                                customerId,
+                                paymentMethodId,
+                            )
+                        }
+
+                        break
+                    }
                     default:
                         request.log.info(`Unhandled webhook event type: ${webhook.type}`)
                         break
