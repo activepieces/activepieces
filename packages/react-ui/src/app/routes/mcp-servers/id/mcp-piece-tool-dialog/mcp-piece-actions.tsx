@@ -80,9 +80,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
               const actionContent = (
                 <div
                   key={action.name}
-                  className={`flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent ${
-                    'opacity-100 cursor-pointer'
-                  }`}
+                  className={`flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent ${'opacity-100 cursor-pointer'}`}
                   onClick={() => onSelectAction(action.name)}
                 >
                   <Checkbox

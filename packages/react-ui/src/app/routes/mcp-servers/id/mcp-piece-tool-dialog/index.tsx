@@ -88,7 +88,6 @@ export function McpPieceDialog({
     setSelectedPiece(piece);
   };
 
-
   const handleActionSelect = (action: string) => {
     setSelectedActions((prev) => {
       const newSelected = prev.includes(action)

@@ -11,10 +11,14 @@ import {
     McpTrigger,
     TelemetryEventName,
 } from '@activepieces/shared'
+import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
@@ -26,10 +30,6 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
-import { generateText } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 
 export async function createMcpServer({
     mcpId,
@@ -208,7 +208,7 @@ async function resolveParametersRecursively({
                                 pieceName: pieceMetadata.name,
                                 pieceVersion: pieceMetadata.version,
                                 pieceType: pieceMetadata.pieceType,
-                            }
+                            },
                         )
                         const propertyResult = await userInteractionWatcher(logger)
                             .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
@@ -218,7 +218,7 @@ async function resolveParametersRecursively({
                             actionOrTriggerName: actionName,
                             input: currentParams,
                             piece: piecePackage,
-                            sampleData: {}
+                            sampleData: {},
                         })
                         if (propertyResult.status === EngineResponseStatus.OK && 
                             propertyResult.result.type === PropertyType.DYNAMIC) {
@@ -231,7 +231,7 @@ async function resolveParametersRecursively({
                                 dynamicProps, 
                                 projectId, 
                                 platformId, 
-                                logger
+                                logger,
                             )
                             
                             if (JSON.stringify(newParams) !== JSON.stringify(currentParams)) {
@@ -239,7 +239,8 @@ async function resolveParametersRecursively({
                                 hasChanges = true
                             }
                         }
-                    } catch (error) {
+                    }
+                    catch (error) {
                         logger.warn(`Failed to resolve dynamic property ${propName}: ${error}`)
                     }
                 }
@@ -356,12 +357,12 @@ async function addFlowToServer(
 
 async function mergeUserInputWithSchemaAI(
     propName: string,
-    input: any, 
-    schema: Record<string, any>, 
+    input: Record<string, unknown>, 
+    schema: InputPropertyMap, 
     projectId: string, 
     platformId: string, 
-    logger: FastifyBaseLogger
-): Promise<any> {
+    logger: FastifyBaseLogger,
+): Promise<Record<string, unknown>> {
     try {
         const baseUrl = await domainHelper.getPublicApiUrl({
             path: '/v1/ai-providers/proxy/openai/v1/',
@@ -403,26 +404,31 @@ Return ONLY the JSON:`
 
         const aiResponse = result.text.trim()
         
-        let parsedResult: any
+        let parsedResult: Record<string, unknown>
         try {
             parsedResult = JSON.parse(aiResponse)
-        } catch {
+        }
+        catch {
             const jsonMatch = aiResponse.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/)
             if (jsonMatch) {
                 try {
                     parsedResult = JSON.parse(jsonMatch[1])
-                } catch {
+                }
+                catch {
                     throw new Error('Could not parse AI response as JSON, even from code blocks')
                 }
-            } else {
+            }
+            else {
                 const jsonObjectMatch = aiResponse.match(/\{[\s\S]*\}/)
                 if (jsonObjectMatch) {
                     try {
-                        parsedResult = JSON.parse(jsonObjectMatch[0])
-                    } catch {
+                        parsedResult = JSON.parse(jsonObjectMatch[0]) as Record<string, unknown>
+                    }
+                    catch {
                         throw new Error('Could not parse AI response as JSON')
                     }
-                } else {
+                }
+                else {
                     throw new Error('Could not parse AI response as JSON')
                 }
             }
@@ -433,7 +439,8 @@ Return ONLY the JSON:`
             [propName]: parsedResult,   
         }
 
-    } catch (error) {
+    }
+    catch (error) {
         logger.warn({
             projectId,
             platformId,

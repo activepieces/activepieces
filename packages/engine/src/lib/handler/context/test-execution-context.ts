@@ -23,7 +23,7 @@ export const testExecutionContext = {
         sampleData,
     }: TestExecutionParams): Promise<FlowExecutorContext> {
         let flowExecutionContext = FlowExecutorContext.empty()
-        if(isNil(flowVersion)) {
+        if (isNil(flowVersion)) {
             return flowExecutionContext
         }
         
