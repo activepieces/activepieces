@@ -37,7 +37,7 @@ export const waitForApproval = createAction({
     const response = await httpClient.sendRequest(request);
     return {
       status: response.body.status.name,
-      message: 'Test approve message',
+      message: 'Test message',
     };
   },
   async run(ctx) {
