@@ -2,7 +2,6 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createVideoFromTemplateAction } from './lib/actions/create-a-video-from-template';
-import { createAvatarVideoAction } from './lib/actions/create-avatar-video';
 import { retrieveTranslatedVideoStatus } from './lib/actions/retrieve-a-translated-video-status';
 import { retrieveVideoStatusAction } from './lib/actions/retrieve-a-video-status';
 import { retrieveSharableVideoUrlAction } from './lib/actions/retrieve-shareable-link-for-a-video';
@@ -24,7 +23,6 @@ export const heygen = createPiece({
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     createVideoFromTemplateAction,
-    createAvatarVideoAction,
     retrieveTranslatedVideoStatus,
     retrieveVideoStatusAction,
     retrieveSharableVideoUrlAction,
