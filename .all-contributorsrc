@@ -1877,6 +1877,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "tumrabert",
+      "name": "Tanakit Phentun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38305310?v=4",
+      "profile": "https://tumrabertworld.vercel.app/resume",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
