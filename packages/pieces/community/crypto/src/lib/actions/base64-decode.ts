@@ -2,12 +2,12 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const base64Decode = createAction({
   name: 'base64-decode',
-  description: 'Decode Base64 text',
   displayName: 'Base64 Decode',
+  description:'Converts base64 text back to plain text.',
   props: {
     text: Property.ShortText({
       displayName: 'Text',
-      description: 'The text to be decoded',
+      description: 'The text to be decoded.',
       required: true,
     }),
   },
