@@ -16,7 +16,6 @@ import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
 
 
-
 type RowValueType = Record<string, any>
 
 export const insertMultipleRowsAction = createAction({
@@ -161,7 +160,6 @@ export const insertMultipleRowsAction = createAction({
 			description: 'The column to check for duplicate values.',
 			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate'],
 			required: false,
-
 			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate }) => {
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;

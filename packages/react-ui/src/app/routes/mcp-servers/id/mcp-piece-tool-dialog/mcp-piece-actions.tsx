@@ -41,9 +41,7 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   const allSelected =
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
-    piece.suggestedActions.every((a) => {
-      return selectedActions.includes(a.name);
-    });
+    piece.suggestedActions.every((a) => selectedActions.includes(a.name));
   const someSelected = selectedActions.length > 0 && !allSelected;
 
   const pieceHasAuth = selectedPiece && !isNil(selectedPiece.auth);

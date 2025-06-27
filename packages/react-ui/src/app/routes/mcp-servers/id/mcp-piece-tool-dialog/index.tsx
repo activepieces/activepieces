@@ -25,7 +25,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
-import { PropertyType } from '@activepieces/pieces-framework';
 import type { McpWithTools } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
@@ -102,11 +101,7 @@ export function McpPieceDialog({
   const handleSelectAll = (checked: boolean) => {
     if (checked && selectedPiece) {
       setSelectedActions(
-        selectedPiece.suggestedActions
-          ?.map((a) => {
-            return isActionValidForMcpTool(a.name) ? a.name : null;
-          })
-          .filter((a) => a !== null) ?? [],
+        selectedPiece.suggestedActions?.map((a) => a.name) ?? [],
       );
     } else {
       setSelectedActions([]);
