@@ -35,7 +35,7 @@ export const stepUtils = {
         : undefined
       : undefined;
     const agentId = getAgentId(step);
-    return [pieceName, pieceVersion, customLogoUrl, agentId, locale];
+    return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
   },
   async getMetadata(
     step: Action | Trigger,

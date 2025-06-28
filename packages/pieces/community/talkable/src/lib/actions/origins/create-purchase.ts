@@ -97,6 +97,11 @@ export const createPurchase = createAction({
       required: false,
       defaultValue: 'USD',
     }),
+    custom_field: Property.ShortText({
+      displayName: 'Custom field',
+      description: undefined,
+      required: false,
+    }),
     shipping_address: Property.ShortText({
       displayName: 'Shipping address',
       description: undefined,

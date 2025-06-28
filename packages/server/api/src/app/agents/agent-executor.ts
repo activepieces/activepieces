@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentOutputUtils, AgentTaskStatus, AgentTestResult, assertEqual, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { Agent, AGENT_REJECTED_STATUS_OPTION, AGENT_RESOLVED_STATUS_OPTION, AGENT_STATUS_OPTIONS, agentOutputUtils, AgentTaskStatus, AgentTestResult, assertNotNullOrUndefined, ContentBlockType, isNil, RichContentBlock, TodoEnvironment, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText } from 'ai'
 import dayjs from 'dayjs'
@@ -124,7 +124,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             projectId: params.agent.projectId,
         })
 
-        const agentResult = agentOutputUtils.findAgentResult({
+        const agentResult = agentOutputUtils.formatAgentResponse({
             todoId,
             content: blocks,
         })

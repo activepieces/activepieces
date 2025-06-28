@@ -436,7 +436,7 @@ const ReplaceConnectionsDialog = ({
             </ScrollArea>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={handleBack}>
+              <Button type="button" variant="accent" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

@@ -77,7 +77,7 @@ export const CreateAgentButton = ({
             )}
           </p>
           <Button
-            variant="secondary"
+            variant="accent"
             className="w-full"
             onClick={handleConfigureClick}
           >

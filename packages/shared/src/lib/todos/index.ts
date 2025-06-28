@@ -3,7 +3,7 @@ import { Agent } from '../agents'
 import { BaseModelSchema, Nullable } from '../common'
 import { PopulatedFlow } from '../flows'
 import { UserWithMetaInformation } from '../user'
-import { RichContentBlock } from './content'
+import { RichContentBlock } from '../agents/response'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
