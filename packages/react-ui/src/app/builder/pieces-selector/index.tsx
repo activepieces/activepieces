@@ -37,11 +37,13 @@ const PieceSelector = ({
     setOpenedPieceSelectorStepNameOrAddButtonId,
     setSelectedPieceMetadataInPieceSelector,
     isForEmptyTrigger,
+    deselectStep
   ] = useBuilderStateContext((state) => [
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
     state.flowVersion.trigger.type === TriggerType.EMPTY && id === 'trigger',
+    state.deselectStep,
   ]);
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
@@ -67,6 +69,9 @@ const PieceSelector = ({
           setOpenedPieceSelectorStepNameOrAddButtonId(null);
           setSelectedPieceMetadataInPieceSelector(null);
           setSelectedPieceGroupType(initiallySelectedPieceGroupType);
+          if(isForEmptyTrigger) {
+            deselectStep();
+          }
         }
       }}
     >

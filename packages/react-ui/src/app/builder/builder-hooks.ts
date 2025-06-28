@@ -115,7 +115,6 @@ export type BuilderState = {
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
   setSampleDataInput: (stepName: string, payload: unknown) => void;
-  exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
@@ -155,7 +154,7 @@ export type BuilderState = {
     selectStepAfter: boolean;
     customLogoUrl?: string;
   }) => string;
-
+  deselectStep: () => void;
   //Piece selector state
   openedPieceSelectorStepNameOrAddButtonId: string | null;
   setOpenedPieceSelectorStepNameOrAddButtonId: (
@@ -334,11 +333,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedBranchIndex: null,
           askAiButtonProps: null,
         })),
-      exitPieceSelector: () =>
-        set({
-          rightSidebar: RightSideBarType.NONE,
-          selectedBranchIndex: null,
-        }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
       setLeftSidebar: (leftSidebar: LeftSideBarType) =>
@@ -524,6 +518,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedNodes: nodes,
         }));
       },
+      deselectStep: () => {
+        return set(() => ({
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+          selectedStep: null,
+        }));
+      },
       panningMode: getPanningModeFromLocalStorage(),
       setPanningMode: (mode: 'grab' | 'pan') => {
         localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
@@ -565,6 +566,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           case FlowOperationType.UPDATE_TRIGGER: {
             if (!isTrigger) {
               break;
+            }
+            if(flowVersion.trigger.type === TriggerType.EMPTY) {
+              set(()=>{
+                return {
+                  rightSidebar: RightSideBarType.PIECE_SETTINGS,
+                }
+              })
             }
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
