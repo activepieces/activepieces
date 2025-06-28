@@ -70,7 +70,7 @@ export const availableSignalsAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.avaiableSignals.query.replace(/\$tokenId/g, String(tokenId));
+    const query = commonQueries.avaiableSignals.query.replace("<tokenId>", String(tokenId));
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
@@ -215,7 +215,7 @@ export const getVinVcLatestAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getVinVcLatest.query.replace(/\$tokenId/g, String(tokenId));
+    const query = commonQueries.getVinVcLatest.query.replace("<tokenId>", String(tokenId));
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
