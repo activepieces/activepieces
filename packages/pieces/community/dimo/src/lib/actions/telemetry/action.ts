@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { commonQueries, TELEMETR_API_BASE_URL } from './constant';
+import { commonQueries, TELEMETRY_API_BASE_URL } from './constant';
 import { dimoAuth } from '../../../index';
-import { getHeaders } from '../../helpers';
+import { getHeaders, handleFailures } from '../../helpers';
 import { getVehicleToken } from '../token-exchange/helper';
 
 // Ortak GraphQL request helper
@@ -10,14 +10,14 @@ async function sendTelemetryGraphQLRequest(query: string, tokenId: number, devel
   const vehicleJwt = await getVehicleToken(developerJwt, tokenId);
   const response = await httpClient.sendRequest({
     method: HttpMethod.POST,
-    url: TELEMETR_API_BASE_URL,
+    url: TELEMETRY_API_BASE_URL,
     body: { query },
     headers: getHeaders(vehicleJwt),
   });
-  if (response.body.errors) {
-    throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
-  }
-  return response.body.data;
+
+  handleFailures(response);
+
+  return response.body;
 }
 
 export const telemetryApiCustomQueryAction = createAction({

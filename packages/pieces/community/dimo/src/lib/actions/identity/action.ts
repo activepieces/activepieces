@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { IDENTITY_BASE_URL, commonQueries } from './constant';
+import { handleFailures } from '../../helpers';
 
 // Ortak GraphQL request helper
 async function sendGraphQLRequest(query: string) {
@@ -10,11 +11,10 @@ async function sendGraphQLRequest(query: string) {
     body: { query },
     headers: { 'Content-Type': 'application/json' },
   });
-  // handleFailures fonksiyonu bulunamadı, basit hata kontrolü ekliyoruz
-  if (response.body.errors) {
-    throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
-  }
-  return response.body.data;
+
+  handleFailures(response);
+
+  return response.body;
 }
 
 export const identityApiCustomQueryAction = createAction({

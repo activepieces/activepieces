@@ -1,4 +1,4 @@
-export const TELEMETR_API_BASE_URL = "https://telemetry-api.dimo.zone/query";
+export const TELEMETRY_API_BASE_URL = "https://telemetry-api.dimo.zone/query";
 export const commonQueries = {
   avaiableSignals: {
     label: "Getting a list of available signals for a specific vehicle",
