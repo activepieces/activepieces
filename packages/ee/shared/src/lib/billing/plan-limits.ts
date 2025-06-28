@@ -100,7 +100,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 }
 
-export const OPENSOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,

@@ -35,7 +35,6 @@ export const billingMutations = {
         platformBillingApi.updateSubscription(params),
       onSuccess: (url) => {
         setIsOpen(false);
-        console.log('url', url);
         navigate(url);
         toast({
           title: t('Success'),

@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { FreeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -47,6 +49,8 @@ export enum FlowsPageTabs {
 }
 
 const FlowsPage = () => {
+  const [managePlanDialogOpen, setManagePlanDialogOpen] = useState(false);
+
   const { checkAccess } = useAuthorization();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const location = useLocation();
@@ -144,6 +148,14 @@ const FlowsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <ManagePlanDialog
+        open={managePlanDialogOpen}
+        setOpen={setManagePlanDialogOpen}
+      />
+      <FreeTrialDialog
+        isPlansDialogOpen={managePlanDialogOpen}
+        setIsPlansDialogOpen={setManagePlanDialogOpen}
+      />
     </div>
   );
 };

@@ -1,7 +1,6 @@
-import { CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import dayjs from 'dayjs'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
@@ -11,51 +10,27 @@ import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
-
-async function getNextBillingInfo(
-    stripe: Stripe, 
-    subscriptionId?: string, 
-    defaultBillingDate?: string,
-) {
-    if (isNil(subscriptionId)) {
-        return {
-            nextBillingAmount: 0,
-            actualNextBillingDate: defaultBillingDate,
-        }
-    }
-
+async function getNextBillingAmount(stripe: Stripe, subscriptionStatus: ApSubscriptionStatus, subscriptionId?: string): Promise<number> {
     try {
         const upcomingInvoice = await stripe.invoices.createPreview({
             subscription: subscriptionId,
         })
-
-        const nextBillingAmount = upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
-        const actualNextBillingDate = new Date(upcomingInvoice.period_end * 1000).toISOString()
-        
-        return { nextBillingAmount, actualNextBillingDate }
+        return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
     }
-    catch (error) {
-        return {
-            nextBillingAmount: 0, actualNextBillingDate: defaultBillingDate,
+    catch {
+        switch (subscriptionStatus) {
+            case ApSubscriptionStatus.TRIALING: {
+                return 25
+            }
+            default: {
+                return 0
+            }
         }
     }
 }
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-
-    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
-        const platformId = request.principal.platform.id
-        const projectId = request.principal.projectId
-
-        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
-
-        return {
-            message: 'AI credit usage increased',
-            platformAiCreditUsage,
-            projectAiCreditUsage,
-        }
-    })
 
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -69,25 +44,21 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         const { stripeSubscriptionEndDate: nextBillingDate, stripeSubscriptionCancelDate: cancelDate } = platformBilling
 
-        const { nextBillingAmount, actualNextBillingDate } = await getNextBillingInfo(
-            stripe, 
-            platformBilling.stripeSubscriptionId,
-            dayjs.unix(nextBillingDate).toISOString(),
-        )
-        
+        const nextBillingAmount = await getNextBillingAmount(stripe, platformBilling.stripeSubscriptionStatus as ApSubscriptionStatus, platformBilling.stripeSubscriptionId)
+
         const response: PlatformBillingInformation = {
             plan: platformBilling,
             usage,
-            nextBillingDate: actualNextBillingDate,
             nextBillingAmount,
-            cancelAt: cancelDate ? dayjs.unix(cancelDate).toISOString() : undefined,
+            nextBillingDate,
+            cancelAt: cancelDate,
         }
         
         return response
     })
 
     fastify.post('/portal', {}, async (request) => {
-        return stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id })
+        return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
     })
 
     fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
@@ -177,14 +148,14 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const subscriptionId = platformBilling.stripeSubscriptionId
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
-        const { plan, seats } = request.body
+        const { plan: newPlan, seats } = request.body
         const extraUsers =  seats ? seats - DEFAULT_BUSINESS_SEATS : 0
 
         const currentPlan = platformBilling.plan as PlanName ?? PlanName.FREE
 
-        const upgradeExperience = isUpgradeExperience(currentPlan, plan, platformBilling.userSeatsLimit, seats)
+        const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformBilling.userSeatsLimit, seats)
 
-        if (plan !== PlanName.BUSINESS && !isNil(seats)) {
+        if (newPlan !== PlanName.BUSINESS && !isNil(seats)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -195,7 +166,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         return stripeHelper(request.log).handleSubscriptionUpdate(
             subscriptionId,
-            plan,
+            newPlan,
             extraUsers,
             request.log,
             upgradeExperience,
@@ -207,7 +178,7 @@ const InfoRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
-    resposne: {
+    response: {
         [StatusCodes.OK]: PlatformBillingInformation,
     },
 }

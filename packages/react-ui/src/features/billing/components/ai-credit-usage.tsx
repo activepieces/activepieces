@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -28,6 +28,9 @@ export function AICreditUsage({
   const totalCreditsUsed = usage.aiCredits || 0;
 
   const isFreePlan = plan.plan === PlanName.FREE;
+  const isTrial =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+
   const [usageBasedEnabled, setUsageBasedEnabled] = useState(
     !isNil(usageBasedLimit),
   );
@@ -85,7 +88,7 @@ export function AICreditUsage({
               </p>
             </div>
           </div>
-          {!isFreePlan && (
+          {!isFreePlan && !isTrial && (
             <div className="flex items-center gap-3 py-2">
               <span className="text-sm font-medium">
                 {t('Usage Based Billing')}
@@ -141,7 +144,7 @@ export function AICreditUsage({
           </div>
         </div>
 
-        {usageBasedEnabled && !isFreePlan && (
+        {usageBasedEnabled && !isFreePlan && !isTrial && (
           <>
             <Separator />
 

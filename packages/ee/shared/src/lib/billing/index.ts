@@ -14,6 +14,7 @@ export type FlowPlanLimits = {
 export enum ApSubscriptionStatus {
     ACTIVE = 'active',
     CANCELED = 'canceled',
+    TRIALING = 'trialing'
 }
 
 export const DEFAULT_BUSINESS_SEATS = 5
@@ -94,6 +95,10 @@ export function getPlanFromPriceId(priceId: string): PlanName {
 
 
 export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
+    if (subscription.status === ApSubscriptionStatus.TRIALING) {
+        return PlanName.PLUS
+    }
+
     if (subscription.status !== ApSubscriptionStatus.ACTIVE) {
         return PlanName.FREE
     }
@@ -113,8 +118,12 @@ export const isUpgradeExperience = (
     userSeatsLimit?: number,
     seats?: number,
 ): boolean => {
+
+    if (currentPlan === PlanName.PLUS && newPlan === PlanName.PLUS) {
+        return true
+    }
+
     const isPlanTierUpgrade = PLAN_HIERARCHY[newPlan] > PLAN_HIERARCHY[currentPlan]
-    
     const isSeatsUpgrade = !!(newPlan === PlanName.BUSINESS && 
                              userSeatsLimit && 
                              seats && 
