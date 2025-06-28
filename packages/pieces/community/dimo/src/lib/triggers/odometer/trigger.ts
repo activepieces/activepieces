@@ -71,12 +71,6 @@ export const odometerTrigger = createTrigger({
     } = context.propsValue;
     const { developerJwt } = context.auth;
 
-
-    console.log(`Original webhook URL: ${context.webhookUrl}`);
-    const triggerWebhookId = context.webhookUrl.substring(
-      context.webhookUrl.lastIndexOf('/') + 1)
-
-      const triggerWebhookUrl = `https://constantly-sweet-cardinal.ngrok-free.app/api/v1/webhooks/${triggerWebhookId}`;
     const webhookDef: WebhookDefinition = {
       service: 'Telemetry',
       data: TriggerField.PowertrainTransmissionTravelledDistance,
@@ -87,8 +81,7 @@ export const odometerTrigger = createTrigger({
       },
       setup: triggerFrequency as 'Realtime' | 'Hourly',
       description: `Odometer trigger: ${operator} ${odometerValue} km`,
-      // targetUri: context.webhookUrl,
-      targetUri: triggerWebhookUrl,
+      targetUri: context.webhookUrl,
       status: 'Active',
     };
     const webhookResponse = await httpClient.sendRequest({
