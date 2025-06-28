@@ -6,7 +6,7 @@ import { ActionType, TriggerType } from '@activepieces/shared';
 
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
-  hidePieceIcon: boolean;
+  hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions;
   onClick: () => void;
 };
@@ -26,7 +26,7 @@ const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
 
 const GenericActionOrTriggerItem = ({
   item,
-  hidePieceIcon,
+  hidePieceIconAndDescription,
   stepMetadataWithSuggestions,
   onClick,
 }: GenericActionOrTriggerItemProps) => {
@@ -35,7 +35,7 @@ const GenericActionOrTriggerItem = ({
       <div className="flex gap-3 items-center">
         <div
           className={cn({
-            'opacity-0': hidePieceIcon,
+            'opacity-0': hidePieceIconAndDescription,
           })}
         >
           <PieceIcon
@@ -49,9 +49,11 @@ const GenericActionOrTriggerItem = ({
           <div className="text-sm">
             {getPieceSelectorItemInfo(item).displayName}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {getPieceSelectorItemInfo(item).description}
-          </div>
+          {!hidePieceIconAndDescription && (
+            <div className="text-xs text-muted-foreground">
+              {getPieceSelectorItemInfo(item).description}
+            </div>
+          )}
         </div>
       </div>
     </CardListItem>

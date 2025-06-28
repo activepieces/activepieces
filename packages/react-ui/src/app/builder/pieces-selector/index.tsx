@@ -15,7 +15,6 @@ import { FlowOperationType, TriggerType } from '@activepieces/shared';
 import { SearchInput } from '../../../components/ui/search-input';
 
 import PieceSelectorIntro from './piece-selector-intro';
-import { PieceTagsList } from './piece-tag';
 import { PiecesCardList } from './pieces-card-list';
 
 type PieceSelectorProps = {
@@ -42,7 +41,7 @@ const PieceSelector = ({
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
-    state.flowVersion.trigger.type === TriggerType.EMPTY,
+    state.flowVersion.trigger.type === TriggerType.EMPTY && id === 'trigger',
   ]);
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
@@ -57,6 +56,7 @@ const PieceSelector = ({
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
   const showPiecesList = selectedPieceGroupType || searchQuery.length > 0;
+  const listHeight = Math.min(listHeightRef.current, 300);
   return (
     <Popover
       open={isOpen}
@@ -109,17 +109,14 @@ const PieceSelector = ({
                   }
                 }}
               />
-              {(searchQuery.length > 0 || selectedPieceGroupType !== null) && (
-                <PieceTagsList />
-              )}
             </div>
 
             <Separator orientation="horizontal" />
           </div>
           <div
-            className=" flex flex-row overflow-y-auto max-h-[300px] h-[300px] "
+            className=" flex flex-row max-h-[300px] h-[300px] "
             style={{
-              height: listHeightRef.current + 'px',
+              height: listHeight + 'px',
             }}
           >
             {!showPiecesList && (
@@ -133,6 +130,7 @@ const PieceSelector = ({
 
             {showPiecesList && (
               <PiecesCardList
+                listHeight={listHeight}
                 key={debouncedQuery}
                 searchQuery={debouncedQuery}
                 operation={operation}

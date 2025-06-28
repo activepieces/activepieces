@@ -232,7 +232,7 @@ const checkPieceInputValidity = (
 
 const maxListHeight = 300;
 const minListHeight = 100;
-const searchInputDivHeight = 86;
+const searchInputDivHeight = 48;
 
 // Adjusts piece list height to prevent overflow on short screens
 const useAdjustPieceListHeightToAvailableSpace = () => {

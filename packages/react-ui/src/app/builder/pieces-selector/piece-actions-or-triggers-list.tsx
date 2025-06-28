@@ -18,7 +18,7 @@ import { CreateTodoDialog } from './create-todo-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 
 type PieceActionsOrTriggersListProps = {
-  hidePieceIcon: boolean;
+  hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;
   operation: PieceSelectorOperation;
 };
@@ -79,7 +79,11 @@ const convertStepMetadataToPieceSelectorItems = (
 
 export const PieceActionsOrTriggersList: React.FC<
   PieceActionsOrTriggersListProps
-> = ({ stepMetadataWithSuggestions, hidePieceIcon, operation }) => {
+> = ({
+  stepMetadataWithSuggestions,
+  hidePieceIconAndDescription,
+  operation,
+}) => {
   const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
     state.handleAddingOrUpdatingStep,
   ]);
@@ -109,7 +113,7 @@ export const PieceActionsOrTriggersList: React.FC<
                   key={index}
                   pieceSelectorItem={item}
                   operation={operation}
-                  hidePieceIcon={hidePieceIcon}
+                  hidePieceIconAndDescription={hidePieceIconAndDescription}
                 />
               );
             }
@@ -117,7 +121,7 @@ export const PieceActionsOrTriggersList: React.FC<
               <GenericActionOrTriggerItem
                 key={index}
                 item={item}
-                hidePieceIcon={hidePieceIcon}
+                hidePieceIconAndDescription={hidePieceIconAndDescription}
                 stepMetadataWithSuggestions={stepMetadataWithSuggestions}
                 onClick={() =>
                   handleAddingOrUpdatingStep({
