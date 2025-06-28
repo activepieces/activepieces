@@ -14,7 +14,7 @@ export const commonQueries = {
       query {
         signals(
           tokenId: <tokenId>,
-          interval: "24h",
+          interval: "<interval>",
           from: "<startDate>", to: "<endDate>"
         ) {
           speed(agg: MED)
@@ -35,7 +35,7 @@ export const commonQueries = {
         signals(
           tokenId: <tokenId>,
           from: "<startDate>", to: "<endDate>",
-          interval: "24h"
+          interval: "<interval>"
         ) {
           timestamp
           avgSpeed: speed(agg: AVG)
@@ -50,7 +50,7 @@ export const commonQueries = {
         signals(
           tokenId: <tokenId>,
           from: "<startDate>", to: "<endDate>",
-          interval: "$interval"
+          interval: "<interval>"
         ) {
           timestamp
           maxSpeed: speed(agg: MAX)
