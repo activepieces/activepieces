@@ -86,14 +86,14 @@ export const signalsAction = createAction({
       description: 'The ERC-721 token ID of the vehicle',
       required: true,
     }),
-    startDate: Property.ShortText({
+    startDate: Property.DateTime({
       displayName: 'Start Date',
-      description: 'Start date for the query (YYYY-MM-DD)',
+      description: 'Start date for the query',
       required: true,
     }),
-    endDate: Property.ShortText({
+    endDate: Property.DateTime({
       displayName: 'End Date',
-      description: 'End date for the query (YYYY-MM-DD)',
+      description: 'End date for the query',
       required: true,
     }),
   },
@@ -103,9 +103,9 @@ export const signalsAction = createAction({
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.signals.query
-      .replace(/\$tokenId/g, String(tokenId))
-      .replace(/\$startDate/g, startDate)
-      .replace(/\$endDate/g, endDate);
+    .replace("<tokenId>", String(tokenId))
+    .replace("<startDate>", startDate)
+    .replace("<endDate>", endDate)
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
@@ -121,12 +121,12 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
       description: 'The ERC-721 token ID of the vehicle',
       required: true,
     }),
-    startDate: Property.ShortText({
+    startDate: Property.DateTime({
       displayName: 'Start Date',
       description: 'Start date for the query (YYYY-MM-DD)',
       required: true,
     }),
-    endDate: Property.ShortText({
+    endDate: Property.DateTime({
       displayName: 'End Date',
       description: 'End date for the query (YYYY-MM-DD)',
       required: true,
@@ -138,9 +138,9 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.getDailyAvgSpeedOfVehicle.query
-      .replace(/\$tokenId/g, String(tokenId))
-      .replace(/\$startDate/g, startDate)
-      .replace(/\$endDate/g, endDate);
+    .replace("<tokenId>", String(tokenId))
+    .replace("<startDate>", startDate)
+    .replace("<endDate>", endDate)
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
@@ -156,12 +156,12 @@ export const getMaxSpeedOfVehicleAction = createAction({
       description: 'The ERC-721 token ID of the vehicle',
       required: true,
     }),
-    startDate: Property.ShortText({
+    startDate: Property.DateTime({
       displayName: 'Start Date',
       description: 'Start date for the query (YYYY-MM-DD)',
       required: true,
     }),
-    endDate: Property.ShortText({
+    endDate: Property.DateTime({
       displayName: 'End Date',
       description: 'End date for the query (YYYY-MM-DD)',
       required: true,
@@ -178,10 +178,10 @@ export const getMaxSpeedOfVehicleAction = createAction({
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
     const query = commonQueries.getMaxSpeedOfVehicle.query
-      .replace(/\$tokenId/g, String(tokenId))
-      .replace(/\$startDate/g, startDate)
-      .replace(/\$endDate/g, endDate)
-      .replace(/\$interval/g, interval);
+      .replace("<tokenId>", String(tokenId))
+      .replace("<startDate>", startDate)
+      .replace("<endDate>", endDate)
+      .replace("<interval>", interval)
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
