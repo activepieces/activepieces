@@ -45,7 +45,7 @@ export const generalInfoAction = createAction({
   description: 'Get total vehicle count',
   props: {},
   async run() {
-    return await sendGraphQLRequest(commonQueries.generalInfo.query);
+    return await sendGraphQLRequest(commonQueries.generalInfo);
   },
 });
 
@@ -62,7 +62,7 @@ export const getDeveloperLicenseInfoAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getDeveloperLicenseInfo.query.replace(/<devLicenseTokenId>/g, String(context.propsValue.devLicenseTokenId));
+    const query = commonQueries.getDeveloperLicenseInfo.replace(/<devLicenseTokenId>/g, String(context.propsValue.devLicenseTokenId));
     return await sendGraphQLRequest(query);
   },
 });
@@ -80,7 +80,7 @@ export const getVehicleByDevLicenseAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getVehicleByDevLicense.query.replace(/<devLicense0x>/g, context.propsValue.devLicense0x);
+    const query = commonQueries.getVehicleByDevLicense.replace(/<devLicense0x>/g, context.propsValue.devLicense0x);
     return await sendGraphQLRequest(query);
   },
 });
@@ -98,7 +98,7 @@ export const getTotalVehicleCountForOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getTotalVehicleCountForOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getTotalVehicleCountForOwner.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
@@ -116,7 +116,7 @@ export const getVehicleMMYByOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getVehicleMMYByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getVehicleMMYByOwner.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
@@ -134,7 +134,7 @@ export const getVehicleMMYByTokenIdAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getVehicleMMYByTokenId.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    const query = commonQueries.getVehicleMMYByTokenId.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
     return await sendGraphQLRequest(query);
   },
 });
@@ -152,7 +152,7 @@ export const getSacdForVehicleAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getSacdForVehicle.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    const query = commonQueries.getSacdForVehicle.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
     return await sendGraphQLRequest(query);
   },
 });
@@ -170,7 +170,7 @@ export const getRewardsByOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getRewardsByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getRewardsByOwner.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
@@ -188,7 +188,7 @@ export const getRewardHistoryByOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getRewardHistoryByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getRewardHistoryByOwner.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
@@ -206,7 +206,7 @@ export const getDeviceDefinitionByTokenIdAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getDeviceDefinitionByTokenId.query.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
+    const query = commonQueries.getDeviceDefinitionByTokenId.replace(/<vehicleTokenId>/g, String(context.propsValue.vehicleTokenId));
     return await sendGraphQLRequest(query);
   },
 });
@@ -224,7 +224,7 @@ export const getDeviceDefinitionByDefinitionIdAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getDeviceDefinitionByDefinitionId.query.replace(/<deviceDefinitionId>/g, context.propsValue.deviceDefinitionId);
+    const query = commonQueries.getDeviceDefinitionByDefinitionId.replace(/<deviceDefinitionId>/g, context.propsValue.deviceDefinitionId);
     return await sendGraphQLRequest(query);
   },
 });
@@ -242,7 +242,7 @@ export const getOwnerVehiclesAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getOwnerVehicles.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getOwnerVehicles.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
@@ -265,7 +265,7 @@ export const getDeveloperSharedVehiclesFromOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getDeveloperSharedVehiclesFromOwner.query
+    const query = commonQueries.getDeveloperSharedVehiclesFromOwner
       .replace(/<devLicense0x>/g, context.propsValue.devLicense0x)
       .replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
@@ -285,7 +285,7 @@ export const getDCNsByOwnerAction = createAction({
     }),
   },
   async run(context) {
-    const query = commonQueries.getDCNsByOwner.query.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
+    const query = commonQueries.getDCNsByOwner.replace(/<ownerAddress>/g, context.propsValue.ownerAddress);
     return await sendGraphQLRequest(query);
   },
 });
