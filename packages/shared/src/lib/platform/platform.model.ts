@@ -121,7 +121,7 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionStartDate: Type.Number(),
     stripeSubscriptionEndDate: Type.Number(),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
-    
+    stripePaymentMethod: Type.Optional(Type.String()),
 
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),

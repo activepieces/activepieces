@@ -72,7 +72,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return updatedPlatformPlan
     },
 
-    async updateByCustomerId({ subscriptionId, status, customerId, startDate, endDate, cancelDate }: UpdateByCustomerId): Promise<PlatformPlan> {
+    async updateByCustomerId({ subscriptionId, status, customerId, startDate, endDate, cancelDate, stripePaymentMethod }: UpdateByCustomerId): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
 
         log.info({
@@ -87,6 +87,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             stripeSubscriptionStartDate: startDate,
             stripeSubscriptionEndDate: endDate,
             stripeSubscriptionCancelDate: cancelDate,
+            stripePaymentMethod, 
         })
 
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
@@ -164,4 +165,5 @@ type UpdateByCustomerId = {
     startDate: number
     endDate: number
     cancelDate?: number
+    stripePaymentMethod?: string
 }

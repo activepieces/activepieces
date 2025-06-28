@@ -1,14 +1,20 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { ClipboardCheck, Sparkles, CreditCard, Clock } from 'lucide-react';
-import React from 'react';
+import {
+  ClipboardCheck,
+  Sparkles,
+  Clock,
+  Rocket,
+} from 'lucide-react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import {
-  billingMutations,
   billingQueries,
 } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -39,13 +45,6 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
   return t('Today');
 };
 
-const getTrialDaysRemaining = (trialEndDate: string) => {
-  const now = dayjs();
-  const trialEnd = dayjs(trialEndDate);
-  const diffInDays = trialEnd.diff(now, 'days');
-  return Math.max(0, diffInDays);
-};
-
 const getTrialProgress = (trialEndDate: string) => {
   const now = dayjs();
   const trialEnd = dayjs(trialEndDate);
@@ -59,13 +58,12 @@ const getTrialProgress = (trialEndDate: string) => {
 };
 
 const UsageLimitsButton = React.memo(() => {
+  const [managePlanOpen, setManagePlanOpen] = useState(false);
+
   const { project } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: platformSubscription } = billingQueries.usePlatformSubscription(
-    platform.id,
-  );
-  const { mutate: redirectToSetupSession } =
-    billingMutations.useGetSetupSessionLink();
+  const { data: platformSubscription, isPending } =
+    billingQueries.usePlatformSubscription(platform.id);
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -74,6 +72,43 @@ const UsageLimitsButton = React.memo(() => {
 
   if (edition === ApEdition.COMMUNITY) {
     return null;
+  }
+
+  if (isPending || isNil(platformSubscription)) {
+    return (
+      <div className="flex flex-col gap-2 w-full px-2">
+        <Separator className="my-1.5" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-4 h-4" />
+                    <Skeleton className="w-12 h-3" />
+                  </div>
+                  <Skeleton className="w-16 h-3" />
+                </div>
+                <Skeleton className="w-full h-[6px]" />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Skeleton className="w-4 h-4" />
+                <Skeleton className="w-16 h-3" />
+              </div>
+              <Skeleton className="w-20 h-3" />
+            </div>
+            <Skeleton className="w-full h-[6px]" />
+            <Skeleton className="w-full h-8" />
+          </div>
+        </div>
+        <Separator className="my-1.5" />
+      </div>
+    );
   }
 
   return (
@@ -94,28 +129,34 @@ const UsageLimitsButton = React.memo(() => {
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
 
-          {isTrial && project.usage.nextLimitResetDate && (
+          {isTrial && platformSubscription?.plan.stripeSubscriptionEndDate && (
             <div className="flex flex-col gap-4">
-              <TrialProgress trialEndDate={project.usage.nextLimitResetDate} />
-              <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => redirectToSetupSession()}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {t('Add Payment Method')}
-                </Button>
-              </FlagGuard>
+              <TrialProgress
+                trialEndDate={dayjs
+                  .unix(platformSubscription.plan.stripeSubscriptionEndDate)
+                  .toISOString()}
+              />
+              <Button
+                variant="default"
+                size="sm"
+                className="w-full"
+                onClick={() => setManagePlanOpen(true)}
+              >
+                <Rocket className="w-4 h-4 mr-2" />
+                {t('Upgrade Plan')}
+              </Button>
             </div>
           )}
         </div>
-        {project.usage.nextLimitResetDate && !isTrial && (
+        {platformSubscription?.plan.stripeSubscriptionEndDate && !isTrial && (
           <div className="text-xs text-muted-foreground flex justify-between w-full">
             <span>
               {t('Usage resets in')}{' '}
-              {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+              {getTimeUntilNextReset(
+                dayjs
+                  .unix(platformSubscription.plan.stripeSubscriptionEndDate)
+                  .toISOString(),
+              )}{' '}
             </span>
             <FlagGuard flag={ApFlagId.SHOW_BILLING}>
               <Link to={'/platform/setup/billing'} className="w-fit">
@@ -128,12 +169,12 @@ const UsageLimitsButton = React.memo(() => {
         )}
       </div>
       <Separator className="my-1.5" />
+      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
     </div>
   );
 });
 
 const TrialProgress = ({ trialEndDate }: { trialEndDate: string }) => {
-  const daysRemaining = getTrialDaysRemaining(trialEndDate);
   const progressPercentage = getTrialProgress(trialEndDate);
 
   return (
@@ -141,19 +182,15 @@ const TrialProgress = ({ trialEndDate }: { trialEndDate: string }) => {
       <div className="w-full flex text-xs justify-between">
         <span className="text-muted-foreground flex items-center gap-1">
           <Clock className="w-4 h-4 mr-1" />
-          {t('Free Trial')}
+          {t('Trial Ends in')}
         </span>
         <div className="text-xs">
           <span className="text-orange-600 font-medium">
-            {daysRemaining}{' '}
-            {daysRemaining === 1 ? t('day left') : t('days left')}
+            {getTimeUntilNextReset(trialEndDate)}
           </span>
         </div>
       </div>
-      <Progress
-        value={progressPercentage}
-        className="w-full h-[6px] bg-orange-100"
-      />
+      <Progress value={progressPercentage} className="w-full h-[6px]" />
     </div>
   );
 };

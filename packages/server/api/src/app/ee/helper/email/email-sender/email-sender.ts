@@ -12,13 +12,12 @@ export type EmailSender = {
 const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.PRODUCTION) {
+    if (env !== ApEnvironment.PRODUCTION) {
         return smtpEmailSender(log)
     }
 
     return logEmailSender(log)
 }
-
 export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
@@ -63,6 +62,11 @@ type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failur
     projectName: string
 }>
 
+type TrialEndingSoonReminder = BaseEmailTemplateData<'trial-ending-reminder', {
+    addPaymentMethodLink: string
+    year: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
@@ -71,6 +75,7 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | IssuesReminderTemplateData
   | TriggerFailureThresholdTemplateData
+  | TrialEndingSoonReminder
 
 type SendArgs = {
     emails: string[]

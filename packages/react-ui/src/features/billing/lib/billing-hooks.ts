@@ -83,15 +83,6 @@ export const billingMutations = {
       },
     });
   },
-  useGetSetupSessionLink: () => {
-    return useMutation({
-      mutationFn: async () => {
-        const setupSessionLink = await platformBillingApi.getSetupSessionLink();
-        window.open(setupSessionLink, '_blank');
-      },
-      onError: () => toast(INTERNAL_ERROR_TOAST),
-    });
-  },
   useSetAiCreditUsageLimit: (queryClient: QueryClient) => {
     return useMutation({
       mutationFn: (params: EnableAiCreditUsageParams) =>

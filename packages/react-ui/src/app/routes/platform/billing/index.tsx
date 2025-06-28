@@ -37,11 +37,8 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
 
-  const { mutate: redirectToSetupSession } =
-    billingMutations.useGetSetupSessionLink();
-
   const isBusinessPlan = platformSubscription?.plan.plan === PlanName.BUSINESS;
-  const isTrail =
+  const isTrial =
     platformSubscription?.plan.stripeSubscriptionStatus ===
     ApSubscriptionStatus.TRIALING;
 
@@ -81,15 +78,10 @@ export default function Billing() {
               {t('Access Billing Portal')}
             </Button>
           )}
-          {isTrail ? (
-            <Button variant="default" onClick={() => redirectToSetupSession()}>
-              {t('Add Payment Method')}
-            </Button>
-          ) : (
-            <Button variant="default" onClick={() => setManagePlanOpen(true)}>
-              {t('Upgrade Plan')}
-            </Button>
-          )}
+
+          <Button variant="default" onClick={() => setManagePlanOpen(true)}>
+            {t('Upgrade Plan')}
+          </Button>
         </div>
       </div>
 
@@ -101,7 +93,7 @@ export default function Billing() {
               : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
                 platformSubscription?.plan.plan.slice(1)}
           </Badge>
-          {isTrail && (
+          {isTrial && (
             <Badge variant="ghost" className="rounded-sm text-sm">
               Trial
             </Badge>
@@ -119,7 +111,7 @@ export default function Billing() {
             <div className="text-sm text-muted-foreground flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               <span>
-                {isTrail ? t('Trial will end') : t('Next billing date')}{' '}
+                {isTrial ? t('Trial will end') : t('Next billing date')}{' '}
                 <span className="font-semibold">
                   {dayjs(
                     dayjs

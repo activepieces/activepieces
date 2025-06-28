@@ -202,6 +202,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     async sendTrialEndingSoonReminder(
         platformId: string,
         customerEmail: string,
+        addPaymentMethodLink: string,
     ): Promise<void> {
 
         await emailSender(log).send({
@@ -210,8 +211,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: {
                 name: 'trial-ending-reminder',
                 vars: {
-                    userName: 'Dear Customer',
-                    addPaymentMethodLink: 'https://activepieces.com/billing/add-payment',
+                    addPaymentMethodLink,
                     year: new Date().getFullYear().toString(),
                 },
             },

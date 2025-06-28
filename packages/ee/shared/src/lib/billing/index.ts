@@ -118,8 +118,12 @@ export const isUpgradeExperience = (
     userSeatsLimit?: number,
     seats?: number,
 ): boolean => {
+
+    if (currentPlan === PlanName.PLUS && newPlan === PlanName.PLUS) {
+        return true
+    }
+
     const isPlanTierUpgrade = PLAN_HIERARCHY[newPlan] > PLAN_HIERARCHY[currentPlan]
-    
     const isSeatsUpgrade = !!(newPlan === PlanName.BUSINESS && 
                              userSeatsLimit && 
                              seats && 

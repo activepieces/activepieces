@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { PartyPopper, CreditCard, Clock } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -7,23 +7,29 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 
-import { billingMutations, billingQueries } from '../lib/billing-hooks';
+import { billingQueries } from '../lib/billing-hooks';
 
-export const FreeTrialDialog = () => {
+type FreeTrialDialogPropsType = {
+  setIsPlansDialogOpen: (open: boolean) => void;
+  isPlansDialogOpen: boolean;
+};
+
+export const FreeTrialDialog = ({
+  isPlansDialogOpen,
+  setIsPlansDialogOpen,
+}: FreeTrialDialogPropsType) => {
   const [isOpen, setIsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: billingInfo } = billingQueries.usePlatformSubscription(
     platform.id,
   );
-  const { mutate: redirectToSetupSession } =
-    billingMutations.useGetSetupSessionLink();
 
   useEffect(() => {
     if (
       billingInfo?.plan.stripeSubscriptionStatus ===
       ApSubscriptionStatus.TRIALING
     ) {
-      const hasSeenTrialDialog = localStorage.getItem('hasSeenFreeTrialDialog');
+      const hasSeenTrialDialog = localStorage.getItem('trial-dialog-seen');
       if (!hasSeenTrialDialog) {
         setIsOpen(true);
       }
@@ -31,17 +37,17 @@ export const FreeTrialDialog = () => {
   }, [billingInfo]);
 
   const handleClose = () => {
-    localStorage.setItem('hasSeenFreeTrialDialog', 'true');
+    localStorage.setItem('trial-dialog-seen', 'true');
     setIsOpen(false);
   };
 
-  const handleAddPayment = () => {
-    redirectToSetupSession();
+  const handleContinue = () => {
     handleClose();
   };
 
-  const handleLater = () => {
+  const handleSeePlans = () => {
     handleClose();
+    setIsPlansDialogOpen(!isPlansDialogOpen);
   };
 
   if (
@@ -69,19 +75,16 @@ export const FreeTrialDialog = () => {
                 )}
               </p>
             </div>
-            <div className="flex w-full items-stretch flex-col-reverse justify-between gap-3">
+            <div className="flex w-full items-stretch flex-col justify-between gap-3">
+              <Button onClick={handleContinue} className="flex-1">
+                {t('Continue on Trial')}
+              </Button>
               <Button
-                onClick={handleLater}
+                onClick={handleSeePlans}
                 variant="outline"
                 className="flex-1"
               >
-                <Clock className="w-4 h-4 mr-1" />
-                {t('Maybe Later')}
-              </Button>
-
-              <Button onClick={handleAddPayment} className="flex-1">
-                <CreditCard className="w-4 h-4 mr-1" />
-                {t('Add Payment Method')}
+                {t('See plans')}
               </Button>
             </div>
           </div>

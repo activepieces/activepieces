@@ -10,7 +10,6 @@ import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
-
 async function getNextBillingAmount(stripe: Stripe, subscriptionStatus: ApSubscriptionStatus, subscriptionId?: string): Promise<number> {
     try {
         const upcomingInvoice = await stripe.invoices.createPreview({
@@ -32,19 +31,6 @@ async function getNextBillingAmount(stripe: Stripe, subscriptionStatus: ApSubscr
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-
-    fastify.post('/increase-ai-credit-usage', {}, async (request) => {
-        const platformId = request.principal.platform.id
-        const projectId = request.principal.projectId
-
-        const { platformAiCreditUsage, projectAiCreditUsage } = await platformUsageService(request.log).increaseAiCreditUsage({ projectId, model: 'gpt-4o', provider: 'openai', cost: 0.1, platformId })
-
-        return {
-            message: 'AI credit usage increased',
-            platformAiCreditUsage,
-            projectAiCreditUsage,
-        }
-    })
 
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -73,10 +59,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/portal', {}, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
-    })
-
-    fastify.post('/setup', {}, async (request) => {
-        return stripeHelper(request.log).createSetupSession(request.principal.platform.id)
     })
 
     fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
@@ -166,14 +148,14 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const subscriptionId = platformBilling.stripeSubscriptionId
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
-        const { plan, seats } = request.body
+        const { plan: newPlan, seats } = request.body
         const extraUsers =  seats ? seats - DEFAULT_BUSINESS_SEATS : 0
 
         const currentPlan = platformBilling.plan as PlanName ?? PlanName.FREE
 
-        const upgradeExperience = isUpgradeExperience(currentPlan, plan, platformBilling.userSeatsLimit, seats)
+        const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformBilling.userSeatsLimit, seats)
 
-        if (plan !== PlanName.BUSINESS && !isNil(seats)) {
+        if (newPlan !== PlanName.BUSINESS && !isNil(seats)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -184,7 +166,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         return stripeHelper(request.log).handleSubscriptionUpdate(
             subscriptionId,
-            plan,
+            newPlan,
             extraUsers,
             request.log,
             upgradeExperience,

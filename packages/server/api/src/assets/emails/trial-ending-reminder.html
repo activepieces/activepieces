@@ -29,7 +29,6 @@
 
     .logo {
       display: block;
-      margin: 0 auto 24px;
     }
 
     h2 {
@@ -67,7 +66,7 @@
     .footer {
       margin-top: 32px;
       font-size: 14px;
-      color: #999999;
+      color: #999999 !important;
       text-align: left;
     }
   </style>
@@ -75,33 +74,44 @@
 
 <body>
   <div class="container">
-    <img class="logo" src="http://cdn.mcauto-images-production.sendgrid.net/515abc4911512d94/8915d91a-9ecd-4dd9-9cea-21b061e1a97f/427x66.png"
-      alt="Activepieces Logo" width="160" />
+  <img
+    class="logo"
+    src="http://cdn.mcauto-images-production.sendgrid.net/515abc4911512d94/8915d91a-9ecd-4dd9-9cea-21b061e1a97f/427x66.png"
+    alt="Activepieces Logo"
+    width="160"
+  />
 
-    <h2>Your free trial ends in 3 days</h2>
+  <h2>Your Free Trial Ending Soon</h2>
 
-    <p>
-      Hello {{userName}},<br /><br />
-      We hope you’re enjoying your time with <strong>Activepieces Plus</strong>! Your free trial will expire in <strong>3 days</strong>.
-    </p>
+  <p>
+    Hello here,<br /><br />
+    We hope you've been enjoying <strong>Activepieces Plus</strong>! Just a quick heads-up, your free trial will expire in about <strong>3 days</strong>.
+  </p>
 
-    <p>
-      To continue using all Plus plan features without interruption, please add your payment method. If no payment method is added, your account will be downgraded to the <strong>Free</strong> plan automatically after the trial ends.
-    </p>
+  <p>
+    To keep uninterrupted access to all Plus features, please add a payment method before your trial ends. Otherwise, your account will automatically downgrade to the <strong>Free</strong> plan.
+  </p>
 
-    <div class="button-container">
-      <a href="{{addPaymentMethodLink}}" class="button">Add Payment Method</a>
-    </div>
-
-    <p>
-      Don’t miss out on advanced automation, Plus plan integrations, and priority support.
-    </p>
-
-    <div class="footer">
-      Need help? <a href="https://www.activepieces.com/contact" style="color: #6e41e2;">Contact us</a><br />
-      &copy; {{year}} Activepieces, All rights reserved.
-    </div>
+  <div class="button-container">
+    <a href="{{addPaymentMethodLink}}" class="button">
+<span
+                                                        class="link-button"
+                                                        style="color: #ffffff"
+                                                        >Add payment method</span
+                                                      >
+    </a>
   </div>
+
+  <p>
+    Don’t miss out on powerful automation, premium integrations, and priority support, all included in the Plus plan.
+  </p>
+
+  <div class="footer">
+    Need help? <a href="https://www.activepieces.com/contact" style="color: #6e41e2;">Contact us</a><br />
+    &copy; {{year}} Activepieces. All rights reserved.
+  </div>
+</div>
+
 </body>
 
 </html>

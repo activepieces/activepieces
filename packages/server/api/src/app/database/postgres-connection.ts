@@ -234,6 +234,7 @@ import { AddBillingCycleDates1750704192423 } from './migration/postgres/17507041
 import { MakeBillingCycleDatesNotNullable1750714315579 } from './migration/postgres/1750714315579-makeBillingCycleDatesNotNullable'
 import { ReplaceTasksLimitWithIncludedTasks1750720173459 } from './migration/postgres/1750720173459-replaceTasksLimitWithIncludedTasks'
 import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgres/1750722071472-renameIncludedTasksToTasksLimit'
+import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -489,6 +490,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakeBillingCycleDatesNotNullable1750714315579,
                 ReplaceTasksLimitWithIncludedTasks1750720173459,
                 RenameIncludedTasksToTasksLimit1750722071472,
+                AddPaymentMethodToPlatformPlan1751021111433,
               
        
             )

@@ -64,6 +64,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             },
             metadata: {
                 platformId,
+                trialSubscription: 'true',
             },
         })
 
@@ -215,6 +216,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             metadata: {
                 plan,
             },
+        }
+
+        if (!isNil(currentSubscription.trial_end)) {
+            updateParams.trial_end = 'now'
         }
 
         await stripe.subscriptions.update(subscriptionId, updateParams)
