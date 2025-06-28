@@ -70,7 +70,7 @@ export const availableSignalsAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.avaiableSignals.query.replace("<tokenId>", String(tokenId));
+    const query = commonQueries.avaiableSignals.replace("<tokenId>", String(tokenId));
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
@@ -107,7 +107,7 @@ export const signalsAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.signals.query
+    const query = commonQueries.signals
     .replace("<tokenId>", String(tokenId))
     .replace("<startDate>", startDate)
     .replace("<endDate>", endDate)
@@ -148,7 +148,7 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getDailyAvgSpeedOfVehicle.query
+    const query = commonQueries.getDailyAvgSpeedOfVehicle
     .replace("<tokenId>", String(tokenId))
     .replace("<startDate>", startDate)
     .replace("<endDate>", endDate)
@@ -189,7 +189,7 @@ export const getMaxSpeedOfVehicleAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getMaxSpeedOfVehicle.query
+    const query = commonQueries.getMaxSpeedOfVehicle
       .replace("<tokenId>", String(tokenId))
       .replace("<startDate>", startDate)
       .replace("<endDate>", endDate)
@@ -215,7 +215,7 @@ export const getVinVcLatestAction = createAction({
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getVinVcLatest.query.replace("<tokenId>", String(tokenId));
+    const query = commonQueries.getVinVcLatest.replace("<tokenId>", String(tokenId));
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
