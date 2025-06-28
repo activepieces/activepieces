@@ -96,9 +96,14 @@ export const signalsAction = createAction({
       description: 'End date for the query',
       required: true,
     }),
+    interval: Property.ShortText({
+      displayName: 'Interval',
+      description: 'Interval (e.g. 24h)',
+      required: true,
+    }),
   },
   async run(context) {
-    const { tokenId, startDate, endDate } = context.propsValue;
+    const { tokenId, startDate, endDate, interval } = context.propsValue;
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
@@ -106,6 +111,7 @@ export const signalsAction = createAction({
     .replace("<tokenId>", String(tokenId))
     .replace("<startDate>", startDate)
     .replace("<endDate>", endDate)
+    .replace("<interval>", interval)
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
@@ -131,9 +137,14 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
       description: 'End date for the query (YYYY-MM-DD)',
       required: true,
     }),
+    interval: Property.ShortText({
+      displayName: 'Interval',
+      description: 'Interval (e.g. 24h)',
+      required: true,
+    }),
   },
   async run(context) {
-    const { tokenId, startDate, endDate } = context.propsValue;
+    const { tokenId, startDate, endDate, interval } = context.propsValue;
     const { developerJwt } = context.auth;
     if (!tokenId) throw new Error('tokenId is required');
     if (!developerJwt) throw new Error('developerJwt is required');
@@ -141,6 +152,7 @@ export const getDailyAvgSpeedOfVehicleAction = createAction({
     .replace("<tokenId>", String(tokenId))
     .replace("<startDate>", startDate)
     .replace("<endDate>", endDate)
+    .replace("<interval>", interval)
     return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
   },
 });
