@@ -14,7 +14,9 @@ async function sendGraphQLRequest(query: string) {
 
   handleFailures(response);
 
-  return response.body;
+  return {
+    body : response.body
+  }
 }
 
 export const identityApiCustomQueryAction = createAction({

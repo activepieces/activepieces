@@ -17,7 +17,9 @@ async function sendTelemetryGraphQLRequest(query: string, tokenId: number, devel
 
   handleFailures(response);
 
-  return response.body;
+  return {
+    body : response.body
+  }
 }
 
 export const telemetryApiCustomQueryAction = createAction({
