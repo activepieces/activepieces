@@ -1,6 +1,7 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+import { ActionBase, PropertyType } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
+    assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
@@ -9,15 +10,21 @@ import {
     mcpToolNaming,
     McpToolType,
     McpTrigger,
+    PiecePackage,
     TelemetryEventName,
 } from '@activepieces/shared'
+import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { generateText, LanguageModelV1 } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { EngineHelperResponse } from 'server-worker'
+import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
+import { z } from 'zod'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
@@ -25,7 +32,7 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
-import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
+import { mcpPropertyToZod } from '../mcp-utils'
 
 export async function createMcpServer({
     mcpId,
@@ -71,32 +78,41 @@ async function addPieceToServer(
         platformId,
     })
 
-    const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
-    for (const action of filteredAction) {
+    const toolActionsNames = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
+    for (const action of toolActionsNames) {
         const actionMetadata = pieceMetadata.actions[action]
         const actionName = mcpToolNaming.fixTool(actionMetadata.displayName, mcpTool.id, McpToolType.PIECE)
 
-        const actionSchema = Object.fromEntries(
-            Object.entries(actionMetadata.props)
-                .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
-                .map(([key, prop]) => [key, piecePropertyToZod(prop)]),
-        )
+        const toolSchema = {
+            instructions: z.string().describe('The instructions to follow when executing the tool'),
+        }
         server.tool(
             actionName,
             actionMetadata.description,
-            actionSchema,
+            toolSchema,
             async (params) => {
-                const defaultValues = Object.fromEntries(
-                    Object.entries(actionMetadata.props)
-                        .filter(([_key, prop]) => !isNil(prop.defaultValue))
-                        .map(([key, prop]) => [key, prop.defaultValue]),
+                const piecePackage = await getPiecePackageWithoutArchive(
+                    logger, 
+                    projectId, 
+                    platformId, 
+                    {
+                        packageType: pieceMetadata.packageType,
+                        pieceName: pieceMetadata.name,
+                        pieceVersion: pieceMetadata.version,
+                        pieceType: pieceMetadata.pieceType,
+                    },
                 )
-                const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
-                const parsedInputs = {
-                    ...defaultValues,
-                    ...params,
-                    auth: pieceConnectionExternalId,
-                }
+                const pieceConnectionExternalId = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
+                assertNotNullOrUndefined(pieceConnectionExternalId, 'Tool has no connection with the piece, please try to add a connection to the tool')
+                const parsedInputs = await parseActionParametersFromInstructions({
+                    actionMetadata,
+                    userInstructions: params.instructions,
+                    piecePackage,
+                    pieceConnectionExternalId,
+                    platformId,
+                    projectId,
+                    logger,
+                })
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                     jobType: UserInteractionJobType.EXECUTE_TOOL,
@@ -253,6 +269,130 @@ async function addFlowToServer(
 
 }
 
+
+async function initializeOpenAIModel({
+    platformId,
+    projectId,
+}: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
+    const model = 'gpt-4o-mini'
+    const baseUrl = await domainHelper.getPublicApiUrl({
+        path: '/v1/ai-providers/proxy/openai/v1/',
+        platformId,
+    })
+
+    const apiKey = await accessTokenManager.generateEngineToken({
+        platformId,
+        projectId,
+    })
+
+    return  createOpenAI({
+        baseURL: baseUrl,
+        apiKey,
+    }).chat(model)
+}
+
+async function parseActionParametersFromInstructions({
+    actionMetadata,
+    userInstructions,    
+    piecePackage,
+    pieceConnectionExternalId,
+    platformId,
+    projectId,
+    logger,
+}: ParseActionParametersParams): Promise<Record<string, unknown>> {
+    const aiModel = await initializeOpenAIModel({
+        platformId,
+        projectId,
+    })
+
+    const actionProperties = actionMetadata.props
+    const parsedParameters: Record<string, unknown> = {
+        'auth': pieceConnectionExternalId,
+    }
+
+    for (const [propertyName, propertyDefinition] of Object.entries(actionProperties)) {
+        const needsDynamicResolution = propertyDefinition.type === PropertyType.DYNAMIC || 
+                                     propertyDefinition.type === PropertyType.DROPDOWN || 
+                                     propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN || 
+                                     propertyDefinition.type === PropertyType.JSON || 
+                                     propertyDefinition.type === PropertyType.OBJECT || 
+                                     propertyDefinition.type === PropertyType.ARRAY
+        
+        let dynamicPropertySchema = 'N/A'
+        if (needsDynamicResolution) {
+            const propertyResolutionResult = await userInteractionWatcher(logger)
+                .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+                jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+                projectId,
+                propertyName,
+                actionOrTriggerName: actionMetadata.name,
+                input: parsedParameters,
+                piece: piecePackage,
+                sampleData: {},
+            })
+            dynamicPropertySchema = JSON.stringify(propertyResolutionResult.result, null, 2)
+        }
+
+        const parameterExtractionPrompt = `
+You are an expert at understanding API schemas and filling out properties based on user instructions.
+
+TASK: Fill out the property "${propertyName}" based on the user's instructions.
+
+USER INSTRUCTIONS:
+${userInstructions}
+
+PROPERTY DETAILS:
+- ${JSON.stringify(propertyDefinition, null, 2)}
+
+PROPERTY SCHEMA:
+${dynamicPropertySchema}
+
+IMPORTANT:
+- For DYNAMIC properties, return an object with the keys and values of the options object and fill it out.
+- For dropdown properties, select values from the provided options array only
+- For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
+- Return valid JSON for complex types, raw values for simple types
+- For CHECKBOX properties, return true or false
+- For SHORT_TEXT and LONG_TEXT properties, return string values
+- For NUMBER properties, return numeric values
+- For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
+- If the property is not required, return SKIP_PROPERTY if the user does not provide a value
+- Use actual values from user instructions when available
+
+CONTEXT:
+- Previously filled properties: ${JSON.stringify(parsedParameters, null, 2)}
+
+INSTRUCTIONS:
+1. Extract the property value from user instructions
+2. For required properties without clear instructions, use defaults or make reasonable assumptions
+3. Return raw values for simple types, valid JSON for complex types
+
+RESPONSE FORMAT:
+- Return only the value (raw for simple types, JSON for complex types)
+- No explanations or additional text
+
+Respond with ONLY the value, no explanations or additional text.`
+
+        const aiResponse = await generateText({
+            model: aiModel,
+            prompt: parameterExtractionPrompt,
+        })
+        let extractedValue = aiResponse.text.trim()
+        
+        try {
+            extractedValue = JSON.parse(aiResponse.text)
+        }
+        catch {
+            if (extractedValue === 'SKIP_PROPERTY') {
+                continue
+            }
+        }
+
+        parsedParameters[propertyName] = extractedValue
+    }
+    return parsedParameters
+}
+
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
 }
@@ -267,6 +407,20 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
     }), logger)
 }
 
+type ParseActionParametersParams = {
+    actionMetadata: ActionBase
+    userInstructions: string
+    piecePackage: PiecePackage
+    pieceConnectionExternalId: string
+    platformId: string
+    projectId: string
+    logger: FastifyBaseLogger
+}
+
+type InitializeOpenAIModelParams = {
+    platformId: string
+    projectId: string
+}
 
 type TrackToolCallParams = {
     mcpId: string
