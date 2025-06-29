@@ -1,5 +1,5 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
@@ -18,6 +18,7 @@ export const webhookService = {
         flowVersionToRun,
         payload,
         execute,
+        onRunCreated,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
@@ -105,6 +106,8 @@ export const webhookService = {
             synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
             flowVersionIdToRun,
             saveSampleData,
+            flowVersionToRun,
+            onRunCreated,
         })
         return {
             status: flowHttpResponse.status,
@@ -126,4 +129,5 @@ type HandleWebhookParams = {
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
     execute: boolean
+    onRunCreated?: (run: FlowRun) => void
 }

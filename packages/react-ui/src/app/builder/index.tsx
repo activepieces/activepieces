@@ -11,6 +11,7 @@ import {
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
+import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -79,6 +80,8 @@ const BuilderPage = () => {
     run,
     canExitRun,
     selectedStep,
+    chatDrawerOpenSource,
+    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.flowVersion,
@@ -87,6 +90,8 @@ const BuilderPage = () => {
     state.run,
     state.canExitRun,
     state.selectedStep,
+    state.chatDrawerOpenSource,
+    state.setChatDrawerOpenSource,
   ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -273,6 +278,12 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
+
+      <ChatDrawer
+        source={chatDrawerOpenSource}
+        onOpenChange={() => setChatDrawerOpenSource(null)}
+        flowVersion={flowVersion}
+      />
     </div>
   );
 };

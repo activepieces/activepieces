@@ -31,11 +31,11 @@ export const AgentBuilder = ({
     <Drawer
       open={isOpen}
       onOpenChange={onOpenChange}
-      className="w-full overflow-auto"
       dismissible={false}
+      direction="right"
     >
       {trigger}
-      <DrawerContent>
+      <DrawerContent className="w-full overflow-auto">
         <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1 justify-between">

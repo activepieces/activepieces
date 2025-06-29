@@ -4,7 +4,6 @@ import React from 'react';
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
 import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
 import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
-import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
@@ -29,19 +28,17 @@ const AboveFlowWidgets = React.memo(() => {
         }}
       >
         <div className="justify-center items-center flex w-[260px]">
+          <TestFlowWidget
+            flowVersion={flowVersion}
+            setRun={setRun}
+            readonly={readonly}
+          ></TestFlowWidget>
           {!readonly && (
-            <>
-              <TestFlowWidget
-                flowVersion={flowVersion}
-                setRun={setRun}
-              ></TestFlowWidget>
-              <IncompleteSettingsButton
-                flowVersion={flowVersion}
-                selectStepByName={selectStepByName}
-              ></IncompleteSettingsButton>
-            </>
+            <IncompleteSettingsButton
+              flowVersion={flowVersion}
+              selectStepByName={selectStepByName}
+            ></IncompleteSettingsButton>
           )}
-          {readonly && <ViewOnlyWidget></ViewOnlyWidget>}
         </div>
       </div>
     </ViewportPortal>
