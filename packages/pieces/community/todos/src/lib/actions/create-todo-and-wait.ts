@@ -33,6 +33,7 @@ export const createTodoAndWait = createAction({
     } else {
       return {
         status: context.resumePayload.queryParams['status'],
+        message: context.resumePayload.queryParams['message'] ?? 'Sample message',
       };
     }
   },
@@ -49,6 +50,7 @@ export const createTodoAndWait = createAction({
     } else {
       const result: CreateAndWaitTodoResult = {
         status: context.resumePayload.queryParams['status'],
+        message: context.resumePayload.queryParams['message'],
       }
       return result;
     }
