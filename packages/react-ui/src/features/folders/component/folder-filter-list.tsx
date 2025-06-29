@@ -279,9 +279,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       </div>
       <div className="flex w-[250px] h-full flex-col gap-y-1">
         <Button
-          variant="ghost"
-          className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
-            'bg-accent dark:bg-accent/50': isInAllFlows,
+          variant="accent"
+          className={cn('flex w-full justify-start bg-background', {
+            'bg-muted': isInAllFlows,
           })}
           onClick={() => updateSearchParams(undefined)}
         >

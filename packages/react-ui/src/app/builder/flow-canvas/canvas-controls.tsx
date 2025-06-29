@@ -199,11 +199,11 @@ const CanvasControls = ({
 
   return (
     <>
-      <div className="bg-secondary absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
+      <div className="bg-accent absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
@@ -222,7 +222,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
@@ -239,10 +239,10 @@ const CanvasControls = ({
           <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
         </Tooltip>
       </div>
-      <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
+      <div className="bg-accent absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomReset}>
+            <Button variant="accent" size="sm" onClick={handleZoomReset}>
               <RotateCw className="w-5 h-5" />
             </Button>
           </TooltipTrigger>
@@ -251,7 +251,7 @@ const CanvasControls = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomIn}>
+            <Button variant="accent" size="sm" onClick={handleZoomIn}>
               <Plus className="w-5 h-5" />
             </Button>
           </TooltipTrigger>
@@ -260,7 +260,7 @@ const CanvasControls = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="sm" onClick={handleZoomOut}>
+            <Button variant="accent" size="sm" onClick={handleZoomOut}>
               <Minus className="w-5 h-5" />
             </Button>
           </TooltipTrigger>
@@ -270,7 +270,7 @@ const CanvasControls = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="accent"
               size="sm"
               onClick={() => handleFitToView(false)}
             >

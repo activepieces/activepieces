@@ -13,16 +13,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
-        basic: 'text-primary underline-offset-4 enabled:hover:bg-accent',
-        destructive:
-          'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
-        outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
-        neutral:
-          'text-background bg-foreground enabled:hover:bg-foreground/80 enabled:hover:text-background',
+          'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
+        basic:
+          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+          'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
+        destructive:
+          'bg-destructive text-background enabled:hover:bg-destructive/90',
+        outline:
+          'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
+        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
@@ -112,7 +112,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <LoadingSpinner
             className={
-              variant === 'default' || variant === 'neutral'
+              variant === 'default' || variant === 'secondary'
                 ? 'stroke-background'
                 : 'stroke-foreground'
             }

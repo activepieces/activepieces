@@ -50,7 +50,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({
             </div>
             <div className="flex-grow flex flex-col gap-0 min-w-0">
               <div className="flex justify-between items-center">
-                <h2 className="font-semibold text-lg">{title}</h2>
+                <h2 className="truncate font-semibold text-lg line-clamp-1">
+                  {title}
+                </h2>
                 <div className="flex items-center gap-2">
                   {onDescriptionChange && (
                     <Button
@@ -89,17 +91,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div
-                  className="text-left text-sm text-muted-foreground line-clamp-2"
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    minHeight: '2.5em',
-                  }}
-                >
+                <div className="text-left text-sm text-muted-foreground overflow-hidden line-clamp-2 min-h-[2.5em]">
                   {description}
                 </div>
               )}
