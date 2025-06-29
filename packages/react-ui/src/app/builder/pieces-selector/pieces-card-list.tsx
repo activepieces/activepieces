@@ -15,6 +15,7 @@ import {
 } from '@/lib/types';
 import {
   ActionType,
+  Agent,
   FlowOperationType,
   isNil,
   TriggerType,
@@ -26,6 +27,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { NoResultsFound } from './no-results-found';
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 import { PieceCardListItem } from './piece-card-item';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
 
 type PiecesCardListProps = {
   searchQuery: string;
@@ -57,9 +59,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
   const noResultsFound = !isLoadingPieces && categories.length === 0;
   const [mouseMoved, setMouseMoved] = useState(false);
+  const { data: agentsPage, isLoading: isLoadingAgents } = agentHooks.useList();
   const virtualizedItems = transformPiecesMetadataToVirtualizedItems(
     categories,
     searchQuery.length > 0 || isMobile,
+    agentsPage?.data,
   );
   const categoryNameOrPieceDisplayNameToScrollTo =
     findInitiallyScrolledToCategoryOrPieceDisplayName(
@@ -72,12 +76,13 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
       (item) => item.displayName === categoryNameOrPieceDisplayNameToScrollTo,
     ),
   );
+  const isLoading = isLoadingPieces || isLoadingAgents;
   const showActionsOrTriggersList =
     searchQuery.length === 0 &&
     !isMobile &&
     !noResultsFound &&
-    !isLoadingPieces;
-  const showPiecesList = !noResultsFound && !isLoadingPieces;
+    !isLoading;
+  const showPiecesList = !noResultsFound && !isLoading;
   return (
     <>
       <div
@@ -88,7 +93,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           'w-full md:w-full': searchQuery.length > 0 || noResultsFound,
         })}
       >
-        {isLoadingPieces && (
+        {isLoading && (
           <div className="flex flex-col gap-2">
             <CardListItemSkeleton numberOfCards={2} withCircle={false} />
           </div>
@@ -174,6 +179,7 @@ type VirtualizedItem = {
 const transformPiecesMetadataToVirtualizedItems = (
   searchResult: CategorizedStepMetadataWithSuggestions[],
   showActionsOrTriggersInsidePiecesList: boolean,
+  agents: Agent[] | undefined,
 ) => {
   return searchResult.reduce<VirtualizedItem[]>((result, category) => {
     if (!showActionsOrTriggersInsidePiecesList) {
@@ -191,6 +197,7 @@ const transformPiecesMetadataToVirtualizedItems = (
         height: getItemHeight(
           pieceMetadata,
           showActionsOrTriggersInsidePiecesList,
+          agents,
         ),
         isCategory: false,
       });
@@ -202,6 +209,7 @@ const transformPiecesMetadataToVirtualizedItems = (
 const getItemHeight = (
   pieceMetadata: StepMetadataWithSuggestions,
   showActionsOrTriggersInsidePiecesList: boolean,
+  agents: Agent[] | undefined,
 ) => {
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
@@ -209,9 +217,10 @@ const getItemHeight = (
     pieceMetadata.type === ActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
+    const numberOfExtraActions = getNumberOfExtraActions(pieceMetadata, agents)
     return (
       ACTION_OR_TRIGGER_ITEM_HEIGHT *
-        Object.values(pieceMetadata.suggestedActions ?? {}).length +
+        (Object.values(pieceMetadata.suggestedActions ?? {}).length + numberOfExtraActions) +
       PIECE_ITEM_HEIGHT
     );
   }
@@ -234,3 +243,11 @@ const getItemHeight = (
   }
   return PIECE_ITEM_HEIGHT;
 };
+
+
+const getNumberOfExtraActions = (pieceMetadata: StepMetadataWithSuggestions, agents: Agent[] | undefined) => {
+  if (pieceMetadata.type === ActionType.PIECE && pieceMetadata.pieceName === '@activepieces/piece-agent') {
+    return agents?.length ?? 0;
+  }
+  return 0;
+}

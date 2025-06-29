@@ -21,7 +21,7 @@ import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
   StepMetadata,
-  StepMetadataWithStepName,
+  StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../../../lib/types';
 
 import { piecesApi } from './pieces-api';
@@ -91,7 +91,7 @@ export const stepUtils = {
   async getMetadata(
     step: Action | Trigger,
     locale: LocalesEnum,
-  ): Promise<StepMetadataWithStepName> {
+  ): Promise<StepMetadataWithActionOrTriggerOrAgentDisplayName> {
     const customLogoUrl =
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
@@ -102,7 +102,7 @@ export const stepUtils = {
         return {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
-          stepDisplayName: step.displayName,
+          actionOrTriggerOrAgentDisplayName: '',
         };
       case ActionType.PIECE:
       case TriggerType.PIECE: {
@@ -112,24 +112,33 @@ export const stepUtils = {
           locale: locale,
         });
         const metadata = stepUtils.mapPieceToMetadata(
-          piece,
-          step.type === ActionType.PIECE ? 'action' : 'trigger',
+            {
+              piece,
+              type: step.type === ActionType.PIECE ? 'action' : 'trigger',
+            }
         );
-        const dataToOverride = await getDataToOverride(step);
+        const agentMetadata = await getAgentMetadata(step);
+        const agentDisplayName = agentMetadata.displayName;
+        const actionOrTriggerDisplayName = step.type === ActionType.PIECE ? piece.actions[step.settings.actionName!].displayName : piece.triggers[step.settings.triggerName!].displayName;
         return {
           ...metadata,
-          stepDisplayName: step.displayName,
-          ...spreadIfDefined('logoUrl', customLogoUrl),
-          ...spreadIfDefined('description', piece.description),
+          ...spreadIfDefined('logoUrl', agentMetadata.logoUrl ?? customLogoUrl),
+          ...spreadIfDefined('description', agentMetadata.description ?? piece.description),
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          ...dataToOverride,
+          actionOrTriggerOrAgentDisplayName: agentDisplayName ?? actionOrTriggerDisplayName,
         };
       }
     }
   },
   mapPieceToMetadata(
-    piece: PieceMetadataModelSummary | PieceMetadataModel,
-    type: 'action' | 'trigger',
+    {
+      piece,
+      type,
+    }: {
+      piece: PieceMetadataModelSummary | PieceMetadataModel;
+      type: 'action' | 'trigger';
+    }
+    
   ): Omit<PieceStepMetadata, 'stepDisplayName'> {
     return {
       displayName: piece.displayName,
@@ -160,7 +169,7 @@ export const stepUtils = {
   },
 };
 
-async function getDataToOverride(
+async function getAgentMetadata(
   step: Action | Trigger,
 ): Promise<
   Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
@@ -177,6 +186,7 @@ async function getDataToOverride(
     return {
       logoUrl: agent.profilePictureUrl,
       description: agent.description,
+      displayName: agent.displayName,
     };
   }
   return {};

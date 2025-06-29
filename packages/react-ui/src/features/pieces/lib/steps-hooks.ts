@@ -11,7 +11,8 @@ import {
 } from '@activepieces/shared';
 
 import {
-  StepMetadataWithStepName,
+  StepMetadata,
+  StepMetadataWithActionOrTriggerOrAgentDisplayName,
   StepMetadataWithSuggestions,
 } from '../../../lib/types';
 
@@ -25,7 +26,7 @@ import {
 export const stepsHooks = {
   useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
     const { i18n } = useTranslation();
-    const query = useQuery<StepMetadataWithStepName, Error>({
+    const query = useQuery<StepMetadataWithActionOrTriggerOrAgentDisplayName, Error>({
       queryKey: getQueryKeyForStepMetadata(step, i18n.language as LocalesEnum),
       queryFn: () => stepUtils.getMetadata(step, i18n.language as LocalesEnum),
       enabled,
@@ -70,7 +71,10 @@ export const stepsHooks = {
         );
 
         const piecesMetadata = filteredPiecesBySuggestionType.map((piece) => {
-          const metadata = stepUtils.mapPieceToMetadata(piece, type);
+          const metadata = stepUtils.mapPieceToMetadata({
+            piece,
+            type,
+          });
           return {
             ...metadata,
             suggestedActions: piece.suggestedActions,
