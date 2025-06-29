@@ -313,11 +313,7 @@ async function parseActionParametersFromInstructions({
     for (const [propertyName, propertyDefinition] of Object.entries(actionProperties)) {
         const needsDynamicResolution = propertyDefinition.type === PropertyType.DYNAMIC || 
                                      propertyDefinition.type === PropertyType.DROPDOWN || 
-                                     propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN || 
-                                     propertyDefinition.type === PropertyType.JSON || 
-                                     propertyDefinition.type === PropertyType.OBJECT || 
-                                     propertyDefinition.type === PropertyType.ARRAY
-        
+                                     propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN        
         let dynamicPropertySchema = 'N/A'
         if (needsDynamicResolution) {
             const propertyResolutionResult = await userInteractionWatcher(logger)
