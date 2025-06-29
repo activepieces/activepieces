@@ -39,6 +39,118 @@ type CreateTodoGuideProps = {
   hidePieceIconAndDescription: boolean;
 };
 
+
+
+const CreateTodoDialog = ({
+  operation,
+  pieceSelectorItem,
+  hidePieceIconAndDescription,
+}: CreateTodoGuideProps) => {
+  const [todoType, setTodoType] = useState<TodoType>(TodoType.INTERNAL);
+  const [hoveredTodoType, setHoveredTodoType] = useState<TodoType | null>(null);
+  const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
+    state.handleAddingOrUpdatingStep,
+  ]);
+
+  const handleAddCreateTodoAction = () => {
+    const todoStepName = createTodoStep({
+      pieceMetadata: pieceSelectorItem.pieceMetadata,
+      operation,
+      todoType,
+      handleAddingOrUpdatingStep,
+    });
+    if (isNil(todoStepName)) {
+      return;
+    }
+    switch (todoType) {
+      case TodoType.INTERNAL: {
+        createRouterStep({
+          parentStepName: todoStepName,
+          logoUrl: pieceSelectorItem.pieceMetadata.logoUrl,
+          handleAddingOrUpdatingStep,
+        });
+        break;
+      }
+      case TodoType.EXTERNAL: {
+        const waitForApprovalStepName = createWaitForApprovalStep({
+          pieceMetadata: pieceSelectorItem.pieceMetadata,
+          parentStepName: todoStepName,
+          handleAddingOrUpdatingStep,
+        });
+        if (!waitForApprovalStepName) {
+          return;
+        }
+        createRouterStep({
+          parentStepName: waitForApprovalStepName,
+          logoUrl: pieceSelectorItem.pieceMetadata.logoUrl,
+          handleAddingOrUpdatingStep,
+        });
+        break;
+      }
+    }
+  };
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <GenericActionOrTriggerItem
+        item={pieceSelectorItem}
+        hidePieceIconAndDescription={hidePieceIconAndDescription}
+        stepMetadataWithSuggestions={pieceSelectorItem.pieceMetadata}
+        onClick={() => setOpen(true)}
+      ></GenericActionOrTriggerItem>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="text-xl">{t('Create Todo')}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto pr-1">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="md:w-1/2 space-y-6">
+                <h3 className="text-lg font-medium">
+                  {t('Where would you like the todo to be reviewed?')}
+                </h3>
+                <div className="space-y-4">
+                  <TodoTypeOption
+                    todoType={TodoType.INTERNAL}
+                    setTodoType={setTodoType}
+                    setHoveredOption={setHoveredTodoType}
+                    selectedTodoType={todoType}
+                  />
+                  <TodoTypeOption
+                    todoType={TodoType.EXTERNAL}
+                    setTodoType={setTodoType}
+                    setHoveredOption={setHoveredTodoType}
+                    selectedTodoType={todoType}
+                  />
+                </div>
+              </div>
+              <div className="md:w-1/2 flex flex-col items-center justify-center">
+                <PreviewImage todoType={hoveredTodoType || todoType} />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="shrink-0 mt-3 pt-3">
+            <Button
+              variant="secondary"
+              onClick={() => setOpen(false)}
+              className="mr-2"
+            >
+              {t('Cancel')}
+            </Button>
+            <Button onClick={handleAddCreateTodoAction}>
+              {t('Add Steps')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+CreateTodoDialog.displayName = 'CreateTodoDialog';
+export { CreateTodoDialog };
 const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
   const image =
     todoType === TodoType.INTERNAL
@@ -159,114 +271,3 @@ const TodoTypeOption = ({
     </CardListItem>
   );
 };
-
-const CreateTodoDialog = ({
-  operation,
-  pieceSelectorItem,
-  hidePieceIconAndDescription,
-}: CreateTodoGuideProps) => {
-  const [todoType, setTodoType] = useState<TodoType>(TodoType.INTERNAL);
-  const [hoveredTodoType, setHoveredTodoType] = useState<TodoType | null>(null);
-  const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
-    state.handleAddingOrUpdatingStep,
-  ]);
-
-  const handleAddCreateTodoAction = () => {
-    const todoStepName = createTodoStep({
-      pieceMetadata: pieceSelectorItem.pieceMetadata,
-      operation,
-      todoType,
-      handleAddingOrUpdatingStep,
-    });
-    if (isNil(todoStepName)) {
-      return;
-    }
-    switch (todoType) {
-      case TodoType.INTERNAL: {
-        createRouterStep({
-          parentStepName: todoStepName,
-          logoUrl: pieceSelectorItem.pieceMetadata.logoUrl,
-          handleAddingOrUpdatingStep,
-        });
-        break;
-      }
-      case TodoType.EXTERNAL: {
-        const waitForApprovalStepName = createWaitForApprovalStep({
-          pieceMetadata: pieceSelectorItem.pieceMetadata,
-          parentStepName: todoStepName,
-          handleAddingOrUpdatingStep,
-        });
-        if (!waitForApprovalStepName) {
-          return;
-        }
-        createRouterStep({
-          parentStepName: waitForApprovalStepName,
-          logoUrl: pieceSelectorItem.pieceMetadata.logoUrl,
-          handleAddingOrUpdatingStep,
-        });
-        break;
-      }
-    }
-  };
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <GenericActionOrTriggerItem
-        item={pieceSelectorItem}
-        hidePieceIconAndDescription={hidePieceIconAndDescription}
-        stepMetadataWithSuggestions={pieceSelectorItem.pieceMetadata}
-        onClick={() => setOpen(true)}
-      ></GenericActionOrTriggerItem>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader className="shrink-0">
-            <DialogTitle className="text-xl">{t('Create Todo')}</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto pr-1">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="md:w-1/2 space-y-6">
-                <h3 className="text-lg font-medium">
-                  {t('Where would you like the todo to be reviewed?')}
-                </h3>
-                <div className="space-y-4">
-                  <TodoTypeOption
-                    todoType={TodoType.INTERNAL}
-                    setTodoType={setTodoType}
-                    setHoveredOption={setHoveredTodoType}
-                    selectedTodoType={todoType}
-                  />
-                  <TodoTypeOption
-                    todoType={TodoType.EXTERNAL}
-                    setTodoType={setTodoType}
-                    setHoveredOption={setHoveredTodoType}
-                    selectedTodoType={todoType}
-                  />
-                </div>
-              </div>
-              <div className="md:w-1/2 flex flex-col items-center justify-center">
-                <PreviewImage todoType={hoveredTodoType || todoType} />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="shrink-0 mt-3 pt-3">
-            <Button
-              variant="secondary"
-              onClick={() => setOpen(false)}
-              className="mr-2"
-            >
-              {t('Cancel')}
-            </Button>
-            <Button onClick={handleAddCreateTodoAction}>
-              {t('Add Steps')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-};
-
-CreateTodoDialog.displayName = 'CreateTodoDialog';
-export { CreateTodoDialog };

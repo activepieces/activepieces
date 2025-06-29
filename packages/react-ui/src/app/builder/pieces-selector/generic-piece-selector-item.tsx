@@ -40,7 +40,7 @@ const GenericActionOrTriggerItem = ({
   return (
     <CardListItem
       className={cn('p-2 w-full ', {
-        truncate: !hidePieceIconAndDescription,
+        truncate: hidePieceIconAndDescription,
       })}
       onClick={onClick}
       style={style}
