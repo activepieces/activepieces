@@ -104,7 +104,7 @@ async function addPieceToServer(
                 })
                 const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
                 const initialParams = { ...defaultValues, ...params, auth: pieceConnectionExternalId ?? undefined }
-                const resolvedParams = await resolveParametersRecursively({
+                const resolvedParams = await resolveParameters({
                     initialParams,
                     actionMetadata,
                     pieceMetadata,
@@ -170,7 +170,7 @@ async function addPieceToServer(
     }
 }
 
-async function resolveParametersRecursively({
+async function resolveParameters({
     initialParams,
     actionMetadata,
     pieceMetadata,
@@ -178,11 +178,11 @@ async function resolveParametersRecursively({
     platformId,
     logger,
     actionName,
-}: ResolveParametersRecursivelyParams): Promise<Record<string, unknown>> {
+}: ResolveParametersParams): Promise<Record<string, unknown>> {
     let currentParams = { ...initialParams }
     let hasChanges = true
     let iterationCount = 0
-    const maxIterations = 3
+    const maxIterations = 10
     
     while (hasChanges && iterationCount < maxIterations) {
         hasChanges = false
@@ -225,7 +225,7 @@ async function resolveParametersRecursively({
                             
                             const dynamicProps = propertyResult.result.options as InputPropertyMap
                             
-                            const newParams = await mergeUserInputWithSchemaAI(
+                            const newParams = await mergeUserInputWithSchema(
                                 propName,
                                 currentParams, 
                                 dynamicProps, 
@@ -355,7 +355,7 @@ async function addFlowToServer(
 
 }
 
-async function mergeUserInputWithSchemaAI(
+async function mergeUserInputWithSchema(
     propName: string,
     input: Record<string, unknown>, 
     schema: InputPropertyMap, 
@@ -389,6 +389,7 @@ Rules:
 - For arrays: use [] if empty, populate if context suggests
 - For objects: recursively apply same logic
 - Return only valid JSON matching schema exactly
+- DO NOT RECURSIVELY FILL THE SAME PROPERTY WITH THE SAME VALUE
 
 Schema: ${JSON.stringify(schema, null, 2)}
 Input: ${JSON.stringify(input, null, 2)}
@@ -398,8 +399,6 @@ Return ONLY the JSON:`
         const result = await generateText({
             model: openai('gpt-4o'),
             prompt: systemPrompt,
-            maxTokens: 2000,
-            temperature: 0.1,
         })
 
         const aiResponse = result.text.trim()
@@ -485,7 +484,7 @@ type CreateMcpServerResponse = {
     server: McpServer
 }
 
-type ResolveParametersRecursivelyParams = {
+type ResolveParametersParams = {
     initialParams: Record<string, unknown>
     actionMetadata: ActionBase
     pieceMetadata: PieceMetadataModel
