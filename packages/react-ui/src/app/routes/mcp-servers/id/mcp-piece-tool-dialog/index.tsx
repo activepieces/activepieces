@@ -31,7 +31,6 @@ import { isNil, McpToolType } from '@activepieces/shared';
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';
 
-
 type McpPieceDialogProps = {
   children: React.ReactNode;
   mcp: McpWithTools;

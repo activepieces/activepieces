@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  PieceTag,
   PieceTagType,
-  PieceStepMetadata,
   StepMetadata,
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
@@ -115,7 +113,7 @@ export const piecesHooks = {
     };
   },
   usePiecesSearch: (
-    props: UsePiecesSearchProps
+    props: UsePiecesSearchProps,
   ): {
     isLoading: boolean;
     data: CategorizedStepMetadataWithSuggestions[];
@@ -129,39 +127,48 @@ export const piecesHooks = {
         data: [],
       };
     }
-    const piecesMetadataWithoutEmptySuggestions = filterOutPiecesWithNoSuggestions(metadata);
-    const popularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) => isPopularPieces(p, platform));
-    const pieceMetadataWithoutPopularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) => !popularPieces.includes(p));
-    const flowControllerPieces = pieceMetadataWithoutPopularPieces.filter(isFlowController);
-    const corePieces  = pieceMetadataWithoutPopularPieces.filter(isCorePiece);
-    const universalAiPieces = pieceMetadataWithoutPopularPieces.filter(isUniversalAiPiece);
+    const piecesMetadataWithoutEmptySuggestions =
+      filterOutPiecesWithNoSuggestions(metadata);
+    const popularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) =>
+      isPopularPieces(p, platform),
+    );
+    const pieceMetadataWithoutPopularPieces =
+      piecesMetadataWithoutEmptySuggestions.filter(
+        (p) => !popularPieces.includes(p),
+      );
+    const flowControllerPieces =
+      pieceMetadataWithoutPopularPieces.filter(isFlowController);
+    const corePieces = pieceMetadataWithoutPopularPieces.filter(isCorePiece);
+    const universalAiPieces =
+      pieceMetadataWithoutPopularPieces.filter(isUniversalAiPiece);
     const appPieces = pieceMetadataWithoutPopularPieces.filter(isAppPiece);
-    const categorizedStepsMetadata: CategorizedStepMetadataWithSuggestions[] = [];
-    if(corePieces.length > 0) {
+    const categorizedStepsMetadata: CategorizedStepMetadataWithSuggestions[] =
+      [];
+    if (corePieces.length > 0) {
       categorizedStepsMetadata.push({
         title: tagCategoryName[PieceTagType.CORE],
         metadata: corePieces,
       });
     }
-    if(flowControllerPieces.length > 0) {
+    if (flowControllerPieces.length > 0) {
       categorizedStepsMetadata.push({
         title: t('Flow Controller'),
         metadata: flowControllerPieces,
       });
     }
-    if(universalAiPieces.length > 0) {
+    if (universalAiPieces.length > 0) {
       categorizedStepsMetadata.push({
         title: tagCategoryName[PieceTagType.AI_AND_AGENTS],
         metadata: universalAiPieces,
       });
     }
-    if(popularPieces.length > 0) {
+    if (popularPieces.length > 0) {
       categorizedStepsMetadata.push({
         title: tagCategoryName[PieceTagType.APPS],
         metadata: popularPieces,
       });
     }
-    if(appPieces.length > 0) {
+    if (appPieces.length > 0) {
       categorizedStepsMetadata.push({
         title: t('Apps'),
         metadata: appPieces,
@@ -170,7 +177,7 @@ export const piecesHooks = {
     return {
       isLoading: false,
       data: categorizedStepsMetadata,
-    }
+    };
   },
 };
 
@@ -229,11 +236,11 @@ const isPopularPieces = (
 ) => {
   if (
     stepMetadata.type !== TriggerType.PIECE &&
-    stepMetadata.type !== ActionType.PIECE 
+    stepMetadata.type !== ActionType.PIECE
   ) {
     return false;
   }
-  if(stepMetadata.categories.includes(PieceCategory.CORE)) {
+  if (stepMetadata.categories.includes(PieceCategory.CORE)) {
     return false;
   }
   const popularPiecesNames = [
@@ -245,29 +252,43 @@ const isPopularPieces = (
     '@activepieces/piece-slack',
   ];
   const pinnedPiecesNames = platform.pinnedPieces ?? [];
-  return  [...pinnedPiecesNames, ...popularPiecesNames].includes(stepMetadata.pieceName);
+  return [...pinnedPiecesNames, ...popularPiecesNames].includes(
+    stepMetadata.pieceName,
+  );
 };
 
 const isFlowController = (stepMetadata: StepMetadata) => {
-  if (stepMetadata.type === ActionType.PIECE || stepMetadata.type === TriggerType.PIECE) {
+  if (
+    stepMetadata.type === ActionType.PIECE ||
+    stepMetadata.type === TriggerType.PIECE
+  ) {
     return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
   }
-  return stepMetadata.type === ActionType.LOOP_ON_ITEMS || stepMetadata.type === ActionType.ROUTER;
+  return (
+    stepMetadata.type === ActionType.LOOP_ON_ITEMS ||
+    stepMetadata.type === ActionType.ROUTER
+  );
 };
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.some(category => [PieceCategory.UNIVERSAL_AI].includes(category as PieceCategory));
+    return stepMetadata.categories.some((category) =>
+      [PieceCategory.UNIVERSAL_AI].includes(category as PieceCategory),
+    );
   }
   return false;
 };
 
-
 const isCorePiece = (metadata: StepMetadata) =>
-  metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE 
+  metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE
     ? !isFlowController(metadata)
-    : metadata.categories.includes(PieceCategory.CORE) && !isFlowController(metadata);
+    : metadata.categories.includes(PieceCategory.CORE) &&
+      !isFlowController(metadata);
 
 const isAppPiece = (metadata: StepMetadata) => {
-  return !isCorePiece(metadata) && !isUniversalAiPiece(metadata) && !isFlowController(metadata);
-}
+  return (
+    !isCorePiece(metadata) &&
+    !isUniversalAiPiece(metadata) &&
+    !isFlowController(metadata)
+  );
+};

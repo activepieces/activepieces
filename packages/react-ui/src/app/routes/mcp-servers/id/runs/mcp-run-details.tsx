@@ -23,7 +23,6 @@ import { McpRun, McpRunStatus } from '@activepieces/shared';
 
 import { mcpRunUtils } from './mcp-run-utils';
 
-
 type McpRunDetailsProps = {
   selectedItem: McpRun;
   metadata: StepMetadataWithSuggestions[];

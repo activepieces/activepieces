@@ -10,6 +10,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
   flowStructureUtil,
@@ -40,7 +41,6 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 
 const getChildrenKey = (step: Step) => {
   switch (step.type) {

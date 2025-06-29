@@ -115,7 +115,6 @@ export type BuilderState = {
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
   setSampleDataInput: (stepName: string, payload: unknown) => void;
-  exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
@@ -155,7 +154,7 @@ export type BuilderState = {
     selectStepAfter: boolean;
     customLogoUrl?: string;
   }) => string;
-
+  deselectStep: () => void;
   //Piece selector state
   openedPieceSelectorStepNameOrAddButtonId: string | null;
   setOpenedPieceSelectorStepNameOrAddButtonId: (
@@ -180,11 +179,7 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
-
-
-export const createBuilderStore = (
-  initialState: BuilderInitialState,
-) =>
+export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
@@ -196,7 +191,9 @@ export const createBuilderStore = (
       failedStepNameInRun,
       initialState.flowVersion,
     );
-    const isEmptyTriggerInitiallySelected = initiallySelectedStep === 'trigger' && initialState.flowVersion.trigger.type === TriggerType.EMPTY;
+    const isEmptyTriggerInitiallySelected =
+      initiallySelectedStep === 'trigger' &&
+      initialState.flowVersion.trigger.type === TriggerType.EMPTY;
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -336,23 +333,19 @@ export const createBuilderStore = (
           selectedBranchIndex: null,
           askAiButtonProps: null,
         })),
-      exitPieceSelector: () =>
-        set({
-          rightSidebar: RightSideBarType.NONE,
-          selectedBranchIndex: null,
-        }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
       setLeftSidebar: (leftSidebar: LeftSideBarType) =>
         set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
-          const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(run.status, run.steps);
-          const initiallySelectedStep = run.steps? determineInitiallySelectedStep(
-            lastStepWithStatus,
-            flowVersion,
-          ) : 
-          state.selectedStep ?? 'trigger';
+          const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
+            run.status,
+            run.steps,
+          );
+          const initiallySelectedStep = run.steps
+            ? determineInitiallySelectedStep(lastStepWithStatus, flowVersion)
+            : state.selectedStep ?? 'trigger';
           return {
             loopsIndexes: flowRunUtils.findLoopsState(
               flowVersion,
@@ -362,7 +355,9 @@ export const createBuilderStore = (
             run,
             flowVersion,
             leftSidebar: LeftSideBarType.RUN_DETAILS,
-            rightSidebar: initiallySelectedStep?RightSideBarType.PIECE_SETTINGS:RightSideBarType.NONE,
+            rightSidebar: initiallySelectedStep
+              ? RightSideBarType.PIECE_SETTINGS
+              : RightSideBarType.NONE,
             selectedStep: initiallySelectedStep,
             readonly: true,
           };
@@ -432,8 +427,13 @@ export const createBuilderStore = (
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {
-        const initiallySelectedStep = determineInitiallySelectedStep(null,flowVersion);
-        const isEmptyTriggerInitiallySelected = initiallySelectedStep === 'trigger' && flowVersion.trigger.type === TriggerType.EMPTY;
+        const initiallySelectedStep = determineInitiallySelectedStep(
+          null,
+          flowVersion,
+        );
+        const isEmptyTriggerInitiallySelected =
+          initiallySelectedStep === 'trigger' &&
+          flowVersion.trigger.type === TriggerType.EMPTY;
         set((state) => ({
           flowVersion,
           run: null,
@@ -442,7 +442,10 @@ export const createBuilderStore = (
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
-          rightSidebar: initiallySelectedStep && !isEmptyTriggerInitiallySelected ?RightSideBarType.PIECE_SETTINGS:RightSideBarType.NONE,
+          rightSidebar:
+            initiallySelectedStep && !isEmptyTriggerInitiallySelected
+              ? RightSideBarType.PIECE_SETTINGS
+              : RightSideBarType.NONE,
           selectedBranchIndex: null,
         }));
       },
@@ -515,6 +518,13 @@ export const createBuilderStore = (
           selectedNodes: nodes,
         }));
       },
+      deselectStep: () => {
+        return set(() => ({
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+          selectedStep: null,
+        }));
+      },
       panningMode: getPanningModeFromLocalStorage(),
       setPanningMode: (mode: 'grab' | 'pan') => {
         localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
@@ -556,6 +566,13 @@ export const createBuilderStore = (
           case FlowOperationType.UPDATE_TRIGGER: {
             if (!isTrigger) {
               break;
+            }
+            if (flowVersion.trigger.type === TriggerType.EMPTY) {
+              set(() => {
+                return {
+                  rightSidebar: RightSideBarType.PIECE_SETTINGS,
+                };
+              });
             }
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
@@ -645,14 +662,21 @@ export const createBuilderStore = (
           selectedPieceMetadataInPieceSelector: metadata,
         }));
       },
-      openedPieceSelectorStepNameOrAddButtonId: isEmptyTriggerInitiallySelected ? 'trigger' : null,
-      setOpenedPieceSelectorStepNameOrAddButtonId: (stepNameOrAddButtonId: string | null) => {
+      openedPieceSelectorStepNameOrAddButtonId: isEmptyTriggerInitiallySelected
+        ? 'trigger'
+        : null,
+      setOpenedPieceSelectorStepNameOrAddButtonId: (
+        stepNameOrAddButtonId: string | null,
+      ) => {
         return set((state) => {
-          const isReplacingEmptyTrigger = state.flowVersion.trigger.type === TriggerType.EMPTY && stepNameOrAddButtonId === 'trigger';
+          const isReplacingEmptyTrigger =
+            state.flowVersion.trigger.type === TriggerType.EMPTY &&
+            stepNameOrAddButtonId === 'trigger';
           return {
             openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,
-            rightSidebar:
-            isReplacingEmptyTrigger ? RightSideBarType.NONE : state.rightSidebar,
+            rightSidebar: isReplacingEmptyTrigger
+              ? RightSideBarType.NONE
+              : state.rightSidebar,
           };
         });
       },
@@ -936,6 +960,8 @@ function determineInitiallySelectedStep(
   if (failedStepNameInRun) {
     return failedStepNameInRun;
   }
-  const firstInvalidStep = flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid);
+  const firstInvalidStep = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .find((s) => !s.valid);
   return firstInvalidStep?.name ?? 'trigger';
 }

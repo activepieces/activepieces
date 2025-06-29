@@ -1,207 +1,236 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
-import {
-  CardList,
-  CardListItem,
-  CardListItemSkeleton,
-} from '@/components/custom/card-list';
+import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   PieceTagType,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
   tagCategoryName,
+  CategorizedStepMetadataWithSuggestions,
 } from '@/lib/types';
-import { FlowOperationType, isNil } from '@activepieces/shared';
+import {
+  ActionType,
+  FlowOperationType,
+  isNil,
+  TriggerType,
+} from '@activepieces/shared';
 
-import { cn, scrollToElementAndClickIt, wait } from '../../../lib/utils';
+import { cn } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { NoResultsFound } from './no-results-found';
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { PieceCardListItem } from './piece-card-item';
 
 type PiecesCardListProps = {
   searchQuery: string;
   operation: PieceSelectorOperation;
   selectedPieceGroupType: PieceTagType | null;
   stepToReplacePieceDisplayName?: string;
+  listHeight: number;
 };
 
-
-export const PiecesCardList: React.FC<PiecesCardListProps> = ({ searchQuery, operation,selectedPieceGroupType, stepToReplacePieceDisplayName } ) => {
+export const PiecesCardList: React.FC<PiecesCardListProps> = ({
+  searchQuery,
+  operation,
+  selectedPieceGroupType,
+  stepToReplacePieceDisplayName,
+  listHeight,
+}) => {
   const isMobile = useIsMobile();
-  const [selectedPieceMetadataInPieceSelector] =
-    useBuilderStateContext((state) => [
-      state.selectedPieceMetadataInPieceSelector,
-    ]);
+  const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
+    (state) => [state.selectedPieceMetadataInPieceSelector],
+  );
   const { isLoading: isLoadingPieces, data: categories } =
     piecesHooks.usePiecesSearch({
       searchQuery,
-      type: operation.type === FlowOperationType.UPDATE_TRIGGER ? 'trigger' : 'action'
+      type:
+        operation.type === FlowOperationType.UPDATE_TRIGGER
+          ? 'trigger'
+          : 'action',
     });
 
-    const noResultsFound = !isLoadingPieces && categories.length === 0;
-    const hasScrolledToElement = useRef(false);
-    const [mouseMoved, setMouseMoved] = useState(false);
-    useEffect(() => {
-      if(hasScrolledToElement.current || isLoadingPieces) {
-        return;
-      }
-      const categoryNameOrPieceDisplayNameToScrollTo = findInitiallyScrolledToCategoryOrPieceDisplayName(selectedPieceGroupType, selectedPieceMetadataInPieceSelector, stepToReplacePieceDisplayName);
-      if (!isNil(categoryNameOrPieceDisplayNameToScrollTo)) {
-        scrollToElementAndClickIt(categoryNameOrPieceDisplayNameToScrollTo);
-        }
-        hasScrolledToElement.current = true;
-
-    }, [isLoadingPieces, selectedPieceMetadataInPieceSelector?.displayName]);
-    
-  return (
-    <>
-      <CardList
-            onMouseMove={() => {
-            setMouseMoved(!isLoadingPieces);
-            }}
-            className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
-              'w-full md:w-full': searchQuery.length > 0 || noResultsFound
-            })}
-            listClassName="gap-0"
-          >
-            {isLoadingPieces && (
-              <div className="flex flex-col gap-2">
-                <CardListItemSkeleton numberOfCards={2} withCircle={false} />
-              </div>
-            )}
-
-            {!isLoadingPieces && !noResultsFound && (
-             categories.map((category, categoryIndex) => (
-                <React.Fragment key={`${category.title}-${categoryIndex}`} >
-                  {searchQuery.length === 0 && <div className="pl-3 text-sm text-muted-foreground" id={category.title}>{category.title}</div>}
-                  {
-                    category.metadata.map((pieceMetadata, metadataIndex) => (
-                      <PieceCardListItem
-                        isDisabled={!mouseMoved}
-                        key={`${pieceMetadata.displayName}-${metadataIndex}`}
-                        pieceMetadata={pieceMetadata}
-                        searchQuery={searchQuery}
-                        operation={operation}
-                      />
-                    ))
-                  }
-                </React.Fragment>
-                 
-            ))
-            )}
-
-          {noResultsFound && <NoResultsFound />}
-          </CardList>
-
-        {searchQuery.length === 0 &&
-          !isLoadingPieces &&
-          categories.length > 0 &&
-          !isMobile && (
-            <>
-              <Separator orientation="vertical" className="h-full" />
-              <PieceActionsOrTriggersList
-                stepMetadataWithSuggestions={selectedPieceMetadataInPieceSelector}
-                hidePieceIcon={false}
-                operation={operation}
-              />
-            </>
-          )}
-          </>
-    
+  const noResultsFound = !isLoadingPieces && categories.length === 0;
+  const [mouseMoved, setMouseMoved] = useState(false);
+  const virtualizedItems = transformPiecesMetadataToVirtualizedItems(
+    categories,
+    searchQuery.length > 0 || isMobile,
   );
-};
-
-
-type PieceCardListItemProps = {
-  pieceMetadata: StepMetadataWithSuggestions;
-  searchQuery: string;
-  operation: PieceSelectorOperation;
-  isDisabled: boolean;
-};
-
-const PieceCardListItem = ({
-  pieceMetadata,
-  searchQuery,
-  operation,
-  isDisabled,
-}: PieceCardListItemProps) => {
-  const isMobile = useIsMobile();
-  const showSuggestions = searchQuery.length > 0 || isMobile;
-  const isMouseOver = useRef(false);
-  const selectPieceMetatdata = async () => {
-   if(isDisabled) {
-    return;
-   }
-    isMouseOver.current = true;
-    await wait(250);
-    if (isMouseOver.current) {
-      setSelectedPieceMetadataInPieceSelector(pieceMetadata);
-    }
-  };
-  const [selectedPieceMetadataInPieceSelector, setSelectedPieceMetadataInPieceSelector] =
-    useBuilderStateContext((state) => [
-      state.selectedPieceMetadataInPieceSelector,
-      state.setSelectedPieceMetadataInPieceSelector,
-    ]);
-
+  const categoryNameOrPieceDisplayNameToScrollTo =
+    findInitiallyScrolledToCategoryOrPieceDisplayName(
+      selectedPieceGroupType,
+      selectedPieceMetadataInPieceSelector,
+      stepToReplacePieceDisplayName,
+    );
+  const initialIndexToScrollToInPiecesListRef = useRef(
+    virtualizedItems.findIndex(
+      (item) => item.displayName === categoryNameOrPieceDisplayNameToScrollTo,
+    ),
+  );
+  const showActionsOrTriggersList =
+    searchQuery.length === 0 &&
+    !isMobile &&
+    !noResultsFound &&
+    !isLoadingPieces;
+  const showPiecesList = !noResultsFound && !isLoadingPieces;
   return (
     <>
-      <CardListItem
-        className={cn("flex-col p-3 gap-1 items-start", {
-          'hover:!bg-transparent': isDisabled,
-        })}
-        selected={
-          selectedPieceMetadataInPieceSelector?.displayName === pieceMetadata.displayName &&
-          searchQuery.length === 0
-        }
-        interactive={!showSuggestions}
-        onMouseEnter={selectPieceMetatdata}
-        onMouseMove={selectPieceMetatdata}
-        onClick={()=> setSelectedPieceMetadataInPieceSelector(pieceMetadata)}
-        onMouseLeave={() => {
-          isMouseOver.current = false;
+      <div
+        onMouseMove={() => {
+          setMouseMoved(!isLoadingPieces);
         }}
-        id={pieceMetadata.displayName}
+        className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+          'w-full md:w-full': searchQuery.length > 0 || noResultsFound,
+        })}
       >
-        <div className="flex gap-2 items-center h-full">
-          <PieceIcon
-            logoUrl={pieceMetadata.logoUrl}
-            displayName={pieceMetadata.displayName}
-            showTooltip={false}
-            size={'sm'}
-          />
-          <div className="flex-grow h-full flex items-center justify-left text-sm">
-            {pieceMetadata.displayName} 
+        {isLoadingPieces && (
+          <div className="flex flex-col gap-2">
+            <CardListItemSkeleton numberOfCards={2} withCircle={false} />
           </div>
-        </div>
-      </CardListItem>
+        )}
 
-      {showSuggestions && (
-        <div>
+        {showPiecesList && (
+          <VirtualizedScrollArea
+            initialScroll={{
+              index: initialIndexToScrollToInPiecesListRef.current,
+              clickAfterScroll: true,
+            }}
+            items={virtualizedItems}
+            estimateSize={(index) => virtualizedItems[index].height}
+            getItemKey={(index) => virtualizedItems[index].id}
+            listHeight={listHeight}
+            renderItem={(item) => {
+              if (item.isCategory) {
+                return (
+                  <div
+                    className="p-2 pb-0 text-sm text-muted-foreground"
+                    id={item.displayName}
+                  >
+                    {item.displayName}
+                  </div>
+                );
+              }
+              return (
+                <PieceCardListItem
+                  pieceMetadata={item}
+                  searchQuery={searchQuery}
+                  operation={operation}
+                  isDisabled={!mouseMoved}
+                />
+              );
+            }}
+          />
+        )}
+
+        {noResultsFound && <NoResultsFound />}
+      </div>
+
+      {showActionsOrTriggersList && (
+        <>
+          <Separator orientation="vertical" className="h-full" />
           <PieceActionsOrTriggersList
-            stepMetadataWithSuggestions={pieceMetadata}
-            hidePieceIcon={true}
+            stepMetadataWithSuggestions={selectedPieceMetadataInPieceSelector}
+            hidePieceIconAndDescription={false}
             operation={operation}
           />
-        </div>
+        </>
       )}
     </>
   );
 };
 
-PieceCardListItem.displayName = 'PieceCardListItem';
-const findInitiallyScrolledToCategoryOrPieceDisplayName = (selectedPieceGroupType: PieceTagType | null, selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null, stepToReplacePieceDisplayName: string | undefined) => {
-   if(isNil(selectedPieceMetadataInPieceSelector) && !isNil(stepToReplacePieceDisplayName) && selectedPieceGroupType === PieceTagType.ALL) {
+const findInitiallyScrolledToCategoryOrPieceDisplayName = (
+  selectedPieceGroupType: PieceTagType | null,
+  selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null,
+  stepToReplacePieceDisplayName: string | undefined,
+) => {
+  if (
+    isNil(selectedPieceMetadataInPieceSelector) &&
+    !isNil(stepToReplacePieceDisplayName) &&
+    selectedPieceGroupType === PieceTagType.ALL
+  ) {
     return stepToReplacePieceDisplayName;
-   }
-   if(isNil(selectedPieceGroupType)) {
+  }
+  if (isNil(selectedPieceGroupType)) {
     return null;
-   }
-   const categoryNameOrPieceDisplayNameToScrollTo =  selectedPieceGroupType === PieceTagType.ALL ? selectedPieceMetadataInPieceSelector?.displayName : tagCategoryName[selectedPieceGroupType];
-   return categoryNameOrPieceDisplayNameToScrollTo;
-}
+  }
+  const categoryNameOrPieceDisplayNameToScrollTo =
+    selectedPieceGroupType === PieceTagType.ALL
+      ? selectedPieceMetadataInPieceSelector?.displayName
+      : tagCategoryName[selectedPieceGroupType];
+  return categoryNameOrPieceDisplayNameToScrollTo;
+};
+type VirtualizedItem = {
+  id: string;
+  displayName: string;
+  height: number;
+  isCategory: boolean;
+};
+const transformPiecesMetadataToVirtualizedItems = (
+  searchResult: CategorizedStepMetadataWithSuggestions[],
+  showActionsOrTriggersInsidePiecesList: boolean,
+) => {
+  return searchResult.reduce<VirtualizedItem[]>((result, category) => {
+    if (!showActionsOrTriggersInsidePiecesList) {
+      result.push({
+        id: category.title,
+        displayName: category.title,
+        height: PIECE_SELECTOR_ELEMENTS_HEIGHTS.CATEGORY_ITEM_HEIGHT,
+        isCategory: true,
+      });
+    }
+    category.metadata.forEach((pieceMetadata, index) => {
+      result.push({
+        id: `${pieceMetadata.displayName}-${index}`,
+        ...pieceMetadata,
+        height: getItemHeight(
+          pieceMetadata,
+          showActionsOrTriggersInsidePiecesList,
+        ),
+        isCategory: false,
+      });
+    });
+    return result;
+  }, []);
+};
+
+const getItemHeight = (
+  pieceMetadata: StepMetadataWithSuggestions,
+  showActionsOrTriggersInsidePiecesList: boolean,
+) => {
+  const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
+    PIECE_SELECTOR_ELEMENTS_HEIGHTS;
+  if (
+    pieceMetadata.type === ActionType.PIECE &&
+    showActionsOrTriggersInsidePiecesList
+  ) {
+    return (
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
+        Object.values(pieceMetadata.suggestedActions ?? {}).length +
+      PIECE_ITEM_HEIGHT
+    );
+  }
+  if (
+    pieceMetadata.type === TriggerType.PIECE &&
+    showActionsOrTriggersInsidePiecesList
+  ) {
+    return (
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
+        Object.values(pieceMetadata.suggestedTriggers ?? {}).length +
+      PIECE_ITEM_HEIGHT
+    );
+  }
+  const isCoreAction =
+    pieceMetadata.type === ActionType.CODE ||
+    pieceMetadata.type === ActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === ActionType.ROUTER;
+  if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
+    return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
+  }
+  return PIECE_ITEM_HEIGHT;
+};

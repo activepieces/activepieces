@@ -36,7 +36,7 @@ import GenericActionOrTriggerItem from './generic-piece-selector-item';
 type CreateTodoGuideProps = {
   pieceSelectorItem: PieceSelectorPieceItem;
   operation: PieceSelectorOperation;
-  hidePieceIcon: boolean;
+  hidePieceIconAndDescription: boolean;
 };
 
 const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
@@ -163,7 +163,7 @@ const TodoTypeOption = ({
 const CreateTodoDialog = ({
   operation,
   pieceSelectorItem,
-  hidePieceIcon,
+  hidePieceIconAndDescription,
 }: CreateTodoGuideProps) => {
   const [todoType, setTodoType] = useState<TodoType>(TodoType.INTERNAL);
   const [hoveredTodoType, setHoveredTodoType] = useState<TodoType | null>(null);
@@ -213,7 +213,7 @@ const CreateTodoDialog = ({
     <>
       <GenericActionOrTriggerItem
         item={pieceSelectorItem}
-        hidePieceIcon={hidePieceIcon}
+        hidePieceIconAndDescription={hidePieceIconAndDescription}
         stepMetadataWithSuggestions={pieceSelectorItem.pieceMetadata}
         onClick={() => setOpen(true)}
       ></GenericActionOrTriggerItem>
