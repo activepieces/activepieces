@@ -51,13 +51,14 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, sampleDataInput, setChatDrawerOpenSource } = useBuilderStateContext((state) => {
-      return {
-        sampleData: state.sampleData[formValues.name],
-        sampleDataInput: state.sampleDataInput[formValues.name],
-        setChatDrawerOpenSource: state.setChatDrawerOpenSource,
-      };
-    });
+    const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
+      useBuilderStateContext((state) => {
+        return {
+          sampleData: state.sampleData[formValues.name],
+          sampleDataInput: state.sampleDataInput[formValues.name],
+          setChatDrawerOpenSource: state.setChatDrawerOpenSource,
+        };
+      });
 
     const onTestSuccess = async () => {
       form.setValue(`settings.inputUiInfo.lastTestDate`, dayjs().toISOString());
@@ -109,25 +110,27 @@ const TestTriggerSection = React.memo(
         case 'simulation':
           return t('testPieceSimulationTriggerNote', {
             pieceName: pieceModel?.displayName,
-            triggerName: pieceModel?.triggers[formValues.settings.triggerName]
-              .displayName,
-          })
+            triggerName:
+              pieceModel?.triggers[formValues.settings.triggerName].displayName,
+          });
         case 'webhook':
-          return <div className="flex flex-col gap-2">
-            <p>
-              {t(
-                'Send Data to the webhook URL to generate sample data to use in the next steps',
-              )}
-            </p>
-            <ManualWebhookTestButton
-              isWebhookTestingDialogOpen={isTestingDialogOpen}
-              setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
-            />
-          </div>
+          return (
+            <div className="flex flex-col gap-2">
+              <p>
+                {t(
+                  'Send Data to the webhook URL to generate sample data to use in the next steps',
+                )}
+              </p>
+              <ManualWebhookTestButton
+                isWebhookTestingDialogOpen={isTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+              />
+            </div>
+          );
         default:
           return null;
       }
-    }
+    };
 
     return (
       <div>
@@ -159,7 +162,11 @@ const TestTriggerSection = React.memo(
                   } else {
                     setIsTestingDialogOpen(true);
                   }
-                  if (testType === 'simulation' || testType === 'webhook' || testType === 'chat-trigger') {
+                  if (
+                    testType === 'simulation' ||
+                    testType === 'webhook' ||
+                    testType === 'chat-trigger'
+                  ) {
                     simulateTrigger(abortControllerRef.current.signal);
                   } else if (testType === 'polling') {
                     pollTrigger();
@@ -182,7 +189,9 @@ const TestTriggerSection = React.memo(
               </TestSampleDataViewer>
             )}
 
-            {(testType === 'simulation' || testType === 'webhook' || testType === 'chat-trigger') &&
+            {(testType === 'simulation' ||
+              testType === 'webhook' ||
+              testType === 'chat-trigger') &&
               isSimulating && (
                 <SimulationNote
                   note={getSimulationNode(testType)}

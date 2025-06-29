@@ -20,11 +20,6 @@ const markdown = `
 Use this for production, views the published version of the chat flow.
 <br>
 <br>
-**Draft Chat URL:**
-\`\`\`text
-{{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
-\`\`\`
-Test the latest version of the chat flow.
 `;
 
 export const onChatSubmission = createTrigger({

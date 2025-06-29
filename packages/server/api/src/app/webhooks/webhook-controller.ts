@@ -13,8 +13,6 @@ import { projectService } from '../project/project-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
-import { websocketService } from '../websockets/websockets.service'
-
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -73,7 +71,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             execute: true,
             onRunCreated: (run) => {
                 app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
-            }
+            },
         })
         await reply
             .status(response.status)

@@ -16,12 +16,12 @@ type TestButtonProps = {
   showKeyboardShortcut?: boolean;
 };
 
-const TestButton = ({ 
-  onClick, 
-  text, 
-  disabled = false, 
+const TestButton = ({
+  onClick,
+  text,
+  disabled = false,
   loading = false,
-  showKeyboardShortcut = true 
+  showKeyboardShortcut = true,
 }: TestButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
 
@@ -78,4 +78,4 @@ const TestButton = ({
 
 TestButton.displayName = 'TestButton';
 
-export { TestButton }; 
+export { TestButton };

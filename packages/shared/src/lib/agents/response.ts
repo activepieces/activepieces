@@ -66,7 +66,7 @@ export const AgentTestResult = Type.Object({
         startTime: Type.String(),
         endTime: Type.Optional(Type.String()),
     })),
-    content: Type.Array(RichContentBlock)
+    content: Type.Array(RichContentBlock),
 })
 
 export type AgentTestResult = Static<typeof AgentTestResult>

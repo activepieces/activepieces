@@ -1,13 +1,12 @@
-import * as React from 'react';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
+import * as React from 'react';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { FileInputPreview } from '@/components/ui/chat/chat-input/file-input-preview';
 import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { cn, useElementSize } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
-
-import { FileInputPreview } from '@/components/ui/chat/chat-input/file-input-preview';
 
 export interface ChatMessage {
   textContent: string;
@@ -21,7 +20,16 @@ interface ChatInputProps extends Omit<ResizableTextareaProps, 'onSubmit'> {
 }
 
 const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
-  ({ className, onSendMessage, disabled = false, placeholder = "Type your message here...", ...props }, ref) => {
+  (
+    {
+      className,
+      onSendMessage,
+      disabled = false,
+      placeholder = 'Type your message here...',
+      ...props
+    },
+    ref,
+  ) => {
     const [input, setInput] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);

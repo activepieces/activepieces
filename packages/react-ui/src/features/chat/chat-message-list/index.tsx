@@ -7,14 +7,16 @@ import {
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from '@/components/ui/chat/chat-bubble';
+import { ChatMessage } from '@/components/ui/chat/chat-input';
 import { cn } from '@/lib/utils';
 import {
   ApErrorParams,
   ChatUIResponse,
   FileResponseInterface,
 } from '@activepieces/shared';
+
 import { MultiMediaMessage } from '../chat-message';
-import { ChatMessage } from '@/components/ui/chat/chat-input';
+
 import { ErrorBubble } from './error-bubble';
 
 export const Messages = Type.Array(
@@ -38,19 +40,22 @@ interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
-  ({
-    className,
-    children,
-    messagesRef,
-    messages,
-    chatUI,
-    sendingError,
-    isSending,
-    flowId,
-    sendMessage,
-    setSelectedImage,
-    ...props
-  }, ref) => {
+  (
+    {
+      className,
+      children,
+      messagesRef,
+      messages,
+      chatUI,
+      sendingError,
+      isSending,
+      flowId,
+      sendMessage,
+      setSelectedImage,
+      ...props
+    },
+    ref,
+  ) => {
     if (messages && messages.length > 0) {
       return (
         <div className="h-full w-full flex items-center justify-center overflow-y-auto">
@@ -66,7 +71,10 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
                   id={isLastMessage ? 'last-message' : undefined}
                   key={index}
                   variant={message.role === 'user' ? 'sent' : 'received'}
-                  className={cn('flex items-start', isLastMessage ? 'pb-8' : '')}
+                  className={cn(
+                    'flex items-start',
+                    isLastMessage ? 'pb-8' : '',
+                  )}
                 >
                   {message.role === 'bot' && (
                     <ChatBubbleAvatar
@@ -84,7 +92,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
                       textContent={message.textContent}
                       attachments={message.files}
                       role={message.role}
-                      setSelectedImage={setSelectedImage || (() => { })}
+                      setSelectedImage={setSelectedImage || (() => {})}
                     />
                   </ChatBubbleMessage>
                 </ChatBubble>

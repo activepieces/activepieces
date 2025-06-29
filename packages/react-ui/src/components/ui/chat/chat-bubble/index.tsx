@@ -127,7 +127,6 @@ const ChatBubbleMessage = React.forwardRef<
 );
 ChatBubbleMessage.displayName = 'ChatBubbleMessage';
 
-
 // ChatBubbleAction
 type ChatBubbleActionProps = ButtonProps & {
   icon: React.ReactNode;
@@ -151,7 +150,6 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
     {icon}
   </Button>
 );
-
 
 export {
   ChatBubble,

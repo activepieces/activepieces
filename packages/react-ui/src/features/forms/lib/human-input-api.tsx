@@ -28,7 +28,10 @@ export const humanInputApi = {
       data as Record<string, unknown>,
       formResult,
     );
-    const suffix = getSuffix(useDraft ? 'draft' : 'locked', formResult.props.waitForResponse);
+    const suffix = getSuffix(
+      useDraft ? 'draft' : 'locked',
+      formResult.props.waitForResponse,
+    );
     return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       processedData,
@@ -102,8 +105,11 @@ async function processData(
   return useFormData ? formData : processedData;
 }
 
-function getSuffix(mode: 'draft' | 'locked' | 'test', waitForResponse: boolean): string {
-  if(mode === 'test') {
+function getSuffix(
+  mode: 'draft' | 'locked' | 'test',
+  waitForResponse: boolean,
+): string {
+  if (mode === 'test') {
     return '/test';
   }
   if (mode === 'draft') {

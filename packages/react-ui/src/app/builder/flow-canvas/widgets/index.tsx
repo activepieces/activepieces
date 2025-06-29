@@ -20,8 +20,9 @@ const AboveFlowWidgets = React.memo(() => {
     <ViewportPortal>
       <div
         style={{
-          transform: `translate(0px,-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
-            }px )`,
+          transform: `translate(0px,-${
+            flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
+          }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
         }}
@@ -33,12 +34,10 @@ const AboveFlowWidgets = React.memo(() => {
             readonly={readonly}
           ></TestFlowWidget>
           {!readonly && (
-            <>
-              <IncompleteSettingsButton
-                flowVersion={flowVersion}
-                selectStepByName={selectStepByName}
-              ></IncompleteSettingsButton>
-            </>
+            <IncompleteSettingsButton
+              flowVersion={flowVersion}
+              selectStepByName={selectStepByName}
+            ></IncompleteSettingsButton>
           )}
         </div>
       </div>

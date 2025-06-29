@@ -7,11 +7,7 @@ import {
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from '@/components/ui/chat/chat-bubble';
-import {
-  ApErrorParams,
-  ChatUIResponse,
-  ErrorCode,
-} from '@activepieces/shared';
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 
 const formatError = (
   projectId: string | undefined | null,
@@ -91,4 +87,4 @@ export const ErrorBubble = ({
   </ChatBubble>
 );
 
-ErrorBubble.displayName = 'ErrorBubble'; 
+ErrorBubble.displayName = 'ErrorBubble';

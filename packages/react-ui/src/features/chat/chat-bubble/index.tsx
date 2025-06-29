@@ -2,11 +2,10 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-
 import MessageLoading from './message-loading';
-import { Button, ButtonProps } from '@/components/ui/button';
 
 // ChatBubble
 const chatBubbleVariant = cva('flex gap-2 w-full items-start relative group', {
@@ -127,7 +126,6 @@ const ChatBubbleMessage = React.forwardRef<
 );
 ChatBubbleMessage.displayName = 'ChatBubbleMessage';
 
-
 // ChatBubbleAction
 type ChatBubbleActionProps = ButtonProps & {
   icon: React.ReactNode;
@@ -151,7 +149,6 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
     {icon}
   </Button>
 );
-
 
 export {
   ChatBubble,

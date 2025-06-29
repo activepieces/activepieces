@@ -188,25 +188,25 @@ export const createBuilderStore = (
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
-        initialState.run.status,
-        initialState.run.steps,
-      )
+          initialState.run.status,
+          initialState.run.steps,
+        )
       : null;
     const initiallySelectedStep = newFlow
       ? null
       : determineInitiallySelectedStep(
-        failedStepInRun,
-        initialState.flowVersion,
-      );
+          failedStepInRun,
+          initialState.flowVersion,
+        );
 
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
-            initialState.run,
-            {},
-          )
+              initialState.flowVersion,
+              initialState.run,
+              {},
+            )
           : {},
       sampleData: initialState.sampleData,
       sampleDataInput: initialState.sampleDataInput,
@@ -223,8 +223,8 @@ export const createBuilderStore = (
       activeDraggingStep: null,
       rightSidebar:
         initiallySelectedStep &&
-          (initiallySelectedStep !== 'trigger' ||
-            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+        (initiallySelectedStep !== 'trigger' ||
+          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -269,7 +269,7 @@ export const createBuilderStore = (
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-              state.flowVersion.trigger.type === TriggerType.EMPTY
+            state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
@@ -359,8 +359,8 @@ export const createBuilderStore = (
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
-              state.selectedStep ??
-              'trigger'
+                state.selectedStep ??
+                'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -525,7 +525,7 @@ export const createBuilderStore = (
             selectedStep: step ? step : state.selectedStep,
             rightSidebar:
               (step && step !== 'trigger') ||
-                state.flowVersion.trigger.type !== TriggerType.EMPTY
+              state.flowVersion.trigger.type !== TriggerType.EMPTY
                 ? RightSideBarType.PIECE_SETTINGS
                 : state.rightSidebar,
           };
@@ -735,7 +735,7 @@ export const useIsFocusInsideListMapperModeInput = ({
         );
       setIsFocusInsideListMapperModeInput(
         isFocusedInside ||
-        (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
       );
     };
     document.addEventListener('focusin', focusInListener);

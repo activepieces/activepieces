@@ -1,6 +1,11 @@
 import { ArrowLeft } from 'lucide-react';
 import React, { useEffect } from 'react';
 
+import {
+  ChatDrawerSource,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -8,10 +13,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { FlowRun, FlowVersion, RunEnvironment, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared';
+import {
+  FlowRun,
+  FlowVersion,
+  RunEnvironment,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
+
 import { FlowChat } from './flow-chat';
-import { useSocket } from '@/components/socket-provider';
-import { ChatDrawerSource, useBuilderStateContext } from '@/app/builder/builder-hooks';
 
 interface ChatDrawerProps {
   source: ChatDrawerSource | null;
@@ -24,30 +33,29 @@ export const ChatDrawer = ({
   onOpenChange,
   flowVersion,
 }: ChatDrawerProps) => {
-
-
-  const [setRun] =
-    useBuilderStateContext((state) => [
-      state.setRun,
-    ]);
+  const [setRun] = useBuilderStateContext((state) => [state.setRun]);
   const socket = useSocket();
 
   const isListening = React.useRef(false);
 
   useEffect(() => {
-
     const onTestFlowRunStarted = (run: FlowRun) => {
-      if (run.flowVersionId === flowVersion.id && run.environment === RunEnvironment.TESTING && isListening.current) {
+      if (
+        run.flowVersionId === flowVersion.id &&
+        run.environment === RunEnvironment.TESTING &&
+        isListening.current
+      ) {
         setRun(run, flowVersion);
         isListening.current = false;
-
       }
-
     };
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onTestFlowRunStarted);
 
     return () => {
-      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onTestFlowRunStarted);
+      socket.off(
+        WebsocketClientEvent.TEST_FLOW_RUN_STARTED,
+        onTestFlowRunStarted,
+      );
     };
   }, [socket]);
 
@@ -75,15 +83,14 @@ export const ChatDrawer = ({
           </div>
         </DrawerHeader>
         <div className="flex-1 overflow-hidden">
-
           <FlowChat
             flowId={flowVersion.flowId}
             className="h-full"
             mode={source}
             showWelcomeMessage={true}
-            onError={() => { }}
+            onError={() => {}}
             closeChat={() => {
-              onOpenChange(false)
+              onOpenChange(false);
             }}
             onSendingMessage={() => {
               if (source === 'test-flow') {

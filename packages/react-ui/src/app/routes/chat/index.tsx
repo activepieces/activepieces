@@ -1,13 +1,16 @@
 import { useParams } from 'react-router-dom';
-import NotFoundPage from '../404-page';
-import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
-import { FlowChat } from '@/features/chat/flow-chat';
 import { useSearchParam } from 'react-use';
+
 import { ChatDrawerSource } from '@/app/builder/builder-hooks';
+import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+
+import NotFoundPage from '../404-page';
+
+import { FlowChat } from './flow-chat';
 
 export function ChatPage() {
   const { flowId } = useParams();
-  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true'
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
 
   if (!flowId) {
     return (
@@ -19,7 +22,7 @@ export function ChatPage() {
   }
 
   return (
-    <FlowChat    
+    <FlowChat
       flowId={flowId}
       mode={useDraft ? ChatDrawerSource.TEST_FLOW : ChatDrawerSource.TEST_STEP}
       onSendingMessage={() => {}}

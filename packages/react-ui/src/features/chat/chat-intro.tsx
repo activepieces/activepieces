@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { ChatUIResponse } from '@activepieces/shared';
 
 interface ChatIntroProps {

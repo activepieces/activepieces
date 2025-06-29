@@ -3,8 +3,15 @@ import { AxiosError } from 'axios';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { ChatInput, ChatMessage } from '@/components/ui/chat/chat-input';
+import { ImageDialog } from '@/components/ui/chat/chat-message/image-dialog';
+import {
+  ChatMessageList,
+  Messages,
+} from '@/components/ui/chat/chat-message-list';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { ChatIntro } from '@/features/chat/chat-intro';
 import { humanInputApi } from '@/features/forms/lib/human-input-api';
 import { cn } from '@/lib/utils';
 import {
@@ -14,11 +21,6 @@ import {
   isNil,
   HumanInputFormResultTypes,
 } from '@activepieces/shared';
-
-import { ImageDialog } from '../../components/ui/chat/chat-message/image-dialog';
-import { ChatMessageList, Messages } from '@/components/ui/chat/chat-message-list';
-import { ChatIntro } from './chat-intro';
-import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 
 interface FlowChatProps {
   flowId: string;
@@ -37,7 +39,7 @@ export function FlowChat({
   mode,
   onError,
   onSendingMessage,
-  closeChat
+  closeChat,
 }: FlowChatProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -48,12 +50,18 @@ export function FlowChat({
     isError: isLoadingError,
   } = useQuery<ChatUIResponse | null, Error>({
     queryKey: ['chat', flowId],
-    queryFn: () => humanInputApi.getChatUI(flowId, mode === ChatDrawerSource.TEST_FLOW || mode === ChatDrawerSource.TEST_STEP ? true : false),
+    queryFn: () =>
+      humanInputApi.getChatUI(
+        flowId,
+        mode === ChatDrawerSource.TEST_FLOW ||
+          mode === ChatDrawerSource.TEST_STEP
+          ? true
+          : false,
+      ),
     enabled: !isNil(flowId),
     staleTime: Infinity,
     retry: false,
   });
-
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -76,11 +84,21 @@ export function FlowChat({
     chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
-    mutationFn: async ({ isRetrying, message }: { isRetrying: boolean; message?: ChatMessage }) => {
+    mutationFn: async ({
+      isRetrying,
+      message,
+    }: {
+      isRetrying: boolean;
+      message?: ChatMessage;
+    }) => {
       if (!flowId || !chatId) return null;
 
-      const savedInput = isRetrying ? previousInputRef.current : (message?.textContent || '');
-      const savedFiles = isRetrying ? previousFilesRef.current : (message?.files || []);
+      const savedInput = isRetrying
+        ? previousInputRef.current
+        : message?.textContent || '';
+      const savedFiles = isRetrying
+        ? previousFilesRef.current
+        : message?.files || [];
 
       previousInputRef.current = savedInput;
       previousFilesRef.current = savedFiles;
@@ -111,7 +129,7 @@ export function FlowChat({
     },
 
     onSuccess: (result) => {
-      console.log(result)
+      console.log(result);
       if (mode === ChatDrawerSource.TEST_STEP) {
         closeChat?.();
       }
@@ -207,7 +225,7 @@ export function FlowChat({
       className={cn(
         'flex w-full flex-col items-center justify-center pb-6',
         messages.length > 0 ? 'h-screen' : 'h-screen',
-        className
+        className,
       )}
     >
       {messages.length > 0 ? (
@@ -256,4 +274,4 @@ export function FlowChat({
       />
     </main>
   );
-} 
+}

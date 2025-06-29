@@ -31,7 +31,11 @@ export const FirstTimeTestingSection = ({
   onMcpToolTesting,
   onSaveMockAsSampleData,
 }: FirstTimeTestingSectionProps) => {
-  if (testType === 'simulation' || testType === 'webhook' || testType === 'chat-trigger') {
+  if (
+    testType === 'simulation' ||
+    testType === 'webhook' ||
+    testType === 'chat-trigger'
+  ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
         <TestButtonTooltip disabled={!isValid}>
