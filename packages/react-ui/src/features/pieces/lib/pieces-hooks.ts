@@ -120,18 +120,19 @@ export const piecesHooks = {
   } => {
     const { metadata, isLoading: isLoadingPieces } =
       stepsHooks.useAllStepsMetadata(props);
+  const areAgentsEnabled = platformHooks.useAreAgentsEnabled();
     const { platform } = platformHooks.useCurrentPlatform();
     if (!metadata || isLoadingPieces) {
       return {
         isLoading: true,
         data: [],
       };
-    }
-    const piecesMetadataWithoutEmptySuggestions =
-      filterOutPiecesWithNoSuggestions(metadata);
+  }
+    const piecesMetadataWithoutEmptySuggestions = filterOutAgentPiece(filterOutPiecesWithNoSuggestions(metadata), areAgentsEnabled);
     const popularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) =>
       isPopularPieces(p, platform),
     );
+
     const pieceMetadataWithoutPopularPieces =
       piecesMetadataWithoutEmptySuggestions.filter(
         (p) => !popularPieces.includes(p),
@@ -209,27 +210,36 @@ type UsePiecesSearchProps = {
 };
 
 const filterOutPiecesWithNoSuggestions = (
-  metadata: StepMetadataWithSuggestions[],
+  stepsMetadata: StepMetadataWithSuggestions[],
 ) => {
-  return metadata.filter((step) => {
+  return stepsMetadata.filter((metadata) => {
     const isActionWithSuggestions =
-      step.type === ActionType.PIECE &&
-      step.suggestedActions &&
-      step.suggestedActions.length > 0;
+      metadata.type === ActionType.PIECE &&
+      metadata.suggestedActions &&
+      metadata.suggestedActions.length > 0;
 
     const isTriggerWithSuggestions =
-      step.type === TriggerType.PIECE &&
-      step.suggestedTriggers &&
-      step.suggestedTriggers.length > 0;
+      metadata.type === TriggerType.PIECE &&
+      metadata.suggestedTriggers &&
+      metadata.suggestedTriggers.length > 0;
 
     const isNotPieceType =
-      step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE;
-
+      metadata.type !== ActionType.PIECE && metadata.type !== TriggerType.PIECE;
     return (
       isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
     );
   });
 };
+const filterOutAgentPiece = (stepsMetadata: StepMetadataWithSuggestions[], areAgentsEnabled: boolean) => {
+  return stepsMetadata.filter((metadata) => {
+    const isPieceStep = metadata.type === ActionType.PIECE || metadata.type === TriggerType.PIECE;
+    const isAgentPiece = isPieceStep && metadata.pieceName === '@activepieces/piece-agent';
+    if(isAgentPiece) {
+      return areAgentsEnabled;
+    }
+    return true;
+  });
+}
 const isPopularPieces = (
   stepMetadata: StepMetadataWithSuggestions,
   platform: PlatformWithoutSensitiveData,
