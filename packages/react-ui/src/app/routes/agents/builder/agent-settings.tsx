@@ -17,7 +17,6 @@ import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
-import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentSettingsProps {
   agent?: Agent;
@@ -131,7 +130,6 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
-              <div>{agent && <AgentTestRunButton agentId={agent.id} />}</div>
             </div>
             <EditableTextWithPen
               value={description}

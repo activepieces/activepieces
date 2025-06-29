@@ -124,7 +124,7 @@ async function executeAgent(params: ExecuteAgent, todoId: string, log: FastifyBa
             projectId: params.agent.projectId,
         })
 
-        const agentResult = agentOutputUtils.findAgentResult({
+        const agentResult = agentOutputUtils.formatAgentResponse({
             todoId,
             content: blocks,
         })

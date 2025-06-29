@@ -30,7 +30,7 @@ function AgentTestingDialog({
     const activities = await todoActivityApi.list(todoId, {
       limit: 100,
     });
-    const agentResult: AgentTestResult = agentOutputUtils.findAgentResult({
+    const agentResult: AgentTestResult = agentOutputUtils.formatAgentResponse({
       todoId,
       content: activities.data[activities.data.length - 1].content,
     });
