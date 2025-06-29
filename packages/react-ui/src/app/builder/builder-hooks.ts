@@ -27,6 +27,7 @@ import {
   isNil,
   StepLocationRelativeToParent,
   FlowRunStatus,
+  apId,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -47,6 +48,7 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
+import { Messages } from '@/components/ui/chat/chat-message-list';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -98,7 +100,13 @@ export type BuilderState = {
   refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
   chatDrawerOpenSource: ChatDrawerSource | null;
+  chatSessionMessages: Messages;
+  chatSessionId: string | null;
   setChatDrawerOpenSource: (source: ChatDrawerSource | null) => void;
+  setChatSessionMessages: (messages: Messages) => void;
+  addChatMessage: (message: Messages[0]) => void;
+  clearChatSession: () => void;
+  setChatSessionId: (sessionId: string | null) => void;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
@@ -229,8 +237,20 @@ export const createBuilderStore = (
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
       chatDrawerOpenSource: null,
+      chatSessionMessages: [],
+      chatSessionId: apId(),
       setChatDrawerOpenSource: (source: ChatDrawerSource | null) =>
         set({ chatDrawerOpenSource: source }),
+      setChatSessionMessages: (messages: Messages) =>
+        set({ chatSessionMessages: messages }),
+      addChatMessage: (message: Messages[0]) =>
+        set((state) => ({
+          chatSessionMessages: [...state.chatSessionMessages, message],
+        })),
+      clearChatSession: () =>
+        set({ chatSessionMessages: [], chatSessionId: null }),
+      setChatSessionId: (sessionId: string | null) =>
+        set({ chatSessionId: sessionId }),
       removeStepSelection: () =>
         set({
           selectedStep: null,

@@ -30,6 +30,10 @@ interface FlowChatProps {
   onError?: (error: ApErrorParams | null) => void;
   onSendingMessage?: (message: ChatMessage) => void;
   closeChat?: () => void;
+  messages?: Messages;
+  chatSessionId?: string | null;
+  onAddMessage?: (message: Messages[0]) => void;
+  onSetSessionId?: (sessionId: string) => void;
 }
 
 export function FlowChat({
@@ -40,6 +44,10 @@ export function FlowChat({
   onError,
   onSendingMessage,
   closeChat,
+  messages = [],
+  chatSessionId,
+  onAddMessage,
+  onSetSessionId,
 }: FlowChatProps) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -72,8 +80,13 @@ export function FlowChat({
     }, 100);
   };
 
-  const chatId = useRef<string>(nanoid());
-  const [messages, setMessages] = useState<Messages>([]);
+  // Initialize chat session ID if not set and we have the callback
+  useEffect(() => {
+    if (!chatSessionId && onSetSessionId) {
+      onSetSessionId(nanoid());
+    }
+  }, [chatSessionId, onSetSessionId]);
+
   const previousInputRef = useRef('');
   const previousFilesRef = useRef<File[]>([]);
   const [sendingError, setSendingError] = useState<ApErrorParams | null>(null);
@@ -91,7 +104,7 @@ export function FlowChat({
       isRetrying: boolean;
       message?: ChatMessage;
     }) => {
-      if (!flowId || !chatId) return null;
+      if (!flowId || !chatSessionId) return null;
 
       const savedInput = isRetrying
         ? previousInputRef.current
@@ -103,25 +116,22 @@ export function FlowChat({
       previousInputRef.current = savedInput;
       previousFilesRef.current = savedFiles;
 
-      if (!isRetrying && message) {
-        setMessages([
-          ...messages,
-          {
-            role: 'user',
-            textContent: savedInput,
-            files: savedFiles.map((file) => ({
-              url: URL.createObjectURL(file),
-              mimeType: file.type,
-            })),
-          },
-        ]);
+      if (!isRetrying && message && onAddMessage) {
+        onAddMessage({
+          role: 'user',
+          textContent: savedInput,
+          files: savedFiles.map((file) => ({
+            url: URL.createObjectURL(file),
+            mimeType: file.type,
+          })),
+        });
       }
 
       scrollToBottom();
 
       return humanInputApi.sendMessage({
         flowId,
-        chatId: chatId.current,
+        chatId: chatSessionId,
         message: savedInput,
         files: savedFiles,
         mode: mode === ChatDrawerSource.TEST_STEP ? 'test' : 'draft',
@@ -143,25 +153,22 @@ export function FlowChat({
         return;
       }
 
-      if ('type' in result) {
+      if ('type' in result && onAddMessage) {
         setSendingError(null);
         onError?.(null);
 
         switch (result.type) {
           case HumanInputFormResultTypes.FILE: {
             if ('url' in result.value) {
-              setMessages([
-                ...messages,
-                {
-                  role: 'bot',
-                  files: [
-                    {
-                      url: result.value.url,
-                      mimeType: result.value.mimeType,
-                    },
-                  ],
-                },
-              ]);
+              onAddMessage({
+                role: 'bot',
+                files: [
+                  {
+                    url: result.value.url,
+                    mimeType: result.value.mimeType,
+                  },
+                ],
+              });
             }
             break;
           }
@@ -171,14 +178,11 @@ export function FlowChat({
               (file) => 'url' in file && 'mimeType' in file,
             );
 
-            setMessages([
-              ...messages,
-              {
-                role: 'bot',
-                textContent: result.value,
-                files: validFiles.length > 0 ? validFiles : undefined,
-              },
-            ]);
+            onAddMessage({
+              role: 'bot',
+              textContent: result.value,
+              files: validFiles.length > 0 ? validFiles : undefined,
+            });
             break;
           }
         }

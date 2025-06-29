@@ -33,7 +33,19 @@ export const ChatDrawer = ({
   onOpenChange,
   flowVersion,
 }: ChatDrawerProps) => {
-  const [setRun] = useBuilderStateContext((state) => [state.setRun]);
+  const [
+    setRun,
+    chatSessionMessages,
+    chatSessionId,
+    addChatMessage,
+    setChatSessionId,
+  ] = useBuilderStateContext((state) => [
+    state.setRun,
+    state.chatSessionMessages,
+    state.chatSessionId,
+    state.addChatMessage,
+    state.setChatSessionId,
+  ]);
   const socket = useSocket();
 
   const isListening = React.useRef(false);
@@ -63,7 +75,6 @@ export const ChatDrawer = ({
     <Drawer
       open={source !== null}
       onOpenChange={onOpenChange}
-      dismissible={false}
       direction="right"
     >
       <DrawerContent className="w-[500px] overflow-x-hidden">
@@ -97,6 +108,10 @@ export const ChatDrawer = ({
                 isListening.current = true;
               }
             }}
+            messages={chatSessionMessages}
+            chatSessionId={chatSessionId}
+            onAddMessage={addChatMessage}
+            onSetSessionId={setChatSessionId}
           />
         </div>
       </DrawerContent>
