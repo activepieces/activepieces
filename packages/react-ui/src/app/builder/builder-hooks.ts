@@ -54,6 +54,7 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -963,5 +964,9 @@ function determineInitiallySelectedStep(
   const firstInvalidStep = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .find((s) => !s.valid);
-  return firstInvalidStep?.name ?? 'trigger';
+   const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM)
+   if (isNewFlow) {
+    return null;
+   }
+   return firstInvalidStep?.name ?? 'trigger';
 }
