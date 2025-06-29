@@ -3,8 +3,9 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
+
+import { ScrollArea } from './scroll-area';
 
 interface VirtualizedScrollAreaProps<T> {
   items: T[];
@@ -30,7 +31,6 @@ export interface VirtualizedScrollAreaRef {
   ) => void;
 }
 
-/**Don't use ScrollArea here, there will always be a mismatch between the scrollbar and the content */
 const VirtualizedScrollArea = ({
   items,
   renderItem,
@@ -78,13 +78,9 @@ const VirtualizedScrollArea = ({
     }
   }, [initialScroll?.index, rowVirtualizer]);
   return (
-    <div
-      ref={parentRef}
-      className={cn(
-        'overflow-auto scrollbar-thin scrollbar-thumb-border  scrollbar-track-background scrollbar-track-rounded-full scrollbar-thumb-rounded-full',
-        className,
-      )}
+    <ScrollArea
       style={{ height: `${listHeight}px` }}
+      viewPortRef={parentRef}
       {...props}
     >
       <div
@@ -111,7 +107,7 @@ const VirtualizedScrollArea = ({
           </div>
         ))}
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 

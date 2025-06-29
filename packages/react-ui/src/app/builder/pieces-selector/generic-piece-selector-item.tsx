@@ -1,9 +1,9 @@
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ActionType, TriggerType } from '@activepieces/shared';
-
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
   hidePieceIconAndDescription: boolean;
@@ -30,8 +30,21 @@ const GenericActionOrTriggerItem = ({
   stepMetadataWithSuggestions,
   onClick,
 }: GenericActionOrTriggerItemProps) => {
+  // we add this style because we hide the piece icon and description when they are in a virtualized list
+  const style = hidePieceIconAndDescription
+    ? {
+        height: `${PIECE_SELECTOR_ELEMENTS_HEIGHTS.ACTION_OR_TRIGGER_ITEM_HEIGHT}px`,
+        maxHeight: `${PIECE_SELECTOR_ELEMENTS_HEIGHTS.ACTION_OR_TRIGGER_ITEM_HEIGHT}px`,
+      }
+    : {};
   return (
-    <CardListItem className="p-2 w-full" onClick={onClick}>
+    <CardListItem
+      className={cn('p-2 w-full ', {
+        truncate: !hidePieceIconAndDescription,
+      })}
+      onClick={onClick}
+      style={style}
+    >
       <div className="flex gap-3 items-center">
         <div
           className={cn({

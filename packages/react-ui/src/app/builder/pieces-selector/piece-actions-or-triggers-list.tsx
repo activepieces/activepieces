@@ -16,7 +16,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import { CreateTodoDialog } from './create-todo-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
-
 type PieceActionsOrTriggersListProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;

@@ -230,20 +230,16 @@ const checkPieceInputValidity = (
   }, true);
 };
 
-const maxListHeight = 300;
-const minListHeight = 100;
-const searchInputDivHeight = 48;
-
 // Adjusts piece list height to prevent overflow on short screens
 const useAdjustPieceListHeightToAvailableSpace = () => {
-  const listHeightRef = useRef<number>(maxListHeight);
+  const listHeightRef = useRef<number>(MAX_PIECE_SELECTOR_LIST_HEIGHT);
   const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   if (!popoverTriggerRef.current) {
     return {
       listHeightRef,
       popoverTriggerRef,
-      searchInputDivHeight,
+      searchInputDivHeight: SEARCH_INPUT_DIV_HEIGHT,
     };
   }
 
@@ -255,11 +251,18 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
 
   if (shouldRenderBelowPopoverTrigger) {
     const availableSpaceBelow =
-      viewportHeight - popOverTriggerRect.bottom - searchInputDivHeight;
-    listHeightRef.current = Math.max(minListHeight, availableSpaceBelow);
+      viewportHeight - popOverTriggerRect.bottom - SEARCH_INPUT_DIV_HEIGHT;
+    listHeightRef.current = Math.max(
+      MIN_PIECE_SELECTOR_LIST_HEIGHT,
+      availableSpaceBelow,
+    );
   } else {
-    const availableSpaceAbove = popOverTriggerRect.top - searchInputDivHeight;
-    listHeightRef.current = Math.max(minListHeight, availableSpaceAbove);
+    const availableSpaceAbove =
+      popOverTriggerRect.top - SEARCH_INPUT_DIV_HEIGHT;
+    listHeightRef.current = Math.max(
+      MIN_PIECE_SELECTOR_LIST_HEIGHT,
+      availableSpaceAbove,
+    );
   }
 
   return {
@@ -267,7 +270,20 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
     popoverTriggerRef,
   };
 };
-
+const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300;
+const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100;
+const SEARCH_INPUT_DIV_HEIGHT = 48;
+const PIECE_ITEM_HEIGHT = 48;
+const ACTION_OR_TRIGGER_ITEM_HEIGHT = 41;
+const CATEGORY_ITEM_HEIGHT = 28;
+export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
+  MAX_PIECE_SELECTOR_LIST_HEIGHT,
+  MIN_PIECE_SELECTOR_LIST_HEIGHT,
+  SEARCH_INPUT_DIV_HEIGHT,
+  PIECE_ITEM_HEIGHT,
+  ACTION_OR_TRIGGER_ITEM_HEIGHT,
+  CATEGORY_ITEM_HEIGHT,
+};
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,

@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -179,7 +180,7 @@ const transformPiecesMetadataToVirtualizedItems = (
       result.push({
         id: category.title,
         displayName: category.title,
-        height: 28,
+        height: PIECE_SELECTOR_ELEMENTS_HEIGHTS.CATEGORY_ITEM_HEIGHT,
         isCategory: true,
       });
     }
@@ -198,20 +199,20 @@ const transformPiecesMetadataToVirtualizedItems = (
   }, []);
 };
 
-const pieceItemHeight = 48;
-const actionOrTriggerItemHeight = 41;
 const getItemHeight = (
   pieceMetadata: StepMetadataWithSuggestions,
   showActionsOrTriggersInsidePiecesList: boolean,
 ) => {
+  const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
+    PIECE_SELECTOR_ELEMENTS_HEIGHTS;
   if (
     pieceMetadata.type === ActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     return (
-      actionOrTriggerItemHeight *
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
         Object.values(pieceMetadata.suggestedActions ?? {}).length +
-      pieceItemHeight
+      PIECE_ITEM_HEIGHT
     );
   }
   if (
@@ -219,9 +220,9 @@ const getItemHeight = (
     showActionsOrTriggersInsidePiecesList
   ) {
     return (
-      actionOrTriggerItemHeight *
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
         Object.values(pieceMetadata.suggestedTriggers ?? {}).length +
-      pieceItemHeight
+      PIECE_ITEM_HEIGHT
     );
   }
   const isCoreAction =
@@ -229,7 +230,7 @@ const getItemHeight = (
     pieceMetadata.type === ActionType.LOOP_ON_ITEMS ||
     pieceMetadata.type === ActionType.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
-    return actionOrTriggerItemHeight + pieceItemHeight;
+    return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
   }
-  return pieceItemHeight;
+  return PIECE_ITEM_HEIGHT;
 };

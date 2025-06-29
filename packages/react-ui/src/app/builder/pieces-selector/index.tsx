@@ -37,7 +37,7 @@ const PieceSelector = ({
     setOpenedPieceSelectorStepNameOrAddButtonId,
     setSelectedPieceMetadataInPieceSelector,
     isForEmptyTrigger,
-    deselectStep
+    deselectStep,
   ] = useBuilderStateContext((state) => [
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
@@ -69,7 +69,7 @@ const PieceSelector = ({
           setOpenedPieceSelectorStepNameOrAddButtonId(null);
           setSelectedPieceMetadataInPieceSelector(null);
           setSelectedPieceGroupType(initiallySelectedPieceGroupType);
-          if(isForEmptyTrigger) {
+          if (isForEmptyTrigger) {
             deselectStep();
           }
         }

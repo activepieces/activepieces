@@ -567,12 +567,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             if (!isTrigger) {
               break;
             }
-            if(flowVersion.trigger.type === TriggerType.EMPTY) {
-              set(()=>{
+            if (flowVersion.trigger.type === TriggerType.EMPTY) {
+              set(() => {
                 return {
                   rightSidebar: RightSideBarType.PIECE_SETTINGS,
-                }
-              })
+                };
+              });
             }
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
