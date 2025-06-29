@@ -40,11 +40,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         <CardContent className="p-4 flex flex-col h-full">
           <div className="flex gap-4 items-center">
             <div className="flex-shrink-0">
-              <div className="w-14 h-14 rounded-full overflow-hidden">
+              <div className="w-14 h-14  overflow-hidden">
                 <img
                   src={picture}
                   alt={title}
-                  className="w-full h-full rounded-sm object-cover"
+                  className="w-full h-full rounded-xl  object-cover"
                 />
               </div>
             </div>

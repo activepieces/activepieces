@@ -11,23 +11,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
+import { Agent, AgentOutputField, AgentOutputType, isNil } from '@activepieces/shared';
 
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
+import { t } from 'i18next';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 
 interface AgentSettingsProps {
   agent?: Agent;
   refetch: () => void;
+  onChange?: (agent: Agent) => void;
 }
 
 interface AgentFormValues {
   systemPrompt: string;
 }
 
-export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
+export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
   const { register, watch, setValue } = useForm<AgentFormValues>({
@@ -78,6 +81,9 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
 
   const handleNameChange = async (value: string) => {
     setDisplayName(value);
+    if(agent) {
+      onChange?.({...agent, displayName: value})
+    }
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { displayName: value } },
       { onSuccess: () => refetch() },
@@ -85,7 +91,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
   };
 
   const handleDescriptionChange = async (value: string) => {
-    setDescription(value);
+    setDescription(value);  
+    if(agent) {
+      onChange?.({...agent, description: value})
+    }
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { description: value } },
       { onSuccess: () => refetch() },
@@ -111,13 +120,10 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
       <div className="w-full px-6 pb-6 space-y-6">
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="flex-shrink-0">
-            <img
-              src={
-                agent?.profilePictureUrl ||
-                'https://cdn.activepieces.com/quicknew/agents/robots/robot_7000.png'
-              }
+            <ImageWithFallback
+              src={agent?.profilePictureUrl}
               alt="Agent avatar"
-              className="w-20 h-20 rounded-xl object-cover border"
+              className="w-20 h-20 rounded-xl object-cover"
             />
           </div>
           <div className="flex flex-col flex-1">
@@ -125,7 +131,7 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
               <EditableTextWithPen
                 value={displayName}
                 className="text-2xl font-semibold"
-                readonly={false}
+                readonly={isNil(agent)}
                 onValueChange={handleNameChange}
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
@@ -134,17 +140,21 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
             <EditableTextWithPen
               value={description}
               className="text-sm text-muted-foreground mt-1 max-w-[400px]"
-              readonly={false}
+              readonly={isNil(agent)}
               onValueChange={handleDescriptionChange}
               isEditing={isEditingDescription}
               setIsEditing={setIsEditingDescription}
             />
-            <div className="flex items-center gap-2 mt-2">
-              <Activity className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium">
-                Task Completed: {agent?.taskCompleted}
-              </span>
-            </div>
+            {
+              !isNil(agent) && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Activity className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium">
+                    {t('Task Completed')}: {agent?.taskCompleted}
+                  </span>
+                </div>
+              )
+            }
           </div>
         </div>
 
@@ -154,17 +164,14 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
             <div className="flex flex-col">
               <div className="flex items-center gap-2 text-lg">
                 <Wand className="w-4 h-4" />
-                <span>Instructions</span>
+                <span>{t('Instructions')}</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <Info className="w-4 h-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>
-                        Define how your agent should behave and respond to
-                        tasks.
-                      </p>
+                        {t('Define how your agent should behave and respond to tasks.')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -176,10 +183,11 @@ export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
             {...register('systemPrompt')}
             placeholder="You are a helpful assistant that specializes in scheduling meetings."
             className="min-h-[100px] resize-none w-full"
+            disabled={isNil(agent)}
           />
         </div>
 
-        {agent?.mcpId && (
+        {!isNil(agent) && !isNil(agent.mcpId) && (
           <div className="space-y-6">
             <McpToolsSection mcpId={agent.mcpId} />
             <AgentSettingsOutput onChange={handleOutputChange} agent={agent} />

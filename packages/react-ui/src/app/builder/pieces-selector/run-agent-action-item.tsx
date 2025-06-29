@@ -1,10 +1,11 @@
 import { CardListItemSkeleton } from "@/components/custom/card-list";
 import { agentHooks } from "@/features/agents/lib/agent-hooks";
-import { Agent, FlowOperationType, isNil } from "@activepieces/shared";
+import { Agent, isNil } from "@activepieces/shared";
 import GenericActionOrTriggerItem from "./generic-piece-selector-item";
 import { PieceSelectorOperation, PieceSelectorPieceItem } from "@/lib/types";
-import { BuilderState, useBuilderStateContext } from "../builder-hooks";
-import { pieceSelectorUtils } from "@/features/pieces/lib/piece-selector-utils";
+import { useBuilderStateContext } from "../builder-hooks";
+import CreateAgentActionItem from "./create-agent-action-item";
+import { handleAddingOrUpdatingCustomAgentPieceSelectorItem, overrideDisplayInfoForPieceSelectorItemWithAgentInfo } from "./custom-piece-selector-items-utils";
 
 
 type RunAgentActionItemProps = {
@@ -22,22 +23,11 @@ const RunAgentActionItem = ({ pieceSelectorItem, operation, hidePieceIconAndDesc
           </div>
     }
 
-    const agentPieceSelectorItems = agentsPage.data.map((agent) => ({...modifyPieceSelectorItemToRunAgent(pieceSelectorItem, agent), agent}))
+    const agentPieceSelectorItems = agentsPage.data.map((agent) => ({...overrideDisplayInfoForPieceSelectorItemWithAgentInfo(pieceSelectorItem, agent), agent}))
 
     return (
         <>
-        <GenericActionOrTriggerItem
-            item={pieceSelectorItem}
-            hidePieceIconAndDescription={hidePieceIconAndDescription}
-            stepMetadataWithSuggestions={pieceSelectorItem.pieceMetadata}
-            onClick={() => {
-                handleAddingOrUpdatingStep({
-                    pieceSelectorItem,
-                    operation,
-                    selectStepAfter: true,
-                  })
-            }}
-        />
+        <CreateAgentActionItem pieceSelectorItem={pieceSelectorItem} operation={operation} hidePieceIconAndDescription={hidePieceIconAndDescription} />
         {agentPieceSelectorItems.map((agentPieceSelectorItem) => (
             <GenericActionOrTriggerItem
                 item={agentPieceSelectorItem}
@@ -54,32 +44,3 @@ const RunAgentActionItem = ({ pieceSelectorItem, operation, hidePieceIconAndDesc
 
 export default RunAgentActionItem;
 
-const modifyPieceSelectorItemToRunAgent = (pieceSelectorItem: PieceSelectorPieceItem, agent: Agent): PieceSelectorPieceItem => {
-    const agentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(JSON.stringify(pieceSelectorItem))
-    agentPieceSelectorItem.pieceMetadata.logoUrl = agent.profilePictureUrl
-    agentPieceSelectorItem.actionOrTrigger.description = agent.description
-    agentPieceSelectorItem.actionOrTrigger.displayName = agent.displayName
-    return agentPieceSelectorItem
-};
-
-const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (pieceSelectorItem: PieceSelectorPieceItem, agent: Agent, operation: PieceSelectorOperation, handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep']) => {
-    const stepName = handleAddingOrUpdatingStep({
-        pieceSelectorItem,
-        operation,
-        selectStepAfter: true
-    })
-    const defaultValues = pieceSelectorUtils.getDefaultStepValues({
-        stepName,
-        pieceSelectorItem
-    })
-    defaultValues.settings.input.agentId = agent.id
-    return handleAddingOrUpdatingStep({
-        pieceSelectorItem,
-        operation: {
-            type: FlowOperationType.UPDATE_ACTION,
-            stepName,
-        },
-        selectStepAfter: false,
-        settings: defaultValues.settings,
-    })
-}

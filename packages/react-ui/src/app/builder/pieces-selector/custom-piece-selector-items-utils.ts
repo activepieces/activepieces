@@ -9,10 +9,12 @@ import {
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
+  PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
   ActionType,
+  Agent,
   BranchExecutionType,
   BranchOperator,
   FlowOperationType,
@@ -183,3 +185,34 @@ export const createWaitForApprovalStep = ({
     settings: defaultValues.settings,
   });
 };
+
+export const overrideDisplayInfoForPieceSelectorItemWithAgentInfo = (pieceSelectorItem: PieceSelectorPieceItem, agent: Agent): PieceSelectorPieceItem => {
+  const agentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(JSON.stringify(pieceSelectorItem))
+  agentPieceSelectorItem.pieceMetadata.logoUrl = agent.profilePictureUrl
+  agentPieceSelectorItem.actionOrTrigger.description = agent.description
+  agentPieceSelectorItem.actionOrTrigger.displayName = agent.displayName
+  return agentPieceSelectorItem
+};
+
+export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (pieceSelectorItem: PieceSelectorPieceItem, agent: Agent, operation: PieceSelectorOperation, handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep']) => {
+  const agentPieceSelectorItem = overrideDisplayInfoForPieceSelectorItemWithAgentInfo(pieceSelectorItem, agent)
+  const stepName = handleAddingOrUpdatingStep({
+      pieceSelectorItem: agentPieceSelectorItem,
+      operation,
+      selectStepAfter: true
+  })
+  const defaultValues = pieceSelectorUtils.getDefaultStepValues({
+      stepName,
+      pieceSelectorItem: agentPieceSelectorItem
+  })
+  defaultValues.settings.input.agentId = agent.id
+  return handleAddingOrUpdatingStep({
+      pieceSelectorItem: agentPieceSelectorItem,
+      operation: {
+          type: FlowOperationType.UPDATE_ACTION,
+          stepName,
+      },
+      selectStepAfter: false,
+      settings: defaultValues.settings,
+  })
+}

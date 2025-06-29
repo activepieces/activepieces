@@ -11,6 +11,7 @@ import {
 import { Agent } from '@activepieces/shared';
 
 import { AgentSettings } from './agent-settings';
+import { t } from 'i18next';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface AgentBuilderProps {
   trigger: ReactNode;
   agent?: Agent;
   refetch: () => void;
+  onChange?: (agent: Agent) => void;
 }
 
 export const AgentBuilder = ({
@@ -26,6 +28,7 @@ export const AgentBuilder = ({
   refetch,
   trigger,
   agent,
+  onChange,
 }: AgentBuilderProps) => {
   return (
     <Drawer
@@ -49,7 +52,7 @@ export const AgentBuilder = ({
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <DrawerTitle>
-                  {agent ? 'Edit Agent' : 'Agent Builder'}
+                  {agent ? `${t('Edit')} ${agent?.displayName}` : `${t('Creating Agent')}...`}
                 </DrawerTitle>
               </div>
             </div>
@@ -61,7 +64,7 @@ export const AgentBuilder = ({
             className="w-full max-w-3xl px-4"
             style={{ maxHeight: 'calc(100vh - 80px)' }}
           >
-            <AgentSettings agent={agent} refetch={refetch} />
+            <AgentSettings agent={agent} refetch={refetch} onChange={onChange} />
           </div>
         </div>
       </DrawerContent>
