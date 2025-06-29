@@ -5,6 +5,7 @@ import {
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
+    McpPieceToolData,
     McpRunStatus,
     McpTool,
     mcpToolNaming,
@@ -102,17 +103,16 @@ async function addPieceToServer(
                         pieceType: pieceMetadata.pieceType,
                     },
                 )
-                const pieceConnectionExternalId = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
-                assertNotNullOrUndefined(pieceConnectionExternalId, 'Tool has no connection with the piece, please try to add a connection to the tool')
                 const parsedInputs = await parseActionParametersFromInstructions({
                     actionMetadata,
+                    toolPieceMetadata,
                     userInstructions: params.instructions,
                     piecePackage,
-                    pieceConnectionExternalId,
                     platformId,
                     projectId,
                     logger,
                 })
+
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                     jobType: UserInteractionJobType.EXECUTE_TOOL,
@@ -293,28 +293,32 @@ async function initializeOpenAIModel({
 
 async function parseActionParametersFromInstructions({
     actionMetadata,
+    toolPieceMetadata,
     userInstructions,    
     piecePackage,
-    pieceConnectionExternalId,
     platformId,
     projectId,
     logger,
 }: ParseActionParametersParams): Promise<Record<string, unknown>> {
+    const pieceConnectionExternalId = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
+    assertNotNullOrUndefined(pieceConnectionExternalId, 'Tool has no connection with the piece, please try to add a connection to the tool')
+
     const aiModel = await initializeOpenAIModel({
         platformId,
         projectId,
     })
 
     const actionProperties = actionMetadata.props
-    const parsedParameters: Record<string, unknown> = {
-        'auth': pieceConnectionExternalId,
-    }
+    const actionPropertiesEntries = Object.entries(actionProperties)
 
-    for (const [propertyName, propertyDefinition] of Object.entries(actionProperties)) {
+    const parsedParameters = await actionPropertiesEntries.reduce(async (accPromise, [propertyName, propertyDefinition]) => {
+        const acc = await accPromise
         const needsDynamicResolution = propertyDefinition.type === PropertyType.DYNAMIC || 
-                                     propertyDefinition.type === PropertyType.DROPDOWN || 
-                                     propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN        
+            propertyDefinition.type === PropertyType.DROPDOWN || 
+            propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN
+        
         let dynamicPropertySchema = 'N/A'
+        
         if (needsDynamicResolution) {
             const propertyResolutionResult = await userInteractionWatcher(logger)
                 .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
@@ -322,7 +326,7 @@ async function parseActionParametersFromInstructions({
                 projectId,
                 propertyName,
                 actionOrTriggerName: actionMetadata.name,
-                input: parsedParameters,
+                input: acc,
                 piece: piecePackage,
                 sampleData: {},
             })
@@ -344,10 +348,11 @@ PROPERTY SCHEMA:
 ${dynamicPropertySchema}
 
 IMPORTANT:
-- For DYNAMIC properties, return an object with the keys and values of the options object and fill it out.
+- For DYNAMIC properties, for each value, wrap the keys inside the options property inside an object with the same property name, and assign the array to the property name. For example, if the property is "values", return: { "values": [ { ...optionKeys }, ... ] }.
 - For dropdown properties, select values from the provided options array only
 - For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
 - Return valid JSON for complex types, raw values for simple types
+- Must include all required properties, even if the user does not provide a value
 - For CHECKBOX properties, return true or false
 - For SHORT_TEXT and LONG_TEXT properties, return string values
 - For NUMBER properties, return numeric values
@@ -356,7 +361,7 @@ IMPORTANT:
 - Use actual values from user instructions when available
 
 CONTEXT:
-- Previously filled properties: ${JSON.stringify(parsedParameters, null, 2)}
+- Previously filled properties: ${JSON.stringify(acc, null, 2)}
 
 INSTRUCTIONS:
 1. Extract the property value from user instructions
@@ -373,19 +378,23 @@ Respond with ONLY the value, no explanations or additional text.`
             model: aiModel,
             prompt: parameterExtractionPrompt,
         })
-        let extractedValue = aiResponse.text.trim()
         
+        let extractedValue = aiResponse.text.trim()
         try {
             extractedValue = JSON.parse(aiResponse.text)
         }
         catch {
             if (extractedValue === 'SKIP_PROPERTY') {
-                continue
+                return acc
             }
         }
 
-        parsedParameters[propertyName] = extractedValue
-    }
+        return {
+            ...acc,
+            [propertyName]: extractedValue,
+        }
+    }, Promise.resolve({ 'auth': pieceConnectionExternalId }))
+
     return parsedParameters
 }
 
@@ -405,9 +414,9 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
 
 type ParseActionParametersParams = {
     actionMetadata: ActionBase
+    toolPieceMetadata: McpPieceToolData
     userInstructions: string
     piecePackage: PiecePackage
-    pieceConnectionExternalId: string
     platformId: string
     projectId: string
     logger: FastifyBaseLogger
