@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
-import { useState, useEffect } from 'react';
 
 import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { Messages } from '@/components/ui/chat/chat-message-list';
@@ -14,7 +14,7 @@ import { FlowChat } from './flow-chat';
 export function ChatPage() {
   const { flowId } = useParams();
   const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
-  
+
   const [messages, setMessages] = useState<Messages>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
 
@@ -25,7 +25,7 @@ export function ChatPage() {
   }, [chatSessionId]);
 
   const addMessage = (message: Messages[0]) => {
-    setMessages(prev => [...prev, message]);
+    setMessages((prev) => [...prev, message]);
   };
 
   if (!flowId) {

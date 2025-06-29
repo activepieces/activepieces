@@ -10,6 +10,7 @@ import {
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
+import { Messages } from '@/components/ui/chat/chat-message-list';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
@@ -48,7 +49,6 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-import { Messages } from '@/components/ui/chat/chat-message-list';
 
 const flowUpdatesQueue = new PromiseQueue();
 
