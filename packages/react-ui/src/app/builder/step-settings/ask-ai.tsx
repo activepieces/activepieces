@@ -4,7 +4,7 @@ import { Sparkle } from 'lucide-react';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { Button, ButtonProps } from '../../../components/ui/button';
-import { AskAiButtonOperations } from '../../../features/pieces/lib/types';
+import { AskAiButtonOperations } from '../../../lib/types';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const AskAiButton = ({

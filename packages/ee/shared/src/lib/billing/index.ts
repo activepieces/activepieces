@@ -14,7 +14,7 @@ export type FlowPlanLimits = {
 export enum ApSubscriptionStatus {
     ACTIVE = 'active',
     CANCELED = 'canceled',
-    TRIALING = 'trialing'
+    TRIALING = 'trialing',
 }
 
 export const DEFAULT_BUSINESS_SEATS = 5

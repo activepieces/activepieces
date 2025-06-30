@@ -14,6 +14,7 @@ import { Messages } from '@/components/ui/chat/chat-message-list';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
@@ -28,12 +29,19 @@ import {
   isNil,
   StepLocationRelativeToParent,
   FlowRunStatus,
+  ActionType,
   apId,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
-import { AskAiButtonOperations } from '../../features/pieces/lib/types';
+import { pieceSelectorUtils } from '../../features/pieces/lib/piece-selector-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+import {
+  AskAiButtonOperations,
+  PieceSelectorItem,
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '../../lib/types';
 
 import {
   copySelectedNodes,
@@ -109,7 +117,7 @@ export type BuilderState = {
   setChatSessionId: (sessionId: string | null) => void;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
-  exitRun: (userHasPermissionToEditFlow: boolean) => void;
+  clearRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
@@ -123,7 +131,6 @@ export type BuilderState = {
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
   setSampleDataInput: (stepName: string, payload: unknown) => void;
-  exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
@@ -150,14 +157,29 @@ export type BuilderState = {
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
   setPanningMode: (mode: 'grab' | 'pan') => void;
-  pieceSelectorStep: string | null;
-  setPieceSelectorStep: (step: string | null) => void;
   isFocusInsideListMapperModeInput: boolean;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   isPublishing: boolean;
   setIsPublishing: (isPublishing: boolean) => void;
+  handleAddingOrUpdatingStep: (props: {
+    pieceSelectorItem: PieceSelectorItem;
+    operation: PieceSelectorOperation;
+    settings?: Record<string, unknown>;
+    selectStepAfter: boolean;
+    customLogoUrl?: string;
+  }) => string;
+  deselectStep: () => void;
+  //Piece selector state
+  openedPieceSelectorStepNameOrAddButtonId: string | null;
+  setOpenedPieceSelectorStepNameOrAddButtonId: (
+    stepNameOrAddButtonId: string | null,
+  ) => void;
+  selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null;
+  setSelectedPieceMetadataInPieceSelector: (
+    metadata: StepMetadataWithSuggestions | null,
+  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -173,40 +195,21 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
-function determineInitiallySelectedStep(
-  failedStepInRun: string | null,
-  flowVersion: FlowVersion,
-): string | null {
-  if (failedStepInRun) {
-    return failedStepInRun;
-  }
-  if (flowVersion.state === FlowVersionState.LOCKED) {
-    return null;
-  }
-  return (
-    flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid)
-      ?.name ?? 'trigger'
-  );
-}
-
-export const createBuilderStore = (
-  initialState: BuilderInitialState,
-  newFlow: boolean,
-) =>
-  create<BuilderState>((set) => {
-    const failedStepInRun = initialState.run?.steps
+export const createBuilderStore = (initialState: BuilderInitialState) =>
+  create<BuilderState>((set, get) => {
+    const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
           initialState.run.steps,
         )
       : null;
-    const initiallySelectedStep = newFlow
-      ? null
-      : determineInitiallySelectedStep(
-          failedStepInRun,
-          initialState.flowVersion,
-        );
-
+    const initiallySelectedStep = determineInitiallySelectedStep(
+      failedStepNameInRun,
+      initialState.flowVersion,
+    );
+    const isEmptyTriggerInitiallySelected =
+      initiallySelectedStep === 'trigger' &&
+      initialState.flowVersion.trigger.type === TriggerType.EMPTY;
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -230,9 +233,7 @@ export const createBuilderStore = (
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       rightSidebar:
-        initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+        initiallySelectedStep && !isEmptyTriggerInitiallySelected
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -297,7 +298,14 @@ export const createBuilderStore = (
             ? LeftSideBarType.RUN_DETAILS
             : LeftSideBarType.NONE;
 
+          const isEmptyTrigger =
+            selectedStep === 'trigger' &&
+            state.flowVersion.trigger.type === TriggerType.EMPTY;
+
           return {
+            openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
+              ? 'trigger'
+              : null,
             selectedStep,
             rightSidebar,
             leftSidebar,
@@ -336,13 +344,12 @@ export const createBuilderStore = (
             },
           };
         }),
-      exitRun: (userHasPermissionToEditFlow: boolean) =>
+      clearRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
           readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
-          rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
@@ -356,17 +363,19 @@ export const createBuilderStore = (
           selectedBranchIndex: null,
           askAiButtonProps: null,
         })),
-      exitPieceSelector: () =>
-        set({
-          rightSidebar: RightSideBarType.NONE,
-          selectedBranchIndex: null,
-        }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
       setLeftSidebar: (leftSidebar: LeftSideBarType) =>
         set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
+          const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
+            run.status,
+            run.steps,
+          );
+          const initiallySelectedStep = run.steps
+            ? determineInitiallySelectedStep(lastStepWithStatus, flowVersion)
+            : state.selectedStep ?? 'trigger';
           return {
             loopsIndexes: flowRunUtils.findLoopsState(
               flowVersion,
@@ -376,12 +385,10 @@ export const createBuilderStore = (
             run,
             flowVersion,
             leftSidebar: LeftSideBarType.RUN_DETAILS,
-            rightSidebar: RightSideBarType.PIECE_SETTINGS,
-            selectedStep: run.steps
-              ? flowRunUtils.findLastStepWithStatus(run.status, run.steps) ??
-                state.selectedStep ??
-                'trigger'
-              : 'trigger',
+            rightSidebar: initiallySelectedStep
+              ? RightSideBarType.PIECE_SETTINGS
+              : RightSideBarType.NONE,
+            selectedStep: initiallySelectedStep,
             readonly: true,
           };
         }),
@@ -450,15 +457,25 @@ export const createBuilderStore = (
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {
+        const initiallySelectedStep = determineInitiallySelectedStep(
+          null,
+          flowVersion,
+        );
+        const isEmptyTriggerInitiallySelected =
+          initiallySelectedStep === 'trigger' &&
+          flowVersion.trigger.type === TriggerType.EMPTY;
         set((state) => ({
           flowVersion,
           run: null,
-          selectedStep: null,
+          selectedStep: initiallySelectedStep,
           readonly:
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
-          rightSidebar: RightSideBarType.NONE,
+          rightSidebar:
+            initiallySelectedStep && !isEmptyTriggerInitiallySelected
+              ? RightSideBarType.PIECE_SETTINGS
+              : RightSideBarType.NONE,
           selectedBranchIndex: null,
         }));
       },
@@ -530,26 +547,19 @@ export const createBuilderStore = (
           selectedNodes: nodes,
         }));
       },
+      deselectStep: () => {
+        return set(() => ({
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+          selectedStep: null,
+        }));
+      },
       panningMode: getPanningModeFromLocalStorage(),
       setPanningMode: (mode: 'grab' | 'pan') => {
         localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
         return set(() => ({
           panningMode: mode,
         }));
-      },
-      pieceSelectorStep: null,
-      setPieceSelectorStep: (step: string | null) => {
-        return set((state) => {
-          return {
-            pieceSelectorStep: step,
-            selectedStep: step ? step : state.selectedStep,
-            rightSidebar:
-              (step && step !== 'trigger') ||
-              state.flowVersion.trigger.type !== TriggerType.EMPTY
-                ? RightSideBarType.PIECE_SETTINGS
-                : state.rightSidebar,
-          };
-        });
       },
       isFocusInsideListMapperModeInput: false,
       setIsFocusInsideListMapperModeInput: (
@@ -558,6 +568,146 @@ export const createBuilderStore = (
         return set(() => ({
           isFocusInsideListMapperModeInput,
         }));
+      },
+      handleAddingOrUpdatingStep: ({
+        pieceSelectorItem,
+        operation,
+        settings,
+        selectStepAfter,
+        customLogoUrl,
+      }): string => {
+        const {
+          applyOperation,
+          selectStepByName,
+          flowVersion,
+          setOpenedPieceSelectorStepNameOrAddButtonId,
+        } = get();
+
+        const defaultValues = pieceSelectorUtils.getDefaultStepValues({
+          stepName: getStepNameFromOperationType(operation, flowVersion),
+          pieceSelectorItem,
+          settings,
+        });
+        const isTrigger =
+          defaultValues.type === TriggerType.PIECE ||
+          defaultValues.type === TriggerType.EMPTY;
+        switch (operation.type) {
+          case FlowOperationType.UPDATE_TRIGGER: {
+            if (!isTrigger) {
+              break;
+            }
+            if (flowVersion.trigger.type === TriggerType.EMPTY) {
+              set(() => {
+                return {
+                  rightSidebar: RightSideBarType.PIECE_SETTINGS,
+                };
+              });
+            }
+            applyOperation({
+              type: FlowOperationType.UPDATE_TRIGGER,
+              request: defaultValues,
+            });
+            selectStepByName('trigger');
+            break;
+          }
+          case FlowOperationType.ADD_ACTION: {
+            if (isTrigger) {
+              break;
+            }
+            applyOperation({
+              type: FlowOperationType.ADD_ACTION,
+              request: {
+                ...operation.actionLocation,
+                action: {
+                  ...defaultValues,
+                  customLogoUrl,
+                },
+              },
+            });
+            if (selectStepAfter) {
+              selectStepByName(defaultValues.name);
+            }
+            break;
+          }
+          case FlowOperationType.UPDATE_ACTION: {
+            const currentAction = flowStructureUtil.getStep(
+              operation.stepName,
+              flowVersion.trigger,
+            );
+            if (isNil(currentAction)) {
+              console.error(
+                "Trying to update an action that's not in the displayed flow version",
+              );
+              break;
+            }
+            if (
+              !flowStructureUtil.isAction(currentAction.type) ||
+              !flowStructureUtil.isAction(defaultValues.type)
+            ) {
+              break;
+            }
+
+            const isSamePieceAction =
+              currentAction.type === ActionType.PIECE &&
+              defaultValues.type === ActionType.PIECE &&
+              defaultValues.settings.actionName ===
+                currentAction.settings.actionName &&
+              defaultValues.settings.pieceVersion ===
+                currentAction.settings.pieceVersion;
+
+            const isSameCoreAction =
+              currentAction.type !== ActionType.PIECE &&
+              defaultValues.type !== ActionType.PIECE &&
+              defaultValues.type === currentAction.type;
+
+            if (isSamePieceAction || isSameCoreAction) {
+              break;
+            }
+
+            applyOperation({
+              type: FlowOperationType.UPDATE_ACTION,
+              request: {
+                type: defaultValues.type,
+                displayName: defaultValues.displayName,
+                name: operation.stepName,
+                settings: {
+                  ...defaultValues.settings,
+                },
+                valid: defaultValues.valid,
+                customLogoUrl,
+              },
+            });
+            break;
+          }
+        }
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
+        return defaultValues.name;
+      },
+      selectedPieceMetadataInPieceSelector: null,
+      setSelectedPieceMetadataInPieceSelector: (
+        metadata: StepMetadataWithSuggestions | null,
+      ) => {
+        return set(() => ({
+          selectedPieceMetadataInPieceSelector: metadata,
+        }));
+      },
+      openedPieceSelectorStepNameOrAddButtonId: isEmptyTriggerInitiallySelected
+        ? 'trigger'
+        : null,
+      setOpenedPieceSelectorStepNameOrAddButtonId: (
+        stepNameOrAddButtonId: string | null,
+      ) => {
+        return set((state) => {
+          const isReplacingEmptyTrigger =
+            state.flowVersion.trigger.type === TriggerType.EMPTY &&
+            stepNameOrAddButtonId === 'trigger';
+          return {
+            openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,
+            rightSidebar: isReplacingEmptyTrigger
+              ? RightSideBarType.NONE
+              : state.rightSidebar,
+          };
+        });
       },
     };
   });
@@ -620,7 +770,7 @@ export const useHandleKeyPressOnCanvas = () => {
       if (
         e.target instanceof HTMLElement &&
         (e.target === document.body ||
-          e.target.classList.contains('react-flow__nodesselection-rect') ||
+          e.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME) ||
           e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
         !readonly
       ) {
@@ -701,11 +851,11 @@ export const useHandleKeyPressOnCanvas = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, exitRun, setFlow] = useBuilderStateContext(
+  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
     (state) => [
       state.flowVersion,
       state.setVersion,
-      state.exitRun,
+      state.clearRun,
       state.setFlow,
     ],
   );
@@ -720,7 +870,7 @@ export const useSwitchToDraft = () => {
       onSuccess: (flow) => {
         setFlow(flow);
         setVersion(flow.version);
-        exitRun(userHasPermissionToEditFlow);
+        clearRun(userHasPermissionToEditFlow);
       },
       onError: () => {
         toast(INTERNAL_ERROR_TOAST);
@@ -818,3 +968,34 @@ export const useResizeCanvas = (
     };
   }, [setViewport, getViewport]);
 };
+
+const getStepNameFromOperationType = (
+  operation: PieceSelectorOperation,
+  flowVersion: FlowVersion,
+) => {
+  switch (operation.type) {
+    case FlowOperationType.UPDATE_ACTION:
+      return operation.stepName;
+    case FlowOperationType.ADD_ACTION:
+      return flowStructureUtil.findUnusedName(flowVersion.trigger);
+    case FlowOperationType.UPDATE_TRIGGER:
+      return 'trigger';
+  }
+};
+function determineInitiallySelectedStep(
+  failedStepNameInRun: string | null,
+  flowVersion: FlowVersion,
+): string | null {
+  if (failedStepNameInRun) {
+    return failedStepNameInRun;
+  }
+  const firstInvalidStep = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .find((s) => !s.valid);
+  // eslint-disable-next-line no-restricted-globals
+  const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM);
+  if (isNewFlow) {
+    return null;
+  }
+  return firstInvalidStep?.name ?? 'trigger';
+}

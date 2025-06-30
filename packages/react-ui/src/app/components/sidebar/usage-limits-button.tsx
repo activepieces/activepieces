@@ -1,11 +1,6 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import {
-  ClipboardCheck,
-  Sparkles,
-  Clock,
-  Rocket,
-} from 'lucide-react';
+import { ClipboardCheck, Sparkles, Clock, Rocket } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -14,9 +9,7 @@ import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
-import {
-  billingQueries,
-} from '@/features/billing/lib/billing-hooks';
+import { billingQueries } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';

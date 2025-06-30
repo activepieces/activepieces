@@ -19,7 +19,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';

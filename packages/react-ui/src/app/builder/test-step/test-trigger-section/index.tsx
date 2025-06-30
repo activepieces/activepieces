@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { Trigger, isNil } from '@activepieces/shared';
 
 import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';

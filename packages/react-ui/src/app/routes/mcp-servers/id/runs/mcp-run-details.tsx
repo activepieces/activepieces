@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { StepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { StepMetadataWithSuggestions } from '@/lib/types';
 import { formatUtils } from '@/lib/utils';
 import { McpRun, McpRunStatus } from '@activepieces/shared';
 

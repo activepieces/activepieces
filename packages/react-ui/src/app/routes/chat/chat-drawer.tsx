@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/drawer';
 import {
   FlowRun,
-  FlowVersion,
   RunEnvironment,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -27,10 +26,7 @@ interface ChatDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export const ChatDrawer = ({
-  source,
-  onOpenChange,
-}: ChatDrawerProps) => {
+export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
   const [
     setRun,
     chatSessionMessages,

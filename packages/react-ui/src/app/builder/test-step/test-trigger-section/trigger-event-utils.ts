@@ -1,4 +1,4 @@
-import { pieceSelectorUtils } from '../../pieces-selector/piece-selector-utils';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 
 export type TestType =
   | 'mcp-tool'

@@ -5,10 +5,10 @@ import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';

@@ -3,7 +3,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { agentsService } from './agents-service'
 
-const DEFAULT_LIMIT = 10
+const DEFAULT_LIMIT = 100
 
 export const agentController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAgentsRequest, async (request) => {
