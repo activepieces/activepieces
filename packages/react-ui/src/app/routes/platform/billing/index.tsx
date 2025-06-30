@@ -86,19 +86,13 @@ export default function Billing() {
       </div>
 
       <div className="space-y-4">
-        <div className="text-sm flex items-center gap-2">
-          <Badge variant="accent" className="rounded-sm text-sm">
-            {isNil(platformSubscription.plan.plan)
-              ? t('Free')
-              : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
-                platformSubscription?.plan.plan.slice(1)}
-          </Badge>
-          {isTrial && (
-            <Badge variant="ghost" className="rounded-sm text-sm">
-              Trial
-            </Badge>
-          )}
-        </div>
+        <Badge variant="accent" className="rounded-sm text-sm">
+          {isNil(platformSubscription.plan.plan)
+            ? t('Free')
+            : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
+              platformSubscription?.plan.plan.slice(1)}
+          {isTrial && t(' ( trial )')}
+        </Badge>
         <div className="flex items-baseline gap-2">
           <div className="text-5xl font-semibold">
             ${platformSubscription.nextBillingAmount || Number(0).toFixed(2)}

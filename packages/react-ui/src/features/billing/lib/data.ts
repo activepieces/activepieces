@@ -59,7 +59,7 @@ export const planData = {
       values: {
         free: null,
         plus: 'Unlimited',
-        business: "Unlimited",
+        business: 'Unlimited',
         enterprise: 'Custom',
       },
     },
