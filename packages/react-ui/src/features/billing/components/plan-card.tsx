@@ -57,7 +57,7 @@ export const PlanCard = ({
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-xl border bg-card p-6',
+        'relative flex flex-col rounded-xl border bg-background p-6',
         isPopular && 'ring-2 ring-primary',
       )}
     >
