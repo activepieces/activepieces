@@ -1,4 +1,4 @@
-import { ActionBase, PropertyType } from '@activepieces/pieces-framework'
+import { ActionBase } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
@@ -16,10 +16,10 @@ import {
 } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { generateText, LanguageModelV1 } from 'ai'
+import { generateObject, LanguageModelV1 } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
+import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
@@ -33,7 +33,9 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
-import { mcpPropertyToZod } from '../mcp-utils'
+import { mcpUtils } from '../mcp-utils'
+
+
 
 export async function createMcpServer({
     mcpId,
@@ -85,7 +87,8 @@ async function addPieceToServer(
         const actionName = mcpToolNaming.fixTool(actionMetadata.displayName, mcpTool.id, McpToolType.PIECE)
 
         const toolSchema = {
-            instructions: z.string().describe('The instructions to follow when executing the tool'),
+            instructions: z.string().describe(
+                'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.'            ),
         }
         server.tool(
             actionName,
@@ -103,7 +106,7 @@ async function addPieceToServer(
                         pieceType: pieceMetadata.pieceType,
                     },
                 )
-                const parsedInputs = await parseActionParametersFromInstructions({
+                const parsedInputs = await extractActionParametersFromUserInstructions({
                     actionMetadata,
                     toolPieceMetadata,
                     userInstructions: params.instructions,
@@ -197,7 +200,7 @@ async function addFlowToServer(
     const zodFromInputSchema = Object.fromEntries(
         inputSchema.map(prop => [
             mcpToolNaming.fixProperty(prop.name),
-            mcpPropertyToZod(prop),
+            mcpUtils.mcpPropertyToZod(prop),
         ]),
     )
     server.tool(
@@ -291,7 +294,9 @@ async function initializeOpenAIModel({
     }).chat(model)
 }
 
-async function parseActionParametersFromInstructions({
+
+
+async function extractActionParametersFromUserInstructions({
     actionMetadata,
     toolPieceMetadata,
     userInstructions,    
@@ -299,9 +304,9 @@ async function parseActionParametersFromInstructions({
     platformId,
     projectId,
     logger,
-}: ParseActionParametersParams): Promise<Record<string, unknown>> {
-    const pieceConnectionExternalId = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
-    assertNotNullOrUndefined(pieceConnectionExternalId, 'Tool has no connection with the piece, please try to add a connection to the tool')
+}: ExtractActionParametersParams): Promise<Record<string, unknown>> {
+    const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
+    assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
 
     const aiModel = await initializeOpenAIModel({
         platformId,
@@ -309,93 +314,50 @@ async function parseActionParametersFromInstructions({
     })
 
     const actionProperties = actionMetadata.props
-    const actionPropertiesEntries = Object.entries(actionProperties)
+    const sortedPropertyNames = mcpUtils.sortByRefreshers(actionProperties)
+    const sortedActionProperties = Object.fromEntries(
+        sortedPropertyNames.map((propertyName: string) => [propertyName, actionProperties[propertyName]]),
+    )
+    
+    const extractedParameters = await Object.entries(sortedActionProperties).reduce(
+        async (accumulatedParametersPromise, [propertyName, propertyDefinition]) => {
+            const accumulatedParameters = await accumulatedParametersPromise
+            
+            const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
+                propertyName,
+                userInstructions,
+                previouslyFilledProperties: accumulatedParameters,
+            })
 
-    const parsedParameters = await actionPropertiesEntries.reduce(async (accPromise, [propertyName, propertyDefinition]) => {
-        const acc = await accPromise
-        const needsDynamicResolution = propertyDefinition.type === PropertyType.DYNAMIC || 
-            propertyDefinition.type === PropertyType.DROPDOWN || 
-            propertyDefinition.type === PropertyType.MULTI_SELECT_DROPDOWN
-        
-        let dynamicPropertySchema = 'N/A'
-        
-        if (needsDynamicResolution) {
-            const propertyResolutionResult = await userInteractionWatcher(logger)
-                .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
-                jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+            const propertySchema = await mcpUtils.buildZodSchemaForPieceProperty({
+                property: propertyDefinition,
+                logger,
+                input: accumulatedParameters,
                 projectId,
                 propertyName,
-                actionOrTriggerName: actionMetadata.name,
-                input: acc,
-                piece: piecePackage,
-                sampleData: {},
+                actionMetadata,
+                piecePackage,
+                depth: 0,
             })
-            dynamicPropertySchema = JSON.stringify(propertyResolutionResult.result, null, 2)
-        }
+            
+            const { object: extractedValue } = await generateObject({
+                model: aiModel,
+                schema: propertySchema.schema,
+                prompt: mcpUtils.buildFinalExtractionPrompt({
+                    parameterExtractionPrompt,
+                    propertySchemaValues: propertySchema.value,
+                }),
+            })
 
-        const parameterExtractionPrompt = `
-You are an expert at understanding API schemas and filling out properties based on user instructions.
-
-TASK: Fill out the property "${propertyName}" based on the user's instructions.
-
-USER INSTRUCTIONS:
-${userInstructions}
-
-PROPERTY DETAILS:
-- ${JSON.stringify(propertyDefinition, null, 2)}
-
-PROPERTY SCHEMA:
-${dynamicPropertySchema}
-
-IMPORTANT:
-- For DYNAMIC properties, for each value, wrap the keys inside the options property inside an object with the same property name, and assign the array to the property name. For example, if the property is "values", return: { "values": [ { ...optionKeys }, ... ] }.
-- For dropdown properties, select values from the provided options array only
-- For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
-- Return valid JSON for complex types, raw values for simple types
-- Must include all required properties, even if the user does not provide a value
-- For CHECKBOX properties, return true or false
-- For SHORT_TEXT and LONG_TEXT properties, return string values
-- For NUMBER properties, return numeric values
-- For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
-- If the property is not required, return SKIP_PROPERTY if the user does not provide a value
-- Use actual values from user instructions when available
-
-CONTEXT:
-- Previously filled properties: ${JSON.stringify(acc, null, 2)}
-
-INSTRUCTIONS:
-1. Extract the property value from user instructions
-2. For required properties without clear instructions, use defaults or make reasonable assumptions
-3. Return raw values for simple types, valid JSON for complex types
-
-RESPONSE FORMAT:
-- Return only the value (raw for simple types, JSON for complex types)
-- No explanations or additional text
-
-Respond with ONLY the value, no explanations or additional text.`
-
-        const aiResponse = await generateText({
-            model: aiModel,
-            prompt: parameterExtractionPrompt,
-        })
-        
-        let extractedValue = aiResponse.text.trim()
-        try {
-            extractedValue = JSON.parse(aiResponse.text)
-        }
-        catch {
-            if (extractedValue === 'SKIP_PROPERTY') {
-                return acc
+            return {
+                ...accumulatedParameters,
+                [propertyName]: extractedValue[propertyName],
             }
-        }
+        }, 
+        Promise.resolve({ 'auth': connectionReference }),
+    )
 
-        return {
-            ...acc,
-            [propertyName]: extractedValue,
-        }
-    }, Promise.resolve({ 'auth': pieceConnectionExternalId }))
-
-    return parsedParameters
+    return extractedParameters
 }
 
 function isOkSuccess(status: number) {
@@ -412,7 +374,7 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
     }), logger)
 }
 
-type ParseActionParametersParams = {
+type ExtractActionParametersParams = {
     actionMetadata: ActionBase
     toolPieceMetadata: McpPieceToolData
     userInstructions: string
@@ -421,6 +383,7 @@ type ParseActionParametersParams = {
     projectId: string
     logger: FastifyBaseLogger
 }
+
 
 type InitializeOpenAIModelParams = {
     platformId: string
