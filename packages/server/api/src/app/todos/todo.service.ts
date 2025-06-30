@@ -23,11 +23,6 @@ export const todoService = (log: FastifyBaseLogger) => ({
         })
         return enrichTodoWithAssignee(todo, log)
     },
-    async countBy(params: CountByParams): Promise<number> {
-        return todoRepo().countBy({
-            ...spreadIfDefined('agentId', params.agentId),
-        })
-    },
     async getOne(params: GetParams): Promise<Todo | null> {
         const todo = await todoRepo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
         return !isNil(todo) ? enrichTodoWithAssignee(todo, log) : null
@@ -112,7 +107,6 @@ export const todoService = (log: FastifyBaseLogger) => ({
         let query = todoRepo().createQueryBuilder('todo').where({
             platformId: params.platformId,
             projectId: params.projectId,
-            agentId: IsNull(),
             ...spreadIfDefined('flowId', params.flowId),
         })
         if (!isNil(params.assigneeId)) {
@@ -185,10 +179,6 @@ async function enrichTodoWithAssignee(
     }
 }
 
-type CountByParams = {
-    agentId: string
-}
-
 type ResolveParams = {
     id: string
     status: string
@@ -225,7 +215,6 @@ type CreateParams = {
     environment: TodoEnvironment
     flowId?: string
     runId?: string
-    agentId?: string
     assigneeId?: string
     resolveUrl?: string
 }

@@ -38,7 +38,6 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             description,
             statusOptions,
             flowId,
-            agentId: request.body.agentId ?? undefined,
             runId,
             assigneeId,
             environment: environment ?? TodoEnvironment.PRODUCTION,
