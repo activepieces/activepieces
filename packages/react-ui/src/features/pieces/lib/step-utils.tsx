@@ -201,16 +201,16 @@ function mapErrorHandlingOptions(
   if (flowStructureUtil.isTrigger(step.type)) {
     return {
       continueOnFailure: {
-        hide: false,
+        hide: true,
       },
       retryOnFailure: {
-        hide: false,
+        hide: true,
       },
     };
   }
   const selectedAction =
     step.type === ActionType.PIECE
-      ? piece?.actions[step.settings.actionName!]
+      ? piece.actions[step.settings.actionName!]
       : null;
   const errorHandlingOptions = selectedAction?.errorHandlingOptions;
   if (errorHandlingOptions) {

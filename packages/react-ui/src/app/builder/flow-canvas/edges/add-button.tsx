@@ -13,13 +13,12 @@ import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly, isOpen] = useBuilderStateContext(
-    (state) => [
+  const [activeDraggingStep, readonly, isPieceSelectorOpen] =
+    useBuilderStateContext((state) => [
       state.activeDraggingStep,
       state.readonly,
       state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
-    ],
-  );
+    ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -81,7 +80,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
               className={cn('rounded-xss cursor-pointer transition-all z-50', {
-                'shadow-add-button': isOpen,
+                'shadow-add-button': isPieceSelectorOpen,
               })}
             >
               <div
@@ -92,11 +91,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 className={cn(
                   'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': isOpen,
+                    'bg-primary ': isPieceSelectorOpen,
                   },
                 )}
               >
-                {!isOpen && (
+                {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-white" />
                 )}
               </div>
