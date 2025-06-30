@@ -65,7 +65,11 @@ function request<TResponse>(
     ...config,
     headers: {
       ...config.headers,
-      Authorization: getToken(unAuthenticated, isApWebsite, authenticationSession.getToken()),
+      Authorization: getToken(
+        unAuthenticated,
+        isApWebsite,
+        authenticationSession.getToken(),
+      ),
     },
   })
     .then((response) =>
@@ -84,14 +88,18 @@ function request<TResponse>(
     });
 }
 
-function getToken(unAuthenticated: boolean, isApWebsite: boolean, token: string | null) {
+function getToken(
+  unAuthenticated: boolean,
+  isApWebsite: boolean,
+  token: string | null,
+) {
   if (unAuthenticated || !isApWebsite) {
-    return undefined
+    return undefined;
   }
   if (isNil(token)) {
-    return undefined
+    return undefined;
   }
-  return `Bearer ${token}`
+  return `Bearer ${token}`;
 }
 
 export type HttpError = AxiosError<unknown, AxiosResponse<unknown>>;

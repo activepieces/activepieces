@@ -36,6 +36,42 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
+
+export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number }): PlatformPlanWithOnlyLimits => {
+    return {
+        plan: planname,
+        tasksLimit,
+        userSeatsLimit,
+        agentsEnabled: true,
+        includedAiCredits: 200,
+        activeFlowsLimit: undefined,
+        projectsLimit: 1,
+        mcpLimit: 1,
+        tablesLimit: 1,
+        agentsLimit: 5,
+
+        todosEnabled: false,
+        tablesEnabled: true,
+
+        embeddingEnabled: false,
+        globalConnectionsEnabled: false,
+        customRolesEnabled: false,
+        environmentsEnabled: false,
+        analyticsEnabled: false,
+        showPoweredBy: false,
+        auditLogEnabled: false,
+        managePiecesEnabled: false,
+        manageTemplatesEnabled: false,
+        customAppearanceEnabled: false,
+        manageProjectsEnabled: false,
+        projectRolesEnabled: true,
+        customDomainsEnabled: false,
+        apiKeysEnabled: false,
+        alertsEnabled: false,
+        ssoEnabled: false,
+
+    }
+}
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
