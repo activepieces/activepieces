@@ -1,12 +1,10 @@
 import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, Todo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
-import { todoService } from '../todos/todo.service'
 import { AgentEntity } from './agent-entity'
 
 const agentRepo = repoFactory(AgentEntity)
@@ -36,7 +34,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             mcpId: mcp.id,
             agentId: agent.id,
         })
-        return enrichAgent(log, agent)
+        return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
         await agentRepo().update({
@@ -57,7 +55,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         if (isNil(agent)) {
             return null
         }
-        return enrichAgent(log, agent)
+        return agent
     },
     async getOneOrThrow(params: GetOneParams): Promise<Agent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
@@ -98,10 +96,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        const enrichedData = await Promise.all(data.map(async (agent) => enrichAgent(log, agent)))
 
         return paginationHelper.createPage<Agent>(
-            enrichedData,
+            data,
             cursor,
         )
     },
@@ -111,13 +108,6 @@ function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
 }
 
-async function enrichAgent(log: FastifyBaseLogger, agent: Agent): Promise<Agent> {
-    return {
-        ...agent,
-        // TODO(agent) calcuate the task completed
-        taskCompleted: 0,
-    }
-}
 
 
 

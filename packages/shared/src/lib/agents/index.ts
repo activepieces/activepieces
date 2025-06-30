@@ -52,7 +52,6 @@ export const Agent = Type.Object({
     maxSteps: Type.Number(),
     mcpId: Type.String(),
     platformId: Type.String(),
-    taskCompleted: Type.Number(),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })

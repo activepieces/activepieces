@@ -35,7 +35,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
+  setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({
@@ -51,9 +51,6 @@ export function DashboardContainer({
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
-
-  const isAgentEnabled = platformHooks.useAreAgentsEnabled();
-
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -70,12 +67,6 @@ export function DashboardContainer({
     return true;
   };
 
-  const filterAgents = (item: SidebarItem) => {
-    if (item.label === t('Agents')) {
-      return isAgentEnabled;
-    }
-    return true;
-  };
 
   const filterAlerts = (item: SidebarItem) =>
     platform.plan.alertsEnabled || item.label !== t('Alerts');
@@ -96,7 +87,6 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: <Workflow />,
     label: t('Flows'),
-    name: !isAgentEnabled ? t('Products') : undefined,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
@@ -164,7 +154,6 @@ export function DashboardContainer({
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts)
-    .filter(filterAgents);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

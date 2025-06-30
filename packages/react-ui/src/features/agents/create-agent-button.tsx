@@ -52,11 +52,10 @@ export const CreateAgentButton = ({
     return (
       <Button
         onClick={handleButtonClick}
-        size={'sm'}
         disabled={createAgentMutation.isPending}
       >
-        <Plus className="h-4 w-4 mr-2" />
-        {createAgentMutation.isPending ? t('Creating...') : t('Create Agent')}
+        <Plus className="h-4 w-4 " />
+        { t('New Agent')}
       </Button>
     );
   }
@@ -64,9 +63,9 @@ export const CreateAgentButton = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button onClick={() => setOpen(true)} size={'sm'}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('Create Agent')}
+        <Button onClick={() => setOpen(true)} className="flex items-center gap-2" >
+          <Plus className="h-4 w-4" />
+          {t('New Agent')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 mr-4">

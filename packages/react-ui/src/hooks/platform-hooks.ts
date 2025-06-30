@@ -30,8 +30,4 @@ export const platformHooks = {
       },
     };
   },
-  useAreAgentsEnabled: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return !isNil(platform.plan.agentsLimit) && platform.plan.agentsLimit > 0;
-  },
 };
