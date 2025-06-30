@@ -29,10 +29,8 @@ export default function AIProvidersPage() {
     queryFn: () => aiProviderApi.list(),
   });
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-  const isCloudEdition = flags?.[ApFlagId.EDITION] === ApEdition.CLOUD;
-  const isCloudPlatform = flags?.[ApFlagId.IS_CLOUD_PLATFORM];
-  const allowWrite = isCloudEdition ? isCloudPlatform === true : true;
+  const { data: canConfigureAIProvider } = flagsHooks.useFlag(ApFlagId.CAN_CONFIGURE_AI_PROVIDER);
+  const allowWrite = canConfigureAIProvider === true;
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
