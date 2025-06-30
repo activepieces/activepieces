@@ -22,6 +22,7 @@ import {
 
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
+import { AgentUseButton } from '../../../../features/agents/agent-use-button';
 
 import { AgentSettingsOutput } from './agent-settings-output';
 
@@ -145,6 +146,7 @@ export const AgentSettings = ({
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
+              {!isNil(agent) && <AgentUseButton agentId={agent.id} />} 
             </div>
             <EditableTextWithPen
               value={description}
@@ -154,14 +156,7 @@ export const AgentSettings = ({
               isEditing={isEditingDescription}
               setIsEditing={setIsEditingDescription}
             />
-            {!isNil(agent) && (
-              <div className="flex items-center gap-2 mt-2">
-                <Activity className="h-4 w-4 text-success" />
-                <span className="text-sm font-medium">
-                  {t('Task Completed')}: {agent?.taskCompleted}
-                </span>
-              </div>
-            )}
+   
           </div>
         </div>
 

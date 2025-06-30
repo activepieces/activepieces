@@ -98,7 +98,6 @@ export const AgentsPage = () => {
             {agents.map((agent) => (
               <div key={agent.id} onClick={() => handleOpenBuilder(agent)}>
                 <AgentCard
-                  taskCompleted={agent.taskCompleted}
                   title={agent.displayName}
                   description={agent.description || ''}
                   picture={agent.profilePictureUrl}

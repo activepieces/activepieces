@@ -109,6 +109,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tasksLimit: undefined,
     includedAiCredits: 0,
     environmentsEnabled: false,
+    agentsLimit: undefined,
     analyticsEnabled: false,
     showPoweredBy: false,
 

@@ -40,6 +40,7 @@ export const flowRunsApi = {
   testStep(
     socket: Socket,
     request: Omit<CreateStepRunRequestBody, 'id'>,
+    onProgress?: (progress: StepRunResponse) => void,
   ): Promise<StepRunResponse> {
     const id = nanoid();
     socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
@@ -54,18 +55,25 @@ export const flowRunsApi = {
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
           );
+          onProgress?.(response);
           socket.off('error', handleError);
 
           resolve(response);
         }
       };
 
+      const handleProgress = (progress: StepRunResponse) => {
+        onProgress?.(progress);
+      };
+
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+        socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
         socket.off('error', handleError);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+      socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
       socket.on('error', handleError);
     });
   },

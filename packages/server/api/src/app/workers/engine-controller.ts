@@ -73,8 +73,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
-        const { runId } = request.body
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+        const { type, data } = request.body
+        app.io.to(request.principal.projectId).emit(type, data)
     })
 
     app.post('/update-run', UpdateRunProgress, async (request) => {

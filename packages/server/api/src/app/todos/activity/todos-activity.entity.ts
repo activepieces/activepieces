@@ -9,7 +9,6 @@ import {
 export type TodoActivitySchema = TodoActivity & {
     todo: Todo
     user: User
-    agent: Agent    
 }
 
 export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
@@ -21,10 +20,6 @@ export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
             nullable: false,
         },
         userId: {
-            ...ApIdSchema,
-            nullable: true,
-        },
-        agentId: {
             ...ApIdSchema,
             nullable: true,
         },
@@ -41,10 +36,6 @@ export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
         {
             name: 'idx_todo_activity_user_id',
             columns: ['userId'],
-        },
-        {
-            name: 'idx_todo_activity_agent_id',
-            columns: ['agentId'],
         },
     ],
     relations: {
@@ -68,12 +59,6 @@ export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
                 name: 'userId',
                 foreignKeyConstraintName: 'fk_todo_activity_user_id',
             },
-        },
-        agent: {
-            type: 'many-to-one',
-            target: 'agent',
-            cascade: true,
-            onDelete: 'CASCADE',
         },
     },
 })

@@ -3,7 +3,6 @@ import {
   Agent,
   CreateAgentRequest,
   UpdateAgentRequest,
-  RunAgentRequest,
   ListAgentsQueryParams,
   SeekPage,
   Todo,
@@ -31,9 +30,6 @@ export const agentsApi = {
     return await api.post<Agent>(`/v1/agents/${id}`, request);
   },
 
-  async run(id: string, request: RunAgentRequest): Promise<Todo> {
-    return await api.post<Todo>(`/v1/agents/${id}/todos`, request);
-  },
 
   async delete(id: string): Promise<void> {
     return await api.delete(`/v1/agents/${id}`);

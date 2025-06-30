@@ -6,7 +6,6 @@ import { TodoDetails } from './todo-details';
 
 type TodoDetailsProps = {
   open: boolean;
-  agentId?: string;
   currentTodo: PopulatedTodo | null;
   onStatusChange: (status: Todo['status']) => void;
   onOpenChange: (open: boolean) => void;
@@ -15,7 +14,6 @@ type TodoDetailsProps = {
 
 function TodoDetailsDrawer({
   open,
-  agentId,
   currentTodo,
   onStatusChange,
   onOpenChange,
@@ -35,7 +33,6 @@ function TodoDetailsDrawer({
             <TodoDetails
               todoId={currentTodo?.id ?? null}
               onClose={onClose}
-              agentId={agentId}
               onStatusChange={onStatusChange}
             />
           </div>
