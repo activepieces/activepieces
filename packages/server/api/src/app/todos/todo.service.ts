@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { IsNull, Like } from 'typeorm'
+import { Like } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
