@@ -517,7 +517,7 @@ const getMigrationConfig = (): MigrationConfig => {
 
     return {
         migrationsRun: true,
-        migrationsTransactionMode: 'each',
+        migrationsTransactionMode: 'all',
         migrations: getMigrations(),
     }
 }
