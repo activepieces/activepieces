@@ -67,7 +67,6 @@ export function DashboardContainer({
     return true;
   };
 
-
   const filterAlerts = (item: SidebarItem) =>
     platform.plan.alertsEnabled || item.label !== t('Alerts');
 
@@ -153,7 +152,7 @@ export function DashboardContainer({
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts)
+    .filter(filterAlerts);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

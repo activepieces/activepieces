@@ -127,7 +127,8 @@ export const piecesHooks = {
         data: [],
       };
     }
-    const piecesMetadataWithoutEmptySuggestions = filterOutPiecesWithNoSuggestions(metadata);
+    const piecesMetadataWithoutEmptySuggestions =
+      filterOutPiecesWithNoSuggestions(metadata);
     const popularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) =>
       isPopularPieces(p, platform),
     );

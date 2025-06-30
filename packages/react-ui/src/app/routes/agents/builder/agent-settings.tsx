@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Wand, Info, Activity } from 'lucide-react';
+import { Wand, Info } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -20,9 +20,9 @@ import {
   isNil,
 } from '@activepieces/shared';
 
+import { AgentUseButton } from '../../../../features/agents/agent-use-button';
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
-import { AgentUseButton } from '../../../../features/agents/agent-use-button';
 
 import { AgentSettingsOutput } from './agent-settings-output';
 
@@ -146,7 +146,7 @@ export const AgentSettings = ({
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
-              {!isNil(agent) && <AgentUseButton agentId={agent.id} />} 
+              {!isNil(agent) && <AgentUseButton agentId={agent.id} />}
             </div>
             <EditableTextWithPen
               value={description}
@@ -156,7 +156,6 @@ export const AgentSettings = ({
               isEditing={isEditingDescription}
               setIsEditing={setIsEditingDescription}
             />
-   
           </div>
         </div>
 

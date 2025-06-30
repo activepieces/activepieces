@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import {
   AgentTestResult,
@@ -6,7 +13,6 @@ import {
   StepRunResponse,
   isNil,
 } from '@activepieces/shared';
-import { Button } from '@/components/ui/button';
 
 type AgentTestingDialogProps = {
   open: boolean;
@@ -20,12 +26,13 @@ function AgentTestingDialog({
   onOpenChange,
   agentProgress,
 }: AgentTestingDialogProps) {
-
   const agentResult = agentProgress?.output as AgentTestResult | undefined;
   const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
-  const prompt = !isNil(agentProgress?.input) && 'prompt' in (agentProgress.input as { prompt: string }) 
-    ? (agentProgress.input as { prompt: string }).prompt 
-    : '';
+  const prompt =
+    !isNil(agentProgress?.input) &&
+    'prompt' in (agentProgress.input as { prompt: string })
+      ? (agentProgress.input as { prompt: string }).prompt
+      : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

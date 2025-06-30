@@ -3,7 +3,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 type UpgradeHookDialogProps = {
-  metric: 'activeFlows' | 'mcp' | 'tables';
+  metric: 'activeFlows' | 'mcp' | 'tables' | 'agents';
   open: boolean;
   setOpen: (open: boolean) => void;
 };

@@ -1,9 +1,6 @@
-import {
-  isNil,
-  STATUS_VARIANT,
-  Todo,
-} from '@activepieces/shared';
 import { t } from 'i18next';
+
+import { STATUS_VARIANT, Todo } from '@activepieces/shared';
 
 interface TodoTimelineStatusProps {
   todo: Todo;
@@ -25,7 +22,7 @@ export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
       <div
         className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}
       >
-        {t( `This todo is now marked as ${todo.status.name}`)}
+        {t(`This todo is now marked as ${todo.status.name}`)}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ export const todoUtils = {
   },
   getAuthorType: (
     todo: PopulatedTodo | TodoActivityWithUser,
-  ):  'flow' | 'user' => {
+  ): 'flow' | 'user' => {
     if ('createdByUser' in todo && !isNil(todo.createdByUser)) {
       return 'user';
     }

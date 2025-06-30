@@ -1,14 +1,15 @@
+import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  AgentStepBlock, 
-  ContentBlockType, 
-  isNil, 
-  MarkdownVariant 
-} from '@activepieces/shared';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AgentStepBlock,
+  ContentBlockType,
+  isNil,
+  MarkdownVariant,
+} from '@activepieces/shared';
+
 import { AgentToolBlock } from './agent-tool-block';
 
 type AgentTimelineProps = {
@@ -18,18 +19,18 @@ type AgentTimelineProps = {
   className?: string;
 };
 
-const AgentTimeline = ({ 
-  steps, 
-  prompt, 
-  className = ""
+const AgentTimeline = ({
+  steps,
+  prompt,
+  className = '',
 }: AgentTimelineProps) => {
   if (isNil(steps)) {
     return (
-      <div className={`flex flex-col items-center justify-center h-full ${className}`}>
+      <div
+        className={`flex flex-col items-center justify-center h-full ${className}`}
+      >
         <Loader2 className="h-8 w-8 animate-spin" />
-        <div className="text-sm text-gray-500 mt-2">
-          Thinking...
-        </div>
+        <div className="text-sm text-gray-500 mt-2">Thinking...</div>
       </div>
     );
   }
@@ -38,17 +39,15 @@ const AgentTimeline = ({
     <ScrollArea className={`h-full p-4 ${className}`}>
       <div className=" flex flex-col gap-3">
         {!isNil(prompt) && (
-          <div className="text-sm text-gray-500">
-            {prompt}
-          </div>
+          <div className="text-sm text-gray-500">{prompt}</div>
         )}
         {steps.map((step, index) => {
           return (
             <div key={index}>
               {step.type === ContentBlockType.MARKDOWN && (
-                <ApMarkdown 
-                  markdown={step.markdown} 
-                  variant={MarkdownVariant.BORDERLESS} 
+                <ApMarkdown
+                  markdown={step.markdown}
+                  variant={MarkdownVariant.BORDERLESS}
                 />
               )}
               {step.type === ContentBlockType.TOOL_CALL && (
@@ -62,4 +61,4 @@ const AgentTimeline = ({
   );
 };
 
-export { AgentTimeline }; 
+export { AgentTimeline };

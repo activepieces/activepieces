@@ -5,7 +5,6 @@ import {
   UpdateAgentRequest,
   ListAgentsQueryParams,
   SeekPage,
-  Todo,
 } from '@activepieces/shared';
 
 export const agentsApi = {
@@ -29,7 +28,6 @@ export const agentsApi = {
   async update(id: string, request: UpdateAgentRequest): Promise<Agent> {
     return await api.post<Agent>(`/v1/agents/${id}`, request);
   },
-
 
   async delete(id: string): Promise<void> {
     return await api.delete(`/v1/agents/${id}`);

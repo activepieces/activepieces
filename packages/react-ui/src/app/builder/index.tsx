@@ -161,7 +161,7 @@ const BuilderPage = () => {
       refetchPiece();
     });
     socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
-      const runId = data?.runId
+      const runId = data?.runId;
       if (run && run?.id === runId) {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {

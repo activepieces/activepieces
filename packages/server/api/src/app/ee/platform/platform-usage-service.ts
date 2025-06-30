@@ -15,6 +15,7 @@ import { projectRepo, projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
+import { agentRepo } from '../../agents/agents-service'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
@@ -40,8 +41,9 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const projects = await getProjectsCount(platformId)
         const seats = await getActiveUsers(platformId)
         const tables = await getTables(platformId)
+        const agents = await getAgentsCount(platformId)
 
-        return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables }
+        return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables, agents }
     },
 
     async increaseTasksUsage(projectId: string, incrementBy: number): Promise<{ projectTasksUsage: number, platformTasksUsage: number }> {
@@ -254,6 +256,16 @@ async function getMCPsCount(platformId: string): Promise<number> {
         },
     })
     return mcpIds
+}
+
+async function getAgentsCount(platformId: string): Promise<number> {
+    const projectIds = await getProjectIds(platformId)
+    const agents = await agentRepo().count({
+        where: {
+            projectId: In(projectIds),
+        },
+    })
+    return agents
 }
 
 async function getActiveUsers(platformId: string): Promise<number> {

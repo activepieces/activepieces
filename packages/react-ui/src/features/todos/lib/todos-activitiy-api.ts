@@ -15,9 +15,6 @@ export const todoActivityApi = {
     );
   },
   async create(requestBody: CreateTodoActivityRequestBody) {
-    return await api.post<TodoActivity>(
-      `/v1/todo-activities`,
-      requestBody,
-    );
+    return await api.post<TodoActivity>(`/v1/todo-activities`, requestBody);
   },
 };

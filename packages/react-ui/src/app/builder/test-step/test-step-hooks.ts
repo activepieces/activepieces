@@ -251,7 +251,7 @@ export const testStepHooks = {
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
-    onProgress: ((progress: StepRunResponse) => void);
+    onProgress: (progress: StepRunResponse) => void;
   }) => {
     const socket = useSocket();
     const { flowVersionId } = useRequiredStateToTestSteps().builderState;
@@ -261,14 +261,17 @@ export const testStepHooks = {
 
     return useMutation<StepRunResponse, Error, StepRunResponse | undefined>({
       mutationFn: async (preExistingSampleData?: StepRunResponse) => {
-
         if (!isNil(preExistingSampleData)) {
           return preExistingSampleData;
         }
-        return await flowRunsApi.testStep(socket, {
-          flowVersionId,
-          stepName: currentStep.name,
-        }, onProgress);;
+        return await flowRunsApi.testStep(
+          socket,
+          {
+            flowVersionId,
+            stepName: currentStep.name,
+          },
+          onProgress,
+        );
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
         const { success, standardOutput, standardError } = testStepResponse;
@@ -284,9 +287,9 @@ export const testStepHooks = {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
               errorMessage ??
-              t(
-                'Failed to run test step, please ensure settings are correct.',
-              ),
+                t(
+                  'Failed to run test step, please ensure settings are correct.',
+                ),
             ),
           );
         }

@@ -47,5 +47,4 @@ export const agentHooks = {
       mutationFn: (id: string) => agentsApi.delete(id),
     });
   },
-
 };

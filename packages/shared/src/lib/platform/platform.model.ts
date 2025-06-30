@@ -65,6 +65,7 @@ export enum PlatformUsageMetric {
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
+    AGENTS = 'agents',
     TABLES = 'tables',
     MCPS = 'mcps',
 }
@@ -78,6 +79,7 @@ export const PlatformUsage = Type.Object({
     mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
+    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>

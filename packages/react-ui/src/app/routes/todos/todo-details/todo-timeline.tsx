@@ -8,7 +8,6 @@ import {
   TodoActivityWithUser,
   TodoActivityChanged,
   PopulatedTodo,
-  ContentBlockType,
 } from '@activepieces/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';

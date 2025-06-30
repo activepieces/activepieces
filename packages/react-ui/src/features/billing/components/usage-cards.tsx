@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
+import { Bot, Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
@@ -23,7 +23,7 @@ export const UsageCards = ({
     <div
       className={cn(
         'grid grid-cols-3 gap-6',
-        isBusinessPlan ? 'xl:grid-cols-4' : '2xl:grid-cols-5',
+        isBusinessPlan ? 'xl:grid-cols-4' : '2xl:grid-cols-6',
       )}
     >
       <UsageCard
@@ -67,6 +67,13 @@ export const UsageCards = ({
         title={t('Tables')}
         used={usage.tables}
         total={plan.tablesLimit}
+      />
+
+      <UsageCard
+        icon={<Bot className="w-4 h-4" />}
+        title={t('Agents')}
+        used={usage.agents}
+        total={plan.agentsLimit}
       />
     </div>
   );

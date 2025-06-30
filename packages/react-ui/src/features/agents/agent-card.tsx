@@ -1,4 +1,4 @@
-import { Pencil, Activity } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';

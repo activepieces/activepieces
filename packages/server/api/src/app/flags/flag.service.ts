@@ -77,12 +77,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.AGENTS_ENABLED,
-                value: false,
-                created,
-                updated,
-            },  
-            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,

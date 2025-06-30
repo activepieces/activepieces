@@ -7,15 +7,13 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import {
   isNil,
   MarkdownVariant,
   ToolCallContentBlock,
   ToolCallStatus,
-  ToolCallType,
 } from '@activepieces/shared';
-
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -27,11 +25,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const isDone = block.status === ToolCallStatus.COMPLETED;
 
   return (
-    <Accordion
-      type="multiple"
-      className="rounded-md border"
-      defaultValue={[]}
-    >
+    <Accordion type="multiple" className="rounded-md border" defaultValue={[]}>
       <AccordionItem value={`block-${index}`} className="border-none">
         <AccordionTrigger className="px-4 py-3 flex items-center gap-3 transition-colors">
           {isLoading ? (
@@ -89,4 +83,4 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       </AccordionItem>
     </Accordion>
   );
-}; 
+};

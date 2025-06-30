@@ -1,9 +1,8 @@
+import { ApMarkdown } from '@/components/custom/markdown';
 import { formatUtils } from '@/lib/utils';
+import { MarkdownVariant } from '@activepieces/shared';
 
 import { ApAvatar } from '../../../../components/custom/ap-avatar';
-
-import { MarkdownVariant } from '@activepieces/shared';
-import { ApMarkdown } from '@/components/custom/markdown';
 
 export type ActivityItem = {
   type: 'comment';

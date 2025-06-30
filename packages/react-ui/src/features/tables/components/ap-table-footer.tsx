@@ -30,17 +30,14 @@ const ApTableFooter = ({
         <div className="text-sm font-sm mt-1">
           {!areAllRecordsSelected && (
             <>
-              {
-                !hasSelectedRows && (
-                  `${t('recordsCount', { recordsCount  })} (${recordsPercentage.toFixed(2)}%)`
-                )
-              }
-              {' '}
-              {
-                hasSelectedRows && (
-                  `${t('selected')} ${t('recordsCount', { recordsCount: selectedRecords.size })}`
-                )
-              }
+              {!hasSelectedRows &&
+                `${t('recordsCount', {
+                  recordsCount,
+                })} (${recordsPercentage.toFixed(2)}%)`}{' '}
+              {hasSelectedRows &&
+                `${t('selected')} ${t('recordsCount', {
+                  recordsCount: selectedRecords.size,
+                })}`}
             </>
           )}
           {areAllRecordsSelected && t('All records selected')}

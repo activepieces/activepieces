@@ -18,6 +18,7 @@ const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
     [PlatformUsageMetric.TABLES]: 'tablesLimit',
     [PlatformUsageMetric.MCPS]: 'mcpLimit',
+    [PlatformUsageMetric.AGENTS]: 'agentsLimit',
 } as const
 
 const METRIC_TO_USAGE_MAPPING = {
@@ -28,6 +29,7 @@ const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'projects',
     [PlatformUsageMetric.TABLES]: 'tables',
     [PlatformUsageMetric.MCPS]: 'mcps',
+    [PlatformUsageMetric.AGENTS]: 'agents',
 } as const
 
 

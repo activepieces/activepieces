@@ -81,7 +81,9 @@ const TestStepSectionImplementation = React.memo(
     );
     const socket = useSocket();
     const [todoId, setTodoId] = useState<string | null>(null);
-    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(null);
+    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(
+      null,
+    );
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[currentStep.name],

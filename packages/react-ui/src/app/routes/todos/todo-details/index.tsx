@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -42,7 +41,6 @@ export const TodoDetails = ({
   const socket = useSocket();
   const previousStatus = useRef<Todo['status']>();
   const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
-  const queryClient = useQueryClient();
 
   function detectStatusChange(updatedTodo: Todo) {
     if (updatedTodo && previousStatus.current) {
