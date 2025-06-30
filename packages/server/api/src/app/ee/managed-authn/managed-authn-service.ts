@@ -111,6 +111,7 @@ const updateProjectLimits = async (
         nickname: 'default-embeddings-limit',
         tasks: includedTasks,
         aiCredits: aiCreditsLimit,
+
         pieces,
         piecesFilterType,
     }, projectId)
