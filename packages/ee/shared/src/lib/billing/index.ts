@@ -19,7 +19,7 @@ export enum ApSubscriptionStatus {
 
 export const DEFAULT_BUSINESS_SEATS = 5
 
-export const PRICE_PER_EXTRA_USER = 10
+export const PRICE_PER_EXTRA_USER = 20
 
 export enum PlanName {
     FREE = 'free',
