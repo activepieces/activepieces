@@ -25,25 +25,25 @@ import { FlowChat } from './flow-chat';
 interface ChatDrawerProps {
   source: ChatDrawerSource | null;
   onOpenChange: (open: boolean) => void;
-  flowVersion: FlowVersion;
 }
 
 export const ChatDrawer = ({
   source,
   onOpenChange,
-  flowVersion,
 }: ChatDrawerProps) => {
   const [
     setRun,
     chatSessionMessages,
     chatSessionId,
     addChatMessage,
+    flowVersion,
     setChatSessionId,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.chatSessionMessages,
     state.chatSessionId,
     state.addChatMessage,
+    state.flowVersion,
     state.setChatSessionId,
   ]);
   const socket = useSocket();

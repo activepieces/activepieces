@@ -282,7 +282,6 @@ const BuilderPage = () => {
       <ChatDrawer
         source={chatDrawerOpenSource}
         onOpenChange={() => setChatDrawerOpenSource(null)}
-        flowVersion={flowVersion}
       />
     </div>
   );
