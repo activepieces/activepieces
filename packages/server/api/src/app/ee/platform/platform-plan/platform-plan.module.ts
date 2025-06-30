@@ -39,7 +39,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     })
 
 
-    systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_HALF_WAY_EMAIL, async (data) => {
+    systemJobHandlers.registerJobHandler(SystemJobName.SEVEN_DAYS_IN_TRIAL, async (data) => {
         const log = app.log
 
         const stripe = stripeHelper(log).getStripe()
@@ -54,8 +54,28 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        await emailService(log).sendTrialHalfWayEmail(platformId, customerEmail)
-        log.info(`Sent Trial Halfway Email for platfrom, ${platformId}`)
+        await emailService(log).sendSevenDaysInTrialEmail(platformId, customerEmail)
+        log.info(`Sent & 7 days in trial email for platfrom, ${platformId}`)
+    })
+
+
+    systemJobHandlers.registerJobHandler(SystemJobName.ONE_DAY_LEFT_ON_TRIAL, async (data) => {
+        const log = app.log
+
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { platformId, customerEmail } = data
+
+        const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId as string)
+
+        if (isNil(subscription) || isNil(subscription.trial_end)) {
+            return
+        }
+
+        await emailService(log).sendOneDayLeftOnTrial(platformId, customerEmail)
+        log.info(`Sent 1 day left on trial email for platfrom, ${platformId}`)
     })
 
     await app.register(platformPlanController, { prefix: '/v1/platform-billing' })

@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
@@ -7,7 +8,6 @@ import { platformUtils } from '../../platform/platform.utils'
 import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { appearanceHelper } from '../helper/appearance-helper'
-import { AppSystemProp } from '@activepieces/server-shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {

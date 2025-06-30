@@ -9,29 +9,12 @@ import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get(
-        '/attach-payment-method',
-        WebhookRequest,
-        async (
-            request: FastifyRequest<{
-                Querystring: {
-                    platformId: string
-                }
-            }>,
-            reply,
-        ) => {
-            const sessionLink = await stripeHelper(request.log).createSetupSession(request.query.platformId)
-            await reply.redirect(sessionLink)
-        },
-    )
-
     fastify.post(
         '/stripe/webhook',
         WebhookRequest,
@@ -63,12 +46,12 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             await emailService(request.log).sendWellcomeToTrialEmail(platformId, subscription.customer as string)
                             await systemJobsSchedule(request.log).upsertJob({
                                 job: {
-                                    name: SystemJobName.TRIAL_HALF_WAY_EMAIL,
+                                    name: SystemJobName.SEVEN_DAYS_IN_TRIAL,
                                     data: {
                                         platformId,
                                         customerEmail: customer.email as string,
                                     },
-                                    jobId: `trial-half-way-email-${platformId}-${customer.email}`,
+                                    jobId: `7-days-left-on-trial-${platformId}-${customer.email}`,
                                 },
                                 schedule: {
                                     type: 'one-time',
@@ -136,8 +119,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     }
                     case 'customer.subscription.trial_will_end': {
                         const subscription = webhook.data.object as Stripe.Subscription
-                        const stripe = stripeHelper(request.log).getStripe()
-                        assertNotNullOrUndefined(stripe, 'stripe is not set')
 
                         const platformPlan = await platformPlanRepo().findOneByOrFail({ stripeSubscriptionId: subscription.id })
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
@@ -150,34 +131,22 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             break
                         }
 
-                        if (!isNil(subscription.default_payment_method)) {
-                            request.log.info('Trial ending soon, payment method already attached. Skipping "add payment method" reminder.', {
-                                subscriptionId: subscription.id,
-                                customerId: customer.id,
-                            })
-                            break
-                        }
+                        await systemJobsSchedule(request.log).upsertJob({
+                            job: {
+                                name: SystemJobName.ONE_DAY_LEFT_ON_TRIAL,
+                                data: {
+                                    platformId: platformPlan.platformId,
+                                    customerEmail: customer.email as string,
+                                },
+                                jobId: `one-day-left-on-trial-${platformPlan}-${customer.email}`,
+                            },
+                            schedule: {
+                                type: 'one-time',
+                                date: apDayjs().add(2, 'days'),
+                            },
+                        })
 
-                        const addPaymentMethodLink = await domainHelper.getInternalApiUrl({ path: `stripe-billing/attach-payment-method?platformId=${platformPlan.platformId}`, platformId: platformPlan.platformId })
-                        await emailService(request.log).sendTrialEndingSoonReminder(platformPlan.platformId, customer.email, addPaymentMethodLink)
-
-                        break
-                    }
-                    case 'checkout.session.completed': {
-                        const session = webhook.data.object as Stripe.Checkout.Session
-                        if (session.mode === 'setup' && session.metadata?.action === 'attach_payment_method') {
-                            const subscriptionId = session.metadata?.subscriptionId as string
-                            const customerId = session.customer as string
-                            const setupIntent = await stripe.setupIntents.retrieve(session.setup_intent as string)
-                            const paymentMethodId = setupIntent.payment_method as string
-
-                            await stripeHelper(request.log).attachPaymentMethod(
-                                stripe,
-                                subscriptionId,
-                                customerId,
-                                paymentMethodId,
-                            )
-                        }
+                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email)
 
                         break
                     }

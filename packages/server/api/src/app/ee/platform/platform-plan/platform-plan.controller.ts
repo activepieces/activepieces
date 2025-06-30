@@ -3,7 +3,6 @@ import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Platform
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import Stripe from 'stripe'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'

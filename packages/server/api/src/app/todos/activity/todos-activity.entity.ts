@@ -1,4 +1,4 @@
-import { Agent, Todo, TodoActivity, User } from '@activepieces/shared'
+import { Todo, TodoActivity, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

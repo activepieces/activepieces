@@ -199,19 +199,36 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
 
-    async sendTrialEndingSoonReminder(
+    async sendThreeDaysLeftOnTrialEmail(
         platformId: string,
         customerEmail: string,
-        addPaymentMethodLink: string,
     ): Promise<void> {
 
         await emailSender(log).send({
             emails: [customerEmail],
             platformId,
             templateData: {
-                name: 'trial-ending-reminder',
+                name: '3-days-left-on-trial',
                 vars: {
-                    addPaymentMethodLink,
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendOneDayLeftOnTrial(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '1-day-left-on-trial',
+                vars: {
                     year: new Date().getFullYear().toString(),
                 },
             },
@@ -230,12 +247,14 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformId,
             templateData: {
                 name: 'wellcome-to-trial',
-                vars: {},
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
             },
         })
     },
 
-    async sendTrialHalfWayEmail(
+    async sendSevenDaysInTrialEmail(
         platformId: string,
         customerEmail: string,
     ): Promise<void> {
@@ -244,8 +263,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
             emails: [customerEmail],
             platformId,
             templateData: {
-                name: 'trial-half-way',
-                vars: {},
+                name: '7-days-in-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
             },
         })
     },

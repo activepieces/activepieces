@@ -400,7 +400,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertDescriptionTodoNaming1750389164014,
         RegenerateIssuesTable1750392148590,
         RemoveProjectIdFromIndex1750712746125,
-        RevertTodoActivties1751217652277
+        RevertTodoActivties1751217652277,
 
     ]
 

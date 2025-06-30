@@ -109,28 +109,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         return session.url!
     },
 
-    createSetupSession: async (platformId: string): Promise<string> => {
-        const stripe = stripeHelper(log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-
-        const { stripeCustomerId, stripeSubscriptionId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            customer: stripeCustomerId,
-            mode: 'setup',
-            success_url: `${frontendUrl}/platform/setup/billing/success?action=setup`,
-            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
-            metadata: {
-                platformId,
-                action: 'attach_payment_method',
-                subscriptionId: stripeSubscriptionId!,
-            },
-        })
-            
-        return session.url!
-    },
-
     createPortalSessionUrl: async (platformId: string): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
@@ -142,31 +120,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         })
 
         return session.url
-    },
-
-
-    attachPaymentMethod: async (
-        stripe: Stripe,
-        subscriptionId: string,
-        customerId: string,
-        paymentMethodId: string,
-    ): Promise<void> => {
-        await stripe.paymentMethods.attach(paymentMethodId, {
-            customer: customerId,
-        })
-
-        await stripe.customers.update(customerId, {
-            invoice_settings: {
-                default_payment_method: paymentMethodId,
-            },
-        })
-
-        await stripe.subscriptions.update(subscriptionId, {
-            collection_method: 'charge_automatically',
-            default_payment_method: paymentMethodId,
-        })
-
-        log.info('Payment method attached.', { subscriptionId, customerId })
     },
 
     updateSubscription: async (

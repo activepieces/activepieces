@@ -2,7 +2,6 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, 
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { IsNull, Like } from 'typeorm'
-import { agentsService } from '../agents/agents-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
