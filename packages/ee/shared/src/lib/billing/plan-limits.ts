@@ -12,6 +12,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     tablesLimit: 1,
     mcpLimit: 1,
+    agentsLimit: 0,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -44,6 +45,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     mcpLimit: undefined,
     tablesLimit: undefined,
+    agentsLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -77,6 +79,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 10,
     mcpLimit: undefined,
     tablesLimit: undefined,
+    agentsLimit: undefined,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -112,6 +115,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     agentsLimit: undefined,
     analyticsEnabled: false,
     showPoweredBy: false,
+    agentsLimit: undefined,
 
     auditLogEnabled: false,
     managePiecesEnabled: false,
