@@ -218,7 +218,8 @@ async function enrichProject(
 
 
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-    const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
+
+    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
     const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {

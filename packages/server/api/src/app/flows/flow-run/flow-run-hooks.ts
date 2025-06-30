@@ -52,7 +52,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
         return
     }
 
-    const { stripeSubscriptionStartDate: startDate } = platformBilling
+    const { startDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
     const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 
