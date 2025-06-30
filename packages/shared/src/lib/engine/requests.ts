@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion, Nullable } from '../common'
 import { FlowRunResponse } from '../flow-run/execution/flow-execution'
-import { ProgressUpdateType } from './engine-operation'
-import { WebsocketClientEvent, WebsocketServerEvent } from '../websocket'
 import { StepRunResponse } from '../flows'
+import { WebsocketClientEvent } from '../websocket'
+import { ProgressUpdateType } from './engine-operation'
 
 export const UpdateRunProgressRequest = Type.Object({
     runDetails: Type.Omit(FlowRunResponse, ['steps']),

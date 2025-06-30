@@ -83,7 +83,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineConstants: constants,
                 flowExecutorContext: executionState,
                 stepName: action.name,
-                stepOutput: stepOutput,
+                stepOutput,
             }),
             flows: createFlowsContext({
                 engineToken: constants.engineToken,

@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { IsNull, Like } from 'typeorm'
+import { Like } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -22,11 +22,6 @@ export const todoService = (log: FastifyBaseLogger) => ({
             ...params,
         })
         return enrichTodoWithAssignee(todo, log)
-    },
-    async countBy(params: CountByParams): Promise<number> {
-        return todoRepo().countBy({
-            ...spreadIfDefined('agentId', params.agentId),
-        })
     },
     async getOne(params: GetParams): Promise<Todo | null> {
         const todo = await todoRepo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
@@ -112,7 +107,6 @@ export const todoService = (log: FastifyBaseLogger) => ({
         let query = todoRepo().createQueryBuilder('todo').where({
             platformId: params.platformId,
             projectId: params.projectId,
-            agentId: IsNull(),
             ...spreadIfDefined('flowId', params.flowId),
         })
         if (!isNil(params.assigneeId)) {
@@ -185,10 +179,6 @@ async function enrichTodoWithAssignee(
     }
 }
 
-type CountByParams = {
-    agentId: string
-}
-
 type ResolveParams = {
     id: string
     status: string
@@ -225,7 +215,6 @@ type CreateParams = {
     environment: TodoEnvironment
     flowId?: string
     runId?: string
-    agentId?: string
     assigneeId?: string
     resolveUrl?: string
 }
