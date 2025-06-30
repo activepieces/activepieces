@@ -31,7 +31,8 @@ const getDailyUsageRedisKey = (
 export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async getAllPlatformUsage(platformId: string): Promise<PlatformUsage> {
         const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-        const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
+
+        const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
 
         const platformTasksUsage = await this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
         const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }) 
