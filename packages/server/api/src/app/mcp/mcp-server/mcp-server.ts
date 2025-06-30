@@ -314,7 +314,7 @@ async function extractActionParametersFromUserInstructions({
     })
 
     const actionProperties = actionMetadata.props
-    const sortedPropertyNames = mcpUtils.sortByRefreshers(actionProperties)
+    const sortedPropertyNames = mcpUtils.sortPropertiesByDependencies(actionProperties)
     const sortedActionProperties = Object.fromEntries(
         sortedPropertyNames.map((propertyName: string) => [propertyName, actionProperties[propertyName]]),
     )

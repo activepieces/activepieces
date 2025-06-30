@@ -131,7 +131,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
 }
 
 
-function sortByRefreshers(properties: PiecePropertyMap): string[] {
+function sortPropertiesByDependencies(properties: PiecePropertyMap): string[] {
     const inDegree: Record<string, number> = {}
     const graph: Record<string, string[]> = {}
     
@@ -228,7 +228,7 @@ export const mcpUtils = {
     buildFinalExtractionPrompt,
     mcpPropertyToZod,
     piecePropertyToZod,
-    sortByRefreshers,
+    sortPropertiesByDependencies,
     buildZodSchemaForPieceProperty,
 }
 
