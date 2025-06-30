@@ -39,11 +39,11 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     case 'customer.subscription.updated': {
                         const subscription = webhook.data.object as Stripe.Subscription
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
-                        const platformId = subscription.metadata.platfromId as string
+                        const platformId = subscription.metadata.platformId as string
                         const isTrialSubscription = checkIsTrialSubscription(subscription)
 
                         if (webhook.type === 'customer.subscription.created' && isTrialSubscription) {
-                            await emailService(request.log).sendWellcomeToTrialEmail(platformId, subscription.customer as string)
+                            await emailService(request.log).sendWellcomeToTrialEmail(platformId, customer.email as string)
                             await systemJobsSchedule(request.log).upsertJob({
                                 job: {
                                     name: SystemJobName.SEVEN_DAYS_IN_TRIAL,
