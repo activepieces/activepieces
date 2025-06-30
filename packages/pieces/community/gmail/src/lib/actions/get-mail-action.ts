@@ -3,7 +3,7 @@ import { GmailRequests } from '../common/data';
 import { GmailMessageFormat } from '../common/models';
 import { gmailAuth } from '../../';
 
-export const gmailGetEmail = createAction({
+export const gmailGetMailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_mail',
   description: 'Get an email from your Gmail account via Id',
