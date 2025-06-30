@@ -1,3 +1,4 @@
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -20,7 +21,6 @@ import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 

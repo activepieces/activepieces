@@ -262,7 +262,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertDescriptionTodoNamingSqlite1750391313307,
         RegenerateIssuesTable1750391974657,
         RemoveProjectIdFromIndex1750712746125,
-        RevertTodoActivtiesSqlite1751217307674
+        RevertTodoActivtiesSqlite1751217307674,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

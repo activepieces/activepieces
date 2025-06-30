@@ -13,6 +13,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesLimit: 1,
     mcpLimit: 1,
     agentsLimit: 0,
+    agentsEnabled: true,
 
     tablesEnabled: true,
     todosEnabled: true,
@@ -47,6 +48,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesLimit: undefined,
     agentsLimit: undefined,
 
+    agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
 
@@ -83,7 +85,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
     tablesEnabled: true,
     todosEnabled: true,
-
+    agentsEnabled: true,
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
@@ -93,11 +95,11 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
     manageProjectsEnabled: false,
-    projectRolesEnabled: false,
+    projectRolesEnabled: true,
     customDomainsEnabled: false,
-    apiKeysEnabled: false,
+    apiKeysEnabled: true,
     alertsEnabled: false,
-    ssoEnabled: false,
+    ssoEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
 
@@ -110,6 +112,8 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     tasksLimit: undefined,
+
+    agentsEnabled: true,
     includedAiCredits: 0,
     environmentsEnabled: false,
     agentsLimit: undefined,

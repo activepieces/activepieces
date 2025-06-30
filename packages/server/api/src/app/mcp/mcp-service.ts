@@ -6,12 +6,9 @@ import {
     Cursor,
     ErrorCode,
     isNil,
-    McpTool,
-    McpToolMetadata,
-    mcpToolNaming,
+    McpTool,    
     McpToolType,
     McpWithTools,
-    PlatformId,
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -19,13 +16,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ILike, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { pieceMetadataService } from '../pieces/piece-metadata-service'
-import { system } from '../helper/system/system'
 import { McpEntity } from './mcp-entity'
 import { McpToolEntity } from './tool/mcp-tool.entity'
 
@@ -208,17 +202,6 @@ async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated'
         }
     }
 }
-
-type GetMcpServerUrlParams = {
-    mcpId: ApId
-}
-
-type GetMcpToolMetadataParams = {
-    toolName: string
-    platformId: PlatformId
-    projectId: ApId
-}
-
 
 type CreateParams = {
     projectId: ApId

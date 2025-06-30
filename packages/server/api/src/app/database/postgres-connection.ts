@@ -236,6 +236,7 @@ import { ReplaceTasksLimitWithIncludedTasks1750720173459 } from './migration/pos
 import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgres/1750722071472-renameIncludedTasksToTasksLimit'
 import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
+import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -400,7 +401,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertDescriptionTodoNaming1750389164014,
         RegenerateIssuesTable1750392148590,
         RemoveProjectIdFromIndex1750712746125,
-        RevertTodoActivties1751217652277
+        RevertTodoActivties1751217652277,
 
     ]
 
@@ -492,10 +493,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ReplaceTasksLimitWithIncludedTasks1750720173459,
                 RenameIncludedTasksToTasksLimit1750722071472,
                 AddPaymentMethodToPlatformPlan1751021111433,
-              
-       
-
                 AddAgentsLimitToPlatformPlan1749917984363,
+                AddAgentsEnabledToPlatformPlan1751309258332,
             )
             break
         case ApEdition.COMMUNITY:

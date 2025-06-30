@@ -96,6 +96,7 @@ export const PlatformPlan = Type.Object({
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    agentsEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),

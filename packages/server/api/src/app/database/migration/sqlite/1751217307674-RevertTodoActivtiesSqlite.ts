@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterface {
     name = 'RevertTodoActivtiesSqlite1751217307674'
@@ -6,24 +6,24 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DELETE FROM "todo_activity"
-        `);
+        `)
 
         await queryRunner.query(`
             DELETE FROM "todo" 
             WHERE "agentId" IS NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -50,7 +50,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
@@ -89,35 +89,35 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "createdByUserId",
                 "locked"
             FROM "todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -130,7 +130,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo_activity"(
                     "id",
@@ -149,38 +149,38 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "agentId",
                 "content"
             FROM "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo_activity"
                 RENAME TO "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -206,7 +206,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
@@ -243,29 +243,29 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "createdByUserId",
                 "locked"
             FROM "todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -277,7 +277,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo_activity"(
                     "id",
@@ -294,33 +294,33 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "userId",
                 "content"
             FROM "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo_activity"
                 RENAME TO "todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo_activity"
                 RENAME TO "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -333,7 +333,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "fk_todo_activity_todo_id" FOREIGN KEY ("todoId") REFERENCES "todo" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo_activity"(
                     "id",
@@ -350,29 +350,29 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "userId",
                 "content"
             FROM "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -399,7 +399,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
@@ -436,38 +436,38 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "createdByUserId",
                 "locked"
             FROM "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_activity_todo_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo_activity"
                 RENAME TO "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo_activity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -481,7 +481,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "fk_todo_activity_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_a70ac10a601ca72584dff95e0d0" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo_activity"(
                     "id",
@@ -500,35 +500,35 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "agentId",
                 "content"
             FROM "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo_activity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_agent_id" ON "todo_activity" ("agentId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_user_id" ON "todo_activity" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_activity_todo_id" ON "todo_activity" ("todoId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_agent_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -556,7 +556,7 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 CONSTRAINT "FK_c79681af2867d6f762d94b885a9" FOREIGN KEY ("createdByUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
@@ -595,22 +595,22 @@ export class RevertTodoActivtiesSqlite1751217307674 implements MigrationInterfac
                 "createdByUserId",
                 "locked"
             FROM "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_agent_id" ON "todo" ("agentId")
-        `);
+        `)
     }
 
 }

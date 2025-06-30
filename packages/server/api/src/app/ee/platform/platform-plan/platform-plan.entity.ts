@@ -129,6 +129,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
+        agentsEnabled: {
+            type: Boolean,
+        },
         mcpLimit: {
             type: Number,
             nullable: true,

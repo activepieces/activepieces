@@ -1,4 +1,4 @@
-import { Agent, Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
+import { Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

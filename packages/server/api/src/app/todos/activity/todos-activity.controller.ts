@@ -1,4 +1,4 @@
-import { CreateTodoActivityRequestBody, isNil, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
+import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { todoActivitiesService as todoActivityService } from './todos-activity.service'
 
