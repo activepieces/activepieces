@@ -60,6 +60,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
+import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
@@ -203,9 +204,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
         stripeSubscriptionId: undefined,
-        tasksLimit: platformPlan?.tasksLimit ?? 0,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
-        includedTasks: platformPlan?.includedTasks ?? 0,
+        tasksLimit: platformPlan?.tasksLimit ?? 0,
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
@@ -225,6 +225,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         todosEnabled: platformPlan?.todosEnabled ?? false,
         alertsEnabled: platformPlan?.alertsEnabled ?? false,
+        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
+        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {

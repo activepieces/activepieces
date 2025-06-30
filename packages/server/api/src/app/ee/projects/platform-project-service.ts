@@ -1,6 +1,5 @@
 import {
     ApSubscriptionStatus,
-    MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
@@ -21,6 +20,7 @@ import {
     spreadIfDefined,
     UserStatus,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -35,7 +35,7 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { BillingEntityType, platformUsageService } from '../platform/platform-usage-service'
+import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
@@ -68,7 +68,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             const project = await projectService.getOneOrThrow(projectId)
             const isCustomerProject = isCustomerPlatform(project.platformId)
             if (isSubscribed || isCustomerProject) {
-                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
+                const newTasks = request.plan.tasks ?? undefined
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
@@ -173,10 +173,6 @@ type GetAllParams = {
     limit: number
 }
 
-function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
-    return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
-}
-
 async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
     const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
@@ -221,15 +217,20 @@ async function enrichProject(
     })
 
 
+    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+    const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformBilling
+    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
+    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),
-        usage: await platformUsageService(log).getTaskAndCreditUsage(
-            project.id,
-            BillingEntityType.PROJECT,
-        ),
+        usage: {
+            aiCredits: projectAICreditUsage,
+            tasks: projectTasksUsage,
+            nextLimitResetDate: dayjs.unix(endDate).toISOString(),
+        },
         analytics: {
             activeFlows,
             totalFlows,

@@ -1,4 +1,4 @@
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { FREE_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { isNil, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -108,7 +108,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 if (action === 'refund') {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
-                        tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
+                        tasksLimit: FREE_CLOUD_PLAN.tasksLimit,
                     })
                 }
                 else {

@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import type { McpTool } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 

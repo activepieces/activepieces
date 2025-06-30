@@ -139,8 +139,11 @@ function findLoopsState(
 
 function findLastStepWithStatus(
   runStatus: FlowRunStatus,
-  steps: Record<string, StepOutput>,
+  steps: Record<string, StepOutput> | undefined,
 ): string | null {
+  if (isNil(steps)) {
+    return null;
+  }
   if (
     runStatus === FlowRunStatus.STOPPED ||
     runStatus === FlowRunStatus.SUCCEEDED

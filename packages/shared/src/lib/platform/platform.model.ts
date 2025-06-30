@@ -66,6 +66,7 @@ export enum PlatformUsageMetric {
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
     TABLES = 'tables',
+    MCPS = 'mcps',
 }
 
 
@@ -74,7 +75,7 @@ export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
-    mcp: Type.Number(),
+    mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
 })
@@ -84,10 +85,10 @@ export type PlatformUsage = Static<typeof PlatformUsage>
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    includedTasks: Type.Number(),
-    includedAiCredits: Type.Number(),
     tasksLimit: Type.Optional(Type.Number()),
+    includedAiCredits: Type.Number(),
     aiCreditsLimit: Type.Optional(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
@@ -117,6 +118,10 @@ export const PlatformPlan = Type.Object({
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
+    stripeSubscriptionStartDate: Type.Number(),
+    stripeSubscriptionEndDate: Type.Number(),
+    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    stripePaymentMethod: Type.Optional(Type.String()),
 
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),
@@ -191,7 +196,9 @@ export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiv
 export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.String(),
+    nextBillingDate: Type.Number(),
+    nextBillingAmount: Type.Number(),
+    cancelAt: Type.Optional(Type.Number()),
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

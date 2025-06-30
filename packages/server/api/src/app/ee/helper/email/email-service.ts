@@ -198,6 +198,58 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+
+    async sendTrialEndingSoonReminder(
+        platformId: string,
+        customerEmail: string,
+        addPaymentMethodLink: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'trial-ending-reminder',
+                vars: {
+                    addPaymentMethodLink,
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendWellcomeToTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'wellcome-to-trial',
+                vars: {},
+            },
+        })
+    },
+
+    async sendTrialHalfWayEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'trial-half-way',
+                vars: {},
+            },
+        })
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)

@@ -26,10 +26,10 @@ function TodoDetailsDrawer({
       dismissible={false}
       open={open}
       onOpenChange={onOpenChange}
-      className="w-2/3 max-w-4xl"
       onClose={onClose}
+      direction="right"
     >
-      <DrawerContent>
+      <DrawerContent className="w-2/3 max-w-4xl">
         <ScrollArea>
           <div className="px-6">
             <TodoDetails

@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { ApId, BaseModelSchema } from "@activepieces/shared";
+import { ApId, BaseModelSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export enum AlertChannel {
     EMAIL = 'EMAIL',
@@ -9,7 +9,7 @@ export const Alert = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,
     channel: Type.Enum(AlertChannel),
-    receiver: Type.String({})
+    receiver: Type.String({}),
 })
 
 export type Alert = Static<typeof Alert>

@@ -1,6 +1,6 @@
 import { isNil } from '../common'
+import { AgentTaskStatus, AgentTestResult, ContentBlockType, RichContentBlock, ToolCallContentBlock } from './response'
 import { agentbuiltInToolsNames } from './index'
-import { ContentBlockType, RichContentBlock, ToolCallContentBlock, AgentTestResult, AgentTaskStatus } from './response'
 
 export const agentOutputUtils = {
     formatAgentResponse(params: Params): AgentTestResult {

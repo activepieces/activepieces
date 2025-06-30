@@ -105,11 +105,11 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const tasksLimit = isNewProject ? (tasks ?? 50000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 1000) : aiCredits
+    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
+    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        tasks: tasksLimit,
+        tasks: includedTasks,
         aiCredits: aiCreditsLimit,
         pieces,
         piecesFilterType,

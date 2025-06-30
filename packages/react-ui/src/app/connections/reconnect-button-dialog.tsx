@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,

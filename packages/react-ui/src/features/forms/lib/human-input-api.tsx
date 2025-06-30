@@ -28,7 +28,10 @@ export const humanInputApi = {
       data as Record<string, unknown>,
       formResult,
     );
-    const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
+    const suffix = getSuffix(
+      useDraft ? 'draft' : 'locked',
+      formResult.props.waitForResponse,
+    );
     return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       processedData,
@@ -46,7 +49,7 @@ export const humanInputApi = {
     chatId,
     message,
     files,
-    useDraft,
+    mode,
   }: SendMessageParams) => {
     const formData = new FormData();
     formData.append('chatId', chatId);
@@ -54,7 +57,7 @@ export const humanInputApi = {
     files.forEach((file, index) => {
       formData.append(`file[${index}]`, file);
     });
-    const suffix = getSuffix(useDraft, true);
+    const suffix = getSuffix(mode, true);
     return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${flowId}${suffix}`,
       formData,
@@ -102,8 +105,14 @@ async function processData(
   return useFormData ? formData : processedData;
 }
 
-function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
-  if (useDraft) {
+function getSuffix(
+  mode: 'draft' | 'locked' | 'test',
+  waitForResponse: boolean,
+): string {
+  if (mode === 'test') {
+    return '/test';
+  }
+  if (mode === 'draft') {
     return waitForResponse ? '/draft/sync' : '/draft';
   }
   return waitForResponse ? '/sync' : '';
@@ -114,5 +123,5 @@ type SendMessageParams = {
   chatId: string;
   message: string;
   files: File[];
-  useDraft: boolean;
+  mode: 'draft' | 'locked' | 'test';
 };

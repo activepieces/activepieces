@@ -76,10 +76,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '20',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
     [AppSystemProp.SHOW_CHANGELOG]: 'true',
-    [AppSystemProp.MAX_MCPS_PER_PROJECT]: '3',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
 }

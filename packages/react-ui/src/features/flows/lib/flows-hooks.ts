@@ -1,18 +1,26 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
 import {
   ApFlagId,
+  ErrorCode,
   FlowOperationType,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
   ListFlowsRequest,
   PopulatedFlow,
+  Trigger,
+  TriggerType,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -35,11 +43,13 @@ export const flowsHooks = {
     flowId,
     setFlow,
     setVersion,
+    showUpgradeDialog,
     setIsPublishing,
   }: {
     flowId: string;
     setFlow: (flow: PopulatedFlow) => void;
     setVersion: (version: FlowVersion) => void;
+    showUpgradeDialog: () => void;
     setIsPublishing: (isPublishing: boolean) => void;
   }) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
@@ -67,8 +77,12 @@ export const flowsHooks = {
         setVersion(flow.version);
         setIsPublishing(false);
       },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
+      onError: (err: Error) => {
+        if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
+          showUpgradeDialog();
+        } else {
+          toast(INTERNAL_ERROR_TOAST);
+        }
         setIsPublishing(false);
       },
     });
@@ -144,6 +158,43 @@ export const flowsHooks = {
       onError: (error) => {
         toast(INTERNAL_ERROR_TOAST);
         console.error(error);
+      },
+    });
+  },
+  useCreateMcpFlow: () => {
+    const navigate = useNavigate();
+    return useMutation({
+      mutationFn: async () => {
+        const flow = await flowsApi.create({
+          projectId: authenticationSession.getProjectId()!,
+          displayName: t('Untitled'),
+        });
+        const mcpPiece = await piecesApi.get({
+          name: '@activepieces/piece-mcp',
+        });
+        const trigger = mcpPiece.triggers['mcp_tool'];
+        if (!trigger) {
+          throw new Error('MCP trigger not found');
+        }
+        const stepData = pieceSelectorUtils.getDefaultStepValues({
+          stepName: 'trigger',
+          pieceSelectorItem: {
+            actionOrTrigger: trigger,
+            type: TriggerType.PIECE,
+            pieceMetadata: stepUtils.mapPieceToMetadata({
+              piece: mcpPiece,
+              type: 'trigger',
+            }),
+          },
+        }) as Trigger;
+        await flowsApi.update(flow.id, {
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: stepData,
+        });
+        return flow;
+      },
+      onSuccess: (flow) => {
+        navigate(`/flows/${flow.id}/`);
       },
     });
   },

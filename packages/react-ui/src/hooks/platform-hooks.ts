@@ -1,7 +1,7 @@
 import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 
@@ -29,5 +29,9 @@ export const platformHooks = {
         queryClient.setQueryData(['platform', currentPlatformId], platform);
       },
     };
+  },
+  useAreAgentsEnabled: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return !isNil(platform.plan.agentsLimit) && platform.plan.agentsLimit > 0;
   },
 };
