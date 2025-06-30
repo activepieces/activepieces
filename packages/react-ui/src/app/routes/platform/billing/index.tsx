@@ -87,7 +87,7 @@ export default function Billing() {
 
       <div className="space-y-4">
         <div className="text-sm flex items-center gap-2">
-          <Badge variant="secondary" className="rounded-sm text-sm">
+          <Badge variant="accent" className="rounded-sm text-sm">
             {isNil(platformSubscription.plan.plan)
               ? t('Free')
               : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
