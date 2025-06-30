@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
@@ -12,7 +12,8 @@ import { AppSystemProp } from '@activepieces/server-shared'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformId = await platformUtils.getPlatformIdForRequest(request) ?? request.principal.platform.id
+        const platformIdFromPrincipal = request.principal.type === PrincipalType.UNKNOWN ? null : request.principal.platform.id
+        const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
