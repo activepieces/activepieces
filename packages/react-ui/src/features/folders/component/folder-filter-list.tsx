@@ -5,7 +5,6 @@ import {
   ArrowUpAz,
   EllipsisVertical,
   Folder,
-  FolderOpen,
   Pencil,
   PlusIcon,
   Shapes,
@@ -17,7 +16,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,19 +41,9 @@ import { CreateFolderDialog } from './create-folder-dialog';
 import { RenameFolderDialog } from './rename-folder-dialog';
 
 const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
-  return isFolderOpen ? (
-    <FolderOpen
-      className={cn(
-        'border-0 text-muted-foreground flex-shrink-0 w-4.5 h-4.5',
-        {
-          'text-primary': isFolderOpen,
-        },
-      )}
-    />
-  ) : (
-    <Folder className=" flex-shrink-0 w-4 h-4" />
-  );
+  return <Folder className="w-4 h-4" />;
 };
+
 type FolderItemProps = {
   folder: FolderDto;
   refetch: () => void;
@@ -72,11 +61,11 @@ const FolderItem = ({
 }: FolderItemProps) => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   return (
-    <div key={folder.id} className="group py-1">
+    <div key={folder.id} className="group">
       <Button
         variant="ghost"
-        className={cn('w-full  items-center justify-start gap-2 px-4 ', {
-          'bg-muted': selectedFolderId === folder.id,
+        className={cn('w-full  items-center justify-start gap-2 pl-4 pr-0', {
+          'bg-accent dark:bg-accent/50': selectedFolderId === folder.id,
         })}
         onClick={() => updateSearchParams(folder.id)}
       >
@@ -86,9 +75,9 @@ const FolderItem = ({
           text={
             <div
               className={cn(
-                'flex-grow whitespace-break-spaces break-all text-start truncate',
+                'flex-grow max-w-[150px] text-start truncate whitespace-nowrap overflow-hidden',
                 {
-                  'text-primary': selectedFolderId === folder.id,
+                  'font-medium': selectedFolderId === folder.id,
                 },
               )}
             >
@@ -96,27 +85,45 @@ const FolderItem = ({
             </div>
           }
         >
-          <div onClick={(e) => e.stopPropagation()} className="flex flex-row ">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center relative ml-auto"
+          >
+            {/* Folder count */}
             <span
-              className={cn('text-muted-foreground self-end', {
-                'group-hover:hidden': userHasPermissionToUpdateFolders,
-                invisible: isActionMenuOpen,
-              })}
+              className={cn(
+                'text-muted-foreground self-end transition-opacity duration-150',
+                buttonVariants({ size: 'icon', variant: 'ghost' }),
+                {
+                  // Show count when: no permissions OR (has permissions AND menu closed AND not hovering)
+                  'opacity-100': !userHasPermissionToUpdateFolders,
+                  'opacity-100 group-hover:opacity-0':
+                    userHasPermissionToUpdateFolders && !isActionMenuOpen,
+                  'opacity-0':
+                    userHasPermissionToUpdateFolders && isActionMenuOpen,
+                },
+              )}
             >
               {folder.numberOfFlows}
             </span>
+
             {userHasPermissionToUpdateFolders && (
               <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
                 <DropdownMenuTrigger asChild>
-                  <div
-                    className={cn('w-0 group-hover:w-3 overflow-hidden', {
-                      '!w-3': isActionMenuOpen,
-                    })}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'absolute inset-0 transition-opacity duration-150',
+                      {
+                        'opacity-0 group-hover:opacity-100': !isActionMenuOpen,
+                        'opacity-100': isActionMenuOpen,
+                      },
+                    )}
                   >
-                    <EllipsisVertical className="h-5 w-5" />
-                  </div>
+                    <EllipsisVertical className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
-
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToUpdateFolders}
@@ -270,7 +277,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           </PermissionNeededTooltip>
         </div>
       </div>
-      <div className="flex w-[270px] h-full flex-col space-y-1">
+      <div className="flex w-[250px] h-full flex-col gap-y-1">
         <Button
           variant="accent"
           className={cn('flex w-full justify-start bg-background', {
@@ -279,67 +286,43 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           onClick={() => updateSearchParams(undefined)}
         >
           <TextWithIcon
-            icon={
-              <TableProperties
-                className={cn('w-4.5 h-4.5 -scale-100', {
-                  'text-primary': isInAllFlows,
-                })}
-              ></TableProperties>
-            }
+            icon={<TableProperties className="w-4 h-4"></TableProperties>}
             text={
-              <div
-                className={cn(
-                  'flex-grow whitespace-break-spaces break-all text-start truncate',
-                  {
-                    'text-primary': isInAllFlows,
-                  },
-                )}
-              >
+              <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
                 {t('All flows')}
               </div>
             }
           />
           <div className="grow"></div>
-          <span className="text-muted-foreground">{allFlowsCount}</span>
+          <span className="size-9 flex  items-center justify-center text-muted-foreground">
+            {allFlowsCount}
+          </span>
         </Button>
         <Button
           variant="ghost"
-          className={cn('flex w-full justify-start bg-background', {
-            'bg-muted': isInUncategorized,
+          className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
+            'bg-accent dark:bg-accent/50': isInUncategorized,
           })}
           onClick={() => updateSearchParams('NULL')}
         >
           <TextWithIcon
-            icon={
-              <Shapes
-                className={cn('w-4.5 h-4.5', {
-                  'text-primary': isInUncategorized,
-                })}
-              ></Shapes>
-            }
+            icon={<Shapes className="w-4 h-4"></Shapes>}
             text={
-              <div
-                className={cn(
-                  'flex-grow whitespace-break-spaces break-all text-start truncate',
-                  {
-                    'text-primary': isInUncategorized,
-                  },
-                )}
-              >
+              <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
                 {t('Uncategorized')}
               </div>
             }
           />
           <div className="grow"></div>
           <div className="flex flex-row -space-x-4">
-            <span className="visible text-muted-foreground group-hover:invisible">
+            <span className="size-9 flex items-center justify-center text-muted-foreground">
               {foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
             </span>
           </div>
         </Button>
-        <Separator className="my-6" />
+        <Separator />
         <ScrollArea type="auto">
-          <div className="flex flex-col w-full max-h-[590px]">
+          <div className="flex flex-col w-full gap-y-1 max-h-[590px]">
             {isLoading && (
               <div className="flex flex-col gap-2">
                 {Array.from(Array(5)).map((_, index) => (

@@ -20,6 +20,8 @@ import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { Error } from '@/features/billing/components/error';
+import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
@@ -568,6 +570,26 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Billing">
           <SettingsBilling />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing/success',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Success />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing/error',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Error />
         </PageTitle>
       </PlatformAdminContainer>
     ),

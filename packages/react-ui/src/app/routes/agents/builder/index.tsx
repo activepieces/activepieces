@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ArrowLeft } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -11,7 +12,6 @@ import {
 import { Agent } from '@activepieces/shared';
 
 import { AgentSettings } from './agent-settings';
-import { t } from 'i18next';
 
 interface AgentBuilderProps {
   isOpen: boolean;
@@ -34,11 +34,11 @@ export const AgentBuilder = ({
     <Drawer
       open={isOpen}
       onOpenChange={onOpenChange}
-      className="w-full overflow-auto"
       dismissible={false}
+      direction="right"
     >
       {trigger}
-      <DrawerContent>
+      <DrawerContent className="w-full overflow-auto">
         <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1 justify-between">
@@ -52,7 +52,9 @@ export const AgentBuilder = ({
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <DrawerTitle>
-                  {agent ? `${t('Edit')} ${agent?.displayName}` : `${t('Creating Agent')}...`}
+                  {agent
+                    ? `${t('Edit')} ${agent?.displayName}`
+                    : `${t('Creating Agent')}...`}
                 </DrawerTitle>
               </div>
             </div>
@@ -64,7 +66,11 @@ export const AgentBuilder = ({
             className="w-full max-w-3xl px-4"
             style={{ maxHeight: 'calc(100vh - 80px)' }}
           >
-            <AgentSettings agent={agent} refetch={refetch} onChange={onChange} />
+            <AgentSettings
+              agent={agent}
+              refetch={refetch}
+              onChange={onChange}
+            />
           </div>
         </div>
       </DrawerContent>

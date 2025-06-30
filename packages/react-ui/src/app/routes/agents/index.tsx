@@ -35,7 +35,6 @@ export const AgentsPage = () => {
   const handleAgentCreated = (newAgent: Agent) => {
     refetch();
     setSelectedAgent(newAgent);
-  
   };
 
   const deleteAgentMutation = agentHooks.useDelete();

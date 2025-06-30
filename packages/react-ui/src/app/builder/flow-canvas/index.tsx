@@ -6,10 +6,12 @@ import {
   useStoreApi,
   PanOnScrollMode,
   useKeyPress,
+  BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import { useTheme } from '@/components/theme-provider';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
@@ -90,6 +92,7 @@ export const FlowCanvas = React.memo(
     setHasCanvasBeenInitialised: (value: boolean) => void;
     lefSideBarContainerWidth: number;
   }) => {
+    const { theme } = useTheme();
     const [
       flowVersion,
       setSelectedNodes,
@@ -246,7 +249,13 @@ export const FlowCanvas = React.memo(
               onSelectionEnd={onSelectionEnd}
             >
               <AboveFlowWidgets></AboveFlowWidgets>
-              <Background />
+              <Background
+                gap={30}
+                size={4}
+                variant={BackgroundVariant.Dots}
+                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
+                color={theme === 'dark' ? ' #372727' : '#F2F2F2'}
+              />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>

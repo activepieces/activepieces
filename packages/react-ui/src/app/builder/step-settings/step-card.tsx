@@ -4,7 +4,13 @@ import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
-import { Action, ActionType, isNil, Trigger, TriggerType } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  isNil,
+  Trigger,
+  TriggerType,
+} from '@activepieces/shared';
 
 type StepCardProps = {
   step: Action | Trigger;
@@ -21,9 +27,12 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
-  const actionOrTriggerDisplayName = stepMetadata?.actionOrTriggerOrAgentDisplayName;
+  const actionOrTriggerDisplayName =
+    stepMetadata?.actionOrTriggerOrAgentDisplayName;
   const modifiedTitle = stepMetadata
-    ? `${stepMetadata?.displayName} ${actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''}`
+    ? `${stepMetadata?.displayName} ${
+        actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
+      }`
     : null;
 
   return (

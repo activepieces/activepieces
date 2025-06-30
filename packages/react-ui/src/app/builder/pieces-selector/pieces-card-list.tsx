@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,7 +28,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { NoResultsFound } from './no-results-found';
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 import { PieceCardListItem } from './piece-card-item';
-import { agentHooks } from '@/features/agents/lib/agent-hooks';
 
 type PiecesCardListProps = {
   searchQuery: string;
@@ -78,10 +78,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
   const isLoading = isLoadingPieces || isLoadingAgents;
   const showActionsOrTriggersList =
-    searchQuery.length === 0 &&
-    !isMobile &&
-    !noResultsFound &&
-    !isLoading;
+    searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
   const showPiecesList = !noResultsFound && !isLoading;
   return (
     <>
@@ -217,10 +214,11 @@ const getItemHeight = (
     pieceMetadata.type === ActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
-    const numberOfExtraActions = getNumberOfExtraActions(pieceMetadata, agents)
+    const numberOfExtraActions = getNumberOfExtraActions(pieceMetadata, agents);
     return (
       ACTION_OR_TRIGGER_ITEM_HEIGHT *
-        (Object.values(pieceMetadata.suggestedActions ?? {}).length + numberOfExtraActions) +
+        (Object.values(pieceMetadata.suggestedActions ?? {}).length +
+          numberOfExtraActions) +
       PIECE_ITEM_HEIGHT
     );
   }
@@ -244,10 +242,15 @@ const getItemHeight = (
   return PIECE_ITEM_HEIGHT;
 };
 
-
-const getNumberOfExtraActions = (pieceMetadata: StepMetadataWithSuggestions, agents: Agent[] | undefined) => {
-  if (pieceMetadata.type === ActionType.PIECE && pieceMetadata.pieceName === '@activepieces/piece-agent') {
+const getNumberOfExtraActions = (
+  pieceMetadata: StepMetadataWithSuggestions,
+  agents: Agent[] | undefined,
+) => {
+  if (
+    pieceMetadata.type === ActionType.PIECE &&
+    pieceMetadata.pieceName === '@activepieces/piece-agent'
+  ) {
     return agents?.length ?? 0;
   }
   return 0;
-}
+};

@@ -1,8 +1,10 @@
+import { t } from 'i18next';
 import { Wand, Info, Activity } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -11,14 +13,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Agent, AgentOutputField, AgentOutputType, isNil } from '@activepieces/shared';
+import {
+  Agent,
+  AgentOutputField,
+  AgentOutputType,
+  isNil,
+} from '@activepieces/shared';
 
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
-import { t } from 'i18next';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 
 interface AgentSettingsProps {
   agent?: Agent;
@@ -30,7 +35,11 @@ interface AgentFormValues {
   systemPrompt: string;
 }
 
-export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) => {
+export const AgentSettings = ({
+  agent,
+  refetch,
+  onChange,
+}: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
   const { register, watch, setValue } = useForm<AgentFormValues>({
@@ -81,8 +90,8 @@ export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) 
 
   const handleNameChange = async (value: string) => {
     setDisplayName(value);
-    if(agent) {
-      onChange?.({...agent, displayName: value})
+    if (agent) {
+      onChange?.({ ...agent, displayName: value });
     }
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { displayName: value } },
@@ -91,9 +100,9 @@ export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) 
   };
 
   const handleDescriptionChange = async (value: string) => {
-    setDescription(value);  
-    if(agent) {
-      onChange?.({...agent, description: value})
+    setDescription(value);
+    if (agent) {
+      onChange?.({ ...agent, description: value });
     }
     await updateAgentMutation.mutateAsync(
       { id: agent!.id, request: { description: value } },
@@ -145,16 +154,14 @@ export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) 
               isEditing={isEditingDescription}
               setIsEditing={setIsEditingDescription}
             />
-            {
-              !isNil(agent) && (
-                <div className="flex items-center gap-2 mt-2">
-                  <Activity className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium">
-                    {t('Task Completed')}: {agent?.taskCompleted}
-                  </span>
-                </div>
-              )
-            }
+            {!isNil(agent) && (
+              <div className="flex items-center gap-2 mt-2">
+                <Activity className="h-4 w-4 text-success" />
+                <span className="text-sm font-medium">
+                  {t('Task Completed')}: {agent?.taskCompleted}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -171,7 +178,9 @@ export const AgentSettings = ({ agent, refetch, onChange }: AgentSettingsProps) 
                       <Info className="w-4 h-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                        {t('Define how your agent should behave and respond to tasks.')}
+                      {t(
+                        'Define how your agent should behave and respond to tasks.',
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

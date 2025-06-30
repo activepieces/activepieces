@@ -14,9 +14,9 @@ export const agentsApi = {
     const query = {
       limit: params?.limit ?? 100,
       cursor: params?.cursor ?? '',
-    }
+    };
 
-    return await api.get<SeekPage<Agent>>(`/v1/agents`,query);
+    return await api.get<SeekPage<Agent>>(`/v1/agents`, query);
   },
 
   async get(id: string): Promise<Agent> {

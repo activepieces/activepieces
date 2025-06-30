@@ -10,9 +10,11 @@ import {
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
+import { Messages } from '@/components/ui/chat/chat-message-list';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
@@ -28,6 +30,7 @@ import {
   StepLocationRelativeToParent,
   FlowRunStatus,
   ActionType,
+  apId,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -54,7 +57,6 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -82,6 +84,11 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+export enum ChatDrawerSource {
+  TEST_FLOW = 'test-flow',
+  TEST_STEP = 'test-step',
+}
+
 type InsertMentionHandler = (propertyPath: string) => void;
 export type BuilderState = {
   flow: PopulatedFlow;
@@ -100,6 +107,14 @@ export type BuilderState = {
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
+  chatDrawerOpenSource: ChatDrawerSource | null;
+  chatSessionMessages: Messages;
+  chatSessionId: string | null;
+  setChatDrawerOpenSource: (source: ChatDrawerSource | null) => void;
+  setChatSessionMessages: (messages: Messages) => void;
+  addChatMessage: (message: Messages[0]) => void;
+  clearChatSession: () => void;
+  setChatSessionId: (sessionId: string | null) => void;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
@@ -222,7 +237,21 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
-
+      chatDrawerOpenSource: null,
+      chatSessionMessages: [],
+      chatSessionId: apId(),
+      setChatDrawerOpenSource: (source: ChatDrawerSource | null) =>
+        set({ chatDrawerOpenSource: source }),
+      setChatSessionMessages: (messages: Messages) =>
+        set({ chatSessionMessages: messages }),
+      addChatMessage: (message: Messages[0]) =>
+        set((state) => ({
+          chatSessionMessages: [...state.chatSessionMessages, message],
+        })),
+      clearChatSession: () =>
+        set({ chatSessionMessages: [], chatSessionId: null }),
+      setChatSessionId: (sessionId: string | null) =>
+        set({ chatSessionId: sessionId }),
       removeStepSelection: () =>
         set({
           selectedStep: null,
@@ -458,7 +487,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         set((state) => ({
           refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
         })),
-
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (
@@ -964,9 +992,10 @@ function determineInitiallySelectedStep(
   const firstInvalidStep = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .find((s) => !s.valid);
-   const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM)
-   if (isNewFlow) {
+  // eslint-disable-next-line no-restricted-globals
+  const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM);
+  if (isNewFlow) {
     return null;
-   }
-   return firstInvalidStep?.name ?? 'trigger';
+  }
+  return firstInvalidStep?.name ?? 'trigger';
 }

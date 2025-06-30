@@ -41,7 +41,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           <Search className="size-4 shrink-0 opacity-50"></Search>
         )}
         <input
-          className="rounded-md bg-transparent  h-8 grow text-sm outline-none placeholder:text-muted-foreground"
+          className="rounded-md bg-transparent h-9 grow text-sm outline-none placeholder:text-muted-foreground"
           type={type}
           ref={ref}
           {...props}

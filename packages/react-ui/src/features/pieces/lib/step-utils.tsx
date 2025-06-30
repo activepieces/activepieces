@@ -111,35 +111,37 @@ export const stepUtils = {
           version: step.settings.pieceVersion,
           locale: locale,
         });
-        const metadata = stepUtils.mapPieceToMetadata(
-            {
-              piece,
-              type: step.type === ActionType.PIECE ? 'action' : 'trigger',
-            }
-        );
+        const metadata = stepUtils.mapPieceToMetadata({
+          piece,
+          type: step.type === ActionType.PIECE ? 'action' : 'trigger',
+        });
         const agentMetadata = await getAgentMetadata(step);
         const agentDisplayName = agentMetadata.displayName;
-        const actionOrTriggerDisplayName = step.type === ActionType.PIECE ? piece.actions[step.settings.actionName!].displayName : piece.triggers[step.settings.triggerName!].displayName;
+        const actionOrTriggerDisplayName =
+          step.type === ActionType.PIECE
+            ? piece.actions[step.settings.actionName!].displayName
+            : piece.triggers[step.settings.triggerName!].displayName;
         return {
           ...metadata,
           ...spreadIfDefined('logoUrl', agentMetadata.logoUrl ?? customLogoUrl),
-          ...spreadIfDefined('description', agentMetadata.description ?? piece.description),
+          ...spreadIfDefined(
+            'description',
+            agentMetadata.description ?? piece.description,
+          ),
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          actionOrTriggerOrAgentDisplayName: agentDisplayName ?? actionOrTriggerDisplayName,
+          actionOrTriggerOrAgentDisplayName:
+            agentDisplayName ?? actionOrTriggerDisplayName,
         };
       }
     }
   },
-  mapPieceToMetadata(
-    {
-      piece,
-      type,
-    }: {
-      piece: PieceMetadataModelSummary | PieceMetadataModel;
-      type: 'action' | 'trigger';
-    }
-    
-  ): Omit<PieceStepMetadata, 'stepDisplayName'> {
+  mapPieceToMetadata({
+    piece,
+    type,
+  }: {
+    piece: PieceMetadataModelSummary | PieceMetadataModel;
+    type: 'action' | 'trigger';
+  }): Omit<PieceStepMetadata, 'stepDisplayName'> {
     return {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,

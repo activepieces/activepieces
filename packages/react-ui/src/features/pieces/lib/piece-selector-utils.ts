@@ -284,7 +284,20 @@ export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
   ACTION_OR_TRIGGER_ITEM_HEIGHT,
   CATEGORY_ITEM_HEIGHT,
 };
+
+const isMcpToolTrigger = (pieceName: string, triggerName: string) => {
+  return pieceName === '@activepieces/piece-mcp' && triggerName === 'mcp_tool';
+};
+
+const isChatTrigger = (pieceName: string, triggerName: string) => {
+  return (
+    pieceName === '@activepieces/piece-forms' &&
+    triggerName === 'chat_submission'
+  );
+};
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
+  isMcpToolTrigger,
+  isChatTrigger,
 };

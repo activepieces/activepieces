@@ -120,15 +120,18 @@ export const piecesHooks = {
   } => {
     const { metadata, isLoading: isLoadingPieces } =
       stepsHooks.useAllStepsMetadata(props);
-  const areAgentsEnabled = platformHooks.useAreAgentsEnabled();
+    const areAgentsEnabled = platformHooks.useAreAgentsEnabled();
     const { platform } = platformHooks.useCurrentPlatform();
     if (!metadata || isLoadingPieces) {
       return {
         isLoading: true,
         data: [],
       };
-  }
-    const piecesMetadataWithoutEmptySuggestions = filterOutAgentPiece(filterOutPiecesWithNoSuggestions(metadata), areAgentsEnabled);
+    }
+    const piecesMetadataWithoutEmptySuggestions = filterOutAgentPiece(
+      filterOutPiecesWithNoSuggestions(metadata),
+      areAgentsEnabled,
+    );
     const popularPieces = piecesMetadataWithoutEmptySuggestions.filter((p) =>
       isPopularPieces(p, platform),
     );
@@ -230,16 +233,21 @@ const filterOutPiecesWithNoSuggestions = (
     );
   });
 };
-const filterOutAgentPiece = (stepsMetadata: StepMetadataWithSuggestions[], areAgentsEnabled: boolean) => {
+const filterOutAgentPiece = (
+  stepsMetadata: StepMetadataWithSuggestions[],
+  areAgentsEnabled: boolean,
+) => {
   return stepsMetadata.filter((metadata) => {
-    const isPieceStep = metadata.type === ActionType.PIECE || metadata.type === TriggerType.PIECE;
-    const isAgentPiece = isPieceStep && metadata.pieceName === '@activepieces/piece-agent';
-    if(isAgentPiece) {
+    const isPieceStep =
+      metadata.type === ActionType.PIECE || metadata.type === TriggerType.PIECE;
+    const isAgentPiece =
+      isPieceStep && metadata.pieceName === '@activepieces/piece-agent';
+    if (isAgentPiece) {
       return areAgentsEnabled;
     }
     return true;
   });
-}
+};
 const isPopularPieces = (
   stepMetadata: StepMetadataWithSuggestions,
   platform: PlatformWithoutSensitiveData,

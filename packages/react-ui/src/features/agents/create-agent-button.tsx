@@ -71,9 +71,7 @@ export const CreateAgentButton = ({
       </PopoverTrigger>
       <PopoverContent className="w-80 mr-4">
         <div className="space-y-4">
-          <h4 className="font-medium leading-none">
-            {t('Connect to OpenAI')}
-          </h4>
+          <h4 className="font-medium leading-none">{t('Connect to OpenAI')}</h4>
           <p className="text-sm text-muted-foreground">
             {t(
               "To create an agent, you'll first need to connect to OpenAI in platform settings.",

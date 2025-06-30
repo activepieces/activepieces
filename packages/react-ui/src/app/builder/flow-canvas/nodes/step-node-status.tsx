@@ -10,18 +10,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { FlowRunStatus, flowStructureUtil, isNil, Step } from '@activepieces/shared';
+import { FlowRunStatus, flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes, flowVersion, step] = useBuilderStateContext((state) => [
-    state.run,
-    state.loopsIndexes,
-    state.flowVersion,
-    flowStructureUtil.getStep(stepName, state.flowVersion.trigger)
-  ]);
+  const [run, loopIndexes, flowVersion, step] = useBuilderStateContext(
+    (state) => [
+      state.run,
+      state.loopsIndexes,
+      state.flowVersion,
+      flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
+    ],
+  );
 
   const stepStatusInRun = useMemo(() => {
     return flowCanvasUtils.getStepStatus(

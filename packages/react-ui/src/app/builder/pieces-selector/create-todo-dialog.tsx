@@ -39,8 +39,6 @@ type CreateTodoGuideProps = {
   hidePieceIconAndDescription: boolean;
 };
 
-
-
 const CreateTodoDialog = ({
   operation,
   pieceSelectorItem,

@@ -1,34 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
+import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import {
-  SeekPage,
-  Trigger,
-  TriggerEventWithPayload,
-  TriggerTestStrategy,
-  isNil,
-} from '@activepieces/shared';
+import { Trigger, isNil } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../test-step-hooks';
 
 import { FirstTimeTestingSection } from './first-time-testing-section';
-import { SimulationSection } from './simulation-section';
+import { ManualWebhookTestButton } from './manual-webhook-test-button';
+import { SimulationNote } from './simulation-section';
+import { TriggerEventSelect } from './trigger-event-select';
+import { TestType, triggerEventUtils } from './trigger-event-utils';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;
@@ -36,17 +24,6 @@ type TestTriggerSectionProps = {
   flowId: string;
   projectId: string;
 };
-
-function getSelectedId(
-  sampleData: unknown,
-  pollResults: TriggerEventWithPayload[],
-) {
-  if (sampleData === undefined) {
-    return undefined;
-  }
-  return pollResults.find((result) => deepEqual(sampleData, result.payload))
-    ?.id;
-}
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
@@ -56,8 +33,7 @@ const TestTriggerSection = React.memo(
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
-    const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
-      useState(false);
+    const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
 
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -66,20 +42,23 @@ const TestTriggerSection = React.memo(
 
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
-    const isMcpTool = formValues.settings.triggerName === 'mcp_tool';
-    const isSimulation =
-      pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
-        TriggerTestStrategy.SIMULATION && !isMcpTool;
+
+    const testType: TestType = triggerEventUtils.getTestType(
+      formValues.settings.triggerName,
+      formValues.settings.pieceName,
+    );
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
 
-    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
-      return {
-        sampleData: state.sampleData[formValues.name],
-        sampleDataInput: state.sampleDataInput[formValues.name],
-      };
-    });
+    const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
+      useBuilderStateContext((state) => {
+        return {
+          sampleData: state.sampleData[formValues.name],
+          sampleDataInput: state.sampleDataInput[formValues.name],
+          setChatDrawerOpenSource: state.setChatDrawerOpenSource,
+        };
+      });
 
     const onTestSuccess = async () => {
       form.setValue(`settings.inputUiInfo.lastTestDate`, dayjs().toISOString());
@@ -91,8 +70,6 @@ const TestTriggerSection = React.memo(
         onSuccess: onTestSuccess,
       });
 
-    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
-      useState(false);
     const {
       mutate: simulateTrigger,
       isPending: isSimulating,
@@ -101,7 +78,7 @@ const TestTriggerSection = React.memo(
       setErrorMessage,
       onSuccess: async () => {
         await onTestSuccess();
-        setIsWebhookTestingDialogOpen(false);
+        setIsTestingDialogOpen(false);
       },
     });
     const { mutate: pollTrigger, isPending: isPollingTesting } =
@@ -110,182 +87,127 @@ const TestTriggerSection = React.memo(
         onSuccess: onTestSuccess,
       });
 
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      formValues.name,
-      (step) => {
-        const sampleDataFileId = step.settings.inputUiInfo?.sampleDataFileId;
-        const sampleDataInputFileId =
-          step.settings.inputUiInfo?.sampleDataInputFileId;
-        form.setValue(
-          'settings.inputUiInfo',
-          {
-            ...formValues.settings.inputUiInfo,
-            sampleDataFileId,
-            sampleDataInputFileId,
-            currentSelectedData: undefined,
-            lastTestDate: dayjs().toISOString(),
-          },
-          { shouldValidate: true },
-        );
-      },
+    const { pollResults, refetch } = triggerEventHooks.usePollResults(
+      flowVersionId,
+      flowId,
     );
-    const { data: pollResults, refetch } = useQuery<
-      SeekPage<TriggerEventWithPayload>
-    >({
-      queryKey: ['triggerEvents', flowVersionId],
-      queryFn: () =>
-        triggerEventsApi.list({
-          flowId: flowId,
-          limit: 5,
-          cursor: undefined,
-        }),
-      staleTime: 0,
-    });
 
     const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const isTestedBefore = !isNil(
       form.getValues().settings.inputUiInfo?.lastTestDate,
     );
-    const selectedId = useMemo(
-      () => getSelectedId(sampleData, pollResults?.data ?? []),
-      [sampleData, pollResults],
-    );
+    const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
     if (isPieceLoading) {
       return null;
     }
     const showSampleDataViewer =
       sampleDataSelected && !isSimulating && !isSavingMockdata;
-    const showSimulationSection = isSimulation && isSimulating;
-    const showFirstTimeTestingSectionForSimulation =
-      !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
 
-    const showFirstTimeTestingSectionForPolling =
-      !isTestedBefore &&
-      !sampleDataSelected &&
-      !isSimulation &&
-      !isSimulating &&
-      !isMcpTool;
-    const showFirstTimeMcpToolTestingSection =
-      !isTestedBefore && !sampleDataSelected && isMcpTool;
-    const isWebhookPieceTrigger =
-      pieceModel?.name === '@activepieces/piece-webhook' &&
-      formValues.settings.triggerName === 'catch_webhook';
-
-    const handleMcpToolTesting = () => {
-      setIsMcpToolTestingDialogOpen(true);
+    const getSimulationNode = (testType: TestType) => {
+      switch (testType) {
+        case 'simulation':
+          return t('testPieceSimulationTriggerNote', {
+            pieceName: pieceModel?.displayName,
+            triggerName:
+              pieceModel?.triggers[formValues.settings.triggerName].displayName,
+          });
+        case 'webhook':
+          return (
+            <div className="flex flex-col gap-2">
+              <p>
+                {t(
+                  'Send Data to the webhook URL to generate sample data to use in the next steps',
+                )}
+              </p>
+              <ManualWebhookTestButton
+                isWebhookTestingDialogOpen={isTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+              />
+            </div>
+          );
+        default:
+          return null;
+      }
     };
 
     return (
       <div>
-        {showSampleDataViewer && (
-          <TestSampleDataViewer
-            onRetest={
-              isSimulation
-                ? () => {
-                    simulateTrigger(abortControllerRef.current.signal);
-                  }
-                : isMcpTool
-                ? handleMcpToolTesting
-                : pollTrigger
-            }
-            isValid={isValid}
-            isTesting={isPollingTesting}
-            sampleData={sampleData}
-            sampleDataInput={sampleDataInput ?? null}
-            errorMessage={errorMessage}
-            lastTestDate={lastTestDate}
-            isSaving={isSaving}
-          >
-            {pollResults?.data && (
-              <div className="mb-3">
-                <Select
-                  value={selectedId}
-                  onValueChange={(value) => {
-                    const triggerEvent = pollResults?.data.find(
-                      (triggerEvent) => triggerEvent.id === value,
-                    );
-                    if (triggerEvent) {
-                      updateSampleData({
-                        response: {
-                          output: triggerEvent.payload,
-                          success: true,
-                        },
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    className="w-full"
-                    disabled={pollResults && pollResults.data.length === 0}
-                  >
-                    {pollResults && pollResults.data.length > 0 ? (
-                      <SelectValue
-                        placeholder={t('No sample data available')}
-                      ></SelectValue>
-                    ) : (
-                      t('Old results were removed, retest for new sample data')
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pollResults &&
-                      pollResults.data.map((triggerEvent, index) => (
-                        <SelectItem
-                          key={triggerEvent.id}
-                          value={triggerEvent.id}
-                        >
-                          {t('Result #') + (index + 1)}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-sm mt-2 text-muted-foreground">
-                  {t('The sample data can be used in the next steps.')}
-                </span>
-              </div>
-            )}
-          </TestSampleDataViewer>
-        )}
-
-        {showSimulationSection && (
-          <SimulationSection
-            isWebhookPieceTrigger={isWebhookPieceTrigger}
-            pieceModel={pieceModel}
-            triggerName={formValues.settings.triggerName}
-            isWebhookTestingDialogOpen={isWebhookTestingDialogOpen}
-            setIsWebhookTestingDialogOpen={setIsWebhookTestingDialogOpen}
-            resetSimulation={resetSimulation}
-            abortControllerRef={abortControllerRef}
-          />
-        )}
-
-        {(showFirstTimeTestingSectionForSimulation ||
-          showFirstTimeTestingSectionForPolling ||
-          showFirstTimeMcpToolTestingSection) && (
+        {showFirstTimeTestingSection && (
           <FirstTimeTestingSection
             isValid={isValid}
-            isSimulation={isSimulation}
-            isMcpTool={isMcpTool}
-            isPollingTesting={isPollingTesting}
-            isMcpToolTestingDialogOpen={isMcpToolTestingDialogOpen}
+            testType={testType}
+            isTesting={isPollingTesting || isSimulating || isTestingDialogOpen}
             mockData={mockData}
             isSavingMockdata={isSavingMockdata}
-            onSimulateTrigger={() =>
-              simulateTrigger(abortControllerRef.current.signal)
-            }
+            onSimulateTrigger={() => {
+              if (testType === 'chat-trigger') {
+                setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+              }
+              simulateTrigger(abortControllerRef.current.signal);
+            }}
             onPollTrigger={pollTrigger}
-            onMcpToolTesting={handleMcpToolTesting}
+            onMcpToolTesting={() => setIsTestingDialogOpen(true)}
             onSaveMockAsSampleData={saveMockAsSampleData}
           />
         )}
+        {!showFirstTimeTestingSection && (
+          <>
+            {showSampleDataViewer && (
+              <TestSampleDataViewer
+                onRetest={() => {
+                  if (testType === 'chat-trigger') {
+                    setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);
+                  } else {
+                    setIsTestingDialogOpen(true);
+                  }
+                  if (
+                    testType === 'simulation' ||
+                    testType === 'webhook' ||
+                    testType === 'chat-trigger'
+                  ) {
+                    simulateTrigger(abortControllerRef.current.signal);
+                  } else if (testType === 'polling') {
+                    pollTrigger();
+                  }
+                }}
+                isValid={isValid}
+                isTesting={isPollingTesting}
+                sampleData={sampleData}
+                sampleDataInput={sampleDataInput ?? null}
+                errorMessage={errorMessage}
+                lastTestDate={lastTestDate}
+                isSaving={isSaving}
+              >
+                {pollResults?.data && (
+                  <TriggerEventSelect
+                    pollResults={pollResults}
+                    sampleData={sampleData}
+                  />
+                )}
+              </TestSampleDataViewer>
+            )}
 
-        {isMcpTool && (
-          <McpToolTestingDialog
-            open={isMcpToolTestingDialogOpen}
-            onOpenChange={setIsMcpToolTestingDialogOpen}
-            onTestingSuccess={onTestSuccess}
-          />
+            {(testType === 'simulation' ||
+              testType === 'webhook' ||
+              testType === 'chat-trigger') &&
+              isSimulating && (
+                <SimulationNote
+                  note={getSimulationNode(testType)}
+                  resetSimulation={resetSimulation}
+                  abortControllerRef={abortControllerRef}
+                />
+              )}
+
+            {testType === 'mcp-tool' && (
+              <McpToolTestingDialog
+                open={isTestingDialogOpen}
+                onOpenChange={setIsTestingDialogOpen}
+                onTestingSuccess={onTestSuccess}
+              />
+            )}
+          </>
         )}
       </div>
     );
