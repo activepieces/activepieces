@@ -54,6 +54,16 @@ export const planData = {
       },
     },
     {
+      key: 'agents',
+      label: t('AI Agents'),
+      values: {
+        free: null,
+        plus: 'Unlimited',
+        business: 'Unlimited',
+        enterprise: 'Custom',
+      },
+    },
+    {
       key: 'users',
       label: t('Users'),
       values: {

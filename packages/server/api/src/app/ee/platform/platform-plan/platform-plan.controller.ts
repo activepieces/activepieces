@@ -1,7 +1,7 @@
 import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { platformService } from '../../../platform/platform.service'
@@ -10,7 +10,13 @@ import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
-async function getNextBillingAmount(stripe: Stripe, subscriptionStatus: ApSubscriptionStatus, subscriptionId?: string): Promise<number> {
+async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
+    const stripe = stripeHelper(log).getStripe()
+    
+    if (isNil(stripe)) {
+        return 0
+    }
+
     try {
         const upcomingInvoice = await stripe.invoices.createPreview({
             subscription: subscriptionId,
@@ -34,8 +40,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const stripe = stripeHelper(request.log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+        
 
         const [platformBilling, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
@@ -44,7 +49,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
         const { stripeSubscriptionEndDate: nextBillingDate, stripeSubscriptionCancelDate: cancelDate } = platformBilling
 
-        const nextBillingAmount = await getNextBillingAmount(stripe, platformBilling.stripeSubscriptionStatus as ApSubscriptionStatus, platformBilling.stripeSubscriptionId)
+        const nextBillingAmount = await getNextBillingAmount(platformBilling.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformBilling.stripeSubscriptionId)
 
         const response: PlatformBillingInformation = {
             plan: platformBilling,

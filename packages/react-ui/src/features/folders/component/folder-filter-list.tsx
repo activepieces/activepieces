@@ -280,7 +280,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       <div className="flex w-[250px] h-full flex-col gap-y-1">
         <Button
           variant="accent"
-          className={cn('flex w-full justify-start bg-background', {
+          className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
             'bg-muted': isInAllFlows,
           })}
           onClick={() => updateSearchParams(undefined)}
@@ -294,9 +294,11 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             }
           />
           <div className="grow"></div>
-          <span className="size-9 flex  items-center justify-center text-muted-foreground">
-            {allFlowsCount}
-          </span>
+          <div className="flex flex-row -space-x-4">
+            <span className="size-9 flex items-center justify-center text-muted-foreground">
+              {allFlowsCount}
+            </span>
+          </div>
         </Button>
         <Button
           variant="ghost"

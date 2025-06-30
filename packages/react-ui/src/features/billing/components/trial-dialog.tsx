@@ -70,21 +70,29 @@ export const FreeTrialDialog = ({
                 {t('Welcome To Your Free Trial!')}
               </h1>
               <p className="text-sm text-muted-foreground">
+                {t("You're all set! Enjoy 14 days of full access for the")}{' '}
+                <Button
+                  variant="link"
+                  onClick={handleSeePlans}
+                  className="px-0"
+                >
+                  {t('Plus')}
+                </Button>{' '}
                 {t(
-                  "You're all set! Enjoy 14 days of full access with the Plus plan explore all features and make the most of your trial.",
+                  'plan explore all features and make the most of your trial.',
                 )}
               </p>
             </div>
             <div className="flex w-full items-stretch flex-col justify-between gap-3">
               <Button onClick={handleContinue} className="flex-1">
-                {t('Continue on Trial')}
+                {t('Continue on trial')}
               </Button>
               <Button
                 onClick={handleSeePlans}
                 variant="outline"
                 className="flex-1"
               >
-                {t('See plans')}
+                {t('View plans')}
               </Button>
             </div>
           </div>

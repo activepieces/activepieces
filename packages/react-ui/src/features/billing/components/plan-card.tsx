@@ -38,9 +38,8 @@ export const PlanCard = ({
 
   const { mutate: updateSubscription, isPending: isUpdatingSubscription } =
     billingMutations.useUpdateSubscription(() => setDialogOpen(false));
-  const { mutate: createSubscription } = billingMutations.useCreateSubscription(
-    () => setDialogOpen(false),
-  );
+  const { mutate: createSubscription, isPending: isCreatingSubscripton } =
+    billingMutations.useCreateSubscription(() => setDialogOpen(false));
 
   const hasActiveSubscription =
     billingInformation?.plan.stripeSubscriptionStatus ===
@@ -57,7 +56,7 @@ export const PlanCard = ({
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-xl border bg-card p-6',
+        'relative flex flex-col rounded-xl border bg-background p-6',
         isPopular && 'ring-2 ring-primary',
       )}
     >
@@ -65,7 +64,7 @@ export const PlanCard = ({
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Badge
             variant="ghost"
-            className="bg-secondary text-foreground px-3 py-1 text-xs font-medium"
+            className="bg-accent text-foreground px-3 py-1 text-xs font-medium"
           >
             <StarIcon className="mr-1 h-3 w-3 fill-current" />
             {t('Most Popular')}
@@ -113,11 +112,12 @@ export const PlanCard = ({
             }
           }
         }}
-        disabled={isUpdatingSubscription || isSelected}
+        disabled={isUpdatingSubscription || isSelected || isCreatingSubscripton}
       >
-        {isUpdatingSubscription && (
-          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-        )}
+        {isUpdatingSubscription ||
+          (isCreatingSubscripton && (
+            <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+          ))}
         {getButtonText()}
       </Button>
 

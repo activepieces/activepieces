@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -107,12 +112,14 @@ export function AICreditUsage({
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <h4 className="text-base font-medium">{t('Plan Credits Usage')}</h4>
-            <div className="group relative">
-              <Info className="w-4 h-4 text-muted-foreground" />
-              <div className="invisible group-hover:visible absolute left-0 top-6 bg-popover text-popover-foreground text-xs rounded-md px-2 py-1 whitespace-nowrap z-10 border shadow-md">
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
                 Credits reset monthly with your billing cycle
-              </div>
-            </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="rounded-lg space-y-3">
@@ -153,12 +160,14 @@ export function AICreditUsage({
                 <h4 className="text-base font-medium">
                   {t('Additional Credits Usage')}
                 </h4>
-                <div className="group relative">
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                  <div className="invisible group-hover:visible absolute left-0 top-6 bg-popover text-popover-foreground text-xs rounded-md px-2 py-1 whitespace-nowrap z-10 border shadow-md">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="w-4 h-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
                     Credits used beyond your plan limit ($0.01 each)
-                  </div>
-                </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               <div className="rounded-lg space-y-3">
