@@ -127,7 +127,7 @@ const CreateAgentActionItem = ({
         }
       />
       <UpgradeHookDialog
-        metric="mcp"
+        metric="agents"
         open={showUpgradeDialog}
         setOpen={setShowUpgradeDialog}
       />
