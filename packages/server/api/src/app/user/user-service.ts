@@ -24,6 +24,9 @@ import { projectMemberRepo } from '../ee/projects/project-role/project-role.serv
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { UserEntity, UserSchema } from './user-entity'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { Cursor } from '@activepieces/shared'
+import { buildPaginator } from '../helper/pagination/build-paginator'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -81,16 +84,23 @@ export const userService = {
         }
         return this.getMetaInformation({ id })
     },
-    async list({ platformId }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
-        const users = await userRepo().findBy({
-            platformId,
+    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: UserEntity,
+            query: {
+                limit,
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
         })
+        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
+            platformId,
+            ...spreadIfDefined('externalId', externalId),
+        }))
 
-        return {
-            data: await Promise.all(users.map(this.getMetaInformation)),
-            next: null,
-            previous: null,
-        }
+        const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
+        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })
@@ -195,6 +205,9 @@ type DeleteParams = {
 
 type ListParams = {
     platformId: PlatformId
+    externalId?: string
+    cursorRequest: Cursor
+    limit?: number
 }
 
 type GetOneByIdentityIdOnlyParams = {
