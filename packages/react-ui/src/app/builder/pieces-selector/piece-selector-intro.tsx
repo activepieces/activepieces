@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { ArrowRight } from 'lucide-react';
 
 import {
   CardList,
@@ -72,13 +73,16 @@ const PieceSelectorIntro = ({
           interactive={true}
           onClick={() => onGroupClick(group)}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 grow">
             <PieceIcon showTooltip={false} logoUrl={group.logoUrl} size="md" />
             <div className="flex flex-col gap-1">
               <div className="text-sm">{group.title}</div>
               <div className="text-xs text-muted-foreground">
                 {group.description}
               </div>
+            </div>
+            <div className="flex items-center justify-end grow pr-5">
+              <ArrowRight className="w-4 h-4" />
             </div>
           </div>
         </CardListItem>
@@ -138,7 +142,7 @@ const createPiecesGroups = (
     },
   ];
   if (!isNil(aiAndAgentsGroup) && !isForTrigger) {
-    groups.push(aiAndAgentsGroup);
+    groups.splice(0, 0, aiAndAgentsGroup);
   }
   if (!isNil(webhooksPieceMetadata) && isForTrigger) {
     groups.push({

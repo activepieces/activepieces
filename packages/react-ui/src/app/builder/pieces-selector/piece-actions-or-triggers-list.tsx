@@ -4,6 +4,7 @@ import React from 'react';
 
 import { CardList } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { CORE_ACTIONS_METADATA } from '@/features/pieces/lib/step-utils';
 import {
   PieceSelectorItem,
@@ -22,33 +23,15 @@ type PieceActionsOrTriggersListProps = {
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;
   operation: PieceSelectorOperation;
 };
-const hiddenActions = [
-  {
-    pieceName: '@activepieces/piece-todos',
-    actionName: 'wait_for_approval',
-  },
-  {
-    pieceName: '@activepieces/piece-todos',
-    actionName: 'createTodoAndWait',
-  },
-];
 const convertStepMetadataToPieceSelectorItems = (
   stepMetadataWithSuggestions: StepMetadataWithSuggestions,
 ): PieceSelectorItem[] => {
   switch (stepMetadataWithSuggestions.type) {
     case ActionType.PIECE: {
-      const actions = Object.values(
-        stepMetadataWithSuggestions.suggestedActions ?? {},
+      const actions = pieceSelectorUtils.removeHiddenActions(
+        stepMetadataWithSuggestions,
       );
-      const actionsWithoutHidden = actions.filter(
-        (action) =>
-          !hiddenActions.some(
-            (hidden) =>
-              hidden.actionName === action.name &&
-              hidden.pieceName === stepMetadataWithSuggestions.pieceName,
-          ),
-      );
-      return actionsWithoutHidden.map((action) => ({
+      return actions.map((action) => ({
         actionOrTrigger: action,
         type: ActionType.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,

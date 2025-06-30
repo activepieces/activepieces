@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -9,6 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, TriggerType } from '@activepieces/shared';
 
@@ -55,20 +58,35 @@ const PieceSelector = ({
   const [selectedPieceGroupType, setSelectedPieceGroupType] =
     useState<PieceTagType | null>(initiallySelectedPieceGroupType);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
+  const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const showPiecesList = selectedPieceGroupType || searchQuery.length > 0;
+  const showPiecesList =
+    selectedPieceGroupType || searchQuery.length > 0 || isMobile;
   const listHeight = Math.min(listHeightRef.current, 300);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      });
+    }
+  }, [isOpen]);
+  const showBackButton = selectedPieceGroupType !== null && !isMobile;
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSelectedPieceMetadataInPieceSelector(null);
+    setSelectedPieceGroupType(null);
+  };
   return (
     <Popover
       open={isOpen}
       modal={true}
       onOpenChange={(open) => {
         if (!open) {
-          setSearchQuery('');
-          setOpenedPieceSelectorStepNameOrAddButtonId(null);
-          setSelectedPieceMetadataInPieceSelector(null);
+          clearSearch();
           setSelectedPieceGroupType(initiallySelectedPieceGroupType);
+          setOpenedPieceSelectorStepNameOrAddButtonId(null);
           if (isForEmptyTrigger) {
             deselectStep();
           }
@@ -98,17 +116,23 @@ const PieceSelector = ({
       >
         <>
           <div>
-            <div className="p-2 flex-col  gap-1 items-center ">
+            <div className="p-2 flex  items-center ">
+              {showBackButton && (
+                <Button variant="ghost" size="icon" onClick={clearSearch}>
+                  <ArrowLeft className="size-4 shrink-0"></ArrowLeft>
+                </Button>
+              )}
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
                 showDeselect={false}
                 showBackButton={selectedPieceGroupType !== null}
+                ref={searchInputRef}
                 onChange={(e) => {
                   setSearchQuery(e);
                   setSelectedPieceMetadataInPieceSelector(null);
                   if (e === '') {
-                    setSelectedPieceGroupType(null);
+                    clearSearch();
                   } else {
                     setSelectedPieceGroupType(PieceTagType.ALL);
                   }
@@ -136,11 +160,14 @@ const PieceSelector = ({
             {showPiecesList && (
               <PiecesCardList
                 listHeight={listHeight}
-                key={debouncedQuery}
+                //need to add the id to the key to force a re-render the virtualized list
+                key={`${debouncedQuery}-${id}`}
                 searchQuery={debouncedQuery}
                 operation={operation}
                 selectedPieceGroupType={selectedPieceGroupType}
-                stepToReplacePieceDisplayName={stepToReplacePieceDisplayName}
+                stepToReplacePieceDisplayName={
+                  isMobile ? undefined : stepToReplacePieceDisplayName
+                }
               />
             )}
           </div>
