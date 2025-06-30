@@ -159,9 +159,12 @@ type DeleteParams = {
     projectId: ProjectId
 }   
 
-async function sendResolveRequest(resolveUrl: string, status: StatusOption) {
+async function sendResolveRequest(resolveUrl: string, status: StatusOption, message?: string) {
     const url = new URL(resolveUrl)
     url.searchParams.append('status', status.name)
+    if (message) {
+        url.searchParams.append('message', message)
+    }
     await fetch(url.toString(), {
         method: 'POST',
     })

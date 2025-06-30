@@ -8,13 +8,14 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import './tip-tap.css';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { cn } from '@/lib/utils';
-import { flowStructureUtil, isNil } from '@activepieces/shared';
-
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
+
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { cn } from '@/lib/utils';
+
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 type TextInputWithMentionsProps = {
   className?: string;
