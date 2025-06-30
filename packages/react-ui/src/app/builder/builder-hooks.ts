@@ -182,6 +182,7 @@ export type BuilderState = {
   ) => void;
   /**Need this to re-render the piece settings form on replace step or updating agent */
   lastRerenderPieceSettingsTimeStamp: number | null;
+  setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -745,6 +746,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       lastRerenderPieceSettingsTimeStamp: null,
+      setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => {
+        return set(() => ({
+          lastRerenderPieceSettingsTimeStamp: timestamp,
+        }));
+      },
     };
   });
 
