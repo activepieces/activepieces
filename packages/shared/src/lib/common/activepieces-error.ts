@@ -47,6 +47,7 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
+    | QuotaExceededDowngradeParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -79,6 +80,7 @@ export type ApErrorParams =
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
+    | ErrorUpdatingSubscriptionParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -368,6 +370,19 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
+export type QuotaExceededDowngradeParams = BaseErrorParams<
+ErrorCode.QUOTA_EXCEEDED_DOWNGRADE,
+{
+    metrics: PlatformUsageMetric[]
+}
+>
+
+export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
+ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
+{
+    message: string
+}>
+
 export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
 ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
 {
@@ -460,6 +475,7 @@ export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIE
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
+    ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
@@ -501,6 +517,7 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    QUOTA_EXCEEDED_DOWNGRADE = 'QUOTA_EXCEEDED_DOWNGRADEJJ',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',

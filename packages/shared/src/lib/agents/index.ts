@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
+import { AgentStepBlock } from './content'
 
 export enum AgentOutputType {
     NO_OUTPUT = 'no_output',
@@ -26,6 +27,20 @@ export const AgentOutputField = Type.Object({
 export type AgentOutputField = Static<typeof AgentOutputField>
 
 
+export enum AgentTaskStatus {
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
+    IN_PROGRESS = 'IN_PROGRESS',
+}
+
+export const AgentTestResult = Type.Object({
+    status: Type.Enum(AgentTaskStatus),
+    output: Type.Unknown(),
+    steps: Type.Array(AgentStepBlock)
+})
+
+export type AgentTestResult = Static<typeof AgentTestResult>
+
 export const Agent = Type.Object({
     ...BaseModelSchema,
     displayName: Type.String(),
@@ -37,7 +52,6 @@ export const Agent = Type.Object({
     maxSteps: Type.Number(),
     mcpId: Type.String(),
     platformId: Type.String(),
-    taskCompleted: Type.Number(),
     outputType: Type.Optional(Type.Enum(AgentOutputType)),
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })
@@ -68,10 +82,3 @@ export const ListAgentsQueryParams = Type.Object({
 })
 
 export type ListAgentsQueryParams = Static<typeof ListAgentsQueryParams>
-
-export const RunAgentRequest = Type.Object({
-    prompt: Type.String(),
-    callbackUrl: Type.Optional(Type.String()),
-})
-
-export type RunAgentRequest = Static<typeof RunAgentRequest>

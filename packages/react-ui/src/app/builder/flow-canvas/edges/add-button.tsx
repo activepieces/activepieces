@@ -4,22 +4,21 @@ import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-  isNil,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.readonly,
-  ]);
+  const [activeDraggingStep, readonly, isPieceSelectorOpen] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.readonly,
+      state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
+    ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -28,8 +27,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       ...props,
     },
   });
-
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
   const showDropIndicator = !isNil(activeDraggingStep);
 
@@ -68,30 +65,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       )}
       {!showDropIndicator && !readonly && (
         <PieceSelector
-          operation={
-            props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
-              ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
-              : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
-          }
-          open={actionMenuOpen}
-          onOpenChange={setActionMenuOpen}
-          asChild={true}
+          operation={flowCanvasUtils.createAddOperationFromAddButtonData(props)}
+          id={props.edgeId}
         >
           <div
             style={{
@@ -105,7 +80,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
               className={cn('rounded-xss cursor-pointer transition-all z-50', {
-                'shadow-add-button': actionMenuOpen,
+                'shadow-add-button': isPieceSelectorOpen,
               })}
             >
               <div
@@ -116,11 +91,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 className={cn(
                   'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': actionMenuOpen,
+                    'bg-primary ': isPieceSelectorOpen,
                   },
                 )}
               >
-                {!actionMenuOpen && (
+                {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-white" />
                 )}
               </div>

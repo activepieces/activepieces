@@ -30,13 +30,14 @@ import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
 export async function createMcpServer({
     mcpId,
     logger,
+    projectId,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
     const server = new McpServer({
         name: 'Activepieces',
         version: '1.0.0',
     })
 
-    const mcp = await mcpService(logger).getOrThrow({ mcpId })
+    const mcp = await mcpService(logger).getOrThrow({ mcpId, projectId })
     const platformId = await projectService.getPlatformId(mcp.projectId)
     const addedToolPromise = mcp.tools.map(tool => {
         switch (tool.type) {
@@ -74,7 +75,7 @@ async function addPieceToServer(
     const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of filteredAction) {
         const actionMetadata = pieceMetadata.actions[action]
-        const actionName = mcpToolNaming.fixTool(actionMetadata.displayName, mcpTool.id, McpToolType.PIECE)
+        const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
 
         const actionSchema = Object.fromEntries(
             Object.entries(actionMetadata.props)
@@ -277,6 +278,7 @@ type TrackToolCallParams = {
 
 type CreateMcpServerRequest = {
     mcpId: string
+    projectId: string
     logger: FastifyBaseLogger
 }
 

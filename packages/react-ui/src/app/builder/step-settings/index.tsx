@@ -23,8 +23,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
+import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
-import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -33,7 +33,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
-import { StepCardInfo } from './step-card';
+import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -147,6 +147,10 @@ const StepSettingsContainer = () => {
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
+  const showActionErrorHandlingForm =
+    [ActionType.CODE, ActionType.PIECE].includes(
+      modifiedStep.type as ActionType,
+    ) && !isNil(stepMetadata);
   return (
     <Form {...form}>
       <form
@@ -193,9 +197,8 @@ const StepSettingsContainer = () => {
           <ResizablePanel defaultSize={55}>
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
-                {stepMetadata && (
-                  <StepCardInfo step={modifiedStep}></StepCardInfo>
-                )}
+                <StepCard step={modifiedStep}></StepCard>
+
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>
                 )}
@@ -219,20 +222,18 @@ const StepSettingsContainer = () => {
                     readonly={readonly}
                   ></PieceSettings>
                 )}
-                {[ActionType.CODE, ActionType.PIECE].includes(
-                  modifiedStep.type as ActionType,
-                ) && (
+                {showActionErrorHandlingForm && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.continueOnFailure
                             ?.hide
                         : false
                     }
                     disabled={readonly}
                     hideRetryOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.retryOnFailure
                             ?.hide
                         : false
                     }

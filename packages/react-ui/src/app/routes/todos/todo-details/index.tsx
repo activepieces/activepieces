@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -15,41 +14,33 @@ import {
   TodoChanged,
   WebsocketClientEvent,
   UNRESOLVED_STATUS,
-  isNil,
-  PopulatedTodo,
   TodoActivityCreated,
 } from '@activepieces/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
-import { TodoCreateTodo } from './todo-create-todo';
 import { TodoDetailsStatus } from './todo-details-status';
 import { TodoTimeline } from './todo-timeline';
 
 type TodoDetailsProps = {
   todoId: string | null;
   onClose?: () => void;
-  agentId?: string;
   onStatusChange?: (status: Todo['status'], source: 'agent' | 'manual') => void;
   className?: string;
   simpleTitle?: boolean;
 };
 
 export const TodoDetails = ({
-  todoId: initialTodoId,
+  todoId,
   onClose,
-  agentId,
   onStatusChange,
   className,
   simpleTitle = false,
 }: TodoDetailsProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const [createdTodoId, setCreatedTodoId] = useState<string | null>(null);
-  const todoId = createdTodoId ?? initialTodoId;
   const socket = useSocket();
   const previousStatus = useRef<Todo['status']>();
   const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
-  const queryClient = useQueryClient();
 
   function detectStatusChange(updatedTodo: Todo) {
     if (updatedTodo && previousStatus.current) {
@@ -97,11 +88,6 @@ export const TodoDetails = ({
     };
   }, [socket, refetch, todoId]);
 
-  const handleTodoCreated = (todo: PopulatedTodo) => {
-    todosHooks.setTodoManually(todo.id, todo, queryClient);
-    setCreatedTodoId(todo.id);
-  };
-
   const {
     data: comments,
     isLoading: isLoadingComments,
@@ -125,15 +111,6 @@ export const TodoDetails = ({
   return (
     <div className={cn('flex flex-col w-full ', className)}>
       {isLoading && <LoadingScreen mode="container"></LoadingScreen>}
-      {!isLoading && isNil(todo) && !isNil(agentId) && (
-        <TodoCreateTodo
-          onTodoCreated={handleTodoCreated}
-          agentId={agentId}
-          onClose={() => {
-            onClose?.();
-          }}
-        />
-      )}
       {!isLoading && todo && (
         <ScrollArea className="flex-1 px-0">
           <div className="flex flex-col py-2 gap-2">

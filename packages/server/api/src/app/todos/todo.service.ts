@@ -2,7 +2,6 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, 
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { IsNull, Like } from 'typeorm'
-import { agentsService } from '../agents/agents-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -175,9 +174,6 @@ async function enrichTodoWithAssignee(
         ...todo,
         assignee: isNil(todo.assigneeId) ? null : await userService.getMetaInformation({
             id: todo.assigneeId,
-        }),
-        agent: isNil(todo.agentId) ? null : await agentsService(log).getOneOrThrow({
-            id: todo.agentId,
         }),
         createdByUser: isNil(todo.createdByUserId) ? null : await userService.getMetaInformation({
             id: todo.createdByUserId,

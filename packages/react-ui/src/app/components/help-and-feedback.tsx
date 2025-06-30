@@ -23,7 +23,7 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton className="w-full justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors">
+        <SidebarMenuButton>
           <div className="flex items-center gap-2">
             <QuestionMarkCircledIcon className="size-4" />
             <span>Help & Feedback</span>

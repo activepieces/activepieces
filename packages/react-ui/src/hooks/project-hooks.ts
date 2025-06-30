@@ -27,7 +27,6 @@ export const projectHooks = {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
-      staleTime: Infinity,
     });
     return {
       ...query,
