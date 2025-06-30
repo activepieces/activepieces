@@ -33,6 +33,7 @@ export const AgentsPage = () => {
   };
 
   const handleAgentCreated = (newAgent: Agent) => {
+    setIsOpen(true);
     refetch();
     setSelectedAgent(newAgent);
   };
@@ -71,7 +72,6 @@ export const AgentsPage = () => {
             <CreateAgentButton
               onAgentCreated={handleAgentCreated}
               isAgentsEnabled={isAgentsEnabled ?? false}
-              onClick={() => setIsOpen(true)}
             />
           }
         />

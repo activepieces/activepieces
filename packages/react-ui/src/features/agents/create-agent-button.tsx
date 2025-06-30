@@ -16,11 +16,9 @@ import { agentHooks } from './lib/agent-hooks';
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
   isAgentsEnabled: boolean;
-  onClick?: () => void;
 }
 
 export const CreateAgentButton = ({
-  onClick,
   isAgentsEnabled,
   onAgentCreated,
 }: CreateAgentButtonProps) => {
@@ -31,7 +29,6 @@ export const CreateAgentButton = ({
   const createAgentMutation = agentHooks.useCreate();
 
   const handleButtonClick = () => {
-    onClick?.();
     createAgentMutation.mutate(
       {
         displayName: 'Fresh Agent',
