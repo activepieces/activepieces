@@ -12,19 +12,19 @@ import { AppSystemProp } from '@activepieces/server-shared'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const platformId = await platformUtils.getPlatformIdForRequest(request) ?? request.principal.platform.id
+        const edition = system.getEdition()
         if (isNil(platformId)) {
-            const edition = system.getEdition()
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                     [ThirdPartyAuthnProviderEnum.GOOGLE]: true,
                 }
-                modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = platformId === system.get(AppSystemProp.CLOUD_PLATFORM_ID)
             }
             return modifiedFlags
         }
 
         modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = flagService.isCloudPlatform(platformId)
+        modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD || platformId === system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
