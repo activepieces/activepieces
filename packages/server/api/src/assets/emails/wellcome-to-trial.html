@@ -15,7 +15,6 @@
       flex-direction: column;
       align-items: center;
     }
-
     .container {
       background: #ffffff;
       padding: 32px;
@@ -25,29 +24,55 @@
       border-radius: 8px;
       text-align: left;
     }
-
     .logo {
       display: block;
       margin-bottom: 24px;
     }
-
     h2 {
       color: #1f1f1f;
       font-size: 28px;
       margin-bottom: 16px;
     }
-
     p {
       color: #333333;
       font-size: 16px;
       line-height: 24px;
       margin-bottom: 24px;
     }
-
+    .highlight {
+      color: #6e41e2;
+      font-weight: 600;
+    }
+    .resources {
+      background-color: #f8f7fc;
+      padding: 20px;
+      border-radius: 6px;
+      margin: 24px 0;
+    }
+    .resources h3 {
+      color: #1f1f1f;
+      font-size: 18px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .resource-link {
+      display: inline-block;
+      margin-right: 24px;
+      margin-bottom: 8px;
+    }
+    .resource-link a {
+      color: #6e41e2;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .resource-link a:hover {
+      color: #5936c4;
+    }
     .button-container {
       text-align: left;
+      margin: 24px 0;
     }
-
     .button {
       display: inline-block;
       padding: 14px 24px;
@@ -58,11 +83,14 @@
       border-radius: 6px;
       transition: background 0.3s ease;
     }
-
     .button:hover {
       background-color: #5936c4;
     }
-
+    .signature {
+      margin-top: 32px;
+      font-style: italic;
+      color: #666666;
+    }
     .footer {
       margin-top: 32px;
       font-size: 14px;
@@ -71,7 +99,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <img
@@ -80,27 +107,46 @@
       alt="Activepieces Logo"
       width="160"
     />
-
-    <h2>Welcome to Activepieces 🎉</h2>
+    <h2>Welcome to Activepieces!</h2>
+    <p>
+      Hello Automator,<br /><br />
+      Thanks for joining Activepieces! We're excited to have you on board.
+    </p>
+    <p>
+      <strong>Spoiler alert:</strong> Your life's about to get way easier. AI is officially on chore duty, and your repetitive tasks might start missing you!
+    </p>
+    
+    <div class="resources">
+      <h3>Quick-start resources to get you automating:</h3>
+      <div class="resource-link">
+        <a href="https://community.activepieces.com/c/templates/12">🎯 Templates</a>
+      </div>
+      <div class="resource-link">
+        <a href="https://community.activepieces.com">👥 Community</a>
+      </div>
+      <div class="resource-link">
+        <a href="https://www.youtube.com/@activepiecesco">📺 YouTube Tutorials</a>
+      </div>
+    </div>
 
     <p>
-      Hey there,<br /><br />
-      Welcome aboard! You’ve just started your 14-day free trial of Activepieces — a powerful way to build, automate, and scale your workflows without the hassle.<br /><br />
-
-      Whether you’re connecting tools, automating tasks, or creating powerful flows, you're in the right place. Everything you need is right at your fingertips, and we're here to support you every step of the way.<br /><br />
-
-      To get started, we recommend creating your first flow — or checking out some ready-made templates to inspire your automation journey.
+      You're currently on a <span class="highlight">14-day trial of our Plus Plan</span>, giving you unlimited tasks, AI agents, extra tables, and much more!
     </p>
 
     <div class="button-container">
-      <a href="https://activepieces.com/app" class="button">Start Building</a>
+      <a href="https://www.activepieces.com/pricing" class="button">
+        <span style="color: #ffffff">Explore Plus Features</span>
+      </a>
     </div>
 
+    <p class="signature">
+      Catch you later, automator!
+    </p>
+
     <div class="footer">
-      Let us know if you need anything — we’re just a message away.<br />
-      — The Activepieces Team
+      Need help getting started? <a href="https://www.activepieces.com/contact" style="color: #6e41e2;">Contact us</a><br />
+      &copy; {{year}} Activepieces. All rights reserved.
     </div>
   </div>
 </body>
 </html>
-

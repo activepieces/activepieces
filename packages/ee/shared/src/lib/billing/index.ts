@@ -54,7 +54,7 @@ export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
     const testMode = stripeKey?.startsWith('sk_test')
     return testMode
         ? 'price_1RcktVQN93Aoq4f8JjdYKXBp'
-        : 'price_live_ai_credits_monthly'
+        : 'price_1RflgeKZ0dZRqLEKGVORuNNl'
 }
 
 export function getTasksPriceId(stripeKey: string | undefined) {
@@ -68,14 +68,14 @@ export function getUserPriceId(stripeKey: string | undefined) {
     const testMode = stripeKey?.startsWith('sk_test')
     return testMode
         ? 'price_1RU2GkQN93Aoq4f8ogetgfUB'
-        : 'price_live_user_monthly'
+        : 'price_1RflgiKZ0dZRqLEKiDFoa17I'
 }
 
 export function getPlanPriceId(stripeKey: string | undefined) {
     const testMode = stripeKey?.startsWith('sk_test')
     return {
-        [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_live_plus_monthly',
-        [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_live_business_monthly',
+        [PlanName.PLUS]: testMode ? 'price_1RTRd4QN93Aoq4f8E22qF5JU' : 'price_1RflgUKZ0dZRqLEK5COq9Kn8',
+        [PlanName.BUSINESS]: testMode ? 'price_1RTReBQN93Aoq4f8v9CnMTFT' : 'price_1RflgbKZ0dZRqLEKaW4Nlt0P',
     }
 
 }
@@ -83,10 +83,10 @@ export function getPlanPriceId(stripeKey: string | undefined) {
 export function getPlanFromPriceId(priceId: string): PlanName {
     switch (priceId) {
         case 'price_1RTRd4QN93Aoq4f8E22qF5JU':
-        case 'price_live_plus_monthly':
+        case 'price_1RflgUKZ0dZRqLEK5COq9Kn8':
             return PlanName.PLUS
         case 'price_1RTReBQN93Aoq4f8v9CnMTFT':
-        case 'price_live_business_monthly':
+        case 'price_1RflgbKZ0dZRqLEKaW4Nlt0P':
             return PlanName.BUSINESS
         default:
             throw new Error(`Unknown price ID: ${priceId}`)

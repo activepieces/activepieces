@@ -11,7 +11,6 @@ import {
   SUPPORTED_AI_PROVIDERS,
   PlatformRole,
   ApFlagId,
-  ApEdition,
 } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -29,7 +28,9 @@ export default function AIProvidersPage() {
     queryFn: () => aiProviderApi.list(),
   });
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: canConfigureAIProvider } = flagsHooks.useFlag(ApFlagId.CAN_CONFIGURE_AI_PROVIDER);
+  const { data: canConfigureAIProvider } = flagsHooks.useFlag(
+    ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+  );
   const allowWrite = canConfigureAIProvider === true;
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({

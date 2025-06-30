@@ -6,7 +6,7 @@ import {
     Cursor,
     ErrorCode,
     isNil,
-    McpTool,    
+    McpTool,
     McpToolType,
     McpWithTools,
     SeekPage,
