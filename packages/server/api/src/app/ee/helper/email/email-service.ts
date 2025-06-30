@@ -219,6 +219,37 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
     },
 
+
+    async sendWellcomeToTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'wellcome-to-trial',
+                vars: {},
+            },
+        })
+    },
+
+    async sendTrialHalfWayEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'trial-half-way',
+                vars: {},
+            },
+        })
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)

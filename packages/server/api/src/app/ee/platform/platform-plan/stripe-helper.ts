@@ -68,10 +68,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             },
         })
 
+
+
         return subscription.id
     },
     
     createSubscriptionCheckoutUrl: async (
+        platformId: string,
         customerId: string,
         params: CreateSubscriptionParams,
     ): Promise<string> => {
@@ -93,6 +96,11 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'subscription',
+            subscription_data: {
+                metadata: {
+                    platformId,
+                },
+            },
             success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,
@@ -114,6 +122,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             success_url: `${frontendUrl}/platform/setup/billing/success?action=setup`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             metadata: {
+                platformId,
                 action: 'attach_payment_method',
                 subscriptionId: stripeSubscriptionId!,
             },
@@ -161,6 +170,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     updateSubscription: async (
+        platformId: string,
         subscriptionId: string,
         plan: PlanName.PLUS | PlanName.BUSINESS,
         extraUsers: number,
@@ -246,6 +256,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     handleSubscriptionUpdate: async (
+        platformId: string,
         subscriptionId: string,
         newPlan: PlanName,
         extraUsers: number,
@@ -275,7 +286,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     await stripe.subscriptionSchedules.cancel(schedule.id)
                 }
 
-                await stripeHelper(log).updateSubscription(subscription.id, newPlan as PlanName.PLUS | PlanName.BUSINESS, extraUsers)
+                await stripeHelper(log).updateSubscription(platformId, subscription.id, newPlan as PlanName.PLUS | PlanName.BUSINESS, extraUsers)
             }
             else {
                 if (relevantSchedules.length > 0) {

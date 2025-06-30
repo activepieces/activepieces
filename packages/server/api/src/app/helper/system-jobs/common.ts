@@ -11,6 +11,7 @@ export enum SystemJobName {
     RUN_TELEMETRY = 'run-telemetry',
     ISSUE_AUTO_ARCHIVE = 'archive-old-issues',
     AI_USAGE_REPORT = 'ai-usage-report',
+    TRIAL_HALF_WAY_EMAIL = 'trial-half-way-email',
 }
 
 type HardDeleteProjectSystemJobData = {
@@ -28,6 +29,11 @@ type AiUsageReportSystemJobData = {
     overage: string
 }
 
+type TrialHalfWayEmailSystemJobData = {
+    platformId: PlatformId
+    customerEmail: string
+}
+
 type SystemJobDataMap = {
     [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
     [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
@@ -38,6 +44,7 @@ type SystemJobDataMap = {
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.ISSUE_AUTO_ARCHIVE]: Record<string, never>
+    [SystemJobName.TRIAL_HALF_WAY_EMAIL]: TrialHalfWayEmailSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

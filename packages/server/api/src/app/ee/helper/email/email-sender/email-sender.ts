@@ -62,10 +62,14 @@ type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failur
     projectName: string
 }>
 
-type TrialEndingSoonReminder = BaseEmailTemplateData<'trial-ending-reminder', {
+type TrialEndingSoonReminderTemplateData = BaseEmailTemplateData<'trial-ending-reminder', {
     addPaymentMethodLink: string
     year: string
 }>
+
+type WellcomeToTrialTemplateData = BaseEmailTemplateData<'wellcome-to-trial', Record<string, never>>
+
+type TrialHalfWayData = BaseEmailTemplateData<'trial-half-way', Record<string, never>>
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
@@ -75,7 +79,9 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | IssuesReminderTemplateData
   | TriggerFailureThresholdTemplateData
-  | TrialEndingSoonReminder
+  | TrialEndingSoonReminderTemplateData
+  | WellcomeToTrialTemplateData
+  | TrialHalfWayData
 
 type SendArgs = {
     emails: string[]

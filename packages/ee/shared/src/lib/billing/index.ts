@@ -1,4 +1,4 @@
-import { PiecesFilterType } from '@activepieces/shared'
+import { isNil, PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 import Stripe from 'stripe'
@@ -93,6 +93,10 @@ export function getPlanFromPriceId(priceId: string): PlanName {
     }
 }
 
+
+export function checkIsTrialSubscription(subscription: Stripe.Subscription): boolean {
+    return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
+}
 
 export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanName {
     if (subscription.status === ApSubscriptionStatus.TRIALING) {

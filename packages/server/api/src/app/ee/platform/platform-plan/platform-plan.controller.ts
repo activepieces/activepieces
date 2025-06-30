@@ -137,6 +137,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { plan } = request.body
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
+            platformBilling.platformId,
             customerId,
             { plan },
         )
@@ -165,6 +166,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
 
         return stripeHelper(request.log).handleSubscriptionUpdate(
+            platformBilling.platformId,
             subscriptionId,
             newPlan,
             extraUsers,

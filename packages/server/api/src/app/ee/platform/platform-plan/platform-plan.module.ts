@@ -1,8 +1,9 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import Stripe from 'stripe'
 import {  SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
+import { emailService } from '../../helper/email/email-service'
 import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
@@ -35,6 +36,26 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
                 stripe_customer_id: subscription.customer as string,
             },
         })
+    })
+
+
+    systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_HALF_WAY_EMAIL, async (data) => {
+        const log = app.log
+
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { platformId, customerEmail } = data
+
+        const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId as string)
+
+        if (isNil(subscription) || isNil(subscription.trial_end)) {
+            return
+        }
+
+        await emailService(log).sendTrialHalfWayEmail(platformId, customerEmail)
+        log.info(`Sent Trial Halfway Email for platfrom, ${platformId}`)
     })
 
     await app.register(platformPlanController, { prefix: '/v1/platform-billing' })

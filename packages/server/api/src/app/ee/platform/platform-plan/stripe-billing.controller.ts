@@ -1,11 +1,14 @@
-import { ApSubscriptionStatus, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, checkIsTrialSubscription, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
+import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
+import { systemJobsSchedule } from '../../../helper/system-jobs'
+import { SystemJobName } from '../../../helper/system-jobs/common'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
@@ -52,20 +55,39 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                     case 'customer.subscription.created':
                     case 'customer.subscription.updated': {
                         const subscription = webhook.data.object as Stripe.Subscription
+                        const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
+                        const platformId = subscription.metadata.platfromId as string
+                        const isTrialSubscription = checkIsTrialSubscription(subscription)
 
-                        if (webhook.type === 'customer.subscription.created' && subscription.metadata.trialSubscription !== 'true') {
+                        if (webhook.type === 'customer.subscription.created' && isTrialSubscription) {
+                            await emailService(request.log).sendWellcomeToTrialEmail(platformId, subscription.customer as string)
+                            await systemJobsSchedule(request.log).upsertJob({
+                                job: {
+                                    name: SystemJobName.TRIAL_HALF_WAY_EMAIL,
+                                    data: {
+                                        platformId,
+                                        customerEmail: customer.email as string,
+                                    },
+                                    jobId: `trial-half-way-email-${platformId}-${customer.email}`,
+                                },
+                                schedule: {
+                                    type: 'one-time',
+                                    date: apDayjs().add(7, 'days'),
+                                },
+                            })
+                        }
+
+                        if (webhook.type === 'customer.subscription.created' && !isTrialSubscription) {
                             const customerSubscriptions = await stripe.subscriptions.list({ customer: subscription.customer as string })
-                            const trialSubscription = customerSubscriptions.data.find(sub => sub.metadata.trialSubscription === 'true')
+                            const trialSubscription = customerSubscriptions.data.find(sub => checkIsTrialSubscription(sub))
 
                             if (trialSubscription) {
                                 await stripe.subscriptions.cancel(trialSubscription.id)
                             }
                         }
 
-                        if (webhook.type === 'customer.subscription.deleted') {
-                            if (subscription.metadata.trialSubscription === 'true') {
-                                break
-                            }
+                        if (webhook.type === 'customer.subscription.deleted' && isTrialSubscription) {
+                            break
                         }
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
