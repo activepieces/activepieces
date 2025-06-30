@@ -1,5 +1,6 @@
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     FilteredPieceBehavior,
@@ -19,6 +20,7 @@ import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 
@@ -158,11 +160,17 @@ export const platformService = {
         if (isNil(platform)) {
             return null
         }
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
@@ -171,13 +179,17 @@ export const platformService = {
     },
 }
 
-async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
-    const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 
-    return {
-        ...platform,
-        plan,
+async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return {
+            ...OPEN_SOURCE_PLAN,
+            stripeSubscriptionStartDate: 0,
+            stripeSubscriptionEndDate: 0,
+        }
     }
+    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {
