@@ -97,7 +97,6 @@ const CreateAgentActionItem = ({
                 });
                 return;
               }
-              setIsAgentBuilderOpen(true);
               createAgent(
                 {
                   displayName: 'Fresh Agent',
@@ -105,7 +104,10 @@ const CreateAgentActionItem = ({
                     'I am a fresh agent, Jack of all trades, master of none (yet)',
                 },
                 {
-                  onSuccess: (agent) => setAgent(agent),
+                  onSuccess: (agent) => {
+                    setAgent(agent);
+                    setIsAgentBuilderOpen(true);
+                  },
                   onError: (err: Error) => {
                     if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
                       setShowUpgradeDialog(true);
