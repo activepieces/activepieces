@@ -8,6 +8,7 @@ import {
   useRef,
 } from 'react';
 import { usePrevious } from 'react-use';
+import semVer from 'semver';
 import { create, useStore } from 'zustand';
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
@@ -57,7 +58,6 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-
 const flowUpdatesQueue = new PromiseQueue();
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
@@ -180,6 +180,8 @@ export type BuilderState = {
   setSelectedPieceMetadataInPieceSelector: (
     metadata: StepMetadataWithSuggestions | null,
   ) => void;
+  /**Need this to re-render the piece settings form on replace step or updating agent */
+  lastRerenderPieceSettingsTimeStamp: number | null;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -603,11 +605,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 };
               });
             }
+            const isSameTrigger =
+              defaultValues.settings.triggerName ===
+                flowVersion.trigger.settings.triggerName &&
+              defaultValues.settings.pieceName ===
+                flowVersion.trigger.settings.pieceName;
+            const isSameTriggerVersion =
+              isSameTrigger &&
+              semVer.satisfies(
+                defaultValues.settings.pieceVersion,
+                flowVersion.trigger.settings.pieceVersion,
+              );
+            if (isSameTrigger && isSameTriggerVersion) {
+              break;
+            }
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
               request: defaultValues,
             });
             selectStepByName('trigger');
+            set(() => ({
+              lastRerenderPieceSettingsTimeStamp: Date.now(),
+            }));
             break;
           }
           case FlowOperationType.ADD_ACTION: {
@@ -652,15 +671,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               defaultValues.type === ActionType.PIECE &&
               defaultValues.settings.actionName ===
                 currentAction.settings.actionName &&
-              defaultValues.settings.pieceVersion ===
-                currentAction.settings.pieceVersion;
+              defaultValues.settings.pieceName ===
+                currentAction.settings.pieceName;
+            const isSamePieceVersion =
+              isSamePieceAction &&
+              semVer.satisfies(
+                defaultValues.settings.pieceVersion,
+                currentAction.settings.pieceVersion,
+              );
+            const isSameAgentId =
+              isSamePieceAction &&
+              defaultValues.settings.input.agentId ===
+                currentAction.settings.input.agentId;
 
             const isSameCoreAction =
               currentAction.type !== ActionType.PIECE &&
               defaultValues.type !== ActionType.PIECE &&
               defaultValues.type === currentAction.type;
 
-            if (isSamePieceAction || isSameCoreAction) {
+            if (
+              isSameCoreAction ||
+              (isSamePieceAction && isSamePieceVersion && isSameAgentId)
+            ) {
               break;
             }
 
@@ -677,6 +709,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 customLogoUrl,
               },
             });
+            set(() => ({
+              lastRerenderPieceSettingsTimeStamp: Date.now(),
+            }));
             break;
           }
         }
@@ -709,6 +744,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
+      lastRerenderPieceSettingsTimeStamp: null,
     };
   });
 

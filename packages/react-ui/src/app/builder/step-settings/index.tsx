@@ -147,6 +147,10 @@ const StepSettingsContainer = () => {
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
+  const showActionErrorHandlingForm =
+    [ActionType.CODE, ActionType.PIECE].includes(
+      modifiedStep.type as ActionType,
+    ) && !isNil(stepMetadata);
   return (
     <Form {...form}>
       <form
@@ -218,20 +222,18 @@ const StepSettingsContainer = () => {
                     readonly={readonly}
                   ></PieceSettings>
                 )}
-                {[ActionType.CODE, ActionType.PIECE].includes(
-                  modifiedStep.type as ActionType,
-                ) && (
+                {showActionErrorHandlingForm && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.continueOnFailure
                             ?.hide
                         : false
                     }
                     disabled={readonly}
                     hideRetryOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.retryOnFailure
                             ?.hide
                         : false
                     }

@@ -57,12 +57,11 @@ const VirtualizedScrollArea = ({
     if (isNil(initialScroll)) {
       return;
     }
-    if (initialScroll?.index > -1) {
+    if (initialScroll.index > -1) {
       rowVirtualizer.scrollToIndex(initialScroll.index, {
         align: 'start',
         behavior: 'auto',
       });
-
       if (initialScroll?.clickAfterScroll) {
         //need to wait for the scroll to be completed
         setTimeout(() => {
@@ -76,7 +75,7 @@ const VirtualizedScrollArea = ({
         }, 100);
       }
     }
-  }, [initialScroll?.index, rowVirtualizer]);
+  }, [rowVirtualizer]);
   return (
     <ScrollArea
       style={{ height: `${listHeight}px` }}

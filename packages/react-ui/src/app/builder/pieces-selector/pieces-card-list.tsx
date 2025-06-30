@@ -1,10 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
-import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
+import {
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
+  pieceSelectorUtils,
+} from '@/features/pieces/lib/piece-selector-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -60,9 +63,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   const noResultsFound = !isLoadingPieces && categories.length === 0;
   const [mouseMoved, setMouseMoved] = useState(false);
   const { data: agentsPage, isLoading: isLoadingAgents } = agentHooks.useList();
+  const showActionsOrTriggersInsidePiecesList =
+    searchQuery.length > 0 || isMobile;
   const virtualizedItems = transformPiecesMetadataToVirtualizedItems(
     categories,
-    searchQuery.length > 0 || isMobile,
+    showActionsOrTriggersInsidePiecesList,
     agentsPage?.data,
   );
   const categoryNameOrPieceDisplayNameToScrollTo =
@@ -71,11 +76,10 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
       selectedPieceMetadataInPieceSelector,
       stepToReplacePieceDisplayName,
     );
-  const initialIndexToScrollToInPiecesListRef = useRef(
-    virtualizedItems.findIndex(
-      (item) => item.displayName === categoryNameOrPieceDisplayNameToScrollTo,
-    ),
+  const initialIndexToScrollToInPiecesList = virtualizedItems.findIndex(
+    (item) => item.displayName === categoryNameOrPieceDisplayNameToScrollTo,
   );
+
   const isLoading = isLoadingPieces || isLoadingAgents;
   const showActionsOrTriggersList =
     searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
@@ -99,7 +103,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         {showPiecesList && (
           <VirtualizedScrollArea
             initialScroll={{
-              index: initialIndexToScrollToInPiecesListRef.current,
+              index: initialIndexToScrollToInPiecesList,
               clickAfterScroll: true,
             }}
             items={virtualizedItems}
@@ -110,7 +114,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               if (item.isCategory) {
                 return (
                   <div
-                    className="p-2 pb-0 text-sm text-muted-foreground"
+                    className={cn('p-2 pb-0 text-sm text-muted-foreground')}
                     id={item.displayName}
                   >
                     {item.displayName}
@@ -122,7 +126,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                   pieceMetadata={item}
                   searchQuery={searchQuery}
                   operation={operation}
-                  isDisabled={!mouseMoved}
+                  isTemporaryDisabledUntilNextCursorMove={!mouseMoved}
                 />
               );
             }}
@@ -214,10 +218,12 @@ const getItemHeight = (
     pieceMetadata.type === ActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
+    const actionsListWithoutHiddenActions =
+      pieceSelectorUtils.removeHiddenActions(pieceMetadata);
     const numberOfExtraActions = getNumberOfExtraActions(pieceMetadata, agents);
     return (
       ACTION_OR_TRIGGER_ITEM_HEIGHT *
-        (Object.values(pieceMetadata.suggestedActions ?? {}).length +
+        (Object.values(actionsListWithoutHiddenActions).length +
           numberOfExtraActions) +
       PIECE_ITEM_HEIGHT
     );

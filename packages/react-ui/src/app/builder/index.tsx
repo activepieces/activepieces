@@ -63,12 +63,23 @@ const useAnimateSidebar = (
   return handleRef;
 };
 
-const constructContainerKey = (
-  flowId: string,
-  stepName: string,
-  triggerOrActionName?: string,
-) => {
-  return flowId + stepName + (triggerOrActionName ?? '');
+const constructContainerKey = ({
+  flowId,
+  stepName,
+  lastRerenderPieceSettingsTimeStamp,
+  triggerOrActionName,
+}: {
+  flowId: string;
+  stepName: string;
+  lastRerenderPieceSettingsTimeStamp: number | null;
+  triggerOrActionName?: string;
+}) => {
+  return (
+    flowId +
+    stepName +
+    (triggerOrActionName ?? '') +
+    (lastRerenderPieceSettingsTimeStamp ?? '')
+  );
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -113,11 +124,13 @@ const BuilderPage = () => {
           : step?.settings.actionName;
       return {
         memorizedSelectedStep: step,
-        containerKey: constructContainerKey(
-          state.flow.id,
-          state.selectedStep,
+        containerKey: constructContainerKey({
+          flowId: state.flow.id,
+          stepName: state.selectedStep,
           triggerOrActionName,
-        ),
+          lastRerenderPieceSettingsTimeStamp:
+            state.lastRerenderPieceSettingsTimeStamp,
+        }),
       };
     },
   );

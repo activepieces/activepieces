@@ -1,6 +1,10 @@
 import { useRef } from 'react';
 
-import { PieceSelectorItem, PieceSelectorPieceItem } from '@/lib/types';
+import {
+  PieceSelectorItem,
+  PieceSelectorPieceItem,
+  PieceStepMetadataWithSuggestions,
+} from '@/lib/types';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -23,6 +27,33 @@ import { formUtils } from './form-utils';
 const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
+
+//can't remove this from search results, because it is used to add actions to the flow, check todo-dialog for more details
+const hiddenActions = [
+  {
+    pieceName: '@activepieces/piece-todos',
+    actionName: 'wait_for_approval',
+  },
+  {
+    pieceName: '@activepieces/piece-todos',
+    actionName: 'createTodoAndWait',
+  },
+];
+
+const removeHiddenActions = (
+  pieceMetadata: PieceStepMetadataWithSuggestions,
+) => {
+  const actions = Object.values(pieceMetadata.suggestedActions ?? {});
+  const actionsWithoutHidden = Object.values(actions).filter(
+    (action) =>
+      !hiddenActions.some(
+        (hidden) =>
+          hidden.actionName === action.name &&
+          hidden.pieceName === pieceMetadata.pieceName,
+      ),
+  );
+  return actionsWithoutHidden;
+};
 
 const isPieceActionOrTrigger = (
   pieceSelectorItem: PieceSelectorItem,
@@ -270,12 +301,12 @@ const useAdjustPieceListHeightToAvailableSpace = () => {
     popoverTriggerRef,
   };
 };
-const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300;
-const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100;
-const SEARCH_INPUT_DIV_HEIGHT = 48;
-const PIECE_ITEM_HEIGHT = 48;
-const ACTION_OR_TRIGGER_ITEM_HEIGHT = 41;
-const CATEGORY_ITEM_HEIGHT = 28;
+const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300 as const;
+const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100 as const;
+const SEARCH_INPUT_DIV_HEIGHT = 48 as const;
+const PIECE_ITEM_HEIGHT = 48 as const;
+const ACTION_OR_TRIGGER_ITEM_HEIGHT = 41 as const;
+const CATEGORY_ITEM_HEIGHT = 28 as const;
 export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
   MAX_PIECE_SELECTOR_LIST_HEIGHT,
   MIN_PIECE_SELECTOR_LIST_HEIGHT,
@@ -300,4 +331,5 @@ export const pieceSelectorUtils = {
   useAdjustPieceListHeightToAvailableSpace,
   isMcpToolTrigger,
   isChatTrigger,
+  removeHiddenActions,
 };

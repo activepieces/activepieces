@@ -18,20 +18,20 @@ type PieceCardListItemProps = {
   pieceMetadata: StepMetadataWithSuggestions;
   searchQuery: string;
   operation: PieceSelectorOperation;
-  isDisabled: boolean;
+  isTemporaryDisabledUntilNextCursorMove: boolean;
 };
 
 const PieceCardListItem = ({
   pieceMetadata,
   searchQuery,
   operation,
-  isDisabled,
+  isTemporaryDisabledUntilNextCursorMove,
 }: PieceCardListItemProps) => {
   const isMobile = useIsMobile();
   const showSuggestions = searchQuery.length > 0 || isMobile;
   const isMouseOver = useRef(false);
   const selectPieceMetatdata = async () => {
-    if (isDisabled) {
+    if (isTemporaryDisabledUntilNextCursorMove || showSuggestions) {
       return;
     }
     isMouseOver.current = true;
@@ -52,7 +52,7 @@ const PieceCardListItem = ({
     <>
       <CardListItem
         className={cn('flex-col p-3 gap-1 items-start truncate', {
-          'hover:!bg-transparent': isDisabled,
+          'hover:!bg-transparent': isTemporaryDisabledUntilNextCursorMove,
         })}
         style={{ height: `${itemHeight}px`, maxHeight: `${itemHeight}px` }}
         selected={
@@ -62,7 +62,11 @@ const PieceCardListItem = ({
         interactive={!showSuggestions}
         onMouseEnter={selectPieceMetatdata}
         onMouseMove={selectPieceMetatdata}
-        onClick={() => setSelectedPieceMetadataInPieceSelector(pieceMetadata)}
+        onClick={() => {
+          if (!showSuggestions) {
+            setSelectedPieceMetadataInPieceSelector(pieceMetadata);
+          }
+        }}
         onMouseLeave={() => {
           isMouseOver.current = false;
         }}
