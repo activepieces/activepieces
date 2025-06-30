@@ -67,7 +67,7 @@ export const CreateAgentButton = ({
           {t('New Agent')}
         </Button>
         <UpgradeHookDialog
-          metric="mcp"
+          metric="agents"
           open={showUpgradeDialog}
           setOpen={setShowUpgradeDialog}
         />
