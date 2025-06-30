@@ -230,15 +230,19 @@ const CreateOrEditConnectionDialogContent = React.memo(
               )}
             </ScrollArea>
             <DialogFooter className="mt-0">
-              <Button
-                onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
-                className="w-full mx-5"
-                loading={isPending}
-                type="submit"
-                disabled={!form.formState.isValid}
-              >
-                {t('Save')}
-              </Button>
+              <div className="mx-5 w-full">
+                <Button
+                  onClick={(e) =>
+                    form.handleSubmit(() => upsertConnection())(e)
+                  }
+                  className="w-full"
+                  loading={isPending}
+                  type="submit"
+                  disabled={!form.formState.isValid}
+                >
+                  {t('Save')}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
