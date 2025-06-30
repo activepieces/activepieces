@@ -115,7 +115,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     agentsLimit: undefined,
     analyticsEnabled: false,
     showPoweredBy: false,
-    agentsLimit: undefined,
 
     auditLogEnabled: false,
     managePiecesEnabled: false,
