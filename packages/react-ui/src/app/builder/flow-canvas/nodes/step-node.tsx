@@ -196,7 +196,7 @@ const ApStepCanvasNode = React.memo(
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
                     </div>
-                    <ApStepNodeStatus step={step} />
+                    <ApStepNodeStatus stepName={step.name} />
                   </div>
                 </div>
               </div>

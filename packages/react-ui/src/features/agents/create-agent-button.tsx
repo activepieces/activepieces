@@ -13,11 +13,13 @@ import { agentHooks } from './lib/agent-hooks';
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
   isAgentsEnabled: boolean;
+  onClick?: () => void;
 }
 
 export const CreateAgentButton = ({
-  onAgentCreated,
+  onClick,
   isAgentsEnabled,
+  onAgentCreated,
 }: CreateAgentButtonProps) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ export const CreateAgentButton = ({
   const createAgentMutation = agentHooks.useCreate();
 
   const handleButtonClick = () => {
+    onClick?.();
     createAgentMutation.mutate(
       {
         displayName: 'Fresh Agent',
@@ -69,11 +72,11 @@ export const CreateAgentButton = ({
       <PopoverContent className="w-80 mr-4">
         <div className="space-y-4">
           <h4 className="font-medium leading-none">
-            {t('Connect an OpenAI Provider')}
+            {t('Connect to OpenAI')}
           </h4>
           <p className="text-sm text-muted-foreground">
             {t(
-              "To create an agent, you'll first need to connect an OpenAI in platform settings.",
+              "To create an agent, you'll first need to connect to OpenAI in platform settings.",
             )}
           </p>
           <Button

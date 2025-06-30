@@ -30,7 +30,7 @@ import {
   createRouterStep,
   createTodoStep,
   createWaitForApprovalStep,
-} from './create-todo-utils';
+} from './custom-piece-selector-items-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 
 type CreateTodoGuideProps = {

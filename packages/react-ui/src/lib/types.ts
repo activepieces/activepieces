@@ -55,8 +55,8 @@ export type CategorizedStepMetadataWithSuggestions = {
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
-export type StepMetadataWithStepName = StepMetadata & {
-  stepDisplayName: string;
+export type StepMetadataWithActionOrTriggerOrAgentDisplayName = StepMetadata & {
+  actionOrTriggerOrAgentDisplayName: string;
 };
 
 export type PieceSelectorOperation =

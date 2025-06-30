@@ -173,7 +173,10 @@ export const flowsHooks = {
           pieceSelectorItem: {
             actionOrTrigger: trigger,
             type: TriggerType.PIECE,
-            pieceMetadata: stepUtils.mapPieceToMetadata(mcpPiece, 'trigger'),
+            pieceMetadata: stepUtils.mapPieceToMetadata({
+              piece: mcpPiece,
+              type: 'trigger',
+            }),
           },
         }) as Trigger;
         await flowsApi.update(flow.id, {

@@ -4,7 +4,7 @@ import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
-import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
+import { Action, ActionType, isNil, Trigger, TriggerType } from '@activepieces/shared';
 
 type StepCardProps = {
   step: Action | Trigger;
@@ -21,8 +21,9 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
+  const actionOrTriggerDisplayName = stepMetadata?.actionOrTriggerOrAgentDisplayName;
   const modifiedTitle = stepMetadata
-    ? `${stepMetadata?.displayName} (${stepMetadata?.stepDisplayName})`
+    ? `${stepMetadata?.displayName} ${actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''}`
     : null;
 
   return (
@@ -39,7 +40,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base flex justify-center">
           <div className="flex-grow">
-            {modifiedTitle ? (
+            {!isNil(modifiedTitle) ? (
               modifiedTitle
             ) : (
               <Skeleton className="h-3 w-32 rounded" />
@@ -52,7 +53,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           )}
         </div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-          {stepMetadata?.description ? (
+          {!isNil(stepMetadata?.description) ? (
             stepMetadata.description
           ) : (
             <div className="flex flex-col gap-1">

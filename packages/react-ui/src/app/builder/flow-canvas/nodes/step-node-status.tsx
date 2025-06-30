@@ -10,27 +10,28 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { FlowRunStatus, isNil, Step } from '@activepieces/shared';
+import { FlowRunStatus, flowStructureUtil, isNil, Step } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
-const ApStepNodeStatus = ({ step }: { step: Step }) => {
-  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
+const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
+  const [run, loopIndexes, flowVersion, step] = useBuilderStateContext((state) => [
     state.run,
     state.loopsIndexes,
     state.flowVersion,
+    flowStructureUtil.getStep(stepName, state.flowVersion.trigger)
   ]);
 
   const stepStatusInRun = useMemo(() => {
     return flowCanvasUtils.getStepStatus(
-      step.name,
+      stepName,
       run,
       loopIndexes,
       flowVersion,
     );
-  }, [step.name, run, loopIndexes, flowVersion]);
-  const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+  }, [stepName, run, loopIndexes, flowVersion]);
+  const isSkipped = flowCanvasUtils.isSkipped(stepName, flowVersion.trigger);
   const stillRunning =
     isNil(stepStatusInRun) &&
     run?.status === FlowRunStatus.RUNNING &&
@@ -50,7 +51,7 @@ const ApStepNodeStatus = ({ step }: { step: Step }) => {
           <TooltipContent side="bottom">{t('Skipped')}</TooltipContent>
         </Tooltip>
       )}
-      {!step.valid && !isSkipped && (
+      {!step?.valid && !isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="mr-3">

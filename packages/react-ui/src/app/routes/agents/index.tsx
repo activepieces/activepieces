@@ -35,7 +35,7 @@ export const AgentsPage = () => {
   const handleAgentCreated = (newAgent: Agent) => {
     refetch();
     setSelectedAgent(newAgent);
-    setIsOpen(true);
+  
   };
 
   const deleteAgentMutation = agentHooks.useDelete();
@@ -72,6 +72,7 @@ export const AgentsPage = () => {
             <CreateAgentButton
               onAgentCreated={handleAgentCreated}
               isAgentsEnabled={isAgentsEnabled ?? false}
+              onClick={() => setIsOpen(true)}
             />
           }
         />
