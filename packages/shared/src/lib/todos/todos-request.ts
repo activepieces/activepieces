@@ -42,6 +42,7 @@ export const CreateTodoRequestBody = Type.Object({
     assigneeId: Type.Optional(ApId),
     resolveUrl: Type.Optional(Type.String()),
     environment: Type.Optional(Type.Enum(TodoEnvironment)),
+    agentId: Type.Optional(ApId),
 })
 export type CreateTodoRequestBody = Static<typeof CreateTodoRequestBody>
 
@@ -53,6 +54,7 @@ export type ResolveTodoRequestQuery = Static<typeof ResolveTodoRequestQuery>
 
 
 export const ListTodoActivitiesQueryParams = Type.Object({
+    todoId: ApId,
     type: Type.Optional(Type.String()),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
@@ -61,6 +63,8 @@ export const ListTodoActivitiesQueryParams = Type.Object({
 export type ListTodoActivitiesQueryParams = Static<typeof ListTodoActivitiesQueryParams>
 
 export const CreateTodoActivityRequestBody = Type.Object({
+    todoId: ApId,
     content: Type.String(),
 })
 export type CreateTodoActivityRequestBody = Static<typeof CreateTodoActivityRequestBody>
+

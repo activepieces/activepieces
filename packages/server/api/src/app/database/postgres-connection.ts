@@ -228,6 +228,7 @@ import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037
 import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
 import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
 import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
+import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -392,6 +393,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertDescriptionTodoNaming1750389164014,
         RegenerateIssuesTable1750392148590,
         RemoveProjectIdFromIndex1750712746125,
+        RevertTodoActivties1751217652277
 
     ]
 

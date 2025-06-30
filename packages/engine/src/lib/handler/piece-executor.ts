@@ -79,6 +79,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 engineToken: constants.engineToken,
             }),
+            output: progressService.createOutputContext({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                stepName: action.name,
+                stepOutput: stepOutput,
+            }),
             flows: createFlowsContext({
                 engineToken: constants.engineToken,
                 internalApiUrl: constants.internalApiUrl,

@@ -1,7 +1,6 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, PlatformId, ProjectId, RichContentBlock, SeekPage, spreadIfDefined, TodoActivity, TodoActivityWithUser, UserId } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, TodoActivity, TodoActivityWithUser, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
-import { agentsService } from '../../agents/agents-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -16,7 +15,11 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<TodoActivity> {
         const activity = repo().create({
             id: apId(),
-            ...params,
+            ...spreadIfDefined('userId', params.userId),
+            todoId: params.todoId,
+            content: params.content,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
         })
         const savedActivity = await repo().save(activity)
         await todoSideEfffects(log).notifyActivityCreated({
@@ -73,7 +76,7 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(query)
         const enrichedData = await Promise.all(
             data.map(async (activity) => {
-                return enrichTodoActivityWithUser(activity, log)
+                return enrichTodoActivityWithUser(activity)
             }),
         )
         return paginationHelper.createPage<TodoActivityWithUser>(enrichedData, newCursor)
@@ -83,17 +86,12 @@ export const todoActivitiesService = (log: FastifyBaseLogger) => ({
 
 async function enrichTodoActivityWithUser(
     activity: TodoActivity,
-    log: FastifyBaseLogger,
 ): Promise<TodoActivityWithUser> {
     const user = isNil(activity.userId) ? null : await userService.getMetaInformation({
         id: activity.userId,
     })
-    const agent = isNil(activity.agentId) ? null : await agentsService(log).getOne({
-        id: activity.agentId,
-    })
     return {
         ...activity,
-        agent,
         user,
     }
 }
@@ -111,18 +109,17 @@ type ListParams = {
 }
 
 type CreateParams = {
-    content: RichContentBlock[]
+    content: string
     platformId: PlatformId
     projectId: ProjectId
     userId: UserId | null
-    agentId: string | null
     todoId: ApId
     socket: Socket
 }
 
 type UpdateParams = {
     id: string
-    content: RichContentBlock[]
+    content: string
     socket: Socket
     projectId: ProjectId
 }

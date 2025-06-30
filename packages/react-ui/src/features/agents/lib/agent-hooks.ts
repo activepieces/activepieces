@@ -4,7 +4,6 @@ import {
   ListAgentsQueryParams,
   CreateAgentRequest,
   UpdateAgentRequest,
-  RunAgentRequest,
 } from '@activepieces/shared';
 
 import { agentsApi } from './agents-api';
@@ -49,10 +48,4 @@ export const agentHooks = {
     });
   },
 
-  useRun: () => {
-    return useMutation({
-      mutationFn: ({ id, request }: { id: string; request: RunAgentRequest }) =>
-        agentsApi.run(id, request),
-    });
-  },
 };

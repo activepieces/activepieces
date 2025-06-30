@@ -15,6 +15,7 @@ import {
   PopulatedTodo,
   flowStructureUtil,
   isNil,
+  StepRunResponse,
 } from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
@@ -80,6 +81,7 @@ const TestStepSectionImplementation = React.memo(
     );
     const socket = useSocket();
     const [todoId, setTodoId] = useState<string | null>(null);
+    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(null);
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[currentStep.name],
@@ -97,6 +99,11 @@ const TestStepSectionImplementation = React.memo(
             `settings.inputUiInfo.lastTestDate`,
             dayjs().toISOString(),
           );
+        },
+        onProgress: (progress: any) => {
+          if (isRunAgent(currentStep)) {
+            setAgentProgress(progress);
+          }
         },
       });
 
@@ -120,14 +127,8 @@ const TestStepSectionImplementation = React.memo(
 
     const handleRunAgent = async () => {
       setActiveDialog(DialogType.AGENT);
-      const testStepResponse = await flowRunsApi.testStep(socket, {
-        flowVersionId,
-        stepName: currentStep.name,
-      });
-      const output = testStepResponse.output as { todoId: string };
-      if (testStepResponse.success && !isNil(output)) {
-        setTodoId(output.todoId as string);
-      }
+      setAgentProgress(null);
+      testAction(undefined);
     };
 
     const onTestButtonClick = async () => {
@@ -145,6 +146,7 @@ const TestStepSectionImplementation = React.memo(
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
       setTodoId(null);
+      setAgentProgress(null);
     };
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
@@ -209,13 +211,12 @@ const TestStepSectionImplementation = React.memo(
             />
           )}
         {activeDialog === DialogType.AGENT &&
-          currentStep.type === ActionType.PIECE &&
-          todoId && (
+          currentStep.type === ActionType.PIECE && (
             <AgentTestingDialog
               open={true}
               onOpenChange={(open) => !open && handleCloseDialog()}
-              todoId={todoId}
-              currentStep={currentStep}
+              agentProgress={agentProgress}
+              isTesting={isTesting}
             />
           )}
         {activeDialog === DialogType.WEBHOOK && (

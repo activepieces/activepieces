@@ -26,7 +26,6 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
-import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { McpEntity } from './mcp-entity'
 import { McpToolEntity } from './tool/mcp-tool.entity'
 
@@ -44,42 +43,11 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         })
-        return this.getOrThrow({ mcpId: mcp.id })
+        return this.getOrThrow({ mcpId: mcp.id, projectId })
     },
 
     async getMcpTool(toolId: ApId): Promise<McpTool> {
         return mcpToolRepo().findOneOrFail({ where: { id: toolId } })
-    },
-    async getMcpToolMetadata({ toolName, projectId, platformId }: GetMcpToolMetadataParams): Promise<McpToolMetadata> {
-        const toolId = mcpToolNaming.extractToolId(toolName)
-        const mcpTool = await this.getMcpTool(toolId)
-        switch (mcpTool.type) {
-            case McpToolType.PIECE: {
-                const pieceMetadataTool = mcpTool.pieceMetadata
-                assertNotNullOrUndefined(pieceMetadataTool, 'pieceMetadataTool is required')
-                const pieceMetadata = await pieceMetadataService(_log).getOrThrow({ name: pieceMetadataTool.pieceName, projectId, version: pieceMetadataTool.pieceVersion, platformId })
-                const actionMetadataEntry = Object.entries(pieceMetadata.actions).find(([_, action]) => mcpToolNaming.fixTool(action.displayName, toolId, McpToolType.PIECE) === toolName)
-                assertNotNullOrUndefined(actionMetadataEntry, 'actionMetadataEntry is required')
-                const actionMetadata = actionMetadataEntry[1]
-                return {
-                    displayName: actionMetadata.displayName,
-                    logoUrl: pieceMetadata.logoUrl,
-                }
-            }
-            case McpToolType.FLOW: {
-                const flow = await flowService(_log).getOnePopulatedOrThrow({
-                    id: mcpTool.flowId!,
-                    projectId,
-                })
-                return {
-                    displayName: flow.version.displayName,
-                }
-            }
-        }
-    },
-    async getMcpServerUrl({ mcpId }: GetMcpServerUrlParams): Promise<string> {
-        const mcp = await mcpRepo().findOneOrFail({ where: { id: mcpId } })
-        return domainHelper.getPublicApiUrl({ path: `/v1/mcp/${mcp.token}/sse` })
     },
 
     async deleteFlowTool({ flowId }: DeleteFlowToolsParams): Promise<void> {
@@ -104,13 +72,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
 
         const { data, cursor } = await paginator.paginate(mcpRepo().createQueryBuilder('mcp').where(queryWhere))
-        const populatedMcps = await Promise.all(data.map(async (mcp) => this.getOrThrow({ mcpId: mcp.id })))
+        const populatedMcps = await Promise.all(data.map(async (mcp) => this.getOrThrow({ mcpId: mcp.id, projectId })))
         return paginationHelper.createPage(populatedMcps, cursor)
     },
 
-    async getOrThrow({ mcpId }: GetOrThrowParams): Promise<McpWithTools> {
+    async getOrThrow({ mcpId, projectId }: GetOrThrowParams): Promise<McpWithTools> {
         const mcp = await mcpRepo().findOne({
-            where: { id: mcpId },
+            where: { id: mcpId, projectId },
             relations: { tools: true },
             order: { tools: { created: 'DESC' } },
         })
@@ -137,7 +105,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
                 params: { entityId: token, entityType: 'MCP' },
             })
         }
-        return this.getOrThrow({ mcpId: mcp.id })
+        return this.getOrThrow({ mcpId: mcp.id, projectId: mcp.projectId })
     },
 
     async update({ mcpId, token, name, tools, agentId }: UpdateParams): Promise<McpWithTools> {
@@ -162,7 +130,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('agentId', agentId),
             updated: dayjs().toISOString(),
         })
-        return this.getOrThrow({ mcpId })
+        return this.getOrThrow({ mcpId, projectId: mcp.projectId })
     },
 
     async delete({ mcpId, projectId }: { mcpId: ApId, projectId: ApId }): Promise<void> {
@@ -290,6 +258,7 @@ type CountParams = {
 
 type GetOrThrowParams = {
     mcpId: ApId
+    projectId: ApId
 }
 
 type DeleteFlowToolsParams = {

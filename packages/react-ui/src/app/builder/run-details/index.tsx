@@ -61,14 +61,15 @@ const FlowRunDetails = React.memo(() => {
       ];
     });
 
+
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
       ? flowRunUtils.extractStepOutput(
-          selectedStep,
-          loopsIndexes,
-          run.steps,
-          flowVersion.trigger,
-        )
+        selectedStep,
+        loopsIndexes,
+        run.steps,
+        flowVersion.trigger,
+      )
       : null;
   }, [run, selectedStep, loopsIndexes, flowVersion.trigger]);
 

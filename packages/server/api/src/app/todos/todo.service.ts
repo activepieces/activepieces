@@ -176,9 +176,6 @@ async function enrichTodoWithAssignee(
         assignee: isNil(todo.assigneeId) ? null : await userService.getMetaInformation({
             id: todo.assigneeId,
         }),
-        agent: isNil(todo.agentId) ? null : await agentsService(log).getOneOrThrow({
-            id: todo.agentId,
-        }),
         createdByUser: isNil(todo.createdByUserId) ? null : await userService.getMetaInformation({
             id: todo.createdByUserId,
         }),

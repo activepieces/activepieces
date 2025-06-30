@@ -132,6 +132,7 @@ export const engineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
 
         const input: ExecuteStepOperation = {
+            requestId: operation.requestId,
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
