@@ -80,7 +80,7 @@ const template = {
             actionName: 'return_response',
             pieceVersion: '~0.4.3',
             input: {
-              markdown: "{{step_2['output']['message']}}",
+              markdown: "{{step_2['message']}}",
             },
             errorHandlingOptions: {
               continueOnFailure: {
