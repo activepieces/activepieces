@@ -28,15 +28,15 @@ export const STATE_QUERY_PARAM = 'state';
 export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
 export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
-export const useDefaultRedirectPath = (embeddingEnabled: boolean) => {
-  return embeddingEnabled ? '/flows' : '/agents';
+export const useDefaultRedirectPath = () => {
+  const { embedState } = useEmbedding();
+  return !isNil(embedState) && embedState.isEmbedded ? '/flows' : '/agents';
 };
 
 export const useRedirectAfterLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { embedState } = useEmbedding();
-  const defaultRedirectPath = useDefaultRedirectPath(!isNil(embedState) && embedState.isEmbedded && embedState.embeddingEnabled);
+  const defaultRedirectPath = useDefaultRedirectPath();
   const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   return () => navigate(from);
 };
