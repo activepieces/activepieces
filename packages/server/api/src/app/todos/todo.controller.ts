@@ -38,6 +38,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             description,
             statusOptions,
             flowId,
+            agentId: request.body.agentId ?? undefined,
             runId,
             assigneeId,
             environment: environment ?? TodoEnvironment.PRODUCTION,
@@ -134,7 +135,7 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }
 
@@ -157,7 +158,7 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }
 

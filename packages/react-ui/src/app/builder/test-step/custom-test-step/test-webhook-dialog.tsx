@@ -156,6 +156,7 @@ const TestWaitForNextWebhookDialog = ({
       onSuccess: () => {
         onOpenChange(false);
       },
+      onProgress: () => {},
     });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

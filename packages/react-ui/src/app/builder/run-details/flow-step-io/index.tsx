@@ -33,7 +33,7 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
     return (
       <FlowStepAgent stepDetails={stepDetails} selectedStep={selectedStep} />
     );
-  }
+    }
 
   return (
     <FlowStepInputOutput

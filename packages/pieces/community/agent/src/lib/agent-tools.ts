@@ -1,12 +1,9 @@
-import { Agent,  agentbuiltInToolsNames,  AgentOutputFieldType,  AgentOutputType, isNil, McpToolMetadata } from '@activepieces/shared'
+import { Agent,  agentbuiltInToolsNames,  AgentOutputFieldType,  AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
 import { experimental_createMCPClient, tool } from 'ai'
-import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
 import { z, ZodRawShape, ZodSchema } from 'zod'
-import { mcpService } from '../mcp/mcp-service'
 
 export const agentTools = async (params: AgentToolsParams) => {
-    const mcpClient = await getMcpClient(params.agent, params.log)
+    const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
     const mcpTools = isNil(await mcpClient?.tools()) ? {} : await mcpClient?.tools()
     const tools = {
@@ -20,14 +17,6 @@ export const agentTools = async (params: AgentToolsParams) => {
         },
         close: async () => {
             await mcpClient?.close()
-        },
-        getMetadata: async (toolName: string): Promise<McpToolMetadata> => {
-            if (toolName === agentbuiltInToolsNames.markAsComplete) {
-                return {
-                    displayName: 'Mark as Complete',
-                }
-            }
-            return mcpService(params.log).getMcpToolMetadata({ toolName, projectId: params.agent.projectId, platformId: params.agent.platformId })
         },
     }
 }
@@ -47,14 +36,14 @@ async function buildInternalTools(params: AgentToolsParams) {
     }   
 }
 
-async function getMcpClient(agent: Agent, log: FastifyBaseLogger) {
-    const mcpServer = await mcpService(log).getOrThrow({
-        mcpId: agent.mcpId,
-    })
+
+async function getMcpClient(params: AgentToolsParams) {
+    const mcpServer = params.mcp
     if (mcpServer.tools.length === 0) {
         return null
     }
-    const mcpServerUrl = await mcpService(log).getMcpServerUrl({ mcpId: agent.mcpId })
+    const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
+    console.log("MCP SERVER URL", mcpServerUrl)
     return experimental_createMCPClient({
         transport: {
             type: 'sse',
@@ -91,8 +80,8 @@ async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
 }   
 
 type AgentToolsParams = {
+    publicUrl: string
+    token: string
+    mcp: McpWithTools
     agent: Agent
-    todoId: string
-    socket: Socket
-    log: FastifyBaseLogger
 }
