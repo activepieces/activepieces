@@ -155,6 +155,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
         platformId,
+        cursorRequest: null,
+        limit: 1000,
     })
     const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
         return userService.update({

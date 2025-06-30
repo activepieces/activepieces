@@ -164,6 +164,14 @@
           ]
         },
         {
+          "group": "Users",
+          "icon": "user",
+          "pages": [
+            "endpoints/users/schema",
+            "endpoints/users/list"
+          ]
+        },
+        {
           "group": "User Invitations",
           "icon": "paper-plane",
           "pages": [

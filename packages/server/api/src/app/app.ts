@@ -90,6 +90,8 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { UserWithMetaInformation } from '@activepieces/shared'
+
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -128,6 +130,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
                     'flow-template': FlowTemplate,
                     'folder': Folder,
+                    'user': UserWithMetaInformation,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
