@@ -169,7 +169,7 @@ export const CopilotSidebar = () => {
       const codeAction = pieceSelectorUtils.getDefaultStepValues({
         stepName,
         pieceSelectorItem: CORE_STEP_METADATA[ActionType.CODE],
-        settings: {
+        overrideDefaultSettings: {
           input: message.content.inputs,
           sourceCode: {
             code: message.content.code,
