@@ -118,6 +118,26 @@ export const billingMutations = {
       },
     });
   },
+  useStartTrial: () => {
+    return useMutation({
+      mutationFn: () => platformBillingApi.startTrial(),
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.VALIDATION) {
+            toast({
+              title: t('Starting trial failed'),
+              description: t(apError.params.message),
+              variant: 'default',
+              duration: 5000,
+            });
+            return;
+          }
+        }
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
+  },
 };
 
 export const billingQueries = {

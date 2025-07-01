@@ -1,6 +1,6 @@
 import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
@@ -179,6 +179,34 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             upgradeExperience,
         )
     })
+
+    fastify.post('/start-trial', StartTrialRequest, async (request) => {
+        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        
+        if (!platformBilling.eligibleForTrial) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Platform is not eligible for trial',
+                },
+            })
+        }
+
+        const customerId = platformBilling.stripeCustomerId
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+
+        const trialSubscriptionId = await stripeHelper(request.log).startTrial(customerId, platformBilling.platformId)
+        
+        if (trialSubscriptionId) {
+            await platformPlanService(request.log).update({
+                platformId: platformBilling.platformId,
+                stripeSubscriptionId: trialSubscriptionId,
+                eligibleForTrial: false,
+            })
+        }
+
+        return { success: true }
+    })
 }
 
 const InfoRequest = {
@@ -216,5 +244,16 @@ const EnableAiCreditUsageRequest = {
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+const StartTrialRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    response: {
+        [StatusCodes.OK]: Type.Object({
+            success: Type.Boolean(),
+        }),
     },
 }
