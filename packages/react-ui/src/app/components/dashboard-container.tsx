@@ -3,8 +3,10 @@ import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
+import mcpDark from '@/assets/img/custom/mcp-dark.svg';
+import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -33,7 +35,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
+  setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({
@@ -42,6 +44,7 @@ export function DashboardContainer({
   hideHeader,
   removeBottomPadding,
 }: DashboardContainerProps) {
+  const { theme } = useTheme();
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
@@ -60,14 +63,6 @@ export function DashboardContainer({
   const permissionFilter = (link: SidebarItem) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
-    }
-    return true;
-  };
-
-  // TODO(agents): after we enable agents for everyone.
-  const filterAgents = (item: SidebarItem) => {
-    if (item.label === t('Agents')) {
-      return platform.plan.agentsLimit && platform.plan.agentsLimit > 0;
     }
     return true;
   };
@@ -91,7 +86,6 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: <Workflow />,
     label: t('Flows'),
-    name: t('Products'),
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
@@ -105,7 +99,13 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: McpSvg,
+    icon: (
+      <img
+        src={theme === 'dark' ? mcpDark : mcpLight}
+        alt="MCP"
+        className="color-foreground"
+      />
+    ),
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
@@ -119,6 +119,7 @@ export function DashboardContainer({
     showInEmbed: false,
     hasPermission: true,
     isSubItem: false,
+    name: t('Products'),
   };
 
   const tablesLink: SidebarLink = {
@@ -142,17 +143,16 @@ export function DashboardContainer({
   };
 
   const items: SidebarItem[] = [
-    flowsLink,
     agentsLink,
-    mcpLink,
+    flowsLink,
     tablesLink,
+    mcpLink,
     todosLink,
     releasesLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts)
-    .filter(filterAgents);
+    .filter(filterAlerts);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

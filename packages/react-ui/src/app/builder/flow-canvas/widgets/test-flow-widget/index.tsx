@@ -1,0 +1,95 @@
+import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
+
+import {
+  ChatDrawerSource,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import { useSocket } from '@/components/socket-provider';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
+
+import ViewOnlyWidget from '../view-only-widget';
+
+import { TestButton } from './test-button';
+
+type TestFlowWidgetProps = {
+  flowVersion: FlowVersion;
+  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
+  readonly: boolean;
+};
+
+const TestFlowWidget = ({
+  flowVersion,
+  setRun,
+  readonly,
+}: TestFlowWidgetProps) => {
+  const socket = useSocket();
+  const [setChatDrawerOpenSource] = useBuilderStateContext((state) => [
+    state.setChatDrawerOpenSource,
+  ]);
+
+  const triggerHasSampleData =
+    flowVersion.trigger.type === TriggerType.PIECE &&
+    !isNil(flowVersion.trigger.settings.inputUiInfo?.lastTestDate);
+
+  const isChatTrigger = pieceSelectorUtils.isChatTrigger(
+    flowVersion.trigger.settings.pieceName,
+    flowVersion.trigger.settings.triggerName,
+  );
+
+  const { mutate: runFlow, isPending } = useMutation<void>({
+    mutationFn: () =>
+      flowRunsApi.testFlow(
+        socket,
+        {
+          flowVersionId: flowVersion.id,
+        },
+        (run) => {
+          setRun(run, flowVersion);
+        },
+      ),
+    onError: (error) => {
+      console.log(error);
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+
+  if (!flowVersion.valid) {
+    return null;
+  }
+
+  if (isChatTrigger) {
+    return (
+      <TestButton
+        onClick={() => {
+          setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
+        }}
+        text={t('Open Chat')}
+        disabled={!triggerHasSampleData}
+        loading={isPending}
+      />
+    );
+  }
+
+  if (readonly) {
+    return <ViewOnlyWidget />;
+  }
+
+  return (
+    <TestButton
+      onClick={() => {
+        runFlow();
+      }}
+      text={t('Test Flow')}
+      disabled={!triggerHasSampleData}
+      loading={isPending}
+    />
+  );
+};
+
+TestFlowWidget.displayName = 'TestFlowWidget';
+
+export { TestFlowWidget };

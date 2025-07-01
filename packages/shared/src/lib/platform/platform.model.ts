@@ -65,7 +65,9 @@ export enum PlatformUsageMetric {
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
+    AGENTS = 'agents',
     TABLES = 'tables',
+    MCPS = 'mcps',
 }
 
 
@@ -74,9 +76,10 @@ export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
-    mcp: Type.Number(),
+    mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
+    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -84,15 +87,16 @@ export type PlatformUsage = Static<typeof PlatformUsage>
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    includedTasks: Type.Number(),
-    includedAiCredits: Type.Number(),
     tasksLimit: Type.Optional(Type.Number()),
+    includedAiCredits: Type.Number(),
     aiCreditsLimit: Type.Optional(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    agentsEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
@@ -112,10 +116,15 @@ export const PlatformPlan = Type.Object({
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
+    stripeSubscriptionStartDate: Type.Optional(Type.Number()),
+    stripeSubscriptionEndDate: Type.Optional(Type.Number()),
+    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    stripePaymentMethod: Type.Optional(Type.String()),
 
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),
@@ -164,8 +173,6 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
-    hasLicenseKey: Type.Optional(Type.Boolean()),
-    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',
@@ -192,7 +199,9 @@ export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiv
 export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.String(),
+    nextBillingDate: Type.Number(),
+    nextBillingAmount: Type.Number(),
+    cancelAt: Type.Optional(Type.Number()),
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

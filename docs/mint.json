@@ -144,6 +144,13 @@
       ]
     },
     {
+      "group": "Product",
+      "icon": "tool",
+      "pages": [
+        "handbook/product/interface-design"
+      ]
+    },
+    {
       "group": "Endpoints",
       "pages": [
         {
@@ -154,6 +161,14 @@
             "endpoints/projects/create",
             "endpoints/projects/update",
             "endpoints/projects/list"
+          ]
+        },
+        {
+          "group": "Users",
+          "icon": "user",
+          "pages": [
+            "endpoints/users/schema",
+            "endpoints/users/list"
           ]
         },
         {
@@ -210,8 +225,7 @@
           "group": "Sample Data",
           "icon": "database",
           "pages": [
-            "endpoints/sample-data/get",
-            "endpoints/sample-data/save"
+            "endpoints/sample-data/get"
           ]
         },
         {
@@ -281,17 +295,6 @@
             "endpoints/mcp-servers/rotate",
             "endpoints/mcp-servers/update"
           ]
-        },
-        {
-          "group": "MCP pieces",
-          "icon": "plug",
-          "pages": [
-            "endpoints/mcp-pieces/schema",
-            "endpoints/mcp-pieces/add",
-            "endpoints/mcp-pieces/delete",
-            "endpoints/mcp-pieces/update",
-            "endpoints/mcp-pieces/list"
-          ]
         }
       ]
     },
@@ -347,7 +350,8 @@
         "install/architecture/overview",
         "install/architecture/workers",
         "install/architecture/engine",
-        "install/architecture/stack"
+        "install/architecture/stack",
+        "install/architecture/performance"
       ]
     },
     {
@@ -432,7 +436,6 @@
       "pages": [
         "embedding/customize-pieces",
         "embedding/embed-connections",
-        "embedding/mcps",
         "embedding/navigation",
         "embedding/predefined-connection",
         "embedding/sdk-changelog",

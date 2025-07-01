@@ -37,8 +37,8 @@ const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
             'h-4': size === '4',
             'w-5': size === '5',
             'h-5': size === '5',
-            'text-success-300': variant === 'success',
-            'text-destructive-300': variant === 'error',
+            'text-success': variant === 'success',
+            'text-destructive': variant === 'error',
             'text-foreground': variant === 'default',
           })}
         ></Icon>

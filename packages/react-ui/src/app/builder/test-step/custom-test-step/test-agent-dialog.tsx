@@ -1,57 +1,57 @@
-import { TodoDetails } from '@/app/routes/todos/todo-details';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
+import { Button } from '@/components/ui/button';
 import {
-  Action,
-  agentMarkdownParser,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
+import {
   AgentTestResult,
+  AgentStepBlock,
+  StepRunResponse,
+  isNil,
 } from '@activepieces/shared';
-
-import { testStepHooks } from '../test-step-hooks';
 
 type AgentTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  todoId: string;
-  currentStep: Action;
+  agentProgress: StepRunResponse | null;
+  isTesting: boolean;
 };
 
 function AgentTestingDialog({
   open,
   onOpenChange,
-  todoId,
-  currentStep,
+  agentProgress,
 }: AgentTestingDialogProps) {
-  const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-    currentStep.name,
-  );
-
-  const handleStatusChange = async () => {
-    const activities = await todoActivityApi.list(todoId, {
-      limit: 100,
-    });
-    const agentResult: AgentTestResult = agentMarkdownParser.findAgentResult({
-      todoId,
-      output: activities.data[activities.data.length - 1].content,
-    });
-    updateSampleData({
-      response: {
-        output: agentResult,
-        success: true,
-      },
-      step: currentStep,
-    });
-    onOpenChange(false);
-  };
+  const agentResult = agentProgress?.output as AgentTestResult | undefined;
+  const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
+  const prompt =
+    !isNil(agentProgress?.input) &&
+    'prompt' in (agentProgress.input as { prompt: string })
+      ? (agentProgress.input as { prompt: string }).prompt
+      : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl p-0 overflow-hidden">
-        <TodoDetails
-          todoId={todoId}
-          className="h-[90vh] py-3 px-6"
-          onStatusChange={handleStatusChange}
-        />
+      <DialogContent className="w-full max-w-2xl overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>Agent Test Results</DialogTitle>
+        </DialogHeader>
+        <div className="h-[40vh]">
+          <AgentTimeline
+            steps={agentSteps}
+            prompt={prompt}
+            className="h-full"
+          />
+        </div>
+        <DialogFooter className="">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

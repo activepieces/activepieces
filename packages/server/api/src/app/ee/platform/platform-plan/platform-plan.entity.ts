@@ -14,8 +14,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
-        includedTasks: {
-            type: Number,
+        plan: {
+            type: String,
+            nullable: true,
         },
         tasksLimit: {
             type: Number,
@@ -26,6 +27,22 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         aiCreditsLimit: {
             type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionStartDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionEndDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionCancelDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripePaymentMethod: {
+            type: String,
             nullable: true,
         },
         environmentsEnabled: {
@@ -113,6 +130,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         tablesLimit: {
             type: Number,
             nullable: true,
+        },
+        agentsEnabled: {
+            type: Boolean,
         },
         mcpLimit: {
             type: Number,

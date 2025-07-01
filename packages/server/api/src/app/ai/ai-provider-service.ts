@@ -7,17 +7,25 @@ import {
     apId,
     CreateAIProviderRequest,
     ErrorCode,
+    isNil,
     PlatformId,
     SeekPage,
+    SUPPORTED_AI_PROVIDERS,
+    SupportedAIProvider,
 } from '@activepieces/shared'
+import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
+import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
+import { aiProvidersStrategies, Usage } from './providers'
+import { StreamingParser } from './providers/types'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
+export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
@@ -97,6 +105,37 @@ export const aiProviderService = {
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
+
+    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.calculateUsage(request, response)
+    },
+
+    extractModelId(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (!providerStrategy) return null
+        return providerStrategy.extractModelId(request)
+    },
+
+    isModelSupported(provider: string, model: string): boolean {
+        const providerConfig = getProviderConfig(provider)!
+        return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
+    },
+
+    isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.isStreaming(request)
+    },
+
+    providerSupportsStreaming(provider: string): boolean {
+        const providerConfig = getProviderConfig(provider)!
+        return providerConfig.streaming
+    },
+
+    streamingParser(provider: string): StreamingParser {
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.streamingParser!()
+    },
 }
 
 function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
@@ -115,4 +154,9 @@ function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
     })
 }
 
-
+function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
+    if (isNil(provider)) {
+        return undefined
+    }
+    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}

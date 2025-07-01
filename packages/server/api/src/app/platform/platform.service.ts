@@ -1,4 +1,4 @@
-import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -15,7 +15,6 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-import { licenseKeysService } from '../ee/license-keys/license-keys-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
@@ -161,11 +160,17 @@ export const platformService = {
         if (isNil(platform)) {
             return null
         }
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
@@ -174,20 +179,15 @@ export const platformService = {
     },
 }
 
-async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
-    const plan = await getPlan(platform)
-    const licenseKey = await licenseKeysService(system.globalLogger()).getKey(plan.licenseKey)
-    return {
-        ...platform,
-        licenseExpiresAt: licenseKey?.expiresAt,
-        hasLicenseKey: !isNil(licenseKey),
-        plan,
-    }
-}
+
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
-        return OPENSOURCE_PLAN
+        return {
+            ...OPEN_SOURCE_PLAN,
+            stripeSubscriptionStartDate: 0,
+            stripeSubscriptionEndDate: 0,
+        }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }

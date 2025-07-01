@@ -27,7 +27,7 @@ import {
 } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { cn } from '@/lib/utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 
@@ -436,7 +436,7 @@ const ReplaceConnectionsDialog = ({
             </ScrollArea>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={handleBack}>
+              <Button type="button" variant="accent" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

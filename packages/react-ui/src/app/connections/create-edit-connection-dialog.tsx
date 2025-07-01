@@ -45,7 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import { newConnectionUtils } from '../../features/connections/lib/utils';
-import { formUtils } from '../builder/piece-properties/form-utils';
+import { formUtils } from '../../features/pieces/lib/form-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
@@ -199,19 +199,25 @@ const CreateOrEditConnectionDialogContent = React.memo(
                 </div>
               )}
               {auth?.type === PropertyType.SECRET_TEXT && (
-                <SecretTextConnectionSettings
-                  authProperty={piece.auth as SecretTextProperty<boolean>}
-                />
+                <div className="mt-3.5">
+                  <SecretTextConnectionSettings
+                    authProperty={piece.auth as SecretTextProperty<boolean>}
+                  />
+                </div>
               )}
               {auth?.type === PropertyType.BASIC_AUTH && (
-                <BasicAuthConnectionSettings
-                  authProperty={piece.auth as BasicAuthProperty}
-                />
+                <div className="mt-3.5">
+                  <BasicAuthConnectionSettings
+                    authProperty={piece.auth as BasicAuthProperty}
+                  />
+                </div>
               )}
               {auth?.type === PropertyType.CUSTOM_AUTH && (
-                <CustomAuthConnectionSettings
-                  authProperty={piece.auth as CustomAuthProperty<any>}
-                />
+                <div className="mt-3.5">
+                  <CustomAuthConnectionSettings
+                    authProperty={piece.auth as CustomAuthProperty<any>}
+                  />
+                </div>
               )}
               {auth?.type === PropertyType.OAUTH2 && (
                 <div className="mt-3.5">
@@ -224,15 +230,19 @@ const CreateOrEditConnectionDialogContent = React.memo(
               )}
             </ScrollArea>
             <DialogFooter className="mt-0">
-              <Button
-                onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
-                className="w-full mx-5"
-                loading={isPending}
-                type="submit"
-                disabled={!form.formState.isValid}
-              >
-                {t('Save')}
-              </Button>
+              <div className="mx-5 w-full">
+                <Button
+                  onClick={(e) =>
+                    form.handleSubmit(() => upsertConnection())(e)
+                  }
+                  className="w-full"
+                  loading={isPending}
+                  type="submit"
+                  disabled={!form.formState.isValid}
+                >
+                  {t('Save')}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

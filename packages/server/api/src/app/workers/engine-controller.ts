@@ -73,8 +73,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
-        const { runId } = request.body
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+        const { type, data } = request.body
+        app.io.to(request.principal.projectId).emit(type, data)
     })
 
     app.post('/update-run', UpdateRunProgress, async (request) => {
@@ -149,7 +149,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        const exceededLimit = await projectLimitsService(request.log).tasksExceededLimit(request.principal.projectId)
+        const exceededLimit = await projectLimitsService(request.log).checkTasksExceededLimit(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,

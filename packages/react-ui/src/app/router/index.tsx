@@ -20,6 +20,8 @@ import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { Error } from '@/features/billing/components/error';
+import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
@@ -55,7 +57,6 @@ import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
-import AppearancePage from '../routes/settings/appearance';
 import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
@@ -331,18 +332,7 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.appearance,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Appearance">
-          <ProjectSettingsLayout>
-            <AppearancePage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
+
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.general,
     element: (
@@ -433,7 +423,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
   {
     path: '/404',
     element: (
@@ -581,6 +570,26 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Billing">
           <SettingsBilling />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing/success',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Success />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing/error',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <Error />
         </PageTitle>
       </PlatformAdminContainer>
     ),

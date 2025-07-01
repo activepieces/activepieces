@@ -125,7 +125,7 @@ export const BuilderHeader = () => {
               )}
             {!embedState.hideFlowNameInBuilder && (
               <EditableText
-                className="font-semibold"
+                className="font-semibold hover:cursor-text"
                 value={flowVersion.displayName}
                 readonly={!isLatestVersion}
                 onValueChange={(value) =>
@@ -138,6 +138,7 @@ export const BuilderHeader = () => {
                 }
                 isEditing={isEditingFlowName}
                 setIsEditing={setIsEditingFlowName}
+                tooltipContent={isLatestVersion ? t('Edit Flow Name') : ''}
               />
             )}
           </div>
@@ -158,7 +159,9 @@ export const BuilderHeader = () => {
               onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
               onDuplicate={() => {}}
             >
-              <ChevronDown className="h-8 w-8" />
+              <Button variant="ghost" size="icon">
+                <ChevronDown className="h-4 w-4" />
+              </Button>
             </FlowActionMenu>
           )}
         </div>
@@ -166,52 +169,35 @@ export const BuilderHeader = () => {
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
           {showSupport && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => openNewWindow(supportUrl)}
-                >
-                  <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
-                  {t('Support')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Support')}</TooltipContent>
-            </Tooltip>
+            <Button
+              variant="ghost"
+              className="gap-2 px-2"
+              onClick={() => openNewWindow(supportUrl)}
+            >
+              <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+              {t('Support')}
+            </Button>
           )}
           {hasPermissionToReadRuns && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-                  className="gap-2 px-2"
-                >
-                  <Logs className="w-4 h-4" />
-                  {t('Runs')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
-            </Tooltip>
+            <Button
+              variant="ghost"
+              onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+              className="gap-2 px-2"
+            >
+              <Logs className="w-4 h-4" />
+              {t('Runs')}
+            </Button>
           )}
 
           {!isInRunsPage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-                >
-                  <History className="w-4 h-4" />
-                  {t('Versions')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Versions History')}
-              </TooltipContent>
-            </Tooltip>
+            <Button
+              variant="ghost"
+              className="gap-2 px-2"
+              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
+            >
+              <History className="w-4 h-4" />
+              {t('Versions')}
+            </Button>
           )}
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
