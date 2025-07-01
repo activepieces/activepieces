@@ -20,9 +20,9 @@ export class AddTrialFlagInPlatform1751394161203 implements MigrationInterface {
         `)
 
         await queryRunner.query(`
-            UPDATE "platform_plan"
+            UPDATE "platform_plan" 
             SET "eligibleForTrial" = true
-            WHERE "plan" = 'free'
+            WHERE "plan" IN ('free', 'payg')
         `)
     }
 
