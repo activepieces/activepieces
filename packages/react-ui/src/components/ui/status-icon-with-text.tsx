@@ -4,7 +4,7 @@ import React from 'react';
 import { isNil } from '@activepieces/shared';
 
 const statusCodeVariants = cva(
-  'inline-flex gap-1 rounded px-2.5 py-1 text-xs font-semibold',
+  'inline-flex gap-1 rounded-md px-2.5 py-1 text-xs font-semibold',
   {
     variants: {
       variant: {
