@@ -21,6 +21,7 @@ import { restoreDatabaseItem } from './lib/actions/restore-database-item';
 import { addComment } from './lib/actions/add-comment';
 import { retrieveDatabase } from './lib/actions/retrieve-database';
 import { getPageComments } from './lib/actions/get-page-comments';
+import { findPage } from './lib/actions/find-page';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -61,6 +62,7 @@ export const notion = createPiece({
     addComment,
     retrieveDatabase,
     getPageComments,
+    findPage,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.notion.com/v1',
       auth: notionAuth,
