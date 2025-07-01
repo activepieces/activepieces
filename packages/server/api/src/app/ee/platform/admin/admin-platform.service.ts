@@ -13,10 +13,10 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In, IsNull } from 'typeorm'
+import { In } from 'typeorm'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { platformService } from '../../../platform/platform.service'
-import { projectRepo, projectService } from '../../../project/project-service'
+import { projectService } from '../../../project/project-service'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
 import { licenseKeysService } from '../../license-keys/license-keys-service'
 
