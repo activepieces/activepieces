@@ -57,13 +57,6 @@ export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
         : 'price_1RflgeKZ0dZRqLEKGVORuNNl'
 }
 
-export function getTasksPriceId(stripeKey: string | undefined) {
-    const testMode = stripeKey?.startsWith('sk_test')
-    return testMode
-        ? 'price_1OnWqKKZ0dZRqLEKkcYBso8K'
-        : 'price_1Qf7RiKZ0dZRqLEKAgP38l7w'
-}
-
 export function getUserPriceId(stripeKey: string | undefined) {
     const testMode = stripeKey?.startsWith('sk_test')
     return testMode
