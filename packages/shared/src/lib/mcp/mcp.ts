@@ -51,12 +51,7 @@ export const mcpToolNaming = {
     extractToolId: (toolName: string) => {
         const splitted = toolName.split('_')
         return splitted[splitted.length - 1]
-    },
-    extractActionName: (actionName: string, pieceName: string) => {
-        const pieceNameWithoutPrefix = pieceName.split('@activepieces/piece-')[1]
-        const actionNameWithoutPiece = actionName.replace(`${pieceNameWithoutPrefix}-`, '')
-        return actionNameWithoutPiece
-    },
+    }
 }
 
 
