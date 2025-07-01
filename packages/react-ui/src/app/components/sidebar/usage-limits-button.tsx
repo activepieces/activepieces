@@ -55,7 +55,6 @@ const UsageLimitsButton = React.memo(() => {
   const [managePlanOpen, setManagePlanOpen] = useState(false);
 
   const { project, isPending } = projectHooks.useCurrentProject();
-
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const status = project.platformSubscriptionStatus;
