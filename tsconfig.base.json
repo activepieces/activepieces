@@ -51,6 +51,9 @@
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
+      "@activepieces/piece-airtop": [
+        "packages/pieces/community/airtop/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
@@ -657,11 +660,11 @@
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
       ],
-      "@activepieces/piece-reddit": [
-        "packages/pieces/community/reddit/src/index.ts"
-      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
