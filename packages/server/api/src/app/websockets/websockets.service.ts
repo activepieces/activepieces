@@ -25,7 +25,7 @@ export const websocketService = {
         }
     },
     async verifyPrincipal(socket: Socket): Promise<Principal> {
-        return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+        return await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
     },
     addListener<T>(event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
         listener[event] = handler

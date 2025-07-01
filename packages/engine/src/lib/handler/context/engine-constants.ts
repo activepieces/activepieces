@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -12,9 +12,6 @@ const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
     retryExponential: 2,
     retryInterval: 2000,
 }
-
-const DEFAULT_TRIGGER_EXECUTION = 'execute-trigger'
-const DEFAULT_EXECUTE_PROPERTY = 'execute-property'
 
 export class EngineConstants {
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
@@ -91,10 +88,10 @@ export class EngineConstants {
 
     public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
         return new EngineConstants(
-            DEFAULT_MCP_DATA.flowId,
-            DEFAULT_MCP_DATA.flowVersionId,
-            DEFAULT_MCP_DATA.flowVersionState,
-            DEFAULT_MCP_DATA.flowRunId,
+            'mcp-flow-id',
+            'mcp-flow-version-id',
+            FlowVersionState.LOCKED,
+            'mcp-flow-run-id',
             input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
@@ -138,10 +135,10 @@ export class EngineConstants {
 
     public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
         return new EngineConstants(
-            input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
-            input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
-            input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
-            DEFAULT_EXECUTE_PROPERTY,
+            input.flowVersion.flowId,
+            input.flowVersion.id,
+            input.flowVersion.state,
+            'execute-property',
             input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
@@ -164,7 +161,7 @@ export class EngineConstants {
             input.flowVersion.flowId,
             input.flowVersion.id,
             input.flowVersion.state,
-            DEFAULT_TRIGGER_EXECUTION,
+            'execute-trigger',
             input.publicApiUrl,
             addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,

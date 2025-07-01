@@ -2,7 +2,6 @@ import {
     DropdownState,
     DynamicPropsValue,
     PieceMetadata,
-    PropertyType,
 } from '@activepieces/pieces-framework'
 import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
@@ -25,10 +24,10 @@ export type EngineHelperTriggerResult<
 > = ExecuteTriggerResponse<T>
 
 export type EngineHelperPropResult = {
-    type: PropertyType.DROPDOWN
+    type: 'dropdown'
     options: DropdownState<unknown>
 } | {
-    type: PropertyType.DYNAMIC
+    type: 'dynamicproperties'
     options: Record<string, DynamicPropsValue>
 }
 
