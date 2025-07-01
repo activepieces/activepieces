@@ -78,7 +78,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
-                value: false,
+                value: true,
                 created,
                 updated,
             },

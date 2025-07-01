@@ -47,7 +47,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         ])
 
         const { stripeSubscriptionCancelDate: cancelDate } = platformBilling
-        const { startDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformBilling)
+        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformBilling)
 
         const nextBillingAmount = await getNextBillingAmount(platformBilling.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformBilling.stripeSubscriptionId)
 

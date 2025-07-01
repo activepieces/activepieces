@@ -36,7 +36,8 @@ export enum AgentTaskStatus {
 export const AgentTestResult = Type.Object({
     status: Type.Enum(AgentTaskStatus),
     output: Type.Unknown(),
-    steps: Type.Array(AgentStepBlock)
+    steps: Type.Array(AgentStepBlock),
+    message: Type.String(),
 })
 
 export type AgentTestResult = Static<typeof AgentTestResult>

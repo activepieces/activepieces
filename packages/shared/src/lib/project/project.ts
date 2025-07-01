@@ -28,7 +28,7 @@ export enum NotificationStatus {
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     aiCredits: Type.Number(),
-    nextLimitResetDate: Type.String(),
+    nextLimitResetDate: Type.Number(),
 })
 
 export const SwitchProjectResponse = Type.Object({
@@ -78,6 +78,7 @@ export type Project = Static<typeof Project>
 export const ProjectWithLimits = Type.Composite([
     Type.Omit(Project, ['deleted']),
     Type.Object({
+        platformSubscriptionStatus: Type.Optional(Type.String()),
         usage: ProjectUsage,
         plan: ProjectPlan,
         analytics: projectAnalytics,
