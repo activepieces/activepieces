@@ -32,7 +32,7 @@ const getTodoActionName = (todoType: TodoType) => {
     case TodoType.INTERNAL:
       return TODO_ACTIONS.createTodoAndWait;
     case TodoType.EXTERNAL:
-      return TODO_ACTIONS.waitForApproval;
+      return TODO_ACTIONS.createTodo;
   }
 };
 
@@ -60,7 +60,7 @@ export const createRouterStep = ({
   logoUrl: string;
   handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'];
 }) => {
-  const routerInternalSettings: RouterActionSettings = {
+  const routerOnApprovalSettings: RouterActionSettings = {
     branches: [
       {
         conditions: [
@@ -97,7 +97,7 @@ export const createRouterStep = ({
       },
     },
     selectStepAfter: false,
-    settings: routerInternalSettings,
+    overrideSettings: routerOnApprovalSettings,
     customLogoUrl: logoUrl,
   });
 };
@@ -182,7 +182,7 @@ export const createWaitForApprovalStep = ({
       stepName: waitForApprovalStepName,
     },
     selectStepAfter: false,
-    settings: defaultValues.settings,
+    overrideSettings: defaultValues.settings,
   });
 };
 
@@ -227,6 +227,6 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
       stepName,
     },
     selectStepAfter: false,
-    settings: defaultValues.settings,
+    overrideSettings: defaultValues.settings,
   });
 };
