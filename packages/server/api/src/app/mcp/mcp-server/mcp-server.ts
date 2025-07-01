@@ -346,7 +346,7 @@ async function extractActionParametersFromUserInstructions({
             )
 
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
-            
+
             const { object: extractedValue } = await generateObject({
                 model: aiModel,
                 schema: z.object(schemaObject),
@@ -363,6 +363,7 @@ async function extractActionParametersFromUserInstructions({
             return {
                 ...accumulatedParameters,
                 ...extractedParameters,
+                'auth': connectionReference,
             }
         }, 
         Promise.resolve({ 'auth': connectionReference }),

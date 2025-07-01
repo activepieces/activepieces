@@ -134,17 +134,16 @@ function sortPropertiesByDependencies(properties: PiecePropertyMap): Record<numb
     const depth: Record<string, number> = {}
     
     Object.entries(properties).forEach(([key, property]) => {
-        if ('refreshers' in property && property.refreshers) {
+        const hasRefreshers = 'refreshers' in property && property.refreshers && property.refreshers.length > 0
+        if (hasRefreshers) {
             for (const refresher of property.refreshers) {
                 inDegree[key] = (inDegree[key] || 0) + 1
                 graph[refresher] = graph[refresher] ?? []
                 graph[refresher].push(key)
             }   
         }
-        else {
-            inDegree[key] = inDegree[key] ?? 0
-            graph[key] = graph[key] ?? []
-        }
+        inDegree[key] = inDegree[key] ?? 0
+        graph[key] = graph[key] ?? []
     })
 
     // Topological sort
@@ -179,9 +178,33 @@ function sortPropertiesByDependencies(properties: PiecePropertyMap): Record<numb
 }
 
 
-async function buildZodSchemaForPieceProperty({ property, logger, input, projectId, propertyName, actionMetadata, piecePackage, depth = 0 }: BuildZodSchemaForPiecePropertyParams): Promise<BuildZodSchemaForPiecePropertyResult> {
+async function buildZodSchemaForPieceProperty({ property, logger, input, projectId, propertyName, actionMetadata, piecePackage, depth = 0 }: BuildZodSchemaForPiecePropertyParams): Promise<BuildZodSchemaForPiecePropertyResult> {    
+    if (property.type === PropertyType.ARRAY) {
+        const hasProperties = property.properties && Object.keys(property.properties).length > 0
+        if (hasProperties) {
+            const entries = await Promise.all(
+                Object.entries(property.properties ?? {}).map(async ([key, value]) => [
+                    key,
+                    (await buildZodSchemaForPieceProperty({
+                        property: value,
+                        logger,
+                        input,
+                        projectId,
+                        propertyName,
+                        actionMetadata,
+                        piecePackage,
+                        depth: depth + 1,
+                    })).schema,
+                ]),
+            )
+            const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.object(Object.fromEntries(entries))) }) : z.array(z.object(Object.fromEntries(entries)))
+            return { schema, value: property }
+        }
+        const schema = z.object({ [propertyName]: z.array(z.string()) })
+        return { schema, value: property }
+    }
+
     const needsRuntimeResolution = property.type === PropertyType.DYNAMIC || property.type === PropertyType.DROPDOWN || property.type === PropertyType.MULTI_SELECT_DROPDOWN
-    
     if (!needsRuntimeResolution) {
         const schema = depth === 0 ? z.object({ [propertyName]: piecePropertyToZod(property) }) : piecePropertyToZod(property)
         return {
