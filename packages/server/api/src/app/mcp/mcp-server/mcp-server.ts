@@ -85,8 +85,8 @@ async function addPieceToServer(
     const toolActionsNames = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of toolActionsNames) {
         const actionMetadata = pieceMetadata.actions[action]
-        const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
-
+        const extractActionName = mcpToolNaming.extractActionName(actionMetadata.name, toolPieceMetadata.pieceName)
+        const actionName = mcpToolNaming.fixTool(extractActionName, mcpTool.id, McpToolType.PIECE)
         const toolSchema = {
             instructions: z.string().describe(
                 'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.'            ),
