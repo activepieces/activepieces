@@ -153,7 +153,7 @@ export const ExecutePropertyJobData = Type.Object({
     requestId: Type.String(),
     jobType: Type.Literal(UserInteractionJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
-    flowVersion: Type.Optional(FlowVersion),
+    flowVersion: FlowVersion,
     propertyName: Type.String(),
     piece: PiecePackage,
     actionOrTriggerName: Type.String(),
