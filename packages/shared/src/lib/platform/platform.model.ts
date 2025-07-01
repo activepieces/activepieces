@@ -108,6 +108,7 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    eligibleForTrial: Type.Boolean(),
 
     tablesEnabled: Type.Boolean(),
     todosEnabled: Type.Boolean(),

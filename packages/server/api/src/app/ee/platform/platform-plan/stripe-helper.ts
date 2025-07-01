@@ -1,4 +1,4 @@
-import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName } from '@activepieces/ee-shared'
+import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, StripePlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -292,7 +292,7 @@ async function updateSubscriptionSchedule(
     if (!isFreeDowngrade) {
         const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
             {
-                price: STRIPE_PLAN_PRICE_IDS[newPlan],
+                price: STRIPE_PLAN_PRICE_IDS[newPlan as StripePlanName],
                 quantity: 1,
             },
             { price: AI_CREDITS_PRICE_ID },

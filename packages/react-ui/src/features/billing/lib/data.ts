@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { PlanName, PlanNameWithEnterprise } from '@activepieces/ee-shared';
+import { PlanName } from '@activepieces/ee-shared';
 
 export const planData = {
   tabs: [t('Monthly'), t('Annual')],
@@ -25,7 +25,7 @@ export const planData = {
       price: 150,
     },
     {
-      name: PlanNameWithEnterprise.ENTERPRISE,
+      name: PlanName.ENTERPRISE,
       description: t('Cloud or Self-Hosted'),
       featuresTitle: t('Maximum Capabilities'),
       price: 'Custom',
