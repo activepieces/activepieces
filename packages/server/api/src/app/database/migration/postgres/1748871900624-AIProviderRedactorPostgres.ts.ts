@@ -69,7 +69,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
             ALTER TABLE "ai_provider" DROP CONSTRAINT "fk_ai_provider_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider" ALTER COLUMN "platformId" TYPE character varying(21)
@@ -135,7 +135,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
             ALTER TABLE "ai_provider" DROP CONSTRAINT "fk_ai_provider_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider" ALTER COLUMN "platformId" TYPE character varying

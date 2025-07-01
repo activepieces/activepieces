@@ -20,6 +20,7 @@ interface AgentBuilderProps {
   agent?: Agent;
   refetch: () => void;
   onChange?: (agent: Agent) => void;
+  hideUseAgentButton?: boolean;
 }
 
 export const AgentBuilder = ({
@@ -29,6 +30,7 @@ export const AgentBuilder = ({
   trigger,
   agent,
   onChange,
+  hideUseAgentButton,
 }: AgentBuilderProps) => {
   return (
     <Drawer
@@ -70,6 +72,7 @@ export const AgentBuilder = ({
               agent={agent}
               refetch={refetch}
               onChange={onChange}
+              hideUseAgentButton={hideUseAgentButton}
             />
           </div>
         </div>

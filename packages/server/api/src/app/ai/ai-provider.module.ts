@@ -1,4 +1,5 @@
 import { Writable } from 'stream'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -77,17 +78,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
                             await platformUsageService(app.log).increaseAiCreditUsage({ projectId, platformId: request.principal.platform.id, provider, model: usage.model, cost: usage.cost })
-                            const completeResponse = JSON.parse(buffer.toString())
-                            const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, provider, model, cost, platformId: request.principal.platform.id })
                         }
                         catch (error) {
-                            app.log.error({
+                            exceptionHandler.handle({
                                 error,
                                 projectId,
                                 request,
                                 response: buffer.toString(),
-                            }, 'Error processing AI provider response')
+                                message: 'Error processing AI provider response',
+                            }, app.log)
                         }
                         finally {
                             callback()
