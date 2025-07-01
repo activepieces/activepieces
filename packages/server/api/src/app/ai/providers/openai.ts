@@ -76,13 +76,19 @@ export const openaiProvider: AIProviderStrategy = {
         const body = request.body as { stream?: boolean }
         const isStreaming = body.stream ?? false
 
-        if (isStreaming && !request.url.includes('chat/completions')) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
-                params: {
-                    message: 'OpenAI streaming is only supported for chat/completions API',
-                },
-            })
+        if (isStreaming) {
+            if (!request.url.includes('chat/completions')) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    params: {
+                        message: 'OpenAI streaming is only supported for chat/completions API',
+                    },
+                })
+            }
+
+            (request.body as Record<string, unknown>)['stream_options'] = {
+                include_usage: true,
+            }
         }
 
         return isStreaming
