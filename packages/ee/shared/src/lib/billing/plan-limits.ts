@@ -11,6 +11,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsLimit: undefined,
     includedAiCredits: 200,
     activeFlowsLimit: 2,
+    eligibleForTrial: true,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
@@ -52,6 +53,7 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         mcpLimit: 1,
         tablesLimit: 1,
         agentsLimit: 5,
+        eligibleForTrial: false,
 
         todosEnabled: false,
         tablesEnabled: true,
@@ -79,6 +81,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
     aiCreditsLimit: undefined,
+    eligibleForTrial: false,
     includedAiCredits: 500,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
@@ -114,6 +117,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
     tasksLimit: undefined,
     aiCreditsLimit: undefined,
+    eligibleForTrial: false,
     includedAiCredits: 1000,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
@@ -145,6 +149,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    eligibleForTrial: false,
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,

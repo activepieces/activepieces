@@ -1,6 +1,5 @@
 import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, RunEnvironment, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../websockets/websockets.service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from './sample-data.service'
