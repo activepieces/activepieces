@@ -20,7 +20,7 @@ import { generateObject, LanguageModelV1 } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
-import { z } from 'zod'
+import { z, ZodRawShape } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
@@ -314,44 +314,54 @@ async function extractActionParametersFromUserInstructions({
     })
 
     const actionProperties = actionMetadata.props
-    const sortedPropertyNames = mcpUtils.sortPropertiesByDependencies(actionProperties)
-    const sortedActionProperties = Object.fromEntries(
-        sortedPropertyNames.map((propertyName: string) => [propertyName, actionProperties[propertyName]]),
-    )
-    
-    const extractedParameters = await Object.entries(sortedActionProperties).reduce(
-        async (accumulatedParametersPromise, [propertyName, propertyDefinition]) => {
+    const depthToPropertyMap = mcpUtils.sortPropertiesByDependencies(actionProperties)
+
+    const extractedParameters = await Object.entries(depthToPropertyMap).reduce(
+        async (accumulatedParametersPromise, [_, propertyNames]) => {
             const accumulatedParameters = await accumulatedParametersPromise
-            
+
             const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
-                propertyName,
+                propertyNames,
                 userInstructions,
-                previouslyFilledProperties: accumulatedParameters,
             })
 
-            const propertySchema = await mcpUtils.buildZodSchemaForPieceProperty({
-                property: propertyDefinition,
-                logger,
-                input: accumulatedParameters,
-                projectId,
-                propertyName,
-                actionMetadata,
-                piecePackage,
-                depth: 0,
-            })
+            const propertySchemas = (await Promise.all(propertyNames.map(async propertyName => {
+                const result = await mcpUtils.buildZodSchemaForPieceProperty({
+                    property: actionProperties[propertyName],
+                    logger,
+                    input: accumulatedParameters,
+                    projectId,
+                    propertyName,
+                    actionMetadata,
+                    piecePackage,
+                    depth: 0,
+                })
+                return { propertyName, ...result }
+            }))).filter(({ schema }) => schema !== null)
+                        
+            const schemaObject: ZodRawShape = Object.fromEntries(
+                propertySchemas
+                    .map(({ propertyName, schema }) => [propertyName, schema!]),
+            )
+
+            const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
             
             const { object: extractedValue } = await generateObject({
                 model: aiModel,
-                schema: propertySchema.schema,
+                schema: z.object(schemaObject),
                 prompt: mcpUtils.buildFinalExtractionPrompt({
                     parameterExtractionPrompt,
-                    propertySchemaValues: propertySchema.value,
+                    propertySchemaValues,
                 }),
             })
 
+            const extractedParameters = Object.fromEntries(
+                Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
+            )
+
             return {
                 ...accumulatedParameters,
-                [propertyName]: extractedValue[propertyName],
+                ...extractedParameters,
             }
         }, 
         Promise.resolve({ 'auth': connectionReference }),

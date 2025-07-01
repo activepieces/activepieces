@@ -10,7 +10,7 @@ import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 const PARAMETER_EXTRACTION_PROMPT_TEMPLATE = `
 You are an expert at understanding API schemas and filling out properties based on user instructions.
 
-TASK: Fill out the property "{propertyName}" based on the user's instructions.
+TASK: Fill out the properties "{propertyNames}" based on the user's instructions.
 
 USER INSTRUCTIONS:
 {userInstructions}
@@ -19,7 +19,6 @@ IMPORTANT:
 - For DYNAMIC properties, for each value, wrap the keys inside the options property inside an object with the same property name, and assign the array to the property name. For example, if the property is "values", return: { "values": [ { ...optionKeys }, ... ] }.
 - For dropdown properties, select values from the provided options array only
 - For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
-- Return valid JSON for complex types, raw values for simple types
 - Must include all required properties, even if the user does not provide a value
 - For CHECKBOX properties, return true or false
 - For SHORT_TEXT and LONG_TEXT properties, return string values
@@ -27,21 +26,17 @@ IMPORTANT:
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from user instructions when available
 
-CONTEXT:
-- Previously filled properties: {previouslyFilledProperties}
 `
 
 
 
 function buildParameterExtractionPrompt({
-    propertyName,
+    propertyNames,
     userInstructions,
-    previouslyFilledProperties,
 }: BuildParameterExtractionPromptParams): string {
     return PARAMETER_EXTRACTION_PROMPT_TEMPLATE
-        .replace('{propertyName}', propertyName)
+        .replace('{propertyNames}', propertyNames.join(', '))
         .replace('{userInstructions}', userInstructions)
-        .replace('{previouslyFilledProperties}', JSON.stringify(previouslyFilledProperties, null, 2))
 }
 
 function buildFinalExtractionPrompt({
@@ -51,8 +46,10 @@ function buildFinalExtractionPrompt({
     return `
     ${parameterExtractionPrompt}
 
-    USE THESE VALUES TO FILL OUT THE PROPERTY ACCORDING TO USER INSTRUCTIONS:
+    YOU MUST USE THESE VALUES TO FILL OUT THE PROPERTIES ACCORDING TO USER INSTRUCTIONS:
     ${JSON.stringify(propertySchemaValues, null, 2)}
+
+    IF NO VALUE IS PROVIDED FOR A PROPERTY, RETURN DEFAULT VALUES WHICH WILL MATCH THE SCHEMA.
     `
 }
 
@@ -131,9 +128,10 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
 }
 
 
-function sortPropertiesByDependencies(properties: PiecePropertyMap): string[] {
+function sortPropertiesByDependencies(properties: PiecePropertyMap): Record<number, string[]> {
     const inDegree: Record<string, number> = {}
     const graph: Record<string, string[]> = {}
+    const depth: Record<string, number> = {}
     
     Object.entries(properties).forEach(([key, property]) => {
         if ('refreshers' in property && property.refreshers) {
@@ -154,6 +152,8 @@ function sortPropertiesByDependencies(properties: PiecePropertyMap): string[] {
     const queue = Object.entries(inDegree)
         .filter(([, degree]) => degree === 0)
         .map(([name]) => name)
+
+    queue.forEach(property => depth[property] = 0)
     
     while (queue.length > 0) {
         const current = queue.shift()!
@@ -164,11 +164,18 @@ function sortPropertiesByDependencies(properties: PiecePropertyMap): string[] {
             inDegree[neighbor]--
             if (inDegree[neighbor] === 0) {
                 queue.push(neighbor)
+                depth[neighbor] = depth[current] + 1
             }
         })
     }
 
-    return order
+    const depthToPropertyMap: Record<number, string[]> = {}
+    for (const [property, depthValue] of Object.entries(depth)) {
+        depthToPropertyMap[depthValue] = depthToPropertyMap[depthValue] ?? []
+        depthToPropertyMap[depthValue].push(property)
+    }
+    
+    return depthToPropertyMap
 }
 
 
@@ -194,10 +201,20 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
         sampleData: {},
     })
 
+    const options = resolvedPropertyData.result.options
+    const hasOptions = options && (Array.isArray(options) ? options.length > 0 : Object.keys(options).length > 0)
+
+    if (!hasOptions) {
+        return {
+            schema: null,
+            value: null,
+        }
+    }
+
     if (property.type === PropertyType.DYNAMIC) {
         const dynamicSchema: z.ZodTypeAny = z.object(Object.fromEntries(
             await Promise.all(
-                Object.entries(resolvedPropertyData.result.options).map(async ([key, value]) => [
+                Object.entries(options).map(async ([key, value]) => [
                     key, 
                     (await buildZodSchemaForPieceProperty({
                         property: value,
@@ -219,7 +236,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
 
     return {
         schema: z.object({ [propertyName]: piecePropertyToZod(property) }),
-        value: resolvedPropertyData.result.options,
+        value: options,
     }
 }
 
@@ -234,9 +251,8 @@ export const mcpUtils = {
 
 
 type BuildParameterExtractionPromptParams = {
-    propertyName: string
+    propertyNames: string[]
     userInstructions: string
-    previouslyFilledProperties: unknown
 }
 
 type BuildFinalExtractionPromptParams = {
@@ -256,6 +272,6 @@ type BuildZodSchemaForPiecePropertyParams = {
 }
 
 type BuildZodSchemaForPiecePropertyResult = {
-    schema: z.ZodTypeAny
+    schema: z.ZodTypeAny | null
     value: unknown
 }
