@@ -39,7 +39,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async getPlanWithPlatformLimits(projectId: string): Promise<ProjectPlan> {
         const projectPlan = await getOrCreateDefaultPlan(projectId)
         const platformId = await projectService.getPlatformId(projectId)
-        const platformPlan = await getPlatformBillingOnCloudAndManageIsOff(platformId, log)
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         return {
             ...projectPlan,
             ...getProjectLimits(projectPlan, platformPlan),
@@ -115,21 +115,6 @@ async function getOrCreateDefaultPlan(projectId: string): Promise<ProjectPlan> {
     return projectPlanRepo().findOneByOrFail({ projectId })
 }
 
-
-async function getPlatformBillingOnCloudAndManageIsOff(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan | undefined> {
-    if (edition !== ApEdition.CLOUD) {
-        return undefined
-    }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
-    if (platform.plan.manageProjectsEnabled) {
-        return undefined
-    }
-    return platformPlanService(log).getOrCreateForPlatform(platformId)
-}
-
-
-
-
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
     const { manageProjectsEnabled, projectId, projectUsage, usageType } = params
     if (!manageProjectsEnabled) {
@@ -170,14 +155,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 
 }
 
-function getProjectLimits(projectPlan: ProjectPlan, platformPlan?: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
-    if (isNil(platformPlan)) {
-        return {
-            tasks: undefined,
-            aiCredits: undefined,
-        }
-    }
-
+function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
     const isOverageEnabled = platformPlan.aiCreditsOverageEnabled ?? false
 
     if (!platformPlan.manageProjectsEnabled) {
