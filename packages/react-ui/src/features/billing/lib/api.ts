@@ -25,4 +25,7 @@ export const platformBillingApi = {
       params,
     );
   },
+  startTrial() {
+    return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
+  },
 };

@@ -29,6 +29,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
+        eligibleForTrial: {
+            type: Boolean,
+            nullable: false,
+        },
         stripeSubscriptionStartDate: {
             type: Number,
             nullable: true,

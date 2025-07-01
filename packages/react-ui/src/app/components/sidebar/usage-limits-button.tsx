@@ -16,6 +16,7 @@ import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const date = dayjs.unix(nextResetDate).toISOString();
@@ -56,9 +57,11 @@ const UsageLimitsButton = React.memo(() => {
 
   const { project, isPending } = projectHooks.useCurrentProject();
 
+  const { platform } = platformHooks.useCurrentPlatform();
+
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  const status = project.platformSubscriptionStatus;
+  const status = platform.plan.stripeSubscriptionStatus;
   const isTrial = status === ApSubscriptionStatus.TRIALING;
 
   if (edition === ApEdition.COMMUNITY) {

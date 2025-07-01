@@ -10,11 +10,13 @@ import { useTheme } from '@/components/theme-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
+import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -50,6 +52,9 @@ export function DashboardContainer({
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+
+  const { data: showBilling} = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_BILLING)
+
   const [isAlertClosed, setIsAlertClosed] = useState(false);
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -172,6 +177,7 @@ export function DashboardContainer({
         >
           {children}
         </SidebarComponent>
+        {showBilling && <WelcomeTrialDialog />}
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );
