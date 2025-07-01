@@ -12,6 +12,8 @@ import { createPage } from './lib/actions/create-page';
 import { updateDatabaseItem } from './lib/actions/update-database-item';
 import { newDatabaseItem } from './lib/triggers/new-database-item';
 import { updatedDatabaseItem } from './lib/triggers/updated-database-item';
+import { newComment } from './lib/triggers/new-comment';
+import { updatedPage } from './lib/triggers/updated-page';
 import { findDatabaseItem } from './lib/actions/find-item';
 import { getPageOrBlockChildren } from './lib/actions/get-page-or-block-children';
 
@@ -39,6 +41,7 @@ export const notion = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'EzhilShanmugham'
   ],
   auth: notionAuth,
   actions: [
@@ -56,5 +59,5 @@ export const notion = createPiece({
       }),
     }),
   ],
-  triggers: [newDatabaseItem, updatedDatabaseItem],
+  triggers: [newDatabaseItem, updatedDatabaseItem, newComment, updatedPage],
 });
