@@ -1,11 +1,11 @@
 import crypto from 'crypto'
-import { ActionType, assertNotNullOrUndefined, FileLocation, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { OutputContext } from '@activepieces/pieces-framework'
+import { ActionType, assertNotNullOrUndefined, FileLocation, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
-import { OutputContext } from '@activepieces/pieces-framework'
 
 const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
 const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
@@ -70,12 +70,13 @@ export const progressService = {
                             success: true,
                             input: stepOutput.input,
                             output: params.data,
-                            standardError:  '',
-                            standardOutput:  '',
+                            standardError: '',
+                            standardOutput: '',
                             sampleDataFileId: undefined,
                         },
                     })
-                } else {
+                }
+                else {
                     await sendUpdateRunRequest({
                         engineConstants,
                         flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),

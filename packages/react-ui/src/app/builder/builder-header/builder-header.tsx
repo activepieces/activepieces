@@ -125,7 +125,7 @@ export const BuilderHeader = () => {
               )}
             {!embedState.hideFlowNameInBuilder && (
               <EditableText
-                className="font-semibold"
+                className="font-semibold hover:cursor-text"
                 value={flowVersion.displayName}
                 readonly={!isLatestVersion}
                 onValueChange={(value) =>
@@ -138,6 +138,7 @@ export const BuilderHeader = () => {
                 }
                 isEditing={isEditingFlowName}
                 setIsEditing={setIsEditingFlowName}
+                tooltipContent={isLatestVersion ? t('Edit Flow Name') : ''}
               />
             )}
           </div>

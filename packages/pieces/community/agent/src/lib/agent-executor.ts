@@ -41,6 +41,7 @@ export const agentExecutor = {
                 steps: [],
                 status: AgentTaskStatus.IN_PROGRESS,
                 output: undefined,
+                message: '',
             }
             let currentText = ''
 
@@ -89,6 +90,7 @@ export const agentExecutor = {
             const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
             agentResult.output = markAsComplete?.input
             agentResult.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
+            agentResult.message = agentResult.steps.filter((step) => step.type === ContentBlockType.MARKDOWN).map((step) => step.markdown).join('\n')
 
             await params.update(agentResult)
 

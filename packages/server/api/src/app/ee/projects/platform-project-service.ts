@@ -20,7 +20,6 @@ import {
     spreadIfDefined,
     UserStatus,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -224,13 +223,14 @@ async function enrichProject(
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
+        platformSubscriptionStatus: platformBilling.stripeSubscriptionStatus,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),
         usage: {
             aiCredits: projectAICreditUsage,
             tasks: projectTasksUsage,
-            nextLimitResetDate: dayjs.unix(endDate).toISOString(),
+            nextLimitResetDate: endDate,
         },
         analytics: {
             activeFlows,
