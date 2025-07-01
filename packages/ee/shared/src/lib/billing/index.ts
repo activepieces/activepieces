@@ -37,10 +37,18 @@ export const CreateSubscriptionParamsSchema = Type.Object({
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
 
-export const EnableAiCreditUsageParamsSchema = Type.Object({
-    limit: Type.Optional(Type.Number({ minimum: 10 })),
+export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
+    limit: Type.Number({ minimum: 10 }),
 })
-export type EnableAiCreditUsageParams = Static<typeof EnableAiCreditUsageParamsSchema>
+export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLimitParamsSchema>
+
+
+export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
+    enabled: Type.Boolean(),
+})
+export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
+
+
 
 
 export const UpdateSubscriptionParamsSchema = Type.Object({

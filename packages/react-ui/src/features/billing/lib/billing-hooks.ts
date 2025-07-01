@@ -6,7 +6,8 @@ import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
-  EnableAiCreditUsageParams,
+  ToggleAiCreditsOverageEnabledParams,
+  SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
@@ -83,10 +84,10 @@ export const billingMutations = {
       },
     });
   },
-  useSetAiCreditUsageLimit: (queryClient: QueryClient) => {
+  useSetAiCreditOverageLimit: (queryClient: QueryClient) => {
     return useMutation({
-      mutationFn: (params: EnableAiCreditUsageParams) =>
-        platformBillingApi.setAiCreditUsageLimit(params),
+      mutationFn: (params: SetAiCreditsOverageLimitParams) =>
+        platformBillingApi.setAiCreditsOverageLimit(params),
       onSuccess: (data) => {
         queryClient.invalidateQueries({
           queryKey: billingKeys.platformSubscription(data.platformId),
@@ -94,6 +95,45 @@ export const billingMutations = {
         toast({
           title: t('Success'),
           description: t('AI credit usage limit set successfully'),
+        });
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.VALIDATION) {
+            toast({
+              title: t('Setting AI credit usage limit failed'),
+              description: t(apError.params.message),
+              variant: 'default',
+              duration: 5000,
+            });
+            return;
+          }
+        }
+        toast({
+          title: t('Setting AI credit usage limit failed'),
+          description: t(error.message),
+          variant: 'default',
+          duration: 5000,
+        });
+      },
+    });
+  },
+  useToggleAiCreditOverageEnabled: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: (params: ToggleAiCreditsOverageEnabledParams) =>
+        platformBillingApi.toggleAiCreditsOverageEnabled(params),
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({
+          queryKey: billingKeys.platformSubscription(data.platformId),
+        });
+        toast({
+          title: t('Success'),
+          description: t(
+            `AI credits overage ${
+              data.aiCreditsOverageEnabled ? 'enabled' : 'disabled'
+            } successfully`,
+          ),
         });
       },
       onError: (error) => {

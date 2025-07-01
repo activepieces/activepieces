@@ -5,8 +5,9 @@ export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscri
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
-    aiCreditsLimit: undefined,
-    includedAiCredits: 200,
+    aiCreditsLimit: 200,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageEnabled: false,
     activeFlowsLimit: 2,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -39,8 +40,9 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
-    aiCreditsLimit: undefined,
-    includedAiCredits: 500,
+    aiCreditsLimit: 500,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageEnabled: false,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -74,8 +76,10 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
     tasksLimit: undefined,
-    aiCreditsLimit: undefined,
-    includedAiCredits: 1000,
+    aiCreditsLimit: 1000,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageEnabled: false,
+
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
@@ -114,7 +118,9 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tasksLimit: undefined,
 
     agentsEnabled: true,
-    includedAiCredits: 0,
+    aiCreditsLimit: 0,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageEnabled: false,
     environmentsEnabled: false,
     agentsLimit: undefined,
     analyticsEnabled: false,

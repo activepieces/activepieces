@@ -236,6 +236,7 @@ import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgr
 import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
+import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -493,6 +494,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPaymentMethodToPlatformPlan1751021111433,
                 AddAgentsLimitToPlatformPlan1749917984363,
                 AddAgentsEnabledToPlatformPlan1751309258332,
+                UpdateAiCredits1751404517528,
             )
             break
         case ApEdition.COMMUNITY:

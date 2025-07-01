@@ -39,11 +39,10 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async getPlanWithPlatformLimits(projectId: string): Promise<ProjectPlan> {
         const projectPlan = await getOrCreateDefaultPlan(projectId)
         const platformId = await projectService.getPlatformId(projectId)
-        const platformBilling = await getPlatformBillingOnCloudAndManageIsOff(platformId, log)
+        const platformPlan = await getPlatformBillingOnCloudAndManageIsOff(platformId, log)
         return {
             ...projectPlan,
-            tasks: projectPlan.tasks ?? platformBilling?.tasksLimit,
-            aiCredits: projectPlan.aiCredits ?? platformBilling?.includedAiCredits,
+            ...getProjectLimits(projectPlan, platformPlan),
         }
     },
 
@@ -60,9 +59,8 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const platformId = await projectService.getPlatformId(projectId)
             const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-            const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-            const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
+            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformPlan)
 
             const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate })
             const platformTasksUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
@@ -84,12 +82,10 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         }
 
         const platformId = await projectService.getPlatformId(projectId)
-
         const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-        const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-        const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformPlan)
 
         const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
         const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
@@ -154,25 +150,49 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
     }
 
     const { platformId, platformUsage, usageType, log } = params
-    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-    const isOverageEnabled = !isNil(platformBilling.aiCreditsLimit)
+    const isOverageEnabled = platformPlan.aiCreditsOverageEnabled ?? false
     
     const platformLimit = usageType === 'tasks'
-        ? platformBilling.tasksLimit
-        : platformBilling.aiCreditsLimit ?? platformBilling.includedAiCredits
+        ? platformPlan.tasksLimit
+        : platformPlan.aiCreditsLimit
 
     if (isNil(platformLimit)) {
         return false
     }
 
     const totalLimit = usageType === 'ai_credits' && isOverageEnabled
-        ? platformLimit + platformBilling.includedAiCredits
+        ? platformLimit + (platformPlan.aiCreditsOverageLimit ?? 0)
         : platformLimit
 
     return platformUsage >= totalLimit
+
 }
 
+function getProjectLimits(projectPlan: ProjectPlan, platformPlan?: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
+    if (isNil(platformPlan)) {
+        return {
+            tasks: undefined,
+            aiCredits: undefined,
+        }
+    }
+
+    const isOverageEnabled = platformPlan.aiCreditsOverageEnabled ?? false
+
+    if (!platformPlan.manageProjectsEnabled) {
+        return {
+            aiCredits: isOverageEnabled ? ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.aiCreditsLimit) : platformPlan.aiCreditsLimit,
+            tasks: platformPlan?.tasksLimit,
+        }
+    }
+
+    return {
+        tasks: projectPlan.tasks ?? platformPlan?.tasksLimit,
+        aiCredits: projectPlan.aiCredits ?? isOverageEnabled ? ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.aiCreditsLimit) : platformPlan?.aiCreditsLimit,
+    }
+
+}
 
 type LimitReachedFromProjectPlanParams = {
     projectId: string

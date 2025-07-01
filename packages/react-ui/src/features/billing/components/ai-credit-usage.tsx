@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Sparkles, Info, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
@@ -25,24 +25,29 @@ export function AICreditUsage({
   platformSubscription: PlatformBillingInformation;
 }) {
   const queryClient = useQueryClient();
-
   const { plan, usage } = platformSubscription;
 
-  const planIncludedCredits = plan.includedAiCredits;
-  const usageBasedLimit = plan.aiCreditsLimit;
-  const totalCreditsUsed = usage.aiCredits || 0;
+  const planIncludedCredits = plan.aiCreditsLimit;
+  const overageLimit = plan.aiCreditsOverageLimit;
+  const totalCreditsUsed = usage.aiCredits;
+  const overageEnabled = plan.aiCreditsOverageEnabled || false;
 
   const isFreePlan = plan.plan === PlanName.FREE;
   const isTrial =
     plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
 
-  const [usageBasedEnabled, setUsageBasedEnabled] = useState(
-    !isNil(usageBasedLimit),
-  );
-  const [usageLimit, setUsageLimit] = useState<number>(usageBasedLimit ?? 500);
+  const [usageBasedEnabled, setUsageBasedEnabled] = useState(overageEnabled);
+  const [usageLimit, setUsageLimit] = useState<number>(overageLimit ?? 500);
 
-  const { mutate: setAiCreditUsageLimit, isPending } =
-    billingMutations.useSetAiCreditUsageLimit(queryClient);
+  const {
+    mutate: setAiCreditOvrageLimit,
+    isPending: settingAiCreditsOverLimit,
+  } = billingMutations.useSetAiCreditOverageLimit(queryClient);
+
+  const {
+    mutate: toggleAiCreditsOverageEnabled,
+    isPending: togglingAiCreditsOverageEnabled,
+  } = billingMutations.useToggleAiCreditOverageEnabled(queryClient);
 
   const creditsUsedFromPlan = Math.min(totalCreditsUsed, planIncludedCredits);
   const overageCreditsUsed = Math.max(
@@ -55,8 +60,8 @@ export function AICreditUsage({
     Math.round((creditsUsedFromPlan / planIncludedCredits) * 100),
   );
   const overageUsagePercentage =
-    usageBasedEnabled && usageBasedLimit
-      ? Math.min(100, Math.round((overageCreditsUsed / usageBasedLimit) * 100))
+    usageBasedEnabled && overageLimit
+      ? Math.min(100, Math.round((overageCreditsUsed / overageLimit) * 100))
       : 0;
 
   const isPlanLimitApproaching = planUsagePercentage > 80;
@@ -64,12 +69,12 @@ export function AICreditUsage({
   const isOverageLimitApproaching = overageUsagePercentage > 80;
 
   const handleSaveAiCreditUsageLimit = () => {
-    setAiCreditUsageLimit({ limit: usageLimit });
+    setAiCreditOvrageLimit({ limit: usageLimit });
   };
 
   const handleEnableAiCreditUsage = () => {
-    setAiCreditUsageLimit(
-      { limit: usageBasedEnabled ? undefined : 500 },
+    toggleAiCreditsOverageEnabled(
+      { enabled: !usageBasedEnabled },
       {
         onSuccess: () => {
           setUsageBasedEnabled(!usageBasedEnabled);
@@ -77,6 +82,10 @@ export function AICreditUsage({
       },
     );
   };
+
+  useEffect(() => {
+    setUsageLimit(overageLimit ?? 500);
+  }, [overageLimit]);
 
   return (
     <Card className="w-full">
@@ -100,7 +109,7 @@ export function AICreditUsage({
               </span>
               <Switch
                 checked={usageBasedEnabled}
-                disabled={isPending}
+                disabled={togglingAiCreditsOverageEnabled}
                 onCheckedChange={handleEnableAiCreditUsage}
               />
             </div>
@@ -125,8 +134,7 @@ export function AICreditUsage({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {creditsUsedFromPlan.toLocaleString()} /{' '}
-                {planIncludedCredits.toLocaleString()}
+                {creditsUsedFromPlan} / {planIncludedCredits}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Included')}
@@ -173,8 +181,7 @@ export function AICreditUsage({
               <div className="rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">
-                    {overageCreditsUsed.toLocaleString()} /{' '}
-                    {usageBasedLimit?.toLocaleString() ?? 'unknown'}
+                    {overageCreditsUsed} / {overageLimit ?? 'unknown'}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
                     {t('Usage Limit')}
@@ -221,10 +228,10 @@ export function AICreditUsage({
                   </div>
                   <Button
                     onClick={handleSaveAiCreditUsageLimit}
-                    disabled={isPending}
+                    disabled={settingAiCreditsOverLimit}
                     className="whitespace-nowrap"
                   >
-                    {isPending && (
+                    {settingAiCreditsOverLimit && (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     )}
                     {t('Save Limit')}

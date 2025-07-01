@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment,  apId,  FlowStatus, isNil, PlatformUsage, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment,  apId,  FlowStatus, PlatformUsage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
@@ -130,7 +130,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const platformAiCreditUsageIncremented = await redisConnection.incrby(platformRedisKey, incrementBy)
         await redisConnection.expire(platformRedisKey, thirtyDays)
 
-        const platformBilling = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
         await aiUsageRepo().insert({
             id: apId(),
@@ -141,9 +141,8 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             cost,
         })
         
-        const aiCreditLimit = platformBilling.aiCreditsLimit
-        const shouldReportUsage = !isNil(aiCreditLimit)
-        const overage = Math.round(platformAiCreditUsageIncremented - (platformBilling.includedAiCredits ?? 0))
+        const shouldReportUsage = platformPlan.aiCreditsOverageEnabled
+        const overage = Math.round(platformAiCreditUsageIncremented - platformPlan.aiCreditsLimit)
         const hasOverage = overage > 0
 
         if (!shouldReportUsage || !hasOverage) {
