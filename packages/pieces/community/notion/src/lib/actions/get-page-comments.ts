@@ -27,7 +27,7 @@ export const getPageComments = createAction({
       notionVersion: '2022-02-22',
     });
 
-    let allComments: any[] = [];
+    const allComments: any[] = [];
     let cursor: string | undefined;
     let hasMore = true;
 
@@ -56,14 +56,17 @@ export const getPageComments = createAction({
       }
     });
 
-    Object.keys(commentsByDiscussion).forEach(discussionId => {
-      commentsByDiscussion[discussionId].sort((a, b) => 
-        new Date(a.created_time).getTime() - new Date(b.created_time).getTime()
+    Object.keys(commentsByDiscussion).forEach((discussionId) => {
+      commentsByDiscussion[discussionId].sort(
+        (a: any, b: any) =>
+          new Date(a.created_time).getTime() -
+          new Date(b.created_time).getTime()
       );
     });
 
-    pageComments.sort((a, b) => 
-      new Date(a.created_time).getTime() - new Date(b.created_time).getTime()
+    pageComments.sort(
+      (a: any, b: any) =>
+        new Date(a.created_time).getTime() - new Date(b.created_time).getTime()
     );
 
     return {
