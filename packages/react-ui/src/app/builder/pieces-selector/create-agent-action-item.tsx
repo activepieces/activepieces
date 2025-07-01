@@ -55,6 +55,7 @@ const CreateAgentActionItem = ({
         onChange={(agent) => {
           setAgent(agent);
         }}
+        hideUseAgentButton={true}
         onOpenChange={(open) => {
           setIsAgentBuilderOpen(open);
           if (!open) {
@@ -127,7 +128,7 @@ const CreateAgentActionItem = ({
         }
       />
       <UpgradeHookDialog
-        metric="mcp"
+        metric="agents"
         open={showUpgradeDialog}
         setOpen={setShowUpgradeDialog}
       />

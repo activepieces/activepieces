@@ -80,7 +80,7 @@ const template = {
             actionName: 'return_response',
             pieceVersion: '~0.4.3',
             input: {
-              markdown: "{{step_2['output']['output']}}",
+              markdown: "{{step_2['message']}}",
             },
             errorHandlingOptions: {
               continueOnFailure: {
@@ -105,11 +105,11 @@ const template = {
   blogUrl: '',
 };
 
-interface AgentUseButtonProps {
+interface UseAgentButton {
   agentId: string;
 }
 
-export const AgentUseButton = ({ agentId }: AgentUseButtonProps) => {
+export const UseAgentButton = ({ agentId }: UseAgentButton) => {
   const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation({

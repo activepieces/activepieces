@@ -7,6 +7,7 @@ import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { PlanName } from '@ee/shared/src/lib/billing'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -129,6 +130,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await platformService.update({
             id: platformId,
             plan: {
+                plan: PlanName.ENTERPRISE,
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
@@ -155,6 +157,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
         platformId,
+        cursorRequest: null,
+        limit: 1000,
     })
     const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
         return userService.update({

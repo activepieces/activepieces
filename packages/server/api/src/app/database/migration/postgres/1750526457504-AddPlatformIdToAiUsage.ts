@@ -5,8 +5,12 @@ export class AddPlatformIdToAiUsage1750526457504 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
+            TRUNCATE TABLE "ai_usage"
         `)
+        await queryRunner.query(`
+            DROP INDEX "idx_ai_usage_project_created"
+        `)
+
         await queryRunner.query(`
             ALTER TABLE "ai_usage"
             ADD "platformId" character varying NOT NULL
@@ -23,7 +27,7 @@ export class AddPlatformIdToAiUsage1750526457504 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
+            DROP INDEX "idx_ai_usage_project_created"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_version"

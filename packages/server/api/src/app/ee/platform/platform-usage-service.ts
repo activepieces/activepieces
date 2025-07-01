@@ -122,12 +122,12 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const thirtyDays = 60 * 60 * 24 * 90
 
         const projectRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
-        const projectAiCreditUsageIncremented = await redisConnection.incrby(projectRedisKey, incrementBy)
+        const projectAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(projectRedisKey, incrementBy))
 
         await redisConnection.expire(projectRedisKey, thirtyDays)
 
         const platformRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
-        const platformAiCreditUsageIncremented = await redisConnection.incrby(platformRedisKey, incrementBy)
+        const platformAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(platformRedisKey, incrementBy))
         await redisConnection.expire(platformRedisKey, thirtyDays)
 
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)

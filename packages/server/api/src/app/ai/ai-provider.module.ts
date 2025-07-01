@@ -1,8 +1,10 @@
 import { Writable } from 'stream'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
+import { exceptionHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, AIErrorResponse, ErrorCode, isNil, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { aiProviderController } from './ai-provider-controller'
@@ -77,17 +79,15 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
                             await platformUsageService(app.log).increaseAiCreditUsage({ projectId, platformId: request.principal.platform.id, provider, model: usage.model, cost: usage.cost })
-                            const completeResponse = JSON.parse(buffer.toString())
-                            const { cost, model } = aiProviderService.calculateUsage(provider, request, completeResponse)
-                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, provider, model, cost, platformId: request.principal.platform.id })
                         }
                         catch (error) {
-                            app.log.error({
+                            exceptionHandler.handle({
                                 error,
                                 projectId,
                                 request,
                                 response: buffer.toString(),
-                            }, 'Error processing AI provider response')
+                                message: 'Error processing AI provider response',
+                            }, app.log)
                         }
                         finally {
                             callback()
@@ -97,7 +97,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        preHandler: async (request, _reply) => {
+        preHandler: async (request, reply) => {
             if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
@@ -131,12 +131,13 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const projectId = request.principal.projectId
             const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
             if (exceededLimit) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.QUOTA_EXCEEDED,
-                    params: {
-                        metric: PlatformUsageMetric.AI_TOKENS,
+                return reply.status(StatusCodes.PAYMENT_REQUIRED).send({
+                    error: {
+                        message: 'You exceeded your current quota, please check your plan and billing details.',
+                        type: 'invalid_request_error',
+                        code: 'insufficient_quota',
                     },
-                })
+                } as AIErrorResponse)
             }
 
             const userPlatformId = request.principal.platform.id

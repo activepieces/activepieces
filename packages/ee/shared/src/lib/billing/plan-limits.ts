@@ -2,6 +2,8 @@ import { PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
 
+
+
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
@@ -9,6 +11,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageEnabled: false,
     activeFlowsLimit: 2,
+    eligibleForTrial: true,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
@@ -37,11 +40,49 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
+
+export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number }): PlatformPlanWithOnlyLimits => {
+    return {
+        plan: planname,
+        tasksLimit,
+        userSeatsLimit,
+        agentsEnabled: true,
+        includedAiCredits: 200,
+        activeFlowsLimit: undefined,
+        projectsLimit: 1,
+        mcpLimit: 1,
+        tablesLimit: 1,
+        agentsLimit: 5,
+        eligibleForTrial: false,
+
+        todosEnabled: false,
+        tablesEnabled: true,
+
+        embeddingEnabled: false,
+        globalConnectionsEnabled: false,
+        customRolesEnabled: false,
+        environmentsEnabled: false,
+        analyticsEnabled: false,
+        showPoweredBy: false,
+        auditLogEnabled: false,
+        managePiecesEnabled: false,
+        manageTemplatesEnabled: false,
+        customAppearanceEnabled: false,
+        manageProjectsEnabled: false,
+        projectRolesEnabled: true,
+        customDomainsEnabled: false,
+        apiKeysEnabled: false,
+        alertsEnabled: false,
+        ssoEnabled: false,
+
+    }
+}
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
     aiCreditsLimit: 500,
     aiCreditsOverageLimit: undefined,
+    eligibleForTrial: false,
     aiCreditsOverageEnabled: false,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
@@ -94,15 +135,15 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     environmentsEnabled: false,
-    analyticsEnabled: false,
+    analyticsEnabled: true,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    manageProjectsEnabled: true,
     projectRolesEnabled: true,
     customDomainsEnabled: false,
     apiKeysEnabled: true,
-    alertsEnabled: false,
+    alertsEnabled: true,
     ssoEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
@@ -110,6 +151,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    eligibleForTrial: false,
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,

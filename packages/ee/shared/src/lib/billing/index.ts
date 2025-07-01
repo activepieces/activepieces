@@ -25,11 +25,11 @@ export enum PlanName {
     FREE = 'free',
     PLUS = 'plus',
     BUSINESS = 'business',
-}
-
-export enum PlanNameWithEnterprise {
     ENTERPRISE = 'enterprise',
 }
+
+export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS
+
 
 export const CreateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
@@ -115,6 +115,7 @@ const PLAN_HIERARCHY = {
     [PlanName.FREE]: 0,
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
+    [PlanName.ENTERPRISE]: 3,
 } as const
 
 export const isUpgradeExperience = (
