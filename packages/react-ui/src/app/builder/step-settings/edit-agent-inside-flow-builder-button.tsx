@@ -30,6 +30,7 @@ const EditAgentInFlowBuilderButton = ({ agentId }: { agentId: string }) => {
           setLastRerenderPieceSettingsTimeStamp(Date.now());
         }
       }}
+      hideUseAgentButton={true}
       agent={agent}
       trigger={
         <Tooltip>
