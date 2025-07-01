@@ -16,6 +16,11 @@ import { newComment } from './lib/triggers/new-comment';
 import { updatedPage } from './lib/triggers/updated-page';
 import { findDatabaseItem } from './lib/actions/find-item';
 import { getPageOrBlockChildren } from './lib/actions/get-page-or-block-children';
+import { archiveDatabaseItem } from './lib/actions/archive-database-item';
+import { restoreDatabaseItem } from './lib/actions/restore-database-item';
+import { addComment } from './lib/actions/add-comment';
+import { retrieveDatabase } from './lib/actions/retrieve-database';
+import { getPageComments } from './lib/actions/get-page-comments';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -51,6 +56,11 @@ export const notion = createPiece({
     createPage,
     appendToPage,
     getPageOrBlockChildren,
+    archiveDatabaseItem,
+    restoreDatabaseItem,
+    addComment,
+    retrieveDatabase,
+    getPageComments,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.notion.com/v1',
       auth: notionAuth,
