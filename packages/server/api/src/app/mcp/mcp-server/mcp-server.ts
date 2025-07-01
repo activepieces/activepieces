@@ -1,31 +1,23 @@
-import { ActionBase } from '@activepieces/pieces-framework'
+import { PropertyType } from '@activepieces/pieces-framework'
 import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
-    assertNotNullOrUndefined,
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
-    McpPieceToolData,
     McpRunStatus,
     McpTool,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
-    PiecePackage,
     TelemetryEventName,
 } from '@activepieces/shared'
-import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { generateObject, LanguageModelV1 } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
-import { z, ZodRawShape } from 'zod'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
-import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
@@ -33,9 +25,7 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
-import { mcpUtils } from '../mcp-utils'
-
-
+import { mcpPropertyToZod, piecePropertyToZod } from '../mcp-utils'
 
 export async function createMcpServer({
     mcpId,
@@ -82,41 +72,32 @@ async function addPieceToServer(
         platformId,
     })
 
-    const toolActionsNames = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
-    for (const action of toolActionsNames) {
+    const filteredAction = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
+    for (const action of filteredAction) {
         const actionMetadata = pieceMetadata.actions[action]
         const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
 
-        const toolSchema = {
-            instructions: z.string().describe(
-                'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.'            ),
-        }
+        const actionSchema = Object.fromEntries(
+            Object.entries(actionMetadata.props)
+                .filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN)
+                .map(([key, prop]) => [key, piecePropertyToZod(prop)]),
+        )
         server.tool(
             actionName,
             actionMetadata.description,
-            toolSchema,
+            actionSchema,
             async (params) => {
-                const piecePackage = await getPiecePackageWithoutArchive(
-                    logger, 
-                    projectId, 
-                    platformId, 
-                    {
-                        packageType: pieceMetadata.packageType,
-                        pieceName: pieceMetadata.name,
-                        pieceVersion: pieceMetadata.version,
-                        pieceType: pieceMetadata.pieceType,
-                    },
+                const defaultValues = Object.fromEntries(
+                    Object.entries(actionMetadata.props)
+                        .filter(([_key, prop]) => !isNil(prop.defaultValue))
+                        .map(([key, prop]) => [key, prop.defaultValue]),
                 )
-                const parsedInputs = await extractActionParametersFromUserInstructions({
-                    actionMetadata,
-                    toolPieceMetadata,
-                    userInstructions: params.instructions,
-                    piecePackage,
-                    platformId,
-                    projectId,
-                    logger,
-                })
-
+                const pieceConnectionExternalId = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
+                const parsedInputs = {
+                    ...defaultValues,
+                    ...params,
+                    auth: pieceConnectionExternalId,
+                }
                 const result = await userInteractionWatcher(logger)
                     .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                     jobType: UserInteractionJobType.EXECUTE_TOOL,
@@ -201,7 +182,7 @@ async function addFlowToServer(
     const zodFromInputSchema = Object.fromEntries(
         inputSchema.map(prop => [
             mcpToolNaming.fixProperty(prop.name),
-            mcpUtils.mcpPropertyToZod(prop),
+            mcpPropertyToZod(prop),
         ]),
     )
     server.tool(
@@ -273,104 +254,6 @@ async function addFlowToServer(
 
 }
 
-
-async function initializeOpenAIModel({
-    platformId,
-    projectId,
-}: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o-mini'
-    const baseUrl = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai/v1/',
-        platformId,
-    })
-
-    const apiKey = await accessTokenManager.generateEngineToken({
-        platformId,
-        projectId,
-    })
-
-    return  createOpenAI({
-        baseURL: baseUrl,
-        apiKey,
-    }).chat(model)
-}
-
-
-
-async function extractActionParametersFromUserInstructions({
-    actionMetadata,
-    toolPieceMetadata,
-    userInstructions,    
-    piecePackage,
-    platformId,
-    projectId,
-    logger,
-}: ExtractActionParametersParams): Promise<Record<string, unknown>> {
-    const connectionReference = `{{connections['${toolPieceMetadata.connectionExternalId}']}}`
-    assertNotNullOrUndefined(connectionReference, 'Tool has no connection with the piece, please try to add a connection to the tool')
-
-    const aiModel = await initializeOpenAIModel({
-        platformId,
-        projectId,
-    })
-
-    const actionProperties = actionMetadata.props
-    const depthToPropertyMap = mcpUtils.sortPropertiesByDependencies(actionProperties)
-
-    const extractedParameters = await Object.entries(depthToPropertyMap).reduce(
-        async (accumulatedParametersPromise, [_, propertyNames]) => {
-            const accumulatedParameters = await accumulatedParametersPromise
-
-            const parameterExtractionPrompt = mcpUtils.buildParameterExtractionPrompt({
-                propertyNames,
-                userInstructions,
-            })
-
-            const propertySchemas = (await Promise.all(propertyNames.map(async propertyName => {
-                const result = await mcpUtils.buildZodSchemaForPieceProperty({
-                    property: actionProperties[propertyName],
-                    logger,
-                    input: accumulatedParameters,
-                    projectId,
-                    propertyName,
-                    actionMetadata,
-                    piecePackage,
-                    depth: 0,
-                })
-                return { propertyName, ...result }
-            }))).filter(({ schema }) => schema !== null)
-                        
-            const schemaObject: ZodRawShape = Object.fromEntries(
-                propertySchemas
-                    .map(({ propertyName, schema }) => [propertyName, schema!]),
-            )
-
-            const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
-            
-            const { object: extractedValue } = await generateObject({
-                model: aiModel,
-                schema: z.object(schemaObject),
-                prompt: mcpUtils.buildFinalExtractionPrompt({
-                    parameterExtractionPrompt,
-                    propertySchemaValues,
-                }),
-            })
-
-            const extractedParameters = Object.fromEntries(
-                Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
-            )
-
-            return {
-                ...accumulatedParameters,
-                ...extractedParameters,
-            }
-        }, 
-        Promise.resolve({ 'auth': connectionReference }),
-    )
-
-    return extractedParameters
-}
-
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
 }
@@ -385,21 +268,6 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
     }), logger)
 }
 
-type ExtractActionParametersParams = {
-    actionMetadata: ActionBase
-    toolPieceMetadata: McpPieceToolData
-    userInstructions: string
-    piecePackage: PiecePackage
-    platformId: string
-    projectId: string
-    logger: FastifyBaseLogger
-}
-
-
-type InitializeOpenAIModelParams = {
-    platformId: string
-    projectId: string
-}
 
 type TrackToolCallParams = {
     mcpId: string
