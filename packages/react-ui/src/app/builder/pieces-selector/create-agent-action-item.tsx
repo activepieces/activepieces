@@ -55,6 +55,7 @@ const CreateAgentActionItem = ({
         onChange={(agent) => {
           setAgent(agent);
         }}
+        hideUseAgentButton={true}
         onOpenChange={(open) => {
           setIsAgentBuilderOpen(open);
           if (!open) {
