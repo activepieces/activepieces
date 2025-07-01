@@ -15,7 +15,7 @@ import { ActionType, isNil, TriggerType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { CreateTodoDialog } from './create-todo-dialog';
+import { CreateTodoDialog } from './add-todo-step-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 import RunAgentActionItem from './run-agent-action-item';
 type PieceActionsOrTriggersListProps = {

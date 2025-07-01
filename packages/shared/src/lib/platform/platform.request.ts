@@ -36,6 +36,7 @@ export const AdminAddPlatformRequestBody = Type.Object({
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
 
 export const AdminRetryRunsRequestBody = Type.Object({
+    runIds: Type.Array(ApId),
     createdAfter: Type.String(),
     createdBefore: Type.String(),
 })
