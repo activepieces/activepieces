@@ -28,8 +28,6 @@ IMPORTANT:
 
 `
 
-
-
 function buildParameterExtractionPrompt({
     propertyNames,
     userInstructions,
