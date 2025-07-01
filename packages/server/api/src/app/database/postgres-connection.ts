@@ -212,6 +212,7 @@ import { AddMcpToolEntity1748352614033 } from './migration/postgres/174835261403
 import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
 import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
 import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddPlanNameOnPlatformPlan1748549003744 } from './migration/postgres/1748549003744-AddPlanNameOnPlatformPlan'
 import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
 import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
 import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
@@ -228,6 +229,13 @@ import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037
 import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
 import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
 import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
+import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
+import { AddBillingCycleDates1750704192423 } from './migration/postgres/1750704192423-addBillingCycleDates'
+import { ReplaceTasksLimitWithIncludedTasks1750720173459 } from './migration/postgres/1750720173459-replaceTasksLimitWithIncludedTasks'
+import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgres/1750722071472-renameIncludedTasksToTasksLimit'
+import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
+import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
+import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -392,6 +400,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertDescriptionTodoNaming1750389164014,
         RegenerateIssuesTable1750392148590,
         RemoveProjectIdFromIndex1750712746125,
+        RevertTodoActivties1751217652277,
 
     ]
 
@@ -476,8 +485,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddManualTaskCommentTable1742305104390,
                 AddMetadataFieldToFlowTemplates1744780800000,
                 AddLimitsOnPlatformPlan1747921788059,
-
+                AddPlanNameOnPlatformPlan1748549003744,
+                AddPlatformIdToAiUsage1750526457504,
+                AddBillingCycleDates1750704192423,
+                ReplaceTasksLimitWithIncludedTasks1750720173459,
+                RenameIncludedTasksToTasksLimit1750722071472,
+                AddPaymentMethodToPlatformPlan1751021111433,
                 AddAgentsLimitToPlatformPlan1749917984363,
+                AddAgentsEnabledToPlatformPlan1751309258332,
             )
             break
         case ApEdition.COMMUNITY:

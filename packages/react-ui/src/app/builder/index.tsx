@@ -11,6 +11,7 @@ import {
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
+import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
@@ -62,12 +63,23 @@ const useAnimateSidebar = (
   return handleRef;
 };
 
-const constructContainerKey = (
-  flowId: string,
-  stepName: string,
-  triggerOrActionName?: string,
-) => {
-  return flowId + stepName + (triggerOrActionName ?? '');
+const constructContainerKey = ({
+  flowId,
+  stepName,
+  lastRerenderPieceSettingsTimeStamp,
+  triggerOrActionName,
+}: {
+  flowId: string;
+  stepName: string;
+  lastRerenderPieceSettingsTimeStamp: number | null;
+  triggerOrActionName?: string;
+}) => {
+  return (
+    flowId +
+    stepName +
+    (triggerOrActionName ?? '') +
+    (lastRerenderPieceSettingsTimeStamp ?? '')
+  );
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -79,6 +91,8 @@ const BuilderPage = () => {
     run,
     canExitRun,
     selectedStep,
+    chatDrawerOpenSource,
+    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.flowVersion,
@@ -87,6 +101,8 @@ const BuilderPage = () => {
     state.run,
     state.canExitRun,
     state.selectedStep,
+    state.chatDrawerOpenSource,
+    state.setChatDrawerOpenSource,
   ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -108,11 +124,13 @@ const BuilderPage = () => {
           : step?.settings.actionName;
       return {
         memorizedSelectedStep: step,
-        containerKey: constructContainerKey(
-          state.flow.id,
-          state.selectedStep,
+        containerKey: constructContainerKey({
+          flowId: state.flow.id,
+          stepName: state.selectedStep,
           triggerOrActionName,
-        ),
+          lastRerenderPieceSettingsTimeStamp:
+            state.lastRerenderPieceSettingsTimeStamp,
+        }),
       };
     },
   );
@@ -142,7 +160,8 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
+      const runId = data?.runId;
       if (run && run?.id === runId) {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {
@@ -273,6 +292,11 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
+
+      <ChatDrawer
+        source={chatDrawerOpenSource}
+        onOpenChange={() => setChatDrawerOpenSource(null)}
+      />
     </div>
   );
 };

@@ -1,9 +1,9 @@
-import { Agent,  CreateAgentRequest,  ListAgentsQueryParams,  PrincipalType, RunAgentRequest, SeekPage, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent,  CreateAgentRequest,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { agentsService } from './agents-service'
 
-const DEFAULT_LIMIT = 10
+const DEFAULT_LIMIT = 100
 
 export const agentController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAgentsRequest, async (request) => {
@@ -19,6 +19,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
         const { id } = request.params
         return agentsService(request.log).getOneOrThrow({
             id,
+            projectId: request.principal.projectId,
         })
     })
 
@@ -43,38 +44,22 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
             testPrompt,
             outputType,
             outputFields,
+            projectId: request.principal.projectId,
         })
     })
 
-    app.post('/:id/todos', RunAgentRequestParams, async (request) => {
-        const { id } = request.params
-        const { prompt, callbackUrl } = request.body
-        return agentsService(request.log).run({
-            id,
-            prompt,
-            userId: request.principal.type === PrincipalType.USER ? request.principal.id : undefined,
-            socket: app.io,
-            callbackUrl,
-        })  
-    })
-
+ 
     app.delete('/:id', DeleteAgentRequest, async (request) => {
         const { id } = request.params
         await agentsService(request.log).delete({
-            id,
+            id, 
+            projectId: request.principal.projectId,
         })
         return { success: true }
     })
 }
 
-const RunAgentRequestParams = {
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-        body: RunAgentRequest,
-    },
-}
+
 const ListAgentsRequest = {
     schema: {
         querystring: ListAgentsQueryParams,
@@ -109,7 +94,7 @@ const GetAgentRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
     },
 }
 

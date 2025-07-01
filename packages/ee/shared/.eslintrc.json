@@ -1,5 +1,5 @@
 {
-  "extends": ["../../../.eslintrc.json"],
+  "extends": ["../../server/api/.eslintrc.json"],
   "ignorePatterns": ["!**/*"],
   "overrides": [
     {
