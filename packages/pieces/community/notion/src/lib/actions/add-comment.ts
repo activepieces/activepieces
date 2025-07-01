@@ -45,10 +45,10 @@ export const addComment = createAction({
     if (!page_id) {
       throw new Error('Page ID is required');
     }
-    
-      commentData.parent = {
-        page_id: page_id,
-      };
+
+    commentData.parent = {
+      page_id: page_id,
+    };
 
     const response = await notion.comments.create(commentData);
 
