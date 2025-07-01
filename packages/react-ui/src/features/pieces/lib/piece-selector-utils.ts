@@ -1,3 +1,4 @@
+import { Value } from '@sinclair/typebox/value';
 import { useRef } from 'react';
 
 import {
@@ -21,6 +22,8 @@ import {
   spreadIfDefined,
   isNil,
   flowStructureUtil,
+  StepSettings,
+  RouterActionSettingsWithValidation,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
@@ -65,22 +68,52 @@ const isPieceActionOrTrigger = (
   );
 };
 
-const isStepInitiallyValid = (pieceSelectorItem: PieceSelectorItem) => {
+const isStepInitiallyValid = (
+  pieceSelectorItem: PieceSelectorItem,
+  overrideDefaultSettings?: StepSettings,
+) => {
   switch (pieceSelectorItem.type) {
     case ActionType.CODE:
       return true;
     case ActionType.PIECE:
     case TriggerType.PIECE: {
+      const overridingInput =
+        overrideDefaultSettings && 'input' in overrideDefaultSettings
+          ? overrideDefaultSettings.input
+          : undefined;
       const inputValidity = checkPieceInputValidity(
-        getInitalStepInput(pieceSelectorItem),
+        overridingInput ?? getInitalStepInput(pieceSelectorItem),
         pieceSelectorItem.actionOrTrigger.props,
       );
-      return inputValidity && !pieceSelectorItem.actionOrTrigger.requireAuth;
+      const needsAuth = pieceSelectorItem.actionOrTrigger.requireAuth;
+      const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
+      return inputValidity && (!needsAuth || !hasAuth);
     }
-    case ActionType.LOOP_ON_ITEMS:
-    case ActionType.ROUTER:
-    case TriggerType.EMPTY:
+    case ActionType.LOOP_ON_ITEMS: {
+      if (
+        overrideDefaultSettings &&
+        'input' in overrideDefaultSettings &&
+        overrideDefaultSettings.input.items
+      ) {
+        return true;
+      }
       return false;
+    }
+    case TriggerType.EMPTY: {
+      return false;
+    }
+    case ActionType.ROUTER: {
+      if (overrideDefaultSettings) {
+        const errors = Array.from(
+          Value.Errors(
+            RouterActionSettingsWithValidation,
+            overrideDefaultSettings,
+          ),
+        );
+        return errors.length === 0;
+      }
+      return false;
+    }
   }
 };
 
@@ -100,11 +133,11 @@ const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
 const getDefaultStepValues = ({
   stepName,
   pieceSelectorItem,
-  settings,
+  overrideDefaultSettings,
 }: {
   stepName: string;
   pieceSelectorItem: PieceSelectorItem;
-  settings?: Record<string, unknown>;
+  overrideDefaultSettings?: StepSettings;
 }): Action | Trigger => {
   const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
@@ -116,7 +149,10 @@ const getDefaultStepValues = ({
   };
 
   const input = getInitalStepInput(pieceSelectorItem);
-  const isValid = isStepInitiallyValid(pieceSelectorItem);
+  const isValid = isStepInitiallyValid(
+    pieceSelectorItem,
+    overrideDefaultSettings,
+  );
   const common = {
     name: stepName,
     valid: isValid,
@@ -136,7 +172,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<CodeAction>(
         {
           type: ActionType.CODE,
-          settings: settings ?? {
+          settings: overrideDefaultSettings ?? {
             sourceCode: {
               code: defaultCode,
               packageJson: '{}',
@@ -154,7 +190,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.LOOP_ON_ITEMS,
-          settings: settings ?? {
+          settings: overrideDefaultSettings ?? {
             items: '',
             inputUiInfo: {
               customizedInputs: {},
@@ -167,7 +203,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.ROUTER,
-          settings: settings ?? {
+          settings: overrideDefaultSettings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
@@ -206,7 +242,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<PieceAction>(
         {
           type: ActionType.PIECE,
-          settings: settings ?? {
+          settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             pieceType: pieceSelectorItem.pieceMetadata.pieceType,
             packageType: pieceSelectorItem.pieceMetadata.packageType,
@@ -228,7 +264,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<PieceTrigger>(
         {
           type: TriggerType.PIECE,
-          settings: settings ?? {
+          settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             pieceType: pieceSelectorItem.pieceMetadata.pieceType,
             packageType: pieceSelectorItem.pieceMetadata.packageType,

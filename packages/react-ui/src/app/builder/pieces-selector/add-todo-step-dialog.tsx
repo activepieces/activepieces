@@ -33,17 +33,17 @@ import {
 } from './custom-piece-selector-items-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 
-type CreateTodoGuideProps = {
+type AddTodoStepDialogProps = {
   pieceSelectorItem: PieceSelectorPieceItem;
   operation: PieceSelectorOperation;
   hidePieceIconAndDescription: boolean;
 };
 
-const CreateTodoDialog = ({
+const AddTodoStepDialog = ({
   operation,
   pieceSelectorItem,
   hidePieceIconAndDescription,
-}: CreateTodoGuideProps) => {
+}: AddTodoStepDialogProps) => {
   const [todoType, setTodoType] = useState<TodoType>(TodoType.INTERNAL);
   const [hoveredTodoType, setHoveredTodoType] = useState<TodoType | null>(null);
   const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
@@ -131,7 +131,7 @@ const CreateTodoDialog = ({
 
           <DialogFooter className="shrink-0 mt-3 pt-3">
             <Button
-              variant="secondary"
+              variant="outline"
               onClick={() => setOpen(false)}
               className="mr-2"
             >
@@ -147,8 +147,8 @@ const CreateTodoDialog = ({
   );
 };
 
-CreateTodoDialog.displayName = 'CreateTodoDialog';
-export { CreateTodoDialog };
+AddTodoStepDialog.displayName = 'CreateTodoDialog';
+export { AddTodoStepDialog as CreateTodoDialog };
 const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
   const image =
     todoType === TodoType.INTERNAL
