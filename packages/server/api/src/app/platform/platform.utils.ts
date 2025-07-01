@@ -5,7 +5,7 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
-import { ENTERPRISE_PLAN_ID } from '@activepieces/ee-shared'
+import { PlanName } from '@activepieces/ee-shared'
 
 export const platformUtils = {
     async getPlatformIdForRequest(req: FastifyRequest): Promise<PlatformId | null> {
@@ -27,7 +27,7 @@ export const platformUtils = {
         if (edition !== ApEdition.CLOUD) {
             return false
         }
-        return platform.plan.plan === ENTERPRISE_PLAN_ID
+        return platform.plan.plan === PlanName.ENTERPRISE
     },
 }
 

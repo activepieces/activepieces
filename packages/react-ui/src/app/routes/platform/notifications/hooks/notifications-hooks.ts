@@ -70,7 +70,11 @@ export const notificationHooks = {
         });
       }
 
-      if (!(providers && providers.data.length > 0) && !isLoading && edition !== ApEdition.CLOUD) {
+      if (
+        !(providers && providers.data.length > 0) &&
+        !isLoading &&
+        edition !== ApEdition.CLOUD
+      ) {
         allMessages.push({
           title: t('Your Universal AI needs a quick setup'),
           description: t(
