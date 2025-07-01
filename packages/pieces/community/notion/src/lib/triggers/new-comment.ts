@@ -27,21 +27,21 @@ export const newComment = createTrigger({
     id: '223805e9-774b-80b1-9194-001d0c8f56dd',
     parent: {
       type: 'page_id',
-      page_id: '1d5805e9-774b-8071-80c0-ffcea9b13b94'
+      page_id: '1d5805e9-774b-8071-80c0-ffcea9b13b94',
     },
     discussion_id: 'f1c805e9-774b-824f-8511-83edf6abbdda',
     created_time: '2025-07-01T07:19:00.000Z',
     last_edited_time: '2025-07-01T07:19:00.000Z',
     created_by: {
       object: 'user',
-      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6'
+      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6',
     },
     rich_text: [
       {
         type: 'text',
         text: {
           content: 'Good DX',
-          link: null
+          link: null,
         },
         annotations: {
           bold: false,
@@ -49,10 +49,10 @@ export const newComment = createTrigger({
           strikethrough: false,
           underline: false,
           code: false,
-          color: 'default'
+          color: 'default',
         },
         plain_text: 'Good DX',
-        href: null
+        href: null,
       }
     ],
     display_name: {
@@ -93,10 +93,7 @@ export const newComment = createTrigger({
   },
 });
 
-const polling: Polling<
-  OAuth2PropertyValue,
-  { page_id: string | undefined }
-> = {
+const polling: Polling<OAuth2PropertyValue, { page_id: string | undefined }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;
@@ -109,11 +106,7 @@ const polling: Polling<
       lastCreatedDate = lastItem;
     }
 
-    const items = await getComments(
-      auth,
-      propsValue.page_id!,
-      lastCreatedDate
-    );
+    const items = await getComments(auth, propsValue.page_id!, lastCreatedDate);
     return items.map((item: any) => {
       const comment = item as { created_time: string; id: string };
       return {
@@ -148,7 +141,7 @@ const getComments = async (
     cursor = response.next_cursor ?? undefined;
 
     const filteredComments = startDate
-      ? response.results.filter((comment: any) => 
+      ? response.results.filter((comment: any) =>
           dayjs(comment.created_time).isAfter(dayjs(startDate))
         )
       : response.results;
@@ -156,7 +149,8 @@ const getComments = async (
     results.push(...filteredComments);
   } while (hasMore && !isNil(startDate));
 
-  return results.sort((a: any, b: any) => 
-    dayjs(b.created_time).valueOf() - dayjs(a.created_time).valueOf()
+  return results.sort(
+    (a: any, b: any) =>
+      dayjs(b.created_time).valueOf() - dayjs(a.created_time).valueOf()
   );
 };

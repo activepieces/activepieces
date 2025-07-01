@@ -41,28 +41,36 @@ export const retrieveDatabase = createAction({
     };
 
     Object.entries(database.properties).forEach(([key, property]: [string, any]) => {
-      formStructure.properties[key] = {
-        name: property.name || key,
-        type: property.type,
-        id: property.id,
-      };
+        formStructure.properties[key] = {
+          name: property.name || key,
+          type: property.type,
+          id: property.id,
+        };
 
-      formStructure.propertyTypes[key] = property.type;
+        formStructure.propertyTypes[key] = property.type;
 
-      if (property.type === 'select' && property.select?.options) {
-        formStructure.selectOptions[key] = property.select.options.map((option: any) => ({
-          name: option.name,
-          color: option.color,
-          id: option.id,
-        }));
-      } else if (property.type === 'multi_select' && property.multi_select?.options) {
-        formStructure.selectOptions[key] = property.multi_select.options.map((option: any) => ({
-          name: option.name,
-          color: option.color,
-          id: option.id,
-        }));
+        if (property.type === 'select' && property.select?.options) {
+          formStructure.selectOptions[key] = property.select.options.map(
+            (option: any) => ({
+              name: option.name,
+              color: option.color,
+              id: option.id,
+            })
+          );
+        } else if (
+          property.type === 'multi_select' &&
+          property.multi_select?.options
+        ) {
+          formStructure.selectOptions[key] = property.multi_select.options.map(
+            (option: any) => ({
+              name: option.name,
+              color: option.color,
+              id: option.id,
+            })
+          );
+        }
       }
-    });
+    );
 
     return {
       success: true,

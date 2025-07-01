@@ -25,20 +25,20 @@ export const updatedPage = createTrigger({
     last_edited_time: '2025-07-01T07:29:00.000Z',
     created_by: {
       object: 'user',
-      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6'
+      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6',
     },
     last_edited_by: {
       object: 'user',
-      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6'
+      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6',
     },
     cover: null,
     icon: {
       type: 'emoji',
-      emoji: '💰'
+      emoji: '💰',
     },
     parent: {
       type: 'workspace',
-      workspace: true
+      workspace: true,
     },
     archived: false,
     in_trash: false,
@@ -51,7 +51,7 @@ export const updatedPage = createTrigger({
             type: 'text',
             text: {
               content: 'Saas Ideas',
-              link: null
+              link: null,
             },
             annotations: {
               bold: false,
@@ -59,16 +59,16 @@ export const updatedPage = createTrigger({
               strikethrough: false,
               underline: false,
               code: false,
-              color: 'default'
+              color: 'default',
             },
             plain_text: 'Saas Ideas',
-            href: null
-          }
-        ]
-      }
+            href: null,
+          },
+        ],
+      },
     },
     url: 'https://www.notion.so/Saas-Ideas-1d4805e9774b8056820bc1083bff77e3',
-    public_url: null
+    public_url: null,
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
@@ -103,10 +103,7 @@ export const updatedPage = createTrigger({
   },
 });
 
-const polling: Polling<
-  OAuth2PropertyValue,
-  Record<string, never>
-> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;
@@ -117,10 +114,7 @@ const polling: Polling<
       lastEditedDate = dayjs(lastUpdatedEpochMS).toDate();
     }
 
-    const items = await getUpdatedPages(
-      auth,
-      lastEditedDate
-    );
+    const items = await getUpdatedPages(auth, lastEditedDate);
     return items.map((item: any) => {
       const page = item as { last_edited_time: string; id: string };
       return {
