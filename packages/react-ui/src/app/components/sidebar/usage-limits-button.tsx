@@ -10,13 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const date = dayjs.unix(nextResetDate).toISOString();
@@ -123,9 +123,11 @@ const UsageLimitsButton = React.memo(() => {
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
 
-          {isTrial && (
+          {isTrial && platform.plan.stripeSubscriptionEndDate && (
             <div className="flex flex-col gap-4">
-              <TrialProgress trialEndDate={project.usage.nextLimitResetDate} />
+              <TrialProgress
+                trialEndDate={platform.plan.stripeSubscriptionEndDate}
+              />
               <Button
                 variant="default"
                 size="sm"

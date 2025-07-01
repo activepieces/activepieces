@@ -118,14 +118,9 @@ export const billingMutations = {
       },
     });
   },
-  useStartTrial: (queryClient: QueryClient, platformId: string, refetch: () => void) => {
+  useStartTrial: () => {
     return useMutation({
       mutationFn: () => platformBillingApi.startTrial(),
-      onSuccess: () => {
-        setTimeout(() => {
-          refetch();
-        }, 10000);
-      },
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;

@@ -47,7 +47,6 @@ export enum FlowsPageTabs {
 }
 
 const FlowsPage = () => {
-
   const { checkAccess } = useAuthorization();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const location = useLocation();
@@ -145,7 +144,6 @@ const FlowsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
-
     </div>
   );
 };

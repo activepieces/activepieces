@@ -1,30 +1,33 @@
 import { t } from 'i18next';
 import { PartyPopper } from 'lucide-react';
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffectOnce } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { PlatformRole } from '@activepieces/shared';
+
 import { billingMutations } from '../lib/billing-hooks';
-import { useEffectOnce } from 'react-use';
+
 import { ManagePlanDialog } from './manage-plan-dialog';
 
 export const WelcomeTrialDialog = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const { data: user } = userHooks.useCurrentUser();
-  const queryClient = useQueryClient();
   const [managePlanDialogOpen, setManagePlanDialogOpen] = useState(false);
 
-  const isEligibleForTrial = platform.plan.eligibleForTrial && user?.platformRole === PlatformRole.ADMIN;
+  const isEligibleForTrial =
+    platform.plan.eligibleForTrial && user?.platformRole === PlatformRole.ADMIN;
+
   const [isOpen, setIsOpen] = useState(isEligibleForTrial);
 
-  const { mutate: startTrial } = billingMutations.useStartTrial(queryClient, platform.id, refetch);
+  const { mutate: startTrial } = billingMutations.useStartTrial();
 
   const handleClose = () => {
     setIsOpen(false);
+    refetch();
   };
 
   useEffectOnce(() => {
@@ -71,10 +74,7 @@ export const WelcomeTrialDialog = () => {
                 </p>
               </div>
               <div className="flex w-full items-stretch flex-col justify-between gap-3">
-                <Button
-                  onClick={handleContinue}
-                  className="flex-1"
-                >
+                <Button onClick={handleContinue} className="flex-1">
                   {t('Continue on trial')}
                 </Button>
                 <Button
