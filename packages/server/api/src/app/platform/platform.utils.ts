@@ -5,6 +5,7 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
+import { ENTERPRISE_PLAN_ID } from '@activepieces/ee-shared'
 
 export const platformUtils = {
     async getPlatformIdForRequest(req: FastifyRequest): Promise<PlatformId | null> {
@@ -21,13 +22,12 @@ export const platformUtils = {
         const oldestPlatform = await platformService.getOldestPlatform()
         return oldestPlatform?.id ?? null
     },
-    // TODO (@amrabuaza) this is a temporary function to check if the platform is an enterprise customer on cloud
     isEnterpriseCustomerOnCloud(platform: PlatformWithoutSensitiveData): boolean {
         const edition = system.getEdition()
         if (edition !== ApEdition.CLOUD) {
             return false
         }
-        return platform.plan.ssoEnabled || platform.plan.embeddingEnabled
+        return platform.plan.plan === ENTERPRISE_PLAN_ID
     },
 }
 

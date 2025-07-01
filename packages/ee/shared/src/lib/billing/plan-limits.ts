@@ -2,6 +2,9 @@ import { PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
 
+
+export const ENTERPRISE_PLAN_ID = 'enterprise'
+
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,

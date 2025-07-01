@@ -7,6 +7,7 @@ import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { ENTERPRISE_PLAN_ID } from '@activepieces/ee-shared'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -129,6 +130,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await platformService.update({
             id: platformId,
             plan: {
+                plan: ENTERPRISE_PLAN_ID,
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
