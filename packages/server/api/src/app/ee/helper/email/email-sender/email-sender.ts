@@ -12,7 +12,7 @@ export type EmailSender = {
 const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
 
-    if (env !== ApEnvironment.PRODUCTION) {
+    if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender(log)
     }
 
