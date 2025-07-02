@@ -78,9 +78,14 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
         if (!isNil(identity)) {
-            const user = await userRepo().findOneBy({
-                identityId: identity.id,
-                platformRole: PlatformRole.ADMIN,
+            const user = await userRepo().findOne({
+                where: {
+                    identityId: identity.id,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                order: {
+                    created: 'ASC'
+                }
             })
             if (!isNil(user)) {
                 const project = await projectService.getUserProjectOrThrow(user.id)

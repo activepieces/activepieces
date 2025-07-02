@@ -112,6 +112,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         await platformPlanService(request.log).update({ 
                             ...planLimits,
                             platformId: platformPlan.platformId,
+                            eligibleForTrial: false,
                             stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
                             aiCreditsLimit: isFreePlan ? undefined : platformPlan.aiCreditsLimit,
                         })

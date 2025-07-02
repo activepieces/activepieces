@@ -13,7 +13,6 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
-import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
@@ -166,8 +165,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        accessTokenManager
-            .verifyPrincipal(socket.handshake.auth.token)
+        websocketService
+            .verifyPrincipal(socket)
             .then(() => {
                 next()
             })

@@ -1,6 +1,5 @@
 import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, RunEnvironment, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../websockets/websockets.service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from './sample-data.service'
@@ -8,7 +7,7 @@ import { sampleDataService } from './sample-data.service'
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
         return async (data: CreateStepRunRequestBody) => {
-            const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+            const principal = await websocketService.verifyPrincipal(socket)
             fastify.log.debug({ data }, '[Socket#testStepRun]')
             const stepRun = await sampleDataService(fastify.log).runAction({
                 projectId: principal.projectId,

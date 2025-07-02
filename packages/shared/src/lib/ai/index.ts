@@ -32,5 +32,15 @@ export const AIUsage = Type.Object({
 
 export type AIUsage = Static<typeof AIUsage>
 
+export const AIErrorResponse = Type.Object({
+    error: Type.Object({
+        message: Type.String(),
+        type: Type.String(),
+        code: Type.String(),
+    }),
+})
+
+export type AIErrorResponse = Static<typeof AIErrorResponse>
+
 export * from './supported-ai-providers'
 export * from './ai-sdk'

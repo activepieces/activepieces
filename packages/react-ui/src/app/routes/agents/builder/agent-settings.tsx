@@ -20,8 +20,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { AgentUseButton } from '../../../../features/agents/agent-use-button';
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
+import { UseAgentButton } from '../../../../features/agents/use-agent-button';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
@@ -30,6 +30,7 @@ interface AgentSettingsProps {
   agent?: Agent;
   refetch: () => void;
   onChange?: (agent: Agent) => void;
+  hideUseAgentButton?: boolean;
 }
 
 interface AgentFormValues {
@@ -40,6 +41,7 @@ export const AgentSettings = ({
   agent,
   refetch,
   onChange,
+  hideUseAgentButton,
 }: AgentSettingsProps) => {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
@@ -146,7 +148,9 @@ export const AgentSettings = ({
                 isEditing={isEditingName}
                 setIsEditing={setIsEditingName}
               />
-              {!isNil(agent) && <AgentUseButton agentId={agent.id} />}
+              {!isNil(agent) && !hideUseAgentButton && (
+                <UseAgentButton agentId={agent.id} />
+              )}
             </div>
             <EditableTextWithPen
               value={description}
