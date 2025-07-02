@@ -15,7 +15,10 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { AiOverageState, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  AiOverageState,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
@@ -30,15 +33,19 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const planIncludedCredits = plan.aiCreditsLimit;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
-  const aiOverrageState = plan.aiCreditsOverageState ?? plan.aiCreditsOverageState ?? AiOverageState.NotAllowed;
+  const aiOverrageState =
+    plan.aiCreditsOverageState ??
+    plan.aiCreditsOverageState ??
+    AiOverageState.NOT_ALLOWED;
 
   const isFreePlan = plan.plan === PlanName.FREE;
-  const isTrial = plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const isTrial =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
 
   const overageConfig = useMemo(() => {
-    const isAllowed = aiOverrageState !== AiOverageState.NotAllowed;
-    const isEnabled = aiOverrageState === AiOverageState.AllowedAndOn;
-    
+    const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
+    const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
+
     return {
       allowed: isAllowed,
       enabled: isEnabled,
@@ -46,7 +53,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
     };
   }, [aiOverrageState, isFreePlan, isTrial]);
 
-  const [usageBasedEnabled, setUsageBasedEnabled] = useState(overageConfig.enabled);
+  const [usageBasedEnabled, setUsageBasedEnabled] = useState(
+    overageConfig.enabled,
+  );
   const [usageLimit, setUsageLimit] = useState<number>(overageLimit ?? 500);
 
   const {
@@ -61,16 +70,20 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
 
   const creditMetrics = useMemo(() => {
     const creditsUsedFromPlan = Math.min(totalCreditsUsed, planIncludedCredits);
-    const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits);
+    const overageCreditsUsed = Math.max(
+      0,
+      totalCreditsUsed - planIncludedCredits,
+    );
 
     const planUsagePercentage = Math.min(
       100,
-      Math.round((creditsUsedFromPlan / planIncludedCredits) * 100)
+      Math.round((creditsUsedFromPlan / planIncludedCredits) * 100),
     );
 
-    const overageUsagePercentage = usageBasedEnabled && overageLimit
-      ? Math.min(100, Math.round((overageCreditsUsed / overageLimit) * 100))
-      : 0;
+    const overageUsagePercentage =
+      usageBasedEnabled && overageLimit
+        ? Math.min(100, Math.round((overageCreditsUsed / overageLimit) * 100))
+        : 0;
 
     return {
       creditsUsedFromPlan,
@@ -88,9 +101,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   }, [setAiCreditOverageLimit, usageLimit]);
 
   const handleToggleAiCreditUsage = useCallback(() => {
-    const newState = usageBasedEnabled 
-      ? AiOverageState.AllowedButOff 
-      : AiOverageState.AllowedAndOn;
+    const newState = usageBasedEnabled
+      ? AiOverageState.ALLOWED_BUT_OFF
+      : AiOverageState.ALLOWED_AND_ON;
 
     toggleAiCreditsOverageEnabled(
       { state: newState },
@@ -98,7 +111,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         onSuccess: () => {
           setUsageBasedEnabled(!usageBasedEnabled);
         },
-      }
+      },
     );
   }, [usageBasedEnabled, toggleAiCreditsOverageEnabled]);
 
@@ -163,16 +176,20 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
                 {t('Plan Included')}
               </span>
             </div>
-            <Progress value={creditMetrics.planUsagePercentage} className="w-full" />
+            <Progress
+              value={creditMetrics.planUsagePercentage}
+              className="w-full"
+            />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
                 {creditMetrics.planUsagePercentage}% of plan credits used
               </span>
-              {creditMetrics.isPlanLimitApproaching && !creditMetrics.isPlanLimitExceeded && (
-                <span className="text-orange-600 font-medium">
-                  Approaching limit
-                </span>
-              )}
+              {creditMetrics.isPlanLimitApproaching &&
+                !creditMetrics.isPlanLimitExceeded && (
+                  <span className="text-orange-600 font-medium">
+                    Approaching limit
+                  </span>
+                )}
               {creditMetrics.isPlanLimitExceeded && (
                 <span className="text-destructive font-medium">
                   Plan limit exceeded
@@ -204,13 +221,17 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
               <div className="rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">
-                    {creditMetrics.overageCreditsUsed} / {overageLimit ?? 'unknown'}
+                    {creditMetrics.overageCreditsUsed} /{' '}
+                    {overageLimit ?? 'unknown'}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
                     {t('Usage Limit')}
                   </span>
                 </div>
-                <Progress value={creditMetrics.overageUsagePercentage} className="w-full" />
+                <Progress
+                  value={creditMetrics.overageUsagePercentage}
+                  className="w-full"
+                />
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     {creditMetrics.overageUsagePercentage}% of usage limit used
