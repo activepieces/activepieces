@@ -34,13 +34,14 @@ export type McpToolMetadata = Static<typeof McpToolMetadata>
 
 
 export const mcpToolNaming = {
-    fixTool: (name: string, type: McpToolType) => {
+    fixTool: (name: string, id: string, type: McpToolType) => {
+        const spaceToReserve = id.length + 1
         const baseName = name.replace(/[\s/@-]+/g, '_')
         switch (type) {
             case McpToolType.FLOW:
-                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - 1)}`
+                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}`
             case McpToolType.PIECE:{
-                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - 1)}` 
+                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}` 
             }
         }
     },
