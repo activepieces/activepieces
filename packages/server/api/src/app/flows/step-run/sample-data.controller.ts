@@ -15,8 +15,8 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
                 flowVersionId: data.flowVersionId,
                 stepName: data.stepName,
                 runEnvironment: RunEnvironment.TESTING,
+                requestId: data.id,
             })
-
             const response: StepRunResponse = {
                 id: data.id,
                 success: stepRun.success,
