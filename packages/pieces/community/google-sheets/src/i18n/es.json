@@ -92,7 +92,7 @@
   "The title of the new worksheet.": "El título de la nueva hoja de cálculo.",
   "The row number to get from the sheet": "El número de fila a obtener de la hoja",
   "Which row to start from?": "¿Desde qué fila empezar?",
-  "\n**Notes:**\n\n- Memory key is used to remember where last row was processed and will be used in the following runs.\n- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.\n": "\n**Notes:**\n\n- Memory key is used to remember where last row was processed and will be used in the following runs.\n- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.\n",
+  "\n**Notes:**\n\n- Memory key is used to remember where last row was processed and will be used in the following runs.\n- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.\n": "\n**Notas:**\n\n- La clave de memoria se utiliza para recordar en qué fila se procesó por última vez y se usará en las siguientes ejecuciones.\n- Volver a publicar el flujo **mantiene** el valor de la clave de memoria. Si deseas comenzar desde cero, **cambia** la clave de memoria.\n",
   "The key used to store the current row number in memory": "La clave utilizada para almacenar el número de fila actual en la memoria",
   "The number of rows to get": "El número de filas a obtener",
   "The name of the spreadsheet(s) to find.": "El nombre de la hoja de cálculo a encontrar.",
