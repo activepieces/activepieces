@@ -10,7 +10,7 @@ import { GmailProps } from '../common/props';
 export const gmailCreateDraftReplyAction = createAction({
   auth: gmailAuth,
   name: 'create_draft_reply',
-  description: 'Create a draft reply to an existing email within the same thread',
+  description: 'Creates a draft reply to an existing email.',
   displayName: 'Create Draft Reply',
   props: {
     message_id: GmailProps.message,
