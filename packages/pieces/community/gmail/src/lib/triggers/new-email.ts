@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../../';
-import { GmailRequests, parseStream, convertAttachment } from '../common/data';
+import { GmailRequests, parseStream, convertAttachment, getFirstFiveOrAll } from '../common/data';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
@@ -152,10 +152,3 @@ async function pollRecentMessages({
   return pollingResponse;
 }
 
-function getFirstFiveOrAll(array: unknown[]) {
-  if (array.length <= 5) {
-    return array;
-  } else {
-    return array.slice(0, 5);
-  }
-}

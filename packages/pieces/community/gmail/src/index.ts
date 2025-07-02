@@ -12,8 +12,6 @@ import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
 import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
-import { gmailNewStarredEmailTrigger } from './lib/triggers/new-starred-email';
-import { gmailNewConversationTrigger } from './lib/triggers/new-conversation';
 import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
@@ -77,8 +75,6 @@ export const gmail = createPiece({
 	triggers: [
 		gmailNewEmailTrigger,
 		gmailNewLabeledEmailTrigger,
-		gmailNewStarredEmailTrigger,
-		gmailNewConversationTrigger,
 		gmailNewAttachmentTrigger,
 		gmailNewLabelTrigger,
 	],

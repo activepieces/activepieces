@@ -331,3 +331,11 @@ export async function convertAttachment(
   const results = await Promise.all(promises);
   return results.filter((result) => result !== null);
 }
+
+export function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
+}
