@@ -238,7 +238,7 @@ import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgre
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
 import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
-import { AddAiOverageState1751460416146 } from './migration/postgres/1751460416146-add-ai-overage-satate'
+import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -498,7 +498,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddAgentsEnabledToPlatformPlan1751309258332,
                 AddTrialFlagInPlatform1751394161203,
                 UpdateAiCredits1751404517528,
-                AddAiOverageState1751460416146
+                AddAiOverageState1751466404493
             )
             break
         case ApEdition.COMMUNITY:
