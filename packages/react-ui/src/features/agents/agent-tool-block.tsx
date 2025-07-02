@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Loader2, Wrench, CircleCheck } from 'lucide-react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -23,11 +24,11 @@ interface AgentToolBlockProps {
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
-
+  const { output, isJson } = extractMarkdownFromOutput(block.output);
   return (
-    <Accordion type="multiple" className="rounded-md border" defaultValue={[]}>
-      <AccordionItem value={`block-${index}`} className="border-none">
-        <AccordionTrigger className="px-4 py-3 flex items-center gap-3 transition-colors">
+    <Accordion type="multiple" defaultValue={[]}>
+      <AccordionItem value={`block-${index}`}>
+        <AccordionTrigger className="flex items-center gap-3 transition-colors">
           {isLoading ? (
             <div className="h-5 w-5 shrink-0">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -36,7 +37,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
             <img
               src={metadata.logoUrl}
               alt="Logo"
-              className="h-5 w-5 rounded-md object-contain shrink-0"
+              className="h-5 w-5 object-contain shrink-0"
             />
           ) : (
             <div className="h-5 w-5 shrink-0">
@@ -55,11 +56,11 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
             <Loader2 className="h-4 w-4 animate-spin shrink-0" />
           )}
         </AccordionTrigger>
-        <AccordionContent className="p-3">
+        <AccordionContent>
           <div className="space-y-3">
             <div className="space-y-1">
               <div className="text-xs font-medium text-muted-foreground">
-                Arguments
+                {t('Arguments')}
               </div>
               <pre className="text-xs bg-muted/50 p-3 rounded-md whitespace-pre-wrap break-all">
                 {JSON.stringify(block.input, null, 2)}
@@ -68,13 +69,20 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
             {!isNil(block.output) && (
               <div className="space-y-1">
                 <div className="text-xs font-medium text-muted-foreground">
-                  Result
+                  {t('Result')}
                 </div>
                 <div className="bg-muted/50 p-3 rounded-md">
-                  <ApMarkdown
-                    markdown={block.output as string}
-                    variant={MarkdownVariant.BORDERLESS}
-                  />
+                  {isJson ? (
+                    <pre className="text-xs break-all bg-muted/50 p-3 rounded-md whitespace-pre-wrap break-all">
+                      {output}
+                    </pre>
+                  ) : (
+                    <ApMarkdown
+                      className="text-xs break-words"
+                      markdown={output}
+                      variant={MarkdownVariant.BORDERLESS}
+                    />
+                  )}
                 </div>
               </div>
             )}
@@ -83,4 +91,27 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       </AccordionItem>
     </Accordion>
   );
+};
+
+//TODO: Check how to simplify this logic and make it typed
+const extractMarkdownFromOutput = (output: unknown) => {
+  if (isNil(output)) {
+    return { output: '', isJson: false };
+  }
+  if (typeof output === 'string') {
+    return { output, isJson: false };
+  }
+  if (output !== null && typeof output === 'object' && 'content' in output) {
+    if (typeof output.content === 'string') {
+      return { output: output.content, isJson: false };
+    }
+    if (Array.isArray(output.content)) {
+      return {
+        output: output.content.map((item) => item.text).join('\n'),
+        isJson: false,
+      };
+    }
+    return { output: JSON.stringify(output.content, null, 2), isJson: true };
+  }
+  return { output: '', isJson: false };
 };

@@ -5,7 +5,7 @@ export class UpdateAiCredits1751404517528 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "platform_plan" DROP COLUMN "includedAiCredits"
+            ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsLimit"
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
@@ -15,18 +15,9 @@ export class UpdateAiCredits1751404517528 implements MigrationInterface {
             ALTER TABLE "platform_plan"
             ADD "aiCreditsOverageEnabled" boolean
         `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ALTER COLUMN "aiCreditsLimit"
-            SET NOT NULL
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ALTER COLUMN "aiCreditsLimit" DROP NOT NULL
-        `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsOverageEnabled"
         `)
@@ -35,7 +26,7 @@ export class UpdateAiCredits1751404517528 implements MigrationInterface {
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "includedAiCredits" integer NOT NULL
+            ADD "aiCreditsLimit" integer NOT NULL
         `)
     }
 

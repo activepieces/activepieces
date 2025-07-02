@@ -5,7 +5,7 @@ export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscri
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
-    aiCreditsLimit: 200,
+    includedAiCredits: 200,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     activeFlowsLimit: 2,
@@ -45,7 +45,7 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         tasksLimit,
         userSeatsLimit,
         agentsEnabled: true,
-        aiCreditsLimit: 200,
+        includedAiCredits: 200,
         aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
         aiCreditsOverageLimit: undefined,
         activeFlowsLimit: undefined,
@@ -80,7 +80,7 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
-    aiCreditsLimit: 500,
+    includedAiCredits: 500,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     eligibleForTrial: false,
@@ -117,7 +117,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
     tasksLimit: undefined,
-    aiCreditsLimit: 1000,
+    includedAiCredits: 1000,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     eligibleForTrial: false,
@@ -160,7 +160,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tasksLimit: undefined,
 
     agentsEnabled: true,
-    aiCreditsLimit: 0,
+    includedAiCredits: 0,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     environmentsEnabled: false,

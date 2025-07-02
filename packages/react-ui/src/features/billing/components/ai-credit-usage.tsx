@@ -30,11 +30,14 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
 
-  const planIncludedCredits = plan.aiCreditsLimit;
+  const planIncludedCredits = plan.includedAiCredits;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
 
-  const aiOverrageState = plan.aiCreditsOverageState ?? plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
+  const aiOverrageState =
+    plan.aiCreditsOverageState ??
+    plan.aiCreditsOverageState ??
+    AiOverageState.NOT_ALLOWED;
 
   const isFreePlan = plan.plan === PlanName.FREE;
   const isTrial =
@@ -98,7 +101,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   }, [setAiCreditOverageLimit, usageLimit]);
 
   const handleToggleAiCreditUsage = useCallback(() => {
-
     const newState = usageBasedEnabled
       ? AiOverageState.ALLOWED_BUT_OFF
       : AiOverageState.ALLOWED_AND_ON;
