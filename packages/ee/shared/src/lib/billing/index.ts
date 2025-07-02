@@ -1,4 +1,4 @@
-import { isNil, PiecesFilterType } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 import Stripe from 'stripe'
@@ -37,10 +37,18 @@ export const CreateSubscriptionParamsSchema = Type.Object({
 export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
 
-export const EnableAiCreditUsageParamsSchema = Type.Object({
-    limit: Type.Optional(Type.Number({ minimum: 10 })),
+export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
+    limit: Type.Number({ minimum: 10 }),
 })
-export type EnableAiCreditUsageParams = Static<typeof EnableAiCreditUsageParamsSchema>
+export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLimitParamsSchema>
+
+
+export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
+    state: Type.Enum(AiOverageState),
+})
+export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
+
+
 
 
 export const UpdateSubscriptionParamsSchema = Type.Object({
@@ -55,13 +63,6 @@ export const getAiCreditsPriceId = (stripeKey: string | undefined) => {
     return testMode
         ? 'price_1RcktVQN93Aoq4f8JjdYKXBp'
         : 'price_1RflgeKZ0dZRqLEKGVORuNNl'
-}
-
-export function getTasksPriceId(stripeKey: string | undefined) {
-    const testMode = stripeKey?.startsWith('sk_test')
-    return testMode
-        ? 'price_1OnWqKKZ0dZRqLEKkcYBso8K'
-        : 'price_1Qf7RiKZ0dZRqLEKAgP38l7w'
 }
 
 export function getUserPriceId(stripeKey: string | undefined) {

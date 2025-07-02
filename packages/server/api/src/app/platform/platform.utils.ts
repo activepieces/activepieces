@@ -1,11 +1,11 @@
 
 
+import { PlanName } from '@activepieces/ee-shared'
 import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
 import { platformService } from './platform.service'
-import { PlanName } from '@activepieces/ee-shared'
 
 export const platformUtils = {
     async getPlatformIdForRequest(req: FastifyRequest): Promise<PlatformId | null> {
