@@ -85,7 +85,7 @@ async function addPieceToServer(
     const toolActionsNames = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
     for (const action of toolActionsNames) {
         const actionMetadata = pieceMetadata.actions[action]
-        const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)       
+        const actionName = mcpToolNaming.fixTool(actionMetadata.name, McpToolType.PIECE)       
         const toolSchema = {
             instructions: z.string().describe(
                 'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.',
@@ -186,7 +186,7 @@ async function addFlowToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool(mcpTool.flowId!, mcpTool.id, McpToolType.FLOW)
+    const toolName = mcpToolNaming.fixTool(mcpTool.flowId!, McpToolType.FLOW)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse

@@ -18,7 +18,7 @@ export const agentExecutor = {
             token: params.serverToken,
             mcpId: agent.mcpId,
         })
-
+        
         const agentToolInstance = await agentTools({
             agent,
             publicUrl: params.publicUrl,
@@ -128,7 +128,13 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
             displayName: 'Mark as Complete',
         }
     }
-    const tool = mcp.tools.find((tool) => tool.id === mcpToolNaming.extractToolId(toolName))
+    const tool = mcp.tools.find((tool) => {
+        const hasActionMatches = Object.values(tool.pieceMetadata?.actionNames ?? {}).some((action) => {
+            const fixedToolName = mcpToolNaming.fixTool(action, McpToolType.PIECE)
+            return toolName === fixedToolName
+        })
+        return hasActionMatches
+    })
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
     }
@@ -136,7 +142,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
         case McpToolType.PIECE: {
             const pieceMetadata = tool.pieceMetadata
             assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
-            const actionMetadataEntry = Object.values(pieceMetadata.actionNames).find((action) => mcpToolNaming.fixTool(action, mcpToolNaming.extractToolId(toolName), McpToolType.PIECE) === toolName)
+            const actionMetadataEntry = Object.values(pieceMetadata.actionNames).find((action) => mcpToolNaming.fixTool(action, McpToolType.PIECE) === toolName)
             assertNotNullOrUndefined(actionMetadataEntry, 'Action metadata entry not found')
             return {
                 ...baseTool,
