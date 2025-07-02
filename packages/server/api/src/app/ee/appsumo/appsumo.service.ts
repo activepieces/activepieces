@@ -84,8 +84,8 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                     platformRole: PlatformRole.ADMIN,
                 },
                 order: {
-                    created: 'ASC'
-                }
+                    created: 'ASC',
+                },
             })
             if (!isNil(user)) {
                 const project = await projectService.getUserProjectOrThrow(user.id)
