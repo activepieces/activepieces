@@ -114,7 +114,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             platformId: platformPlan.platformId,
                             eligibleForTrial: false,
                             stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
-                            aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NotAllowed : AiOverageState.AllowedButOff
+                            aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF
                         })
                         break
                     }

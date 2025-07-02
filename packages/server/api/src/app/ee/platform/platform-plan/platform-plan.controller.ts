@@ -99,7 +99,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
         
-        if (platformPlan.plan === PlanName.FREE && state !== AiOverageState.NotAllowed) {
+        if (platformPlan.plan === PlanName.FREE && state !== AiOverageState.NOT_ALLOWED) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -112,7 +112,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const planIncludedCredits = platformPlan.aiCreditsLimit || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
-        if (state === AiOverageState.AllowedButOff && overageCreditsUsed > 0) {
+        if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -130,7 +130,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             },
         }, 'Updating AI credits overage state')
         
-        const newOverageLimit = state === AiOverageState.AllowedAndOn 
+        const newOverageLimit = state === AiOverageState.ALLOWED_AND_ON 
             ? (platformPlan.aiCreditsOverageLimit || 500)
             : platformPlan.aiCreditsOverageLimit
         
@@ -150,7 +150,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
         
-        if (platformPlan.aiCreditsOverageState !== AiOverageState.AllowedAndOn) {
+        if (platformPlan.aiCreditsOverageState !== AiOverageState.ALLOWED_AND_ON) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {

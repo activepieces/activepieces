@@ -85,9 +85,9 @@ export const PlatformUsage = Type.Object({
 export type PlatformUsage = Static<typeof PlatformUsage>
 
 export enum AiOverageState {
-  NotAllowed = "not_allowed",
-  AllowedButOff = "allowed_but_off",
-  AllowedAndOn = "allowed_and_on",
+  NOT_ALLOWED = "not_allowed",
+  ALLOWED_BUT_OFF = "allowed_but_off",
+  ALLOWED_AND_ON = "allowed_an_on"
 }
 
 export const PlatformPlan = Type.Object({

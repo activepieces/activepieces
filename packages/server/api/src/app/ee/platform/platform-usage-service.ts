@@ -141,7 +141,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             cost,
         })
         
-        const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.AllowedAndOn
+        const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
         const overage = Math.round(platformAiCreditUsageIncremented - platformPlan.aiCreditsLimit)
         const hasOverage = overage > 0
 
