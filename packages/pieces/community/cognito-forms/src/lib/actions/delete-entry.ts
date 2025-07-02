@@ -8,7 +8,7 @@ export const deleteEntryAction = createAction({
   auth: cognitoFormsAuth,
   name: 'delete_entry',
   displayName: 'Delete Entry',
-  description: 'Deletes an entry using the specified form ID and entry ID.',
+  description: 'Deletes a specified entry.',
   props: {
     formId: formIdDropdown,
     entryId: Property.ShortText({

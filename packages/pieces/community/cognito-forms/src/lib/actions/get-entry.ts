@@ -4,11 +4,11 @@ import { makeRequest } from '../common';
 import { cognitoFormsAuth } from '../../index';
 import { formIdDropdown } from '../common/props';
 
-export const getEntryDetailsAction = createAction({
+export const getEntryAction = createAction({
   auth: cognitoFormsAuth,
-  name: 'get_entry_details',
-  displayName: 'Get Entry Details',
-  description: 'Retrieves complete submission data for a specified entry. Useful for auditing, export, or integration into reporting systems.',
+  name: 'get_entry',
+  displayName: 'Get Entry',
+  description: 'Gets a specified entry.',
   props: {
     formId: formIdDropdown,
     entryId: Property.ShortText({

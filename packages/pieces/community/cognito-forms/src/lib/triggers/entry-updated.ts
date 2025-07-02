@@ -1,86 +1,40 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../../index';
-import { formIdDropdown } from '../common/props';
-
-export interface StoredWebhookData {
-  webhookId: string;
-}
-
-export interface WebhookCreationResponse {
-  id: string;
-  [key: string]: any;
-}
 
 export const entryUpdatedTrigger = createTrigger({
   name: 'entry_updated',
   displayName: 'Entry Updated',
-  description: 'Triggers when an existing form entry is updated',
+  description: 'Triggers when an existing form entry is updated.',
   auth: cognitoFormsAuth,
   props: {
-    formId: formIdDropdown,
+    webhookInstructions: Property.MarkDown({
+      value: `
+          To use this trigger, you need to manually set up a webhook in your Cognito Forms account:
+    
+          1. Login to your Cognito Forms account.
+          2. Select desired form and go to Form Settings.
+          3. Enable **Post JSON Data to Website** and add following URL in **Update Entry Endpoint** field:
+          \`\`\`text
+          {{webhookUrl}}
+          \`\`\`
+          4. Click Save to save the form changes.
+          `,
+    }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {
-    Id: '1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p',
-    FormId: '7p8o9i0j-1k2l-3m4n-5o6p-7q8r9s0t1u2v',
-    Number: 123,
-    Status: 'Updated',
-    DateCreated: '2023-06-15T10:30:45Z',
-    DateSubmitted: '2023-06-15T10:35:22Z',
-    DateUpdated: '2023-06-15T11:20:15Z',
-    Entry: {
-      Name: 'John Doe',
-      Email: 'john.updated@example.com',
-      Phone: '555-987-6543',
-      Message: 'This is an updated form submission',
-    },
-  },
-
+  sampleData: undefined,
   async onEnable(context) {
-    try {
-      const formId = context.propsValue.formId;
-
-      const response = await makeRequest(
-        context.auth as string,
-        HttpMethod.POST,
-        '/webhooks',
-        {
-          url: context.webhookUrl,
-          events: ['EntryUpdated'],
-          formId: formId,
-        }
-      ) as WebhookCreationResponse;
-
-      if (!response?.id) {
-        throw new Error('Failed to create webhook: Invalid response format');
-      }
-
-      await context.store.put<StoredWebhookData>('webhookData', {
-        webhookId: response.id,
-      });
-    } catch (error) {
-      throw new Error(`Failed to enable entry updated trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // No need to register webhooks programmatically as user will do it manually
   },
-
   async onDisable(context) {
-    try {
-      const webhookData = await context.store.get<StoredWebhookData>('webhookData');
-      if (webhookData?.webhookId) {
-        await makeRequest(
-          context.auth as string,
-          HttpMethod.DELETE,
-          `/webhooks/${webhookData.webhookId}`
-        );
-      }
-    } catch (error) {
-      throw new Error(`Failed to disable entry updated trigger: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // No need to unregister webhooks as user will do it manually
   },
 
   async run(context) {
-    return context.payload.body ? [context.payload.body] : [];
+    return [context.payload.body];
   },
 });

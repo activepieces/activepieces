@@ -1,4 +1,8 @@
-import { Property, DropdownOption } from '@activepieces/pieces-framework';
+import {
+  Property,
+  DropdownOption,
+  DynamicPropsValue,
+} from '@activepieces/pieces-framework';
 import { makeRequest } from './index';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -29,3 +33,72 @@ export const formIdDropdown = Property.Dropdown({
     };
   },
 });
+
+export const formFields = Property.DynamicProperties({
+  displayName: 'Fields',
+  refreshers: ['formId'],
+  required: true,
+  props: async ({ auth, formId }) => {
+    if (!auth || !formId) return {};
+
+    const apiKey = auth as unknown as string;
+    const response = await makeRequest(
+      apiKey,
+      HttpMethod.GET,
+      `/forms/${formId}/schema`
+    );
+
+    const fields = response as FormSchemaResponse;
+
+    const props: DynamicPropsValue = {};
+
+    for (const [key, value] of Object.entries(fields.properties)) {
+      const fieldType = value.type;
+      const fieldName = key;
+      const fieldDes = value.description;
+      const isReadOnly = value.readOnly;
+
+      if (isReadOnly) continue;
+
+      switch (fieldType) {
+        case 'string':
+          props[fieldName] = Property.ShortText({
+            displayName: fieldName,
+            description: fieldDes ?? '',
+            required: false,
+          });
+          break;
+        case 'boolean':
+          props[fieldName] = Property.Checkbox({
+            displayName: fieldName,
+            description: fieldDes ?? '',
+
+            required: false,
+          });
+          break;
+        case 'number':
+          props[fieldName] = Property.Number({
+            displayName: fieldName,
+            description: fieldDes ?? '',
+
+            required: false,
+          });
+          break;
+        default:
+          break;
+      }
+    }
+    return props;
+  },
+});
+
+type FormSchemaResponse = {
+  type: string;
+  properties: {
+    [x: string]: {
+      type: string;
+      readOnly: boolean;
+      description: string;
+    };
+  };
+};
