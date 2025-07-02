@@ -149,9 +149,7 @@ export const billingMutations = {
         });
         toast({
           title: t('Success'),
-          description: t(
-            `AI credits overage updated successfully`,
-          ),
+          description: t(`AI credits overage updated successfully`),
         });
       },
       onError: (error) => {
