@@ -30,14 +30,14 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const planIncludedCredits = plan.aiCreditsLimit;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
-  const aiOverrageState = plan.aiCreditsOverageState ?? plan.aiCreditsOverageState ?? AiOverageState.NotAllowed;
+  const aiOverrageState = plan.aiCreditsOverageState ?? plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
 
   const isFreePlan = plan.plan === PlanName.FREE;
   const isTrial = plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
 
   const overageConfig = useMemo(() => {
-    const isAllowed = aiOverrageState !== AiOverageState.NotAllowed;
-    const isEnabled = aiOverrageState === AiOverageState.AllowedAndOn;
+    const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
+    const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
     
     return {
       allowed: isAllowed,
@@ -89,8 +89,8 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
 
   const handleToggleAiCreditUsage = useCallback(() => {
     const newState = usageBasedEnabled 
-      ? AiOverageState.AllowedButOff 
-      : AiOverageState.AllowedAndOn;
+      ? AiOverageState.ALLOWED_BUT_OFF 
+      : AiOverageState.ALLOWED_AND_ON;
 
     toggleAiCreditsOverageEnabled(
       { state: newState },
