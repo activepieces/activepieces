@@ -252,7 +252,7 @@ async function getMCPsCount(platformId: string): Promise<number> {
     const mcpIds = await mcpRepo().count({
         where: {
             projectId: In(projectIds),
-            agentId: IsNull()
+            agentId: IsNull(),
         },
     })
     return mcpIds
