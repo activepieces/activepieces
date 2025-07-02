@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 
 const initialPermissions = [
@@ -90,14 +90,12 @@ const initialPermissions = [
     description: 'Read and write tables',
     read: [Permission.READ_TABLE],
     write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
-    disableNone: true,
   },
   {
     name: 'Todos',
     description: 'Read and write todos',
     read: [Permission.READ_TODOS],
     write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
-    disableNone: true,
   },
   {
     name: 'MCP',

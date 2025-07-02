@@ -127,7 +127,7 @@ export class EngineConstants {
             true,
             ProgressUpdateType.NONE,
             null,
-            null,
+            input.requestId ?? null,
             undefined,
             input.runEnvironment,
         )

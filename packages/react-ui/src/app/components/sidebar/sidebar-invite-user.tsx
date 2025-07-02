@@ -13,7 +13,7 @@ export function SidebarInviteUserButton() {
 
   return (
     <InviteUserDialog>
-      <SidebarMenuButton className="w-full justify-start hover:bg-accent hover:text-primary rounded-lg transition-colors">
+      <SidebarMenuButton>
         <UserPlus className="size-4  stroke-[2px]" />
         <span>Invite User</span>
       </SidebarMenuButton>

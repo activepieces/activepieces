@@ -1,6 +1,8 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
-import { AI, AIChatRole, aiProps, AIFunctionArgumentDefinition } from '@activepieces/pieces-common';
+import { createAIProvider, MarkdownVariant } from '@activepieces/shared';
+import { aiProps } from '@activepieces/pieces-common';
+import { generateText, tool, LanguageModel, jsonSchema, CoreMessage, CoreUserMessage } from 'ai';
+import mime from 'mime-types';
 import Ajv from 'ajv';
 
 export const extractStructuredData = createAction({
@@ -8,8 +10,8 @@ export const extractStructuredData = createAction({
 	displayName: 'Extract Structured Data',
 	description: 'Extract structured data from provided text,image or PDF.',
 	props: {
-		provider: aiProps('function').provider,
-		model: aiProps('function').model,
+		provider: aiProps({ modelType: 'language', functionCalling: true }).provider,
+		model: aiProps({ modelType: 'language', functionCalling: true }).model,
 		text: Property.LongText({
 			displayName: 'Text',
 			description: 'Text to extract structured data from.',
@@ -125,23 +127,32 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
-		const model = context.propsValue.model;
+		const providerName = context.propsValue.provider as string;
+		const modelInstance = context.propsValue.model as LanguageModel;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
 		const schema = context.propsValue.schama;
+		const maxTokens = context.propsValue.maxTokens;
 
 		if (!text && !files.length) {
 			throw new Error('Please provide text or image/PDF to extract data from.');
 		}
 
-		const ai = AI({ provider, server: context.server });
+		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+		const engineToken = context.server.token;
+		const provider = createAIProvider({
+			providerName,
+			modelInstance,
+			apiKey: engineToken,
+			baseURL,
+		});
 
-		let params: AIFunctionArgumentDefinition;
+		let schemaDefinition: any;
+		
 		if (context.propsValue.mode === 'advanced') {
 			const ajv = new Ajv();
-			const isValidSchema = ajv.validateSchema(schema);
+			const isValidSchema = ajv.validateSchema(schema['fields']);
 
 			if (!isValidSchema) {
 				throw new Error(
@@ -152,77 +163,111 @@ export const extractStructuredData = createAction({
 				);
 			}
 
-			params = schema['fields'] as AIFunctionArgumentDefinition;
+			schemaDefinition = jsonSchema(schema['fields'] as any);
 		} else {
-			params = {
-				type: 'object',
-				properties: (
-					schema['fields'] as Array<{
-						name: string;
-						description?: string;
-						type: string;
-						isRequired: boolean;
-					}>
-				).reduce((acc, field) => {
-					acc[field.name] = {
-						type: field.type,
-						description: field.description,
-					};
-					return acc;
-				}, {} as Record<string, { type: string; description?: string }>),
-				required: (
-					schema['fields'] as Array<{
-						name: string;
-						description?: string;
-						type: string;
-						isRequired: boolean;
-					}>
-				)
-					.filter((field) => field.isRequired)
-					.map((field) => field.name),
-			};
-		}
+			const fields = schema['fields'] as Array<{
+				name: string;
+				description?: string;
+				type: string;
+				isRequired: boolean;
+			}>;
 
-		const functionCalling = ai?.function?.call;
-		if (!functionCalling) {
-			throw new Error(`Model ${model} does not support iextract structured data.`);
-		}
+			const properties: Record<string, any> = {};
+			const required: string[] = [];
+			
+			fields.forEach((field) => {
+				properties[field.name] = {
+					type: field.type,
+					description: field.description,
+				};
 
-		const messages = [
-			{
-				role: AIChatRole.USER,
-				content: prompt ?? 'Use optical character recognition (OCR) to extract from provided data.',
-			},
-		];
-		if (!isNil(text) && text !== '') {
-			messages.push({
-				role: AIChatRole.USER,
-				content: text,
+				if (field.isRequired) {
+					required.push(field.name);
+				}
 			});
+
+			const jsonSchemaObject = {
+				type: 'object' as const,
+				properties,
+				required,
+			};
+
+			schemaDefinition = jsonSchema(jsonSchemaObject);
 		}
 
-		const response = await functionCalling({
-			model,
-			files: files.map((file) => file.file),
-			messages,
-			functions: [
-				{
-					name: 'extract_structured_data',
-					description: 'Extract the following data from the provided data.',
-					arguments: params,
-				},
-			],
+		const extractionTool = tool({
+			description: 'Extract structured data from the provided content',
+			parameters: schemaDefinition,
+			execute: async (data) => {
+				return data;
+			},
 		});
 
-		const args = response?.call?.function?.arguments;
-		if (isNil(args)) {
-			throw new Error(
-				JSON.stringify({
-					message:
-						response.choices[0].content ?? 'Failed to extract structured data from the input.',
-				}),
-			);
+		const messages: Array<CoreMessage> = [];
+
+		// Prepare content parts array
+		const contentParts: CoreUserMessage['content']= [];
+
+		// Add the main prompt message
+		let textContent = prompt || 'Extract the following data from the provided data.';
+		if (text) {
+			textContent += `\n\nText to analyze:\n${text}`;
 		}
-		return args;
+
+		contentParts.push({
+			type: 'text',
+			text: textContent,
+		});
+
+		// Handle file processing similar to previous implementation
+		if (files.length > 0) {
+			for (const fileWrapper of files) {
+				const file = fileWrapper.file;
+				if (!file) {
+					continue;
+				}
+				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
+
+				if (fileType && fileType.startsWith('image') && file.base64) {
+					contentParts.push({
+						type: 'image',
+						image: `data:${fileType};base64,${file.base64}`,
+					});
+				}
+			}
+		}
+
+		// Add the message with all content parts
+		messages.push({
+			role: 'user',
+			content: contentParts,
+		});
+
+		try {
+			// Use Vercel AI SDK to generate text with tool calling
+			const result = await generateText({
+				model: provider,
+				maxTokens,
+				tools: {
+					extractData: extractionTool,
+				},
+				toolChoice: 'required',
+				messages,
+			});
+
+			// Extract the tool call result
+			const toolCalls = result.toolCalls;
+			if (!toolCalls || toolCalls.length === 0) {
+				throw new Error('No structured data could be extracted from the input.');
+			}
+
+			const extractedData = toolCalls[0].args;
+			return extractedData;
+
+		} catch (error) {
+			throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
 	},
 });
+
+

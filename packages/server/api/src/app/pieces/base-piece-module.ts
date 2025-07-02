@@ -3,7 +3,6 @@ import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shar
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
-    FileType,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -14,6 +13,7 @@ import {
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
+    SampleDataFileType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -137,7 +137,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 id: req.body.flowId,
                 versionId: req.body.flowVersionId,
             })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, FileType.SAMPLE_DATA)
+            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
             const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
                 jobType: UserInteractionJobType.EXECUTE_PROPERTY,
                 projectId,

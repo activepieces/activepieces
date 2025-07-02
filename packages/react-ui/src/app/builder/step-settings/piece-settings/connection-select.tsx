@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -27,8 +29,6 @@ import {
   PieceTrigger,
   isNil,
 } from '@activepieces/shared';
-
-import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {
   disabled: boolean;
@@ -51,17 +51,22 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const form = useFormContext<PieceAction | PieceTrigger>();
+
   const {
-    data: connectionsPage,
-    isLoading,
+    data: connections,
+    isLoading: isLoadingConnections,
     refetch,
-  } = appConnectionsHooks.useConnections({
-    pieceName: params.piece.name,
-    cursor: undefined,
-    limit: 1000,
+  } = appConnectionsQueries.useAppConnections({
+    request: {
+      pieceName: params.piece.name,
+      projectId: authenticationSession.getProjectId()!,
+      limit: 1000,
+    },
+    extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
+    staleTime: 0,
   });
 
-  const selectedConnection = connectionsPage?.find(
+  const selectedConnection = connections?.data?.find(
     (connection) =>
       connection.externalId ===
       removeBrackets(form.getValues().settings.input.auth ?? ''),
@@ -76,14 +81,14 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       name={'settings.input.auth'}
       render={({ field }) => (
         <>
-          {isLoading && (
+          {isLoadingConnections && (
             <Select disabled={params.disabled}>
               <SelectContent>
                 <SelectLoader />
               </SelectContent>
             </Select>
           )}
-          {!isLoading && (
+          {!isLoadingConnections && (
             <AutoFormFieldWrapper
               property={params.piece.auth!}
               propertyName="auth"
@@ -117,7 +122,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 <div className="relative">
                   {field.value && !field.disabled && (
                     <>
-                      {connectionsPage?.find(
+                      {connections?.data?.find(
                         (connection) =>
                           connection.externalId ===
                             removeBrackets(field.value) &&
@@ -147,14 +152,14 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     >
                       {!isNil(field.value) &&
                       !isNil(
-                        connectionsPage?.find(
+                        connections?.data?.find(
                           (connection) =>
                             connection.externalId ===
                             removeBrackets(field.value),
                         ),
                       ) ? (
                         <div className="truncate flex-grow flex-shrink flex items-center gap-2">
-                          {connectionsPage?.find(
+                          {connections?.data?.find(
                             (connection) =>
                               connection.externalId ===
                               removeBrackets(field.value),
@@ -162,7 +167,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                             <Globe size={16} className="shrink-0" />
                           )}
                           {
-                            connectionsPage?.find(
+                            connections?.data?.find(
                               (connection) =>
                                 connection.externalId ===
                                 removeBrackets(field.value),
@@ -173,7 +178,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     </SelectValue>
                     <div className="grow"></div>
                     {field.value &&
-                      connectionsPage?.find(
+                      connections?.data?.find(
                         (connection) =>
                           connection.externalId ===
                             removeBrackets(field.value) &&
@@ -203,8 +208,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     </span>
                   </SelectAction>
 
-                  {connectionsPage &&
-                    connectionsPage.map((connection) => {
+                  {connections &&
+                    connections.data &&
+                    connections.data?.map((connection) => {
                       return (
                         <SelectItem
                           value={addBrackets(connection.externalId)}

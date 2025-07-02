@@ -4,7 +4,6 @@ import { McpProperty, McpPropertyType } from '@activepieces/shared'
 import { z } from 'zod' 
 
 
-export const MAX_TOOL_NAME_LENGTH = 47
 
 export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
     let schema: z.ZodTypeAny
@@ -21,10 +20,10 @@ export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
             schema = z.boolean()
             break
         case McpPropertyType.ARRAY:
-            schema = z.array(z.unknown())
+            schema = z.array(z.string())
             break
         case McpPropertyType.OBJECT:
-            schema = z.record(z.string(), z.unknown())
+            schema = z.record(z.string(), z.string())
             break
         default:
             schema = z.unknown()

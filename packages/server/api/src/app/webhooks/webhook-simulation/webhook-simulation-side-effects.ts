@@ -1,10 +1,6 @@
 import {
-    ActivepiecesError,
-    EngineResponseStatus,
-    ErrorCode,
     FlowId,
     FlowVersionId,
-    isNil,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -27,20 +23,11 @@ export const webhookSideEffects = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const response = await triggerHooks.enable({
+        await triggerHooks.enable({
             projectId,
             flowVersion,
             simulate: true,
         }, log)
-
-        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
-            throw new ActivepiecesError({
-                code: ErrorCode.TRIGGER_ENABLE,
-                params: {
-                    flowVersionId: flowVersion.id,
-                },
-            })
-        }
     },
 
     async preDelete({

@@ -1,2 +1,6 @@
 export * from './mcp'
-export * from './dto/mcp.dto'
+export * from './mcp.request'
+export * from './tools/mcp-tool'
+export * from './pieces/mcp-piece'
+export * from './tools/run/mcp-run'
+export * from './tools/run/mcp-run.request'

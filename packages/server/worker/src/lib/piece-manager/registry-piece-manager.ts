@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -11,11 +11,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { PackageInfo, packageManager } from '../cache/package-manager'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-
-enum CacheState {
-    READY = 'READY',
-    PENDING = 'PENDING',
-}
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({

@@ -4,6 +4,7 @@ import {
     EventPayload,
     isMultipartFile,
     WebhookUrlParams,
+    WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -12,7 +13,6 @@ import { projectService } from '../project/project-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
-
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -69,6 +69,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             saveSampleData: true,
             flowVersionToRun: WebhookFlowVersionToRun.LATEST,
             execute: true,
+            onRunCreated: (run) => {
+                app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
+            },
         })
         await reply
             .status(response.status)

@@ -255,9 +255,9 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         limit,
         scope,
         platformId,
+        externalIds,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
             query: {
@@ -282,12 +282,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         if (!isNil(status)) {
             querySelector.status = In(status)
         }
+        if (!isNil(externalIds)) {
+            querySelector.externalId = In(externalIds)
+        }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
-
-
 
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = appConnectionHandler(log).decryptConnection(encryptedConnection)
@@ -599,6 +600,7 @@ type ListParams = {
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     limit: number
+    externalIds: string[] | undefined
 }
 
 type UpdateParams = {

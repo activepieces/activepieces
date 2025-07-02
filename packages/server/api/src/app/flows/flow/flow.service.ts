@@ -2,6 +2,7 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -22,6 +23,7 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
@@ -33,12 +35,13 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
+import { handshakeHandler } from '../../webhooks/handshake-handler'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
+import { triggerHooks } from '../trigger'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
@@ -113,12 +116,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             query: {
                 limit,
                 order: 'DESC',
+                orderBy: 'updated',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
         const queryWhere: Record<string, unknown> = { projectId }
-        
+
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
         }
@@ -167,14 +171,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             return null
         }
-        const projectExists = await projectService.exists(flow.projectId)
+        const projectExists = await projectService.exists({
+            projectId: flow.projectId,
+        })
         if (!projectExists) {
             return null
         }
         return flow
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
-        const projectExists = await projectService.exists(projectId)
+        const projectExists = await projectService.exists({
+            projectId,
+        })
         if (!projectExists) {
             return null
         }
@@ -203,7 +211,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const projectExists = await projectService.exists(projectId)
+        const projectExists = await projectService.exists({
+            projectId,
+        })
         if (isNil(flow) || !projectExists) {
             return null
         }
@@ -267,6 +277,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         userId,
                         projectId,
                         platformId,
+                    })
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status ?? FlowStatus.ENABLED,
                     })
                     break
                 }
@@ -359,16 +374,27 @@ export const flowService = (log: FastifyBaseLogger) => ({
             entityManager,
         })
 
+        const publishedFlowVersionId = flowToUpdate.publishedVersionId
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions, webhookHandshakeConfiguration } = await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                newStatus,
+            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: flowToUpdate.id,
+                versionId: publishedFlowVersionId,
                 entityManager,
+            })
+
+            const webhookHandshakeConfiguration = await handshakeHandler.getWebhookHandshakeConfiguration(publishedFlowVersion, projectId, log)
+            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            await flowRepo(entityManager).save(flowToUpdate)
+
+            const { scheduleOptions } = await flowSideEffects(log).preUpdateStatus({
+                flowToUpdate,
+                publishedFlowVersion,
+                newStatus,
             })
 
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
-            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
         }
 
@@ -440,10 +466,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         )
 
-        const { scheduleOptions, webhookHandshakeConfiguration } = await flowSideEffects(log).preUpdatePublishedVersionId({
-            flowToUpdate,
-            flowVersionToPublish,
-        })
+        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
+            await triggerHooks.disable({
+                flowVersion: await flowVersionService(log).getOneOrThrow(
+                    flowToUpdate.publishedVersionId,
+                ),
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+            }, log)
+        }
 
         return transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
@@ -456,11 +487,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.ENABLED
-            flowToUpdate.schedule = scheduleOptions
-            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            flowToUpdate.status = FlowStatus.DISABLED
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-
             return {
                 ...updatedFlow,
                 version: lockedFlowVersion,
@@ -563,7 +591,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
         })
     },
+
+    async updateLastModified(flowId: FlowId, projectId: ProjectId): Promise<void> {
+        const flow = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+        })
+
+        flow.updated = dayjs().toISOString()
+        await flowRepo().save(flow)
+    },
 })
+
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,

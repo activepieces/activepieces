@@ -1,2 +1,2 @@
-export * from "./app-credentials";
-export * from "./app-credentials-requests";
+export * from './app-credentials'
+export * from './app-credentials-requests'

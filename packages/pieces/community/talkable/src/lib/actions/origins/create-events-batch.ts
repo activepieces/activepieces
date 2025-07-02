@@ -33,6 +33,7 @@ export const createEventsBatch = createAction({
             eye_color: 'brown',
             person_occupation: 'marketing',
           },
+          custom_field: '',
           phone_number: '+12025551111',
           campaign_tags: 'post-purchase',
           sharing_channels: ['facebook', 'custom'],

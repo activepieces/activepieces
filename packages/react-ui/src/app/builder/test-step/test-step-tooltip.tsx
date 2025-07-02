@@ -19,9 +19,11 @@ const TestButtonTooltip = ({ children, disabled }: TestButtonTooltipProps) => {
         <TooltipTrigger asChild className="disabled:pointer-events-auto">
           {children}
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {disabled ? t('Please fix inputs first') : ''}
-        </TooltipContent>
+        {disabled && (
+          <TooltipContent side="bottom">
+            {t('Please fix inputs first')}
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   );

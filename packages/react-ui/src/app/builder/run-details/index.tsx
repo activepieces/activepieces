@@ -6,8 +6,8 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { CardList } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
-import { CardList } from '@/components/ui/card-list';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -26,8 +26,8 @@ import {
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';
 
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
-import { FlowStepInputOutput } from './flow-step-input-output';
+import { FlowStepIO } from './flow-step-io';
+import { FlowStepDetailsCardItem } from './run-step-card-item';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {
   if (!run || run.status === FlowRunStatus.RUNNING) return null;
@@ -123,9 +123,7 @@ const FlowRunDetails = React.memo(() => {
         <>
           <ResizableHandle withHandle={true} />
           <ResizablePanel defaultValue={25}>
-            <FlowStepInputOutput
-              stepDetails={selectedStepOutput}
-            ></FlowStepInputOutput>
+            <FlowStepIO stepDetails={selectedStepOutput}></FlowStepIO>
           </ResizablePanel>
         </>
       )}

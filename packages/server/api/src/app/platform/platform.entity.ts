@@ -60,10 +60,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
-        defaultLocale: {
-            type: String,
-            nullable: true,
-        },
         allowedAuthDomains: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),

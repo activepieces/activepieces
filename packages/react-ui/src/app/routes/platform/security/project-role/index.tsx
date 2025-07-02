@@ -3,14 +3,14 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';

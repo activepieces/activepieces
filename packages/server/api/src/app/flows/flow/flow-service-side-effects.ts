@@ -1,5 +1,4 @@
 import {
-    assertNotNullOrUndefined,
     FileType,
     Flow,
     FlowScheduleOptions,
@@ -11,49 +10,37 @@ import {
     WebhookHandshakeConfiguration,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
-        flowToUpdate,
         newStatus,
-        entityManager,
+        flowToUpdate,
+        publishedFlowVersion,
     }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
-        assertNotNullOrUndefined(
-            flowToUpdate.publishedVersionId,
-            'publishedVersionId',
-        )
-
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
-            {
-                flowId: flowToUpdate.id,
-                versionId: flowToUpdate.publishedVersionId,
-                entityManager,
-            },
-        )
 
         let scheduleOptions: ScheduleOptions | undefined
-        let webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
+        const webhookHandshakeConfiguration: WebhookHandshakeConfiguration | null = flowToUpdate.handshakeConfiguration ?? null
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                const response = await triggerHooks.enable({
-                    flowVersion: publishedFlowVersion,
-                    projectId: flowToUpdate.projectId,
-                    simulate: false,
-                }, log)
-                scheduleOptions = response?.result.scheduleOptions  
-                webhookHandshakeConfiguration = response?.webhookHandshakeConfiguration ?? null
+                const response = await triggerHooks.enable(
+                    {
+                        flowVersion: publishedFlowVersion,
+                        projectId: flowToUpdate.projectId,
+                        simulate: false,
+                    }, log)
+                scheduleOptions = response?.result.scheduleOptions
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerHooks.disable({
-                    flowVersion: publishedFlowVersion,
-                    projectId: flowToUpdate.projectId,
-                    simulate: false,
-                }, log)
+                await triggerHooks.disable(
+                    {
+                        flowVersion: publishedFlowVersion,
+                        projectId: flowToUpdate.projectId,
+                        simulate: false,
+                    }, log)
                 break
             }
         }
@@ -75,68 +62,27 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async preUpdatePublishedVersionId({
-        flowToUpdate,
-        flowVersionToPublish,
-    }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
-        if (
-            flowToUpdate.status === FlowStatus.ENABLED &&
-      flowToUpdate.publishedVersionId
-        ) {
-            await triggerHooks.disable({
-                flowVersion: await flowVersionService(log).getOneOrThrow(
-                    flowToUpdate.publishedVersionId,
-                ),
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-            }, log)
-        }
-
-        const enableResult = await triggerHooks.enable({
-            flowVersion: flowVersionToPublish,
-            projectId: flowToUpdate.projectId,
-            simulate: false,
-        }, log)
-
-        const scheduleOptions = enableResult?.result.scheduleOptions
-        const webhookHandshakeConfiguration = enableResult?.webhookHandshakeConfiguration ?? null
-        if (isNil(scheduleOptions)) {
-            return {
-                scheduleOptions: null,
-                webhookHandshakeConfiguration,
-            }
-        }
-
-        return {
-            scheduleOptions: {
-                ...scheduleOptions,
-                type: ScheduleType.CRON_EXPRESSION,
-                failureCount: 0,
-            },
-            webhookHandshakeConfiguration,
-        }
-    },
-
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
-      isNil(flowToDelete.publishedVersionId)
+            isNil(flowToDelete.publishedVersionId)
         ) {
             return
         }
 
-        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
-            {
-                flowId: flowToDelete.id,
-                versionId: flowToDelete.publishedVersionId,
-            },
-        )
+        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: flowToDelete.id,
+            versionId: flowToDelete.publishedVersionId,
+        })
 
-        await triggerHooks.disable({
-            flowVersion: publishedFlowVersion,
-            projectId: flowToDelete.projectId,
-            simulate: false,
-        }, log)
+        await triggerHooks.disable(
+            {
+                flowVersion: publishedFlowVersion,
+                projectId: flowToDelete.projectId,
+                simulate: false,
+            },
+            log,
+        )
 
         await sampleDataService(log).deleteForFlow({
             projectId: flowToDelete.projectId,
@@ -152,17 +98,10 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 })
 
-type PreUpdateParams = {
+type PreUpdateStatusParams = {
     flowToUpdate: Flow
-}
-
-type PreUpdateStatusParams = PreUpdateParams & {
+    publishedFlowVersion: FlowVersion
     newStatus: FlowStatus
-    entityManager: EntityManager | undefined
-}
-
-type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
-    flowVersionToPublish: FlowVersion
 }
 
 type PreUpdateReturn = {

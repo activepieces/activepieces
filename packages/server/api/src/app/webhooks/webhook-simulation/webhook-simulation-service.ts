@@ -35,7 +35,7 @@ type AcquireLockParams = {
 
 const createLock = async ({ flowId, log }: AcquireLockParams): Promise<ApLock> => {
     const key = `${flowId}-webhook-simulation`
-    return distributedLock.acquireLock({ key, timeout: 5000, log })
+    return distributedLock.acquireLock({ key, timeout: 60000, log })
 }
 
 const webhookSimulationRepo = repoFactory(WebhookSimulationEntity)
@@ -65,11 +65,10 @@ export const webhookSimulationService = (log: FastifyBaseLogger) => ({
                 })
             }
 
-            const webhookSimulation: Omit<WebhookSimulation, 'created' | 'updated'> =
-        {
-            id: apId(),
-            ...params,
-        }
+            const webhookSimulation: Omit<WebhookSimulation, 'created' | 'updated'> = {
+                id: apId(),
+                ...params,
+            }
 
             await webhookSideEffects(log).preCreate({
                 flowId,
@@ -113,7 +112,7 @@ export const webhookSimulationService = (log: FastifyBaseLogger) => ({
         }
         return webhookSimulation
     },
-    
+
     async delete(params: DeleteParams): Promise<void> {
         log.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 

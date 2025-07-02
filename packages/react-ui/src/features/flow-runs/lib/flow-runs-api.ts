@@ -40,6 +40,7 @@ export const flowRunsApi = {
   testStep(
     socket: Socket,
     request: Omit<CreateStepRunRequestBody, 'id'>,
+    onProgress?: (progress: StepRunResponse) => void,
   ): Promise<StepRunResponse> {
     const id = nanoid();
     socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
@@ -54,21 +55,25 @@ export const flowRunsApi = {
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
           );
+          onProgress?.(response);
           socket.off('error', handleError);
-          console.log('clear TEST_STEP_FINISHED listener' + response.id);
 
           resolve(response);
         }
       };
 
+      const handleProgress = (progress: StepRunResponse) => {
+        onProgress?.(progress);
+      };
+
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+        socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
         socket.off('error', handleError);
-        console.log('clear TEST_STEP_FINISHED listener', error);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      console.log('listened to TEST_STEP_FINISHED');
+      socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleProgress);
       socket.on('error', handleError);
     });
   },
@@ -83,11 +88,9 @@ function getInitialRun(
         return;
       }
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }

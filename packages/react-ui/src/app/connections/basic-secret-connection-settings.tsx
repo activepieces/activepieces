@@ -45,7 +45,7 @@ const BasicAuthConnectionSettings = React.memo(
           name="request.value.password"
           control={form.control}
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem className="flex flex-col mt-3.5">
               <FormLabel>{authProperty.password.displayName}</FormLabel>
               <FormControl>
                 <Input {...field} type="password" />

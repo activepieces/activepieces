@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { replyMessage } from './lib/actions/reply-message';
 import { sendMessage } from './lib/actions/send-message';
+import { reactMessage } from './lib/actions/react-message';
 
 export const returningAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -14,6 +15,6 @@ export const returningAi = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: `https://cdn.activepieces.com/pieces/returning-ai.png`,
   authors: ['mg-wunna'],
-  actions: [sendMessage, replyMessage],
+  actions: [sendMessage, replyMessage, reactMessage],
   triggers: [],
 });

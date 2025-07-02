@@ -1,5 +1,5 @@
 import path from 'path'
-import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, ExecutionMode, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
@@ -8,10 +8,6 @@ import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
 
-export const GLOBAL_CACHE_PATH = path.resolve('cache')
-export const GLOBAL_CACHE_COMMON_PATH = path.resolve('cache', 'common')
-export const GLOBAL_CODE_CACHE_PATH = path.resolve('cache', 'codes')
-export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
     getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {

@@ -6,14 +6,15 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { localPieceCache } from './helper/local-piece-cache'
-import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
+import { pieceListUtils } from './utils'
 import { toPieceMetadataModelSummary } from '.'
 
 const repo = repoFactory(PieceMetadataEntity)
@@ -38,13 +39,13 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 }
             })
             const piecesWithTags = await enrichTags(params.platformId, latestVersionOfEachPiece, params.includeTags)
-            const filteredPieces = await pieceMetadataServiceHooks.get().filterPieces({
+            const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
             const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
-            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)    
+            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
@@ -61,6 +62,14 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 ))
                 return piece.name === name && strictlyLessThan
             })
+            const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
+                piece,
+                projectId,
+                platformId,
+            })
+            if (isFiltered) {
+                return undefined
+            }
             return piece
         },
         async getOrThrow({ projectId, version, name, platformId, locale }): Promise<PieceMetadataModel> {
@@ -69,7 +78,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        message: `piece_metadata_not_found projectId=${projectId}`,
+                        message: `piece_metadata_not_found projectId=${projectId} pieceName=${name}`,
                     },
                 })
             }

@@ -1,61 +1,9 @@
 import { pipedriveAuth } from '../../';
-import {
-	createTrigger,
-	PiecePropValueSchema,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { pipedriveApiCall, pipedrivePaginatedApiCall } from '../common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { pipedriveApiCall, pipedriveCommon } from '../common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
-
-const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, lastFetchEpochMS }) {
-		const notes = [];
-
-		if (lastFetchEpochMS === 0) {
-			const response = await pipedriveApiCall<LeadListResponse>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/notes',
-				query: { limit: 10, sort: 'update_time DESC' },
-			});
-
-			if (isNil(response.data)) {
-				return [];
-			}
-
-			for (const note of response.data) {
-				notes.push(note);
-			}
-		} else {
-			const response = await pipedrivePaginatedApiCall<Record<string, any>>({
-				accessToken: auth.access_token,
-				apiDomain: auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/notes',
-				query: { sort: 'add_time DESC' },
-			});
-			if (isNil(response)) {
-				return [];
-			}
-
-			for (const note of response) {
-				notes.push(note);
-			}
-		}
-
-		return notes.map((note) => {
-			return {
-				epochMilliSeconds: dayjs(note.add_time).valueOf(),
-				data: note,
-			};
-		});
-	},
-};
 
 export const newNoteTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -63,26 +11,55 @@ export const newNoteTrigger = createTrigger({
 	displayName: 'New Note',
 	description: 'Triggers when a new note is created.',
 	props: {},
-	type: TriggerStrategy.POLLING,
+	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
+		const webhook = await pipedriveCommon.subscribeWebhook(
+			'note',
+			'added',
+			context.webhookUrl!,
+			context.auth.data['api_domain'],
+			context.auth.access_token,
+		);
+		await context.store?.put<{
+			webhookId: string;
+		}>('_new_note_trigger', {
+			webhookId: webhook.data.id,
 		});
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		const response = await context.store?.get<{
+			webhookId: string;
+		}>('_new_note_trigger');
+		if (response !== null && response !== undefined) {
+			await pipedriveCommon.unsubscribeWebhook(
+				response.webhookId,
+				context.auth.data['api_domain'],
+				context.auth.access_token,
+			);
+		}
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		const response = await pipedriveApiCall<LeadListResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/notes',
+			query: { limit: 10, sort: 'update_time DESC' },
+		});
+
+		if (isNil(response.data)) {
+			return [];
+		}
+
+		return response.data;
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		const payloadBody = context.payload.body as {
+			current: Record<string, unknown>;
+			previous: Record<string, unknown>;
+		};
+
+		return [payloadBody.current];
 	},
 	sampleData: {
 		id: 1,
@@ -104,6 +81,11 @@ export const newNoteTrigger = createTrigger({
 		person: { name: 'John' },
 		deal: null,
 		lead: null,
-		user: { email: 'test@gmail.com', name: 'John', icon_url: null, is_you: true },
+		user: {
+			email: 'test@gmail.com',
+			name: 'John',
+			icon_url: null,
+			is_you: true,
+		},
 	},
 });

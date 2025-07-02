@@ -1,6 +1,6 @@
 import { HttpMethod, AuthenticationType, HttpRequest, httpClient } from "@activepieces/pieces-common";
 import { Property } from "@activepieces/pieces-framework";
-import { CreateTodoRequestBody, SeekPage, STATUS_VARIANT, TodoWithAssignee, UserWithMetaInformation } from "@activepieces/shared";
+import { CreateTodoRequestBody, PopulatedTodo, SeekPage, STATUS_VARIANT,  UserWithMetaInformation } from "@activepieces/shared";
 
 
 export const createTodoProps = {
@@ -98,7 +98,7 @@ type ApprovalParms = {
 export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) {
   const requestBody: CreateTodoRequestBody = {
     title: context.propsValue.title,
-    description: context.propsValue.description ?? undefined,
+    description: context.propsValue.description ?? '',
     statusOptions: context.propsValue.statusOptions.map((option: any) => ({
       name: option.name,
       description: option.description,
@@ -112,7 +112,7 @@ export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) 
       queryParams: {},
     }),
   };
-  return await httpClient.sendRequest<TodoWithAssignee>({
+  return await httpClient.sendRequest<PopulatedTodo>({
     method: HttpMethod.POST,
     url: `${context.server.publicUrl}v1/todos`,
     body: requestBody,

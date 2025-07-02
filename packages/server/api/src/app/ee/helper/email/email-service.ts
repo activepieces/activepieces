@@ -198,6 +198,79 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+
+    async sendThreeDaysLeftOnTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '3-days-left-on-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendOneDayLeftOnTrial(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '1-day-left-on-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendWellcomeToTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'wellcome-to-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+    },
+
+    async sendSevenDaysInTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '7-days-in-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)

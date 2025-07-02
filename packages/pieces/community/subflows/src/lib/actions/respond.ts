@@ -64,7 +64,7 @@ export const response = createAction({
         body: {
           data: response
         },
-        retries: 4,
+        retries: 10,
       });
     }
     return response;

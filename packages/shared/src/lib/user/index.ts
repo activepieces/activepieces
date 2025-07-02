@@ -12,3 +12,11 @@ export const UpdateUserRequestBody = Type.Object({
 
 export type UpdateUserRequestBody = Static<typeof UpdateUserRequestBody>
 
+
+export const ListUsersRequestBody = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+    externalId: Type.Optional(Type.String()),
+})
+
+export type ListUsersRequestBody = Static<typeof ListUsersRequestBody>

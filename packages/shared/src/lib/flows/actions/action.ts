@@ -239,11 +239,6 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-export const BranchActionSettings = Type.Object({
-    conditions: Type.Array(Type.Array(BranchConditionValid(false))),
-    inputUiInfo: SampleDataSetting,
-})
-export type BranchActionSettings = Static<typeof BranchActionSettings>
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
     Type.Array(
@@ -349,7 +344,7 @@ export type StepSettings =
   | CodeActionSettings
   | PieceActionSettings
   | PieceTriggerSettings
-  | BranchActionSettings
+  | RouterActionSettings
   | LoopOnItemsActionSettings
 
 export const emptyCondition: ValidBranchCondition = {

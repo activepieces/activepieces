@@ -86,6 +86,10 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
+        const hasScheduledJob = await queue.getJobScheduler(flowVersionId)
+        if (isNil(hasScheduledJob)) {
+            return
+        }
         const result = await queue.removeJobScheduler(flowVersionId)
         if (!result) {
             exceptionHandler.handle(new ActivepiecesError({

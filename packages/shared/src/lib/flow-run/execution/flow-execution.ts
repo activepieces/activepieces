@@ -108,10 +108,13 @@ export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
     return isFlowUserTerminalState(status) || status === FlowRunStatus.INTERNAL_ERROR
 }
 
+export const FAILED_STATES = [
+    FlowRunStatus.FAILED,
+    FlowRunStatus.INTERNAL_ERROR,
+    FlowRunStatus.QUOTA_EXCEEDED,
+    FlowRunStatus.TIMEOUT,
+    FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+]   
 export const isFailedState = (status: FlowRunStatus): boolean => {
-    return status === FlowRunStatus.FAILED
-        || status === FlowRunStatus.INTERNAL_ERROR
-        || status === FlowRunStatus.QUOTA_EXCEEDED
-        || status === FlowRunStatus.TIMEOUT
-        || status === FlowRunStatus.MEMORY_LIMIT_EXCEEDED
+    return FAILED_STATES.includes(status)
 }

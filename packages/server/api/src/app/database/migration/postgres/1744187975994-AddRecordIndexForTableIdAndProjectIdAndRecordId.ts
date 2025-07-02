@@ -11,7 +11,7 @@ export class AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 implem
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_record_table_id_project_id_record_id"
+            DROP INDEX "idx_record_table_id_project_id_record_id"
         `)
     }
 

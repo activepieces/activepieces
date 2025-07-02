@@ -17,14 +17,10 @@ import {
   PiecePropertyMap,
   PieceProperty,
 } from '@activepieces/pieces-framework';
-import {
-  Trigger,
-  McpPropertyType,
-  fixSchemaNaming,
-} from '@activepieces/shared';
+import { Trigger, McpPropertyType, mcpToolNaming } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
-import testStepHooks from '../test-step-hooks';
+import { testStepHooks } from '../test-step-hooks';
 
 type McpToolTestingDialogProps = {
   open: boolean;
@@ -136,7 +132,10 @@ function McpToolTestingDialog({
               const cleanedData = Object.fromEntries(
                 Object.entries(data)
                   .filter(([key, _]) => key.trim() !== '')
-                  .map(([key, value]) => [fixSchemaNaming(key), value]),
+                  .map(([key, value]) => [
+                    mcpToolNaming.fixProperty(key),
+                    value,
+                  ]),
               );
               saveMockAsSampleData(cleanedData);
             })}

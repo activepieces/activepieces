@@ -153,9 +153,7 @@ export enum TelemetryEventName {
     KEY_ACTIVATED = 'key.activated',
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
-    UPGRADE_CLICKED = 'upgrade.clicked',
     USER_INVITED = 'user.invited',
-    OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
     CREATED_FLOW = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
@@ -179,6 +177,10 @@ export enum TelemetryEventName {
     AI_PROVIDER_USED = 'ai.provider.used',
     AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
     MCP_TOOL_CALLED = 'mcp.tool.called',
+
+    UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
+    UPGRADE_CLICKED = 'upgrade.clicked',
+    OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
 }
 
 type BaseTelemetryEvent<T, P> = {

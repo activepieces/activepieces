@@ -3,7 +3,7 @@ import * as path from 'path'
 import { cwd } from 'node:process'
 import { readPackageJson, readProjectJson } from './files'
 import { exec } from './exec'
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
@@ -100,12 +100,12 @@ export async function publishPieceFromFolder(
         });
         console.info(chalk.green(`Piece '${packageJson.name}' published.`));
     } catch (error) {
-        const axiosError = error as AxiosError;
-        if (axiosError.response) {
-            if (axiosError.response.status === 409) {
+     
+        if (axios.isAxiosError(error)) {
+            if (error.response.status === 409) {
                 console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
-            } else if (Math.floor(axiosError.response.status / 100) !== 2) {
-                console.info(chalk.red(`Error publishing piece '${packageJson.name}', ` + JSON.stringify(axiosError.response.data)));
+            } else if (Math.floor(error.response.status / 100) !== 2) {
+                console.info(chalk.red(`Error publishing piece '${packageJson.name}',  ${error}` ));
                 if (failOnError) {
                     console.info(chalk.yellow(`Terminating process due to publish failure for piece '${packageJson.name}' (fail-on-error is enabled)`));
                     process.exit(1);

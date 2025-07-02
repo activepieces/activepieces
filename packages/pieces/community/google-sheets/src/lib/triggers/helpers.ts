@@ -133,7 +133,7 @@ export function transformWorkSheetValues(rowValues: any[][], oldRowCount: number
 	const result = [];
 	for (let i = 0; i < rowValues.length; i++) {
 		const values: any = {};
-		for (let j = 0; j < headerCount ; j++) {
+		for (let j = 0; j < Math.max(headerCount,rowValues[i].length) ; j++) {
 			values[columnToLabel(j)] = rowValues[i][j] ?? "";
 		}
 		result.push({

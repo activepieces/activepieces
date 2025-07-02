@@ -1,5 +1,4 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import { access, constants } from 'node:fs/promises'
 
 export type PackageJson = {
   name: string

@@ -9,6 +9,7 @@ import {
     apId,
     Cursor,
     DefaultProjectRole,
+    isNil,
     PlatformId,
     PlatformRole,
     ProjectId,
@@ -104,9 +105,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         }
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        const enrichedData = await Promise.all(
+        const enrichedData: (ProjectMemberWithUser | null)[] = await Promise.all(
             data.map(async (member) => {
                 const enrichedMember = await enrichProjectMemberWithUser(member, log)
+                if (isNil(enrichedMember)) {
+                    return null
+                }
                 return {
                     ...enrichedMember,
                     projectRole: await projectRoleService.getOneOrThrowById({
@@ -115,7 +119,8 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 }
             }),
         )
-        return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
+        const filteredEnrichedData = enrichedData.filter((member) => !isNil(member))
+        return paginationHelper.createPage<ProjectMemberWithUser>(filteredEnrichedData, cursor)
     },
     async getRole({
         userId,
@@ -220,7 +225,15 @@ type UpdateMemberRole = {
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,
     log: FastifyBaseLogger,
-): Promise<ProjectMemberWithUser> {
+): Promise<ProjectMemberWithUser | null> {  
+    const isProjectSoftDeleted = await projectService.exists({
+        projectId: projectMember.projectId,
+        isSoftDeleted: true,
+    })
+    if (isProjectSoftDeleted) {
+        return null
+    }
+
     const user = await userService.getOneOrFail({
         id: projectMember.userId,
     })

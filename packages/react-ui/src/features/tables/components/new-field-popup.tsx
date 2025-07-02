@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
-import { ArrayInput } from '@/components/ui/array-input';
+import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
