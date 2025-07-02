@@ -1,4 +1,11 @@
+import { t } from 'i18next';
+
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +18,7 @@ import {
   AgentTestResult,
   AgentStepBlock,
   StepRunResponse,
+  AgentTaskStatus,
   isNil,
 } from '@activepieces/shared';
 
@@ -19,12 +27,14 @@ type AgentTestingDialogProps = {
   onOpenChange: (open: boolean) => void;
   agentProgress: StepRunResponse | null;
   isTesting: boolean;
+  agentId: string;
 };
 
 function AgentTestingDialog({
   open,
   onOpenChange,
   agentProgress,
+  agentId,
 }: AgentTestingDialogProps) {
   const agentResult = agentProgress?.output as AgentTestResult | undefined;
   const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
@@ -33,21 +43,27 @@ function AgentTestingDialog({
     'prompt' in (agentProgress.input as { prompt: string })
       ? (agentProgress.input as { prompt: string }).prompt
       : '';
-
+  const isDone =
+    agentResult?.status === AgentTaskStatus.COMPLETED ||
+    agentResult?.status === AgentTaskStatus.FAILED;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-2xl overflow-hidden">
+      <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
         <DialogHeader>
-          <DialogTitle>Agent Test Results</DialogTitle>
+          <DialogTitle>{t('Agent Test Results')}</DialogTitle>
         </DialogHeader>
-        <div className="h-[40vh]">
+
+        <div className="max-h-[60vh] min-h-[40vh] ">
           <AgentTimeline
+            agentId={agentId}
             steps={agentSteps}
+            className="h-full p-0 pr-3 max-w-[39.25rem]"
             prompt={prompt}
-            className="h-full"
+            isDone={isDone}
           />
         </div>
-        <DialogFooter className="">
+
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>

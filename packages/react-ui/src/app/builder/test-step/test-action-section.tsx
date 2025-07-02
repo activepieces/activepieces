@@ -6,6 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
+import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import {
   Action,
@@ -16,6 +17,7 @@ import {
   flowStructureUtil,
   isNil,
   StepRunResponse,
+  PieceAction,
 } from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
@@ -152,7 +154,7 @@ const TestStepSectionImplementation = React.memo(
     };
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
-
+    const agentId = stepUtils.getAgentId(currentStep);
     return (
       <>
         {!sampleDataExists && (
@@ -219,6 +221,7 @@ const TestStepSectionImplementation = React.memo(
               onOpenChange={(open) => !open && handleCloseDialog()}
               agentProgress={agentProgress}
               isTesting={isTesting}
+              agentId={agentId ?? ''}
             />
           )}
         {activeDialog === DialogType.WEBHOOK && (
@@ -250,6 +253,14 @@ const TestActionSection = React.memo((props: TestActionComponentProps) => {
   return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
 });
 
+const getPrompt = (step: PieceAction) => {
+  const prompt = step.settings.input?.prompt;
+  if (typeof prompt === 'string') {
+    return prompt;
+  }
+  console.error('Prompt is not a string', prompt);
+  return '';
+};
 TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 

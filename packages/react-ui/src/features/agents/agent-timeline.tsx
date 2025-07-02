@@ -1,8 +1,18 @@
-import { Loader2 } from 'lucide-react';
-import React from 'react';
+import { t } from 'i18next';
+import { Brain, CogIcon, Loader2, SparkleIcon, Wrench } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   AgentStepBlock,
   ContentBlockType,
@@ -11,39 +21,30 @@ import {
 } from '@activepieces/shared';
 
 import { AgentToolBlock } from './agent-tool-block';
+import { agentHooks } from './lib/agent-hooks';
 
 type AgentTimelineProps = {
   steps: AgentStepBlock[];
-  prompt?: string;
-  isLoading?: boolean;
   className?: string;
+  prompt: string;
+  isDone: boolean;
+  agentId: string;
 };
 
 const AgentTimeline = ({
   steps,
-  prompt,
   className = '',
+  prompt,
+  isDone,
+  agentId,
 }: AgentTimelineProps) => {
-  if (isNil(steps)) {
-    return (
-      <div
-        className={`flex flex-col items-center justify-center h-full ${className}`}
-      >
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <div className="text-sm text-gray-500 mt-2">Thinking...</div>
-      </div>
-    );
-  }
-
   return (
     <ScrollArea className={`h-full p-4 ${className}`}>
+      {prompt !== '' && <AgentPromptBlock prompt={prompt} />}
       <div className=" flex flex-col gap-3">
-        {!isNil(prompt) && (
-          <div className="text-sm text-gray-500">{prompt}</div>
-        )}
         {steps.map((step, index) => {
           return (
-            <div key={index}>
+            <div key={index} className='animate-fade'>
               {step.type === ContentBlockType.MARKDOWN && (
                 <ApMarkdown
                   markdown={step.markdown}
@@ -56,8 +57,50 @@ const AgentTimeline = ({
             </div>
           );
         })}
+        {!isDone && <AgentStepSkeleton agentId={agentId} />}
       </div>
     </ScrollArea>
+  );
+};
+
+const AgentStepSkeleton = ({ agentId }: { agentId: string }) => {
+  const { data: agent } = agentHooks.useGet(agentId);
+  const [dots, setDots] = useState('...');
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev === '....' ? '.' : `${prev}.`));
+    }, 250);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <div className="flex items-center px-4 py-3 text-sm font-medium gap-3">
+      <ImageWithFallback
+        src={agent?.profilePictureUrl}
+        alt={agent?.displayName}
+        className="size-8"
+      ></ImageWithFallback>
+      {`${t('Working my magic')} ${dots}`}
+    </div>
+  );
+};
+
+const AgentPromptBlock = ({ prompt }: { prompt: string }) => {
+  return (
+    <div className='animate-fade mb-3'>
+        <Accordion type="single" collapsible  defaultValue="prompt">
+      <AccordionItem value="prompt" className="border-none">
+        <AccordionTrigger>
+          <div className="flex items-center gap-2">
+            <SparkleIcon className="size-4 text-primary" /> {t('Prompt')}
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <div>{prompt}</div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+    </div>
+    
   );
 };
 

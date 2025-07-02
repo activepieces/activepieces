@@ -7,10 +7,7 @@ import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import {
-  ApSubscriptionStatus,
-  PlanName,
-} from '@activepieces/ee-shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type PlanCardProps = {
@@ -103,7 +100,12 @@ export const PlanCard = ({
             openNewWindow('https://activepieces.com/sales');
           } else if (!isSelected) {
             if (hasActiveSubscription) {
-              updateSubscription({ plan: plan.name as PlanName.PLUS | PlanName.BUSINESS | PlanName.FREE });
+              updateSubscription({
+                plan: plan.name as
+                  | PlanName.PLUS
+                  | PlanName.BUSINESS
+                  | PlanName.FREE,
+              });
             } else {
               createSubscription({
                 plan: plan.name as PlanName.PLUS | PlanName.BUSINESS,

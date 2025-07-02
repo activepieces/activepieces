@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Settings2 } from 'lucide-react';
+import { Settings, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { AgentBuilder } from '@/app/routes/agents/builder';
@@ -36,12 +36,14 @@ const EditAgentInFlowBuilderButton = ({ agentId }: { agentId: string }) => {
         <Tooltip>
           <TooltipTrigger>
             <Button
-              className="text-foreground"
-              variant="ghost"
               size="icon"
+              className="size-8"
               onClick={() => setIsAgentBuilderOpen(true)}
+              variant="outline-primary"
             >
-              <Settings2 className="size-4" />
+              <div className="flex items-center justify-center rounded-sm p-0.5 ">
+                <Settings className="size-5" />
+              </div>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('Agent Settings')}</TooltipContent>
