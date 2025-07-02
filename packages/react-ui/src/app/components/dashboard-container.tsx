@@ -7,10 +7,12 @@ import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
+import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -50,6 +52,11 @@ export function DashboardContainer({
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BILLING,
+  );
+
   const [isAlertClosed, setIsAlertClosed] = useState(false);
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -172,6 +179,7 @@ export function DashboardContainer({
         >
           {children}
         </SidebarComponent>
+        {showBilling && <WelcomeTrialDialog />}
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

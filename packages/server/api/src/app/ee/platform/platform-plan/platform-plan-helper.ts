@@ -7,12 +7,10 @@ const edition = system.getEdition()
 
 type QuotaCheckParams = {
     platformId: string
-    metric: PlatformUsageMetric
+    metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_TOKENS | PlatformUsageMetric.TASKS>
 }
 
 const METRIC_TO_LIMIT_MAPPING = {
-    [PlatformUsageMetric.TASKS]: 'tasksLimit',
-    [PlatformUsageMetric.AI_TOKENS]: 'aiCreditsLimit',
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
     [PlatformUsageMetric.USER_SEATS]: 'userSeatsLimit',
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
@@ -22,8 +20,6 @@ const METRIC_TO_LIMIT_MAPPING = {
 } as const
 
 const METRIC_TO_USAGE_MAPPING = {
-    [PlatformUsageMetric.TASKS]: 'tasks',
-    [PlatformUsageMetric.AI_TOKENS]: 'aiCredits',
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
     [PlatformUsageMetric.USER_SEATS]: 'seats',
     [PlatformUsageMetric.PROJECTS]: 'projects',

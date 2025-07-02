@@ -3,7 +3,6 @@ import {
     flowStructureUtil,
     FlowVersion,
     GenericStepOutput,
-    isNil,
     LoopStepOutput,
     RouterStepOutput,
     spreadIfDefined,
@@ -22,12 +21,8 @@ export const testExecutionContext = {
         apiUrl,
         sampleData,
     }: TestExecutionParams): Promise<FlowExecutorContext> {
-        let flowExecutionContext = FlowExecutorContext.empty()
-        if (isNil(flowVersion)) {
-            return flowExecutionContext
-        }
-        
         const flowSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        let flowExecutionContext = FlowExecutorContext.empty()
 
         for (const step of flowSteps) {
             const { name } = step
@@ -88,7 +83,7 @@ export const testExecutionContext = {
 
 
 type TestExecutionParams = {
-    flowVersion?: FlowVersion
+    flowVersion: FlowVersion
     excludedStepName?: string
     projectId: string
     apiUrl: string

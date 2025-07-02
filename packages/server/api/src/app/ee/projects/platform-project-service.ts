@@ -223,7 +223,6 @@ async function enrichProject(
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
-        platformSubscriptionStatus: platformBilling.stripeSubscriptionStatus,
         plan: await projectLimitsService(log).getPlanWithPlatformLimits(
             project.id,
         ),

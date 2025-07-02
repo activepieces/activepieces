@@ -1,6 +1,6 @@
 import { ApSubscriptionStatus, checkIsTrialSubscription, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { AiOverageState, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -112,8 +112,9 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         await platformPlanService(request.log).update({ 
                             ...planLimits,
                             platformId: platformPlan.platformId,
+                            eligibleForTrial: false,
                             stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
-                            aiCreditsLimit: isFreePlan ? undefined : platformPlan.aiCreditsLimit,
+                            aiCreditsOverageState: isFreePlan || isTrialSubscription ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
                         })
                         break
                     }
