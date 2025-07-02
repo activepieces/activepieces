@@ -18,7 +18,7 @@ export const agentExecutor = {
             token: params.serverToken,
             mcpId: agent.mcpId,
         })
-        
+
         const agentToolInstance = await agentTools({
             agent,
             publicUrl: params.publicUrl,
