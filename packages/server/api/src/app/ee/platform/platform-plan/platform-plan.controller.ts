@@ -8,7 +8,6 @@ import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-author
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
     const stripe = stripeHelper(log).getStripe()
