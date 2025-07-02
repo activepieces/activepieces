@@ -1,4 +1,4 @@
-import { isNil, PiecesFilterType } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 import Stripe from 'stripe'
@@ -44,7 +44,7 @@ export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLi
 
 
 export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
-    enabled: Type.Boolean(),
+    state: Type.Enum(AiOverageState),
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
 

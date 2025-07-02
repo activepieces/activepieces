@@ -1,6 +1,7 @@
 import { FlowPlanLimits } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
+    AiOverageState,
     ApEdition,
     apId,
     isNil,
@@ -12,7 +13,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
-import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../../platform/platform-usage-service'
@@ -136,8 +136,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 
     const { platformId, platformUsage, usageType, log } = params
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-    const isOverageEnabled = platformPlan.aiCreditsOverageEnabled ?? false
+    const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.AllowedAndOn
     
     const platformLimit = usageType === 'tasks'
         ? platformPlan.tasksLimit
@@ -152,11 +151,10 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
         : platformLimit
 
     return platformUsage >= totalLimit
-
 }
 
 function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
-    const isOverageEnabled = platformPlan.aiCreditsOverageEnabled ?? false
+    const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.AllowedAndOn
 
     if (!platformPlan.manageProjectsEnabled) {
         return {

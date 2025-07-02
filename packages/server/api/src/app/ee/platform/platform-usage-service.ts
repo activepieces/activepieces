@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment,  apId,  FlowStatus, PlatformUsage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, ApEdition, ApEnvironment,  apId,  FlowStatus, PlatformUsage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
@@ -141,7 +141,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             cost,
         })
         
-        const shouldReportUsage = platformPlan.aiCreditsOverageEnabled
+        const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.AllowedAndOn
         const overage = Math.round(platformAiCreditUsageIncremented - platformPlan.aiCreditsLimit)
         const hasOverage = overage > 0
 
@@ -149,7 +149,6 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             return { projectAiCreditUsage: projectAiCreditUsageIncremented, platformAiCreditUsage: platformAiCreditUsageIncremented }
         }
         
-
         await systemJobsSchedule(system.globalLogger()).upsertJob({
             job: {
                 name: SystemJobName.AI_USAGE_REPORT,

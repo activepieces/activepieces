@@ -84,6 +84,11 @@ export const PlatformUsage = Type.Object({
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
+export enum AiOverageState {
+  NotAllowed = "not_allowed",
+  AllowedButOff = "allowed_but_off",
+  AllowedAndOn = "allowed_and_on",
+}
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
@@ -92,7 +97,7 @@ export const PlatformPlan = Type.Object({
     tasksLimit: Type.Optional(Type.Number()),
     aiCreditsLimit: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),
-    aiCreditsOverageEnabled: Type.Optional(Type.Boolean()),
+    aiCreditsOverageState: Type.Optional(Type.Enum(AiOverageState)),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),

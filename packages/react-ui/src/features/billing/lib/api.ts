@@ -28,7 +28,7 @@ export const platformBillingApi = {
   },
   toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
     return api.post<PlatformPlan>(
-      '/v1/platform-billing/toggle-ai-credist-overage-enabled',
+      '/v1/platform-billing/update-ai-overage-state',
       params,
     );
   },

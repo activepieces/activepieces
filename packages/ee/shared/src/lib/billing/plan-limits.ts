@@ -1,15 +1,13 @@
-import { PlatformPlanLimits } from '@activepieces/shared'
+import { AiOverageState, PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
-
-
 
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
     aiCreditsLimit: 200,
     aiCreditsOverageLimit: undefined,
-    aiCreditsOverageEnabled: false,
+    aiCreditsOverageState: AiOverageState.NotAllowed,
     activeFlowsLimit: 2,
     eligibleForTrial: true,
     userSeatsLimit: 1,
@@ -48,7 +46,7 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         userSeatsLimit,
         agentsEnabled: true,
         aiCreditsLimit: 200,
-        aiCreditsOverageEnabled: false,
+        aiCreditsOverageState: AiOverageState.NotAllowed,
         aiCreditsOverageLimit: undefined,
         activeFlowsLimit: undefined,
         projectsLimit: 1,
@@ -84,7 +82,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tasksLimit: undefined,
     aiCreditsLimit: 500,
     aiCreditsOverageLimit: undefined,
-    aiCreditsOverageEnabled: false,
+    aiCreditsOverageState: AiOverageState.AllowedButOff,
     eligibleForTrial: false,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
@@ -121,7 +119,7 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tasksLimit: undefined,
     aiCreditsLimit: 1000,
     aiCreditsOverageLimit: undefined,
-    aiCreditsOverageEnabled: false,
+    aiCreditsOverageState: AiOverageState.AllowedButOff,
     eligibleForTrial: false,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
@@ -164,7 +162,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     agentsEnabled: true,
     aiCreditsLimit: 0,
     aiCreditsOverageLimit: undefined,
-    aiCreditsOverageEnabled: false,
+    aiCreditsOverageState: AiOverageState.AllowedButOff,
     environmentsEnabled: false,
     agentsLimit: undefined,
     analyticsEnabled: false,
