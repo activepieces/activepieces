@@ -30,7 +30,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
 
-  const planIncludedCredits = plan.aiCreditsLimit;
+  const planIncludedCredits = plan.includedAiCredits;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
 
