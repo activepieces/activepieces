@@ -1,4 +1,4 @@
-import { Platform, PlatformPlan } from '@activepieces/shared'
+import { AiOverageState, Platform, PlatformPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -25,8 +25,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsLimit: {
+        aiCreditsOverageLimit: {
             type: Number,
+            nullable: true,
+        },
+        aiCreditsOverageState: {
+            type: String,
             nullable: true,
         },
         eligibleForTrial: {

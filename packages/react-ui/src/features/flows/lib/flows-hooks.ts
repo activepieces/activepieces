@@ -198,4 +198,13 @@ export const flowsHooks = {
       },
     });
   },
+  useGetFlow: (flowId: string) => {
+    return useQuery({
+      queryKey: ['flow', flowId],
+      queryFn: async () => {
+        return await flowsApi.get(flowId);
+      },
+      staleTime: 0,
+    });
+  },
 };

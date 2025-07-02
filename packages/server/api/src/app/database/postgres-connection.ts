@@ -237,6 +237,8 @@ import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgr
 import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
+import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
+import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -495,6 +497,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddAgentsLimitToPlatformPlan1749917984363,
                 AddAgentsEnabledToPlatformPlan1751309258332,
                 AddTrialFlagInPlatform1751394161203,
+                UpdateAiCredits1751404517528,
+                AddAiOverageState1751466404493
             )
             break
         case ApEdition.COMMUNITY:

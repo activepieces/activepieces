@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import React, { useEffect } from 'react';
 
 import {
@@ -72,6 +72,7 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
       open={source !== null}
       onOpenChange={onOpenChange}
       direction="right"
+      dismissible={false}
     >
       <DrawerContent className="w-[500px] overflow-x-hidden">
         <DrawerHeader>
@@ -83,7 +84,7 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
                 className="text-foreground"
                 onClick={() => onOpenChange(false)}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" />
               </Button>
               <DrawerTitle>Chat</DrawerTitle>
             </div>

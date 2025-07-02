@@ -1,5 +1,5 @@
-import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, EnableAiCreditUsageParamsSchema, isUpgradeExperience, PlanName, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +8,7 @@ import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-author
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
+import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 async function getNextBillingAmount(subscriptionStatus: ApSubscriptionStatus, log: FastifyBaseLogger, subscriptionId?: string): Promise<number> {
     const stripe = stripeHelper(log).getStripe()
@@ -39,20 +40,18 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        
-
-        const [platformBilling, usage] = await Promise.all([
+        const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
             platformUsageService(request.log).getAllPlatformUsage(platform.id),
         ])
 
-        const { stripeSubscriptionCancelDate: cancelDate } = platformBilling
-        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformBilling)
+        const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
+        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
 
-        const nextBillingAmount = await getNextBillingAmount(platformBilling.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformBilling.stripeSubscriptionId)
+        const nextBillingAmount = await getNextBillingAmount(platformPlan.stripeSubscriptionStatus as ApSubscriptionStatus, request.log, platformPlan.stripeSubscriptionId)
 
         const response: PlatformBillingInformation = {
-            plan: platformBilling,
+            plan: platformPlan,
             usage,
             nextBillingAmount,
             nextBillingDate,
@@ -66,20 +65,16 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
     })
 
-    fastify.post('/set-ai-credit-usage-limit', EnableAiCreditUsageRequest, async (request) => {
+    fastify.post('/update-ai-overage-state', EnableAiCreditsOverageRequest, async (request) => {
         const platformId = request.principal.platform.id
-        const { limit } = request.body
+        const { state } = request.body
         
-        const [usage, platformBilling] = await Promise.all([
+        const [usage, platformPlan] = await Promise.all([
             platformUsageService(request.log).getAllPlatformUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
-        assertNotNullOrUndefined(platformBilling, 'Plan is not set')
         
-        const subscriptionId = platformBilling.stripeSubscriptionId
-        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
-        
-        if (platformBilling.plan === PlanName.FREE) {
+        if (platformPlan.plan === PlanName.FREE && state !== AiOverageState.NOT_ALLOWED) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -87,26 +82,61 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 },
             })
         }
-
-        const totalCreditsUsed = usage.aiCredits || 0
-        const planIncludedCredits = platformBilling?.includedAiCredits || 0
+        
+        const totalCreditsUsed = usage.aiCredits
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
-
-        if (!limit) {
-            if (overageCreditsUsed > 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: `Cannot disable usage-based billing while you have ${overageCreditsUsed} overage credits used.`,
-                    },
-                })
-            }
-            
-            return platformPlanService(request.log).update({
-                platformId,
-                aiCreditsLimit: undefined,
+        
+        if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Cannot disable usage-based billing while you have ${overageCreditsUsed.toLocaleString()} overage credits used.`,
+                },
             })
         }
+        
+        request.log.info({
+            platformId,
+            currentUsage: {
+                total: totalCreditsUsed,
+                planCredits: Math.min(totalCreditsUsed, planIncludedCredits),
+                overageCredits: overageCreditsUsed,
+            },
+        }, 'Updating AI credits overage state')
+        
+        const newOverageLimit = state === AiOverageState.ALLOWED_AND_ON 
+            ? (platformPlan.aiCreditsOverageLimit || 500)
+            : platformPlan.aiCreditsOverageLimit
+        
+        return platformPlanService(request.log).update({
+            platformId,
+            aiCreditsOverageState: state,
+            aiCreditsOverageLimit: newOverageLimit,
+        })
+    })
+
+    fastify.post('/set-ai-credits-overage-limit', SetAiCreditsOverageLimitRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const { limit } = request.body
+        
+        const [usage, platformPlan] = await Promise.all([
+            platformUsageService(request.log).getAllPlatformUsage(platformId),
+            platformPlanService(request.log).getOrCreateForPlatform(platformId),
+        ])
+        
+        if (platformPlan.aiCreditsOverageState !== AiOverageState.ALLOWED_AND_ON) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Setting AI credits overage limit is not allowed while overage is not enabled',
+                },
+            })
+        }
+        
+        const totalCreditsUsed = usage.aiCredits
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
+        const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (overageCreditsUsed > limit) {
             throw new ActivepiecesError({
@@ -119,7 +149,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         
         request.log.info({
             platformId,
-            previousLimit: platformBilling.aiCreditsLimit,
+            previousLimit: platformPlan.aiCreditsOverageLimit,
             newLimit: limit,
             currentUsage: {
                 total: totalCreditsUsed,
@@ -130,19 +160,19 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         
         return platformPlanService(request.log).update({
             platformId,
-            aiCreditsLimit: limit,
+            aiCreditsOverageLimit: limit,
         })
     })
 
     fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = platformBilling.stripeCustomerId
+        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const customerId = platformPlan.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const { plan } = request.body
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
-            platformBilling.platformId,
+            platformPlan.platformId,
             customerId,
             { plan },
         )
@@ -150,16 +180,16 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/update-subscription', UpgradeRequest, async (request) => {
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const subscriptionId = platformBilling.stripeSubscriptionId
+        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const subscriptionId = platformPlan.stripeSubscriptionId
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
         const { plan: newPlan, seats } = request.body
         const extraUsers =  seats ? seats - DEFAULT_BUSINESS_SEATS : 0
 
-        const currentPlan = platformBilling.plan as PlanName ?? PlanName.FREE
+        const currentPlan = platformPlan.plan as PlanName ?? PlanName.FREE
 
-        const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformBilling.userSeatsLimit, seats)
+        const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformPlan.userSeatsLimit, seats)
 
         if (newPlan !== PlanName.BUSINESS && !isNil(seats)) {
             throw new ActivepiecesError({
@@ -171,7 +201,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
 
         return stripeHelper(request.log).handleSubscriptionUpdate(
-            platformBilling.platformId,
+            platformPlan.platformId,
             subscriptionId,
             newPlan,
             extraUsers,
@@ -238,9 +268,18 @@ const CreateSubscriptionRequest = {
 }
 
 
-const EnableAiCreditUsageRequest = {
+const SetAiCreditsOverageLimitRequest = {
     schema: {
-        body: EnableAiCreditUsageParamsSchema,
+        body: SetAiCreditsOverageLimitParamsSchema,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+}
+
+const EnableAiCreditsOverageRequest = {
+    schema: {
+        body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
