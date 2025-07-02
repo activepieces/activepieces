@@ -18,7 +18,6 @@ const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
 
     return logEmailSender(log)
 }
-
 export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
@@ -63,6 +62,22 @@ type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failur
     projectName: string
 }>
 
+type ThreeDaysLeftOnTrialTemplateData = BaseEmailTemplateData<'3-days-left-on-trial', {
+    year: string
+}>
+
+type OneDayLeftOnTrialTemplateData = BaseEmailTemplateData<'1-day-left-on-trial', {
+    year: string
+}>
+
+type WellcomeToTrialTemplateData = BaseEmailTemplateData<'wellcome-to-trial', {
+    year: string
+}>
+
+type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
+    year: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
@@ -71,6 +86,10 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | IssuesReminderTemplateData
   | TriggerFailureThresholdTemplateData
+  | ThreeDaysLeftOnTrialTemplateData
+  | OneDayLeftOnTrialTemplateData
+  | WellcomeToTrialTemplateData
+  | SevenDaysInTrialTemplateData
 
 type SendArgs = {
     emails: string[]

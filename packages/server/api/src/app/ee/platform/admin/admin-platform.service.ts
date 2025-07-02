@@ -13,10 +13,10 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In, IsNull } from 'typeorm'
+import { In } from 'typeorm'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { platformService } from '../../../platform/platform.service'
-import { projectRepo, projectService } from '../../../project/project-service'
+import { projectService } from '../../../project/project-service'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
 import { licenseKeysService } from '../../license-keys/license-keys-service'
 
@@ -67,21 +67,19 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     retryRuns: async ({
         createdAfter,
         createdBefore,
+        runIds,
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
-        //Get all flow runs that failed, regardless of the project or platform
-        const projects = await projectRepo().find({
-            where: {
-                deleted: IsNull(),
-            },
-        })
-
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
             environment: RunEnvironment.PRODUCTION,
             status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
-            projectId: In(projects.map((project) => project.id)),
         })
+        if (!isNil(runIds)) {
+            query = query.andWhere({
+                id: In(runIds),
+            })
+        }
         if (!createdAfter || !createdBefore) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,

@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { customDomainApi } from '@/features/platform-admin-panel/lib/custom-domain-api';
+import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { CustomDomain, CustomDomainStatus } from '@activepieces/ee-shared';
 
 const CustomDomainsCard = () => {

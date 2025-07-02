@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { ArrayInput } from '@/components/ui/array-input';
+import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';

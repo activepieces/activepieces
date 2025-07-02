@@ -83,8 +83,14 @@ export * from './lib/todos'
 export * from './lib/todos/todos-request'
 export * from './lib/changelog'
 export * from './lib/mcp'
+export * from './lib/agents'
+export * from './lib/agents/content'
+
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/license-keys'
 export * from './lib/flow-run/execution/flow-execution'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
+export * from './lib/issues/index'
+export * from './lib/issues/issues-requests'
+export * from './lib/issues/issue-dto'

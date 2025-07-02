@@ -126,6 +126,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {
@@ -149,6 +150,15 @@ export type OnStartContext<
    payload: unknown;
 }
 
+
+export type OutputContext = {
+  update: (params: {
+    data: {
+      [key: string]: unknown;
+    };
+  }) => Promise<void>;
+}
+
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
@@ -158,6 +168,7 @@ export type BaseActionContext<
   tags: TagsManager;
   server: ServerContext;
   files: FilesService;
+  output: OutputContext;
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
