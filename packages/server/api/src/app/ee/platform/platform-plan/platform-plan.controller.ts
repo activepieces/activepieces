@@ -84,7 +84,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
         
         const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.aiCreditsLimit || 0
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
@@ -135,7 +135,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         }
         
         const totalCreditsUsed = usage.aiCredits
-        const planIncludedCredits = platformPlan.aiCreditsLimit || 0
+        const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (overageCreditsUsed > limit) {

@@ -95,7 +95,7 @@ export const PlatformPlan = Type.Object({
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
     tasksLimit: Type.Optional(Type.Number()),
-    aiCreditsLimit: Type.Number(),
+    includedAiCredits: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),
     aiCreditsOverageState: Type.Optional(Type.String()),
 
