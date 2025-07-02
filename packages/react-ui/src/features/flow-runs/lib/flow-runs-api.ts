@@ -63,7 +63,9 @@ export const flowRunsApi = {
       };
 
       const handleProgress = (progress: StepRunResponse) => {
-        onProgress?.(progress);
+        if(progress.id === id ) {
+          onProgress?.(progress);
+        }
       };
 
       const handleError = (error: any) => {

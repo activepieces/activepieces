@@ -31,6 +31,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         flowVersionId,
         stepName,
         runEnvironment,
+        requestId,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
@@ -42,7 +43,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             stepName: step.name,
             runEnvironment,
             sampleData: await this.getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT),
-        })
+        }, requestId)
 
         return {
             success: result.success,
@@ -204,5 +205,6 @@ type RunActionParams = {
     flowVersionId: FlowVersionId
     stepName: string
     platformId: PlatformId
-    runEnvironment: RunEnvironment
+    runEnvironment: RunEnvironment,
+    requestId: string
 }
