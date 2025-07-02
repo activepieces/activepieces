@@ -273,7 +273,9 @@ export const GmailRequests = {
     authentication: OAuth2PropertyValue,
     maxResults = 15
   ) => {
-    return await httpClient.sendRequest<{ threads: { id: string; snippet?: string }[] }>({
+    return await httpClient.sendRequest<{
+      threads: { id: string; snippet?: string }[];
+    }>({
       method: HttpMethod.GET,
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
       authentication: {

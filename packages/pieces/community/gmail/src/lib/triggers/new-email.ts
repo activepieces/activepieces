@@ -8,7 +8,12 @@ import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../../';
-import { GmailRequests, parseStream, convertAttachment, getFirstFiveOrAll } from '../common/data';
+import {
+  GmailRequests,
+  parseStream,
+  convertAttachment,
+  getFirstFiveOrAll,
+} from '../common/data';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
@@ -151,4 +156,3 @@ async function pollRecentMessages({
 
   return pollingResponse;
 }
-

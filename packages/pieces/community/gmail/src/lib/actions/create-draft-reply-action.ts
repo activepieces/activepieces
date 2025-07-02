@@ -16,7 +16,8 @@ export const gmailCreateDraftReplyAction = createAction({
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
-      description: 'Choose whether to reply to sender only or to all recipients',
+      description:
+        'Choose whether to reply to sender only or to all recipients',
       required: true,
       defaultValue: 'reply',
       options: {
@@ -95,12 +96,15 @@ export const gmailCreateDraftReplyAction = createAction({
     }
 
     const headers = originalMessage.data.payload.headers || [];
-    const headerMap = headers.reduce((acc: { [key: string]: string }, header) => {
-      if (header.name && header.value) {
-        acc[header.name.toLowerCase()] = header.value;
-      }
-      return acc;
-    }, {});
+    const headerMap = headers.reduce(
+      (acc: { [key: string]: string }, header) => {
+        if (header.name && header.value) {
+          acc[header.name.toLowerCase()] = header.value;
+        }
+        return acc;
+      },
+      {}
+    );
 
     const originalSubject = headerMap['subject'] || '';
     const originalFrom = headerMap['from'] || '';
@@ -115,7 +119,7 @@ export const gmailCreateDraftReplyAction = createAction({
     if (context.propsValue.include_original_message) {
       try {
         const { parseStream } = await import('../common/data');
-        
+
         const originalMessageFull = await gmail.users.messages.get({
           userId: 'me',
           id: context.propsValue.message_id,
@@ -123,45 +127,64 @@ export const gmailCreateDraftReplyAction = createAction({
         });
 
         if (originalMessageFull.data.raw) {
-          const rawMessage = Buffer.from(originalMessageFull.data.raw, 'base64').toString('utf-8');
+          const rawMessage = Buffer.from(
+            originalMessageFull.data.raw,
+            'base64'
+          ).toString('utf-8');
           const parsedMessage = await parseStream(rawMessage);
-          
+
           let messageText = parsedMessage.text || '';
           if (!messageText && parsedMessage.html) {
-            messageText = parsedMessage.html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+            messageText = parsedMessage.html
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>');
           }
-          
+
           if (messageText) {
-            const quotedLines = messageText.split('\n').map(line => `> ${line.trim()}`);
+            const quotedLines = messageText
+              .split('\n')
+              .map((line) => `> ${line.trim()}`);
             const senderInfo = `On ${originalDate}, ${originalFrom} wrote:`;
             originalMessageContent = `${senderInfo}\n${quotedLines.join('\n')}`;
           }
         }
       } catch (error) {
-        console.warn('Could not extract original message content for quoting:', error);
+        console.warn(
+          'Could not extract original message content for quoting:',
+          error
+        );
         originalMessageContent = `On ${originalDate}, ${originalFrom} wrote:\n> [Original message content could not be parsed]`;
       }
     }
 
-    let toRecipients: string[] = [];
-    let ccRecipients: string[] = [];
+    const toRecipients: string[] = [];
+    const ccRecipients: string[] = [];
 
     if (context.propsValue.reply_type === 'reply_all') {
       const senderEmail = originalReplyTo || originalFrom;
       if (senderEmail) {
         toRecipients.push(senderEmail);
       }
-      
-      const currentUserEmail = (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()).data.email;
-      
+
+      const currentUserEmail = (
+        await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
+      ).data.email;
+
       if (originalTo) {
-        const toEmails = originalTo.split(',').map(email => email.trim());
-        toRecipients.push(...toEmails.filter(email => !email.includes(currentUserEmail || '')));
+        const toEmails = originalTo.split(',').map((email) => email.trim());
+        toRecipients.push(
+          ...toEmails.filter((email) => !email.includes(currentUserEmail || ''))
+        );
       }
-      
+
       if (originalCc) {
-        const ccEmails = originalCc.split(',').map(email => email.trim());
-        ccRecipients.push(...ccEmails.filter(email => !email.includes(currentUserEmail || '')));
+        const ccEmails = originalCc.split(',').map((email) => email.trim());
+        ccRecipients.push(
+          ...ccEmails.filter((email) => !email.includes(currentUserEmail || ''))
+        );
       }
     } else {
       const senderEmail = originalReplyTo || originalFrom;
@@ -180,20 +203,26 @@ export const gmailCreateDraftReplyAction = createAction({
       referencesHeader = `${originalReferences} ${originalMessageId}`;
     }
 
-    const senderEmail = (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()).data.email;
+    const senderEmail = (
+      await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
+    ).data.email;
 
     let draftBody = context.propsValue.body || '';
-    
+
     if (context.propsValue.include_original_message && originalMessageContent) {
-      const separator = context.propsValue.body_type === 'html' 
-        ? '<br><br>--- Original Message ---<br>' 
-        : '\n\n--- Original Message ---\n';
-      
-      const quotedContent = context.propsValue.body_type === 'html'
-        ? originalMessageContent.replace(/\n/g, '<br>')
-        : originalMessageContent;
-        
-      draftBody = draftBody ? `${draftBody}${separator}${quotedContent}` : quotedContent;
+      const separator =
+        context.propsValue.body_type === 'html'
+          ? '<br><br>--- Original Message ---<br>'
+          : '\n\n--- Original Message ---\n';
+
+      const quotedContent =
+        context.propsValue.body_type === 'html'
+          ? originalMessageContent.replace(/\n/g, '<br>')
+          : originalMessageContent;
+
+      draftBody = draftBody
+        ? `${draftBody}${separator}${quotedContent}`
+        : quotedContent;
     }
 
     const subjectBase64 = Buffer.from(replySubject).toString('base64');
@@ -201,7 +230,8 @@ export const gmailCreateDraftReplyAction = createAction({
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text: context.propsValue.body_type === 'plain_text' ? draftBody : undefined,
+      text:
+        context.propsValue.body_type === 'plain_text' ? draftBody : undefined,
       html: context.propsValue.body_type === 'html' ? draftBody : undefined,
       attachments: [],
       headers: [
@@ -228,7 +258,9 @@ export const gmailCreateDraftReplyAction = createAction({
       );
       const attachmentOption: Attachment[] = [
         {
-          filename: context.propsValue.attachment_name ?? context.propsValue.attachment.filename,
+          filename:
+            context.propsValue.attachment_name ??
+            context.propsValue.attachment.filename,
           content: context.propsValue.attachment.base64,
           contentType: lookupResult || undefined,
           encoding: 'base64',
@@ -248,11 +280,11 @@ export const gmailCreateDraftReplyAction = createAction({
 
     const draft = await gmail.users.drafts.create({
       userId: 'me',
-      requestBody: { 
-        message: { 
-          threadId: originalMessage.data.threadId || undefined, 
-          raw: encodedPayload 
-        } 
+      requestBody: {
+        message: {
+          threadId: originalMessage.data.threadId || undefined,
+          raw: encodedPayload,
+        },
       },
     });
 
@@ -277,4 +309,4 @@ export const gmailCreateDraftReplyAction = createAction({
       },
     };
   },
-}); 
+});

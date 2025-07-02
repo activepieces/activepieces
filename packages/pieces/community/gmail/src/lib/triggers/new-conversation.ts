@@ -32,7 +32,7 @@ async function enrichNewConversation({
 
   const thread = threadResponse.data;
   const messages = thread.messages || [];
-  
+
   const firstMessage = messages[0];
   if (!firstMessage?.id) {
     throw new Error('No messages found in thread');
@@ -45,16 +45,21 @@ async function enrichNewConversation({
   });
 
   const parsedFirstMessage = await parseStream(
-    Buffer.from(rawMessageResponse.data.raw as string, 'base64').toString('utf-8')
+    Buffer.from(rawMessageResponse.data.raw as string, 'base64').toString(
+      'utf-8'
+    )
   );
 
   const headers = firstMessage.payload?.headers || [];
-  const headerMap = headers.reduce((acc: { [key: string]: string }, header: any) => {
-    if (header.name && header.value) {
-      acc[header.name.toLowerCase()] = header.value;
-    }
-    return acc;
-  }, {});
+  const headerMap = headers.reduce(
+    (acc: { [key: string]: string }, header: any) => {
+      if (header.name && header.value) {
+        acc[header.name.toLowerCase()] = header.value;
+      }
+      return acc;
+    },
+    {}
+  );
 
   return {
     conversation: {
@@ -88,26 +93,34 @@ async function enrichNewConversation({
   };
 }
 
-function extractParticipants(messages: any[]): { from: Set<string>; to: Set<string>; cc: Set<string> } {
+function extractParticipants(messages: any[]): {
+  from: Set<string>;
+  to: Set<string>;
+  cc: Set<string>;
+} {
   const participants = {
     from: new Set<string>(),
     to: new Set<string>(),
     cc: new Set<string>(),
   };
 
-  messages.forEach(message => {
+  messages.forEach((message) => {
     const headers = message.payload?.headers || [];
     headers.forEach((header: any) => {
       if (header.name && header.value) {
         const name = header.name.toLowerCase();
         const value = header.value;
-        
+
         if (name === 'from') {
           participants.from.add(value);
         } else if (name === 'to') {
-          value.split(',').forEach((email: string) => participants.to.add(email.trim()));
+          value
+            .split(',')
+            .forEach((email: string) => participants.to.add(email.trim()));
         } else if (name === 'cc') {
-          value.split(',').forEach((email: string) => participants.cc.add(email.trim()));
+          value
+            .split(',')
+            .forEach((email: string) => participants.cc.add(email.trim()));
         }
       }
     });
@@ -134,12 +147,14 @@ export const gmailNewConversationTrigger = createTrigger({
     },
     subject: Property.ShortText({
       displayName: 'Subject Contains',
-      description: 'Only trigger for conversations containing this text in the subject (optional)',
+      description:
+        'Only trigger for conversations containing this text in the subject (optional)',
       required: false,
     }),
     maxAgeHours: Property.Number({
-      displayName: 'Maximum Age (Hours)', 
-      description: 'Only trigger for conversations started within this many hours',
+      displayName: 'Maximum Age (Hours)',
+      description:
+        'Only trigger for conversations started within this many hours',
       required: false,
       defaultValue: 24,
     }),
@@ -165,7 +180,8 @@ export const gmailNewConversationTrigger = createTrigger({
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const lastHistoryId = await context.store.get('lastHistoryId');
-    const processedThreads = (await context.store.get<string[]>('processedThreads')) || [];
+    const processedThreads =
+      (await context.store.get<string[]>('processedThreads')) || [];
     const maxAge = (context.propsValue.maxAgeHours || 24) * 60 * 60 * 1000;
     const cutoffTime = Date.now() - maxAge;
 
@@ -178,7 +194,7 @@ export const gmailNewConversationTrigger = createTrigger({
       });
 
       const newConversations: string[] = [];
-      
+
       if (historyResponse.data.history) {
         for (const history of historyResponse.data.history) {
           if (history.messagesAdded) {
@@ -190,7 +206,7 @@ export const gmailNewConversationTrigger = createTrigger({
                   id: threadId,
                   format: 'minimal',
                 });
-                
+
                 if (threadResponse.data.messages?.length === 1) {
                   newConversations.push(threadId);
                 }
@@ -200,8 +216,8 @@ export const gmailNewConversationTrigger = createTrigger({
         }
       }
 
-             const results: any[] = [];
-       for (const threadId of newConversations) {
+      const results: any[] = [];
+      for (const threadId of newConversations) {
         const threadResponse = await gmail.users.threads.get({
           userId: 'me',
           id: threadId,
@@ -215,24 +231,30 @@ export const gmailNewConversationTrigger = createTrigger({
         const messageDate = parseInt(firstMessage.internalDate || '0');
         if (messageDate < cutoffTime) continue;
 
-         const headers = firstMessage.payload?.headers || [];
-         const headerMap: { [key: string]: string } = {};
-         headers.forEach((h: any) => {
-           if (h.name && h.value) {
-             headerMap[h.name.toLowerCase()] = h.value;
-           }
-         });
+        const headers = firstMessage.payload?.headers || [];
+        const headerMap: { [key: string]: string } = {};
+        headers.forEach((h: any) => {
+          if (h.name && h.value) {
+            headerMap[h.name.toLowerCase()] = h.value;
+          }
+        });
 
         if (context.propsValue.from) {
           const from = headerMap['from'] || '';
-          if (!from.toLowerCase().includes(context.propsValue.from.toLowerCase())) {
+          if (
+            !from.toLowerCase().includes(context.propsValue.from.toLowerCase())
+          ) {
             continue;
           }
         }
 
         if (context.propsValue.subject) {
           const subject = headerMap['subject'] || '';
-          if (!subject.toLowerCase().includes(context.propsValue.subject.toLowerCase())) {
+          if (
+            !subject
+              .toLowerCase()
+              .includes(context.propsValue.subject.toLowerCase())
+          ) {
             continue;
           }
         }
@@ -244,7 +266,9 @@ export const gmailNewConversationTrigger = createTrigger({
         });
 
         const parsedMessage = await parseStream(
-          Buffer.from(rawResponse.data.raw as string, 'base64').toString('utf-8')
+          Buffer.from(rawResponse.data.raw as string, 'base64').toString(
+            'utf-8'
+          )
         );
 
         results.push({
@@ -260,7 +284,10 @@ export const gmailNewConversationTrigger = createTrigger({
               id: firstMessage.id,
               threadId: threadId,
               date: new Date(messageDate).toISOString(),
-              attachments: await convertAttachment(parsedMessage.attachments, context.files),
+              attachments: await convertAttachment(
+                parsedMessage.attachments,
+                context.files
+              ),
             },
             conversation: {
               starter: {
@@ -277,9 +304,12 @@ export const gmailNewConversationTrigger = createTrigger({
       }
 
       if (historyResponse.data.historyId) {
-        await context.store.put('lastHistoryId', historyResponse.data.historyId);
+        await context.store.put(
+          'lastHistoryId',
+          historyResponse.data.historyId
+        );
       }
-      
+
       const recentThreads = processedThreads.slice(-1000);
       await context.store.put('processedThreads', recentThreads);
 
@@ -315,11 +345,11 @@ export const gmailNewConversationTrigger = createTrigger({
       maxResults: 5,
     });
 
-         const results: any[] = [];
-     if (threadsResponse.data.threads) {
+    const results: any[] = [];
+    if (threadsResponse.data.threads) {
       for (const thread of threadsResponse.data.threads) {
         const threadId = thread.id!;
-        
+
         const fullThread = await gmail.users.threads.get({
           userId: 'me',
           id: threadId,
@@ -328,13 +358,13 @@ export const gmailNewConversationTrigger = createTrigger({
 
         if (fullThread.data.messages?.length === 1) {
           const firstMessage = fullThread.data.messages[0];
-                     const headers = firstMessage.payload?.headers || [];
-           const headerMap: { [key: string]: string } = {};
-           headers.forEach((h: any) => {
-             if (h.name && h.value) {
-               headerMap[h.name.toLowerCase()] = h.value;
-             }
-           });
+          const headers = firstMessage.payload?.headers || [];
+          const headerMap: { [key: string]: string } = {};
+          headers.forEach((h: any) => {
+            if (h.name && h.value) {
+              headerMap[h.name.toLowerCase()] = h.value;
+            }
+          });
 
           const rawResponse = await gmail.users.messages.get({
             userId: 'me',
@@ -343,7 +373,9 @@ export const gmailNewConversationTrigger = createTrigger({
           });
 
           const parsedMessage = await parseStream(
-            Buffer.from(rawResponse.data.raw as string, 'base64').toString('utf-8')
+            Buffer.from(rawResponse.data.raw as string, 'base64').toString(
+              'utf-8'
+            )
           );
 
           results.push({
@@ -358,8 +390,13 @@ export const gmailNewConversationTrigger = createTrigger({
                 ...parsedMessage,
                 id: firstMessage.id,
                 threadId: threadId,
-                date: new Date(parseInt(firstMessage.internalDate || '0')).toISOString(),
-                attachments: await convertAttachment(parsedMessage.attachments, context.files),
+                date: new Date(
+                  parseInt(firstMessage.internalDate || '0')
+                ).toISOString(),
+                attachments: await convertAttachment(
+                  parsedMessage.attachments,
+                  context.files
+                ),
               },
               conversation: {
                 starter: {
@@ -377,4 +414,4 @@ export const gmailNewConversationTrigger = createTrigger({
 
     return results;
   },
-}); 
+});
