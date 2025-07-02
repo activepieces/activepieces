@@ -9,12 +9,9 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
 
 const AboveFlowWidgets = React.memo(() => {
-  const [flowVersion, selectStepByName, readonly] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.selectStepByName,
-      state.readonly,
-    ]);
+  const [flowVersion, selectStepByName, readonly] = useBuilderStateContext(
+    (state) => [state.flowVersion, state.selectStepByName, state.readonly],
+  );
   return (
     <ViewportPortal>
       <div
@@ -27,8 +24,7 @@ const AboveFlowWidgets = React.memo(() => {
         }}
       >
         <div className="justify-center items-center flex w-[260px]">
-          <TestFlowWidget
-          ></TestFlowWidget>
+          <TestFlowWidget></TestFlowWidget>
           {!readonly && (
             <IncompleteSettingsButton
               flowVersion={flowVersion}

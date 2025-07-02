@@ -26,7 +26,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const { output, isJson } = extractMarkdownFromOutput(block.output);
   return (
-    <Accordion type="multiple"  defaultValue={[]}>
+    <Accordion type="multiple" defaultValue={[]}>
       <AccordionItem value={`block-${index}`}>
         <AccordionTrigger className="flex items-center gap-3 transition-colors">
           {isLoading ? (

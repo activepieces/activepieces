@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { Brain, CogIcon, Loader2, SparkleIcon, Wrench } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { SparkleIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import {
@@ -11,12 +11,9 @@ import {
 } from '@/components/ui/accordion';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   AgentStepBlock,
   ContentBlockType,
-  isNil,
   MarkdownVariant,
 } from '@activepieces/shared';
 
@@ -44,7 +41,7 @@ const AgentTimeline = ({
       <div className=" flex flex-col gap-3">
         {steps.map((step, index) => {
           return (
-            <div key={index} className='animate-fade'>
+            <div key={index} className="animate-fade">
               {step.type === ContentBlockType.MARKDOWN && (
                 <ApMarkdown
                   markdown={step.markdown}
@@ -86,21 +83,20 @@ const AgentStepSkeleton = ({ agentId }: { agentId: string }) => {
 
 const AgentPromptBlock = ({ prompt }: { prompt: string }) => {
   return (
-    <div className='animate-fade mb-3'>
-        <Accordion type="single" collapsible  defaultValue="prompt">
-      <AccordionItem value="prompt" className="border-none">
-        <AccordionTrigger>
-          <div className="flex items-center gap-2">
-            <SparkleIcon className="size-4 text-primary" /> {t('Prompt')}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent>
-          <div>{prompt}</div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <div className="animate-fade mb-3">
+      <Accordion type="single" collapsible defaultValue="prompt">
+        <AccordionItem value="prompt" className="border-none">
+          <AccordionTrigger>
+            <div className="flex items-center gap-2">
+              <SparkleIcon className="size-4 text-primary" /> {t('Prompt')}
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div>{prompt}</div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
-    
   );
 };
 

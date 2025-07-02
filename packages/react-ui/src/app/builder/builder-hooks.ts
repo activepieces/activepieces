@@ -31,7 +31,6 @@ import {
   FlowRunStatus,
   apId,
   StepSettings,
-  FlowVersionMetadata,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -390,7 +389,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: initiallySelectedStep
               ? RightSideBarType.PIECE_SETTINGS
               : RightSideBarType.NONE,
-              selectedStep: initiallySelectedStep,
+            selectedStep: initiallySelectedStep,
             readonly: true,
           };
         }),
@@ -910,8 +909,11 @@ export const useIsFocusInsideListMapperModeInput = ({
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
 export const useFocusOnStep = () => {
-  const [currentRun , selectStep] = useBuilderStateContext((state) => [state.run, state.selectStepByName]);
-  
+  const [currentRun, selectStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.selectStepByName,
+  ]);
+
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
     previousStatus ?? FlowRunStatus.RUNNING,
@@ -920,15 +922,15 @@ export const useFocusOnStep = () => {
   const lastStep = usePrevious(currentStep);
 
   const { fitView } = useReactFlow();
- useEffect(() => {
-  if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
-    setTimeout(() => {
-      console.log('focusing on step', currentStep);
-      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-      selectStep(currentStep);
-    });
-  }
- }, [lastStep, currentStep, selectStep, fitView]);
+  useEffect(() => {
+    if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
+      setTimeout(() => {
+        console.log('focusing on step', currentStep);
+        fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+        selectStep(currentStep);
+      });
+    }
+  }, [lastStep, currentStep, selectStep, fitView]);
 };
 
 export const useResizeCanvas = (

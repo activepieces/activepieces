@@ -2,11 +2,6 @@ import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '@/components/ui/collapsible';
-import {
   Dialog,
   DialogContent,
   DialogHeader,

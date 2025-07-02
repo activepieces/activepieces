@@ -5,7 +5,7 @@ import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
 
 export const userInteractionWatcher = (log: FastifyBaseLogger) => ({
-    submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation,requestId?: string): Promise<T> => {
+    submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation, requestId?: string): Promise<T> => {
         const id = requestId ?? apId()
         await jobQueue(log).add({
             id,

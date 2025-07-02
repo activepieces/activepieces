@@ -17,7 +17,6 @@ import {
   flowStructureUtil,
   isNil,
   StepRunResponse,
-  PieceAction,
 } from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
@@ -261,14 +260,6 @@ const TestActionSection = React.memo((props: TestActionComponentProps) => {
   return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
 });
 
-const getPrompt = (step: PieceAction) => {
-  const prompt = step.settings.input?.prompt;
-  if (typeof prompt === 'string') {
-    return prompt;
-  }
-  console.error('Prompt is not a string', prompt);
-  return '';
-};
 TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Settings, Settings2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
 import { AgentBuilder } from '@/app/routes/agents/builder';
@@ -20,6 +20,7 @@ const EditAgentInFlowBuilderButton = ({ agentId }: { agentId: string }) => {
   const [setLastRerenderPieceSettingsTimeStamp] = useBuilderStateContext(
     (state) => [state.setLastRerenderPieceSettingsTimeStamp],
   );
+
   return (
     <AgentBuilder
       refetch={refetch}

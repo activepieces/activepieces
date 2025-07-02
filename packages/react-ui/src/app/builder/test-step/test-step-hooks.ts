@@ -275,13 +275,13 @@ export const testStepHooks = {
             stepName: currentStep.name,
           },
           (progress) => {
-            if(params?.abortSignal?.aborted) {
+            if (params?.abortSignal?.aborted) {
               throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
             }
             onProgress?.(progress);
-          }
+          },
         );
-        if(params?.abortSignal?.aborted) {
+        if (params?.abortSignal?.aborted) {
           throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
         }
         return response;
@@ -308,7 +308,7 @@ export const testStepHooks = {
         }
       },
       onError: (error) => {
-        if(error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
+        if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
           return;
         }
         console.error(error);
@@ -328,9 +328,11 @@ const useRequiredStateToTestSteps = () => {
   return { form, builderState };
 };
 
-type TestActionMutationParams = {
-  preExistingSampleData?: StepRunResponse;
-  abortSignal?: AbortSignal;
-} | undefined;
+type TestActionMutationParams =
+  | {
+      preExistingSampleData?: StepRunResponse;
+      abortSignal?: AbortSignal;
+    }
+  | undefined;
 
 const CANCEL_TEST_STEP_ERROR_MESSAGE = 'Test step aborted';

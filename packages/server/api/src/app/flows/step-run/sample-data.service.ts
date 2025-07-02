@@ -205,6 +205,6 @@ type RunActionParams = {
     flowVersionId: FlowVersionId
     stepName: string
     platformId: PlatformId
-    runEnvironment: RunEnvironment,
+    runEnvironment: RunEnvironment
     requestId: string
 }

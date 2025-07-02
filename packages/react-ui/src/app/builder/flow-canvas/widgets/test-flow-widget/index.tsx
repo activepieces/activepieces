@@ -9,22 +9,21 @@ import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
+import { isNil, TriggerType } from '@activepieces/shared';
 
 import ViewOnlyWidget from '../view-only-widget';
 
 import { TestButton } from './test-button';
 
-
-
 const TestFlowWidget = () => {
   const socket = useSocket();
-  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] = useBuilderStateContext((state) => [
-    state.setChatDrawerOpenSource,
-    state.flowVersion,
-    state.readonly,
-    state.setRun,
-  ]);
+  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
+    useBuilderStateContext((state) => [
+      state.setChatDrawerOpenSource,
+      state.flowVersion,
+      state.readonly,
+      state.setRun,
+    ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
