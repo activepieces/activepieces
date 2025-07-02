@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddAiOverageState1751460416146 implements MigrationInterface {
-    name = 'AddAiOverageState1751460416146'
+export class AddAiOverageState1751466404493 implements MigrationInterface {
+    name = 'AddAiOverageState1751466404493'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -12,24 +12,14 @@ export class AddAiOverageState1751460416146 implements MigrationInterface {
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsOverageState"
         `);
         await queryRunner.query(`
-            CREATE TYPE "public"."platform_plan_aicreditsoveragestate_enum" AS ENUM(
-                'not_allowed',
-                'allowed_but_off',
-                'allowed_and_on'
-            )
-        `);
-        await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "aiCreditsOverageState" "public"."platform_plan_aicreditsoveragestate_enum"
+            ADD "aiCreditsOverageState" character varying
         `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsOverageState"
-        `);
-        await queryRunner.query(`
-            DROP TYPE "public"."platform_plan_aicreditsoveragestate_enum"
         `);
         await queryRunner.query(`
             ALTER TABLE "platform_plan"

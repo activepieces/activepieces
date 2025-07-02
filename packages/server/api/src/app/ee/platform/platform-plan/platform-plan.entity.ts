@@ -30,8 +30,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             nullable: true,
         },
         aiCreditsOverageState: {
-            type: 'enum',
-            enum: AiOverageState,
+            type: String,
             nullable: true,
         },
         eligibleForTrial: {
