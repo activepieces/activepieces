@@ -1,5 +1,6 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,7 +8,6 @@ import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
-import { PlanName } from '@ee/shared/src/lib/billing'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 

@@ -1,4 +1,4 @@
-import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getTasksPriceId, getUserPriceId, PlanName, StripePlanName } from '@activepieces/ee-shared'
+import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getUserPriceId, PlanName, StripePlanName } from '@activepieces/ee-shared'
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,7 +13,6 @@ export const stripeWebhookSecret = system.get(
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 
-export const TASKS_PRICE_ID = getTasksPriceId(stripeSecretKey)
 export const STRIPE_PLAN_PRICE_IDS = getPlanPriceId(stripeSecretKey)
 export const USER_PRICE_ID = getUserPriceId(stripeSecretKey)
 export const AI_CREDITS_PRICE_ID = getAiCreditsPriceId(stripeSecretKey)
@@ -177,6 +176,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             proration_behavior: 'create_prorations',
             billing_cycle_anchor: 'now',
             metadata: {
+                platformId,
                 plan,
             },
         }
