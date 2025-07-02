@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
@@ -93,8 +93,11 @@ const TestStepSectionImplementation = React.memo(
       };
     });
     const form = useFormContext<ActionWithoutNext>();
+    const abortControllerRef = useRef<AbortController>(new AbortController());
+    const [mutationKey, setMutationKey] = useState<string[]>([]);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
+        mutationKey,
         currentStep,
         setErrorMessage,
         setConsoleLogs,
@@ -132,7 +135,10 @@ const TestStepSectionImplementation = React.memo(
     const handleRunAgent = async () => {
       setActiveDialog(DialogType.AGENT);
       setAgentProgress(null);
-      testAction(undefined);
+      abortControllerRef.current = new AbortController();
+      testAction({
+        abortSignal: abortControllerRef.current.signal,
+      });
     };
 
     const onTestButtonClick = async () => {
@@ -151,6 +157,8 @@ const TestStepSectionImplementation = React.memo(
       setActiveDialog(DialogType.NONE);
       setTodoId(null);
       setAgentProgress(null);
+      abortControllerRef.current.abort();
+      setMutationKey([Date.now().toString()]);
     };
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;

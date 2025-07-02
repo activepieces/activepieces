@@ -15,20 +15,15 @@ import ViewOnlyWidget from '../view-only-widget';
 
 import { TestButton } from './test-button';
 
-type TestFlowWidgetProps = {
-  flowVersion: FlowVersion;
-  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
-  readonly: boolean;
-};
 
-const TestFlowWidget = ({
-  flowVersion,
-  setRun,
-  readonly,
-}: TestFlowWidgetProps) => {
+
+const TestFlowWidget = () => {
   const socket = useSocket();
-  const [setChatDrawerOpenSource] = useBuilderStateContext((state) => [
+  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] = useBuilderStateContext((state) => [
     state.setChatDrawerOpenSource,
+    state.flowVersion,
+    state.readonly,
+    state.setRun,
   ]);
 
   const triggerHasSampleData =

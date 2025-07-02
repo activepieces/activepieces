@@ -3,7 +3,6 @@ import React from 'react';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
-  Action,
   AgentTaskStatus,
   AgentTestResult,
   isNil,
@@ -11,6 +10,8 @@ import {
   PieceAction,
   StepOutput,
 } from '@activepieces/shared';
+import { Bot } from 'lucide-react';
+import { t } from 'i18next';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;
@@ -33,12 +34,19 @@ const FlowStepAgent = (props: FlowStepAgentProps) => {
     output?.status === AgentTaskStatus.FAILED;
 
   return (
+    <>
+    <div className='flex gap-2 items-center px-4 mt-4'>
+      <Bot className='size-5' />
+      {t("Agent Output")}
+    </div>
     <AgentTimeline
       prompt={prompt}
       isDone={isDone}
       agentId={agentId ?? ''}
       steps={output?.steps || []}
     />
+    </>
+    
   );
 };
 

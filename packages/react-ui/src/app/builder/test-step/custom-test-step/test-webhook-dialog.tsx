@@ -156,7 +156,6 @@ const TestWaitForNextWebhookDialog = ({
       onSuccess: () => {
         onOpenChange(false);
       },
-      onProgress: () => {},
     });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,16 +167,18 @@ const TestWaitForNextWebhookDialog = ({
           showMethodDropdown={false}
           onSubmit={(data) => {
             onSubmit({
-              id: apId(),
-              success: true,
-              output: {
-                body: data.body,
-                headers: data.headers,
-                queryParams: data.queryParams,
-              },
-              standardError: '',
-              standardOutput: '',
-              input: {},
+              preExistingSampleData: {
+                id: apId(),
+                success: true,
+                output: {
+                  body: data.body,
+                  headers: data.headers,
+                  queryParams: data.queryParams,
+                },
+                standardError: '',
+                standardOutput: '',
+                input: {},
+              }
             });
           }}
           isLoading={isLoading}
