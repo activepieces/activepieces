@@ -32,16 +32,15 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
 
         const startTimeCode = performance.now()
         await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
-        const buildJobs = codeSteps.map(async (artifact) => {
-            assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
-            return codeBuilder(log).processCodeStep({
+        assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
+        // This is sequential to ensure the worker machine is not overloaded
+        for (const artifact of codeSteps) {
+            await codeBuilder(log).processCodeStep({
                 artifact,
                 codesFolderPath: GLOBAL_CODE_CACHE_PATH,
-                runEnvironment,
                 log,
             })
-        })
-        await Promise.all(buildJobs)
+        }
         log.info({
             path: GLOBAL_CODE_CACHE_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeCode)}ms`,
