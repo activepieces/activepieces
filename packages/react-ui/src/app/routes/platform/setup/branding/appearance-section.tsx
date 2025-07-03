@@ -24,7 +24,6 @@ const FromSchema = Type.Object({
   logoUrl: Type.String(),
   iconUrl: Type.String(),
   faviconUrl: Type.String(),
-  language: Type.String(),
   color: Type.String(),
 });
 
