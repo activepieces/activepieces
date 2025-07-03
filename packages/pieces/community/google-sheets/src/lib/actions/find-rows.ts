@@ -1,14 +1,16 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
-  getAllGoogleSheetRows,
+  areSheetIdsValid,
   googleSheetsCommon,
   labelToColumn,
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+import { columnNameProp, commonProps } from '../common/props';
 
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -17,10 +19,8 @@ export const findRowsAction = createAction({
     'Find or get rows in a Google Sheet by column name and search value',
   displayName: 'Find Rows',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
-    columnName: googleSheetsCommon.columnName,
+    ...commonProps,
+    columnName: columnNameProp(),
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       description:
@@ -38,7 +38,6 @@ export const findRowsAction = createAction({
       displayName: 'Starting Row',
       description: 'The row number to start searching from',
       required: false,
-      validators: [Validators.minValue(1)],
     }),
     numberOfRows: Property.Number({
       displayName: 'Number of Rows',
@@ -46,33 +45,29 @@ export const findRowsAction = createAction({
         'The number of rows to return ( the default is 1 if not specified )',
       required: false,
       defaultValue: 1,
-      validators: [Validators.minValue(1)],
     }),
   },
   async run({ propsValue, auth }) {
-    const spreadSheetId = propsValue.spreadsheet_id;
-    const sheetId = propsValue.sheet_id;
+    await propsValidation.validateZod(propsValue, {
+      startingRow: z.number().min(1).optional(),
+      numberOfRows: z.number().min(1).optional(),
+    });
+
+    const spreadsheetId = propsValue.spreadsheetId;
+    const sheetId = propsValue.sheetId;
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
-    const sheetName = await googleSheetsCommon.findSheetName(
-      auth.access_token,
-      spreadSheetId,
-      sheetId
-    );
+    if (!areSheetIdsValid(spreadsheetId,sheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
-    let rows = await getAllGoogleSheetRows({
+    const rows = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: spreadsheetId as string,
       accessToken: auth.access_token,
-      sheetName: `${sheetName}!A${startingRow}:ZZZ`,
-      spreadSheetId: spreadSheetId,
-    });
-
-    // modify row number based on starting row number
-    rows = rows.map((row) => {
-      return {
-        row: row.row + startingRow - 1,
-        values: row.values,
-      };
+      sheetId: sheetId as number,
+      rowIndex_s: startingRow,
+      rowIndex_e: undefined,
     });
 
     const values = rows.map((row) => {
@@ -81,13 +76,13 @@ export const findRowsAction = createAction({
 
     const matchingRows: any[] = [];
     const columnName = propsValue.columnName ? propsValue.columnName : 'A';
-    const columnNumber = labelToColumn(columnName);
+    const columnNumber:number = labelToColumn(columnName);
     const searchValue = propsValue.searchValue ?? '';
 
     let matchedRowCount = 0;
 
     for (let i = 0; i < values.length; i++) {
-      const row = values[i];
+      const row:Record<string,any> = values[i];
 
       if (matchedRowCount === numberOfRowsToReturn) break;
 

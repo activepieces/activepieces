@@ -82,7 +82,7 @@ export const flowise = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/flowise.png',
   auth: flowiseAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["aasimsani","kishanprmr","MoShizzle","abuaboud"],
   actions: [
@@ -90,7 +90,7 @@ export const flowise = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: flowiseAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${
           (auth as { access_token: string }).access_token
         }`,

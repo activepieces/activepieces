@@ -17,16 +17,19 @@ export type TodoistCreateTaskRequest = {
 	labels?: Array<string> | undefined;
 	priority?: number | undefined;
 	due_date?: string | undefined;
+    due_string?: string | undefined;
+    due_datetime?: string | undefined;
 	section_id?: string | undefined;
 };
 
 export type TodoistUpdateTaskRequest = {
-	task_id: string;
 	content?: string;
 	description?: string;
 	labels?: Array<string>;
 	priority?: number;
-	due_date?: string;
+	due_date?: string | undefined;
+    due_string?: string | undefined;
+    due_datetime?: string | undefined;
 };
 
 type TodoistTaskDue = {

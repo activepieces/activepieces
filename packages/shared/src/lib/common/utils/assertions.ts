@@ -34,3 +34,12 @@ export function assertNotEqual<T>(
 export const isNotUndefined = <T>(value: T | undefined): value is T => {
     return value !== undefined
 }
+
+export function assertNull<T>(
+    value: T | null,
+    fieldName: string,
+): asserts value is T {
+    if (value !== null) {
+        throw new Error(`${fieldName} should be null`)
+    }
+} 

@@ -43,7 +43,7 @@ export const mastodon = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   categories: [PieceCategory.COMMUNICATION],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: ["denieler","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mastodonAuth,
   actions: [
@@ -52,7 +52,7 @@ export const mastodon = createPiece({
       baseUrl: (auth) =>
         (auth as { base_url: string }).base_url.replace(/\/$/, '') + '/api/v1',
       auth: mastodonAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${
           (auth as { access_token: string }).access_token
         }`,

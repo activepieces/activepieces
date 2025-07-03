@@ -64,7 +64,7 @@ export const woocommerce = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
   categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   authors: ["TaskMagicKyle","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     wooCreateCustomer,
@@ -75,7 +75,7 @@ export const woocommerce = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
       auth: wooAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { consumerKey: string }).consumerKey}:${
             (auth as { consumerSecret: string }).consumerSecret

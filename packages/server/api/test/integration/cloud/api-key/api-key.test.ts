@@ -1,32 +1,33 @@
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
-    createMockUser,
-    mockBasicSetup,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await initializeDatabase({ runMigrations: false })
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
 describe('API Key API', () => {
     describe('Create API Key API', () => {
         it('should create a new API Key', async () => {
-            const { mockOwner, mockPlatform } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -63,17 +64,18 @@ describe('API Key API', () => {
 
     describe('Delete API Key endpoint', () => {
         it('Fail if non owner', async () => {
-            const { mockPlatform } = await mockBasicSetup()
-            const mockUser = createMockUser({
-                platformId: mockPlatform.id,
-                platformRole: PlatformRole.MEMBER,
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection.getRepository('user').save([mockUser])
             const mockApiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection.getRepository('api_key').save(mockApiKey)
+            await databaseConnection().getRepository('api_key').save(mockApiKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -96,8 +98,8 @@ describe('API Key API', () => {
     describe('List API Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const { mockPlatform: mockPlatformTwo } = await mockBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
 
             const mockKeyOne = createMockApiKey({
@@ -108,7 +110,7 @@ describe('API Key API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('api_key')
                 .save([mockKeyOne, mockKeyTwo])
 

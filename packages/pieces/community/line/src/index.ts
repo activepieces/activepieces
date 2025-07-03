@@ -14,7 +14,7 @@ export const line = createPiece({
   description: 'Build chatbots for LINE',
 
   auth: lineAuth2,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/line.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -23,7 +23,7 @@ export const line = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.line.me/v2',
       auth: lineAuth2,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

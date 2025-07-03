@@ -1,10 +1,11 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 import { ContentfulProperty } from '../../properties';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const ContentfulSearchRecordsAction = createAction({
   name: 'contentful_record_search',
@@ -39,11 +40,14 @@ export const ContentfulSearchRecordsAction = createAction({
         'Number of levels to include for entries and assets. See https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/resource-links/retrieval-of-linked-resource-links',
       defaultValue: 1,
       required: false,
-      validators: [Validators.minValue(1)],
     }),
     [PropertyKeys.QUERY_SELECT]: ContentfulProperty.SelectFields,
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      [PropertyKeys.QUERY_INCLUDE]: z.number().min(1),
+    });
+
     const { client } = makeClient(auth);
     const select =
       (propsValue[PropertyKeys.QUERY_SELECT] as string[]) || undefined;

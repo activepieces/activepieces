@@ -9,7 +9,7 @@ import {
   RetableProject,
   RetableTable,
 } from './models';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared';
 
 export const retableCommon = {
   baseUrl: 'https://api.retable.io/v1/public',

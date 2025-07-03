@@ -8,7 +8,7 @@ export const clearout = createPiece({
   displayName: 'Clearout',
   description: 'Bulk email validation and verification',
   auth: clearoutAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
@@ -17,7 +17,7 @@ export const clearout = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.clearout.io/v2', // Replace with the actual base URL
       auth: clearoutAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `${(auth as { apiKey: string }).apiKey}`,
       }),
     }),

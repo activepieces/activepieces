@@ -1,11 +1,12 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { endpoint, kizeoFormsCommon } from '../common';
 import { kizeoFormsAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const getAllListItems = createAction({
   auth: kizeoFormsAuth,
@@ -27,7 +28,6 @@ export const getAllListItems = createAction({
       displayName: 'Limit',
       description: 'Max number of results to return',
       required: false,
-      validators: [Validators.minValue(1)],
     }),
     sort: Property.ShortText({
       displayName: 'Sort',
@@ -42,6 +42,9 @@ export const getAllListItems = createAction({
     listId: kizeoFormsCommon.listId,
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      limit: z.number().min(1).optional(),
+    });
     const { listId, search, offset, limit, sort, direction } =
       context.propsValue;
 

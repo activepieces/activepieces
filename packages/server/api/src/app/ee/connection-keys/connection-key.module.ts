@@ -1,8 +1,3 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { connectionKeyService } from './connection-key.service'
 import {
     ConnectionKeyId,
     GetOrDeleteConnectionFromTokenRequest,
@@ -10,7 +5,13 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, AppConnectionScope } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { projectService } from '../../project/project-service'
+import { connectionKeyService } from './connection-key.service'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, {
@@ -36,11 +37,14 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: GetOrDeleteConnectionFromTokenRequest
             }>,
         ) => {
-            const appConnection = await connectionKeyService.getConnection(
+            const appConnection = await connectionKeyService(request.log).getConnection(
                 request.query,
             )
+            const platformId = await projectService.getPlatformId(request.query.projectId)
             if (appConnection !== null) {
-                await appConnectionService.delete({
+                await appConnectionService(request.log).delete({
+                    scope: AppConnectionScope.PROJECT,
+                    platformId,
                     projectId: request.query.projectId,
                     id: appConnection.id,
                 })
@@ -63,7 +67,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: GetOrDeleteConnectionFromTokenRequest
             }>,
         ) => {
-            return connectionKeyService.getConnection(request.query)
+            return connectionKeyService(request.log).getConnection(request.query)
         },
     )
 
@@ -82,7 +86,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertConnectionFromToken
             }>,
         ) => {
-            return connectionKeyService.createConnection(request.body)
+            return connectionKeyService(request.log).createConnection(request.body)
         },
     )
 
@@ -98,7 +102,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: ListConnectionKeysRequest
             }>,
         ) => {
-            return connectionKeyService.list(
+            return connectionKeyService(request.log).list(
                 request.principal.projectId,
                 request.query.cursor ?? null,
                 request.query.limit ?? DEFAULT_LIMIT_SIZE,
@@ -118,7 +122,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertSigningKeyConnection
             }>,
         ) => {
-            return connectionKeyService.upsert({
+            return connectionKeyService(request.log).upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
             })
@@ -135,7 +139,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             }>,
             reply,
         ) => {
-            await connectionKeyService.delete(request.params.connectionkeyId)
+            await connectionKeyService(request.log).delete(request.params.connectionkeyId)
             return reply.status(StatusCodes.OK).send()
         },
     )

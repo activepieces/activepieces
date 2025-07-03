@@ -1,11 +1,12 @@
 {
   "name": "@activepieces/piece-pdf",
-  "version": "0.0.1",
+  "version": "0.2.4",
   "dependencies": {
-    "@activepieces/pieces-framework": "*",
-    "pdf-text-reader": "4.1.0",
-    "tslib": "2.6.2"
+    "jimp": "^0.22.12",
+    "pdf-parse": "1.1.1",
+    "pdf-lib": "1.17.1"
   },
-  "main": "./src/index.js",
-  "type": "commonjs"
+  "devDependencies": {
+    "@types/pdf-parse": "1.1.4"
+  }
 }

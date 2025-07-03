@@ -1,12 +1,18 @@
+import {
+    assertNotNullOrUndefined,
+    Principal,
+    PrincipalType,
+} from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { Principal, PrincipalType } from '@activepieces/shared'
 
 const ROUTE_PREFIX = '/v1/appsumo'
 
 export class AppSumoAuthnHandler extends BaseSecurityHandler {
     protected canHandle(request: FastifyRequest): Promise<boolean> {
-        const routeMatches = request.routerPath.startsWith(ROUTE_PREFIX)
+        const routerPath = request.routeOptions.url
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
+        const routeMatches = routerPath.startsWith(ROUTE_PREFIX)
         return Promise.resolve(routeMatches)
     }
 

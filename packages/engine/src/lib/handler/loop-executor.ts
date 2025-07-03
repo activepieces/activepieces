@@ -1,7 +1,6 @@
-import { isNil, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
+import { isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
@@ -13,12 +12,8 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         action,
         executionState,
         constants,
-    }: {
-        action: LoopOnItemsAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
-        const { resolvedInput, censoredInput } = await constants.variableService.resolve<LoopOnActionResolvedSettings>({
+        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
                 items: action.settings.items,
             },
@@ -29,6 +24,16 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             input: censoredInput,
         })
         let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
+
+        if (!Array.isArray(resolvedInput.items)) {
+            const failedStepOutput = stepOutput
+                .setStatus(StepOutputStatus.FAILED)
+                .setErrorMessage(JSON.stringify({
+                    message: 'The items you have selected must be a list.',
+                }))
+            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED)
+        }
+
         const firstLoopAction = action.firstLoopAction
 
 
@@ -39,9 +44,8 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
-                newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput)
             }
-            newExecutionContext = newExecutionContext.setCurrentPath(newCurrentPath)
+            newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
             if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
                 newExecutionContext = await flowExecutor.execute({
                     action: firstLoopAction,

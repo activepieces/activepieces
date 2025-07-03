@@ -1,3 +1,4 @@
+import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -6,7 +7,6 @@ import {
     isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
-import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
     owner: User
@@ -40,76 +40,12 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
-        smtpHost: {
-            type: String,
+        smtp: {
+            type: JSONB_COLUMN_TYPE,    
             nullable: true,
         },
-        smtpPort: {
-            type: Number,
-            nullable: true,
-        },
-        smtpUser: {
-            type: String,
-            nullable: true,
-        },
-        smtpPassword: {
-            type: String,
-            nullable: true,
-        },
-        smtpSenderEmail: {
-            type: String,
-            nullable: true,
-        },
-        smtpUseSSL: {
-            type: Boolean,
-            nullable: true,
-        },
-        privacyPolicyUrl: {
-            type: String,
-            nullable: true,
-        },
-        termsOfServiceUrl: {
-            type: String,
-            nullable: true,
-        },
-        showPoweredBy: {
-            type: Boolean,
-            nullable: false,
-        },
+
         cloudAuthEnabled: {
-            type: Boolean,
-            nullable: false,
-            default: true,
-        },
-        customDomainsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        customAppearanceEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        manageProjectsEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        managePiecesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        manageTemplatesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        apiKeysEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        projectRolesEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        embeddingEnabled: {
             type: Boolean,
             nullable: false,
             default: true,
@@ -124,24 +60,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
-        gitSyncEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
-        defaultLocale: {
-            type: String,
-            enum: LocalesEnum,
-            nullable: true,
-        },
         allowedAuthDomains: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
         },
         enforceAllowedAuthDomains: {
-            type: Boolean,
-            nullable: false,
-        },
-        ssoEnabled: {
             type: Boolean,
             nullable: false,
         },
@@ -152,13 +75,14 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         federatedAuthProviders: {
             type: JSONB_COLUMN_TYPE,
         },
-        auditLogEnabled: {
-            type: Boolean,
+        pinnedPieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
             nullable: false,
         },
-        showActivityLog: {
-            type: Boolean,
-            nullable: false,
+        copilotSettings: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [],

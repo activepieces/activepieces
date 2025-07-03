@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
 import { githubAuth } from '../../';
-import { githubCommon } from '../common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubCreateIssueAction = createAction({
   auth: githubAuth,
@@ -28,34 +23,30 @@ export const githubCreateIssueAction = createAction({
     labels: githubCommon.labelDropDown(),
     assignees: githubCommon.assigneeDropDown(),
   },
-  async run(configValue) {
-    const { title, assignees, labels, description } = configValue.propsValue;
-    const { owner, repo } = configValue.propsValue['repository']!;
+  async run({ auth, propsValue }) {
+    const { title, assignees, labels, description } = propsValue;
+    const { owner, repo } = propsValue.repository!;
 
-    const requestBody: CreateIssueRequestBody = {
-      title: title,
+    const issueFields: Record<string, any> = {
+      title,
       body: description,
-      labels: labels,
-      assignees: assignees,
     };
 
-    const request: HttpRequest = {
+    if (labels) {
+      issueFields['labels'] = labels;
+    }
+
+    if (assignees) {
+      issueFields['assignees'] = assignees;
+    }
+
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
       method: HttpMethod.POST,
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues`,
-      body: requestBody,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
-      },
-      queryParams: {},
-    };
-    return await httpClient.sendRequest(request);
+      resourceUri: `/repos/${owner}/${repo}/issues`,
+      body: issueFields,
+    });
+
+    return response;
   },
 });
-
-type CreateIssueRequestBody = {
-  title: string;
-  body?: string;
-  labels?: string[];
-  assignees?: string[];
-};

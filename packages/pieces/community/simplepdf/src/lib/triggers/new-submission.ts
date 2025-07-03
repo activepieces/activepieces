@@ -6,7 +6,10 @@ import {
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-- Paste this URL in the webhook integration endpoint: {{webhookUrl}}
+- Paste this URL in the webhook integration endpoint:
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
 - Click update (keep other settings unchanged)
 <br>
 <br>

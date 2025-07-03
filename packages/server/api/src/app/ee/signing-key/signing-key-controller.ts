@@ -1,10 +1,3 @@
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../helper/application-events'
-import { signingKeyService } from './signing-key-service'
 import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -13,21 +6,27 @@ import {
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../../helper/application-events'
+import { signingKeyService } from './signing-key-service'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
         const platformId = req.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-
         const newSigningKey = await signingKeyService.add({
             platformId,
             displayName: req.body.displayName,
         })
 
-        eventsHooks.get().send(req, {
-            action: ApplicationEventName.CREATED_SIGNING_KEY,
-            userId: req.principal.id,
-            signingKey: newSigningKey,
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+            action: ApplicationEventName.SIGNING_KEY_CREATED,
+            data: {
+                signingKey: newSigningKey,
+            },
         })
 
         return res.status(StatusCodes.CREATED).send(newSigningKey)

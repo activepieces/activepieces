@@ -1,23 +1,23 @@
-import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { FlowTemplateEntity } from './flow-template.entity'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     apId,
     ErrorCode,
-    flowHelper,
+    flowPieceUtil,
     FlowTemplate,
     FlowVersionTemplate,
     isNil,
     ListFlowTemplatesRequest,
+    sanitizeObjectForPostgresql,
     SeekPage,
     TemplateType,
 } from '@activepieces/shared'
+import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { FlowTemplateEntity } from './flow-template.entity'
 
-const templateRepo =
-  databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
+const templateRepo = repoFactory<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
     upsert: async (
@@ -30,30 +30,33 @@ export const flowTemplateService = {
             blogUrl,
             tags,
             id,
+            metadata,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
-        const flowTemplate: FlowVersionTemplate = template
+        const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
-        await templateRepo.upsert(
+
+        await templateRepo().upsert(
             {
                 id: newId,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 template: flowTemplate as any,
                 name: flowTemplate.displayName,
                 description: description ?? '',
-                pieces: flowHelper.getUsedPieces(flowTemplate.trigger),
+                pieces: flowPieceUtil.getUsedPieces(flowTemplate.trigger),
                 blogUrl,
                 type,
                 tags: newTags,
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 platformId,
-                projectId,
+                projectId: type === TemplateType.PLATFORM ? undefined : projectId,
+                metadata: (metadata as unknown) ?? null,
             },
             ['id'],
         )
-        return templateRepo.findOneByOrFail({
+        return templateRepo().findOneByOrFail({
             id: newId,
         })
     },
@@ -74,14 +77,14 @@ export const flowTemplateService = {
         }
         commonFilters.platformId = Equal(platformId)
         commonFilters.type = Equal(TemplateType.PLATFORM)
-        const templates = await templateRepo
+        const templates = await templateRepo()
             .createQueryBuilder('flow_template')
             .where(commonFilters)
             .getMany()
         return paginationHelper.createPage(templates, null)
     },
     getOrThrow: async (id: string): Promise<FlowTemplate> => {
-        const template = await templateRepo.findOneBy({
+        const template = await templateRepo().findOneBy({
             id,
         })
         if (isNil(template)) {
@@ -95,7 +98,7 @@ export const flowTemplateService = {
         return template
     },
     async delete({ id }: { id: string }): Promise<void> {
-        await templateRepo.delete({
+        await templateRepo().delete({
             id,
         })
     },

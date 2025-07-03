@@ -1,26 +1,35 @@
 import {
+    ApId,
+    assertEqual,
+    EndpointScope,
+    PlatformWithoutSensitiveData,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    UpdatePlatformRequestBody,
+} from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { platformService } from './platform.service'
-import {
-    ApId,
-    assertEqual,
-    Platform,
-    PlatformWithoutSensitiveData,
-    Principal,
-    UpdatePlatformRequestBody,
-} from '@activepieces/shared'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
-        return platformService.update({
+
+        const { smtp } = req.body
+        if (smtp) {
+            await smtpEmailSender(req.log).validateOrThrow(smtp)
+        }
+
+        await platformService.update({
             id: req.params.id,
             ...req.body,
         })
+        return platformService.getOneWithPlanOrThrow(req.params.id)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -30,36 +39,9 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             'userPlatformId',
             'paramId',
         )
-        const platform = await platformService.getOneOrThrow(req.params.id)
-
-        return buildResponse({
-            platform,
-            principal: req.principal,
-        })
+        return platformService.getOneWithPlanOrThrow(req.params.id)
     })
 }
-
-const buildResponse = ({
-    platform,
-    principal,
-}: BuildResponseParams): Platform | PlatformBasics => {
-    if (platform.ownerId === principal.id) {
-        return {
-            ...platform,
-            smtpPassword: undefined,
-        }
-    }
-
-    const { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled } = platform
-    return { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled }
-}
-
-type BuildResponseParams = {
-    platform: Platform
-    principal: Principal
-}
-
-type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled' | 'gitSyncEnabled'>
 
 const UpdatePlatformRequest = {
     schema: {
@@ -74,9 +56,19 @@ const UpdatePlatformRequest = {
 }
 
 const GetPlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
+        tags: ['platforms'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get a platform by id',
         params: Type.Object({
             id: ApId,
         }),
+        response: {
+            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+        },
     },
 }

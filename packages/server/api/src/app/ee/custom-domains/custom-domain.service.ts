@@ -1,45 +1,26 @@
-import { databaseConnection } from '../../database/database-connection'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
-import { cloudflareHostnameServices } from './cloudflare-api.service'
-import { CustomDomainEntity } from './custom-domain.entity'
 import {
     CustomDomain,
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { CustomDomainEntity } from './custom-domain.entity'
 
-type HostnameDetailsResponse = {
-    txtName: string
-    txtValue: string
-    hostname: string
-}
-
-const customDomainRepo =
-    databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
-
-const isCloudEdition = getEdition() === ApEdition.CLOUD && system.getOrThrow(SystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
+const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {
-        if (isCloudEdition) {
-            const customDomain = await customDomainService.getOneByIdOrThrow(request.id)
-            const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
-            const domainId = hostnameDetails.data.result[0]?.id
-            if (domainId) {
-                await cloudflareHostnameServices.delete(hostnameDetails.data.result[0].id)
-            }
-        }
-        await customDomainRepo.delete({
+        await customDomainRepo().delete({
             id: request.id,
             platformId: request.platformId,
         })
     },
     async getOneByIdOrThrow(id: string) {
-        const customDomain = await customDomainRepo.findOneBy({
+        const customDomain = await customDomainRepo().findOneBy({
             id,
         })
 
@@ -57,103 +38,61 @@ export const customDomainService = {
     async getOneByDomain(request: {
         domain: string
     }): Promise<CustomDomain | null> {
-        return customDomainRepo.findOneBy({
+        return customDomainRepo().findOneBy({
             domain: request.domain,
         })
     },
     async getOneByPlatform(request: {
-        platformId: string
+        platformId: string | null
     }): Promise<CustomDomain | null> {
-        return customDomainRepo.findOneBy({
-            platformId: request.platformId,
-        })
-    },
-    async getDomainValidationData(request: {
-        id: string
-    }): Promise<HostnameDetailsResponse | null> {
-        const customDomain = await customDomainService.getOneByIdOrThrow(request.id)
-        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
-        const record = hostnameDetails.data.result[0]
-        if (record.ssl.status === 'initializing') {
+        if (isNil(request.platformId)) {
             return null
         }
-        const validationRecord = record.ssl.validation_records[0]
-        return {
-            txtName: validationRecord.txt_name,
-            txtValue: validationRecord.txt_value,
-            hostname: record.hostname,
-        }
+        return customDomainRepo().findOneBy({
+            platformId: request.platformId,
+        })
     },
     async verifyDomain(request: {
         platformId: string
         id: string
-    }): Promise<{ status: string }> {
-        const customDomain = await customDomainRepo.findOneBy({
-            id: request.id,
-        })
-
-        if (isNil(customDomain)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'CustomDomain',
-                    entityId: request.id,
-                },
-            })
-        }
-
-        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
-        const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result[0].id)
-        const status = patchResult.data.result.status
-
-        await customDomainRepo.update({
+    }): Promise<void> {
+        await customDomainRepo().update({
             platformId: request.platformId,
             id: request.id,
         }, {
-            status: status !== 'pending' ? CustomDomainStatus.ACTIVE : CustomDomainStatus.PENDING,
+            status: CustomDomainStatus.ACTIVE,
         })
 
-        return { status }
     },
     async create(request: {
         domain: string
         platformId: string
-    }): Promise<{
-            customDomain: CustomDomain
-            cloudflareHostnameData: null | HostnameDetailsResponse
-        }> {
-        const customDomain = await customDomainRepo.save({
+    }): Promise<CustomDomain> {
+        const isCloudEdition = system.getEdition() === ApEdition.CLOUD
+        return customDomainRepo().save({
             id: apId(),
             domain: request.domain,
             platformId: request.platformId,
             status: isCloudEdition ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE,
         })
 
-        let cloudflareHostnameData: HostnameDetailsResponse | null = null
-        if (isCloudEdition) {
-            await cloudflareHostnameServices.create(request.domain)
-            let retry = 0
-            // TODO this is hack to wait to create verification record
-            while (!cloudflareHostnameData && retry < 3) {
-                cloudflareHostnameData = await customDomainService.getDomainValidationData({
-                    id: customDomain.id,
-                })
-                retry++
-                await new Promise((resolve) => setTimeout(resolve, 3000))
-            }
-        }
-        return {
-            customDomain,
-            cloudflareHostnameData,
-        }
+    },
+    async getPlatformUrlFromEmail(userEmail: string): Promise<string | null> {
+        const rootDomain = userEmail.split('@')[1]
+        const allDomains: CustomDomain[] = await customDomainRepo().find({
+            where: {
+                status: CustomDomainStatus.ACTIVE,
+            },
+        })
+        return allDomains.find(cd => {
+            const domainOrSubdomain = cd.domain
+            return domainOrSubdomain.endsWith(`.${rootDomain}`)
+        })?.domain ?? null
     },
     async list({
         request,
         platformId,
-    }: {
-        platformId: string
-        request: ListCustomDomainsRequest
-    }): Promise<SeekPage<CustomDomain>> {
+    }: ListParams): Promise<SeekPage<CustomDomain>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: CustomDomainEntity,
@@ -164,7 +103,7 @@ export const customDomainService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = customDomainRepo
+        const queryBuilder = customDomainRepo()
             .createQueryBuilder('custom_domain')
             .where({
                 platformId,
@@ -172,4 +111,9 @@ export const customDomainService = {
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<CustomDomain>(data, cursor)
     },
+}
+
+type ListParams = {
+    platformId: string
+    request: ListCustomDomainsRequest
 }

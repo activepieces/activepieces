@@ -71,7 +71,6 @@ export const readNewRows = createTrigger({
         'The maximum number of rows to poll, the rest will be polled on the next run.',
       required: false,
       defaultValue: 10,
-      validators: [],
     }),
   },
   type: TriggerStrategy.POLLING,
@@ -99,6 +98,7 @@ export const readNewRows = createTrigger({
         Math.min(10, context.propsValue.max_rows_to_poll ?? 10)
       ),
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -106,6 +106,7 @@ export const readNewRows = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
 });

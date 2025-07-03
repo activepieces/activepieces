@@ -1,14 +1,16 @@
+import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
-import { FlowRunId } from '../flow-run/flow-run'
+import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '../pieces'
+import { PackageType, PiecePackage, PieceType } from '../pieces'
+import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
-    EXECUTE_TEST_FLOW = 'EXECUTE_TEST_FLOW',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -26,36 +28,84 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteStepOperation
+    | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
 
-export type BaseEngineOperation = {
-    projectId: ProjectId
-    workerToken: string
-    serverUrl: string
+export const enum EngineSocketEvent {
+    ENGINE_RESULT = 'engine-result',
+    ENGINE_ERROR = 'engine-error',
+    ENGINE_STDOUT = 'engine-stdout',
+    ENGINE_STDERR = 'engine-stderr',
+    ENGINE_READY = 'engine-ready',
+    ENGINE_OPERATION = 'engine-operation',
 }
 
-export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+export const EngineResult = Type.Object({
+    result: Type.Unknown(),
+})
+
+export const EngineError = Type.Object({
+    error: Type.Unknown(),
+})
+
+export const EngineStdout = Type.Object({
+    message: Type.String(),
+})
+
+export const EngineStderr = Type.Object({
+    message: Type.String(),
+})
+
+
+export type EngineResult = Static<typeof EngineResult>
+export type EngineError = Static<typeof EngineError>
+export type EngineStdout = Static<typeof EngineStdout>
+export type EngineStderr = Static<typeof EngineStderr>
+
+
+export type BaseEngineOperation = {
+    projectId: ProjectId
+    engineToken: string
+    internalApiUrl: string
+    publicApiUrl: string
+}
+
+export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
+    platformId: PlatformId
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage
+export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteStepOperation = BaseEngineOperation &  {
+export type ExecuteStepOperation = BaseEngineOperation & {
     stepName: string
     flowVersion: FlowVersion
+    sampleData: Record<string, unknown>
+    runEnvironment: RunEnvironment
+    requestId: string
+}
+
+export type ExecuteToolOperation = BaseEngineOperation & {
+    actionName: string
+    pieceName: string
+    pieceVersion: string
+    pieceType: PieceType
+    packageType: PackageType
+    input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
-    stepName: string
-    flowVersion: FlowVersion
+    actionOrTriggerName: string
+    flowVersion?: FlowVersion
     input: Record<string, unknown>
+    sampleData: Record<string, unknown>
     searchValue?: string
 }
 
@@ -63,39 +113,53 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
+    tasks: number
+    runEnvironment: RunEnvironment
+    executionState: ExecutionState
+    serverHandlerId: string | null
+    httpRequestId: string | null
+    progressUpdateType: ProgressUpdateType
+}
+
+export enum ProgressUpdateType {
+    WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
+    TEST_FLOW = 'TEST_FLOW',
+    NONE = 'NONE',
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
     triggerPayload: unknown
+    executeTrigger: boolean
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    tasks: number
     resumePayload: ResumePayload
-} & ExecutionState
+}
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-export type EngineTestOperation = BeginExecuteFlowOperation & {
-    /**
-     * original flow version that the current test flow version is derived from.
-     * Used to generate the test execution context.
-     */
-    sourceFlowVersion: FlowVersion
-}
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT
+    test: boolean
     flowVersion: FlowVersion
     webhookUrl: string
     triggerPayload?: TriggerPayload
-    edition?: string
     appWebhookUrl?: string
-    webhookSecret?: string
+    webhookSecret?: string | Record<string, string>
 }
+
+
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
 
 export type TriggerPayload<T = unknown> = {
     body: T
+    rawBody?: unknown
     headers: Record<string, string>
     queryParams: Record<string, string>
 }
@@ -144,6 +208,14 @@ type ExecuteOnEnableTriggerResponse = {
     scheduleOptions?: ScheduleOptions
 }
 
+export const EngineHttpResponse = Type.Object({
+    status: Type.Number(),
+    body: Type.Unknown(),
+    headers: Type.Record(Type.String(), Type.String()),
+})
+
+export type EngineHttpResponse = Static<typeof EngineHttpResponse>
+
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
         H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
@@ -153,6 +225,7 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
 
 export type ExecuteActionResponse = {
     success: boolean
+    input: unknown
     output: unknown
     message?: string
 }
@@ -173,6 +246,7 @@ export type ExecuteValidateAuthResponse =
 export type ScheduleOptions = {
     cronExpression: string
     timezone: string
+    failureCount: number
 }
 
 export type EngineResponse<T> = {
@@ -184,4 +258,5 @@ export enum EngineResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
     TIMEOUT = 'TIMEOUT',
+    MEMORY_ISSUE = 'MEMORY_ISSUE',
 }

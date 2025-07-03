@@ -47,7 +47,7 @@ export const deepl = createPiece({
   displayName: 'DeepL',
   description: 'AI-powered language translation',
   auth: deeplAuth,
-  minimumSupportedRelease: '0.6.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',
   categories: [],
   authors: ["BBND","kishanprmr","MoShizzle","abuaboud"],
@@ -59,7 +59,7 @@ export const deepl = createPiece({
           ? 'https://api-free.deepl.com/v2'
           : 'https://api.deepl.com/v2', // Replace with the actual base URL
       auth: deeplAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `DeepL-Auth-Key ${(auth as { key: string }).key}`,
       }),
     }),

@@ -12,7 +12,7 @@ export const moveFileAction = createAction({
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
-      description: 'You can use **Search Folder/File** action to retrive ID.',
+      description: 'You can use **Search Folder/File** action to retrieve ID.',
       required: true,
     }),
     include_team_drives: common.properties.include_team_drives,
@@ -27,13 +27,18 @@ export const moveFileAction = createAction({
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
-    const file = await drive.files.get({ fileId });
+    const file = await drive.files.get({
+      fileId,
+      supportsAllDrives: context.propsValue.include_team_drives,
+      fields: 'id,parents',
+    });
 
     const response = await drive.files.update({
       fileId: fileId,
       fields: '*',
       removeParents: file.data.parents?.join(','),
       addParents: folderId,
+      supportsAllDrives: context.propsValue.include_team_drives,
     });
 
     return response.data;

@@ -1,9 +1,9 @@
-import { EntitySchemaColumnOptions } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { EntitySchemaColumnOptions } from 'typeorm'
+import { DatabaseType, system } from '../helper/system/system'
 
-const databaseType = system.get(SystemProp.DB_TYPE)
+const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 export const JSON_COLUMN_TYPE =
   databaseType === DatabaseType.SQLITE3 ? 'simple-json' : 'json'
@@ -47,5 +47,5 @@ export const BaseColumnSchemaPart = {
 }
 
 export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
-    return !editions.includes(getEdition())
+    return !editions.includes(system.getEdition())
 }

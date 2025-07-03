@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../..';
 import {
@@ -6,7 +6,13 @@ import {
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
-import { profilePicture, slackChannel, slackInfo, text, username } from '../common/props';
+import {
+  profilePicture,
+  singleSelectChannelInfo,
+  slackChannel,
+  text,
+  username,
+} from '../common/props';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -15,8 +21,8 @@ export const requestSendApprovalMessageAction = createAction({
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
-    info: slackInfo,
-    channel: slackChannel,
+    info: singleSelectChannelInfo,
+    channel: slackChannel(true),
     text,
     username,
     profilePicture,
@@ -42,7 +48,7 @@ export const requestSendApprovalMessageAction = createAction({
         queryParams: { action: 'disapprove' },
       });
 
-      return await slackSendMessage({
+      await slackSendMessage({
         token,
         text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
         username,
@@ -82,6 +88,10 @@ export const requestSendApprovalMessageAction = createAction({
         ],
         conversationId: channel,
       });
+
+      return {
+        approved: false, // default approval is false
+      };
     } else {
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',

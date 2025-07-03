@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
+  areSheetIdsValid,
   Dimension,
   googleSheetsCommon,
   objectToArray,
@@ -8,6 +9,8 @@ import {
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { isNil } from '@activepieces/shared';
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { commonProps, rowValuesProp } from '../common/props';
 
 export const insertRowAction = createAction({
   auth: googleSheetsAuth,
@@ -15,13 +18,10 @@ export const insertRowAction = createAction({
   description: 'Append a row of values to an existing sheet',
   displayName: 'Insert Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    ...commonProps,
     as_string: Property.Checkbox({
       displayName: 'As String',
-      description:
-        'Inserted values that are dates and formulas will be entered strings and have no effect',
+      description: 'Inserted values that are dates and formulas will be entered strings and have no effect',
       required: false,
     }),
     first_row_headers: Property.Checkbox({
@@ -30,43 +30,76 @@ export const insertRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values,
+    values: rowValuesProp(),
   },
   async run({ propsValue, auth }) {
-    const values = propsValue['values'];
+    const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
+    const accessToken = auth.access_token;
+
+    if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+    const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+
     const sheetName = await googleSheetsCommon.findSheetName(
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id']
+      accessToken,
+      spreadsheetId,
+      sheetId
     );
-    let formattedValues;
-    if (propsValue.first_row_headers) {
-      formattedValues = objectToArray(values);
-      for (let i = 0; i < formattedValues.length; i++) {
-        if (isNil(formattedValues[i])) formattedValues[i] = '';
-      }
-    } else {
-      formattedValues = values['values'];
-    }
-    const res = await googleSheetsCommon.appendGoogleSheetValues({
-      accessToken: auth['access_token'],
+
+    const formattedValues = first_row_headers
+      ? objectToArray(values).map(val => isNil(val) ? '' : val)
+      : values.values;
+
+    const res = await appendGoogleSheetValues({
+      accessToken,
       majorDimension: Dimension.COLUMNS,
       range: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'],
-      valueInputOption: propsValue['as_string']
-        ? ValueInputOption.RAW
-        : ValueInputOption.USER_ENTERED,
+      spreadSheetId: spreadsheetId,
+      valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
       values: stringifyArray(formattedValues),
     });
 
-    //Split the updatedRange string to extract the row number
-    const updatedRangeParts = res.body.updates.updatedRange.split('!');
-    const updatedRowRange = updatedRangeParts[1];
-    const updatedRowNumber = parseInt(
-      updatedRowRange.split(':')[0].substring(1),
-      10
-    );
-
+    const updatedRowNumber = extractRowNumber(res.body.updates.updatedRange);
     return { ...res.body, row: updatedRowNumber };
   },
 });
+
+function extractRowNumber(updatedRange: string): number {
+  const rowRange = updatedRange.split('!')[1];
+  return parseInt(rowRange.split(':')[0].substring(1), 10);
+}
+
+async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
+  const { accessToken, majorDimension, range, spreadSheetId, valueInputOption, values } = params;
+
+  const request: HttpRequest = {
+    method: HttpMethod.POST,
+    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(`${range}!A:A`)}:append`,
+    body: {
+      majorDimension,
+      range: `${range}!A:A`,
+      values: values.map(val => ({ values: val })),
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+    queryParams: {
+      valueInputOption,
+    },
+  };
+
+  return httpClient.sendRequest(request);
+}
+
+type AppendGoogleSheetValuesParams = {
+  values: string[];
+  spreadSheetId: string;
+  range: string;
+  valueInputOption: ValueInputOption;
+  majorDimension: Dimension;
+  accessToken: string;
+};

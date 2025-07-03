@@ -1,0 +1,97 @@
+---
+title: Handling Downtime
+icon: turn-down
+---
+
+![Downtime Incident](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTZnbGxjc3k5d3NxeXQwcmhxeTRsbnNybnd4NG41ZnkwaDdsa3MzeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2UCt7zbmsLoCXybx6t/giphy.gif)
+
+## 📋 What You Need Before Starting
+
+Make sure these are ready:
+- **[Incident.io Setup](../playbooks/setup-incident-io)**: For managing incidents.
+- **Grafana & Loki**: For checking logs and errors.
+- **Checkly Debugging**: For testing and monitoring.
+
+---
+
+## 🚨 Stay Calm and Take Action
+
+<Warning>
+  Don’t panic! Follow these steps to fix the issue.
+</Warning>
+
+1. **Tell Your Users**:
+   - Let your users know there’s an issue. Post on [Community](https://community.activepieces.com) and Discord.
+   - Example message: *“We’re looking into a problem with our services. Thanks for your patience!”*
+
+2. **Find Out What’s Wrong**:
+   - Gather details. What’s not working? When did it start?
+
+3. **Update the Status Page**:
+   - Use [Incident.io](https://incident.io) to update the status page. Set it to *“Investigating”* or *“Partial Outage”*.
+
+---
+
+## 🔍 Check for Infrastructure Problems
+
+1. **Look at DigitalOcean**:
+   - Check if the CPU, memory, or disk usage is too high.
+   - If it is:
+     - **Increase the machine size** temporarily to fix the issue.
+     - Keep looking for the root cause.
+
+---
+
+## 📜 Check Logs and Errors
+
+1. **Use Grafana & Loki**:
+   - Search for recent errors in the logs.
+   - Look for anything unusual or repeating.
+
+2. **Check Sentry**:
+   - Look for grouped errors (errors that happen a lot).
+   - Try to **reproduce the error** and fix it if possible.
+
+---
+
+## 🛠️ Debugging with Checkly
+
+1. **Check Checkly Logs**:
+   - Watch the **video recordings** of failed checks to see what went wrong.
+   - If the issue is a **timeout**, it might mean there’s a bigger performance problem.
+   - If it's an E2E test failure due to UI changes, it's likely not urgent.
+     - Fix the test and the issue will go away.
+
+---
+
+## 🚨 When Should You Ask for Help?
+
+Ask for help right away if:
+- Flows are failing.
+- The whole platform is down.
+- There's a lot of data loss or corruption.
+- You're not sure what is causing the issue.
+- You've spent **more than 5 minutes** and still don't know what's wrong.
+
+💡 **How to Ask for Help**:
+- Use **Incident.io** to create a **critical alert**.
+- Go to the **Slack incident channel** and escalate the issue to the engineering team.
+
+<Warning>
+  If you’re unsure, **ask for help!** It’s better to be safe than sorry.
+</Warning>
+
+---
+
+## 💡 Helpful Tips
+
+1. **Stay Organized**:
+   - Keep a list of steps to follow during downtime.
+   - Write down everything you do so you can refer to it later.
+
+2. **Communicate Clearly**:
+   - Keep your team and users updated.
+   - Use simple language in your updates.
+
+3. **Take Care of Yourself**:
+   - If you feel stressed, take a short break. Grab a coffee ☕, take a deep breath, and tackle the problem step by step.

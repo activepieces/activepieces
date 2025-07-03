@@ -1,16 +1,24 @@
 import {
   Property,
   createAction,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
-  createNewDate,
   timeZoneOptions,
-  timeDiff,
+  getCorrectedFormat,
 } from '../common';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(advancedFormat);
 
 export const nextDayofWeek = createAction({
   name: 'next_day_of_week',
@@ -48,7 +56,6 @@ export const nextDayofWeek = createAction({
         'The time that you would like to get the date and time of. This must be in 24h format.',
       required: false,
       defaultValue: '00:00',
-      validators: [Validators.pattern(/^\d\d:\d\d$/)],
     }),
     currentTime: Property.Checkbox({
       displayName: 'Use Current Time',
@@ -76,16 +83,20 @@ export const nextDayofWeek = createAction({
     }),
   },
   async run(context) {
-    const timeFormat = context.propsValue.timeFormat;
+    await propsValidation.validateZod(context.propsValue, {
+      time: z.string().regex(/^\d\d:\d\d$/),
+    });
+
+    const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone as string;
     const dayIndex = context.propsValue.weekday as number;
     const currentTime = context.propsValue.currentTime as boolean;
     let time = context.propsValue.time as string;
 
-    const nextOccurrence = new Date();
+    let nextOccurrence = dayjs().tz(timeZone);
 
     if (currentTime === true) {
-      time = `${nextOccurrence.getHours()}:${nextOccurrence.getMinutes()}`;
+      time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -103,35 +114,21 @@ export const nextDayofWeek = createAction({
       );
     }
 
-    if (typeof timeFormat !== 'string') {
-      throw new Error(
-        `Output format is not a string \noutput format: ${JSON.stringify(
-          timeFormat
-        )}`
-      );
-    }
-
     // Set the time
-    nextOccurrence.setHours(hours, minutes, 0, 0);
+    nextOccurrence = nextOccurrence.hour(hours).minute(minutes).second(0).millisecond(0);
 
     // Calculate the day difference
-    let dayDiff = dayIndex - nextOccurrence.getDay();
-    console.log('dayDiff:', dayDiff, nextOccurrence, new Date());
+    let dayDiff = dayIndex - nextOccurrence.day();
     if (
       dayDiff < 0 ||
-      (dayDiff === 0 && nextOccurrence.getTime() < new Date().getTime())
+      (dayDiff === 0 && nextOccurrence.isBefore(dayjs().tz(timeZone)))
     ) {
       // If it's a past day in the week or today but past time, move to next week
       dayDiff += 7;
     }
     // Set the date to the next occurrence of the given day
-    nextOccurrence.setDate(nextOccurrence.getDate() + dayDiff);
+    nextOccurrence = nextOccurrence.add(dayDiff, 'day');
 
-    // Set the time for the timezone
-    nextOccurrence.setMinutes(
-      nextOccurrence.getMinutes() + timeDiff('UTC', timeZone)
-    );
-
-    return { result: createNewDate(nextOccurrence, timeFormat) };
+    return { result: nextOccurrence.format(timeFormat) };
   },
 });

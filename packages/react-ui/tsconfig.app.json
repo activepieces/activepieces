@@ -1,0 +1,45 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": [
+      "node",
+      "@nx/react/typings/cssmodule.d.ts",
+      "@nx/react/typings/image.d.ts",
+      "vite/client"
+    ],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@activepieces/shared": [
+        "../../packages/shared/src"
+      ],
+      "@activepieces/ee-shared": [
+        "../../packages/ee/shared/src"  
+      ],
+      "@activepieces/pieces-framework": [
+        "../../packages/pieces/community/framework/src" 
+      ],
+      "@activepieces/pieces-common": [
+        "../../packages/pieces/community/common/src" 
+      ],
+      "ee-embed-sdk": [
+        "../../packages/ee/ui/embed-sdk/src"
+      ]
+    }
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.js",
+    "src/**/*.test.js",
+    "src/**/*.spec.jsx",
+    "src/**/*.test.jsx"
+  ],
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "i18next-parser.config.js", "src/app/builder/builder-flow-status-section/index.tsx"]
+}

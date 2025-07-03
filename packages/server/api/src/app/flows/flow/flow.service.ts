@@ -1,46 +1,69 @@
-import { EntityManager, IsNull } from 'typeorm'
-import { transaction } from '../../core/db/transaction'
-import { acquireLock } from '../../helper/lock'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { telemetry } from '../../helper/telemetry.utils'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { flowFolderService } from '../folder/folder.service'
-import { flowSideEffects } from './flow-service-side-effects'
-import { FlowEntity } from './flow.entity'
-import { flowRepo } from './flow.repo'
-import { logger } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
     Flow,
-    flowHelper,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
+    flowPieceUtil,
     FlowStatus,
     FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
     isNil,
+    Metadata,
+    PlatformId,
     PopulatedFlow,
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { EntityManager, In, IsNull } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
+import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connection'
+import { emailService } from '../../ee/helper/email/email-service'
+import { distributedLock } from '../../helper/lock'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { telemetry } from '../../helper/telemetry.utils'
+import { projectService } from '../../project/project-service'
+import { handshakeHandler } from '../../webhooks/handshake-handler'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowFolderService } from '../folder/folder.service'
+import { triggerHooks } from '../trigger'
+import { flowSideEffects } from './flow-service-side-effects'
+import { FlowEntity } from './flow.entity'
+import { flowRepo } from './flow.repo'
 
-export const flowService = {
-    async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
+const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
-        const folderId = isNil(request.folderName) ? null : (await flowFolderService.upsert({
+const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+    if (folderId) {
+        return folderId
+    }
+    if (folderName) {
+        return (await flowFolderService(log).upsert({
             projectId,
             request: {
-                displayName: request.folderName,
+                projectId,
+                displayName: folderName,
             },
         })).id
+    }
+    return null
+}
+
+export const flowService = (log: FastifyBaseLogger) => ({
+    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
             projectId,
@@ -48,26 +71,26 @@ export const flowService = {
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
             schedule: null,
+            externalId: externalId ?? apId(),
+            metadata: request.metadata,
         }
-
         const savedFlow = await flowRepo().save(newFlow)
 
-        const savedFlowVersion = await flowVersionService.createEmptyVersion(
+        const savedFlowVersion = await flowVersionService(log).createEmptyVersion(
             savedFlow.id,
             {
                 displayName: request.displayName,
             },
         )
 
-        telemetry
-            .trackProject(savedFlow.projectId, {
-                name: TelemetryEventName.CREATED_FLOW,
-                payload: {
-                    flowId: savedFlow.id,
-                },
-            })
+        telemetry(log).trackProject(savedFlow.projectId, {
+            name: TelemetryEventName.CREATED_FLOW,
+            payload: {
+                flowId: savedFlow.id,
+            },
+        })
             .catch((e) =>
-                logger.error(e, '[FlowService#create] telemetry.trackProject'),
+                log.error(e, '[FlowService#create] telemetry.trackProject'),
             )
 
         return {
@@ -82,19 +105,22 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
+        connectionExternalIds,
+        versionState = FlowVersionState.DRAFT,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
         const paginator = buildPaginator({
             entity: FlowEntity,
+            alias: 'ff',
             query: {
                 limit,
                 order: 'DESC',
+                orderBy: 'updated',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-
         const queryWhere: Record<string, unknown> = { projectId }
 
         if (folderId !== undefined) {
@@ -102,36 +128,64 @@ export const flowService = {
         }
 
         if (status !== undefined) {
-            queryWhere.status = status
+            queryWhere.status = In(status)
         }
 
-        const paginationResult = await paginator.paginate(
-            flowRepo().createQueryBuilder('flow').where(queryWhere),
-        )
+        const queryBuilder = flowRepo().createQueryBuilder('ff')
+            .leftJoin(
+                'flow_version',
+                'latest_version',
+                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)',
+            )
+            .where(queryWhere)
+
+        if (name !== undefined) {
+            queryBuilder.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:name)', { name: `%${name}%` })
+        }
+
+        if (connectionExternalIds !== undefined) {
+            AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', connectionExternalIds)
+        }
+
+        const paginationResult = await paginator.paginate(queryBuilder)
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
-            const version = await flowVersionService.getFlowVersionOrThrow({
+            const version = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
-                versionId: undefined,
+                versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
             })
-
             return {
                 ...flow,
                 version,
             }
         })
 
-        const populatedFlows = await Promise.all(populatedFlowPromises)
-
+        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
-        return flowRepo().findOneBy({
+        const flow = await flowRepo().findOneBy({
             id,
         })
+        if (isNil(flow)) {
+            return null
+        }
+        const projectExists = await projectService.exists({
+            projectId: flow.projectId,
+        })
+        if (!projectExists) {
+            return null
+        }
+        return flow
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
+        const projectExists = await projectService.exists({
+            projectId,
+        })
+        if (!projectExists) {
+            return null
+        }
         return flowRepo(entityManager).findOneBy({
             id,
             projectId,
@@ -148,7 +202,8 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -156,14 +211,18 @@ export const flowService = {
             projectId,
         })
 
-        if (isNil(flow)) {
+        const projectExists = await projectService.exists({
+            projectId,
+        })
+        if (isNil(flow) || !projectExists) {
             return null
         }
 
-        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
+        const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: id,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
 
@@ -177,14 +236,16 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
         assertFlowIsNotNull(flow)
@@ -195,71 +256,100 @@ export const flowService = {
         id,
         userId,
         projectId,
+        platformId,
         operation,
         lock = true,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowLock = lock
-            ? await acquireLock({
+            ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
+                log,
             })
             : null
 
         try {
-            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
-                await this.updatedPublishedVersionId({
-                    id,
-                    userId,
-                    projectId,
-                })
-            }
-            else if (operation.type === FlowOperationType.CHANGE_STATUS) {
-                await this.updateStatus({
-                    id,
-                    projectId,
-                    newStatus: operation.request.status,
-                })
-            }
-            else if (operation.type === FlowOperationType.CHANGE_FOLDER) {
-                await flowRepo().update(id, {
-                    folderId: operation.request.folderId,
-                })
-            }
-            else {
-                let lastVersion = await flowVersionService.getFlowVersionOrThrow({
-                    flowId: id,
-                    versionId: undefined,
-                })
-
-                if (lastVersion.state === FlowVersionState.LOCKED) {
-                    const lastVersionWithArtifacts =
-                        await flowVersionService.getFlowVersionOrThrow({
-                            flowId: id,
-                            versionId: undefined,
-                        })
-
-                    lastVersion = await flowVersionService.createEmptyVersion(id, {
-                        displayName: lastVersionWithArtifacts.displayName,
-                    })
-
-                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService.applyOperation({
+            switch (operation.type) {
+                case FlowOperationType.LOCK_AND_PUBLISH:
+                {
+                    await this.updatedPublishedVersionId({
+                        id,
                         userId,
                         projectId,
-                        flowVersion: lastVersion,
-                        userOperation: {
-                            type: FlowOperationType.IMPORT_FLOW,
-                            request: lastVersionWithArtifacts,
-                        },
+                        platformId,
                     })
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status ?? FlowStatus.ENABLED,
+                    })
+                    break
                 }
 
-                await flowVersionService.applyOperation({
-                    userId,
-                    projectId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                })
+                case FlowOperationType.CHANGE_STATUS:
+                {
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status,
+                    })
+                    break
+                }
+
+                case FlowOperationType.CHANGE_FOLDER:
+                {
+                    await flowRepo().update(id, {
+                        folderId: operation.request.folderId,
+                    })
+                    break
+                }
+
+                case FlowOperationType.UPDATE_METADATA:
+                {
+                    await this.updateMetadata({
+                        id,
+                        projectId,
+                        metadata: operation.request.metadata,
+                    })
+                    break
+                }
+                default: {
+                    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                        flowId: id,
+                        versionId: undefined,
+                    })
+
+                    if (lastVersion.state === FlowVersionState.LOCKED) {
+                        const lastVersionWithArtifacts =
+                            await flowVersionService(log).getFlowVersionOrThrow({
+                                flowId: id,
+                                versionId: undefined,
+                            })
+
+                        lastVersion = await flowVersionService(log).createEmptyVersion(id, {
+                            displayName: lastVersionWithArtifacts.displayName,
+                        })
+
+                        // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
+                        lastVersion = await flowVersionService(log).applyOperation({
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersion: lastVersion,
+                            userOperation: {
+                                type: FlowOperationType.IMPORT_FLOW,
+                                request: lastVersionWithArtifacts,
+                            },
+                        })
+                    }
+                    await flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: operation,
+                    })
+                }
             }
         }
         finally {
@@ -284,16 +374,27 @@ export const flowService = {
             entityManager,
         })
 
+        const publishedFlowVersionId = flowToUpdate.publishedVersionId
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions } = await flowSideEffects.preUpdateStatus({
-                flowToUpdate,
-                newStatus,
+            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: flowToUpdate.id,
+                versionId: publishedFlowVersionId,
                 entityManager,
+            })
+
+            const webhookHandshakeConfiguration = await handshakeHandler.getWebhookHandshakeConfiguration(publishedFlowVersion, projectId, log)
+            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            await flowRepo(entityManager).save(flowToUpdate)
+
+            const { scheduleOptions } = await flowSideEffects(log).preUpdateStatus({
+                flowToUpdate,
+                publishedFlowVersion,
+                newStatus,
             })
 
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
-
             await flowRepo(entityManager).save(flowToUpdate)
         }
 
@@ -304,39 +405,90 @@ export const flowService = {
         })
     },
 
+    async updateFailureCount({
+        flowId,
+        projectId,
+        success,
+    }: UpdateFailureCountParams): Promise<void> {
+        const flow = await this.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+
+        const { schedule } = flow
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED
+
+        if (skipUpdateFlowCount) {
+            return
+        }
+        const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+
+        if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
+            await this.updateStatus({
+                id: flowId,
+                projectId,
+                newStatus: FlowStatus.DISABLED,
+            })
+
+            await emailService(log).sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
+            rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
+                name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
+                payload: {
+                    projectId,
+                    flowId,
+                    pieceName: flow.version.trigger.settings.pieceName,
+                    pieceVersion: flow.version.trigger.settings.pieceVersion,
+                },
+            }), log)
+        }
+
+        await flowRepo().update(flowId, {
+            schedule: {
+                ...flow.schedule,
+                failureCount: newFailureCount,
+            },
+        })
+    },
+
+
     async updatedPublishedVersionId({
         id,
         userId,
         projectId,
+        platformId,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-        const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow(
+        const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow(
             {
                 flowId: id,
                 versionId: undefined,
             },
         )
 
-        const { scheduleOptions } = await flowSideEffects.preUpdatePublishedVersionId({
-            flowToUpdate,
-            flowVersionToPublish,
-        })
+        if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
+            await triggerHooks.disable({
+                flowVersion: await flowVersionService(log).getOneOrThrow(
+                    flowToUpdate.publishedVersionId,
+                ),
+                projectId: flowToUpdate.projectId,
+                simulate: false,
+            }, log)
+        }
 
         return transaction(async (entityManager) => {
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
                 projectId,
+                platformId,
                 entityManager,
+                log,
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.ENABLED
-            flowToUpdate.schedule = scheduleOptions
-
+            flowToUpdate.status = FlowStatus.DISABLED
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-
             return {
                 ...updatedFlow,
                 version: lockedFlowVersion,
@@ -345,9 +497,10 @@ export const flowService = {
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const lock = await acquireLock({
+        const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
+            log,
         })
 
         try {
@@ -355,10 +508,10 @@ export const flowService = {
                 id,
                 projectId,
             })
-            
-            await flowSideEffects.preDelete({
+
+            rejectedPromiseHandler(flowSideEffects(log).preDelete({
                 flowToDelete,
-            })
+            }), log)
 
             await flowRepo().delete({ id })
         }
@@ -382,13 +535,14 @@ export const flowService = {
             id: flowId,
             projectId,
             versionId,
-            removeSecrets: true,
+            removeConnectionsName: true,
+            removeSampleData: true,
         })
 
         return {
             name: flow.version.displayName,
             description: '',
-            pieces: flowHelper.getUsedPieces(flow.version.trigger),
+            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
             template: flow.version,
             tags: [],
             created: Date.now().toString(),
@@ -397,14 +551,15 @@ export const flowService = {
         }
     },
 
-    async count({ projectId, folderId }: CountParams): Promise<number> {
+    async count({ projectId, folderId, status }: CountParams): Promise<number> {
         if (folderId === undefined) {
-            return flowRepo().countBy({ projectId })
+            return flowRepo().countBy({ projectId, status })
         }
 
         return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
+            status,
         })
     },
 
@@ -416,21 +571,55 @@ export const flowService = {
             status,
         })
     },
-}
+
+    async updateMetadata({
+        id,
+        projectId,
+        metadata,
+    }: UpdateMetadataParams): Promise<PopulatedFlow> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+
+        flowToUpdate.metadata = metadata
+
+        await flowRepo().save(flowToUpdate)
+
+        return this.getOnePopulatedOrThrow({
+            id,
+            projectId,
+        })
+    },
+
+    async updateLastModified(flowId: FlowId, projectId: ProjectId): Promise<void> {
+        const flow = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+        })
+
+        flow.updated = dayjs().toISOString()
+        await flowRepo().save(flow)
+    },
+})
+
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
     userId,
     projectId,
+    platformId,
     entityManager,
+    log,
 }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
     if (flowVersion.state === FlowVersionState.LOCKED) {
         return flowVersion
     }
 
-    return flowVersionService.applyOperation({
+    return flowVersionService(log).applyOperation({
         userId,
         projectId,
+        platformId,
         flowVersion,
         userOperation: {
             type: FlowOperationType.LOCK_FLOW,
@@ -456,6 +645,7 @@ const assertFlowIsNotNull: <T extends Flow>(
 type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
+    externalId?: string
 }
 
 type ListParams = {
@@ -463,7 +653,10 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
-    status: FlowStatus | undefined
+    status: FlowStatus[] | undefined
+    name: string | undefined
+    versionState?: FlowVersionState
+    connectionExternalIds?: string[]
 }
 
 type GetOneParams = {
@@ -474,7 +667,8 @@ type GetOneParams = {
 
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
-    removeSecrets?: boolean
+    removeConnectionsName?: boolean
+    removeSampleData?: boolean
 }
 
 type GetTemplateParams = {
@@ -486,14 +680,16 @@ type GetTemplateParams = {
 type CountParams = {
     projectId: ProjectId
     folderId?: string
+    status?: FlowStatus
 }
 
 type UpdateParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
     lock?: boolean
+    platformId: PlatformId
 }
 
 type UpdateStatusParams = {
@@ -503,9 +699,16 @@ type UpdateStatusParams = {
     entityManager?: EntityManager
 }
 
+type UpdateFailureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    success: boolean
+}
+
 type UpdatePublishedVersionIdParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
+    platformId: PlatformId
     projectId: ProjectId
 }
 
@@ -518,13 +721,21 @@ type NewFlow = Omit<Flow, 'created' | 'updated'>
 
 type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
+    platformId: PlatformId
     entityManager: EntityManager
+    log: FastifyBaseLogger
 }
 
 type ExistsByProjectAndStatusParams = {
     projectId: ProjectId
     status: FlowStatus
     entityManager: EntityManager
+}
+
+type UpdateMetadataParams = {
+    id: FlowId
+    projectId: ProjectId
+    metadata: Metadata | null | undefined
 }

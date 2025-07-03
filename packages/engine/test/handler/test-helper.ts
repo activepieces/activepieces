@@ -1,26 +1,33 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
-import { VariableService } from '../../src/lib/services/variable-service'
+import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
         params?.flowId ?? 'flowId',
+        params?.flowVersionId ?? 'flowVersionId',
+        params?.flowVersionState ?? FlowVersionState.DRAFT,
         params?.flowRunId ?? 'flowRunId',
-        params?.serverUrl ?? 'http://127.0.0.1:3000',
+        params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
+        params?.internalApiUrl ??  'http://127.0.0.1:3000/',
         params?.retryConstants ?? {
             maxAttempts: 2,
             retryExponential: 1,
             retryInterval: 1,
         },
-        params?.workerToken ?? 'workerToken',
+        params?.engineToken ?? 'engineToken',
         params?.projectId ?? 'projectId',
-        params?.variableService ?? new VariableService({
+        params?.propsResolver ?? createPropsResolver({
             projectId: 'projectId',
-            workerToken: 'workerToken',
+            engineToken: 'engineToken',
+            apiUrl: 'http://127.0.0.1:3000',
         }),
         params?.testSingleStepMode ?? false,
-        params?.filesServiceType ?? 'local',
+        params?.progressUpdateType ?? ProgressUpdateType.NONE,
+        params?.serverHandlerId ?? null,
+        params?.httpRequestId ?? null,
         params?.resumePayload,
+        params?.runEnvironment ?? RunEnvironment.TESTING,
     )
 }
 
@@ -28,15 +35,18 @@ export function buildSimpleLoopAction({
     name,
     loopItems,
     firstLoopAction,
+    skip,
 }: {
     name: string
     loopItems: string
     firstLoopAction?: Action
+    skip?: boolean
 }): LoopOnItemsAction {
     return {
         name,
         displayName: 'Loop',
         type: ActionType.LOOP_ON_ITEMS,
+        skip: skip ?? false,
         settings: {
             items: loopItems,
             inputUiInfo: {},
@@ -46,31 +56,40 @@ export function buildSimpleLoopAction({
     }
 }
 
-
-
-export function buildActionWithOneCondition({ condition, onSuccessAction, onFailureAction }: { condition: BranchCondition, onSuccessAction?: Action, onFailureAction?: Action }): BranchAction {
+export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): Action {
     return {
-        name: 'branch',
-        displayName: 'Your Branch Name',
-        type: ActionType.BRANCH,
+        name: 'router',
+        displayName: 'Your Router Name',
+        type: ActionType.ROUTER,
+        skip: skip ?? false,
         settings: {
+            branches: conditions.map((condition) => {
+                if (condition === null) {
+                    return {
+                        branchType: BranchExecutionType.FALLBACK,
+                        branchName: 'Fallback Branch',
+                    }
+                }
+                return {
+                    conditions: [[condition]],
+                    branchType: BranchExecutionType.CONDITION,
+                    branchName: 'Test Branch',
+                }
+            }),
+            executionType,
             inputUiInfo: {},
-            conditions: [
-                [condition],
-            ],
         },
-        onFailureAction,
-        onSuccessAction,
+        children,
         valid: true,
     }
 }
 
-
-export function buildCodeAction({ name, input, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
         type: ActionType.CODE,
+        skip: skip ?? false,
         settings: {
             input,
             sourceCode: {
@@ -84,11 +103,12 @@ export function buildCodeAction({ name, input, nextAction, errorHandlingOptions 
     }
 }
 
-export function buildPieceAction({ name, input, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, nextAction?: Action, pieceName: string, actionName: string }): PieceAction {
+export function buildPieceAction({ name, input, skip, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string, nextAction?: Action }): PieceAction {
     return {
         name,
         displayName: 'Your Action Name',
         type: ActionType.PIECE,
+        skip: skip ?? false,
         settings: {
             input,
             pieceName,
@@ -96,9 +116,7 @@ export function buildPieceAction({ name, input, pieceName, actionName, nextActio
             pieceVersion: '1.0.0', // Not required since it's running in development mode
             pieceType: PieceType.OFFICIAL,
             actionName,
-            inputUiInfo: {
-                currentSelectedData: {},
-            },
+            inputUiInfo: {},
             errorHandlingOptions,
         },
         nextAction,

@@ -88,6 +88,7 @@ export class AITableClient {
             defaultValue?: string;
             options?: {
               name: string;
+              id?: string;
             }[];
           };
         }[];

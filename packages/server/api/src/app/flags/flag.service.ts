@@ -1,67 +1,114 @@
-import axios from 'axios'
-import { databaseConnection } from '../database/database-connection'
-import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
-import { webhookService } from '../webhooks/webhook-service'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { In } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
+import { repoFactory } from '../core/db/repo-factory'
+import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 
-const flagRepo = databaseConnection.getRepository(FlagEntity)
+const flagRepo = repoFactory(FlagEntity)
+
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return flagRepo.save({
+        return flagRepo().save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return flagRepo.findOneBy({
-            id: flagId,
-        })
+        return flagRepo().findOneBy({ id: flagId })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo.find({})
+        const flags = await flagRepo().findBy({
+            id: In([
+                ApFlagId.SHOW_POWERED_BY_IN_FORM,
+                ApFlagId.CLOUD_AUTH_ENABLED,
+                ApFlagId.PROJECT_LIMITS_ENABLED,
+                ApFlagId.CURRENT_VERSION,
+                ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
+                ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                ApFlagId.ENVIRONMENT,
+                ApFlagId.PUBLIC_URL,
+                ApFlagId.LATEST_VERSION,
+                ApFlagId.PRIVACY_POLICY_URL,
+                ApFlagId.PIECES_SYNC_MODE,
+                ApFlagId.PRIVATE_PIECES_ENABLED,
+                ApFlagId.FLOW_RUN_TIME_SECONDS,
+                ApFlagId.SHOW_COMMUNITY,
+                ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                ApFlagId.TELEMETRY_ENABLED,
+                ApFlagId.TEMPLATES_PROJECT_ID,
+                ApFlagId.TERMS_OF_SERVICE_URL,
+                ApFlagId.THEME,
+                ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+                ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+                ApFlagId.SAML_AUTH_ACS_URL,
+                ApFlagId.USER_CREATED,
+                ApFlagId.WEBHOOK_URL_PREFIX,
+                ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+                ApFlagId.MAX_FIELDS_PER_TABLE,
+                ApFlagId.MAX_RECORDS_PER_TABLE,
+                ApFlagId.MAX_FILE_SIZE_MB,
+                ApFlagId.SHOW_CHANGELOG,
+            ]),
+        })
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        const currentVersion = await this.getCurrentRelease()
-        const latestVersion = await this.getLatestRelease()
+        const currentVersion = await apVersionUtil.getCurrentRelease()
+        const latestVersion = await apVersionUtil.getLatestRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
-                value: system.get(SystemProp.ENVIRONMENT),
+                value: system.get(AppSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AGENTS_CONFIGURED,
+                value: await aiProviderService.isAgentConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
+                value: true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PIECES_SYNC_MODE,
-                value: system.get(SystemProp.PIECES_SYNC_MODE),
+                value: system.get(AppSystemProp.PIECES_SYNC_MODE),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(getEdition()),
+                id: ApFlagId.ENABLE_FLOW_ON_PUBLISH,
+                value: system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true,
                 created,
                 updated,
             },
             {
-                id: ApFlagId.OWN_AUTH2_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_REWARDS,
-                value: true,
+                id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
-                value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
                 updated,
             },
@@ -72,44 +119,20 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.COPILOT_ENABLED,
-                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                id: ApFlagId.EDITION,
+                value: system.getEdition(),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COPILOT,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+                id: ApFlagId.IS_CLOUD_PLATFORM,
                 value: false,
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_SIGN_UP_LINK,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.EDITION,
-                value: getEdition(),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_BILLING,
-                value: getEdition() === ApEdition.CLOUD,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -121,9 +144,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition())
-                    ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : undefined,
+                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
                 created,
                 updated,
             },
@@ -140,20 +161,20 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_DOCS,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                id: ApFlagId.SHOW_COMMUNITY,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COMMUNITY,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                id: ApFlagId.SHOW_CHANGELOG,
+                value: true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -170,32 +191,40 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SIGN_UP_ENABLED,
-                value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
                 updated,
             },
             {
-                id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookService.getWebhookPrefix(),
+                id: ApFlagId.PUBLIC_URL,
+                value: await domainHelper.getPublicUrl({
+                    path: '',
+                }),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.FRONTEND_URL,
-                value: system.get(SystemProp.FRONTEND_URL),
+                id: ApFlagId.FLOW_RUN_TIME_SECONDS,
+                value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
-                value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
+                id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
+                value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
+                value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
+                value: system.getNumber(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS),
                 created,
                 updated,
             },
@@ -212,58 +241,75 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: getSupportedAppWebhooks(),
+                id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+                value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_RECORDS_PER_TABLE,
+                value: system.getNumber(AppSystemProp.MAX_RECORDS_PER_TABLE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_FIELDS_PER_TABLE,
+                value: system.getNumber(AppSystemProp.MAX_FIELDS_PER_TABLE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_FILE_SIZE_MB,
+                value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
                 created,
                 updated,
             },
         )
 
+        if (system.isApp()) {
+            flags.push(
+                {
+                    id: ApFlagId.WEBHOOK_URL_PREFIX,
+                    value: await domainHelper.getPublicApiUrl({
+                        path: 'v1/webhooks',
+                    }),
+                    created,
+                    updated,
+                },
+                {
+                    id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                    value: getSupportedAppWebhooks(),
+                    created,
+                    updated,
+                },
+            )
+        }
         return flags
     },
-    getThirdPartyRedirectUrl(
-        platformId: string | undefined,
-        hostname: string | undefined,
-    ): string {
-        const isCustomerPlatform =
-            platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform) {
-            return `https://${hostname}/redirect`
-        }
-        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
-        const trimmedFrontendUrl = frontendUrl?.endsWith('/')
-            ? frontendUrl.slice(0, -1)
-            : frontendUrl
-        return `${trimmedFrontendUrl}/redirect`
-    },
-    async getCurrentRelease(): Promise<string> {
-        const packageJson = await import('package.json')
-        return packageJson.version
-    },
-
-    async getLatestRelease(): Promise<string> {
-        try {
-            const response = await axios.get<PackageJson>(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-            )
-            return response.data.version
-        }
-        catch (ex) {
-            return '0.0.0'
-        }
-    },
+    
     isCloudPlatform(platformId: string | null): boolean {
-        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (!cloudPlatformId || !platformId) {
             return false
         }
+
         return platformId === cloudPlatformId
     },
 }
 
+
+
+function getSupportedAppWebhooks(): string[] {
+    const webhookSecrets = system.get(AppSystemProp.APP_WEBHOOK_SECRETS)
+    if (isNil(webhookSecrets)) {
+        return []
+    }
+    const parsed = webhookSecretsUtils.parseWebhookSecrets(webhookSecrets)
+    return Object.keys(parsed)
+}
+
 export type FlagType =
-    | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
@@ -271,8 +317,4 @@ export type FlagType =
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
     value: V
-}
-
-type PackageJson = {
-    version: string
 }

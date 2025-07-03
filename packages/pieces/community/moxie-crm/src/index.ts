@@ -38,7 +38,7 @@ export const moxieCrm = createPiece({
   description: 'CRM build for the freelancers.',
 
   auth: moxieCRMAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.SALES_AND_CRM],
@@ -49,7 +49,7 @@ export const moxieCrm = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
       auth: moxieCRMAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-API-KEY': (auth as { apiKey: string }).apiKey,
       }),
     }),

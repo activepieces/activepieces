@@ -33,6 +33,7 @@ export const createEventsBatch = createAction({
             eye_color: 'brown',
             person_occupation: 'marketing',
           },
+          custom_field: '',
           phone_number: '+12025551111',
           campaign_tags: 'post-purchase',
           sharing_channels: ['facebook', 'custom'],
@@ -55,10 +56,6 @@ export const createEventsBatch = createAction({
         },
       ],
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
-    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -76,12 +73,6 @@ export const createEventsBatch = createAction({
           data: context.propsValue.events,
           create_offers: context.propsValue.create_offers,
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return createEventsBatch.body;
   },

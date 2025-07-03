@@ -1,4 +1,9 @@
 import {
+    AddDomainRequest,
+    ListCustomDomainsRequest,
+} from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Static,
     Type,
@@ -7,11 +12,6 @@ import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
-import {
-    AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),
@@ -19,7 +19,7 @@ const GetOneRequest = Type.Object({
 type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
@@ -69,40 +69,6 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             return customDomainService.list({
                 platformId,
                 request: request.query,
-            })
-        },
-    )
-
-    app.get(
-        '/validation/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-
-            return customDomainService.getDomainValidationData({
-                id: request.params.id,
-            })
-        },
-    )
-
-    app.patch(
-        '/verify/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            return customDomainService.verifyDomain({
-                id: request.params.id,
-                platformId,
             })
         },
     )

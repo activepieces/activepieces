@@ -1,80 +1,65 @@
-import { fileService } from '../../file/file.service'
-import { PieceMetadataSchema } from '../piece-metadata-entity'
-import { FastDbPieceMetadataService } from './db-piece-metadata-service'
-import { FilePieceMetadataService } from './file-piece-metadata-service'
-import { PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, PiecesSource } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     PackageType,
     PiecePackage,
+    PlatformId,
     PrivatePiecePackage,
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../helper/system/system'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
+import { FastDbPieceMetadataService } from './db-piece-metadata-service'
+import { FilePieceMetadataService } from './file-piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 
-const pieceSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
 
-
-const initPieceMetadataService = (): PieceMetadataService => {
-    const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+export const pieceMetadataService = (log: FastifyBaseLogger): PieceMetadataService => {
+    const source = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
         case PiecesSource.CLOUD_AND_DB:
-            return FastDbPieceMetadataService()
+            return FastDbPieceMetadataService(log)
         case PiecesSource.FILE:
-            return FilePieceMetadataService()
+            return FilePieceMetadataService(log)
     }
 }
 
-export const pieceMetadataService = initPieceMetadataService()
-
-export const getPiecePackage = async (
-    projectId: string,
+export const getPiecePackageWithoutArchive = async (
+    log: FastifyBaseLogger,
+    projectId: string | undefined,
+    platformId: PlatformId | undefined,
     pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
-    switch (pkg.packageType) {
-        case PackageType.ARCHIVE: {
-            const pieceMetadata = await pieceMetadataService.getOrThrow({
-                name: pkg.pieceName,
-                version: pkg.pieceVersion,
-                projectId,
-            })
-            const archiveFile = await fileService.getOneOrThrow({
-                fileId: pieceMetadata.archiveId!,
-            })
-            return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pkg.pieceName,
-                pieceVersion: pkg.pieceVersion,
-                pieceType: pkg.pieceType,
-                archiveId: pieceMetadata.archiveId!,
-                archive: archiveFile.data,
-            }
-        }
-        case PackageType.REGISTRY: {
-            const directoryPath = await getDirectoryPath(projectId, pkg)
-            return {
-                ...pkg,
-                directoryPath,
-            }
-        }
-    }
-}
-
-
-async function getDirectoryPath(projectId: string,
-    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>): Promise<string | undefined> {
-    if (pieceSource !== PiecesSource.FILE) {
-        return undefined
-    }
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
+    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pkg.pieceName,
         version: pkg.pieceVersion,
         projectId,
+        platformId,
     })
-    return pieceMetadata.directoryPath
+    switch (pkg.packageType) {
+        case PackageType.ARCHIVE: {
+            return {
+                packageType: PackageType.ARCHIVE,
+                pieceName: pkg.pieceName,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pkg.pieceType,
+                archiveId: pieceMetadata.archiveId!,
+                archive: undefined,
+            }
+        }
+        case PackageType.REGISTRY: {
+            return {
+                packageType: PackageType.REGISTRY,
+                pieceName: pkg.pieceName,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pkg.pieceType,
+            }
+        }
+    }
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(

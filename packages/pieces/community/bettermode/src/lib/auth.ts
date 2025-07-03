@@ -1,8 +1,9 @@
 import {
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 import { getAuthToken } from './api';
 
 export type BettermodeAuthType = {
@@ -33,13 +34,11 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
       displayName: 'BetterMode Domain',
       description: 'The domain of your Bettermode account',
       required: true,
-      validators: [Validators.url],
     }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Email address for your Bettermode account',
       required: true,
-      validators: [Validators.email],
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
@@ -64,6 +63,11 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
 });
 
 const validateAuth = async (auth: BettermodeAuthType) => {
+  await propsValidation.validateZod(auth, {
+    domain: z.string().url(),
+    email: z.string().email(),
+  });
+
   const response = await getAuthToken(auth);
   if (!response.memberId) {
     throw new Error(

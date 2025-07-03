@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox';
-import { TestOrRunHookContext, TriggerHookContext } from '../context';
+import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { TriggerTestStrategy } from '@activepieces/shared';
+import { isNil, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
@@ -13,24 +13,15 @@ export enum TriggerStrategy {
   APP_WEBHOOK = "APP_WEBHOOK",
 }
 
-export enum WebhookHandshakeStrategy {
-  NONE = 'NONE',
-  HEADER_PRESENT = 'HEADER_PRESENT',
-  QUERY_PRESENT = 'QUERY_PRESENT',
-  BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
-}
 
 export enum WebhookRenewStrategy {
   CRON = 'CRON',
   NONE = 'NONE',
 }
 
-export const WebhookHandshakeConfiguration = Type.Object({
-  strategy: Type.Enum(WebhookHandshakeStrategy),
-  paramName: Type.Optional(Type.String()),
-})
+type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
-export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
+
 
 export const WebhookRenewConfiguration = Type.Union([
   Type.Object({
@@ -57,13 +48,15 @@ type BaseTriggerParams<
   name: string
   displayName: string
   description: string
+  requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
   type: TS
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+  onStart?: OnStartRunner<PieceAuth, TriggerProps>,
   sampleData: unknown
 }
 
@@ -95,6 +88,7 @@ export class ITrigger<
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
+    public readonly requireAuth: boolean,
     public readonly props: TriggerProps,
     public readonly type: TS,
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
@@ -103,6 +97,7 @@ export class ITrigger<
     public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
+    public readonly onStart: OnStartRunner<PieceAuth, TriggerProps>,
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
@@ -128,6 +123,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
@@ -136,6 +132,7 @@ export const createTrigger = <
         params.onRenew ?? (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
@@ -146,6 +143,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
@@ -154,6 +152,7 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
@@ -164,6 +163,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
@@ -172,10 +172,11 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
-        TriggerTestStrategy.TEST_FUNCTION,
+        (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
       )
   }
 }

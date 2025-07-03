@@ -3,18 +3,24 @@ import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dro
 import { ShortTextProperty } from "./text-property";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyContext } from "../../context";
-import { ValidationInputType } from "../../validators/types";
 import { PropertyType } from "./property-type";
+import { JsonProperty } from "./json-property";
+import { ArrayProperty } from "./array-property";
+import { DropdownState, InputPropertyMap } from "..";
 
-const DynamicProp = Type.Union([
+export const DynamicProp = Type.Union([
   ShortTextProperty,
   StaticDropdownProperty,
+  JsonProperty,
+  ArrayProperty,
   StaticMultiSelectDropdownProperty,
 ])
 
-type DynamicProp =
+export type DynamicProp =
   | ShortTextProperty<boolean>
   | StaticDropdownProperty<any, boolean>
+  | JsonProperty<boolean>
+  | ArrayProperty<boolean>
   | StaticMultiSelectDropdownProperty<any, boolean>;
 
 export const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);
@@ -34,12 +40,12 @@ export type DynamicProperties<R extends boolean> = BasePropertySchema &
   props: (
     propsValue: Record<string, DynamicPropsValue>,
     ctx: PropertyContext
-  ) => Promise<Record<string, DynamicProp>>;
+  ) => Promise<InputPropertyMap>;
   refreshers: string[];
 } &
   TPropertyValue<
     DynamicPropsValue,
     PropertyType.DYNAMIC,
-    ValidationInputType.ANY,
     R
   >;
+

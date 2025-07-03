@@ -1,4 +1,8 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  OAuth2PropertyValue,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   getContacts,
   getTask,
@@ -49,7 +53,10 @@ export const updateTaskAction = createAction({
             options: [],
           };
 
-        const tasks = await getTasks((auth as OAuth2PropertyValue).access_token, contact as string);
+        const tasks = await getTasks(
+          (auth as OAuth2PropertyValue).access_token,
+          contact as string
+        );
         return {
           options: tasks.map((task: any) => {
             return {
@@ -102,16 +109,24 @@ export const updateTaskAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { contact, task, title, dueDate, description, assignedTo, completed } =
-      propsValue;
+    const {
+      contact,
+      task,
+      title,
+      dueDate,
+      description,
+      assignedTo,
+      completed,
+    } = propsValue;
 
-    let originalData: any;
-    if (!title || !dueDate) originalData = await getTask(auth.access_token, contact, task);
+    // let originalData: any;
+    // if (!title || !dueDate)
+    //   originalData = await getTask(auth.access_token, contact, task);
 
     return await updateTask(auth.access_token, contact, task, {
-      title: title ?? originalData.title,
+      title: title, //?? originalData.title,
       // Needs to be ISO string without milliseconds
-      dueDate: dueDate ? formatDate(dueDate) : formatDate(originalData.dueDate),
+      dueDate: dueDate, // ? formatDate(dueDate) : formatDate(originalData.dueDate),
       body: description,
       assignedTo: assignedTo,
       completed,

@@ -1,11 +1,11 @@
+import { AppCredential } from '@activepieces/ee-shared'
+import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
-import { AppCredential } from '@activepieces/ee-shared'
-import { Project } from '@activepieces/shared'
 
 export type AppCredentialSchema = {
     project: Project[]

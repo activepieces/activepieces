@@ -1,13 +1,24 @@
-import ivm from 'isolated-vm'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Check this https://github.com/laverdet/isolated-vm/issues/258#issuecomment-2134341086
+let ivmCache: any
+const getIvm = () => {
+    if (!ivmCache) {
+        ivmCache = require('isolated-vm')
+    }
+    return ivmCache as typeof import('isolated-vm')
+}
 
 /**
  * Runs code in a V8 Isolate sandbox
  */
 export const v8IsolateCodeSandbox: CodeSandbox = {
     async runCodeModule({ codeModule, inputs }) {
+        const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
         try {
@@ -32,12 +43,14 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext }) {
+        const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
         try {
+            // It is to avoid strucutedClone issue of proxy objects / functions, It will throw cannot be cloned error.
             const isolateContext = await initIsolateContext({
                 isolate,
-                codeContext: scriptContext,
+                codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
             return await executeIsolate({
@@ -52,9 +65,9 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
     },
 }
 
-const initIsolateContext = async ({ isolate, codeContext }: InitContextParams): Promise<ivm.Context> => {
+const initIsolateContext = async ({ isolate, codeContext }: InitContextParams): Promise<any> => {
     const isolateContext = await isolate.createContext()
-
+    const ivm = getIvm()
     for (const [key, value] of Object.entries(codeContext)) {
         await isolateContext.global.set(key, new ivm.ExternalCopy(value).copyInto())
     }
@@ -74,17 +87,22 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
 }
 
 const serializeCodeModule = (codeModule: CodeModule): string => {
-    const serializedCodeFunction = codeModule.code.toString()
-    return `const code = ${serializedCodeFunction}; code(inputs);`
+    const serializedCodeFunction = Object.keys(codeModule)
+        .reduce((acc, key) => 
+            acc + `const ${key} = ${(codeModule as any)[key].toString()};`, 
+        '')
+
+    // replace the exports.function_name with function_name
+    return serializedCodeFunction.replace(/\(0, exports\.(\w+)\)/g, '$1') + 'code(inputs);'
 }
 
 type InitContextParams = {
-    isolate: ivm.Isolate
+    isolate: any
     codeContext: Record<string, unknown>
 }
 
 type ExecuteIsolateParams = {
-    isolate: ivm.Isolate
-    isolateContext: ivm.Context
+    isolate: any
+    isolateContext: unknown
     code: string
 }

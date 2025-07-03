@@ -33,7 +33,7 @@ export const calendlyAuth = PieceAuth.SecretText({
 export const calendly = createPiece({
   displayName: 'Calendly',
   description: 'Simple, modern scheduling',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
@@ -42,7 +42,7 @@ export const calendly = createPiece({
     createCustomApiCallAction({
       baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
       auth: calendlyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

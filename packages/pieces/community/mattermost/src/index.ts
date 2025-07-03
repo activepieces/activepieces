@@ -36,7 +36,7 @@ export const mattermost = createPiece({
   description: 'Open-source, self-hosted Slack alternative',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mattermostAuth,
@@ -46,7 +46,7 @@ export const mattermost = createPiece({
       baseUrl: (auth) =>
         (auth as { workspace_url: string }).workspace_url + '/api/v4',
       auth: mattermostAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { token: string }).token}`,
       }),
     }),

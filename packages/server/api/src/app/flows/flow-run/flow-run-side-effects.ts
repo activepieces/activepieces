@@ -1,35 +1,38 @@
-import dayjs from 'dayjs'
-import { notifications } from '../../helper/notifications'
-import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../workers/flow-worker/job-data'
-import { JobType } from '../../workers/flow-worker/queues/queue'
-import { flowRunHooks } from './flow-run-hooks'
-import { HookType } from './flow-run-service'
-import { logger } from '@activepieces/server-shared'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
     FlowRun,
+    isFlowUserTerminalState,
     isNil,
-    PauseType } from '@activepieces/shared'
+    PauseType,
+    ProgressUpdateType,
+} from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { eventsHooks } from '../../helper/application-events'
+import { jobQueue } from '../../workers/queue'
+import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
-    synchronousHandlerId?: string
-    hookType?: HookType
+    executeTrigger: boolean
+    priority: keyof typeof JOB_PRIORITY
+    synchronousHandlerId: string | undefined
+    progressUpdateType: ProgressUpdateType
+    httpRequestId: string | undefined
 }
 
 type PauseParams = {
     flowRun: FlowRun
 }
 
-const calculateDelayForResumeJob = (
+const calculateDelayForPausedRun = (
     resumeDateTimeIsoString: string,
 ): number => {
     const now = dayjs()
@@ -44,14 +47,17 @@ const calculateDelayForResumeJob = (
     return delayInMilliSeconds
 }
 
-export const flowRunSideEffects = {
-    async finish({ flowRun }: { flowRun: FlowRun }): Promise<void> {
-        await flowRunHooks
-            .getHooks()
-            .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
-
-        await notifications.notifyRun({
-            flowRun,
+export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
+    async finish(flowRun: FlowRun): Promise<void> {
+        if (!isFlowUserTerminalState(flowRun.status)) {
+            return
+        }
+        await flowRunHooks(log).onFinish(flowRun)
+        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_FINISHED,
+            data: {
+                flowRun,
+            },
         })
     },
     async start({
@@ -59,31 +65,42 @@ export const flowRunSideEffects = {
         executionType,
         payload,
         synchronousHandlerId,
-        hookType,
+        httpRequestId,
+        priority,
+        progressUpdateType,
+        executeTrigger,
     }: StartParams): Promise<void> {
-        logger.info(
+        log.info(
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
         )
 
-        await flowQueue.add({
+        await jobQueue(log).add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
-            priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
+            priority,
             data: {
-                synchronousHandlerId,
+                synchronousHandlerId: synchronousHandlerId ?? null,
                 projectId: flowRun.projectId,
                 environment: flowRun.environment,
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                executeTrigger,
+                httpRequestId,
                 executionType,
-                hookType,
+                progressUpdateType,
+            },
+        })
+        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_STARTED,
+            data: {
+                flowRun,
             },
         })
     },
 
     async pause({ flowRun }: PauseParams): Promise<void> {
-        logger.info(
+        log.info(
             `[FlowRunSideEffects#pause] flowRunId=${flowRun.id} pauseType=${flowRun.pauseMetadata?.type}`,
         )
 
@@ -100,22 +117,24 @@ export const flowRunSideEffects = {
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY:
-                await flowQueue.add({
+                await jobQueue(log).add({
                     id: flowRun.id,
                     type: JobType.DELAYED,
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
+                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,
                         environment: flowRun.environment,
                         jobType: RepeatableJobType.DELAYED_FLOW,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),
+                    delay: calculateDelayForPausedRun(pauseMetadata.resumeDateTime),
                 })
                 break
             case PauseType.WEBHOOK:
                 break
         }
     },
-}
+})

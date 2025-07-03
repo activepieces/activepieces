@@ -4,6 +4,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 import dayjs from 'dayjs';
 
 export const oneDriveCommon = {
@@ -23,32 +24,33 @@ export const oneDriveCommon = {
       }
 
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      let folders: { id: string; name: string }[] = [];
+      let folders: { id: string; label: string }[] = [];
 
       try {
-        const result = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${oneDriveCommon.baseUrl}/items/root/children?$filter=folder ne null`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authProp.access_token,
-          },
-        });
-        folders = result.body['value'];
+        folders = await getFoldersRecursively(authProp, 'root', '');
       } catch (e) {
         throw new Error(`Failed to get folders\nError:${e}`);
       }
 
       return {
         disabled: false,
-        options: folders.map((folder: { id: string; name: string }) => {
+        options: folders.map((folder: { id: string; label: string }) => {
           return {
-            label: folder.name,
+            label: folder.label,
             value: folder.id,
           };
         }),
       };
     },
+  }),
+   parentFolderInfo : Property.MarkDown({
+    value: 
+      `**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n
+
+      you can find the folder ID in the OneDrive URL after **?id=**, e.g., "onedrive.live.com/?id=**folder-id**&cid=some-other-id"
+
+    `,
+    variant:MarkdownVariant.INFO
   }),
 
   async getFiles(
@@ -96,3 +98,52 @@ export const oneDriveCommon = {
     return files;
   },
 };
+
+async function getFoldersRecursively(
+  auth: OAuth2PropertyValue,
+  folderId: string,
+  parentPath = '',
+  result: { label: string; id: string }[] = []
+) {
+  // Stop recursion if limit is reached
+  if (result.length >= 1000) {
+    return result;
+  }
+
+  const url = `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder`;
+
+  try {
+    const response = await httpClient.sendRequest<getFoldersResponse>({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.access_token,
+      },
+    });
+
+
+    const items = response.body.value;
+
+    const folders = items.filter((item) => item.folder);
+
+    for (const folder of folders) {
+      const path = parentPath ? `${parentPath}/${folder.name}` : folder.name;
+      result.push({ label: path, id: folder.id });
+
+      if (folder.folder?.childCount && folder.folder.childCount > 0) {
+        await getFoldersRecursively(auth, folder.id, path, result);
+      }
+    }
+  } catch (e) {
+    throw new Error(`Failed to get folders\nError: ${e}`);
+  }
+
+  return result;
+}
+
+interface getFoldersResponse {
+  '@odata.nextLink'?: string;
+  '@odata.deltaLink'?: string;
+  value: { id: string; name: string; folder?: { childCount: number } }[];
+}

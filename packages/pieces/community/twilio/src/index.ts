@@ -23,7 +23,7 @@ export const twilio = createPiece({
   description:
     'Cloud communications platform for building SMS, Voice & Messaging applications',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
   categories: [PieceCategory.COMMUNICATION],
@@ -32,7 +32,7 @@ export const twilio = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.twilio.com/2010-04-01',
       auth: twilioAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { username: string }).username}:${
             (auth as { password: string }).password

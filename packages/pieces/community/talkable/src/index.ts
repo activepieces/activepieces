@@ -18,6 +18,7 @@ import {
   unsubscribePerson,
   updatePerson,
   updateReferralStatus,
+  claimOffer,
 } from './lib/actions';
 
 const markdownDescription = `
@@ -49,7 +50,7 @@ export const talkable = createPiece({
   description: 'Referral marketing programs that drive revenue',
 
   auth: talkableAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl:
     'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
   authors: ["Vitalini","kishanprmr","MoShizzle","abuaboud"],
@@ -67,13 +68,15 @@ export const talkable = createPiece({
     refund,
     getLoyaltyRedeemActions,
     updateReferralStatus,
+    claimOffer,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.talkable.com/api/v2',
       auth: talkableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
       }),
     }),
   ],
   triggers: [],
 });
+

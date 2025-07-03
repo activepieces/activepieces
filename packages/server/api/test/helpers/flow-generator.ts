@@ -1,14 +1,15 @@
-import { faker } from '@faker-js/faker'
 import { Action, ActionType, apId, FlowStatus, FlowVersion, FlowVersionState, PackageType, PieceType, PopulatedFlow, Trigger, TriggerType } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 
 export const flowGenerator = {
-    simpleActionAndTrigger(): PopulatedFlow {
-        return flowGenerator.randomizeMetadata(flowVersionGenerator.simpleActionAndTrigger())
+    simpleActionAndTrigger(externalId?: string): PopulatedFlow {
+        return flowGenerator.randomizeMetadata(externalId, flowVersionGenerator.simpleActionAndTrigger())
     },
-    randomizeMetadata(version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
+    randomizeMetadata(externalId: string | undefined, version: Omit<FlowVersion, 'flowId'>): PopulatedFlow {
         const flowId = apId()
         const result = {
+            externalId: externalId ?? flowId,
             version: {
                 ...version,
                 trigger: randomizeTriggerMetadata(version.trigger),
@@ -40,6 +41,7 @@ const flowVersionGenerator = {
                 nextAction: generateAction(),
             },
             state: FlowVersionState.DRAFT,
+            connectionIds: [],
         }
     },
 }
@@ -63,6 +65,7 @@ function generateAction(): Action {
         type: ActionType.PIECE,
         displayName: faker.hacker.noun(),
         name: apId(),
+        skip: false,
         settings: {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,

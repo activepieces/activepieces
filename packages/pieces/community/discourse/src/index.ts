@@ -40,7 +40,7 @@ export const discourse = createPiece({
   displayName: 'Discourse',
   description: 'Modern open source forum software',
   auth: discourseAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
@@ -53,7 +53,7 @@ export const discourse = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { website_url: string }).website_url.trim(), // Replace with the actual base URL
       auth: discourseAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'Api-Key': (auth as { api_key: string }).api_key,
         'Api-Username': (auth as { api_username: string }).api_username,
       }),

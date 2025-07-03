@@ -20,7 +20,7 @@ export const gitlab = createPiece({
   description: 'Collaboration tool for developers',
 
   auth: gitlabAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gitlab.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
@@ -29,7 +29,7 @@ export const gitlab = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://gitlab.com/api/v4',
       auth: gitlabAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

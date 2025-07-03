@@ -1,211 +1,126 @@
 {
   "migrations": [
     {
-      "cli": "nx",
-      "version": "17.3.0-beta.6",
-      "description": "Updates the nx wrapper.",
-      "implementation": "./src/migrations/update-17-3-0/update-nxw",
+      "version": "21.0.0-beta.8",
+      "description": "Removes the legacy cache configuration from nx.json",
+      "implementation": "./src/migrations/update-21-0-0/remove-legacy-cache",
       "package": "nx",
-      "name": "17.3.0-update-nx-wrapper"
+      "name": "remove-legacy-cache"
     },
     {
-      "cli": "nx",
-      "version": "18.0.0-beta.2",
-      "description": "Updates .env to disabled adding plugins when generating projects in an existing Nx workspace",
-      "implementation": "./src/migrations/update-18-0-0/disable-crystal-for-existing-workspaces",
-      "x-repair-skip": true,
+      "version": "21.0.0-beta.8",
+      "description": "Removes the legacy cache configuration from nx.json",
+      "implementation": "./src/migrations/update-21-0-0/remove-custom-tasks-runner",
       "package": "nx",
-      "name": "18.0.0-disable-adding-plugins-for-existing-workspaces"
+      "name": "remove-custom-tasks-runner"
+    },
+    {
+      "version": "21.0.0-beta.11",
+      "description": "Updates release version config based on the breaking changes in Nx v21",
+      "implementation": "./src/migrations/update-21-0-0/release-version-config-changes",
+      "package": "nx",
+      "name": "release-version-config-changes"
+    },
+    {
+      "version": "21.0.0-beta.11",
+      "description": "Updates release changelog config based on the breaking changes in Nx v21",
+      "implementation": "./src/migrations/update-21-0-0/release-changelog-config-changes",
+      "package": "nx",
+      "name": "release-changelog-config-changes"
+    },
+    {
+      "version": "21.1.0-beta.2",
+      "description": "Adds **/nx-rules.mdc and **/nx.instructions.md to .gitignore if not present",
+      "implementation": "./src/migrations/update-21-1-0/add-gitignore-entry",
+      "package": "nx",
+      "name": "21-1-0-add-ignore-entries-for-nx-rule-files"
+    },
+    {
+      "version": "20.2.0-beta.5",
+      "description": "Update TypeScript ESLint packages to v8.13.0 if they are already on v8",
+      "implementation": "./src/migrations/update-20-2-0/update-typescript-eslint-v8-13-0",
+      "package": "@nx/eslint",
+      "name": "update-typescript-eslint-v8.13.0"
+    },
+    {
+      "version": "20.3.0-beta.1",
+      "description": "Update ESLint flat config to include .cjs, .mjs, .cts, and .mts files in overrides (if needed)",
+      "implementation": "./src/migrations/update-20-3-0/add-file-extensions-to-overrides",
+      "package": "@nx/eslint",
+      "name": "add-file-extensions-to-overrides"
     },
     {
       "cli": "nx",
-      "version": "17.2.1-beta.0",
-      "description": "Add webpack.config.js file when webpackConfig is not defined",
-      "implementation": "./src/migrations/update-17-2-1/webpack-config-setup",
-      "package": "@nx/webpack",
-      "name": "update-17-2-1-webpack-config-setup"
-    },
-    {
-      "cli": "nx",
-      "version": "17.2.6-beta.1",
-      "description": "Rename workspace rules from @nx/workspace/name to @nx/workspace-name",
-      "implementation": "./src/migrations/update-17-2-6-rename-workspace-rules/rename-workspace-rules",
-      "package": "@nx/eslint-plugin",
-      "name": "update-17-2-6-rename-workspace-rules"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Update the @angular/cli package version to ~17.0.0.",
-      "factory": "./src/migrations/update-17-1-0/update-angular-cli",
-      "package": "@nx/angular",
-      "name": "update-angular-cli-version-17-0-0"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Rename 'browserTarget' to 'buildTarget'.",
-      "factory": "./src/migrations/update-17-1-0/browser-target-to-build-target",
-      "package": "@nx/angular",
-      "name": "rename-browser-target-to-build-target"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/builders' with '@angular-devkit/build-angular'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-builders",
-      "package": "@nx/angular",
-      "name": "replace-nguniversal-builders"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace usages of '@nguniversal/' packages with '@angular/ssr'.",
-      "factory": "./src/migrations/update-17-1-0/replace-nguniversal-engines",
-      "package": "@nx/angular",
-      "name": "replace-nguniversal-engines"
-    },
-    {
-      "cli": "nx",
-      "version": "17.1.0-beta.5",
-      "requires": {
-        "@angular/core": ">=17.0.0"
-      },
-      "description": "Replace the deep imports from 'zone.js/dist/zone' and 'zone.js/dist/zone-testing' with 'zone.js' and 'zone.js/testing'.",
-      "factory": "./src/migrations/update-17-1-0/update-zone-js-deep-import",
-      "package": "@nx/angular",
-      "name": "update-zone-js-deep-import"
-    },
-    {
-      "cli": "nx",
-      "version": "17.2.0-beta.2",
-      "description": "Rename '@nx/angular:webpack-dev-server' executor to '@nx/angular:dev-server'",
-      "factory": "./src/migrations/update-17-2-0/rename-webpack-dev-server",
-      "package": "@nx/angular",
-      "name": "rename-webpack-dev-server-executor"
-    },
-    {
-      "cli": "nx",
-      "version": "17.3.0-beta.10",
-      "requires": {
-        "@angular/core": ">=17.1.0"
-      },
-      "description": "Update the @angular/cli package version to ~17.1.0.",
-      "factory": "./src/migrations/update-17-3-0/update-angular-cli",
-      "package": "@nx/angular",
-      "name": "update-angular-cli-version-17-1-0"
-    },
-    {
-      "cli": "nx",
-      "version": "17.3.0-beta.10",
-      "requires": {
-        "@angular/core": ">=17.1.0"
-      },
-      "description": "Add 'browser-sync' as dev dependency when '@angular-devkit/build-angular:ssr-dev-server' or '@nx/angular:module-federation-dev-ssr' is used.",
-      "factory": "./src/migrations/update-17-3-0/add-browser-sync-dependency",
-      "package": "@nx/angular",
-      "name": "add-browser-sync-dependency"
-    },
-    {
-      "cli": "nx",
-      "version": "17.3.0-beta.10",
-      "requires": {
-        "@angular/core": ">=17.1.0"
-      },
-      "description": "Add 'autoprefixer' as dev dependency when '@nx/angular:ng-packagr-lite' or '@nx/angular:package` is used.",
-      "factory": "./src/migrations/update-17-3-0/add-autoprefixer-dependency",
-      "package": "@nx/angular",
-      "name": "add-autoprefixer-dependency"
-    },
-    {
-      "cli": "nx",
-      "version": "18.0.0-beta.0",
-      "description": "Add NX_MF_DEV_SERVER_STATIC_REMOTES to inputs for task hashing when '@nx/angular:webpack-browser' is used for Module Federation.",
-      "factory": "./src/migrations/update-18-0-0/add-mf-env-var-to-target-defaults",
-      "package": "@nx/angular",
-      "name": "add-module-federation-env-var-to-target-defaults"
-    },
-    {
-      "version": "17.1.0-beta.2",
-      "description": "Move jest executor options to nx.json targetDefaults",
-      "implementation": "./src/migrations/update-17-1-0/move-options-to-target-defaults",
+      "version": "21.0.0-beta.9",
+      "description": "Replace usage of `getJestProjects` with `getJestProjectsAsync`.",
+      "implementation": "./src/migrations/update-21-0-0/replace-getJestProjects-with-getJestProjectsAsync",
       "package": "@nx/jest",
-      "name": "move-options-to-target-defaults"
+      "name": "replace-getJestProjects-with-getJestProjectsAsync-v21"
     },
     {
-      "version": "17.1.0-beta.1",
-      "description": "Updates for @typescript-utils/utils v6.9.1+",
-      "implementation": "./src/migrations/update-17-1-0/update-typescript-eslint",
-      "package": "@nx/eslint",
-      "name": "update-typescript-eslint"
+      "version": "21.0.0-beta.10",
+      "description": "Remove the previously deprecated and unused `tsConfig` option from the `@nx/jest:jest` executor.",
+      "implementation": "./src/migrations/update-21-0-0/remove-tsconfig-option-from-jest-executor",
+      "package": "@nx/jest",
+      "name": "remove-tsconfig-option-from-jest-executor"
     },
     {
-      "version": "17.2.0-beta.0",
-      "description": "Simplify eslintFilePatterns",
-      "implementation": "./src/migrations/update-17-2-0/simplify-eslint-patterns",
-      "package": "@nx/eslint",
-      "name": "simplify-eslint-patterns"
+      "version": "20.0.4-beta.0",
+      "description": "Add gitignore entry for temporary vite config files.",
+      "implementation": "./src/migrations/update-20-0-4/add-vite-temp-files-to-git-ignore",
+      "package": "@nx/vite",
+      "name": "update-20-0-4"
     },
     {
-      "version": "17.2.9",
-      "description": "Move executor options to target defaults",
-      "implementation": "./src/migrations/update-17-2-9/move-options-to-target-defaults",
-      "package": "@nx/eslint",
-      "name": "move-options-to-target-defaults"
+      "version": "20.0.6-beta.0",
+      "description": "Add gitignore entry for temporary vite config files and remove previous incorrect glob.",
+      "implementation": "./src/migrations/update-20-0-4/add-vite-temp-files-to-git-ignore",
+      "package": "@nx/vite",
+      "name": "update-20-0-6"
     },
     {
-      "version": "17.0.0",
-      "description": "Angular v17 introduces a new control flow syntax that uses the @ and } characters. This migration replaces the existing usages with their corresponding HTML entities.",
-      "factory": "./migrations/block-template-entities/bundle",
-      "package": "@angular/core",
-      "name": "block-template-entities"
+      "version": "20.3.0-beta.2",
+      "description": "Add gitignore entry for temporary vitest config files.",
+      "implementation": "./src/migrations/update-20-3-0/add-vitest-temp-files-to-git-ignore",
+      "package": "@nx/vite",
+      "name": "update-20-3-0"
     },
     {
-      "version": "17.0.0",
-      "description": "CompilerOption.useJit and CompilerOption.missingTranslation are unused under Ivy. This migration removes their usage",
-      "factory": "./migrations/compiler-options/bundle",
-      "package": "@angular/core",
-      "name": "migration-v17-compiler-options"
+      "version": "20.5.0-beta.2",
+      "description": "Install jiti as a devDependency to allow vite to parse TS postcss files.",
+      "implementation": "./src/migrations/update-20-5-0/install-jiti",
+      "package": "@nx/vite",
+      "name": "update-20-5-0-install-jiti"
     },
     {
-      "version": "17.0.0",
-      "description": "Updates `TransferState`, `makeStateKey`, `StateKey` imports from `@angular/platform-browser` to `@angular/core`.",
-      "factory": "./migrations/transfer-state/bundle",
-      "package": "@angular/core",
-      "name": "migration-transfer-state"
+      "version": "20.5.0-beta.3",
+      "description": "Update resolve.conditions to include defaults that are no longer provided by Vite.",
+      "implementation": "./src/migrations/update-20-5-0/update-resolve-conditions",
+      "package": "@nx/vite",
+      "name": "update-20-5-0-update-resolve-conditions"
     },
     {
-      "version": "17.0.0-0",
-      "description": "Updates Angular Material to v17",
-      "factory": "./ng-update/index_bundled#updateToV17",
-      "package": "@angular/material",
-      "name": "migration-v17"
+      "version": "20.5.0-beta.3",
+      "description": "Add vite config temporary files to the ESLint configuration ignore patterns if ESLint is used.",
+      "implementation": "./src/migrations/update-20-5-0/eslint-ignore-vite-temp-files",
+      "package": "@nx/vite",
+      "name": "eslint-ignore-vite-temp-files"
     },
     {
-      "version": "17.0.0-0",
-      "description": "Updates the Angular CDK to v17",
-      "factory": "./ng-update/index#updateToV17",
-      "package": "@angular/cdk",
-      "name": "migration-v17"
+      "cli": "nx",
+      "version": "21.0.0-beta.11",
+      "description": "Replaces `classProperties.loose` option with `loose`.",
+      "factory": "./src/migrations/update-21-0-0/update-babel-loose",
+      "package": "@nx/react",
+      "name": "update-21-0-0-update-babel-loose"
     },
     {
-      "description": "The road to v17-beta.1",
-      "version": "17.0.0-beta",
-      "factory": "./17_0_0-beta/index",
-      "package": "@ngrx/store-devtools",
-      "name": "ngrx-store-devtools-migration-17-0-0-beta"
+      "cli": "nx",
+      "version": "21.0.0-beta.11",
+      "description": "Remove isolatedConfig option for @nx/webpack:webpack",
+      "implementation": "./src/migrations/update-21-0-0/remove-isolated-config",
+      "package": "@nx/webpack",
+      "name": "update-21-0-0-remove-isolated-config"
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     Brackets,
     EntitySchema,
@@ -5,8 +6,8 @@ import {
     SelectQueryBuilder,
     WhereExpressionBuilder,
 } from 'typeorm'
+import { DatabaseType, system } from '../system/system'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 
 export enum Order {
     ASC = 'ASC',
@@ -42,6 +43,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private order: Order = Order.DESC
 
+    private orderBy: string = PAGINATION_KEY
+
     public constructor(private readonly entity: EntitySchema) { }
 
     public setAlias(alias: string): void {
@@ -62,6 +65,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     public setOrder(order: Order): void {
         this.order = order
+    }
+
+    public setOrderBy(orderBy: string): void {
+        this.orderBy = orderBy
     }
 
     public async paginate(
@@ -130,7 +137,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         where: WhereExpressionBuilder,
         cursors: CursorParam,
     ): void {
-        const dbType = system.get(SystemProp.DB_TYPE)
+        const dbType = system.get(AppSystemProp.DB_TYPE)
         const operator = this.getOperator()
         let queryString: string
 
@@ -167,7 +174,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         const orderByCondition: Record<string, Order> = {}
-        orderByCondition[`${this.alias}.${PAGINATION_KEY}`] = order
+        orderByCondition[`${this.alias}.${this.orderBy}`] = order
 
         return orderByCondition
     }

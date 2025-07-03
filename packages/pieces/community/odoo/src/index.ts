@@ -62,7 +62,7 @@ export const odoo = createPiece({
   displayName: 'Odoo',
   description: 'Open source all-in-one management software',
   auth: odooAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',
   authors: ["mariomeyer","kishanprmr","abuaboud"],
   actions,

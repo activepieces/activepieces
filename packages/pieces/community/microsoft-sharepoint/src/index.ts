@@ -10,6 +10,7 @@ import { createListItemAction } from './lib/actions/create-list-item';
 import { updateListItemAction } from './lib/actions/update-list-item';
 import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
+import { uploadFile } from './lib/actions/upload-file';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const microsoftSharePointAuth = PieceAuth.OAuth2({
@@ -30,7 +31,7 @@ export const microsoftSharePointAuth = PieceAuth.OAuth2({
 export const microsoftSharePoint = createPiece({
   displayName: 'Microsoft SharePoint',
   auth: microsoftSharePointAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['kishanprmr'],
@@ -41,10 +42,11 @@ export const microsoftSharePoint = createPiece({
     updateListItemAction,
     deleteListItemAction,
     findListItemAction,
+    uploadFile,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: () => 'https://graph.microsoft.com/v1.0/sites',
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

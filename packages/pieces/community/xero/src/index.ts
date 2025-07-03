@@ -20,17 +20,27 @@ export const xeroAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
   required: true,
-  scope: ['accounting.contacts', 'accounting.transactions'],
+  scope: [
+    'openid',
+    'profile',
+    'email',
+    'offline_access',
+    'accounting.contacts',
+    'accounting.transactions',
+    'accounting.reports.read',
+    'accounting.journals.read',
+    'accounting.budgets.read'
+  ],
 });
 
 export const xero = createPiece({
   displayName: 'Xero',
   description: 'Beautiful accounting software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
-  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+  categories: [PieceCategory.ACCOUNTING],
   auth: xeroAuth,
   actions: [
     xeroCreateContact,
@@ -38,7 +48,7 @@ export const xero = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

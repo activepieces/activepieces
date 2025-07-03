@@ -1,0 +1,89 @@
+---
+title: "Troubleshooting"
+description: ""
+icon: "wrench"
+---
+### Websocket Connection Issues
+
+If you're experiencing issues with websocket connections, it's likely due to incorrect proxy configuration. Common symptoms include:
+
+- Test Flow button not working
+- Test step in flows not working
+- Copilot features not working
+- Real-time updates not showing
+
+To resolve these issues:
+
+1. Ensure your reverse proxy is properly configured for websocket connections
+2. Check our [Setup HTTPS](./setup-ssl) guide for correct configuration examples
+3. Some browser block http websocket connections, please setup ssl to resolve this issue.
+
+### Runs with Internal Errors or Scheduling Issues
+
+If you're experiencing issues with flow runs showing internal errors or scheduling problems:
+
+[BullBoard dashboard](/handbook/engineering/playbooks/bullboard)
+
+### Truncated logs
+
+If you see `(truncated)` in the flow run logs in your flow runs, it means that the logs have exceeded the maximum allowed file size. You can increase the `AP_MAX_FILE_SIZE_MB` environment variable to a higher value to resolve this issue.
+
+### Reset Password
+
+If you forgot your password on self hosted instance, you can reset it using the following steps:
+
+**Postgres**
+
+1. **Locate PostgreSQL Docker Container**:
+   - Use a command like `docker ps` to find the PostgreSQL container.
+
+2. **Access the Container**:
+   - Use SSH to access the PostgreSQL Docker container.
+   ```bash
+   docker exec -it POSTGRES_CONTAINER_ID /bin/bash
+   ```
+
+3. **Open the PostgreSQL Console**:
+   - Inside the container, open the PostgreSQL console with the `psql` command.
+   ```bash
+   psql -U postgres
+   ```
+
+4. **Connect to the ActivePieces Database**:
+   - Connect to the ActivePieces database.
+   ```sql
+   \c activepieces
+   ```
+
+5. **Create a Secure Password**:
+   - Use a tool like [bcrypt-generator.com](https://bcrypt-generator.com/) to generate a new secure password, number of rounds is 10.
+
+6. **Update Your Password**:
+   - Run the following SQL query within the PostgreSQL console, replacing `HASH_PASSWORD` with your new password and `YOUR_EMAIL_ADDRESS` with your email.
+   ```sql
+   UPDATE public.user_identity SET password='HASH_PASSWORD' WHERE email='YOUR_EMAIL_ADDRESS';
+   ```
+
+**SQLite3**
+
+1. **Open the SQLite3 Shell**:
+   - Access the SQLite3 database by opening the SQLite3 shell. Replace "database.db" with the actual name of your SQLite3 database file if it's different.
+   ```bash
+   sqlite3 ~/.activepieces/database.sqlite
+   ```
+
+2. **Create a Secure Password**:
+   - Use a tool like [bcrypt-generator.com](https://bcrypt-generator.com/) to generate a new secure password, number of rounds is 10.
+
+3. **Reset Your Password**:
+   - Once inside the SQLite3 shell, you can update your password with an SQL query. Replace `HASH_PASSWORD` with your new password and `YOUR_EMAIL_ADDRESS` with your email.
+   ```sql
+   UPDATE user_identity SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
+   ```
+
+4. **Exit the SQLite3 Shell**:
+   - After making the changes, exit the SQLite3 shell by typing:
+   ```bash
+   .exit
+   ```
+

@@ -1,0 +1,94 @@
+---
+title: "How to handle Requests" 
+icon: "ticket"
+---
+
+As a support engineer, you should:
+
+* Fix the urgent issues (please see the definition below)
+* Open tickets for all non-urgent issues. **(DO NOT INCLUDE ANY SENSITIVE INFO IN ISSUE)**
+* Keep customers updated
+* Write clear ticket descriptions
+* Help the team prioritize work
+* Route issues to the right people
+
+### Ticket fields
+
+When handling support tickets, ensure you set the appropriate status and priority to help with ticket management and response time:
+
+**Status Field**:
+
+These status fields help both our team and customers understand whether an issue will be addressed in future development sprints or requires immediate attention.
+
+- **Backlog**: Issues planned for future development sprints that don't require immediate attention
+- **Prioritized**: High-priority issues requiring immediate team focus and resolution
+
+**Priority Levels**:
+
+<Tip>
+Make sure when opening a ticket on Linear to match the priority you have in Pylon. We have a view for immediate tickets (High + Medium priority) to be considered in the next sprint planning.  
+[View Immediate Tickets](https://linear.app/activepieces/team/AP/view/immediate-f6fa2e7fcaed)
+</Tip>
+
+During sprint planning, we filter and prioritize customer requests with Medium priority or higher to identify which tickets need immediate attention. This helps us focus our development efforts on the most impactful customer issues.
+
+- **Urgent (P0)**: Emergency issues requiring immediate on-call response
+  - Critical system outages
+  - Security vulnerabilities
+  - Major functionality breakdowns affecting multiple customers
+  
+- **High (P1)**: Critical features or blockers
+  - Core functionality issues
+  - Features essential for customer operations
+  - Significant customer-impacting bugs
+
+- **Medium (P2)**: Important but non-critical issues
+  - Feature enhancements blocking specific workflows
+  - Performance improvements
+  - UX improvements affecting usability
+
+- **Low (P3)**: Non-urgent improvements
+  - Minor enhancements
+  - UI polish
+  - Nice-to-have features
+
+
+### Requests
+
+### Type 1: Quick Fixes & Urgent Issues
+
+* Understand the issue and how urgent it is.
+* If the issue is important/urgent and easy to fix, handle it yourself and open a PR right away. This leaves a great impression!
+
+### Type 2: Complex Technical Issues
+
+* Always create a GitHub issue for the feature request, and send it to the customer.
+* Assess the issue and determine its urgency.
+* Leave a comment on the GitHub issue with an estimated completion time.
+
+### Type 3: Feature Enhancement Requests
+
+* Always create a GitHub issue for the feature request and send it to the customer.
+* Evaluate the request and dig deeper into what the customer is trying to solve, then either evaluate and open a new ticket or append to an existing ticket in the backlog.
+* Add it to our roadmap and discuss it with the team.
+
+<Tip>
+New features will always have the status "Backlog". Please make sure to communicate that we will discuss and address it in future production cycles so the customer doesn't expect immediate action.
+</Tip>
+
+### Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What if I don't understand the feature or issue?">
+    If you don't understand the feature or issue, reach out to the customer for clarification. It's important to fully grasp the problem before proceeding. You can also consult with your team for additional insights.
+  </Accordion>
+
+  <Accordion title="How do I prioritize multiple urgent issues?">
+    When faced with multiple urgent issues, assess the impact of each on the customer and the system. Prioritize based on severity, number of affected users, and potential risks. Communicate with your team to ensure alignment on priorities.
+  </Accordion>
+
+  <Accordion title="What if there is an angry or abusive customer?">
+    If you encounter an abusive or rude customer, escalate the issue to Mohammad AbuAboud or Ashraf Samhouri. It's important to handle such situations with care and ensure that the customer feels heard while maintaining a respectful and professional demeanor.
+  </Accordion>
+
+</AccordionGroup>

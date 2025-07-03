@@ -21,6 +21,7 @@ export const newResponse = createTrigger({
   description: 'Triggers when there is new response',
   props: {
     form_id: googleFormsCommon.form_id,
+    include_team_drives: googleFormsCommon.include_team_drives,
   },
   sampleData: {
     responseId:
@@ -62,11 +63,7 @@ export const newResponse = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    return await pollingHelper.test(polling, ctx);
   },
   async onEnable(ctx) {
     await pollingHelper.onEnable(polling, {
@@ -83,11 +80,7 @@ export const newResponse = createTrigger({
     });
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 
@@ -127,5 +120,10 @@ const getResponse = async (
     },
     queryParams: filter,
   });
-  return response.body['responses'];
+
+  const formResponses = response.body.responses;
+  if (formResponses && Array.isArray(formResponses)) {
+    return formResponses;
+  }
+  return [];
 };

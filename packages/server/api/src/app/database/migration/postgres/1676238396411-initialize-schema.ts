@@ -1,11 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class initializeSchema1676238396411 implements MigrationInterface {
     name = 'initializeSchema1676238396411'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('initializeSchema1676238396411: started')
+        log.info('initializeSchema1676238396411: started')
 
         const userTableExistsQueryResponse: { exists: boolean }[] =
       await queryRunner.query(
@@ -22,7 +24,7 @@ export class initializeSchema1676238396411 implements MigrationInterface {
       userTableExistsQueryResponse[0].exists
 
         if (userTableExists) {
-            logger.info('initializeSchema1676238396411: skipped')
+            log.info('initializeSchema1676238396411: skipped')
             return
         }
 
@@ -135,7 +137,7 @@ export class initializeSchema1676238396411 implements MigrationInterface {
             'ALTER TABLE "app_connection" ADD CONSTRAINT "fk_app_connection_app_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION',
         )
 
-        logger.info('initializeSchema1676238396411: completed')
+        log.info('initializeSchema1676238396411: completed')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -182,32 +184,32 @@ export class initializeSchema1676238396411 implements MigrationInterface {
             'ALTER TABLE "collection" DROP CONSTRAINT "fk_collection_project_id"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_connection_project_id_and_name"',
+            'DROP INDEX "idx_app_connection_project_id_and_name"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_connection_project_id_and_app_name_and_name"',
+            'DROP INDEX "idx_app_connection_project_id_and_app_name_and_name"',
         )
         await queryRunner.query('DROP TABLE "app_connection"')
         await queryRunner.query('DROP TABLE "user"')
         await queryRunner.query('DROP TABLE "store-entry"')
-        await queryRunner.query('DROP INDEX "public"."idx_project_owner_id"')
+        await queryRunner.query('DROP INDEX "idx_project_owner_id"')
         await queryRunner.query('DROP TABLE "project"')
-        await queryRunner.query('DROP INDEX "public"."idx_run_project_id"')
+        await queryRunner.query('DROP INDEX "idx_run_project_id"')
         await queryRunner.query('DROP TABLE "flow_run"')
-        await queryRunner.query('DROP INDEX "public"."idx_instance_collection_id"')
-        await queryRunner.query('DROP INDEX "public"."idx_instance_project_id"')
+        await queryRunner.query('DROP INDEX "idx_instance_collection_id"')
+        await queryRunner.query('DROP INDEX "idx_instance_project_id"')
         await queryRunner.query('DROP TABLE "instance"')
-        await queryRunner.query('DROP INDEX "public"."idx_flow_version_flow_id"')
+        await queryRunner.query('DROP INDEX "idx_flow_version_flow_id"')
         await queryRunner.query('DROP TABLE "flow_version"')
-        await queryRunner.query('DROP INDEX "public"."idx_flow_collection_id"')
+        await queryRunner.query('DROP INDEX "idx_flow_collection_id"')
         await queryRunner.query('DROP TABLE "flow"')
         await queryRunner.query('DROP TABLE "flag"')
         await queryRunner.query('DROP TABLE "file"')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_collection_version_collection_id"',
+            'DROP INDEX "idx_collection_version_collection_id"',
         )
         await queryRunner.query('DROP TABLE "collection_version"')
-        await queryRunner.query('DROP INDEX "public"."idx_collection_project_id"')
+        await queryRunner.query('DROP INDEX "idx_collection_project_id"')
         await queryRunner.query('DROP TABLE "collection"')
     }
 }

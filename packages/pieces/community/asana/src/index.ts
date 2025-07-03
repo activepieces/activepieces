@@ -18,7 +18,7 @@ export const asanaAuth = PieceAuth.OAuth2({
 export const asana = createPiece({
   displayName: 'Asana',
   description: "Work management platform designed to help teams organize, track, and manage their work.",
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["ShayPunter","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
@@ -28,7 +28,7 @@ export const asana = createPiece({
     createCustomApiCallAction({
       baseUrl: () => `https://app.asana.com/api/1.0`,
       auth: asanaAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

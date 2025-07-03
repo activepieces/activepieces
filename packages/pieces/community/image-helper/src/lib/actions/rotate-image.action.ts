@@ -12,15 +12,22 @@ export const rotateImage = createAction({
     }),
     degree: Property.StaticDropdown({
       displayName: 'Degree',
-      description: 'Specifies the degree of clockwise rotation applied to the image.',
+      description:
+        'Specifies the degree of clockwise rotation applied to the image.',
       required: true,
       options: {
         options: [
           { value: 90, label: '90°' },
           { value: 180, label: '180°' },
           { value: 270, label: '270°' },
-        ]
-      }
+        ],
+      },
+    }),
+    resultFileName: Property.ShortText({
+      displayName: 'Result File Name',
+      description:
+        'Specifies the output file name for the result image (without extension).',
+      required: false,
     }),
   },
   async run(context) {
@@ -30,8 +37,11 @@ export const rotateImage = createAction({
     const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + image.getExtension(),
-      data: imageBuffer
+      fileName:
+        (context.propsValue.resultFileName ?? 'image') +
+        '.' +
+        image.getExtension(),
+      data: imageBuffer,
     });
 
     return imageReference;

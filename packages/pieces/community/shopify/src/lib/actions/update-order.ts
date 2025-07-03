@@ -1,10 +1,11 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateOrder } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateOrderAction = createAction({
   auth: shopifyAuth,
@@ -20,12 +21,10 @@ export const updateOrderAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
@@ -38,6 +37,10 @@ export const updateOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      email: z.string().email().optional(),
+    });
+
     const { id, email, phoneNumber, tags, note } = propsValue;
 
     return await updateOrder(

@@ -1,28 +1,15 @@
-import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import {
-    engineHelper,
-    EngineHelperResponse,
-    EngineHelperTriggerResult,
-} from '../../../helper/engine-helper'
-import { getEdition } from '../../../helper/secret-helper'
-import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../../workers/flow-worker/job-data'
-import { JobType } from '../../../workers/flow-worker/queues/queue'
-import { getPieceTrigger } from './trigger-utils'
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { system, SystemProp } from '@activepieces/server-shared'
 import {
-    ApEdition,
+    AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+    UserInteractionJobType } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
     EngineResponseStatus,
+    ErrorCode,
     FlowVersion,
     isNil,
     PieceTrigger,
@@ -31,53 +18,50 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import {
+    EngineHelperResponse,
+    EngineHelperTriggerResult,
+} from 'server-worker'
+import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
+import { system } from '../../../helper/system/system'
+import { jobQueue } from '../../../workers/queue'
+import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
+import { triggerUtils } from './trigger-utils'
 
-const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
-    system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
-)
 
-function constructEveryXMinuteCron(minute: number): string {
-    const edition = getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-            return `*/${minute} * * * *`
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            return `*/${
-                system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
-            } * * * *`
-    }
-}
+const POLLING_FREQUENCY_CRON_EXPRESSION = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
+
 
 export const enablePieceTrigger = async (
     params: EnableParams,
-): Promise<EngineHelperResponse<
-EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
-> | null> => {
+    log: FastifyBaseLogger,
+): Promise<EnableTriggerResponse | null> => {
     const { flowVersion, projectId, simulate } = params
     if (flowVersion.trigger.type !== TriggerType.PIECE) {
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger({
+    const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({
         trigger: flowTrigger,
         projectId,
     })
 
-    const webhookUrl = await webhookService.getWebhookUrl({
-        flowId: flowVersion.flowId,
-        simulate,
-    })
-
-    const engineHelperResponse = await engineHelper.executeTrigger({
+    const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
+        jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
-        webhookUrl,
         projectId,
+        test: simulate,
     })
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return engineHelperResponse
+        throw new ActivepiecesError({
+            code: ErrorCode.TRIGGER_ENABLE,
+            params: {
+                flowVersionId: flowVersion.id,
+            },
+        })
     }
 
     switch (pieceTrigger.type) {
@@ -98,7 +82,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
             const renewConfiguration = pieceTrigger.renewConfiguration
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
-                    await flowQueue.add({
+                    await jobQueue(log).add({
                         id: flowVersion.id,
                         type: JobType.REPEATING,
                         data: {
@@ -111,6 +95,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                         scheduleOptions: {
                             cronExpression: renewConfiguration.cronExpression,
                             timezone: 'UTC',
+                            failureCount: 0,
                         },
                     })
                     break
@@ -123,18 +108,12 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         case TriggerStrategy.POLLING: {
             if (isNil(engineHelperResponse.result.scheduleOptions)) {
                 engineHelperResponse.result.scheduleOptions = {
-                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSION,
                     timezone: 'UTC',
+                    failureCount: 0,
                 }
-                // BEGIN EE
-                const edition = getEdition()
-                if (edition === ApEdition.CLOUD) {
-                    const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
-                    engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)
-                }
-                // END EE
             }
-            await flowQueue.add({
+            await jobQueue(log).add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {
@@ -160,3 +139,6 @@ type EnableParams = {
     flowVersion: FlowVersion
     simulate: boolean
 }
+type EnableTriggerResponse = EngineHelperResponse<
+EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
+>

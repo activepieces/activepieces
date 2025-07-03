@@ -1,131 +1,96 @@
-import cors from '@fastify/cors'
-import formBody from '@fastify/formbody'
-import fastifyMultipart from '@fastify/multipart'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, McpWithTools, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
-import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifyFavicon from 'fastify-favicon'
-import { fastifyRawBody } from 'fastify-raw-body'
-import fastifySocketIO from 'fastify-socket.io'
-import qs from 'qs'
+import { createAdapter } from '@socket.io/redis-adapter'
+import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
+import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
+import { agentModule } from './agents/agent-module'
+import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
-import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { authenticationModule } from './authentication/authentication.module'
-import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
-import { activityModule } from './ee/activity/activity-module'
-import { analyticsModule } from './ee/analytics/analytics-module'
+import { getRedisConnection } from './database/redis-connection'
+import { alertsModule } from './ee/alerts/alerts-module'
+import { analyticsModule } from './ee/analytics/analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
+import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { auditLogService } from './ee/audit-logs/audit-event-service'
-import { cloudAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/cloud-authentication-service-hooks'
-import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
-import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
-import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
+import { otpModule } from './ee/authentication/otp/otp-module'
+import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
+import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
+import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
-import { gitRepoModule } from './ee/git-repos/git-repo.module'
-import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { globalConnectionModule } from './ee/global-connections/global-connection-module'
+import { emailService } from './ee/helper/email/email-service'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-import { otpModule } from './ee/otp/otp-module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
-import { projectMemberModule } from './ee/project-members/project-member.module'
+import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
+import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
-import { referralModule } from './ee/referrals/referral.module'
+import { projectMemberModule } from './ee/projects/project-members/project-member.module'
+import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
+import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
+import { projectRoleModule } from './ee/projects/project-role/project-role.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
-import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
+import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
-import { formModule } from './flows/flow/form/form.module'
-import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
+import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
-import { stepFileModule } from './flows/step-file/step-file.module'
+import { folderModule } from './flows/folder/folder.module'
+import { issuesModule } from './flows/issues/issues-module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
-import { domainHelper } from './helper/domain-helper'
-import { loadEncryptionKey } from './helper/encryption'
-import { errorHandler } from './helper/error-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { getEdition } from './helper/secret-helper'
+import { QueueMode, system } from './helper/system/system'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
+import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
-import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
+import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
+import { todoActivityModule } from './todos/activity/todos-activity.module'
+import { todoModule } from './todos/todo.module'
 import { platformUserModule } from './user/platform/platform-user-module'
-import { userModule } from './user/user.module'
+import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
-import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
-import {
-    GitRepoWithoutSensitiveData,
-    ProjectMember,
-} from '@activepieces/ee-shared'
-import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
-    apId,
-    AppConnectionWithoutSensitiveData,
-    CodeSandboxType,
-    ErrorCode,
-    Flow,
-    FlowRun,
-    ProjectWithLimits,
-} from '@activepieces/shared'
+import { flowConsumer } from './workers/consumer'
+import { engineResponseWatcher } from './workers/engine-response-watcher'
+import { workerModule } from './workers/worker-module'
 
-export const setupApp = async (): Promise<FastifyInstance> => {
-    const app = fastify({
-        logger,
-        // Default 4MB, also set in nginx.conf
-        pluginTimeout: 30000,
-        bodyLimit: 4 * 1024 * 1024,
-        genReqId: () => {
-            return `req_${apId()}`
-        },
-        ajv: {
-            customOptions: {
-                removeAdditional: 'all',
-                useDefaults: true,
-                coerceTypes: 'array',
-                formats: {},
-            },
-        },
-    })
-
-    await app.register(fastifyFavicon)
+export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
         hideUntagged: true,
@@ -145,6 +110,26 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
+                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
+                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
+                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
+                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
+                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
+                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
+                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
+                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
+                    [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
+                    [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
+                    'flow-template': FlowTemplate,
+                    'folder': Folder,
+                    'user': UserWithMetaInformation,
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -152,11 +137,14 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'app-connection': AppConnectionWithoutSensitiveData,
                     piece: PieceMetadata,
                     'git-repo': GitRepoWithoutSensitiveData,
+                    'project-release': ProjectRelease,
+                    'global-connection': AppConnectionWithoutSensitiveData,
+                    'mcp': McpWithTools,
                 },
             },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.14.3',
+                version: '0.0.0',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
@@ -165,42 +153,20 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         },
     })
 
-    await app.register(cors, {
-        origin: '*',
-        exposedHeaders: ['*'],
-        methods: ['*'],
-    })
 
-    await app.register(fastifyMultipart, {
-        attachFieldsToBody: 'keyValues',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        async onFile(part: any) {
-            const buffer = await part.toBuffer()
-            part.value = buffer
-        },
-    })
-
-    await app.register(fastifyRawBody, {
-        field: 'rawBody',
-        global: false,
-        encoding: 'utf8',
-        runFirst: true,
-        routes: [],
-    })
-
-    await app.register(formBody, { parser: (str) => qs.parse(str) })
     await app.register(rateLimitModule)
 
     await app.register(fastifySocketIO, {
         cors: {
             origin: '*',
         },
+        ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        accessTokenManager
-            .extractPrincipal(socket.handshake.auth.token)
+        websocketService
+            .verifyPrincipal(socket)
             .then(() => {
                 next()
             })
@@ -210,13 +176,17 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.io.on('connection', (socket: Socket) => {
-        websocketService.init(socket)
+        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log)
     })
 
+    app.addHook('onResponse', async (request, reply) => {
+        // eslint-disable-next-line
+        reply.header('x-request-id', request.id)
+    })
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
-            url: request.url,
+            url: request.routeOptions.url!,
         })
         if (!route) {
             return reply.code(404).send({
@@ -229,11 +199,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
-    app.setErrorHandler(errorHandler)
-    await systemJobsSchedule.init()
+    await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
+    await app.register(folderModule)
     await app.register(flowModule)
     await app.register(pieceModule)
     await app.register(flowRunModule)
@@ -242,18 +212,28 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(openapiModule)
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
-    await app.register(stepFileModule)
-    await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule)
+    await app.register(copilotModule),
     await app.register(platformModule)
-    await app.register(formModule)
+    await app.register(humanInputModule)
     await app.register(tagsModule)
-    await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
+    await app.register(mcpModule)
+    await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
-    await setupBullMQBoard(app)
-
+    await app.register(issuesModule)
+    await app.register(alertsModule)
+    await app.register(invitationModule)
+    await app.register(workerModule)
+    await app.register(aiProviderModule)
+    await app.register(licenseKeysModule)
+    await app.register(tablesModule)
+    await app.register(userModule)
+    await app.register(todoModule)
+    await app.register(adminPlatformModule)
+    await app.register(changelogModule)
+    await app.register(agentModule)
+    await app.register(todoActivityModule)
+    
     app.get(
         '/redirect',
         async (
@@ -278,27 +258,24 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         },
     )
 
-    // SurveyMonkey
-    app.addContentTypeParser(
-        'application/vnd.surveymonkey.response.v1+json',
-        { parseAs: 'string' },
-        app.getDefaultJsonParser('ignore', 'ignore'),
-    )
-    await validateEnvPropsOnStartup()
+    await validateEnvPropsOnStartup(app.log)
 
-    const edition = getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    const edition = system.getEdition()
+    app.log.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
+            await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(referralModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
+            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -309,30 +286,24 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
-            await app.register(usageTrackerModule)
-            await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
-            await app.register(projectBillingModule)
-
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
+            await app.register(projectRoleModule)
+            await app.register(projectReleaseModule)
+            await app.register(globalConnectionModule)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
-            flowRunHooks.setHooks(platformRunHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
-            domainHelper.set(platformDomainHelper)
-            initializeSentry()
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
+            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -343,19 +314,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
-            await app.register(usageTrackerModule)
             await app.register(analyticsModule)
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
+            await app.register(projectRoleModule)
+            await app.register(projectReleaseModule)
+            await app.register(globalConnectionModule)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.setHooks(platformRunHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
-            authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            domainHelper.set(platformDomainHelper)
             break
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
@@ -365,40 +332,57 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
-        await systemJobsSchedule.close()
-        await engineResponseWatcher.shutdown()
+        app.log.info('Shutting down')
+        await flowConsumer(app.log).close()
+        await systemJobsSchedule(app.log).close()
+        await engineResponseWatcher(app.log).shutdown()
     })
 
     return app
 }
 
 
-const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = system.get<CodeSandboxType>(
-        SystemProp.CODE_SANDBOX_TYPE,
-    )
-    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled =
-        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const environment = system.get(SystemProp.ENVIRONMENT)
-    await loadEncryptionKey(queueMode)
 
-    if (
-        executionMode === ExecutionMode.UNSANDBOXED &&
-        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-        signedUpEnabled &&
-        environment === ApEnvironment.PRODUCTION
-    ) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.EXECUTION_MODE,
-                },
-            },
-            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
+async function getAdapter() {
+    const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
+    switch (queue) {
+        case QueueMode.MEMORY: {
+            return undefined
+        }
+        case QueueMode.REDIS: {
+            const sub = getRedisConnection().duplicate()
+            const pub = getRedisConnection().duplicate()
+            return createAdapter(pub, sub)
+        }
+    }
+}
+
+
+export async function appPostBoot(app: FastifyInstance): Promise<void> {
+
+    app.log.info(`
+             _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
+    /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
+   /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
+  / /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\
+ / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
+/_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
+
+The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
+
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
+    const pieces = process.env.AP_DEV_PIECES
+
+    app.log.warn(
+        `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
+    )
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        app.log.warn(
+            `[WARNING]: The application is running in ${environment} mode.`,
+        )
+        app.log.warn(
+            `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
     }
 }

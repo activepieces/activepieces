@@ -29,8 +29,11 @@ export const moxieCRMRegisterTrigger = ({
         - Go to the **Workspace Settngs -> Connected Apps -> Integration** section.
         - Under **Custom Integration** , click on **Add Rest Hook**.
         - Click on **Integrations** section.
-        - In the endpoint field, paste this URL: 
-          \`{{webhookUrl}}\`
+        - In the endpoint field, paste the following URL: 
+            \`\`\`text
+            {{webhookUrl}}
+            \`\`\`
+
         - Select the event as **\`${displayName}\`** and click on **Save**.
         `,
       }),

@@ -1,10 +1,12 @@
+import { Flow, FlowVersion, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
+    isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
-import { Flow, FlowVersion, User } from '@activepieces/shared'
 
 type FlowVersionSchema = {
     flow: Flow
@@ -19,9 +21,18 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         displayName: {
             type: String,
         },
+        schemaVersion: {
+            type: String,
+            nullable: true,
+        },
         trigger: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
+        },
+        connectionIds: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
         },
         updatedBy: {
             type: String,

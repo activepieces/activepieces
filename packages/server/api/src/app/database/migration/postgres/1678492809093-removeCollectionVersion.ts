@@ -1,12 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class removeCollectionVersion1678492809093
 implements MigrationInterface {
     name = 'removeCollectionVersion1678492809093'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running migration removeCollectionVersion1678492809093')
+        log.info('Running migration removeCollectionVersion1678492809093')
         await queryRunner.query(
             'ALTER TABLE "instance" DROP CONSTRAINT "fk_instance_collection_version"',
         )
@@ -26,13 +28,13 @@ implements MigrationInterface {
             'ALTER TABLE "collection" ADD "displayName" character varying',
         )
         const collections = await queryRunner.query(
-            'SELECT * FROM public.collection',
+            'SELECT * FROM collection',
         )
 
         for (let i = 0; i < collections.length; ++i) {
             let currentCollection = collections[i]
             const latestCollectionVersionQuery = `
-                SELECT * FROM public.collection_version
+                SELECT * FROM collection_version
                 WHERE "collectionId" = '${currentCollection.id}'
                 ORDER BY created DESC
                 LIMIT 1
@@ -52,13 +54,13 @@ implements MigrationInterface {
             }
 
             const updateCollectionQuery = `
-                UPDATE public.collection
+                UPDATE collection
                 SET displayName = '${displayName}'
                 WHERE id = '${currentCollection.id}'
             `
             await queryRunner.query(updateCollectionQuery)
         }
-        logger.info('Finished migration removeCollectionVersion1678492809093')
+        log.info('Finished migration removeCollectionVersion1678492809093')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

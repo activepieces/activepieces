@@ -34,10 +34,10 @@ export class AddPlatformRoleToUser1713302610746 implements MigrationInterface {
      `)
 
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_external_id"
+            DROP INDEX "idx_user_platform_id_external_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_email"
+            DROP INDEX "idx_user_platform_id_email"
         `)
         await queryRunner.query(`
             ALTER TABLE "user"
@@ -69,10 +69,10 @@ export class AddPlatformRoleToUser1713302610746 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_external_id"
+            DROP INDEX "idx_user_platform_id_external_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_email"
+            DROP INDEX "idx_user_platform_id_email"
         `)
         await queryRunner.query(`
             ALTER TABLE "user"

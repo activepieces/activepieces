@@ -1,14 +1,15 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
+  propsValidation,
 } from '@activepieces/pieces-common';
 import { heartbeatAuth } from '../..';
+import { z } from 'zod';
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
@@ -25,7 +26,6 @@ export const heartBeatCreateUser = createAction({
       displayName: 'Email',
       description: "The user's email. Must be unique to the community",
       required: true,
-      validators: [Validators.email],
     }),
     role_id: Property.Dropdown({
       displayName: 'Roles',
@@ -144,19 +144,16 @@ export const heartBeatCreateUser = createAction({
       displayName: 'LinkedIn',
       description: "A link to the user's LinkedIn profile",
       required: false,
-      validators: [Validators.url],
     }),
     twitter: Property.LongText({
       displayName: 'Twitter',
       description: "A link to the user's Twitter profile",
       required: false,
-      validators: [Validators.url],
     }),
     instagram: Property.LongText({
       displayName: 'Instagram',
       description: "A link to the user's Instagram profile",
       required: false,
-      validators: [Validators.url],
     }),
     create_introduction_thread: Property.Checkbox({
       displayName: 'Create introduction thread',
@@ -166,6 +163,13 @@ export const heartBeatCreateUser = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      email: z.string().email(),
+      linkedin: z.string().url().optional(),
+      twitter: z.string().url().optional(), 
+      instagram: z.string().url().optional()
+    });
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
       url: `https://api.heartbeat.chat/v0/users`,

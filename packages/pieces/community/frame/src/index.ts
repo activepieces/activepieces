@@ -25,7 +25,7 @@ export const frame = createPiece({
   description: 'Collaborative workspace platform',
 
   auth: frameAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kanarelo","kishanprmr","MoShizzle","abuaboud"],
@@ -33,7 +33,7 @@ export const frame = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.frame.io/v2',
       auth: frameAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

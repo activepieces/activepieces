@@ -32,6 +32,6 @@ export const updateRecordAction = createAction({
 		});
 
 		const client = makeClient(context.auth);
-		return await client.updateRecord(tableId, recordInput);
+		return await client.updateRecord(tableId, recordInput, context.auth.version || 3);
 	},
 });

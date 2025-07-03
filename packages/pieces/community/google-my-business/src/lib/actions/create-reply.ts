@@ -1,10 +1,10 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { googleAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const createReply = createAction({
   name: 'create-reply',
@@ -15,7 +15,6 @@ export const createReply = createAction({
       displayName: 'Review Name',
       description: 'You can find the review name from new review trigger',
       required: true,
-      validators: [Validators.pattern('accounts/.*/locations/.*/reviews/.*')],
     }),
     comment: Property.LongText({
       displayName: 'Comment',
@@ -26,6 +25,11 @@ export const createReply = createAction({
   auth: googleAuth,
   async run(ctx) {
     const { reviewName, comment } = ctx.propsValue;
+
+    await propsValidation.validateZod(ctx.propsValue, {
+      reviewName: z.string().regex(/accounts\/.*\/locations\/.*\/reviews\/.*/),
+    });
+
     const response = await httpClient.sendRequest({
       url: ` https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
       method: HttpMethod.PUT,

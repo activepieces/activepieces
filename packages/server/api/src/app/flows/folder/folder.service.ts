@@ -1,46 +1,35 @@
-import { databaseConnection } from '../../database/database-connection'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { flowService } from '../flow/flow.service'
-import { FolderEntity } from './folder.entity'
 import {
     ActivepiecesError,
     apId,
-    CreateOrRenameFolderRequest,
-
+    CreateFolderRequest,
     Cursor,
     ErrorCode,
     Folder,
     FolderDto,
     FolderId,
     isNil, ProjectId,
+    UpdateFolderRequest,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { flowService } from '../flow/flow.service'
+import { FolderEntity } from './folder.entity'
 
-export const folderRepo = databaseConnection.getRepository(FolderEntity)
+export const folderRepo = repoFactory(FolderEntity)
 
-export const flowFolderService = {
-    async delete({
-        projectId,
-        folderId,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-    }): Promise<void> {
+export const flowFolderService = (log: FastifyBaseLogger) => ({
+    async delete(params: DeleteParams): Promise<void> {
+        const { projectId, folderId } = params
         const folder = await this.getOneOrThrow({ projectId, folderId })
-        await folderRepo.delete({
+        await folderRepo().delete({
             id: folder.id,
             projectId,
         })
     },
-    async update({
-        projectId,
-        folderId,
-        request,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-        request: CreateOrRenameFolderRequest
-    }): Promise<FolderDto> {
+    async update(params: UpdateParams): Promise<FolderDto> {
+        const { projectId, folderId, request } = params
         const folder = await this.getOneOrThrow({ projectId, folderId })
         const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
@@ -52,18 +41,13 @@ export const flowFolderService = {
                 params: { message: 'Folder displayName is used' },
             })
         }
-        await folderRepo.update(folder.id, {
+        await folderRepo().update(folder.id, {
             displayName: request.displayName,
         })
         return this.getOneOrThrow({ projectId, folderId })
     },
-    async upsert({
-        projectId,
-        request,
-    }: {
-        projectId: ProjectId
-        request: CreateOrRenameFolderRequest
-    }): Promise<FolderDto> {
+    async upsert(params: UpsertParams): Promise<FolderDto> {
+        const { projectId, request } = params
         const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
             displayName: request.displayName,
@@ -76,26 +60,19 @@ export const flowFolderService = {
             })
         }
         const folderId = apId()
-        await folderRepo.upsert({
+        await folderRepo().upsert({
             id: folderId,
             projectId,
             displayName: request.displayName,
         }, ['projectId', 'displayName'])
-        const folder = await folderRepo.findOneByOrFail({ projectId, id: folderId })
+        const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
         }
     },
-    async list({
-        projectId,
-        cursorRequest,
-        limit,
-    }: {
-        projectId: ProjectId
-        cursorRequest: Cursor | null
-        limit: number
-    }) {
+    async list(params: ListParams) {
+        const { projectId, cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FolderEntity,
@@ -107,13 +84,13 @@ export const flowFolderService = {
             },
         })
         const paginationResponse = await paginator.paginate(
-            folderRepo.createQueryBuilder('folder').where({ projectId }),
+            folderRepo().createQueryBuilder('folder').where({ projectId }),
         )
         const numberOfFlowForEachFolder: Promise<number>[] = []
         const dtosList: FolderDto[] = []
         paginationResponse.data.forEach((f) => {
             numberOfFlowForEachFolder.push(
-                flowService.count({ projectId, folderId: f.id }),
+                flowService(log).count({ projectId, folderId: f.id }),
             )
         });
         (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
@@ -124,26 +101,16 @@ export const flowFolderService = {
             paginationResponse.cursor,
         )
     },
-    async getOneByDisplayNameCaseInsensitive({
-        projectId,
-        displayName,
-    }: {
-        projectId: ProjectId
-        displayName: string
-    }): Promise<Folder | null> {
-        return folderRepo.createQueryBuilder('folder')
+    async getOneByDisplayNameCaseInsensitive(params: GetOneByDisplayNameParams): Promise<Folder | null> {
+        const { projectId, displayName } = params
+        return folderRepo().createQueryBuilder('folder')
             .where('folder.projectId = :projectId', { projectId })
             .andWhere('LOWER(folder.displayName) = LOWER(:displayName)', { displayName })
             .getOne()
     },
-    async getOneOrThrow({
-        projectId,
-        folderId,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-    }): Promise<FolderDto> {
-        const folder = await folderRepo.findOneBy({ projectId, id: folderId })
+    async getOneOrThrow(params: GetOneOrThrowParams): Promise<FolderDto> {
+        const { projectId, folderId } = params
+        const folder = await folderRepo().findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -152,10 +119,42 @@ export const flowFolderService = {
                 },
             })
         }
-        const numberOfFlows = await flowService.count({ projectId, folderId })
+        const numberOfFlows = await flowService(log).count({ projectId, folderId })
         return {
             ...folder,
             numberOfFlows,
         }
     },
+})
+
+type DeleteParams = {
+    projectId: ProjectId
+    folderId: FolderId
+}
+
+type UpdateParams = {
+    projectId: ProjectId
+    folderId: FolderId
+    request: UpdateFolderRequest
+}
+
+type UpsertParams = {
+    projectId: ProjectId
+    request: CreateFolderRequest
+}
+
+type ListParams = {
+    projectId: ProjectId
+    cursorRequest: Cursor | null
+    limit: number
+}
+
+type GetOneByDisplayNameParams = {
+    projectId: ProjectId
+    displayName: string
+}
+
+type GetOneOrThrowParams = {
+    projectId: ProjectId
+    folderId: FolderId
 }

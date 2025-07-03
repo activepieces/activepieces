@@ -3,7 +3,7 @@ import { renderTemplate } from './actions/renderTemplate.action';
 import { PieceCategory } from '@activepieces/shared';
 export const generatebanners = createPiece({
   name: 'generatebanners',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   authors: ['tpatel'],
   categories: [PieceCategory.MARKETING],

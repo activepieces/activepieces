@@ -13,7 +13,7 @@ export const sendinblue = createPiece({
   displayName: 'Brevo',
   description:
     'Formerly Sendinblue, is a SaaS solution for relationship marketing',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brevo.png',
   authors: ["kanarelo","BLaidzX","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
@@ -23,7 +23,7 @@ export const sendinblue = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.sendinblue.com/v3',
       auth: sendinblueAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'api-key': auth as string,
       }),
     }),

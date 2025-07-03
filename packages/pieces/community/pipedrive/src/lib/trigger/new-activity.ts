@@ -2,6 +2,8 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { pipedriveCommon } from '../common';
 import { pipedriveAuth } from '../..';
+import { httpClient, HttpMethod,AuthenticationType } from '@activepieces/pieces-common';
+import { ListActivitiesResponse } from '../common/types';
 
 export const newActivity = createTrigger({
   auth: pipedriveAuth,
@@ -33,6 +35,21 @@ export const newActivity = createTrigger({
         context.auth.access_token
       );
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<ListActivitiesResponse>({
+			method: HttpMethod.GET,
+			url: `${context.auth.data['api_domain']}/api/v1/activities`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth.access_token,
+			},
+			queryParams:{
+				limit:'5'
+			}
+		});
+
+		return response.body.data;
   },
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;

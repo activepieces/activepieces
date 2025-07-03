@@ -1,0 +1,35 @@
+---
+title: "Manage AI Providers"
+description: ""
+icon: "sparkles"
+---
+
+Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces like [Text AI](https://www.activepieces.com/pieces/text-ai).
+
+## Manage AI Providers
+
+You can manage the AI providers that you want to use in your flows. To do this, go to the **AI** page in the **Admin Console**.
+
+You can define the provider's base URL and the API key. 
+
+These settings will be used for all the projects for every request to the AI provider.
+
+![Manage AI Providers](/resources/screenshots/configure-ai-provider.png)
+
+## Configure AI Credits Limits Per Project
+
+You can configure the token limits per project. To do this, go to the project general settings and change the **AI Credits** field to the desired value.
+
+<Note>
+  This limit is per project and is an accumulation of all the reported usage by the AI piece in the project.
+  Since only the AI piece goes through the Activepieces API,
+  using any other piece like the standalone OpenAI, Anthropic or Perplexity pieces will not count towards or respect this limit.
+</Note>
+
+![Manage AI Providers](/resources/screenshots/ai-credits-limit.png)
+
+### AI Credits Explained
+
+AI credits are the number tasks that can be run by any of our universal AI pieces.
+
+So if you have a flow run that contains 5 universal AI pieces steps, the AI credits consumed will be 5.

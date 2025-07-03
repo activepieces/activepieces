@@ -1,3 +1,5 @@
+import { OAuthApp } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -5,8 +7,6 @@ import {
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 import { EncryptedObject } from '../../helper/encryption'
-import { OAuthApp } from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
 
 type OAuthAppSchema = {
     platform: Platform[]

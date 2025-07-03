@@ -13,7 +13,7 @@ const description = `Manipulate, format, and extract time units for all your dat
 export const utilityDate = createPiece({
   displayName: 'Date Helper',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.8.0',
+  minimumSupportedRelease: '0.36.1',
   categories: [PieceCategory.CORE],
   logoUrl: 'https://cdn.activepieces.com/pieces/calendar_piece.svg',
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],

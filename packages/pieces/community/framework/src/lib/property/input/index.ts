@@ -1,19 +1,26 @@
-import { Type } from "@sinclair/typebox";
-import { LongTextProperty, ShortTextProperty } from "./text-property";
-import { NumberProperty } from "./number-property";
-import { ArrayProperty } from "./array-property";
-import { ObjectProperty } from "./object-property";
-import { JsonProperty } from "./json-property";
-import { DateTimeProperty } from "./date-time-property";
-import { FileProperty } from "./file-property";
-import { PropertyType } from "./property-type";
-import { MarkDownProperty } from "./markdown-property";
-import { CheckboxProperty } from "./checkbox-property";
-import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
-import { Processors } from "../../processors/processors";
-import { Validators } from "../../validators/validators";
-import { DynamicProperties } from "./dynamic-prop";
-import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
+import { Type } from '@sinclair/typebox';
+import { ArrayProperty } from './array-property';
+import { CheckboxProperty } from './checkbox-property';
+import { DateTimeProperty } from './date-time-property';
+import {
+  DropdownProperty,
+  MultiSelectDropdownProperty,
+} from './dropdown/dropdown-prop';
+import {
+  StaticDropdownProperty,
+  StaticMultiSelectDropdownProperty,
+} from './dropdown/static-dropdown';
+import { DynamicProperties } from './dynamic-prop';
+import { FileProperty } from './file-property';
+import { JsonProperty } from './json-property';
+import { MarkDownProperty } from './markdown-property';
+import { MarkdownVariant } from '@activepieces/shared';
+import { NumberProperty } from './number-property';
+import { ObjectProperty } from './object-property';
+import { PropertyType } from './property-type';
+import { LongTextProperty, ShortTextProperty } from './text-property';
+import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
+import { ColorProperty } from './color-property';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -31,10 +38,11 @@ export const InputProperty = Type.Union([
   JsonProperty,
   DateTimeProperty,
   FileProperty,
-])
+  ColorProperty,
+]);
 
 export type InputProperty =
-  ShortTextProperty<boolean>
+  | ShortTextProperty<boolean>
   | LongTextProperty<boolean>
   | MarkDownProperty
   | CheckboxProperty<boolean>
@@ -48,13 +56,15 @@ export type InputProperty =
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
-  | FileProperty<boolean>;
+  | FileProperty<boolean>
+  | CustomProperty<boolean>
+  | ColorProperty<boolean>;
+
 
 type Properties<T> = Omit<
   T,
   'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
 >;
-
 
 export const Property = {
   ShortText<R extends boolean>(
@@ -64,8 +74,6 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SHORT_TEXT,
-      defaultProcessors: [Processors.string],
-      defaultValidators: [Validators.string],
     } as unknown as R extends true
       ? ShortTextProperty<true>
       : ShortTextProperty<false>;
@@ -92,13 +100,17 @@ export const Property = {
       ? LongTextProperty<true>
       : LongTextProperty<false>;
   },
-  MarkDown(request: { value: string }): MarkDownProperty {
+  MarkDown(request: {
+    value: string;
+    variant?: MarkdownVariant;
+  }): MarkDownProperty {
     return {
       displayName: 'Markdown',
       required: false,
       description: request.value,
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
+      variant: request.variant ?? MarkdownVariant.INFO,
     };
   },
   Number<R extends boolean>(
@@ -106,8 +118,6 @@ export const Property = {
   ): R extends true ? NumberProperty<true> : NumberProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.number],
-      defaultValidators: [Validators.number],
       valueSchema: undefined,
       type: PropertyType.NUMBER,
     } as unknown as R extends true
@@ -122,7 +132,6 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.JSON,
-      defaultProcessors: [Processors.json],
     } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
   },
   Array<R extends boolean>(
@@ -211,8 +220,6 @@ export const Property = {
   ): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.datetime],
-      defaultValidators: [Validators.datetimeIso],
       valueSchema: undefined,
       type: PropertyType.DATE_TIME,
     } as unknown as R extends true
@@ -224,10 +231,40 @@ export const Property = {
   ): R extends true ? FileProperty<true> : FileProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.file],
-      defaultValidators: [Validators.file],
       valueSchema: undefined,
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
+  Custom<R extends boolean>(
+    request: Omit<Properties<CustomProperty<R>>, 'code'> & {
+      /** 
+       * This is designed to be self-contained and operates independently of any
+       * external libraries or imported dependencies. All necessary logic and
+       * functionality are implemented within this function itself.
+       * 
+       * You can return a cleanup function that will be called when the component is unmounted in the frontend.
+       * */
+      code: ((ctx: CustomPropertyCodeFunctionParams) => (()=>void) | void)
+    }
+  ): R extends true ? CustomProperty<true> : CustomProperty<false> {
+    const code = request.code.toString();
+    return {
+      ...request,
+      code,
+      valueSchema: undefined,
+      type: PropertyType.CUSTOM,
+    } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;
+  },
+  Color<R extends boolean>(
+    request: Properties<ColorProperty<R>>
+  ): R extends true ? ColorProperty<true> : ColorProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.COLOR,
+    } as unknown as R extends true
+      ? ColorProperty<true>
+      : ColorProperty<false>;
+  },
 };
+

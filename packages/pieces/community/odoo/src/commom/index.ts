@@ -7,6 +7,9 @@ import {
     GetAllContactsParams,
     GetCompanyParams,
     GetContactParams,
+    GetRecordsParams,
+    CreateRecordParams,
+    UpdateRecordParams,
     OdooConfig,
     RenderReportParams,
     SaveCompanyParams,
@@ -200,6 +203,39 @@ class Odoo {
         })
     }
 
+    async getRecords<T = any>({model, domain, fields, offset, limit}: GetRecordsParams): Promise<T> {
+        return this.execute_kw<T>({
+            model: model,
+            method: "search_read",
+            params: [
+                [domain, fields, offset, limit]
+            ]
+        })
+    }
+
+    async createRecord<T = any>({
+        model,
+        fields,
+    }: CreateRecordParams): Promise<T> {
+        return this.execute_kw<T>({
+            model,
+            method: 'create',
+            params: [[fields]],
+        });
+    }
+
+    async updateRecord<T = any>({
+        model,
+        recordId,
+        fields,
+    }: UpdateRecordParams): Promise<T> {
+        return this.execute_kw<T>({
+            model,
+            method: 'write',
+            params: [[[recordId], fields]],
+        });
+    }
+    
     async saveContact<T = any>({
         name,
         phone,

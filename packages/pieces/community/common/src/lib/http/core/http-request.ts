@@ -12,4 +12,6 @@ export type HttpRequest<RequestBody extends HttpRequestBody = any> = {
   authentication?: Authentication | undefined;
   queryParams?: QueryParams | undefined;
   timeout?: number;
+  retries?: number;
+  responseType?: 'arraybuffer' | 'json' | 'blob' | 'text';
 };

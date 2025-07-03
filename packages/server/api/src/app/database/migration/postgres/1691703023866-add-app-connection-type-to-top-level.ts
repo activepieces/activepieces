@@ -1,7 +1,9 @@
 import * as crypto from 'crypto'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
 
+const log = system.globalLogger()
 type AppConnectionValue = {
     type: string
 }
@@ -12,7 +14,7 @@ implements MigrationInterface {
     name = 'AddAppConnectionTypeToTopLevel1691703023866'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddAppConnectionTypeToTopLevel1691703023866 up')
+        log.info('AddAppConnectionTypeToTopLevel1691703023866 up')
 
         await queryRunner.query(
             'ALTER TABLE "app_connection" ADD "type" character varying',
@@ -30,7 +32,7 @@ implements MigrationInterface {
                 )
             }
             catch (e) {
-                logger.error(e)
+                log.error(e)
             }
         }
 
@@ -38,22 +40,22 @@ implements MigrationInterface {
             'ALTER TABLE "app_connection" ALTER COLUMN "type" SET NOT NULL',
         )
 
-        logger.info('AddAppConnectionTypeToTopLevel1691703023866 finished')
+        log.info('AddAppConnectionTypeToTopLevel1691703023866 finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddAppConnectionTypeToTopLevel1691703023866 down')
+        log.info('AddAppConnectionTypeToTopLevel1691703023866 down')
 
         await queryRunner.query('ALTER TABLE "app_connection" DROP COLUMN "type"')
 
-        logger.info('AddAppConnectionTypeToTopLevel1691703023866 finished')
+        log.info('AddAppConnectionTypeToTopLevel1691703023866 finished')
     }
 }
 
 function decryptObject<T>(encryptedObject: { iv: string, data: string }): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(
-        system.getOrThrow(SystemProp.ENCRYPTION_KEY),
+        system.getOrThrow(AppSystemProp.ENCRYPTION_KEY),
         'binary',
     )
     const decipher = crypto.createDecipheriv(algorithm, key, iv)

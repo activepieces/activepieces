@@ -11,11 +11,13 @@ import { discordCreateChannel } from './lib/actions/create-channel';
 import { discordDeleteChannel } from './lib/actions/delete-channel';
 import { discordSendApprovalMessage } from './lib/actions/send-approval-message';
 import { discordSendMessageWebhook } from './lib/actions/send-message-webhook';
-import { newMessage } from './lib/trigger/new-message';
+import { newMessage } from './lib/triggers/new-message';
 import { discordRemoveBanFromUser } from './lib/actions/remove-ban-from-user';
 import { discordCreateGuildRole } from './lib/actions/create-guild-role';
 import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
 import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
+import { newMember } from './lib/triggers/new-member';
+import { sendMessageWithBot } from './lib/actions/send-message-with-bot'
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -34,11 +36,12 @@ export const discordAuth = PieceAuth.SecretText({
 export const discord = createPiece({
   displayName: 'Discord',
   description: 'Instant messaging and VoIP social platform',
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: discordAuth,
   actions: [
+    sendMessageWithBot,
     discordSendMessageWebhook,
     discordSendApprovalMessage,
     discordAddRoleToMember,
@@ -54,12 +57,13 @@ export const discord = createPiece({
     discordDeleteGuildRole,
     discordBanGuildMember,
     createCustomApiCallAction({
+      auth:discordAuth,
       baseUrl: () => {
         return 'https://discord.com/api/v9';
       },
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bot ${auth}`,
         };
       },
     }),
@@ -75,6 +79,7 @@ export const discord = createPiece({
     'khaledmashaly',
     'abuaboud',
     'tintinthedev',
+    'AshotZaqoyan'
   ],
-  triggers: [newMessage],
+  triggers: [newMessage, newMember],
 });

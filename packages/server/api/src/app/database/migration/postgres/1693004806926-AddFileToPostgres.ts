@@ -26,7 +26,7 @@ export class AddFileToPostgres1693004806926 implements MigrationInterface {
             'ALTER TABLE "step_file" DROP CONSTRAINT "fk_step_file_project_id"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."step_file_project_id_flow_id_step_name_name"',
+            'DROP INDEX "step_file_project_id_flow_id_step_name_name"',
         )
         await queryRunner.query('DROP TABLE "step_file"')
     }

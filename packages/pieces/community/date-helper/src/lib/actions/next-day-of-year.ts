@@ -1,16 +1,24 @@
 import {
   Property,
   createAction,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
-  createNewDate,
   timeZoneOptions,
-  timeDiff,
+  getCorrectedFormat,
 } from '../common';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(advancedFormat);
 
 export const nextDayofYear = createAction({
   name: 'next_day_of_year',
@@ -52,7 +60,6 @@ export const nextDayofYear = createAction({
         'The day of the month that you would like to get the date and time of.',
       required: true,
       defaultValue: 1,
-      validators: [Validators.minValue(1), Validators.maxValue(31)],
     }),
     time: Property.ShortText({
       displayName: '24h Time',
@@ -60,7 +67,6 @@ export const nextDayofYear = createAction({
         'The time that you would like to get the date and time of. This must be in 24h format.',
       required: false,
       defaultValue: '00:00',
-      validators: [Validators.pattern(/^\d\d:\d\d$/)],
     }),
     currentTime: Property.Checkbox({
       displayName: 'Use Current Time',
@@ -88,17 +94,22 @@ export const nextDayofYear = createAction({
     }),
   },
   async run(context) {
-    const timeFormat = context.propsValue.timeFormat;
+    await propsValidation.validateZod(context.propsValue, {
+      day: z.number().min(1).max(31),
+      time: z.string().regex(/^\d\d:\d\d$/),
+    });
+
+    const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone as string;
     const currentTime = context.propsValue.currentTime as boolean;
     const month = context.propsValue.month as number;
     const day = context.propsValue.day as number;
     let time = context.propsValue.time as string;
 
-    const now = new Date();
+    let nextOccurrence = dayjs().tz(timeZone);
 
     if (currentTime === true) {
-      time = `${now.getHours()}:${now.getMinutes()}`;
+      time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -107,31 +118,17 @@ export const nextDayofYear = createAction({
       throw new Error(`Invalid input \nmonth: ${month} \nday: ${day}`);
     }
 
-    if (typeof timeFormat !== 'string') {
-      throw new Error(
-        `Output format is not a string \noutput format: ${JSON.stringify(
-          timeFormat
-        )}`
-      );
-    }
-
-    const currentYear = now.getFullYear();
+    const currentYear = nextOccurrence.year();
 
     // Create a date object for the next occurrence
-    const nextOccurrence = new Date(currentYear, month - 1, day);
-    nextOccurrence.setHours(hours, minutes, 0, 0);
+    nextOccurrence = dayjs.tz(`${currentYear}-${month}-${day} ${hours}:${minutes}`, 'YYYY-M-D H:m', timeZone);
 
     // Check if the next occurrence is already past in the current year
-    if (nextOccurrence.getTime() < now.getTime()) {
+    if (nextOccurrence.isBefore(dayjs().tz(timeZone))) {
       // Move to the next year
-      nextOccurrence.setFullYear(currentYear + 1);
+      nextOccurrence = nextOccurrence.add(1, 'year');
     }
 
-    // Set the time for the timezone
-    nextOccurrence.setMinutes(
-      nextOccurrence.getMinutes() + timeDiff('UTC', timeZone)
-    );
-
-    return { result: createNewDate(nextOccurrence, timeFormat) };
+    return { result: nextOccurrence.format(timeFormat) };
   },
 });

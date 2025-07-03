@@ -1,10 +1,11 @@
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     ErrorCode,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
@@ -15,21 +16,23 @@ export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
 
     private static readonly DEFAULT_ALLOWED_PRINCIPAL_TYPES = [
         PrincipalType.USER,
-        PrincipalType.WORKER,
+        PrincipalType.ENGINE,
         PrincipalType.SERVICE,
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
+        const routerPath = request.routeOptions.url
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
         const requestMatches =
-      !PrincipalTypeAuthzHandler.IGNORED_ROUTES.includes(request.routerPath) &&
-      !request.routerPath.startsWith('/ui')
+      !PrincipalTypeAuthzHandler.IGNORED_ROUTES.includes(routerPath) &&
+      !routerPath.startsWith('/ui')
 
         return Promise.resolve(requestMatches)
     }
 
     protected doHandle(request: FastifyRequest): Promise<void> {
         const principalType = request.principal.type
-        const configuredPrincipals = request.routeConfig.allowedPrincipals
+        const configuredPrincipals = request.routeOptions.config?.allowedPrincipals
         const defaultPrincipals =
       PrincipalTypeAuthzHandler.DEFAULT_ALLOWED_PRINCIPAL_TYPES
         const allowedPrincipals = configuredPrincipals ?? defaultPrincipals

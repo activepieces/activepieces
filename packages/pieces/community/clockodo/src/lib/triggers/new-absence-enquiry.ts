@@ -61,6 +61,7 @@ export default createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -68,6 +69,7 @@ export default createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
 });

@@ -1,5 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class PieceMetadata1685537054805 implements MigrationInterface {
     name = 'PieceMetadata1685537054805'
@@ -15,16 +17,16 @@ export class PieceMetadata1685537054805 implements MigrationInterface {
             'CREATE UNIQUE INDEX "idx_piece_metadata_name_version" ON "piece_metadata" ("name", "version") ',
         )
 
-        logger.info('[PieceMetadata1685537054805] up')
+        log.info('[PieceMetadata1685537054805] up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('DROP COLLATION en_natural')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_piece_metadata_name_version"',
+            'DROP INDEX "idx_piece_metadata_name_version"',
         )
         await queryRunner.query('DROP TABLE "piece_metadata"')
 
-        logger.info('[PieceMetadata1685537054805] down')
+        log.info('[PieceMetadata1685537054805] down')
     }
 }

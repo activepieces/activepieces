@@ -1,4 +1,4 @@
-import { Property, Validators, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const find = createAction({
   description: 'Find substring (Regex or Text).',

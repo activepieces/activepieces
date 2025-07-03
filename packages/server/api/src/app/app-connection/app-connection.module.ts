@@ -5,7 +5,6 @@ import { appConnectionController } from './app-connection.controller'
 
 export const appConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
     await app.register(appConnectionController, {
         prefix: '/v1/app-connections',
     })

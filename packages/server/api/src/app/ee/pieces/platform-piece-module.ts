@@ -1,20 +1,20 @@
 import {
-    FastifyPluginAsyncTypebox,
-    FastifyPluginCallbackTypebox,
-    Type } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { pieceService } from '../../pieces/piece-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import {
     ActivepiecesError,
     AddPieceRequestBody,
     EndpointScope,
     ErrorCode,
     PieceScope,
-    Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    FastifyPluginCallbackTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { pieceService } from '../../pieces/piece-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -26,14 +26,13 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     done,
 ) => {
 
-
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
+        assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
-        await pieceService.installPiece(
+        await pieceService(req.log).installPiece(
             platformId,
-            req.principal.projectId,
+            undefined,
             req.body,
         )
         await reply.status(StatusCodes.CREATED).send({})
@@ -61,15 +60,15 @@ const installPieceParams = {
     },
 }
 
-function assertProjectScopeOnlyAllowedForUser(
+function assertOneOfTheseScope(
     scope: PieceScope,
-    principal: Principal,
+    allowedScopes: PieceScope[],
 ): void {
-    if (scope === PieceScope.PROJECT && principal.type !== PrincipalType.USER) {
+    if (!allowedScopes.includes(scope)) {
         throw new ActivepiecesError({
-            code: ErrorCode.ENGINE_OPERATION_FAILURE,
+            code: ErrorCode.AUTHORIZATION,
             params: {
-                message: 'Project scope is only allowed for user token',
+                message: 'Only project scope is allowed for cloud platform',
             },
         })
     }

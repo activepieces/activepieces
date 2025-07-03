@@ -41,7 +41,7 @@ export const flowlu = createPiece({
   displayName: 'Flowlu',
   description: 'Business management software',
   auth: flowluAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","abuaboud"],

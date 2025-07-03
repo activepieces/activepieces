@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import axiosRetry from 'axios-retry';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -22,23 +23,36 @@ export class AxiosHttpClient extends BaseHttpClient {
   ): Promise<HttpResponse<ResponseBody>> {
     try {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-      const { urlWithoutQueryParams, queryParams } = this.getUrl(request);
+      const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
       const headers = this.getHeaders(request);
       const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
       const timeout = request.timeout ? request.timeout : 0;
+      const queryParams = request.queryParams || {}
+      const responseType = request.responseType || 'json';
 
-      for (const key in request.queryParams) {
-        queryParams.append(key, request.queryParams[key])
+      for (const [key, value] of Object.entries(queryParams)) {
+        urlQueryParams.append(key, value);
       }
 
       const config: AxiosRequestConfig = {
         method: axiosRequestMethod,
         url: urlWithoutQueryParams,
-        params: queryParams,
+        params: urlQueryParams,
         headers,
         data: request.body,
         timeout,
+        responseType,
       };
+
+      if (request.retries && request.retries > 0) {
+        axiosRetry(axios, {
+          retries: request.retries,
+          retryDelay: axiosRetry.exponentialDelay,
+          retryCondition: (error) => {
+            return axiosRetry.isNetworkOrIdempotentRequestError(error) || (error.response && error.response.status >= 500) || false;
+          },
+        });
+      }
 
       const response = await axios.request(config);
 
@@ -56,7 +70,7 @@ export class AxiosHttpClient extends BaseHttpClient {
         );
         console.error(
           '[HttpClient#sendRequest] error, responseBody:',
-          e.response?.data
+          JSON.stringify(e.response?.data)
         );
 
         throw new HttpError(request.body, e);

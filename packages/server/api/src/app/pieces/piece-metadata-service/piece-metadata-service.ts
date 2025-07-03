@@ -1,18 +1,20 @@
-import { EntityManager } from 'typeorm'
 import { PieceMetadata, 
     PieceMetadataModel,
     PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import {
     ApEdition,
     ListVersionsResponse,
+    LocalesEnum,
     PackageType,
     PieceCategory,
     PieceOrderBy,
     PieceSortBy,
     PieceType,
+    PlatformId,
     ProjectId,
     SuggestionType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 
 type ListParams = {
     release: string
@@ -27,15 +29,17 @@ type ListParams = {
     orderBy?: PieceOrderBy
     searchQuery?: string
     suggestionType?: SuggestionType
+    locale?: LocalesEnum
 }
 
 type GetOrThrowParams = {
     name: string
     version: string | undefined
-    projectId: string | undefined
     entityManager?: EntityManager
+    projectId: string | undefined
+    platformId: string | undefined
+    locale?: LocalesEnum
 }
-
 
 type ListVersionsParams = {
     name: string
@@ -43,11 +47,6 @@ type ListVersionsParams = {
     release: string | undefined
     edition: ApEdition
     platformId: string | undefined
-}
-
-type DeleteParams = {
-    id: string
-    projectId?: string
 }
 
 type CreateParams = {
@@ -68,14 +67,15 @@ type GetExactPieceVersionParams = {
     name: string
     version: string
     projectId: ProjectId
+    platformId: PlatformId
 }
 
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    get(params: GetOrThrowParams): Promise<PieceMetadataModel | undefined>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
-    delete(params: DeleteParams): Promise<void>
     updateUsage(params: UpdateUsage): Promise<void>
-    getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
+    resolveExactVersion(params: GetExactPieceVersionParams): Promise<string>
 }

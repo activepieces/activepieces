@@ -1,12 +1,7 @@
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubUnlockIssueAction = createAction({
   auth: githubAuth,
@@ -21,28 +16,16 @@ export const githubUnlockIssueAction = createAction({
       required: true,
     }),
   },
-  async run(configValue) {
-    const { issue_number } = configValue.propsValue;
-    const { owner, repo } = configValue.propsValue.repository!;
+  async run({ auth, propsValue }) {
+    const { issue_number } = propsValue;
+    const { owner, repo } = propsValue.repository!;
 
-    const request: HttpRequest = {
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues/${issue_number}/lock`,
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
       method: HttpMethod.DELETE,
-      queryParams: {
-        owner: `${owner}`,
-        repo: `${repo}`,
-        issue_number: `${issue_number}`,
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
-      },
-    };
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/lock`,
+    });
 
-    const response = await httpClient.sendRequest(request);
-
-    return {
-      success: response.status === 204,
-    };
+    return response;
   },
 });

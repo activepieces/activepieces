@@ -1,14 +1,11 @@
-import { flowService } from '../../flows/flow/flow.service'
-import { triggerHooks } from '../../flows/trigger'
 import {
-    ActivepiecesError,
-    EngineResponseStatus,
-    ErrorCode,
     FlowId,
     FlowVersionId,
-    isNil,
-    PopulatedFlow,
-    ProjectId } from '@activepieces/shared'
+    ProjectId,
+} from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { flowService } from '../../flows/flow/flow.service'
+import { triggerHooks } from '../../flows/trigger'
 
 type BaseParams = {
     projectId: ProjectId
@@ -16,43 +13,21 @@ type BaseParams = {
     flowVersionId?: FlowVersionId
 }
 
-type GetFlowParams = BaseParams
 type PreCreateParams = BaseParams
 type PreDeleteParams = BaseParams
 
-const getFlowOrThrow = async ({
-    projectId,
-    flowId,
-    flowVersionId,
-}: GetFlowParams): Promise<PopulatedFlow> => {
-    return flowService.getOnePopulatedOrThrow({
-        id: flowId,
-        projectId,
-        versionId: flowVersionId,
-    })
-}
-
-export const webhookSideEffects = {
+export const webhookSideEffects = (log: FastifyBaseLogger) => ({
     async preCreate({ projectId, flowId }: PreCreateParams): Promise<void> {
-        const { version: flowVersion } = await getFlowOrThrow({
-            flowId,
+        const { version: flowVersion } = await flowService(log).getOnePopulatedOrThrow({
+            id: flowId,
             projectId,
         })
 
-        const response = await triggerHooks.enable({
+        await triggerHooks.enable({
             projectId,
             flowVersion,
             simulate: true,
-        })
-
-        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
-            throw new ActivepiecesError({
-                code: ErrorCode.TRIGGER_ENABLE,
-                params: {
-                    flowVersionId: flowVersion.id,
-                },
-            })
-        }
+        }, log)
     },
 
     async preDelete({
@@ -60,25 +35,19 @@ export const webhookSideEffects = {
         flowId,
         flowVersionId,
     }: PreDeleteParams): Promise<void> {
-        const { version: flowVersion } = await getFlowOrThrow({
-            flowId,
+        const { version: flowVersion } = await flowService(log).getOnePopulatedOrThrow({
+            id: flowId,
             projectId,
-            flowVersionId,
+            versionId: flowVersionId,
         })
 
-        const response = await triggerHooks.disable({
-            projectId,
-            flowVersion,
-            simulate: true,
-        })
-
-        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
-            throw new ActivepiecesError({
-                code: ErrorCode.TRIGGER_DISABLE,
-                params: {
-                    flowVersionId: flowVersion.id,
-                },
-            })
-        }
+        await triggerHooks.disable(
+            {
+                projectId,
+                flowVersion,
+                simulate: true,
+            },
+            log,
+        )
     },
-}
+})

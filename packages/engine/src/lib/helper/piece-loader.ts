@@ -1,4 +1,4 @@
-import { Action, Piece } from '@activepieces/pieces-framework'
+import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 
 
@@ -33,6 +33,27 @@ const loadPieceOrThrow = async (
     return piece
 }
 
+const getPieceAndTriggerOrThrow = async (params: {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    piecesSource: string
+},
+): Promise<{ piece: Piece, pieceTrigger: Trigger }> => {
+    const { pieceName, pieceVersion, triggerName, piecesSource } = params
+    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
+    const trigger = piece.getTrigger(triggerName)
+
+    if (trigger === undefined) {
+        throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+    }
+
+    return {
+        piece,
+        pieceTrigger: trigger,
+    }
+}
+
 const getPieceAndActionOrThrow = async (params: {
     pieceName: string
     pieceVersion: string
@@ -63,24 +84,24 @@ const getPieceAndActionOrThrow = async (params: {
 }
 
 const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) => {
-    const { piece: piecePackage, stepName, propertyName } = params
+    const { piece: piecePackage, actionOrTriggerName, propertyName } = params
 
     const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
 
-    const action = piece.getAction(stepName) ?? piece.getTrigger(stepName)
+    const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
-    if (isNil(action)) {
+    if (isNil(actionOrTrigger)) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
                 pieceName: piecePackage.pieceName,
                 pieceVersion: piecePackage.pieceVersion,
-                stepName,
+                stepName: actionOrTriggerName,
             },
         })
     }
 
-    const prop = action.props[propertyName]
+    const prop = (actionOrTrigger.props  as PiecePropertyMap)[propertyName]
 
     if (isNil(prop)) {
         throw new ActivepiecesError({
@@ -88,7 +109,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
             params: {
                 pieceName: piecePackage.pieceName,
                 pieceVersion: piecePackage.pieceVersion,
-                stepName,
+                stepName: actionOrTriggerName,
                 configName: propertyName,
             },
         })
@@ -115,6 +136,8 @@ const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
 
 export const pieceLoader = {
     loadPieceOrThrow,
+    getPieceAndTriggerOrThrow,
     getPieceAndActionOrThrow,
     getPropOrThrow,
+    getPackageAlias,
 }

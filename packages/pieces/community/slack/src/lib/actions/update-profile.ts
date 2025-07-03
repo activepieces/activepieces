@@ -1,11 +1,6 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { WebClient } from '@slack/web-api';
 
 export const updateProfileAction = createAction({
   auth: slackAuth,
@@ -29,41 +24,19 @@ export const updateProfileAction = createAction({
     userId: Property.ShortText({
       displayName: 'User',
       description:
-        'ID of user to change. This argument may only be specified by admins on paid teams.You can use **Find User by Email** action to retrive ID.',
+        'ID of user to change. This argument may only be specified by admins on paid teams.You can use **Find User by Email** action to retrieve ID.',
       required: false,
     }),
   },
-  async run(context) {
-    const firstName = context.propsValue.firstName;
-    const lastName = context.propsValue.lastName;
-    const email = context.propsValue.email;
-    const userId = context.propsValue.userId;
-
-    const userToken = context.auth.data['authed_user']?.access_token;
-
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: 'https://slack.com/api/users.profile.set',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: userToken,
+  async run({ auth, propsValue }) {
+    const client = new WebClient(auth.data['authed_user']?.access_token);
+    return client.users.profile.set({
+      profile: {
+        first_name: propsValue.firstName,
+        last_name: propsValue.lastName,
+        email: propsValue.email,
       },
-      body: {
-        profile: {
-          first_name: firstName,
-          last_name: lastName,
-          email,
-        },
-        user: userId,
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    if (!response.body.ok) {
-      throw new Error(JSON.stringify(response.body, undefined, 2));
-    }
-
-    return response.body;
+      user: propsValue.userId,
+    });
   },
 });

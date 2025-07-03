@@ -1,4 +1,3 @@
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { TriggerBase } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -7,30 +6,47 @@ import {
     PieceTrigger,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { projectService } from '../../../project/project-service'
 
-export async function getPieceTrigger({
-    trigger,
-    projectId,
-}: {
+export const triggerUtils = (log: FastifyBaseLogger) => ({
+    async getPieceTriggerOrThrow({ trigger, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase> {
+
+        const pieceTrigger = await this.getPieceTrigger({
+            trigger,
+            projectId,
+
+        })
+        if (isNil(pieceTrigger)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
+                params: {
+                    pieceName: trigger.settings.pieceName,
+                    pieceVersion: trigger.settings.pieceVersion,
+                    triggerName: trigger.settings.triggerName,
+                },
+            })
+        }
+        return pieceTrigger
+    },
+    async getPieceTrigger({ trigger, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase | null> {
+        const platformId = await projectService.getPlatformId(projectId)
+        const piece = await pieceMetadataService(log).get({
+            projectId,
+            platformId,
+            name: trigger.settings.pieceName,
+            version: trigger.settings.pieceVersion,
+        })
+        if (isNil(piece) || isNil(trigger.settings.triggerName)) {
+            return null
+        }
+        const pieceTrigger = piece.triggers[trigger.settings.triggerName]
+        return pieceTrigger
+    },
+})
+
+type GetPieceTriggerOrThrowParams = {
     trigger: PieceTrigger
     projectId: ProjectId
-}): Promise<TriggerBase> {
-    const piece = await pieceMetadataService.getOrThrow({
-        projectId,
-        name: trigger.settings.pieceName,
-        version: trigger.settings.pieceVersion,
-    })
-
-    const pieceTrigger = piece.triggers[trigger.settings.triggerName]
-    if (isNil(pieceTrigger)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
-            params: {
-                pieceName: trigger.settings.pieceName,
-                pieceVersion: trigger.settings.pieceVersion,
-                triggerName: trigger.settings.triggerName,
-            },
-        })
-    }
-    return pieceTrigger
 }

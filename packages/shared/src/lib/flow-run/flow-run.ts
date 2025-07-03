@@ -32,11 +32,15 @@ export const FlowRun = Type.Object({
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),
+    duration: Type.Optional(Type.Number()),
     startTime: Type.String(),
-    finishTime: Type.String(),
+    finishTime: Type.Optional(Type.String()),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
-    ...ExecutionState,
+    // The steps data may be missing if the flow has not started yet,
+    // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
+    steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
+    failedStepName: Type.Optional(Type.String()),
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState

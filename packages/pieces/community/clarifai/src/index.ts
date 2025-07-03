@@ -52,7 +52,7 @@ export const clarifaiAuth = PieceAuth.SecretText({
 export const clarifai = createPiece({
   displayName: 'Clarifai',
   description: 'AI-powered visual recognition',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clarifai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["akatechis","zeiler","Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
@@ -70,7 +70,7 @@ export const clarifai = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.clarifai.com/v2', // Replace with the actual base URL
       auth: clarifaiAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Key ${auth}`,
       }),
     }),

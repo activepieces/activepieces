@@ -2,6 +2,7 @@ version: '3.8'
 
 networks:
   activepieces:
+    driver: bridge
 
 services:
   app:
@@ -9,21 +10,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        # Update 'VARIANT' to pick an LTS version of Node.js: 18, 16, 14.
-        # Append -bullseye or -buster to pin to an OS version.
-        # Use -bullseye variants on local arm64/Apple Silicon.
-        VARIANT: 18-bullseye
 
     volumes:
       - ..:/workspace:cached
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:redis
- 
+    # Connect the app to the same network as db and redis
+    networks:
+      - activepieces
+
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-
 
     # Uncomment the next line to use a non-root user for all processes.
     # user: node
@@ -37,14 +33,21 @@ services:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
-    network_mode: service:redis
+    networks:
+      - activepieces
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7.0.7
+    networks:
+      - activepieces
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

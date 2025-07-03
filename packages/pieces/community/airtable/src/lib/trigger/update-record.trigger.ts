@@ -71,22 +71,23 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
       apiKey: auth,
     });
     const airtable = new Airtable();
-    const currentValues = await airtable
+
+    const lastUpdateDate =
+      lastFetchEpochMS === 0
+        ? dayjs().subtract(1, 'day').toISOString()
+        : dayjs(lastFetchEpochMS).toISOString();
+
+    const records = await airtable
       .base(propsValue.base)
       .table(propsValue.tableId!)
       .select({
-        sort: [{ direction: 'desc', field: propsValue.sortFields! }],
+        filterByFormula: `IS_AFTER({${
+          propsValue.sortFields as string
+        }},DATETIME_PARSE("${lastUpdateDate}","YYYY-MM-DD HH:mm:ss.SSS"))`,
         view: propsValue.viewId ?? '',
       })
       .all();
-    const records = currentValues.filter((record) => {
-      const modified_at = dayjs(record.fields[propsValue.sortFields] as string);
-      return modified_at.isAfter(
-        lastFetchEpochMS === 0
-          ? dayjs().subtract(1, 'day').toISOString()
-          : dayjs(lastFetchEpochMS).toISOString()
-      );
-    });
+
     return records.map((item) => {
       return {
         epochMilliSeconds: dayjs(
@@ -108,8 +109,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
     const { store, auth, propsValue } = context;
@@ -122,7 +122,6 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   },
 
   async run(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue });
+    return await pollingHelper.poll(polling, context);
   },
 });

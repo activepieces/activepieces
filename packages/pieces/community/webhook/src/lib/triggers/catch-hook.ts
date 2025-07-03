@@ -4,24 +4,29 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, MarkdownVariant } from '@activepieces/shared';
 
-const message = `
-
-**Production URL:**
+const liveMarkdown = `**Live URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
+generate sample data & triggers published flow.
 
-**Testing URL:**
-\`\`\`text
-{{webhookUrl}}/test
-\`\`\`
-***Use this URL for testing the webhook and saving sample data. It won't start the flow***.
+`;
 
-**Notes:**
-- If you are expecting a reply from this webhook, append **/sync** to the URL in that case, you will also have to add an HTTP step with **return response** at the end of your flow.
-- If the flow takes more than **30 seconds**, it will give a **408 Request Timeout** response.
+const testMarkdown = `
+**Test URL:**
+
+if you want to generate sample data without triggering the flow, append \`/test\` to your webhook URL.
+
+`;
+
+const syncMarkdown = `**Synchronous Requests:**
+
+If you expect a response from this webhook, add \`/sync\` to the end of the URL. 
+If it takes more than 30 seconds, it will return a 408 Request Timeout response.
+
+To return data, add an Webhook step to your flow with the Return Response action.
 `;
 
 enum AuthType {
@@ -35,8 +40,17 @@ export const catchWebhook = createTrigger({
   description:
     'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
   props: {
-    markdown: Property.MarkDown({
-      value: message,
+    liveMarkdown: Property.MarkDown({
+      value: liveMarkdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
+    syncMarkdown: Property.MarkDown({
+      value: syncMarkdown,
+      variant: MarkdownVariant.INFO,
+    }),
+    testMarkdown: Property.MarkDown({
+      value: testMarkdown,
+      variant: MarkdownVariant.INFO,
     }),
     authType: Property.StaticDropdown<AuthType>({
       displayName: 'Authentication',
@@ -56,6 +70,9 @@ export const catchWebhook = createTrigger({
       required: false,
       refreshers: ['authType'],
       props: async ({ authType }) => {
+        if (!authType) {
+          return {};
+        }
         const authTypeEnum = authType.toString() as AuthType;
         let fields: DynamicPropsValue = {};
         switch (authTypeEnum) {
@@ -80,7 +97,8 @@ export const catchWebhook = createTrigger({
             fields = {
               headerName: Property.ShortText({
                 displayName: 'Header Name',
-                description: 'The name of the header to use for authentication.',
+                description:
+                  'The name of the header to use for authentication.',
                 required: true,
               }),
               headerValue: Property.ShortText({
@@ -107,34 +125,61 @@ export const catchWebhook = createTrigger({
   },
   async run(context) {
     const authenticationType = context.propsValue.authType;
-    assertNotNullOrUndefined(authenticationType, 'Authentication type is required');
-    const verified = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
+    assertNotNullOrUndefined(
+      authenticationType,
+      'Authentication type is required'
+    );
+    const verified = verifyAuth(
+      authenticationType,
+      context.propsValue.authFields ?? {},
+      context.payload.headers
+    );
     if (!verified) {
-      return []
+      return [];
     }
-    return [context.payload]
+    return [context.payload];
   },
 });
 
-function verifyAuth(authenticationType: AuthType, authFields: DynamicPropsValue, headers: Record<string, string>): boolean {
+function verifyAuth(
+  authenticationType: AuthType,
+  authFields: DynamicPropsValue,
+  headers: Record<string, string>
+): boolean {
   switch (authenticationType) {
     case AuthType.NONE:
       return true;
     case AuthType.BASIC:
-      return verifyBasicAuth(headers['authorization'], authFields['username'], authFields['password']);
+      return verifyBasicAuth(
+        headers['authorization'],
+        authFields['username'],
+        authFields['password']
+      );
     case AuthType.HEADER:
-      return verifyHeaderAuth(headers, authFields['headerName'], authFields['headerValue']);
+      return verifyHeaderAuth(
+        headers,
+        authFields['headerName'],
+        authFields['headerValue']
+      );
     default:
       throw new Error('Invalid authentication type');
   }
 }
 
-function verifyHeaderAuth(headers: Record<string, string>, headerName: string, headerSecret: string) {
+function verifyHeaderAuth(
+  headers: Record<string, string>,
+  headerName: string,
+  headerSecret: string
+) {
   const headerValue = headers[headerName.toLocaleLowerCase()];
   return headerValue === headerSecret;
 }
 
-function verifyBasicAuth(headerValue: string, username: string, password: string) {
+function verifyBasicAuth(
+  headerValue: string,
+  username: string,
+  password: string
+) {
   if (!headerValue.toLocaleLowerCase().startsWith('basic ')) {
     return false;
   }

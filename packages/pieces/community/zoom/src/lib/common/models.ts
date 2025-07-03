@@ -167,7 +167,7 @@ export interface MeetingMessageBody extends HttpMessageBody {
     type: number;
     weekly_days: string;
   };
-  settings?: {
+  settings: {
     allow_multiple_devices?: boolean;
     alternative_hosts?: number;
     alternative_hosts_email_notification?: boolean;

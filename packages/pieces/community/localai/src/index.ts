@@ -26,7 +26,7 @@ export const openai = createPiece({
   displayName: 'LocalAI',
   description:
     'The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localaiAuth,
@@ -35,7 +35,7 @@ export const openai = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: localaiAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${
           (auth as { access_token: string }).access_token || ''
         }`,

@@ -1,0 +1,33 @@
+---
+title: "Setup App Webhooks"
+description: ""
+icon: 'webhook'
+---
+
+Certain apps like Slack and Square only support one webhook per OAuth2 app. This means that manual configuration is required in their developer portal, and it cannot be automated.
+
+## Slack
+
+**Configure Webhook Secret**
+
+1. Visit the "Basic Information" section of your Slack OAuth settings.
+2. Copy the "Signing Secret" and save it.
+3. Set the following environment variable in your activepieces environment: 
+    ```
+    AP_APP_WEBHOOK_SECRETS={"@activepieces/piece-slack": {"webhookSecret": "SIGNING_SECRET"}}
+    ```
+4. Restart your application instance.
+
+
+**Configure Webhook URL**
+
+1. Go to the "Event Subscription" settings in the Slack OAuth2 developer platform.
+2. The URL format should be: `https://YOUR_AP_INSTANCE/api/v1/app-events/slack`.
+3. When connecting to Slack, use your OAuth2 credentials or update the OAuth2 app details from the admin console (in platform plans).
+4. Add the following events to the app:
+    - `message.channels`
+    - `reaction_added`
+    - `message.im`
+    - `message.groups`
+    - `message.mpim`
+    - `app_mention`

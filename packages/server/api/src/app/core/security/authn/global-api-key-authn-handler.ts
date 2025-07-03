@@ -1,6 +1,4 @@
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -8,15 +6,18 @@ import {
     isNil,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { system } from '../../../helper/system/system'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'api-key'
-    private static readonly API_KEY = system.get(SystemProp.API_KEY)
+    private static readonly API_KEY = system.get(AppSystemProp.API_KEY)
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const routeMatches =
             request.headers[GlobalApiKeyAuthnHandler.HEADER_NAME] !== undefined
-        const skipAuth = request.routeConfig.skipAuth
+        const skipAuth = request.routeOptions.config?.skipAuth ?? false
         return Promise.resolve(routeMatches && !skipAuth)
     }
 

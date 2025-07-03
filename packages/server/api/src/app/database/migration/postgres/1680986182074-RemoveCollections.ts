@@ -1,12 +1,14 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class RemoveCollections1680986182074 implements MigrationInterface {
     name = 'RemoveCollections1680986182074'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running RemoveCollections1680986182074 migration')
+        log.info('Running RemoveCollections1680986182074 migration')
         // Data Queries
         await queryRunner.query(`
         UPDATE "store-entry"
@@ -37,7 +39,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
             )
             countFolders++
         }
-        logger.info(
+        log.info(
             `RemoveCollections1680986182074 Migrated ${countFolders} folders`,
         )
         // Schema Queries
@@ -47,7 +49,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "flow_run" DROP CONSTRAINT "fk_flow_run_collection_id"',
         )
-        await queryRunner.query('DROP INDEX "public"."idx_flow_collection_id"')
+        await queryRunner.query('DROP INDEX "idx_flow_collection_id"')
         await queryRunner.query(
             'ALTER TABLE "store-entry" RENAME COLUMN "collectionId" TO "projectId"',
         )
@@ -110,7 +112,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
                 )
                 if (!flowExists[0].exists || !flowVersionExists[0].exists) {
                     failed++
-                    logger.info(
+                    log.info(
                         `Skipping flow instance ${instance.id} because flow ${flowId} or flow version ${flowVersionId} does not exist`,
                     )
                 }
@@ -123,7 +125,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
             }
         }
 
-        logger.info(
+        log.info(
             `Finished Running RemoveCollections1680986182074 migration with ${count} flow instances migrated and ${failed} failed`,
         )
     }
@@ -145,8 +147,8 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "flow_instance" DROP CONSTRAINT "fk_flow_instance_flow"',
         )
-        await queryRunner.query('DROP INDEX "public"."idx_flow_folder_id"')
-        await queryRunner.query('DROP INDEX "public"."idx_flow_project_id"')
+        await queryRunner.query('DROP INDEX "idx_flow_folder_id"')
+        await queryRunner.query('DROP INDEX "idx_flow_project_id"')
         await queryRunner.query(
             'ALTER TABLE "flow" ALTER COLUMN "projectId" DROP NOT NULL',
         )
@@ -163,10 +165,10 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "flow" ADD "collectionId" character varying(21) NOT NULL',
         )
-        await queryRunner.query('DROP INDEX "public"."idx_folder_project_id"')
+        await queryRunner.query('DROP INDEX "idx_folder_project_id"')
         await queryRunner.query('DROP TABLE "folder"')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_flow_instance_project_id_flow_id"',
+            'DROP INDEX "idx_flow_instance_project_id_flow_id"',
         )
         await queryRunner.query('DROP TABLE "flow_instance"')
         await queryRunner.query(

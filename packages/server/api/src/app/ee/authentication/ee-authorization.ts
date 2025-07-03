@@ -1,21 +1,21 @@
-import { onRequestAsyncHookHandler } from 'fastify'
-import { platformService } from '../../platform/platform.service'
-import { userService } from '../../user/user-service'
 import {
     ActivepiecesError,
     ErrorCode,
     isNil,
-    Platform,
     PlatformRole,
+    PlatformWithoutSensitiveData,
     PrincipalType,
 } from '@activepieces/shared'
+import { onRequestAsyncHookHandler } from 'fastify'
+import { platformService } from '../../platform/platform.service'
+import { userService } from '../../user/user-service'
 
 const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
     code: ErrorCode.AUTHORIZATION,
     params: {},
 })
 
-export const platformMustHaveFeatureEnabled = (handler: (platform: Platform) => boolean): onRequestAsyncHookHandler =>
+export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWithoutSensitiveData) => boolean): onRequestAsyncHookHandler =>
     async (request, _res) => {
         const platformId = request.principal.platform.id
 
@@ -23,7 +23,7 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: Platform) => 
             throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
         }
 
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const enabled = handler(platform)
 
         if (!enabled) {
@@ -49,7 +49,7 @@ export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
             return
         }
 
-        const user = await userService.getMetaInfo({
+        const user = await userService.getOneOrFail({
             id: request.principal.id,
         })
 

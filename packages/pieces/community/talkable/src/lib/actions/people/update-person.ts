@@ -43,23 +43,43 @@ export const updatePerson = createAction({
       description: undefined,
       required: false,
     }),
-    gated_param_subscribed: Property.Checkbox({
+    gated_param_subscribed: Property.StaticDropdown({
       displayName: 'Opt-in status',
-      description: undefined,
+      description: 'Opt-in status true/false',
       required: false,
+      options: {
+        options: [
+          {
+            label: 'true',
+            value: 'true',
+          },
+          {
+            label: 'false',
+            value: 'false',
+          },
+        ],
+      },
     }),
-    unsubscribed: Property.Checkbox({
+    unsubscribed: Property.StaticDropdown({
       displayName: 'Unsubscribe status',
-      description: undefined,
+      description: 'Unsubscribe status true/false',
       required: false,
+      options: {
+        options: [
+          {
+            label: 'true',
+            value: 'true',
+          },
+          {
+            label: 'false',
+            value: 'false',
+          },
+        ],
+      },
     }),
     unsubscribed_at: Property.DateTime({
       displayName: 'Unsubscribed date',
       description: undefined,
-      required: false,
-    }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
       required: false,
     }),
   },
@@ -100,12 +120,6 @@ export const updatePerson = createAction({
             unsubscribed_at,
           },
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return personUpdateResponse.body;
   },

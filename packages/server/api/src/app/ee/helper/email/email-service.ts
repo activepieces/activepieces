@@ -1,52 +1,88 @@
-import { jwtUtils } from '../../../helper/jwt-utils'
-import { getEdition } from '../../../helper/secret-helper'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { issuesService } from '../../../flows/issues/issues-service'
+import { system } from '../../../helper/system/system'
+import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { platformDomainHelper } from '../platform-domain-helper'
+import { alertsService } from '../../alerts/alerts-service'
+import { domainHelper } from '../../custom-domains/domain-helper'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { OtpType } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
 
-const EDITION = getEdition()
-
+const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
-export const emailService = {
-    async sendInvitation({ email, invitationId, projectId }: SendInvitationArgs): Promise<void> {
-        if (EDITION_IS_NOT_PAID) {
-            return
-        }
+const MAX_ISSUES_EMAIL_LIMT = 50
 
-        const project = await projectService.getOneOrThrow(projectId)
-
-        const token = await jwtUtils.sign({
-            payload: {
-                id: invitationId,
-            },
-            key: await jwtUtils.getJwtSecret(),
+export const emailService = (log: FastifyBaseLogger) => ({
+    async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendInvitation] sending invitation email',
+            email: userInvitation.email,
+            platformId: userInvitation.platformId,
+            projectId: userInvitation.projectId,
+            type: userInvitation.type,
+            projectRole: userInvitation.projectRole,
+            platformRole: userInvitation.platformRole,
         })
-
-        const setupLink = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: `invitation?token=${token}&email=${encodeURIComponent(email)}`,
-        })
-
-        await emailSender.send({
-            email,
-            platformId: project.platformId,
+        const { email, platformId } = userInvitation
+        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
             templateData: {
                 name: 'invitation-email',
                 vars: {
-                    setupLink,
-                    projectName: project.displayName,
+                    setupLink: invitationLink,
+                    projectOrPlatformName,
+                    role,
                 },
             },
         })
     },
 
-    async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
+    async sendIssueCreatedNotification({
+        projectId,
+        flowName,
+        platformId,
+        issueOrRunsPath,
+        isIssue,
+        createdAt,
+    }: IssueCreatedArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            name: '[emailService#sendIssueCreatedNotification]',
+            projectId,
+            flowName,
+            createdAt,
+        })
+
+        // TODO remove the hardcoded limit
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        
+        await emailSender(log).send({
+            emails,
+            platformId,
+            templateData: {
+                name: 'issue-created',
+                vars: {
+                    flowName,
+                    createdAt,
+                    isIssue: isIssue.toString(),
+                    issueUrl: issueOrRunsPath,
+                },
+            },
+        })
+    },
+    async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
         }
@@ -54,38 +90,40 @@ export const emailService = {
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        if (!isNil(project.platformId)) {
-            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labeled.
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
             return
         }
 
-        await emailSender.send({
-            email,
+        // TODO remove the hardcoded limit
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
+        await emailSender(log).send({
+            emails,
             platformId: project.platformId,
             templateData: {
                 name: templateName,
                 vars: {
                     resetDate,
-                    firstName,
                 },
             },
         })
     },
 
-    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
-        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
-        logger.info('Sending OTP email', {
-            email: user.email,
+        log.info('Sending OTP email', {
+            email: userIdentity.email,
             otp,
-            userId: user.id,
-            firstName: user.email,
+            identityId: userIdentity.id,
             type,
         })
 
@@ -94,9 +132,9 @@ export const emailService = {
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await platformDomainHelper.constructUrlFrom({
+        const setupLink = await domainHelper.getPublicUrl({
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
+            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplateData> = {
@@ -110,30 +148,186 @@ export const emailService = {
                 name: 'reset-password',
                 vars: {
                     setupLink,
-                    firstName: user.firstName,
                 },
             },
         }
 
-        await emailSender.send({
-            email: user.email,
+        await emailSender(log).send({
+            emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
     },
+    
+    async sendReminderJobHandler(job: {
+        projectId: string
+        platformId: string
+        projectName: string
+    }): Promise<void> {
+        const issues = await issuesService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        if (issues.data.length === 0) {
+            return
+        }
+
+        const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        
+        const issuesUrl = await domainHelper.getPublicUrl({
+            platformId: job.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+
+        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
+            ...issue, 
+            created: dayjs(issue.created).format('MMM D, h:mm a'),
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
+        }))
+
+        await emailSender(log).send({
+            emails,
+            platformId: job.platformId,
+            templateData: {
+                name: 'issues-reminder',
+                vars: {
+                    issuesUrl,
+                    issuesCount: issues.data.length.toString(),
+                    projectName: job.projectName,
+                    issues: JSON.stringify(issuesWithFormattedDate),
+                },
+            },
+        })
+    },
+
+
+    async sendThreeDaysLeftOnTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '3-days-left-on-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendOneDayLeftOnTrial(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '1-day-left-on-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+
+    },
+
+
+    async sendWellcomeToTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: 'wellcome-to-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+    },
+
+    async sendSevenDaysInTrialEmail(
+        platformId: string,
+        customerEmail: string,
+    ): Promise<void> {
+
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: '7-days-in-trial',
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                },
+            },
+        })
+    },
+
+    async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
+        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const project = await projectService.getOneOrThrow(projectId)
+        
+        await emailSender(log).send({
+            emails,
+            platformId: project.platformId,
+            templateData: {
+                name: 'trigger-failure',
+                vars: {
+                    flowName,
+                    projectName: project.displayName,
+                },
+            },
+        })
+    },
+
+})
+
+async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+    switch (userInvitation.type) {
+        case InvitationType.PLATFORM: {
+            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
+            return {
+                name: platform.name,
+                role: capitalizeFirstLetter(userInvitation.platformRole),
+            }
+        }
+        case InvitationType.PROJECT: {
+            assertNotNullOrUndefined(userInvitation.projectId, 'projectId')
+            assertNotNullOrUndefined(userInvitation.projectRoleId, 'projectRoleId')
+            const projectRole = await projectRoleService.getOneOrThrowById({
+                id: userInvitation.projectRoleId,
+            })
+            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            return {
+                name: project.displayName,
+                role: capitalizeFirstLetter(projectRole.name),
+            }
+        }
+    }
+}
+
+function capitalizeFirstLetter(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
 type SendInvitationArgs = {
-    email: string
-    invitationId: string
-    projectId: string
+    userInvitation: UserInvitation
+    invitationLink: string
 }
 
 type SendQuotaAlertArgs = {
-    email: string
     projectId: string
     resetDate: string
-    firstName: string
     templateName: 'quota-50' | 'quota-90' | 'quota-100'
 }
 
@@ -141,5 +335,14 @@ type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    user: User
+    userIdentity: UserIdentity
+}
+
+type IssueCreatedArgs = {
+    projectId: string
+    flowName: string
+    platformId: string
+    isIssue: boolean
+    issueOrRunsPath: string
+    createdAt: string
 }

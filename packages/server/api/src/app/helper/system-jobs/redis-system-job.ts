@@ -1,19 +1,19 @@
+import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
-import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
-import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobHandler, SystemJobName, SystemJobSchedule } from './common'
-import { logger } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { apDayjs, apDayjsDuration } from '../dayjs-helper'
+import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
+import { systemJobHandlers } from './job-handlers'
 
-const FIFTEEN_MINUTES = 15 * 60 * 1000
+const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
-const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
-
-let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
+export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
-export const redisSystemJobSchedulerService: SystemJobSchedule = {
+export const redisSystemJobSchedulerService = (log: FastifyBaseLogger): SystemJobSchedule => ({
     async init(): Promise<void> {
         systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
@@ -25,6 +25,10 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
                         type: 'exponential',
                         delay: FIFTEEN_MINUTES,
                     },
+                    removeOnComplete: true,
+                    removeOnFail: {
+                        age: ONE_MONTH,
+                    },
                 },
             },
         )
@@ -32,9 +36,9 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job) => {
-                logger.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
+                log.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
 
-                const jobHandler = getJobHandlerOrThrow(job.name)
+                const jobHandler = systemJobHandlers.getJobHandler(job.name)
                 await jobHandler(job.data)
             },
             {
@@ -47,22 +51,25 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             systemJobsQueue.waitUntilReady(),
             systemJobWorker.waitUntilReady(),
         ])
+        await removeDeprecatedJobs()
     },
 
-    async upsertJob({ job, schedule, handler }): Promise<void> {
-        logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Upserting job')
-        if (await jobNotInQueue(job.name)) {
-            logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
-            await addJobToQueue({
-                job,
-                schedule,
-            })
-        }
+    async upsertJob({ job, schedule }): Promise<void> {
+        log.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Upserting job')
+        const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
 
-        setJobHandler({
-            name: job.name,
-            handler,
-        })
+        const patternChanged = !isNil(existingJob) && schedule.type === 'repeated' ? schedule.cron !== existingJob.opts.repeat?.pattern : false
+
+        if (patternChanged && !isNil(existingJob) && !isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
+            log.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Pattern changed, removing job from queue')
+            await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat)
+        }
+        if (isNil(existingJob) || patternChanged) {
+            log.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
+            const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
+            await systemJobsQueue.add(job.name, job.data, jobOptions)
+            return
+        }
     },
 
     async close(): Promise<void> {
@@ -75,67 +82,55 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             systemJobsQueue.close(),
         ])
     },
+})
+
+
+async function removeDeprecatedJobs() {
+    const deprecatedJobs = [
+        'trigger-data-cleaner',
+        'logs-cleanup-trigger',
+        'usage-report',
+    ]
+    const allSystemJobs = await systemJobsQueue.getJobSchedulers()
+    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
+    for (const job of deprecatedJobsFromQueue) {
+        await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
+    }
 }
 
-const addJobToQueue = async <T extends SystemJobName>({ job, schedule }: AddJobToQueueParams<T>): Promise<void> => {
-    const jobOptions = configureJobOptions(schedule)
-    await systemJobsQueue.add(job.name, job.data, jobOptions)
-}
+const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
+    const config: JobsOptions = {}
 
-const configureJobOptions = (schedule: JobSchedule): JobsOptions => {
     switch (schedule.type) {
         case 'one-time': {
-            const now = dayjs()
-            return {
-                delay: schedule.date.diff(now, 'milliseconds'),
-            }
+            const now = apDayjs()
+            config.delay = schedule.date.diff(now, 'milliseconds')
+            break
         }
-
         case 'repeated': {
-            return {
-                repeat: {
-                    pattern: schedule.cron,
-                    tz: 'UTC',
-                },
+            config.repeat = {
+                pattern: schedule.cron,
+                tz: 'UTC',
             }
+            break
         }
     }
-}
 
-const setJobHandler = <T extends SystemJobName>({ name, handler }: SetJobHandlerParams<T>): void => {
-    logger.info({ name: 'RedisSystemJob#setJobHandler', jobName: name }, 'Setting job handler')
-    jobHandlers.set(name, handler)
-}
-
-
-const getJobHandlerOrThrow = (name: string): SystemJobHandler => {
-    const jobHandler = jobHandlers.get(name as SystemJobName)
-
-    if (isNil(jobHandler)) {
-        throw new Error(`No handler for job ${name}`)
+    return {
+        ...config,
+        ...spreadIfDefined('jobId', jobId),
     }
-
-    return jobHandler
 }
 
-const jobNotInQueue = async (name: SystemJobName): Promise<boolean> => {
-    const job = await getJobByName(name)
-    return isNil(job)
-}
-
-const getJobByName = async <T extends SystemJobName>(name: T): Promise<SystemJob<T> | undefined> => {
+const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => job.name === name) as SystemJob<T> | undefined
-}
-
-type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
-
-type AddJobToQueueParams<T extends SystemJobName> = {
-    job: SystemJobDefinition<T>
-    schedule: JobSchedule
-}
-
-type SetJobHandlerParams<T extends SystemJobName> = {
-    name: T
-    handler: SystemJobHandler<T>
+    return allSystemJobs.find(job => {
+        if (isNil(job)) {
+            return false
+        }
+        if (!isNil(jobId)) {
+            return job.name === name && job.id === jobId
+        }
+        return job.name === name
+    })
 }

@@ -99,7 +99,7 @@ export const wordpress = createPiece({
   displayName: 'WordPress',
   description: 'Open-source website creation software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
@@ -121,7 +121,7 @@ export const wordpress = createPiece({
       baseUrl: (auth) =>
         (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
       auth: wordpressAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { username: string }).username}:${
             (auth as { password: string }).password

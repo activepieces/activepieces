@@ -1,4 +1,4 @@
-import { Property, Validators } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 
 export const subscriberId = Property.ShortText({
   displayName: 'Subscriber ID',
@@ -10,7 +10,6 @@ export const subscriberEmail = Property.ShortText({
   displayName: 'Email',
   description: 'The email of the subscriber',
   required: true,
-  validators: [Validators.email],
 });
 
 export const subscriberEmailOptional = {
@@ -30,35 +29,30 @@ export const subscribersPageNumber = Property.Number({
     'Page number. Each page of results will contain up to 50 subscribers.',
   required: false,
   defaultValue: 1,
-  validators: [Validators.number, Validators.nonZero],
 });
 
 export const from = Property.DateTime({
   displayName: 'From',
   description: 'Return subscribers created after this date',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 
 export const to = Property.DateTime({
   displayName: 'To',
   description: 'Return subscribers created before this date',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 
 export const updatedFrom = Property.DateTime({
   displayName: 'Updated From',
   description: 'Return subscribers updated after this date',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 
 export const updatedTo = Property.DateTime({
   displayName: 'Updated To',
   description: 'Return subscribers updated before this date',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 
 export const sortOrder = Property.StaticDropdown({

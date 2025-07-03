@@ -1,23 +1,10 @@
-import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
+    isNil,
     isObject,
-    PrincipalType,
 } from '@activepieces/shared'
-
-// TODO REMOVE
-export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
-    if (request.principal.type !== PrincipalType.WORKER) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-
-    done()
-}
+import { preSerializationHookHandler } from 'fastify'
 
 export function extractResourceName(url: string): string | undefined {
     const urlPath = url.split('?')[0]
@@ -35,13 +22,13 @@ export function extractResourceName(url: string): string | undefined {
 export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
 Payload | null
 > = (request, _response, payload, done) => {
-    logger.trace(
-        { payload, principal: request.principal, route: request.routeConfig },
+    request.log.trace(
+        { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
     )
+    const principalProjectId = request.principal?.projectId
 
-    if (isObject(payload)) {
-        const principalProjectId = request.principal.projectId
+    if (isObject(payload) && !isNil(principalProjectId)) {
         let verdict: AuthzVerdict = 'ALLOW'
 
         if ('projectId' in payload) {

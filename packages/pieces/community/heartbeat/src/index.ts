@@ -23,7 +23,7 @@ export const Heartbeat = createPiece({
   description: 'Monitoring and alerting made easy',
 
   auth: heartbeatAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/heartbeat.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kanarelo","kishanprmr","abuaboud"],
@@ -32,7 +32,7 @@ export const Heartbeat = createPiece({
     createCustomApiCallAction({
       auth: heartbeatAuth,
       baseUrl: () => 'https://api.heartbeat.chat/v0',
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
         };

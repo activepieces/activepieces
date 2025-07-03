@@ -95,13 +95,15 @@ export const newContact = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
-  async test({ auth, propsValue, store }): Promise<unknown[]> {
+  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
       store: store,
       propsValue: propsValue,
+      files: files,
     });
   },
   async onEnable({ auth, propsValue, store }): Promise<void> {

@@ -1,26 +1,29 @@
 import { URL } from 'url'
-import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
-import { createConnectionService } from '../services/connections.service'
-import { createFilesService } from '../services/files.service'
+import { createFlowsContext } from '../services/flows.service'
+import { progressService } from '../services/progress.service'
+import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { HookResponse, utils } from '../utils'
+import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 
-type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
+
+
+
+const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
 export const pieceExecutor: BaseExecutor<PieceAction> = {
     async handle({
         action,
         executionState,
         constants,
-    }: {
-        action: PieceAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
@@ -46,89 +49,121 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             piecesSource: constants.piecesSource,
         })
 
-        const { resolvedInput, censoredInput } = await constants.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.inputUiInfo?.schema as Record<string, InputPropertyMap> | undefined)
         if (Object.keys(errors).length > 0) {
-            throw new Error(JSON.stringify(errors))
+            throw new Error(JSON.stringify(errors, null, 2))
         }
 
-        const hookResponse: HookResponse = {
-            stopResponse: undefined,
-            stopped: false,
-            pauseResponse: undefined,
-            paused: false,
-            tags: [],
+        const params: {
+            hookResponse: HookResponse
+        } = {
+            hookResponse: {
+                type: 'none',
+                tags: [],
+            },
         }
         const isPaused = executionState.isPaused({ stepName: action.name })
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({
+                apiUrl: constants.internalApiUrl,
                 prefix: '',
                 flowId: constants.flowId,
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
+            }),
+            output: progressService.createOutputContext({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                stepName: action.name,
+                stepOutput,
+            }),
+            flows: createFlowsContext({
+                engineToken: constants.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+                flowId: constants.flowId,
+                flowVersionId: constants.flowVersionId,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
-                workerToken: constants.workerToken,
+                apiUrl: constants.internalApiUrl,
+                engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
-                type: constants.filesServiceType,
             }),
             server: {
-                token: constants.workerToken,
-                apiUrl: constants.apiUrl,
-                publicUrl: constants.serverUrl,
+                token: constants.engineToken,
+                apiUrl: constants.internalApiUrl,
+                publicUrl: constants.publicApiUrl,
             },
             propsValue: processedInput,
-            tags: createTagsManager(hookResponse),
-            connections: createConnectionManager({
+            tags: createTagsManager(params),
+            connections: utils.createConnectionManager({
+                apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
-                workerToken: constants.workerToken,
-                hookResponse,
+                engineToken: constants.engineToken,
+                target: 'actions',
+                hookResponse: params.hookResponse,
             }),
-            serverUrl: constants.serverUrl,
+            /*
+                @deprecated Use server.publicApiUrl instead.
+            */
+            serverUrl: constants.publicApiUrl,
             run: {
                 id: constants.flowRunId,
-                stop: createStopHook(hookResponse),
-                pause: createPauseHook(hookResponse, executionState.pauseRequestId),
+                stop: createStopHook(params),
+                pause: createPauseHook(params, executionState.pauseRequestId),
+                respond: createRespondHook(params),
             },
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}${params.sync ? '/sync' : ''}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
-        const newExecutionContext = executionState.addTags(hookResponse.tags)
+        const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
-        if (hookResponse.stopped) {
-            assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
+        const webhookResponse = getResponse(params.hookResponse)
+        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId)) {
+            await progressService.sendFlowResponse(constants, {
+                workerHandlerId: constants.serverHandlerId,
+                httpRequestId: constants.httpRequestId,
+                runResponse: {
+                    status: webhookResponse.status ?? 200,
+                    body: webhookResponse.body,
+                    headers: webhookResponse.headers ?? {},
+                },
+            })
+        }
+
+        if (params.hookResponse.type === 'stopped') {
+            assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
                 reason: FlowRunStatus.STOPPED,
-                stopResponse: hookResponse.stopResponse.response,
+                stopResponse: (params.hookResponse.response as StopHookParams).response,
             }).increaseTask()
         }
-        if (hookResponse.paused) {
-            assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
+        if (params.hookResponse.type === 'paused') {
+            assertNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
                 .setVerdict(ExecutionVerdict.PAUSED, {
                     reason: FlowRunStatus.PAUSED,
-                    pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
+                    pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
@@ -141,59 +176,107 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         return executionState
             .upsertStep(action.name, failedStepOutput)
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
+            .increaseTask()
     }
 }
 
-const createTagsManager = (hookResponse: HookResponse): TagsManager => {
+function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
+    switch (hookResponse.type) {
+        case 'stopped':
+            return hookResponse.response.response
+        case 'respond':
+            return hookResponse.response.response
+        case 'paused':
+            if (hookResponse.response.pauseMetadata.type === PauseType.WEBHOOK) {
+                return hookResponse.response.pauseMetadata.response
+            }
+            else {
+                return undefined
+            }
+        case 'none':
+            return undefined
+    }
+}
+
+const createTagsManager = (hkParams: createTagsManagerParams): TagsManager => {
     return {
-        add: async (params: {
-            name: string
-        }): Promise<void> => {
-            hookResponse.tags.push(params.name)
+        add: async (params: addTagsParams): Promise<void> => {
+            hkParams.hookResponse.tags.push(params.name)
         },
 
     }
 }
 
-const createConnectionManager = ({ workerToken, projectId, hookResponse }: { projectId: string, workerToken: string, hookResponse: HookResponse }): ConnectionsManager => {
-    return {
-        get: async (key: string) => {
-            try {
-                const connection = await createConnectionService({ projectId, workerToken }).obtain(key)
-                hookResponse.tags.push(`connection:${key}`)
-                return connection
-            }
-            catch (e) {
-                return null
-            }
-        },
+type addTagsParams = {
+    name: string
+}
+
+type createTagsManagerParams = {
+    hookResponse: HookResponse
+}
+
+
+function createStopHook(params: CreateStopHookParams): StopHook {
+    return (req?: StopHookParams) => {
+        params.hookResponse = {
+            ...params.hookResponse,
+            type: 'stopped',
+            response: req ?? { response: {} },
+        }
+    }
+}
+type CreateStopHookParams = {
+    hookResponse: HookResponse
+}
+
+function createRespondHook(params: CreateRespondHookParams): RespondHook {
+    return (req?: RespondHookParams) => {
+        params.hookResponse = {
+            ...params.hookResponse,
+            type: 'respond',
+            response: req ?? { response: {} },
+        }
     }
 }
 
-function createStopHook(hookResponse: HookResponse): StopHook {
-    return (req: StopHookParams) => {
-        hookResponse.stopped = true
-        hookResponse.stopResponse = req
-    }
+type CreateRespondHookParams = {
+    hookResponse: HookResponse
 }
 
-function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook {
+function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseHook {
     return (req) => {
-        hookResponse.paused = true
         switch (req.pauseMetadata.type) {
-            case PauseType.DELAY:
-                hookResponse.pauseResponse = {
-                    pauseMetadata: req.pauseMetadata,
+            case PauseType.DELAY: {
+                const diffInDays = dayjs(req.pauseMetadata.resumeDateTime).diff(dayjs(), 'days')
+                if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
+                    throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
+                }
+                params.hookResponse = {
+                    ...params.hookResponse,
+                    type: 'paused',
+                    response: {
+                        pauseMetadata: req.pauseMetadata,
+                    },
                 }
                 break
+            }
             case PauseType.WEBHOOK:
-                hookResponse.pauseResponse = {
-                    pauseMetadata: {
-                        ...req.pauseMetadata,
-                        requestId: pauseId,
+                params.hookResponse = {
+                    ...params.hookResponse,
+                    type: 'paused',
+                    response: {
+                        pauseMetadata: {
+                            ...req.pauseMetadata,
+                            requestId: pauseId,
+                            response: req.pauseMetadata.response ?? {},
+                        },
                     },
                 }
                 break
         }
     }
+}
+
+type CreatePauseHookParams = {
+    hookResponse: HookResponse
 }

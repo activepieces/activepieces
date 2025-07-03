@@ -1,34 +1,37 @@
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
+import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
-    createMockPlatform,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
+
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await initializeDatabase({ runMigrations: false })
+    app = await setupServer()
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {
-    emailService.sendOtp = jest.fn()
-    stripeHelper.getOrCreateCustomer = jest
+    emailService(mockLog).sendOtp = jest.fn()
+    stripeHelper(mockLog).createCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
-    await databaseConnection.getRepository('flag').delete({})
+    await databaseConnection().getRepository('flag').delete({})
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -52,7 +55,7 @@ describe('Authentication API', () => {
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.email).toBe(mockSignUpRequest.email)
+            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
@@ -69,21 +72,20 @@ describe('Authentication API', () => {
 
     it('fails to sign up invited user platform if no project exist', async () => {
     // arrange
-        const mockPlatformId = faker.string.nanoid(21)
 
-        const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-        await databaseConnection.getRepository('user').save([mockPlatformOwner])
-
-        const mockPlatform = createMockPlatform({
-            id: mockPlatformId,
-            ownerId: mockPlatformOwner.id,
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: {
+                emailAuthEnabled: true,
+                enforceAllowedAuthDomains: false,
+            },
+            plan: {
+                ssoEnabled: false,
+            },
         })
-        await databaseConnection.getRepository('platform').save(mockPlatform)
-
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })
-        await databaseConnection
+        await databaseConnection()
             .getRepository('custom_domain')
             .save(mockCustomDomain)
 

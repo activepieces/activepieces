@@ -1,26 +1,19 @@
-import { databaseConnection } from '../database/database-connection'
+import { apId, FlowId, ProjectId } from '@activepieces/shared'
+import { repoFactory } from '../core/db/repo-factory'
 import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { apId, FlowId, ProjectId } from '@activepieces/shared'
 
-const appEventRoutingRepo = databaseConnection.getRepository(
-    AppEventRoutingEntity,
-)
+const appEventRoutingRepo = repoFactory(AppEventRoutingEntity)
 
 export const appEventRoutingService = {
     async listListeners({
         appName,
         event,
         identifierValue,
-    }: {
-        appName: string
-        event: string
-        identifierValue: string
-    }): Promise<AppEventRouting[]> {
-        return appEventRoutingRepo.findBy({ appName, event, identifierValue })
+    }: ListParams): Promise<AppEventRouting[]> {
+        return appEventRoutingRepo().findBy({ appName, event, identifierValue })
     },
     async createListeners({
         appName,
@@ -28,19 +21,10 @@ export const appEventRoutingService = {
         identifierValue,
         flowId,
         projectId,
-    }: {
-        appName: string
-        events: string[]
-        identifierValue: string
-        flowId: FlowId
-        projectId: ProjectId
-    }): Promise<void> {
-        logger.info(
-            `Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`,
-        )
+    }: CreateParams): Promise<void> {
         const upsertCommands: Promise<unknown>[] = []
         events.forEach((event) => {
-            const upsert = appEventRoutingRepo.upsert(
+            const upsert = appEventRoutingRepo().upsert(
                 {
                     id: apId(),
                     appName,
@@ -49,7 +33,7 @@ export const appEventRoutingService = {
                     flowId,
                     projectId,
                 },
-                ['appName', 'event', 'identifierValue', 'projectId'],
+                ['appName', 'event', 'identifierValue', 'projectId', 'flowId'],
             )
             upsertCommands.push(upsert)
         })
@@ -58,25 +42,28 @@ export const appEventRoutingService = {
     async deleteListeners({
         projectId,
         flowId,
-    }: {
-        projectId: ProjectId
-        flowId: FlowId
-    }): Promise<void> {
-        await appEventRoutingRepo.delete({
+    }: DeleteParams): Promise<void> {
+        await appEventRoutingRepo().delete({
             projectId,
             flowId,
         })
     },
-    async getAppWebhookUrl({
-        appName,
-    }: {
-        appName: string
-    }): Promise<string | undefined> {
-        const webhookUrl = system.get(SystemProp.WEBHOOK_URL)
-        if (webhookUrl) {
-            return `${webhookUrl}/v1/app-events/${appName}`
-        }
-        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
-        return `${frontendUrl}/api/v1/app-events/${appName}`
-    },
+}
+
+type ListParams = {
+    appName: string
+    event: string
+    identifierValue: string
+}
+type DeleteParams = {
+    projectId: ProjectId
+    flowId: FlowId
+}
+
+type CreateParams = {
+    appName: string
+    events: string[]
+    identifierValue: string
+    flowId: FlowId
+    projectId: ProjectId
 }

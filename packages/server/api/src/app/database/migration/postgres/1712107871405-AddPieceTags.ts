@@ -55,7 +55,7 @@ export class AddPieceTags1712107871405 implements MigrationInterface {
             ALTER TABLE "tag" DROP CONSTRAINT "FK_9dec09e187398715b7f1e32a6cb"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."tag_platformId"
+            DROP INDEX "tag_platformId"
         `)
         await queryRunner.query(`
             DROP TABLE "piece_tag"

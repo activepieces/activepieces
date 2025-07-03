@@ -1,11 +1,16 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared';
 
 export const waitForApprovalLink = createAction({
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',
-  props: {},
+  props: {
+    markdown: Property.MarkDown({
+      variant: MarkdownVariant.WARNING,
+      value: 'Please use Manual Task feature instead from 0.48.0 and above',
+    }),
+  },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

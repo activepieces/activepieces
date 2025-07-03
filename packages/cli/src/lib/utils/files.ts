@@ -21,6 +21,11 @@ export type ProjectJson = {
           | 'peerDependencies'
           | 'dependencies';
         updateBuildableProjectDepsInPackageJson: boolean;
+        assets?: ({
+          input: string;
+          output: string;
+          glob: string;
+        } | string)[];
       };
     };
     lint: {

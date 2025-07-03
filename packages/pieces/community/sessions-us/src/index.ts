@@ -52,7 +52,7 @@ export const sessionsUs = createPiece({
   displayName: 'Sessions.us',
   description: 'Video conferencing platform for businesses and professionals',
   auth: sessionAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sessions-us.png',
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
@@ -63,7 +63,7 @@ export const sessionsUs = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.app.sessions.us/api',
       auth: sessionAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'x-api-key': `${auth}`,
       }),
     }),

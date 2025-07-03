@@ -1,13 +1,18 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
 import { PackageType, PieceCategory, PieceType } from '../piece'
 
-export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
-export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
+export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
+const VERSION_PATTERN = '^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$'
 
-export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
-export const VersionType = Type.RegEx(VERSION_PATTERN)
-
+export const ExactVersionType = Type.String({
+    pattern: EXACT_VERSION_PATTERN,
+})
+export const VersionType = Type.String({
+    pattern: VERSION_PATTERN,
+})
 export enum SuggestionType {
     ACTION = 'ACTION',
     TRIGGER = 'TRIGGER',
@@ -49,6 +54,7 @@ export const ListPiecesRequestQuery = Type.Object({
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
     suggestionType: Type.Optional(Type.Enum(SuggestionType)),
+    locale: Type.Optional(Type.String()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -63,6 +69,8 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
+    projectId: Type.Optional(Type.String()),
+    locale: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
@@ -75,7 +83,7 @@ export const PieceOptionRequest = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    stepName: Type.String({}),
+    actionOrTriggerName: Type.String({}),
     propertyName: Type.String({}),
     flowId: Type.String(),
     flowVersionId: Type.String(),
@@ -86,24 +94,31 @@ export const PieceOptionRequest = Type.Object({
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export enum PieceScope {
-    PROJECT = 'PROJECT',
     PLATFORM = 'PLATFORM',
+    // TODO: all users have their own platform, so we can remove this
+    // @deprecated
+    PROJECT = 'PROJECT',
+
 }
 
 export const AddPieceRequestBody = Type.Union([
     Type.Object({
         packageType: Type.Literal(PackageType.ARCHIVE),
-        scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        scope: Type.Literal(PieceScope.PLATFORM),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
-        pieceArchive: Type.Unknown(),
+        pieceArchive: ApMultipartFile,
     }, {
         title: 'Private Piece',
     }),
     Type.Object({
         packageType: Type.Literal(PackageType.REGISTRY),
-        scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        scope: Type.Literal(PieceScope.PLATFORM),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
     }, {
         title: 'NPM Piece',

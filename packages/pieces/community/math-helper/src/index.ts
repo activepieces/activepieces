@@ -15,7 +15,7 @@ export const math = createPiece({
   displayName: 'Math Helper',
   description: markdownDescription,
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/math-helper.svg',
   categories: [PieceCategory.CORE],
   authors: ["kishanprmr","MoShizzle","abuaboud"],

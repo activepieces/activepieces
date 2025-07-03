@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
 import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
-import { Attachment } from 'nodemailer/lib/mailer';
+import { Attachment, Headers } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
 export const sendEmail = createAction({
@@ -11,8 +11,12 @@ export const sendEmail = createAction({
   description: 'Send an email using a custom SMTP server.',
   props: {
     from: Property.ShortText({
-      displayName: 'From',
+      displayName: 'From Email',
       required: true,
+    }),
+    senderName: Property.ShortText({
+      displayName: "Sender Name",
+      required: false,
     }),
     to: Property.Array({
       displayName: 'To',
@@ -56,41 +60,46 @@ export const sendEmail = createAction({
       displayName: 'Body',
       required: true,
     }),
-    attachment: Property.File({
-      displayName: 'Attachment',
-      description: 'File to attach to the email you want to send',
+    customHeaders: Property.Object({
+      displayName: 'Custom Headers',
       required: false,
     }),
-    attachment_name: Property.ShortText({
-      displayName: 'Attachment Name',
-      description: 'In case you want to change the name of the attachment',
+    attachments: Property.Array({
+      displayName: 'Attachments',
       required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the email you want to send',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment',
+          required: false,
+        }),
+      }
     }),
   },
   run: async ({ auth, propsValue }) => {
     const transporter = smtpCommon.createSMTPTransport(auth);
 
-    const attachment = propsValue['attachment'];
+    const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
 
-    let attachment_data: Attachment[] = [];
-
-    if (attachment) {
+    const attachment_data: Attachment[] = attachments.map(({file, name}) => {
       const lookupResult = mime.lookup(
-        attachment.extension ? attachment.extension : ''
+        file.extension ? file.extension : ''
       );
-      const attachmentOption: Attachment[] = [
-        {
-          filename: propsValue.attachment_name ?? attachment.filename,
-          content: attachment?.base64,
-          contentType: lookupResult ? lookupResult : undefined,
-          encoding: 'base64',
-        },
-      ];
-      attachment_data = attachmentOption;
-    }
+      return {
+        filename: name ?? file.filename,
+        content: file?.base64,
+        contentType: lookupResult ? lookupResult : undefined,
+        encoding: 'base64',
+      };
+    });
 
-    const info = await transporter.sendMail({
-      from: propsValue.from,
+    const mailOptions = {
+      from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
       inReplyTo: propsValue.replyTo,
@@ -98,9 +107,36 @@ export const sendEmail = createAction({
       subject: propsValue.subject,
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
-      attachments: attachment ? attachment_data : undefined,
-    });
+      attachments: attachment_data ? attachment_data : undefined,
+      headers: propsValue.customHeaders as Headers,
+    };
 
-    return info;
+    return await sendWithRetry(transporter, mailOptions);
   },
 });
+
+async function sendWithRetry(transporter: any, mailOptions: any) {
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      return info;
+    } catch (error: any) {
+      if ('code' in error && error.code === 'ECONNRESET' && retryCount < maxRetries - 1) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+function getFrom(senderName: string|undefined, from: string) {
+  if (senderName) {
+    return `"${senderName}" <${from}>`
+  }
+  return from;
+}

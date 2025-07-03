@@ -9,8 +9,8 @@ import jwt from 'jsonwebtoken';
 export const baseUrl = 'https://services.leadconnectorhq.com';
 
 export const leadConnectorHeaders = {
-  Version: '2021-07-28'
-}
+  Version: '2021-07-28',
+};
 
 export async function getCampaigns(auth: OAuth2PropertyValue): Promise<any> {
   const result = await httpClient.sendRequest({
@@ -22,7 +22,7 @@ export async function getCampaigns(auth: OAuth2PropertyValue): Promise<any> {
       token: auth.access_token,
     },
     queryParams: {
-      status: 'published',
+      // status: 'published',
       locationId: auth.data['locationId'],
     },
   });
@@ -41,13 +41,15 @@ export async function getWorkflows(auth: OAuth2PropertyValue): Promise<any> {
     },
     queryParams: {
       locationId: auth.data['locationId'],
-    }
+    },
   });
 
   return result.body['workflows'];
 }
 
-export async function getTimezones(auth: OAuth2PropertyValue): Promise<string[]> {
+export async function getTimezones(
+  auth: OAuth2PropertyValue
+): Promise<string[]> {
   const result = await httpClient.sendRequest({
     url: `${baseUrl}/locations/${auth.data['locationId']}/timezones`,
     method: HttpMethod.GET,
@@ -58,7 +60,7 @@ export async function getTimezones(auth: OAuth2PropertyValue): Promise<string[]>
     },
   });
 
-  return result.body['timezones'];
+  return result.body['timeZones'];
 }
 
 export async function getTags(auth: OAuth2PropertyValue): Promise<any[]> {
@@ -167,7 +169,9 @@ export async function getContacts(
   return result;
 }
 
-export async function getForms(auth: OAuth2PropertyValue): Promise<LeadConnectorForm[]> {
+export async function getForms(
+  auth: OAuth2PropertyValue
+): Promise<LeadConnectorForm[]> {
   const response = await httpClient.sendRequest({
     url: `${baseUrl}/forms/`,
     method: HttpMethod.GET,
@@ -178,7 +182,7 @@ export async function getForms(auth: OAuth2PropertyValue): Promise<LeadConnector
     },
     queryParams: {
       locationId: auth.data['locationId'],
-    }
+    },
   });
   const result = response.body['forms'] as LeadConnectorForm[];
   return result;
@@ -275,7 +279,7 @@ export async function getPipelines(auth: OAuth2PropertyValue): Promise<any[]> {
     },
     queryParams: {
       locationId: auth.data['locationId'],
-    }
+    },
   });
   const result = response.body['pipelines'];
   return result;
@@ -386,7 +390,7 @@ export async function getUsers(auth: OAuth2PropertyValue): Promise<any> {
     queryParams: {
       locationId: auth.data['locationId'],
       companyId: auth.data['companyId'],
-    }
+    },
   });
   const result = response.body['users'];
   return result;
@@ -447,7 +451,7 @@ export async function updateTask(
   auth: string,
   contact: string,
   task: string,
-  data: LeadConnectorTaskDto
+  data: Partial<LeadConnectorTaskDto>
 ) {
   const result = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/tasks/${task}`,
@@ -463,10 +467,13 @@ export async function updateTask(
   return result.body;
 }
 
-export function getLocationIdFromToken(auth: OAuth2PropertyValue): { authClass: string, authClassId: string } {
-  const result = jwt.decode(auth.access_token)
+export function getLocationIdFromToken(auth: OAuth2PropertyValue): {
+  authClass: string;
+  authClassId: string;
+} {
+  const result = jwt.decode(auth.access_token);
 
-  return result as { authClass: string, authClassId: string };
+  return result as { authClass: string; authClassId: string };
 }
 
 export interface LeadConnectorContact {
@@ -507,7 +514,7 @@ export interface LeadConnectorContactDto {
   country?: string;
   city?: string;
   state?: string;
-  address?: string;
+  address1?: string;
   postalCode?: string;
   timezone?: string;
 }

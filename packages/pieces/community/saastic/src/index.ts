@@ -43,7 +43,7 @@ export const saastic = createPiece({
   description: 'Revenue and churn analytics for Stripe',
 
   auth: saasticAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/saastic.png',
   categories: [PieceCategory.MARKETING],
   authors: ["joselupianez","kishanprmr","MoShizzle","abuaboud"],
@@ -53,7 +53,7 @@ export const saastic = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.saastic.com',
       auth: saasticAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

@@ -32,7 +32,7 @@ export const llmrails = createPiece({
   displayName: 'LLMRails',
   description: 'LLM Rails Platform',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/llmrails.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["w95","kishanprmr","MoShizzle","abuaboud"],
@@ -42,7 +42,7 @@ export const llmrails = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.llmrails.com/v1',
       auth: llmrailsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-API-KEY': auth as string,
       }),
     }),

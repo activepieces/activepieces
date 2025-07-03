@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, spreadIfDefined, StepOutput, StepOutputStatus, StopResponse } from '@activepieces/shared'
+import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -15,7 +15,7 @@ export type VerdictResponse = {
     pauseMetadata: PauseMetadata
 } | {
     reason: FlowRunStatus.STOPPED
-    stopResponse: StopResponse
+    stopResponse: RespondResponse
 } | {
     reason: FlowRunStatus.INTERNAL_ERROR
 }
@@ -24,7 +24,6 @@ export class FlowExecutorContext {
     tasks: number
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
-    currentState: Record<string, unknown>
     pauseRequestId: string
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
@@ -42,7 +41,6 @@ export class FlowExecutorContext {
         this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
-        this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
@@ -128,13 +126,14 @@ export class FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             tasks: this.tasks,
-            currentState: {
-                ...this.currentState,
-                [stepName]: stepOutput.output,
-            },
             ...spreadIfDefined('error', error),
             steps,
         })
+    }
+
+    public getStepOutput(stepName: string): StepOutput | undefined {
+        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        return stateAtPath[stepName]
     }
 
     public setStepDuration({ stepName, duration }: SetStepDurationParams): FlowExecutorContext {
@@ -218,14 +217,19 @@ export class FlowExecutorContext {
                     pauseMetadata: verdictResponse.pauseMetadata,
                 }
             }
-            case ExecutionVerdict.RUNNING:
+            case ExecutionVerdict.RUNNING: {
+                return {
+                    ...baseExecutionOutput,
+                    status: FlowRunStatus.RUNNING,
+                }
+            }
             case ExecutionVerdict.SUCCEEDED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason === FlowRunStatus.STOPPED) {
                     return {
                         ...baseExecutionOutput,
                         status: FlowRunStatus.STOPPED,
-                        stopResponse: verdictResponse.stopResponse,
+                        response: verdictResponse.stopResponse,
                     }
                 }
                 return {
@@ -235,6 +239,31 @@ export class FlowExecutorContext {
             }
         }
     }
+    public currentState(): Record<string, unknown> {
+        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
+        let targetMap = this.steps
+        this.currentPath.path.forEach(([stepName, iteration]) => {
+            const stepOutput = targetMap[stepName]
+            if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+                throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+            }
+            targetMap = stepOutput.output.iterations[iteration]
+            flattenedSteps = {
+                ...flattenedSteps,
+                ...extractOutput(targetMap),
+            }
+        })
+        return flattenedSteps
+    }
+
+
+}
+
+function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
+    return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
+        acc[stepName] = step.output
+        return acc
+    }, {} as Record<string, unknown>)
 }
 
 function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {

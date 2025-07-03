@@ -26,6 +26,18 @@ export const createCard = createAction({
       displayName: 'Task Description',
       required: false,
     }),
+    position: Property.StaticDropdown({
+      description: 'Place the card on top or bottom of the list',
+      displayName: 'Position',
+      required: false,
+      options: {
+        options: [
+          { label: 'Top', value: 'top' },
+          { label: 'Bottom', value: 'bottom' },
+        ],
+      },
+    }),
+    labels: trelloCommon.board_labels,
   },
 
   async run(context) {
@@ -45,6 +57,8 @@ export const createCard = createAction({
       body: {
         name: context.propsValue['name'],
         desc: context.propsValue['description'],
+        pos: context.propsValue['position'],
+        idLabels: context.propsValue['labels'],
       },
       queryParams: {},
     };

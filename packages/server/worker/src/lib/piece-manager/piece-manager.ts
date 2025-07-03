@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, system, SystemProp } from '@activepieces/server-shared'
+import { enrichErrorContext, systemConstants } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -7,23 +7,28 @@ import {
     PackageType,
     PiecePackage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { PackageInfo, packageManager } from '../cache/package-manager'
 
-export const PACKAGE_ARCHIVE_PATH = resolve(
-    system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),
-)
+export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
 export abstract class PieceManager {
-    async install({ projectPath, pieces }: InstallParams): Promise<void> {
+    async install({ projectPath, pieces, log }: InstallParams): Promise<void> {
         try {
             if (isEmpty(pieces)) {
                 return
             }
+
+            await packageManager(log).init({
+                path: projectPath,
+            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
             await this.installDependencies({
                 projectPath,
                 pieces: uniquePieces,
+                log,
             })
         }
         catch (error) {
@@ -43,10 +48,7 @@ export abstract class PieceManager {
     protected abstract installDependencies(params: InstallParams): Promise<void>
 
     protected pieceToDependency(piece: PiecePackage): PackageInfo {
-        const packageAlias = getPackageAliasForPiece({
-            pieceName: piece.pieceName,
-            pieceVersion: piece.pieceVersion,
-        })
+        const packageAlias = getPackageAliasForPiece(piece)
 
         const packageSpec = getPackageSpecForPiece(PACKAGE_ARCHIVE_PATH, piece)
         return {
@@ -59,11 +61,11 @@ export abstract class PieceManager {
         return pieces.filter(
             (piece, index, self) =>
                 index ===
-        self.findIndex(
-            (p) =>
-                p.pieceName === piece.pieceName &&
-            p.pieceVersion === piece.pieceVersion,
-        ),
+                self.findIndex(
+                    (p) =>
+                        p.pieceName === piece.pieceName &&
+                        p.pieceVersion === piece.pieceVersion,
+                ),
         )
     }
 }
@@ -71,6 +73,7 @@ export abstract class PieceManager {
 type InstallParams = {
     projectPath: string
     pieces: PiecePackage[]
+    log: FastifyBaseLogger
 }
 
 const getPackageSpecForPiece = (

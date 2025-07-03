@@ -17,18 +17,24 @@ export const createTask = createAction({
       displayName: 'Task Name',
       required: true,
     }),
+    task_description: Property.LongText({
+        displayName: 'Task Description',
+        required: false,
+    }),
   },
   async run(context) {
     const authentication = context.auth;
     const accessToken = authentication.access_token;
     const status = context.propsValue.status;
     const task_name = context.propsValue.task_name;
+    const task_description = context.propsValue.task_description;
     const milestone = context.propsValue.milestone;
 
     const response = (
       await callNitfyApi(HttpMethod.POST, 'tasks', accessToken, {
         name: task_name,
         task_group_id: status,
+        description: task_description,
         milestone_id: milestone,
       })
     ).body;

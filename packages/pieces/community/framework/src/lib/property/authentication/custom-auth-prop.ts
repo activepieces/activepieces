@@ -1,4 +1,3 @@
-import { ValidationInputType } from '../../validators/types';
 import { Type } from '@sinclair/typebox';
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
@@ -9,6 +8,7 @@ import { StaticDropdownProperty } from '../input/dropdown/static-dropdown';
 import { StaticPropsValue } from '..';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
+import { MarkDownProperty } from '../input/markdown-property';
 
 const CustomAuthProps = Type.Record(Type.String(), Type.Union([
   ShortTextProperty,
@@ -26,6 +26,7 @@ export type CustomAuthProps = Record<
   | NumberProperty<boolean>
   | StaticDropdownProperty<unknown, boolean>
   | CheckboxProperty<boolean>
+  | MarkDownProperty
 >;
 
 export const CustomAuthProperty = Type.Composite([
@@ -44,7 +45,6 @@ export type CustomAuthProperty<
   TPropertyValue<
     StaticPropsValue<T>,
     PropertyType.CUSTOM_AUTH,
-    ValidationInputType.ANY,
     true
   >;
 

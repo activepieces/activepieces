@@ -15,7 +15,7 @@ implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
-            'DROP INDEX "public"."idx_webhook_simulation_flow_id"',
+            'DROP INDEX "idx_webhook_simulation_flow_id"',
         )
         await queryRunner.query('DROP TABLE "webhook_simulation"')
     }

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { queryApiAndHandleRefresh } from '../common';
+import { queryMetabaseApi } from '../common';
 import { metabaseAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -26,17 +26,17 @@ export const getQuestion = createAction({
       required: false,
     }),
   },
-  async run({ auth, store, propsValue }) {
-    const card = await queryApiAndHandleRefresh(
-      { endpoint: `card/${propsValue.questionId}`, method: HttpMethod.GET },
-      auth,
-      store
+  async run({ auth, propsValue }) {
+    const questionId = propsValue.questionId.split('-')[0];
+    const card = await queryMetabaseApi(
+      { endpoint: `card/${questionId}`, method: HttpMethod.GET },
+      auth
     );
     const parameters = card['parameters'] as MetabaseParam[];
 
-    return queryApiAndHandleRefresh(
+    const response = await queryMetabaseApi(
       {
-        endpoint: `card/${propsValue.questionId}/query`,
+        endpoint: `card/${questionId}/query`,
         method: HttpMethod.POST,
         body: {
           collection_preview: false,
@@ -58,8 +58,12 @@ export const getQuestion = createAction({
             }),
         },
       },
-      auth,
-      store
+      auth
     );
+    if (response.error) {
+      throw new Error(response.error);
+    } else {
+      return response;
+    }
   },
 });

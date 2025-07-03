@@ -1,9 +1,5 @@
-import { fileService } from '../../file/file.service'
-import { engineHelper } from '../../helper/engine-helper'
-import { getEdition } from '../../helper/secret-helper'
-import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -11,6 +7,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteExtractPieceMetadata,
+    ExecutionMode,
     FileCompression,
     FileId,
     FileType,
@@ -22,19 +19,28 @@ import {
     PlatformId,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
+import { fileService } from '../../file/file.service'
+import { system } from '../../helper/system/system'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { pieceMetadataService } from '../piece-metadata-service'
 
-export const pieceService = {
+export const pieceService = (log: FastifyBaseLogger) => ({
     async installPiece(
-        platformId: string | undefined,
-        projectId: string,
+        platformId: string,
+        projectId: string | undefined,
         params: AddPieceRequestBody,
     ): Promise<PieceMetadataModel> {
         assertInstallProjectEnabled(params.scope)
         try {
-            const piecePackage = await getPiecePackage(platformId, projectId, params)
-            const pieceInformation = await extractPieceInformation(piecePackage)
+            const piecePackage = await savePiecePackage(platformId, projectId, params, log)
+            const pieceInformation = await extractPieceInformation({
+                ...piecePackage,
+                platformId,
+            }, projectId, log)
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
-            const savedPiece = await pieceMetadataService.create({
+            const savedPiece = await pieceMetadataService(log).create({
                 pieceMetadata: {
                     ...pieceInformation,
                     minimumSupportedRelease:
@@ -44,7 +50,8 @@ export const pieceService = {
                     name: pieceInformation.name,
                     version: pieceInformation.version,
                 },
-                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
+                // TODO (@abuaboud) delete after migrating everyone to their own platform
+                projectId: undefined,
                 packageType: params.packageType,
                 platformId,
                 pieceType: PieceType.CUSTOM,
@@ -54,7 +61,7 @@ export const pieceService = {
             return savedPiece
         }
         catch (error) {
-            logger.error(error, '[PieceService#add]')
+            log.error(error, '[PieceService#add]')
 
             if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
                 throw error
@@ -67,12 +74,12 @@ export const pieceService = {
             })
         }
     },
-}
+})
 
 const assertInstallProjectEnabled = (scope: PieceScope): void => {
     if (scope === PieceScope.PROJECT) {
-        const sandboxMode = system.getOrThrow(SystemProp.EXECUTION_MODE)
-        const edition = getEdition()
+        const sandboxMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
+        const edition = system.getEdition()
         if (
             sandboxMode === ExecutionMode.UNSANDBOXED &&
             [ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)
@@ -88,23 +95,19 @@ const assertInstallProjectEnabled = (scope: PieceScope): void => {
     }
 }
 
-const getPiecePackage = async (
-    platformId: string | undefined,
-    projectId: string | undefined,
-    params: AddPieceRequestBody,
-): Promise<PiecePackage> => {
+async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
             const archiveId = await saveArchive({
-                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
+                projectId: undefined,
                 platformId,
-                archive: params.pieceArchive as Buffer,
-            })
+                archive: params.pieceArchive.data as Buffer,
+            }, log)
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                archive: params.pieceArchive as Buffer,
                 archiveId,
+                archive: undefined,
                 packageType: params.packageType,
             }
         }
@@ -113,14 +116,18 @@ const getPiecePackage = async (
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                directoryPath: undefined,
             }
         }
     }
 }
 
-const extractPieceInformation = async (request: ExecuteExtractPieceMetadata): Promise<PieceMetadata> => {
-    const engineResponse = await engineHelper.extractPieceMetadata(request)
+const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, log: FastifyBaseLogger): Promise<PieceMetadata> => {
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperExtractPieceInformation>>({
+        jobType: UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+        piece: request,
+        projectId,
+        platformId: request.platformId,
+    })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         throw new Error(engineResponse.standardError)
@@ -130,13 +137,15 @@ const extractPieceInformation = async (request: ExecuteExtractPieceMetadata): Pr
 
 const saveArchive = async (
     params: GetPieceArchivePackageParams,
+    log: FastifyBaseLogger,
 ): Promise<FileId> => {
     const { projectId, platformId, archive } = params
 
-    const archiveFile = await fileService.save({
+    const archiveFile = await fileService(log).save({
         projectId: isNil(platformId) ? projectId : undefined,
         platformId,
         data: archive,
+        size: archive.length,
         type: FileType.PACKAGE_ARCHIVE,
         compression: FileCompression.NONE,
     })

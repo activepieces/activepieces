@@ -6,6 +6,7 @@ export type PagingQuery = {
     beforeCursor?: string
     limit?: number
     order?: Order | 'ASC' | 'DESC'
+    orderBy?: string
 }
 
 export type PaginationOptions<Entity> = {
@@ -41,6 +42,10 @@ export function buildPaginator<Entity extends ObjectLiteral>(
 
     if (query.order) {
         paginator.setOrder(query.order as Order)
+    }
+
+    if (query.orderBy) {
+        paginator.setOrderBy(query.orderBy)
     }
 
     return paginator

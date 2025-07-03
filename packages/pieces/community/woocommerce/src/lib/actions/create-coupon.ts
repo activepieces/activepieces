@@ -1,14 +1,15 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
   AuthenticationType,
+  propsValidation,
 } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 import { wooAuth } from '../..';
 
@@ -57,10 +58,13 @@ export const wooCreateCoupon = createAction({
       displayName: 'Minimum amount',
       description: 'Enter the minimum amount',
       required: true,
-      validators: [Validators.minValue(0)],
     }),
   },
   async run(configValue) {
+    await propsValidation.validateZod(configValue.propsValue, {
+      minimum_amount: z.number().min(0),
+    });
+
     const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
     const amount = configValue.propsValue['amount'] || 0;
     const code = configValue.propsValue['code'];

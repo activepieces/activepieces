@@ -1,30 +1,15 @@
-import { Mutex } from 'async-mutex'
+import { ApLock, AppSystemProp, exceptionHandler, memoryLock } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
-import { exceptionHandler, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { QueueMode, system } from './system/system'
 
 let redLock: RedLock
 let redisConnection: Redis
-const memoryLocks = new Map<string, MutexLockWrapper>()
-const queueMode = system.get(SystemProp.QUEUE_MODE)!
-class MutexLockWrapper {
-    private lock: Mutex
+const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
-    constructor() {
-        this.lock = new Mutex()
-    }
-
-    async acquire(): Promise<void> {
-        await this.lock.acquire()
-    }
-
-    async release(): Promise<void> {
-        this.lock.release()
-    }
-}
-
-const initializeLock = () => {
+export const initializeLock = () => {
     switch (queueMode) {
         case QueueMode.REDIS: {
             redisConnection = createRedisClient()
@@ -43,19 +28,11 @@ const initializeLock = () => {
     }
 }
 
-const acquireMemoryLock = async (key: string): Promise<ApLock> => {
-    let lock = memoryLocks.get(key)
-    if (!lock) {
-        lock = new MutexLockWrapper()
-        memoryLocks.set(key, lock)
-    }
-    await lock.acquire()
-    return lock
-}
 
 const acquireRedisLock = async (
     key: string,
     timeout: number,
+    log: FastifyBaseLogger,
 ): Promise<ApLock> => {
     try {
         return await redLock.acquire([key], timeout, {
@@ -64,7 +41,7 @@ const acquireRedisLock = async (
         })
     }
     catch (e) {
-        exceptionHandler.handle(e)
+        exceptionHandler.handle(e, log)
         throw e
     }
 }
@@ -72,24 +49,24 @@ const acquireRedisLock = async (
 type AcquireLockParams = {
     key: string
     timeout?: number
+    log: FastifyBaseLogger
 }
 
-export type ApLock = {
-    release(): Promise<unknown>
-}
-
-export const acquireLock = async ({
+const acquireLock = async ({
     key,
     timeout = 3000,
+    log,
 }: AcquireLockParams): Promise<ApLock> => {
     switch (queueMode) {
         case QueueMode.REDIS:
-            return acquireRedisLock(key, timeout)
+            return acquireRedisLock(key, timeout, log)
         case QueueMode.MEMORY:
-            return acquireMemoryLock(key)
+            return memoryLock.acquire(key, timeout)
         default:
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }
 }
 
-initializeLock()
+export const distributedLock = {
+    acquireLock,
+}

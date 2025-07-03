@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth, config } from '../../index';
+import { activePieceAuth } from '../../index';
 
 export const updateProject = createAction({
   name: 'update_project',
@@ -53,10 +53,10 @@ export const updateProject = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${config.baseApiUrl}/projects/${propsValue['id']}`,
+      url: `${auth.baseApiUrl}/projects/${propsValue['id']}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth,
+        token: auth.apiKey,
       },
       body: {
         displayName: propsValue['display_name'],

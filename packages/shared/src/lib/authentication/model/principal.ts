@@ -1,4 +1,5 @@
 import { ApId } from '../../common/id-generator'
+import { PlatformId } from '../../platform'
 import { ProjectId } from '../../project/project'
 import { PrincipalType } from './principal-type'
 
@@ -8,5 +9,21 @@ export type Principal = {
     projectId: ProjectId
     platform: {
         id: ApId
+    }
+    tokenVersion?: string
+}
+
+export type WorkerPrincipal = {
+    id: ApId
+    type: PrincipalType.WORKER
+}
+
+export type EnginePrincipal = {
+    id: ApId
+    type: PrincipalType.ENGINE
+    queueToken: string | undefined
+    projectId: ProjectId
+    platform: {
+        id: PlatformId
     }
 }

@@ -1,42 +1,28 @@
+import { Project, User, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../database/database-common'
-import { Project, User } from '@activepieces/shared'
+import { BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
 
 export type UserSchema = User & {
     projects: Project[]
+    identity: UserIdentity
 }
 
 export const UserEntity = new EntitySchema<UserSchema>({
     name: 'user',
     columns: {
         ...BaseColumnSchemaPart,
-        email: {
-            type: String,
-        },
-        firstName: {
-            type: String,
-        },
-        lastName: {
-            type: String,
-        },
-        password: {
-            type: String,
-        },
-        verified: {
-            type: Boolean,
-        },
         status: {
             type: String,
         },
-        trackEvents: {
-            type: Boolean,
-            nullable: true,
-        },
-        newsLetter: {
-            type: Boolean,
+        lastChangelogDismissed: {
+            type: TIMESTAMP_COLUMN_TYPE,
             nullable: true,
         },
         platformRole: {
+            type: String,
+            nullable: false,
+        },
+        identityId: {
             type: String,
             nullable: false,
         },
@@ -52,7 +38,7 @@ export const UserEntity = new EntitySchema<UserSchema>({
     indices: [
         {
             name: 'idx_user_platform_id_email',
-            columns: ['platformId', 'email'],
+            columns: ['platformId', 'identityId'],
             unique: true,
         },
         {
@@ -64,8 +50,16 @@ export const UserEntity = new EntitySchema<UserSchema>({
     relations: {
         projects: {
             type: 'one-to-many',
-            target: 'user',
+            target: 'project',
             inverseSide: 'owner',
+        },
+        identity: {
+            type: 'many-to-one',
+            target: 'user_identity',
+            joinColumn: {
+                name: 'identityId',
+                referencedColumnName: 'id',
+            },
         },
     },
 })

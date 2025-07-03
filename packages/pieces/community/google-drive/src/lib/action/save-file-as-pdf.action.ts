@@ -5,12 +5,13 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { Stream } from 'stream';
+import { common } from '../common';
 
 export const saveFileAsPdf = createAction({
-  displayName: 'Save file as PDF',
+  displayName: 'Save Document as PDF',
   auth: googleDriveAuth,
   name: 'save_file_as_pdf',
-  description: 'Save a file as PDF in a Google Drive folder',
+  description: 'Save a document as PDF in a Google Drive folder',
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',
@@ -27,6 +28,7 @@ export const saveFileAsPdf = createAction({
       description: 'The name of the new file (do not include the extension)',
       required: true,
     }),
+    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const authClient = new OAuth2Client();
@@ -43,7 +45,9 @@ export const saveFileAsPdf = createAction({
         fileId: documentId,
         mimeType: 'application/pdf',
       },
-      { responseType: 'arraybuffer' }
+      {
+        responseType: 'arraybuffer',
+      }
     );
 
     const requestBody = {
@@ -62,6 +66,7 @@ export const saveFileAsPdf = createAction({
     const file = await drive.files.create({
       requestBody,
       media: media,
+      supportsAllDrives: context.propsValue.include_team_drives,
     });
 
     return file.data;

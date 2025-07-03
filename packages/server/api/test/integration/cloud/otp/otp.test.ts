@@ -1,39 +1,49 @@
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
 import { OtpType } from '@activepieces/ee-shared'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
+import { setupServer } from '../../../../src/app/server'
+import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let sendOtpSpy: jest.Mock
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await initializeDatabase({ runMigrations: false })
+    app = await setupServer()
 })
 
 beforeEach(() => {
-    emailService.sendOtp = jest.fn()
+    sendOtpSpy = jest.fn()
+    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+        sendOtp: sendOtpSpy,
+        sendInvitation: jest.fn(),
+        sendIssueCreatedNotification: jest.fn(),
+        sendQuotaAlert: jest.fn(),
+        sendReminderJobHandler: jest.fn(),
+        sendThreeDaysLeftOnTrialEmail: jest.fn(),
+        sendOneDayLeftOnTrial: jest.fn(),
+        sendWellcomeToTrialEmail: jest.fn(),
+        sendSevenDaysInTrialEmail: jest.fn(),
+        sendExceedFailureThresholdAlert: jest.fn(),
+    }))
+
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -49,15 +59,14 @@ describe('OTP API', () => {
         })
 
         it('Sends OTP to user', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
-            
+            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+                verified: false,
+            })
+
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -70,27 +79,22 @@ describe('OTP API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(emailService.sendOtp).toBeCalledTimes(1)
-            expect(emailService.sendOtp).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledTimes(1)
+            expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: CLOUD_PLATFORM_ID,
+                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
-                user: expect.objectContaining({
-                    email: mockUser.email,
+                userIdentity: expect.objectContaining({
+                    email: mockUserIdentity.email,
                 }),
             })
         })
 
         it('OTP is unique per user per OTP type', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -111,8 +115,8 @@ describe('OTP API', () => {
             expect(response1?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(response2?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
-            const otpCount = await databaseConnection.getRepository('otp').countBy({
-                userId: mockUser.id,
+            const otpCount = await databaseConnection().getRepository('otp').countBy({
+                identityId: mockUserIdentity.id,
                 type: mockCreateOtpRequest.type,
             })
 

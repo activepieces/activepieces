@@ -83,16 +83,17 @@ export const smtpAuth = PieceAuth.CustomAuth({
 export const smtp = createPiece({
   displayName: 'SMTP',
   description: 'Send emails using Simple Mail Transfer Protocol',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   categories: [PieceCategory.CORE],
   authors: [
+    'tahboubali',
     'abaza738',
     'kishanprmr',
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
-    'pfernandez98',
+    'pfernandez98'
   ],
   auth: smtpAuth,
   actions: [sendEmail],

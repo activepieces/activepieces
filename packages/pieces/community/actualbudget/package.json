@@ -1,0 +1,10 @@
+{
+  "name": "@activepieces/piece-actualbudget",
+  "version": "0.0.4",
+  "dependencies": {
+    "@actual-app/api": "25.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9"
+  }
+}

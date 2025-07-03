@@ -1,5 +1,6 @@
-import { Store, StoreScope } from '@activepieces/pieces-framework';
+import { FilesService, Store } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
+
 
 interface TimebasedPolling<AuthValue, PropsValue> {
   strategy: DedupeStrategy.TIMEBASED;
@@ -21,6 +22,7 @@ interface LastItemPolling<AuthValue, PropsValue> {
   items: (params: {
     auth: AuthValue;
     store: Store;
+    files?: FilesService;
     propsValue: PropsValue;
     lastItemId: unknown;
   }) => Promise<
@@ -48,10 +50,12 @@ export const pollingHelper = {
       auth,
       propsValue,
       maxItemsToPoll,
+      files,
     }: {
       store: Store;
       auth: AuthValue;
       propsValue: PropsValue;
+      files: FilesService;
       maxItemsToPoll?: number;
     }
   ): Promise<unknown[]> {
@@ -83,6 +87,7 @@ export const pollingHelper = {
           auth,
           propsValue,
           lastItemId,
+          files,
         });
 
         const lastItemIndex = items.findIndex((f) => f.id === lastItemId);
@@ -151,7 +156,8 @@ export const pollingHelper = {
       auth,
       propsValue,
       store,
-    }: { store: Store; auth: AuthValue; propsValue: PropsValue }
+      files,
+    }: { store: Store; auth: AuthValue; propsValue: PropsValue, files: FilesService }
   ): Promise<unknown[]> {
     let items = [];
     switch (polling.strategy) {
@@ -170,6 +176,7 @@ export const pollingHelper = {
           auth,
           propsValue,
           lastItemId: null,
+          files,
         });
         break;
       }

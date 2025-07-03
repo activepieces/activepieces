@@ -1,18 +1,19 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import jwtLibrary, {
-    DecodeOptions,
-    SignOptions,
-    VerifyOptions,
-} from 'jsonwebtoken'
-import { localFileStore } from './store'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
+import jwtLibrary, {
+    DecodeOptions,
+    SignOptions,
+    VerifyOptions,
+} from 'jsonwebtoken'
+import { localFileStore } from './local-store'
+import { QueueMode, system } from './system/system'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
@@ -25,13 +26,13 @@ const ISSUER = 'activepieces'
 const ALGORITHM = JwtSignAlgorithm.HS256
 
 let secret: string | null = null
-const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
 const getSecret = async (): Promise<string> => {
     if (secret !== null) {
         return secret
     }
-    secret = system.get(SystemProp.JWT_SECRET) ?? null
+    secret = system.get(AppSystemProp.JWT_SECRET) ?? null
 
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
@@ -46,24 +47,24 @@ const getSecret = async (): Promise<string> => {
             {
                 code: ErrorCode.SYSTEM_PROP_INVALID,
                 params: {
-                    prop: SystemProp.JWT_SECRET,
+                    prop: AppSystemProp.JWT_SECRET,
                 },
             },
-            `System property AP_${SystemProp.JWT_SECRET} must be defined`,
+            `System property AP_${AppSystemProp.JWT_SECRET} must be defined`,
         )
     }
     return secret
 }
 
 const getSecretFromStore = async (): Promise<string | null> => {
-    return localFileStore.load(SystemProp.JWT_SECRET)
+    return localFileStore.load(AppSystemProp.JWT_SECRET)
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 32
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
     const secret = secretBuffer.toString('base64')
-    await localFileStore.save(SystemProp.JWT_SECRET, secret)
+    await localFileStore.save(AppSystemProp.JWT_SECRET, secret)
     return secret
 }
 
@@ -81,7 +82,6 @@ export const jwtUtils = {
             expiresIn: expiresInSeconds,
             issuer: ISSUER,
         }
-
         return new Promise((resolve, reject) => {
             jwtLibrary.sign(payload, key, signOptions, (err, token) => {
                 if (err) {
@@ -116,7 +116,7 @@ export const jwtUtils = {
         }
 
         return new Promise((resolve, reject) => {
-            jwtLibrary.verify(jwt, key, verifyOptions, (err, payload) => {
+            jwtLibrary.verify(jwt, key, verifyOptions, async (err, payload) => {
                 if (err) {
                     return reject(err)
                 }

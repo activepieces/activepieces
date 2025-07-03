@@ -1,36 +1,19 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../common'
+import { ApMultipartFile } from '../../common'
 
-export const StepFile = Type.Object({
-    ...BaseModelSchema,
-    name: Type.String(),
-    flowId: Type.String(),
-    projectId: Type.String(),
-    stepName: Type.String(),
-    size: Type.Number(),
-    data: Type.Unknown(),
-})
-
-export type StepFile = Static<typeof StepFile>
-
-export const StepFileUpsert = Type.Object({
-    name: Type.String(),
+export const StepFileUpsertRequest = Type.Object({
     flowId: Type.String(),
     stepName: Type.String(),
-    file: Type.Unknown(),
+    file: Type.Optional(Type.Pick(ApMultipartFile, ['data'])),
+    contentLength: Type.Number(),
+    fileName: Type.String(),
 })
 
-export type StepFileUpsert = Static<typeof StepFileUpsert>
+export type StepFileUpsert = Static<typeof StepFileUpsertRequest>
 
-export const StepFileGet = Type.Object({
-    id: Type.String(),
-    projectId: Type.String(),
-})
-
-export type StepFileGet = Static<typeof StepFileGet>
-
-export const StepFileWithUrl = Type.Composite([StepFile, Type.Object({
+export const StepFileUpsertResponse = Type.Object({
+    uploadUrl: Type.Optional(Type.String()),
     url: Type.String(),
-})])
+})
 
-export type StepFileWithUrl = Static<typeof StepFileWithUrl>
+export type StepFileUpsertResponse = Static<typeof StepFileUpsertResponse>

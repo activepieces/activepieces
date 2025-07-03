@@ -1,73 +1,76 @@
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
-import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
-import { getEdition } from '../helper/secret-helper'
+import { system } from '../helper/system/system'
 import { systemJobsSchedule } from '../helper/system-jobs'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const syncMode = system.get<PieceSyncMode>(SystemProp.PIECES_SYNC_MODE)
-export const pieceSyncService = {
+const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
+
+export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            logger.info('Piece sync service is disabled')
+            log.info('Piece sync service is disabled')
             return
         }
-        await pieceSyncService.sync()
-        await systemJobsSchedule.upsertJob({
+        systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+            await pieceSyncService(log).sync()
+        })
+        await pieceSyncService(log).sync()
+        await systemJobsSchedule(log).upsertJob({
             job: {
-                name: 'pieces-sync',
+                name: SystemJobName.PIECES_SYNC,
                 data: {},
             },
             schedule: {
                 type: 'repeated',
                 cron: '0 */1 * * *',
             },
-            async handler() {
-                await pieceSyncService.sync()
-            },
         })
     },
     async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            logger.info('Piece sync service is disabled')
+            log.info('Piece sync service is disabled')
             return
         }
         try {
-            logger.info({ time: dayjs().toISOString() }, 'Syncing pieces')
+            log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()
             const promises: Promise<void>[] = []
 
             for (const summary of pieces) {
                 const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
                 if (!lastVersionSynced) {
-                    promises.push(syncPiece(summary.name))
+                    promises.push(syncPiece(summary.name, log))
                 }
             }
             await Promise.all(promises)
         }
         catch (error) {
-            logger.error({ error }, 'Error syncing pieces')
+            log.error({ error }, 'Error syncing pieces')
         }
     },
-}
+})
 
-async function syncPiece(name: string): Promise<void> {
+async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
     try {
-        logger.info({ name }, 'Syncing piece metadata into database')
+        log.info({ name }, 'Syncing piece metadata into database')
         const versions = await getVersions({ name })
         for (const version of Object.keys(versions)) {
             const currentVersionSynced = await existsInDatabase({ name, version })
             if (!currentVersionSynced) {
                 const piece = await getOrThrow({ name, version })
-                await pieceMetadataService.create({
+                await pieceMetadataService(log).create({
                     pieceMetadata: piece,
                     packageType: piece.packageType,
                     pieceType: piece.pieceType,
@@ -76,7 +79,7 @@ async function syncPiece(name: string): Promise<void> {
         }
     }
     catch (error) {
-        logger.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
+        log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
     }
 
 }
@@ -91,8 +94,8 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
 
 async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
-    queryParams.append('release', await flagService.getCurrentRelease())
+    queryParams.append('edition', system.getEdition())
+    queryParams.append('release', await apVersionUtil.getCurrentRelease())
     queryParams.append('name', name)
     const url = `${CLOUD_API_URL}/versions?${queryParams.toString()}`
     const response = await fetch(url)
@@ -108,12 +111,11 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
-    queryParams.append('release', await flagService.getCurrentRelease())
+    queryParams.append('edition', system.getEdition())
+    queryParams.append('release', await apVersionUtil.getCurrentRelease())
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {
-        logger.error({ name }, 'Piece list not found')
         return []
     }
     if (response.status !== StatusCodes.OK.valueOf()) {

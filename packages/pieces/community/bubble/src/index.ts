@@ -49,7 +49,7 @@ export const bubble = createPiece({
   description: 'No-code platform for web and mobile apps',
 
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["TaskMagicKyle","kishanprmr","abuaboud"],

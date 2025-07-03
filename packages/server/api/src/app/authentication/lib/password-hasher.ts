@@ -1,8 +1,8 @@
+import { AppSystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 import bcrypt from 'bcrypt'
 import { FirebaseScrypt } from 'firebase-scrypt'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
-
+import { system } from '../../helper/system/system'
 const SALT_ROUNDS = 10
 const SCRYPT_SEPARATOR = '~'
 
@@ -37,7 +37,7 @@ async function compareScrypt(
     hashedPassword: string,
 ): Promise<boolean> {
     const firebaseParameter = JSON.parse(
-        system.getOrThrow(SystemProp.FIREBASE_HASH_PARAMETERS),
+        system.getOrThrow(AppSystemProp.FIREBASE_HASH_PARAMETERS),
     )
     const firebaseScrypt = new FirebaseScrypt(firebaseParameter)
     return firebaseScrypt.verify(password, salt, hashedPassword)

@@ -20,7 +20,7 @@ export const stripe = createPiece({
   displayName: 'Stripe',
   description: 'Online payment processing for internet businesses',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: ["lldiegon","doskyft","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
@@ -33,7 +33,7 @@ export const stripe = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.stripe.com/v1',
       auth: stripeAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

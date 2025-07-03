@@ -4,6 +4,7 @@ export default {
   preset: '../../../jest.preset.js',
   globals: {},
   testEnvironment: 'node',
+  setupFiles: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\\.[tj]s$': [
       'ts-jest',
@@ -12,6 +13,10 @@ export default {
       },
     ],
   },
+  "moduleNameMapper": {
+    "isolated-vm": "<rootDir>/__mocks__/isolated-vm.js"
+  },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/packages/server/api',
+  testTimeout: 120000
 };

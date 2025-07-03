@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { decryptObject } from '../../../helper/encryption'
-import { logger } from '@activepieces/server-shared'
+import { encryptUtils } from '../../../helper/encryption'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 type AppConnectionValue = {
     type: string
@@ -11,7 +13,7 @@ implements MigrationInterface {
     name = 'AddAppConnectionTypeToTopLevel1691706020626'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddAppConnectionTypeToTopLevel1691706020626 up')
+        log.info('AddAppConnectionTypeToTopLevel1691706020626 up')
 
         await queryRunner.query(
             'DROP INDEX "idx_app_connection_project_id_and_name"',
@@ -31,7 +33,7 @@ implements MigrationInterface {
 
         for (const currentConnection of connections) {
             try {
-                const connectionValue = decryptObject<AppConnectionValue>(
+                const connectionValue = encryptUtils.decryptObject<AppConnectionValue>(
                     JSON.parse(currentConnection.value),
                 )
                 await queryRunner.query(
@@ -39,7 +41,7 @@ implements MigrationInterface {
                 )
             }
             catch (e) {
-                logger.error(e)
+                log.error(e)
             }
         }
 
@@ -57,11 +59,11 @@ implements MigrationInterface {
             'CREATE UNIQUE INDEX "idx_app_connection_project_id_and_name" ON "app_connection" ("projectId", "name") ',
         )
 
-        logger.info('AddAppConnectionTypeToTopLevel1691706020626 finished')
+        log.info('AddAppConnectionTypeToTopLevel1691706020626 finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddAppConnectionTypeToTopLevel1691706020626 down')
+        log.info('AddAppConnectionTypeToTopLevel1691706020626 down')
 
         await queryRunner.query(
             'DROP INDEX "idx_app_connection_project_id_and_name"',
@@ -80,6 +82,6 @@ implements MigrationInterface {
             'CREATE UNIQUE INDEX "idx_app_connection_project_id_and_name" ON "app_connection" ("projectId", "name") ',
         )
 
-        logger.info('AddAppConnectionTypeToTopLevel1691706020626 finished')
+        log.info('AddAppConnectionTypeToTopLevel1691706020626 finished')
     }
 }

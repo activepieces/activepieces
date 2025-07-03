@@ -1,3 +1,9 @@
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import {
+    ApId,
+    BaseModel,
+    Project,
+} from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -7,12 +13,6 @@ import {
     isPostgres,
     JSON_COLUMN_TYPE,
 } from '../database/database-common'
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import {
-    ApId,
-    BaseModel,
-    Project,
-} from '@activepieces/shared'
 
 
 type PieceMetadataSchemaWithRelations = PieceMetadataSchema & {
@@ -104,6 +104,10 @@ export const PieceMetadataEntity =
               ...ApIdSchema,
               nullable: true,
           },
+          i18n: {
+              type: JSON_COLUMN_TYPE,
+              nullable: true,
+          },
       },
       indices: [
           {
@@ -126,9 +130,9 @@ export const PieceMetadataEntity =
           },
           archiveId: {
               type: 'one-to-one',
-              target: 'file',
-              onDelete: 'NO ACTION',
-              onUpdate: 'NO ACTION',
+              target: 'file', 
+              onDelete: 'RESTRICT',
+              onUpdate: 'RESTRICT',
               joinColumn: {
                   name: 'archiveId',
                   referencedColumnName: 'id',

@@ -1,20 +1,17 @@
-import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import path from 'path'
+import importFresh from '@activepieces/import-fresh-webpack'
+import { ActionType, assertNotNullOrUndefined, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
         action,
         executionState,
         constants,
-    }: {
-        action: CodeAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
@@ -25,7 +22,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const { censoredInput, resolvedInput } = await constants.variableService.resolve<Record<string, unknown>>({
+    const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })
@@ -37,8 +34,9 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     try {
-        const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
-        const codeModule: CodeModule = await import(artifactPath)
+        assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${constants.runEnvironment.toString()}/index.js`)
+        const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
 
         const output = await codeSandbox.runCodeModule({

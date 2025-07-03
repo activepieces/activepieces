@@ -1,7 +1,9 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class CreateActivityTable1708515756040 implements MigrationInterface {
     name = 'CreateActivityTable1708515756040'
@@ -30,7 +32,7 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
             ADD CONSTRAINT "fk_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -41,12 +43,12 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
             ALTER TABLE "activity" DROP CONSTRAINT "fk_activity_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_activity_project_id_created_desc"
+            DROP INDEX "idx_activity_project_id_created_desc"
         `)
         await queryRunner.query(`
             DROP TABLE "activity"
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 }

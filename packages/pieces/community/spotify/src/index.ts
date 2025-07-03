@@ -12,16 +12,16 @@ export const spotify = createPiece({
   description: 'Music for everyone',
 
   auth: spotifyCommon.authentication,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
   categories: [],
-  authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud","jerboa88"],
   actions: [
     ...actions,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.spotify.com/v1',
       auth: spotifyCommon.authentication,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

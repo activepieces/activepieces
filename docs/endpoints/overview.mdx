@@ -8,7 +8,6 @@ API keys are generated under the platform dashboard at this moment to manage mul
 Please contact sales@activepieces.com for more information. 
 </Tip>
 
-
 ### Authentication:
 
 The API uses "API keys" to authenticate requests. You can view and manage your API keys from the Platform Dashboard. After creating the API keys, you can pass the API key as a Bearer token in the header.
@@ -21,7 +20,6 @@ Example:
 All endpoints use seek pagination, to paginate through the results, you can provide the `limit` and `cursor` as query parameters.
 
 The API response will have the following structure:
-
 ```json
 {
     "data": [],
@@ -35,3 +33,4 @@ The API response will have the following structure:
 - **`next`**: Provides a starting cursor for the next set of results, if available.
 
 - **`previous`**: Provides a starting cursor for the previous set of results, if applicable.
+

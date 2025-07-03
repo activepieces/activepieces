@@ -1,9 +1,7 @@
-import {
-  Property,
-  createAction,
-  Validators,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { Converter, Flavor } from 'showdown';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const markdownToHTML = createAction({
   name: 'markdown_to_html',
@@ -41,7 +39,6 @@ export const markdownToHTML = createAction({
       description: 'The minimum header level to use during conversion',
       required: true,
       defaultValue: 1,
-      validators: [Validators.minValue(1), Validators.maxValue(6)],
     }),
     tables: Property.Checkbox({
       displayName: 'Support Tables',
@@ -69,6 +66,10 @@ export const markdownToHTML = createAction({
     }),
   },
   run: async (context) => {
+    await propsValidation.validateZod(context.propsValue, {
+      headerLevelStart: z.number().min(1).max(6),
+    });
+
     const converter = new Converter({
       headerLevelStart: context.propsValue.headerLevelStart,
       omitExtraWLInCodeBlocks: true,

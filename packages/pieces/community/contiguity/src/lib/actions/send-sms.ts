@@ -2,13 +2,14 @@ import {
   HttpMethod,
   httpClient,
   HttpRequest,
+  propsValidation,
 } from '@activepieces/pieces-common';
 import { contigAuth } from '../..';
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
 
 export const sendSMS = createAction({
   auth: contigAuth,
@@ -21,7 +22,6 @@ export const sendSMS = createAction({
       description:
         "Enter the recipient's phone number in international format with no spaces, following this pattern: [+][Country Code][Subscriber Number]. For example, +12065551234.",
       required: true,
-      validators: [Validators.pattern(/^\+\d{1,4}\d+$/)],
     }),
     message: Property.LongText({
       displayName: 'Content',
@@ -30,6 +30,10 @@ export const sendSMS = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      to: z.string().regex(/^\+\d{1,4}\d+$/),
+    });
+
     const { to, message } = context.propsValue;
 
     const request: HttpRequest = {

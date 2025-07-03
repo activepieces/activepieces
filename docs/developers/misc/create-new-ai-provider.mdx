@@ -1,0 +1,101 @@
+---
+title: 'Create New AI Provider'
+icon: 'sparkles'
+---
+
+ActivePieces currently supports the following AI providers:
+
+- OpenAI
+- Anthropic
+
+To create a new AI provider, you need to follow these steps:
+
+## Implement the AI Interface
+
+Create a new factory that returns an instance of the `AI` interface in the `packages/pieces/community/common/src/lib/ai/providers/your-ai-provider.ts` file.
+
+```typescript
+export const yourAiProvider = ({
+  serverUrl,
+  engineToken,
+}: { serverUrl: string, engineToken: string }): AI<YourAiProviderSDK> => {
+  const impl = new YourAiProviderSDK(serverUrl, engineToken);
+  return {
+    provider: "YOUR_AI_PROVIDER" as const,
+    chat: {
+      text: async (params) => {
+        try {
+          const response = await impl.chat.text(params);
+          return response;
+        } catch (e: any) {
+          if (e?.error?.error) {
+            throw e.error.error;
+          }
+          throw e;
+        }
+      }
+    },
+  };
+};
+```
+
+## Register the AI Provider
+
+Add the new AI provider to the `AiProviders` enum in `packages/pieces/community/common/src/lib/ai/providers/index.ts` file.
+
+```diff
+export const AiProviders = [
++  {
++    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
++    defaultBaseUrl: 'https://api.your-ai-provider.com',
++    label: 'Your AI Provider' as const,
++    value: 'your-ai-provider' as const,
++    models: [
++      { label: 'model-1', value: 'model-1' },
++      { label: 'model-2', value: 'model-2' },
++      { label: 'model-3', value: 'model-3' },
++    ],
++    factory: yourAiProvider,
++  },
+...
+]
+```
+
+## Define Authentication Header
+
+Now we need to tell ActivePieces how to authenticate to your AI provider. You can do this by adding an `auth` property to the `AiProvider` object.
+
+The `auth` property is an object that defines the authentication mechanism for your AI provider. It consists of two properties: `name` and `mapper`. The `name` property specifies the name of the header that will be used to authenticate with your AI provider, and the `mapper` property defines a function that maps the value of the header to the format that your AI provider expects.
+
+Here's an example of how to define the authentication header for a bearer token:
+
+```diff
+export const AiProviders = [
+  {
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+    defaultBaseUrl: 'https://api.your-ai-provider.com',
+    label: 'Your AI Provider' as const,
+    value: 'your-ai-provider' as const,
+    models: [
+      { label: 'model-1', value: 'model-1' },
+      { label: 'model-2', value: 'model-2' },
+      { label: 'model-3', value: 'model-3' },
+    ],
++    auth: authHeader({ bearer: true }), // or authHeader({ name: 'x-api-key', bearer: false })
+    factory: yourAiProvider,
+  },
+...
+]
+```
+
+## Test the AI Provider
+
+To test the AI provider, you can use a **universal AI** piece in a flow. Follow these steps:
+
+- Add the required headers from the admin console for the newly created AI provider. These headers will be used to authenticate the requests to the AI provider.
+
+![Configure AI Provider](/resources/screenshots/configure-ai-provider.png)
+
+- Create a flow that uses our **universal AI** pieces. And select **"Your AI Provider"** as the AI provider in the **Ask AI** action settings.
+
+![Configure AI Provider](/resources/screenshots/use-ai-provider.png)

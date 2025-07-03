@@ -1,7 +1,6 @@
 import { openRouterAuth } from '../../index';
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { openRouterModels, promptResponse } from '../common';
@@ -11,6 +10,8 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenRouterAction = createAction({
   name: 'ask-lmm',
@@ -68,7 +69,6 @@ export const askOpenRouterAction = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
@@ -81,10 +81,14 @@ export const askOpenRouterAction = createAction({
       required: false,
       description:
         'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      temperature: z.number().min(0).max(1.0).optional(),
+      topP: z.number().min(0).max(1.0).optional(),
+    });
+
     const openRouterModel = context.propsValue.model;
     const prompt = context.propsValue.prompt;
     const request: HttpRequest = {

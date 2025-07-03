@@ -1,13 +1,13 @@
+import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import RateLimitPlugin from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import FastifyPlugin from 'fastify-plugin'
 import { Redis } from 'ioredis'
 import { createRedisClient } from '../../database/redis-connection'
-import { extractClientRealIp } from '../../helper/network-utils'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { QueueMode, system } from '../../helper/system/system'
 
 const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(
-    SystemProp.API_RATE_LIMIT_AUTHN_ENABLED,
+    AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED,
 )
 
 export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
@@ -15,7 +15,7 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
         if (API_RATE_LIMIT_AUTHN_ENABLED) {
             await app.register(RateLimitPlugin, {
                 global: false,
-                keyGenerator: extractClientRealIp,
+                keyGenerator: (req) => networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
                 redis: getRedisClient(),
             })
         }
@@ -24,7 +24,7 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
 
 const getRedisClient = (): Redis | undefined => {
     const redisIsNotConfigured =
-    system.get<QueueMode>(SystemProp.QUEUE_MODE) !== QueueMode.REDIS
+    system.get<QueueMode>(AppSystemProp.QUEUE_MODE) !== QueueMode.REDIS
 
     if (redisIsNotConfigured) {
         return undefined

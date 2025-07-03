@@ -29,6 +29,26 @@ export const FormResponse = Type.Object({
     title: Type.String(),
     props: FormProps,
     projectId: Type.String(),
+    version: Type.String(),
 })
 
 export type FormResponse = Static<typeof FormResponse>
+
+export const ChatUIProps = Type.Object({
+    botName: Type.String(),
+})
+
+export type ChatUIProps = Static<typeof ChatUIProps>
+
+export const ChatUIResponse = Type.Object({
+    id: Type.String(),
+    title: Type.String(),
+    props: ChatUIProps,
+    projectId: Type.String(),
+    platformLogoUrl: Type.String(),
+    platformName: Type.String(),
+})
+
+export type ChatUIResponse = Static<typeof ChatUIResponse>
+
+export const USE_DRAFT_QUERY_PARAM_NAME = 'useDraft'

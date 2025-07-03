@@ -1,10 +1,7 @@
-export enum ProjectMemberRole {
-    ADMIN = 'ADMIN',
-    EDITOR = 'EDITOR',
-    VIEWER = 'VIEWER',
-    /**
-     * Members who are customers for our customers
-     */
-    EXTERNAL_CUSTOMER = 'EXTERNAL_CUSTOMER',
+export enum DefaultProjectRole {
+    ADMIN = 'Admin',
+    EDITOR = 'Editor',
+    OPERATOR = 'Operator',
+    VIEWER = 'Viewer',
 }
 

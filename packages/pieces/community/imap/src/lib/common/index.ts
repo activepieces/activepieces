@@ -3,7 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { FetchMessageObject, ImapFlow } from 'imapflow';
+import { ImapFlow } from 'imapflow';
 import { imapAuth } from '../../';
 
 import dayjs from 'dayjs';
@@ -63,18 +63,15 @@ export const imapCommon = {
     auth,
     lastEpochMilliSeconds,
     mailbox,
-    files,
   }: {
     auth: PiecePropValueSchema<typeof imapAuth>;
     lastEpochMilliSeconds: number;
     mailbox: string;
     files: FilesService;
-  }): Promise<
-    {
-      epochMilliSeconds: number;
-      data: unknown;
-    }[]
-  > {
+  }): Promise<{
+    data: ParsedMail; 
+    epochMilliSeconds: number;
+  }[]> {
     const imapConfig = imapCommon.constructConfig(
       auth as {
         host: string;
@@ -99,27 +96,15 @@ export const imapCommon = {
           source: true,
         }
       );
-      const messages: FetchMessageObject[] = [];
+      const messages = [];
       for await (const message of res) {
-        messages.push(message);
+        const castedItem = await parseStream(message.source);
+        messages.push({
+          data: castedItem,
+          epochMilliSeconds: dayjs(castedItem.date).valueOf(),
+        });
       }
-
-      const convertedItems = await Promise.all(
-        messages.map(async (mail) => {
-          const castedItem = await parseStream(mail.source);
-          return {
-            epochMilliSeconds: dayjs(castedItem.date).valueOf(),
-            data: {
-              ...castedItem,
-              attachments: await convertAttachment(
-                castedItem.attachments,
-                files
-              ),
-            },
-          };
-        })
-      );
-      return convertedItems;
+      return messages;
     } finally {
       lock.release();
       await imapClient.logout();
@@ -127,7 +112,7 @@ export const imapCommon = {
   },
 };
 
-async function convertAttachment(
+export async function convertAttachment(
   attachments: Attachment[],
   files: FilesService
 ) {

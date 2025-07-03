@@ -1,58 +1,49 @@
 import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
-import { localFileStore } from './store'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     assertNotNullOrUndefined,
-    ErrorCode,
     isNil,
 } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { localFileStore } from './local-store'
+import { QueueMode, system } from './system/system'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'
 const ivLength = 16
 
-export const loadEncryptionKey = async (
-    queueMode: QueueMode,
-): Promise<void> => {
-    secret = system.get(SystemProp.ENCRYPTION_KEY) ?? null
+export const EncryptedObject = Type.Composite([Type.Object({
+    iv: Type.String(),
+    data: Type.String(),
+})])
+export type EncryptedObject = Static<typeof EncryptedObject>
+
+const loadEncryptionKey = async (queueMode: QueueMode): Promise<string | null> => {
+    secret = system.get(AppSystemProp.ENCRYPTION_KEY) ?? null
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
-            secret = await localFileStore.load(SystemProp.ENCRYPTION_KEY)
+            secret = await localFileStore.load(AppSystemProp.ENCRYPTION_KEY)
         }
         if (isNil(secret)) {
             secret = await generateAndStoreSecret()
         }
     }
-    if (isNil(secret)) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.ENCRYPTION_KEY,
-                },
-            },
-            `System property AP_${SystemProp.ENCRYPTION_KEY} must be defined`,
-        )
-    }
+    return secret
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 16
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
     const secret = secretBuffer.toString('hex') // Convert to hexadecimal
-    await localFileStore.save(SystemProp.ENCRYPTION_KEY, secret)
+    await localFileStore.save(AppSystemProp.ENCRYPTION_KEY, secret)
     return secret
 }
 
-export type EncryptedObject = {
-    iv: string
-    data: string
-}
 
-export function encryptString(inputString: string): EncryptedObject {
+function encryptString(inputString: string): EncryptedObject {
     const iv = crypto.randomBytes(ivLength) // Generate a random initialization vector
     assertNotNullOrUndefined(secret, 'secret')
     const key = Buffer.from(secret, 'binary')
@@ -65,12 +56,12 @@ export function encryptString(inputString: string): EncryptedObject {
     }
 }
 
-export function encryptObject(object: unknown): EncryptedObject {
+function encryptObject(object: unknown): EncryptedObject {
     const objectString = JSON.stringify(object) // Convert the object to a JSON string
     return encryptString(objectString)
 }
 
-export function decryptObject<T>(encryptedObject: EncryptedObject): T {
+function decryptObject<T>(encryptedObject: EncryptedObject): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(secret!, 'binary')
     const decipher = crypto.createDecipheriv(algorithm, key, iv)
@@ -78,7 +69,7 @@ export function decryptObject<T>(encryptedObject: EncryptedObject): T {
     decrypted += decipher.final('utf8')
     return JSON.parse(decrypted)
 }
-export function decryptString(encryptedObject: EncryptedObject): string {
+function decryptString(encryptedObject: EncryptedObject): string {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(secret!, 'binary')
     const decipher = crypto.createDecipheriv(algorithm, key, iv)
@@ -87,9 +78,16 @@ export function decryptString(encryptedObject: EncryptedObject): string {
     return decrypted
 }
 
-export function hashObject(object: Record<string, unknown>) {
-    const algorithm = 'sha256'
-    const hash = crypto.createHash(algorithm)
-    hash.update(JSON.stringify(object))
-    return hash.digest('hex')
+function get16ByteKey(): string {
+    assertNotNullOrUndefined(secret, 'secret is not defined')
+    return secret
+}
+
+export const encryptUtils = {
+    decryptString,
+    decryptObject,
+    encryptObject,
+    encryptString,
+    get16ByteKey,
+    loadEncryptionKey,
 }

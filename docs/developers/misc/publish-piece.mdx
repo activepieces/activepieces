@@ -1,0 +1,57 @@
+---
+title: 'Publish Custom Pieces'
+icon: 'upload'
+---
+
+You can use the CLI to publish custom pieces to the platform. This process packages the pieces and uploads them to the specified API endpoint.
+
+### How It Works
+
+The CLI scans the `packages/pieces/` directory for the specified piece. It checks the **name** and **version** in the `package.json` file. If the piece is not already published, it builds, packages, and uploads it to the platform using the API.
+
+### Usage
+
+To publish a piece, follow these steps:
+
+1. Ensure you have an API Key. Generate it from the Admin Interface by navigating to Settings.
+2. Install the CLI by cloning the repository.
+3. Run the following command:
+
+```bash
+npm run publish-piece-to-api
+```
+
+4. You will be asked three questions to publish your piece:
+
+  - `Piece Folder Name`: This is the name associated with the folder where the action resides. It helps organize and categorize actions within the piece.
+
+  - `API URL`: This is the URL of the API endpoint where the piece will be published (ex: https://cloud.activepieces.com/api).
+
+  - `API Key Source`: This is the source of the API key. It can be either `Env Variable (AP_API_KEY)` or `Manually`.
+
+
+In case you choose `Env Variable (AP_API_KEY)`, the CLI will use the API key from the `.env` file in the `packages/server/api` directory.
+
+In case you choose `Manually`, you will be asked to enter the API key.
+
+
+Examples:
+
+```bash
+npm run publish-piece-to-api
+
+? Enter the piece folder name : google-drive
+? Enter the API URL : https://cloud.activepieces.com/api
+? Enter the API Key Source : Env Variable (AP_API_KEY)
+
+```
+
+```bash
+npm run publish-piece-to-api
+
+? Enter the piece folder name : google-drive
+? Enter the API URL : https://cloud.activepieces.com/api
+? Enter the API Key Source : Manually
+? Enter the API Key : ap_1234567890abcdef1234567890abcdef
+
+```

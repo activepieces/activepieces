@@ -1,23 +1,24 @@
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ApEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../../helper/system/system'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
 }
 
-const getEmailSenderInstance = (): EmailSender => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
+    const env = system.get(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
-        return smtpEmailSender
+        return smtpEmailSender(log)
     }
 
-    return logEmailSender
+    return logEmailSender(log)
 }
-
-export const emailSender = getEmailSenderInstance()
+export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
     name: Name
@@ -25,22 +26,56 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectName: string
+    projectOrPlatformName: string
+    role: string
     setupLink: string
 }>
 
 type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
     resetDate: string
-    firstName: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
     setupLink: string
-    firstName: string
 }>
 
 type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
     setupLink: string
+}>
+
+type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
+    issueUrl: string
+    flowName: string
+    isIssue: string
+    createdAt: string
+}>
+
+type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+    issuesUrl: string
+    issues: string
+    issuesCount: string
+    projectName: string
+}>
+
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+    flowName: string
+    projectName: string
+}>
+
+type ThreeDaysLeftOnTrialTemplateData = BaseEmailTemplateData<'3-days-left-on-trial', {
+    year: string
+}>
+
+type OneDayLeftOnTrialTemplateData = BaseEmailTemplateData<'1-day-left-on-trial', {
+    year: string
+}>
+
+type WellcomeToTrialTemplateData = BaseEmailTemplateData<'wellcome-to-trial', {
+    year: string
+}>
+
+type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
+    year: string
 }>
 
 export type EmailTemplateData =
@@ -48,9 +83,16 @@ export type EmailTemplateData =
   | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
+  | IssueCreatedTemplateData
+  | IssuesReminderTemplateData
+  | TriggerFailureThresholdTemplateData
+  | ThreeDaysLeftOnTrialTemplateData
+  | OneDayLeftOnTrialTemplateData
+  | WellcomeToTrialTemplateData
+  | SevenDaysInTrialTemplateData
 
 type SendArgs = {
-    email: string
+    emails: string[]
     platformId: string | undefined
     templateData: EmailTemplateData
 }

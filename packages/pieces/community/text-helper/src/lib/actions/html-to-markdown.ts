@@ -1,6 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { Converter, Flavor } from 'showdown';
-import { JSDOM } from 'jsdom';
+import TurndownService from 'turndown';
 
 export const htmlToMarkdown = createAction({
   name: 'html_to_markdown',
@@ -20,25 +19,11 @@ export const htmlToMarkdown = createAction({
       description: 'The HTML to convert to markdown',
       required: true,
     }),
-    flavor: Property.StaticDropdown({
-      displayName: 'Flavor of Markdown',
-      description: 'The flavor of markdown use during conversion',
-      required: true,
-      defaultValue: 'vanilla',
-      options: {
-        options: [
-          { label: 'Default', value: 'vanilla' },
-          { label: 'Original', value: 'original' },
-          { label: 'GitHub', value: 'github' },
-        ],
-      },
-    }),
   },
   run: async (context) => {
     const html = context.propsValue.html;
-    const doc = new JSDOM(html);
-    const converter = new Converter();
-    converter.setFlavor(context.propsValue.flavor as Flavor);
-    return converter.makeMarkdown(html, doc.window.document);
+    const service = new TurndownService();
+    service.remove('script');
+    return service.turndown(html);
   },
 });

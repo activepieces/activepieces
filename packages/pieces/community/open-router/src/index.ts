@@ -50,7 +50,7 @@ export const openRouter = createPiece({
   displayName: 'OpenRouter',
   description: 'Use any AI model to generate code, text, or images via OpenRouter.ai.',
   auth: openRouterAuth,
-  minimumSupportedRelease: '0.8.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
@@ -59,7 +59,7 @@ export const openRouter = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://openrouter.ai/api/v1',
       auth: openRouterAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

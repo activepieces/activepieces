@@ -23,7 +23,7 @@ actions: [
       'https://api.openai.com/v1'
     },
     // Mapping the auth object to the needed authorization headers
-    authMapping: (auth) => {
+    authMapping: async (auth) => {
       return {
         'Authorization': `Bearer ${auth}`
       }
@@ -44,7 +44,7 @@ actions: [
       return `${(auth as JiraAuth).instanceUrl}/rest/api/3`
     },
     auth: jiraCloudAuth,
-    authMapping: (auth) => {
+    authMapping: async (auth) => {
       const typedAuth = auth  as JiraAuth
       return {
         'Authorization': `Basic ${typedAuth.email}:${typedAuth.apiToken}`

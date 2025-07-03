@@ -1,26 +1,32 @@
 import {
+    ApId,
+    assertNotNullOrUndefined,
+    EndpointScope,
+    ListUsersRequestBody,
+    PrincipalType,
+    SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    UpdateUserRequestBody,
+    UserWithMetaInformation,
+} from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '../user-service'
-import { UpdateUserRequestBody } from '@activepieces/ee-shared'
-import {
-    ApId,
-    assertNotNullOrUndefined,
-    EndpointScope,
-    PrincipalType,
-    SeekPage,
-    UserResponse,
-} from '@activepieces/shared'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         return userService.list({
             platformId,
+            externalId: req.query.externalId,
+            cursorRequest: req.query.cursor ?? null,
+            limit: req.query.limit ?? 10,
         })
     })
 
@@ -33,6 +39,8 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
             platformId,
             platformRole: req.body.platformRole,
             status: req.body.status,
+            externalId: req.body.externalId,
+            lastChangelogDismissed: req.body.lastChangelogDismissed,
         })
     })
 
@@ -51,9 +59,16 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
 const ListUsersRequest = {
     schema: {
+        querystring: ListUsersRequestBody,
         response: {
-            [StatusCodes.OK]: SeekPage(UserResponse),
+            [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
         },
+        tags: ['users'],
+        description: 'List users',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+    response: {
+        [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -68,7 +83,7 @@ const UpdateUserRequest = {
         }),
         body: UpdateUserRequestBody,
         response: {
-            [StatusCodes.OK]: UserResponse,
+            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
     config: {

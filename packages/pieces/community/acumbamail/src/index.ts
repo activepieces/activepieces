@@ -1,10 +1,11 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
 import { createSubscriberListAction } from './lib/actions/create-subscriber-list';
-import { deleteSubscriberAction } from './lib/actions/delete-subscriber';
+import { unsubscribeAction } from './lib/actions/unsubscribe-subscriber';
 import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list';
 import { duplicateTemplateAction } from './lib/actions/duplicate-template';
 import { searchSubscriberAction } from './lib/actions/search-subscriber';
+import { removeSubscribeAction } from './lib/actions/delete-subscriber';
 
 export const acumbamailAuth = PieceAuth.SecretText({
   displayName: 'Auth Token',
@@ -21,16 +22,17 @@ export const acumbamail = createPiece({
   displayName: 'Acumbamail',
   description: 'Easily send email and SMS campaigns and boost your business',
   auth: acumbamailAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',
   authors: ["kishanprmr","abuaboud"],
   actions: [
     addUpdateSubscriberAction,
     createSubscriberListAction,
-    deleteSubscriberAction,
+    unsubscribeAction,
     deleteSubscriberListAction,
     duplicateTemplateAction,
     searchSubscriberAction,
+    removeSubscribeAction,
   ],
   triggers: [],
 });

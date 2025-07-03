@@ -1,6 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { googleGeminiAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { defaultLLM, getGeminiModelOptions } from '../common/common';
 
 export const generateContentAction = createAction({
   description:
@@ -14,28 +15,19 @@ export const generateContentAction = createAction({
       required: true,
       description: 'The prompt to generate content from.',
     }),
+    model: Property.Dropdown({
+      displayName: 'Model',
+      required: true,
+      description: 'The model which will generate the completion',
+      refreshers: [],
+      defaultValue: defaultLLM,
+      options: async ({ auth }) => getGeminiModelOptions({ auth }),
+    }),
   },
   async run({ auth, propsValue }) {
-    const request = await httpClient.sendRequest<
-      { id: string; name: string }[]
-    >({
-      method: HttpMethod.POST,
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${auth}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: {
-        contents: [
-          {
-            parts: [
-              {
-                text: propsValue.prompt,
-              },
-            ],
-          },
-        ],
-      },
-    });
-    return request.body;
+    const genAI = new GoogleGenerativeAI(auth);
+    const model = genAI.getGenerativeModel({ model: propsValue.model });
+    const result = await model.generateContent(propsValue.prompt);
+    return result.response.text();
   },
 });

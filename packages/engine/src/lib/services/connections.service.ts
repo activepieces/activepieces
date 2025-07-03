@@ -1,30 +1,29 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { EngineConstants } from '../handler/context/engine-constants'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 
-export const createConnectionService = ({ projectId, workerToken }: CreateConnectionServiceParams): ConnectionService => {
+export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
-        async obtain(connectionName: string): Promise<ConnectionValue> {
-            const url = `${EngineConstants.API_URL}v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
+        async obtain(externalId: string): Promise<ConnectionValue> {
+            const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
             try {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
                 if (!response.ok) {
                     return handleResponseError({
-                        connectionName,
+                        externalId,
                         httpStatus: response.status,
                     })
                 }
                 const connection: AppConnection = await response.json()
                 if (connection.status === AppConnectionStatus.ERROR) {
-                    throw new ConnectionExpiredError(connectionName)
+                    throw new ConnectionExpiredError(externalId)
                 }
                 return getConnectionValue(connection)
             }
@@ -42,12 +41,12 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
     }
 }
 
-const handleResponseError = ({ connectionName, httpStatus }: HandleResponseErrorParams): never => {
+const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorParams): never => {
     if (httpStatus === StatusCodes.NOT_FOUND.valueOf()) {
-        throw new ConnectionNotFoundError(connectionName)
+        throw new ConnectionNotFoundError(externalId)
     }
 
-    throw new ConnectionLoadingError(connectionName)
+    throw new ConnectionLoadingError(externalId)
 }
 
 const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
@@ -75,16 +74,17 @@ type ConnectionValue =
     | string
 
 type ConnectionService = {
-    obtain(connectionName: string): Promise<ConnectionValue>
+    obtain(externalId: string): Promise<ConnectionValue>
 }
 
 type CreateConnectionServiceParams = {
     projectId: string
-    workerToken: string
+    apiUrl: string
+    engineToken: string
 }
 
 type HandleResponseErrorParams = {
-    connectionName: string
+    externalId: string
     httpStatus: number
 }
 

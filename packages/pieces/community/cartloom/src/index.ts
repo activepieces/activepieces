@@ -14,7 +14,7 @@ export const cartloom = createPiece({
   displayName: 'Cartloom',
   description: 'Sell products beautifully',
   auth: cartloomAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/cartloom.png',
   categories: [PieceCategory.COMMERCE],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
@@ -30,7 +30,7 @@ export const cartloom = createPiece({
       baseUrl: (auth) =>
         `https://${(auth as { domain: string }).domain}.cartloom.com/api`, // Replace with the actual base URL
       auth: cartloomAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-API-KEY': (auth as { apiKey: string }).apiKey,
       }),
     }),

@@ -1,12 +1,7 @@
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubCommon } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { githubApiCall, githubCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
@@ -27,27 +22,19 @@ export const githubCreateCommentOnAIssue = createAction({
       required: true,
     }),
   },
-  async run(configValue) {
-    const issueNumber = configValue.propsValue.issue_number;
-    const { owner, repo } = configValue.propsValue.repository!;
+  async run({ auth, propsValue }) {
+    const issue_number = propsValue.issue_number;
+    const { owner, repo } = propsValue.repository!;
 
-    const request: HttpRequest = {
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    const response = await githubApiCall({
+      accessToken: auth.access_token,
       method: HttpMethod.POST,
+      resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}/comments`,
       body: {
-        body: configValue.propsValue.comment,
+        body: propsValue.comment,
       },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
-      },
-    };
+    });
 
-    const response = await httpClient.sendRequest(request);
-
-    return {
-      success: response.status === 201,
-      comment: response.body,
-    };
+    return response;
   },
 });

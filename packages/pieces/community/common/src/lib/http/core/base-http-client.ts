@@ -8,7 +8,6 @@ import type { HttpRequest } from './http-request';
 import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
 import { MediaType } from './media-type';
-import { URL } from 'node:url';
 
 export abstract class BaseHttpClient implements HttpClient {
   constructor(

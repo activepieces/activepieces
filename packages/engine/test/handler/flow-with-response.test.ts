@@ -6,6 +6,19 @@ import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 describe('flow with response', () => {
 
     it('should execute return response successfully', async () => {
+        const input = {
+            responseType: 'json',
+            fields: {
+                status: 200,
+                headers: {
+                    'random': 'header',
+                },
+                body: {
+                    'hello': 'world',
+                },
+            },
+            respond: 'stop',
+        }
         const response = {
             status: 200,
             headers: {
@@ -15,12 +28,13 @@ describe('flow with response', () => {
                 'hello': 'world',
             },
         }
+
         const result = await flowExecutor.execute({
             action: buildPieceAction({
                 name: 'http',
-                pieceName: '@activepieces/piece-http',
+                pieceName: '@activepieces/piece-webhook',
                 actionName: 'return_response',
-                input: response,
+                input,
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)

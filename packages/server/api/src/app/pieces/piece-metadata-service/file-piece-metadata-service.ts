@@ -1,110 +1,36 @@
-import { readdir, stat } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
-import { cwd } from 'node:process'
-import importFresh from 'import-fresh'
-import { nanoid } from 'nanoid'
-import { getEdition } from '../../helper/secret-helper'
-import {
-    PieceMetadataSchema,
-} from '../piece-metadata-entity'
-import { pieceMetadataServiceHooks } from './hooks'
-import { PieceMetadataService } from './piece-metadata-service'
-import { toPieceMetadataModelSummary } from '.'
-import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
+
 import {
     ActivepiecesError,
-    ApEdition,
     ErrorCode,
-    EXACT_VERSION_PATTERN,
-    extractPieceFromModule,
+    EXACT_VERSION_REGEX,
     isNil,
     ListVersionsResponse,
     PackageType,
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { system } from '../../helper/system/system'
+import {
+    PieceMetadataSchema,
+} from '../piece-metadata-entity'
+import { PieceMetadataService } from './piece-metadata-service'
+import { pieceListUtils } from './utils'
+import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const pieces = await findAllPieces()
+    const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')
+    const pieces = await filePiecesUtils(packages, system.globalLogger()).findAllPieces()
+
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )
 }
-async function findAllPieces(): Promise<PieceMetadata[]> {
-    const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-    const enterprisePieces = getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
-    return [...pieces, ...enterprisePieces]
-}
-
-async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
-    try {
-        const paths = await traverseFolder(folderPath)
-        const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-        return pieces.filter((p): p is PieceMetadata => p !== null)
-    }
-    catch (e) {
-        const err = e as Error
-        logger.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
-        return []
-    }
-}
-
-async function traverseFolder(folderPath: string): Promise<string[]> {
-    const paths = []
-    const files = await readdir(folderPath)
-
-    for (const file of files) {
-        const filePath = join(folderPath, file)
-        const fileStats = await stat(filePath)
-        if (
-            fileStats.isDirectory() &&
-            file !== 'node_modules' &&
-            file !== 'dist' &&
-            file !== 'framework' &&
-            file !== 'common'
-        ) {
-            paths.push(...(await traverseFolder(filePath)))
-        }
-        else if (file === 'package.json') {
-            paths.push(folderPath)
-        }
-    }
-    return paths
-}
-
-async function loadPieceFromFolder(
-    folderPath: string,
-): Promise<PieceMetadata | null> {
-    try {
-        const packageJson = importFresh<Record<string, string>>(
-            join(folderPath, 'package.json'),
-        )
-        const module = importFresh<Record<string, unknown>>(
-            join(folderPath, 'src', 'index'),
-        )
-
-        const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
-            module,
-            pieceName,
-            pieceVersion,
-        })
-        return {
-            ...piece.metadata(),
-            name: pieceName,
-            version: pieceVersion,
-            authors: piece.authors,
-            directoryPath: folderPath,
-        }
-    }
-    catch (ex) {
-        logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
-        exceptionHandler.handle(ex)
-    }
-    return null
-}
-export const FilePieceMetadataService = (): PieceMetadataService => {
+export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
             const { projectId } = params
@@ -120,7 +46,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 }
             })
 
-            const pieces = await pieceMetadataServiceHooks.get().filterPieces({
+            const pieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: originalPiecesMetadata,
                 suggestionType: params.suggestionType,
@@ -131,8 +57,8 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                     projectId,
                 }),
             )
-            return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
-
+            const result = toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
+            return result.map((piece) => pieceTranslation.translatePiece<PieceMetadataModelSummary>(piece, params.locale))
         },
         async updateUsage() {
             throw new Error('Updating pieces is not supported in development mode')
@@ -142,13 +68,36 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             const pieceMetadata = piecesMetadata.find((p) => p.name === params.name)
             return pieceMetadata?.version ? { [pieceMetadata.version]: {} } : {}
         },
+        async get({
+            name,
+            projectId,
+        }): Promise<PieceMetadataModel | undefined> {
+            const piecesMetadata = await loadPiecesMetadata()
+            const pieceMetadata = piecesMetadata.find((p) => p.name === name)
+
+            if (isNil(pieceMetadata)) {
+                return undefined
+            }
+
+            return toPieceMetadataModel({
+                pieceMetadata,
+                projectId,
+            })
+        },
         async getOrThrow({
             name,
             version,
             projectId,
+            platformId,
+            locale,
         }): Promise<PieceMetadataModel> {
-            const piecesMetadata = await loadPiecesMetadata()
-            const pieceMetadata = piecesMetadata.find((p) => p.name === name)
+            const pieceMetadata = await this.get({
+                name,
+                version,
+                projectId,
+                platformId,
+            })
+
             if (isNil(pieceMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
@@ -160,22 +109,19 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return toPieceMetadataModel({
+            const result = toPieceMetadataModel({
                 pieceMetadata,
                 projectId,
             })
-        },
 
-        async delete(): Promise<void> {
-            throw new Error('Deleting pieces is not supported in development mode')
+            return pieceTranslation.translatePiece<PieceMetadataModel>(result, locale)
         },
-
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async getExactPieceVersion({ projectId, name, version }): Promise<string> {
-            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+        async resolveExactVersion({ projectId, platformId, name, version }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
                 return version
@@ -183,6 +129,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
             const pieceMetadata = await this.getOrThrow({
                 projectId,
+                platformId,
                 name,
                 version,
             })
@@ -214,6 +161,7 @@ const toPieceMetadataModel = ({
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
+        i18n: pieceMetadata.i18n,
     }
 }
 

@@ -1,11 +1,4 @@
 import crypto from 'crypto'
-import jsonwebtoken from 'jsonwebtoken'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { databaseConnection } from '../../database/database-connection'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { appCredentialService } from '../app-credentials/app-credentials.service'
-import { ConnectionKeyEntity } from './connection-key.entity'
 import {
     AppCredentialType,
     ConnectionKey,
@@ -16,23 +9,38 @@ import {
     UpsertOAuth2ConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, AppConnection,
+import {
+    ActivepiecesError, apId,
+    AppConnectionScope,
     AppConnectionType,
+    AppConnectionWithoutSensitiveData,
     Cursor,
     ErrorCode,
+    isNil,
     ProjectId,
     SeekPage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import jsonwebtoken from 'jsonwebtoken'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { projectService } from '../../project/project-service'
+import { appCredentialService } from '../app-credentials/app-credentials.service'
+import { ConnectionKeyEntity } from './connection-key.entity'
 
-const connectionKeyRepo = databaseConnection.getRepository(ConnectionKeyEntity)
+const connectionKeyRepo = repoFactory(ConnectionKeyEntity)
 
-export const connectionKeyService = {
+export const connectionKeyService = (log: FastifyBaseLogger) => ({
     async getConnection({
         projectId,
         token,
         appName,
-    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnection | null> {
+    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnectionWithoutSensitiveData | null> {
         const connectionName = await getConnectioName({ projectId, token })
+        const project = await projectService.getOneOrThrow(projectId)
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = appName.replace('@activepieces/piece-', '')
         if (connectionName == null) {
@@ -43,18 +51,22 @@ export const connectionKeyService = {
                 },
             })
         }
-        return appConnectionService.getOne({
+        const connection = await appConnectionService(log).getOne({
             projectId,
-            name: `${finalAppName}_${connectionName}`,
+            platformId: project.platformId,
+            externalId: `${finalAppName}_${connectionName}`,
         })
+        return isNil(connection) ? null : appConnectionService(log).removeSensitiveData(connection)
     },
     async createConnection(
         request: UpsertConnectionFromToken,
-    ): Promise<AppConnection> {
+    ): Promise<AppConnectionWithoutSensitiveData> {
         const appCredential = await appCredentialService.getOneOrThrow(
             request.appCredentialId,
         )
         const projectId = appCredential.projectId
+        const project = await projectService.getOneOrThrow(projectId)
+        
         const connectionName = await getConnectioName({
             projectId,
             token: request.token,
@@ -67,44 +79,47 @@ export const connectionKeyService = {
                 },
             })
         }
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = `@activepieces/piece-${appCredential.appName}`
         switch (appCredential.settings.type) {
             case AppCredentialType.API_KEY: {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken
-                return appConnectionService.upsert({
-                    projectId,
-                    request: {
-                        projectId,
-                        name: `${appCredential.appName}_${connectionName}`,
-                        pieceName: finalAppName,
+                return appConnectionService(log).upsert({
+                    scope: AppConnectionScope.PROJECT,
+                    platformId: project.platformId,
+                    projectIds: [projectId],
+                    externalId: `${appCredential.appName}_${connectionName}`,
+                    displayName: `${appCredential.appName}_${connectionName}`,
+                    pieceName: finalAppName,
+                    type: AppConnectionType.SECRET_TEXT,
+                    value: {
                         type: AppConnectionType.SECRET_TEXT,
-                        value: {
-                            type: AppConnectionType.SECRET_TEXT,
-                            secret_text: apiRequest.apiKey,
-                        },
+                        secret_text: apiRequest.apiKey,
                     },
+                    ownerId: null,
                 })
             }
             case AppCredentialType.OAUTH2: {
                 const apiRequest = request as UpsertOAuth2ConnectionFromToken
-                return appConnectionService.upsert({
-                    projectId,
-                    request: {
-                        name: `${appCredential.appName}_${connectionName}`,
-                        pieceName: finalAppName,
-                        projectId,
+                return appConnectionService(log).upsert({
+                    scope: AppConnectionScope.PROJECT,
+                    platformId: project.platformId,
+                    projectIds: [projectId],
+                    externalId: `${appCredential.appName}_${connectionName}`,
+                    displayName: `${appCredential.appName}_${connectionName}`,
+                    pieceName: finalAppName,
+                    type: AppConnectionType.OAUTH2,
+                    value: {
                         type: AppConnectionType.OAUTH2,
-                        value: {
-                            type: AppConnectionType.OAUTH2,
-                            redirect_url: apiRequest.redirectUrl,
-                            code: apiRequest.code,
-                            props: apiRequest.props,
-                            scope: appCredential.settings.scope,
-                            client_id: appCredential.settings.clientId,
-                            client_secret: appCredential.settings.clientSecret!,
-                        },
+                        redirect_url: apiRequest.redirectUrl,
+                        code: apiRequest.code,
+                        props: apiRequest.props,
+                        scope: appCredential.settings.scope,
+                        client_id: appCredential.settings.clientId,
+                        client_secret: appCredential.settings.clientSecret!,
                     },
+                    ownerId: null,
                 })
             }
         }
@@ -127,7 +142,7 @@ export const connectionKeyService = {
                 format: 'pem',
             },
         })
-        const savedConnection: ConnectionKey = await connectionKeyRepo.save({
+        const savedConnection: ConnectionKey = await connectionKeyRepo().save({
             id: apId(),
             projectId,
             settings: {
@@ -159,24 +174,24 @@ export const connectionKeyService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = connectionKeyRepo
+        const queryBuilder = connectionKeyRepo()
             .createQueryBuilder('connection_key')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ConnectionKey>(data, cursor)
     },
     async delete(id: ConnectionKeyId): Promise<void> {
-        await connectionKeyRepo.delete({
+        await connectionKeyRepo().delete({
             id,
         })
     },
-}
+})
 
 async function getConnectioName(request: {
     projectId: string
     token: string
 }): Promise<string | null> {
-    const connectionKeys = await connectionKeyRepo.findBy({
+    const connectionKeys = await connectionKeyRepo().findBy({
         projectId: request.projectId,
     })
     let connectionName: string | null = null

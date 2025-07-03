@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
@@ -16,8 +15,6 @@ export const createEvent = createAction({
       displayName: 'Email',
       description: undefined,
       required: true,
-      processors: [],
-      validators: [Validators.email],
     }),
     event_category: Property.ShortText({
       displayName: 'Event category',
@@ -105,6 +102,11 @@ export const createEvent = createAction({
       required: false,
       defaultValue: 'USD',
     }),
+    custom_field: Property.ShortText({
+      displayName: 'Custom field',
+      description: undefined,
+      required: false,
+    }),
     shipping_address: Property.ShortText({
       displayName: 'Shipping address',
       description: undefined,
@@ -117,16 +119,11 @@ export const createEvent = createAction({
     }),
     items: Property.Json({
       displayName: 'Items',
-      description: undefined,
+      description: "You can pass items with event",
       required: false,
       defaultValue: [
         { price: 10, quantity: 1, product_id: 'SKU1' },
-        { price: 20, quantity: 1, product_id: 'SKU2' },
       ],
-    }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
     }),
   },
   async run(context) {
@@ -144,12 +141,6 @@ export const createEvent = createAction({
           site_slug: site,
           data: context.propsValue,
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return createEventResponse.body;
   },

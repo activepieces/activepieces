@@ -69,7 +69,7 @@ export const retune = createPiece({
     'Everything you need to transform your business with AI, from custom chatbots to autonomous agents.',
 
   auth: retuneAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -78,7 +78,7 @@ export const retune = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://retune.so/api',
       auth: retuneAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-Workspace-API-Key': (auth as { apiKey: string }).apiKey,
       }),
     }),

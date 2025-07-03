@@ -1,7 +1,6 @@
 import {
   DynamicPropsValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { isEmpty } from '@activepieces/shared';
 import dayjs from 'dayjs';
@@ -35,7 +34,6 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         description:
           'A list of item IDs to connect with. The items must be on boards that are connected to the column. Example: [125345, 5846475]',
         required: false,
-        validators: [Validators.pattern(/^\[\d+(,\d+)*]$/)],
       });
     case MondayColumnType.COUNTRY:
       return Property.ShortText({
@@ -55,7 +53,6 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         description:
           'A list of item IDs from the same board. Example: [188392, 20339]',
         required: false,
-        validators: [Validators.pattern(/^\[\d+(,\d+)*]$/)],
       });
     case MondayColumnType.DROPDOWN: {
       const labels: { id: string; name: string }[] = JSON.parse(
@@ -90,7 +87,6 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         displayName: column.title,
         required: false,
         description: `Represent time in 24-hour format, like '16:30' or '2:00', ensuring removal of leading zeroes from data (e.g., send '9' instead of '09').`,
-        validators: [Validators.pattern(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/)],
       });
     case MondayColumnType.LOCATION:
       return Property.ShortText({
@@ -119,7 +115,6 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         displayName: column.title,
         required: false,
         description: `A number between 1 and 5.For example, 3.`,
-        validators: [Validators.inRange(1, 5)],
       });
     case MondayColumnType.STATUS: {
       const labels = JSON.parse(column.settings_str).labels;
@@ -143,18 +138,13 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         displayName: column.title,
         required: false,
         description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. For example: '2022-01-01;2022-12-31`,
-        validators: [
-          Validators.pattern(/^\d{4}-\d{2}-\d{2};\d{4}-\d{2}-\d{2}$/),
-        ],
       });
     case MondayColumnType.WEEK:
       return Property.ShortText({
         displayName: column.title,
         required: false,
         description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. The dates must be 7 days apart (inclusive of the first and last date).\n For example: '2019-06-10;2019-06-16`,
-        validators: [
-          Validators.pattern(/^\d{4}-\d{2}-\d{2};\d{4}-\d{2}-\d{2}$/),
-        ],
+  
       });
     case MondayColumnType.WORLD_CLOCK:
       return Property.ShortText({

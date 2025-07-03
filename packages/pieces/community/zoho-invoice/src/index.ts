@@ -52,7 +52,7 @@ export const zohoInvoice = createPiece({
   description: 'Online invoicing software for businesses',
 
   auth: zohoAuth,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
@@ -61,7 +61,7 @@ export const zohoInvoice = createPiece({
       baseUrl: (auth) =>
         common.baseUrl((auth as OAuth2PropertyValue).props!['region']),
       auth: zohoAuth,
-      authMapping: (auth) =>
+      authMapping: async (auth) =>
         common.authHeaders((auth as OAuth2PropertyValue).access_token),
     }),
   ],
