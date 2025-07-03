@@ -29,7 +29,6 @@ import { exportSheetAction } from './lib/actions/export-sheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
-
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,

@@ -128,6 +128,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
                 if (appConnection.scope) {
                     body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
+                    log.debug('-----------------refresh')
+                    log.debug(JSON.stringify(body))
+                    log.debug('-----------------')
                 }
                 if (appConnection.props) {
                     Object.entries(appConnection.props).forEach(([key, value]) => {
@@ -169,6 +172,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             appConnection,
             oauth2Util(log).formatOAuth2Response({ ...response }),
         )
+        log.debug('-----------------refresh done')
+        log.debug(JSON.stringify(mergedObject))
+        log.debug('-----------------')
         return {
             ...mergedObject,
             props: appConnection.props,

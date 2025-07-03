@@ -66,10 +66,10 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectId: projectIds?.[0],
             platformId,
         }, log)
-
         const encryptedConnectionValue = encryptUtils.encryptObject({
             ...validatedConnectionValue,
             ...value,
+            expires_in: 60,
         })
 
         const existingConnection = await appConnectionsRepo().findOneBy({

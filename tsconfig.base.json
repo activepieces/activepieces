@@ -196,6 +196,9 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
+      "@activepieces/piece-cognito-forms": [
+        "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
@@ -618,6 +621,9 @@
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
+      "@activepieces/piece-pipefy": [
+        "packages/pieces/community/pipefy/src/index.ts"
+      ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
       ],
@@ -654,11 +660,11 @@
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
       ],
-      "@activepieces/piece-reddit": [
-        "packages/pieces/community/reddit/src/index.ts"
-      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
