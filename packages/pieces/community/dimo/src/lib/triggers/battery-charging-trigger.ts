@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 import { dimoAuth } from '../../index';
 
 interface WebhookInfo {
@@ -21,9 +22,22 @@ interface DimoWebhookPayload {
 export const batteryChargingTrigger = createTrigger({
   auth: dimoAuth,
   name: 'battery_charging_trigger',
-  displayName: 'Battery Is Charging Trigger',
-  description: 'Triggers when vehicle battery charging status changes (True/False) - requires Developer JWT',
+  displayName: 'Battery Charging Trigger',
+  description: 'Triggers when vehicle battery charging state changes (requires Developer JWT)',
   type: TriggerStrategy.WEBHOOK,
+  
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+    paramName: 'verify',
+  },
+  
+  async onHandshake(context) {
+    return {
+      status: 200,
+      body: context.payload.queryParams['verify'] || 'OK',
+    };
+  },
+
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
@@ -78,12 +92,12 @@ export const batteryChargingTrigger = createTrigger({
       throw new Error('Developer JWT is required for battery charging trigger. Please provide a Developer JWT in the authentication configuration.');
     }
 
-    // Build trigger condition for charging state (1 = charging, 0 = not charging)
+
     const triggerValue = chargingState === 'true' ? 1 : 0;
     const triggerCondition = `valueNumber = ${triggerValue}`;
 
     try {
-      // Step 1: Create webhook configuration
+
       const webhookResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://vehicle-events-api.dimo.zone/v1/webhooks',
@@ -110,9 +124,7 @@ export const batteryChargingTrigger = createTrigger({
       const webhookId = webhookResponse.body.id;
       const subscribedVehicles: number[] = [];
 
-      // Step 2: Subscribe vehicles to the webhook
       if (vehicleTokenIds && vehicleTokenIds.length > 0) {
-        // Subscribe specific vehicles
         for (const tokenId of vehicleTokenIds) {
           try {
             await httpClient.sendRequest({
@@ -128,7 +140,6 @@ export const batteryChargingTrigger = createTrigger({
           }
         }
       } else {
-        // Subscribe all vehicles with permissions
         await httpClient.sendRequest({
           method: HttpMethod.POST,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookId}/subscribe/all`,
@@ -138,7 +149,6 @@ export const batteryChargingTrigger = createTrigger({
         });
       }
 
-      // Store webhook info for cleanup
       await context.store.put<WebhookInfo>('webhook_info', {
         webhookId,
         subscribedVehicles,
@@ -157,7 +167,6 @@ export const batteryChargingTrigger = createTrigger({
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
       
       if (webhookInfo?.webhookId && context.auth.developerJwt) {
-        // Delete the webhook configuration
         await httpClient.sendRequest({
           method: HttpMethod.DELETE,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookInfo.webhookId}`,
@@ -174,12 +183,10 @@ export const batteryChargingTrigger = createTrigger({
   async run(context) {
     const webhookBody = context.payload.body as DimoWebhookPayload;
     
-    // Validate webhook payload structure
     if (!webhookBody || typeof webhookBody !== 'object') {
       throw new Error('Invalid webhook payload');
     }
 
-    // Verify this is a battery charging event
     if (webhookBody.name !== 'powertrainTractionBatteryChargingIsCharging') {
       throw new Error('Received non-battery-charging webhook event');
     }
@@ -187,7 +194,6 @@ export const batteryChargingTrigger = createTrigger({
     const isCharging = webhookBody.valueNumber === 1;
     const chargingStatus = isCharging ? 'CHARGING' : 'NOT CHARGING';
 
-    // Return the webhook data
     return [
       {
         vehicleTokenId: webhookBody.tokenId,

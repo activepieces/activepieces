@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 import { dimoAuth } from '../../index';
 import { TriggerComparisonType, getTriggerCondition } from '../common/trigger-helpers';
 
@@ -25,6 +26,16 @@ export const batteryPowerTrigger = createTrigger({
   displayName: 'Battery Current Power Trigger',
   description: 'Triggers when vehicle battery current power meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+    paramName: 'verify',
+  },
+  async onHandshake(context) {
+    return {
+      status: 200,
+      body: context.payload.queryParams['verify'] || 'OK',
+    };
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
@@ -87,11 +98,9 @@ export const batteryPowerTrigger = createTrigger({
       throw new Error('Developer JWT is required for battery power trigger. Please provide a Developer JWT in the authentication configuration.');
     }
 
-    // Build trigger condition
     const triggerCondition = getTriggerCondition(comparisonType, powerWatts);
 
     try {
-      // Step 1: Create webhook configuration
       const webhookResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://vehicle-events-api.dimo.zone/v1/webhooks',
@@ -118,9 +127,7 @@ export const batteryPowerTrigger = createTrigger({
       const webhookId = webhookResponse.body.id;
       const subscribedVehicles: number[] = [];
 
-      // Step 2: Subscribe vehicles to the webhook
       if (vehicleTokenIds && vehicleTokenIds.length > 0) {
-        // Subscribe specific vehicles
         for (const tokenId of vehicleTokenIds) {
           try {
             await httpClient.sendRequest({
@@ -136,7 +143,6 @@ export const batteryPowerTrigger = createTrigger({
           }
         }
       } else {
-        // Subscribe all vehicles with permissions
         await httpClient.sendRequest({
           method: HttpMethod.POST,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookId}/subscribe/all`,
@@ -146,7 +152,6 @@ export const batteryPowerTrigger = createTrigger({
         });
       }
 
-      // Store webhook info for cleanup
       await context.store.put<WebhookInfo>('webhook_info', {
         webhookId,
         subscribedVehicles,
@@ -165,7 +170,6 @@ export const batteryPowerTrigger = createTrigger({
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
       
       if (webhookInfo?.webhookId && context.auth.developerJwt) {
-        // Delete the webhook configuration
         await httpClient.sendRequest({
           method: HttpMethod.DELETE,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookInfo.webhookId}`,
@@ -182,12 +186,10 @@ export const batteryPowerTrigger = createTrigger({
   async run(context) {
     const webhookBody = context.payload.body as DimoWebhookPayload;
     
-    // Validate webhook payload structure
     if (!webhookBody || typeof webhookBody !== 'object') {
       throw new Error('Invalid webhook payload');
     }
 
-    // Verify this is a battery power event
     if (webhookBody.name !== 'powertrainTractionBatteryCurrentPower') {
       throw new Error('Received non-battery-power webhook event');
     }
@@ -197,7 +199,6 @@ export const batteryPowerTrigger = createTrigger({
     const isCharging = powerWatts < 0; // Negative power typically means charging
     const isDischarging = powerWatts > 0; // Positive power typically means discharging
 
-    // Return the webhook data
     return [
       {
         vehicleTokenId: webhookBody.tokenId,

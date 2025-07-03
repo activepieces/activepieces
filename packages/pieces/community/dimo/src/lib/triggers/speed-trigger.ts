@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 import { dimoAuth } from '../../index';
 
 interface WebhookInfo {
@@ -24,6 +25,19 @@ export const speedTrigger = createTrigger({
   displayName: 'Speed Trigger',
   description: 'Triggers when vehicle speed meets specified conditions (requires Developer JWT)',
   type: TriggerStrategy.WEBHOOK,
+  
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+    paramName: 'verify',
+  },
+  
+  async onHandshake(context) {
+    return {
+      status: 200,
+      body: context.payload.queryParams['verify'] || 'OK',
+    };
+  },
+
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
@@ -86,7 +100,6 @@ export const speedTrigger = createTrigger({
       throw new Error('Developer JWT is required for speed trigger. Please provide a Developer JWT in the authentication configuration.');
     }
 
-    // Build trigger condition based on type
     let triggerCondition = '';
     switch (conditionType) {
       case 'equal':
@@ -109,7 +122,6 @@ export const speedTrigger = createTrigger({
     }
 
     try {
-      // Step 1: Create webhook configuration
       const webhookResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://vehicle-events-api.dimo.zone/v1/webhooks',
@@ -136,9 +148,7 @@ export const speedTrigger = createTrigger({
       const webhookId = webhookResponse.body.id;
       const subscribedVehicles: number[] = [];
 
-      // Step 2: Subscribe vehicles to the webhook
       if (vehicleTokenIds && vehicleTokenIds.length > 0) {
-        // Subscribe specific vehicles
         for (const tokenId of vehicleTokenIds) {
           try {
             await httpClient.sendRequest({
@@ -154,7 +164,6 @@ export const speedTrigger = createTrigger({
           }
         }
       } else {
-        // Subscribe all vehicles with permissions
         await httpClient.sendRequest({
           method: HttpMethod.POST,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookId}/subscribe/all`,
@@ -164,7 +173,6 @@ export const speedTrigger = createTrigger({
         });
       }
 
-      // Store webhook info for cleanup
       await context.store.put<WebhookInfo>('webhook_info', {
         webhookId,
         subscribedVehicles,
@@ -200,17 +208,14 @@ export const speedTrigger = createTrigger({
   async run(context) {
     const webhookBody = context.payload.body as DimoWebhookPayload;
     
-    // Validate webhook payload structure
     if (!webhookBody || typeof webhookBody !== 'object') {
       throw new Error('Invalid webhook payload');
     }
 
-    // Verify this is a speed event
     if (webhookBody.name !== 'speed') {
       throw new Error('Received non-speed webhook event');
     }
 
-    // Return the webhook data
     return [
       {
         vehicleTokenId: webhookBody.tokenId,

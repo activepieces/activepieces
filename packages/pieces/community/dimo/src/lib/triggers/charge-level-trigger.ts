@@ -1,5 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 import { dimoAuth } from '../../index';
 import { TriggerComparisonType, getTriggerCondition } from '../common/trigger-helpers';
 
@@ -25,6 +26,16 @@ export const chargeLevelTrigger = createTrigger({
   displayName: 'Charge Level Trigger',
   description: 'Triggers when vehicle battery charge level meets the specified condition - requires Developer JWT',
   type: TriggerStrategy.WEBHOOK,
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.QUERY_PRESENT,
+    paramName: 'verify',
+  },
+  async onHandshake(context) {
+    return {
+      status: 200,
+      body: context.payload.queryParams['verify'] || 'OK',
+    };
+  },
   props: {
     vehicleTokenIds: Property.Array({
       displayName: 'Vehicle Token IDs',
@@ -87,16 +98,13 @@ export const chargeLevelTrigger = createTrigger({
       throw new Error('Developer JWT is required for charge level trigger. Please provide a Developer JWT in the authentication configuration.');
     }
 
-    // Validate charge percentage
     if (chargePercentage < 0 || chargePercentage > 100) {
       throw new Error('Charge percentage must be between 0 and 100');
     }
 
-    // Build trigger condition
     const triggerCondition = getTriggerCondition(comparisonType, chargePercentage);
 
     try {
-      // Step 1: Create webhook configuration
       const webhookResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://vehicle-events-api.dimo.zone/v1/webhooks',
@@ -123,9 +131,7 @@ export const chargeLevelTrigger = createTrigger({
       const webhookId = webhookResponse.body.id;
       const subscribedVehicles: number[] = [];
 
-      // Step 2: Subscribe vehicles to the webhook
       if (vehicleTokenIds && vehicleTokenIds.length > 0) {
-        // Subscribe specific vehicles
         for (const tokenId of vehicleTokenIds) {
           try {
             await httpClient.sendRequest({
@@ -141,7 +147,6 @@ export const chargeLevelTrigger = createTrigger({
           }
         }
       } else {
-        // Subscribe all vehicles with permissions
         await httpClient.sendRequest({
           method: HttpMethod.POST,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookId}/subscribe/all`,
@@ -151,7 +156,6 @@ export const chargeLevelTrigger = createTrigger({
         });
       }
 
-      // Store webhook info for cleanup
       await context.store.put<WebhookInfo>('webhook_info', {
         webhookId,
         subscribedVehicles,
@@ -170,7 +174,6 @@ export const chargeLevelTrigger = createTrigger({
       const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
       
       if (webhookInfo?.webhookId && context.auth.developerJwt) {
-        // Delete the webhook configuration
         await httpClient.sendRequest({
           method: HttpMethod.DELETE,
           url: `https://vehicle-events-api.dimo.zone/v1/webhooks/${webhookInfo.webhookId}`,
@@ -187,19 +190,16 @@ export const chargeLevelTrigger = createTrigger({
   async run(context) {
     const webhookBody = context.payload.body as DimoWebhookPayload;
     
-    // Validate webhook payload structure
     if (!webhookBody || typeof webhookBody !== 'object') {
       throw new Error('Invalid webhook payload');
     }
 
-    // Verify this is a charge level event
     if (webhookBody.name !== 'powertrainTractionBatteryStateOfChargeCurrent') {
       throw new Error('Received non-charge-level webhook event');
     }
 
     const chargePercentage = webhookBody.valueNumber;
 
-    // Return the webhook data with comprehensive charge level information
     return [
       {
         vehicleTokenId: webhookBody.tokenId,
