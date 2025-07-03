@@ -30,17 +30,26 @@ type ToolCallOutput = {
   }[];
   resolvedFields: Record<string, unknown>;
 };
+
+function parseJsonOrReturnOriginal(json: unknown) {
+  try {
+    return JSON.parse(json as string);
+  } catch (error) {
+    return json;
+  }
+}
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const outputAsToolCallOutput = block.output as ToolCallOutput | null;
+
 
   const hasInstructions = !isNil(block.input?.instructions);
   const resolvedFields = !isNil(outputAsToolCallOutput?.resolvedFields)
     ? outputAsToolCallOutput.resolvedFields
     : null;
   const output = !isNil(outputAsToolCallOutput?.content)
-    ? JSON.parse(outputAsToolCallOutput.content[0].text)
+    ? parseJsonOrReturnOriginal(outputAsToolCallOutput.content[0].text)
     : null;
 
   const markAsComplete = !isNil(outputAsToolCallOutput?.success)
