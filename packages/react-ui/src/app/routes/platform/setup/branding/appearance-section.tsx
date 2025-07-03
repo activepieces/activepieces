@@ -70,7 +70,7 @@ export const AppearanceSection = () => {
       toast(INTERNAL_ERROR_TOAST);
     },
   });
-
+  console.log(form.formState.isValid, form.getValues());
   return (
     <>
       <Separator className="my-2" />

@@ -127,7 +127,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await deactivatePlatformUsersOtherThanAdmin(platformId)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
-        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD;
+        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         await platformService.update({
             id: platformId,
             plan: {
