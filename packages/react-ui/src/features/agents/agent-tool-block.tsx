@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Loader2, Wrench, CircleCheck, CircleX } from 'lucide-react';
 
-import { CodeMirrorJsonViewer } from '@/components/code-mirror-json-viewer';
+import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import { ApMarkdown } from '@/components/custom/markdown';
 import {
   Accordion,
@@ -33,21 +33,17 @@ type ToolCallOutput = {
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const outputAsToolCallOutput = block.output as ToolCallOutput;
-  const output =
-    block.output && outputAsToolCallOutput.content?.[0]?.text
-      ? JSON.parse(outputAsToolCallOutput.content[0].text)
-      : '';
-  const resolvedFields =
-    block.output && outputAsToolCallOutput.resolvedFields
-      ? outputAsToolCallOutput.resolvedFields
-      : {};
-  const markAsComplete =
-    block.output &&
-    (outputAsToolCallOutput.success === true ||
-      outputAsToolCallOutput.success === undefined);
+  const outputAsToolCallOutput = block.output as ToolCallOutput | null;
+
+
+  const hasInstructions = !isNil(block.input?.instructions);
+  const resolvedFields = !isNil(outputAsToolCallOutput?.resolvedFields) ? outputAsToolCallOutput.resolvedFields : null;
+  const output = !isNil(outputAsToolCallOutput?.content) ? JSON.parse(outputAsToolCallOutput.content[0].text) : null;
+
+  const markAsComplete = !isNil(outputAsToolCallOutput?.success) ? outputAsToolCallOutput.success : true;
+
   return (
-    <Accordion type="multiple" defaultValue={[]}>
+    <Accordion type="multiple" defaultValue={[`block-${index}`]}>
       <AccordionItem value={`block-${index}`}>
         <AccordionTrigger className="flex items-center gap-3 transition-colors">
           {isLoading ? (
@@ -83,26 +79,46 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         </AccordionTrigger>
         <AccordionContent>
           <div className="space-y-3">
+
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-muted-foreground">
-                {t('Instructions')}
+                {hasInstructions ? t('Instructions') : t('Input')}
               </div>
-              <ApMarkdown
-                variant={MarkdownVariant.BORDERLESS}
-                markdown={JSON.stringify(
-                  block.input?.instructions ?? block.input,
-                )}
-              />
+              {hasInstructions ? (
+                <ApMarkdown
+                  variant={MarkdownVariant.BORDERLESS}
+                  markdown={JSON.stringify(
+                    block.input?.instructions
+                  )}
+                />
+              ) : (
+                <SimpleJsonViewer
+                  data={block.input}
+                  hideCopyButton={true}
+                />
+              )}
             </div>
             {!isNil(resolvedFields) && (
-              <CodeMirrorJsonViewer
-                json={resolvedFields}
-                hideDownload={true}
-                title={t('Resolved Fields')}
-              />
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t('Resolved Fields')}
+                </div>
+                <SimpleJsonViewer
+                  data={resolvedFields}
+                  hideCopyButton={true}
+                />
+              </div>
             )}
             {!isNil(output) && (
-              <CodeMirrorJsonViewer json={output} title={t('Result')} />
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">
+                  {t('Result')}
+                </div>
+                <SimpleJsonViewer
+                  data={output}
+                  hideCopyButton={true}
+                />
+              </div>
             )}
           </div>
         </AccordionContent>
