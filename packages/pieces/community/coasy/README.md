@@ -126,9 +126,18 @@ The piece uses custom authentication with:
 
 The piece is published as `@coasy/piece-coasy` to npm. Version is currently `0.0.11`.
 
-To update the version:
-1. Update `version` in `package.json`
-2. Use the publish script: `npm run publish-piece`
+To publish a new version:
+1. Navigate to the coasy piece directory:
+   ```bash
+   cd packages/pieces/community/coasy
+   ```
+2. Update the `version` in `package.json` (e.g., from `0.0.11` to `0.0.12`)
+3. Publish directly to npm:
+   ```bash
+   npm publish
+   ```
+
+**Note**: The monorepo's `npm run publish-piece` script currently has dependency resolution issues. Use the direct `npm publish` method above instead.
 
 ## Resources
 
