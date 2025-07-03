@@ -163,13 +163,16 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clicksend": [
+        "packages/pieces/community/clicksend/src/index.ts"
+      ],
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
