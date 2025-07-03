@@ -7,7 +7,7 @@ import { sessionId, windowId } from '../common/props';
 export const clickAction = createAction({
 	name: 'click',
 	auth: airtopAuth,
-	displayName: 'Click Element',
+	displayName: 'Click',
 	description: 'Execute a click interaction in a specific browser window.',
 	props: {
 		sessionId: sessionId,

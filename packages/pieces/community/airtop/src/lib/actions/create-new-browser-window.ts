@@ -60,7 +60,7 @@ export const createNewBrowserWindowAction = createAction({
 		const response = await airtopApiCall({
 			apiKey: context.auth,
 			method: HttpMethod.POST,
-			resourceUri: `/sessions/${sessionId}/window`,
+			resourceUri: `/sessions/${sessionId}/windows`,
 			body,
 		});
 

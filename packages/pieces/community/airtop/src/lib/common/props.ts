@@ -11,6 +11,12 @@ interface PropsValue {
 	sessionId: string;
 }
 
+interface File {
+	id: string;
+	fileName: string;
+	fileType: string;
+}
+
 export const sessionId = Property.Dropdown({
 	displayName: 'Session',
 	refreshers: [],
@@ -28,10 +34,6 @@ export const sessionId = Property.Dropdown({
 			apiKey: auth as string,
 			method: HttpMethod.GET,
 			resourceUri: '/sessions',
-			query: {
-				limit: 1000,
-				page: 1,
-			},
 		});
 
 		const sessions = response?.data?.sessions ?? [];
@@ -48,22 +50,26 @@ export const sessionId = Property.Dropdown({
 
 export const windowId = Property.Dropdown({
 	displayName: 'Window',
-	refreshers: ['sessionId'],
 	required: true,
-	options: async ({ auth, propsValue }) => {
-		const { sessionId } = propsValue as PropsValue;
-
-		if (!auth || !sessionId) {
+	refreshers: ['sessionId'],
+	options: async ({ auth, sessionId }) => {
+		if (!auth) {
 			return {
 				disabled: true,
 				options: [],
-				placeholder: 'Select a session first.',
+				placeholder: 'Please connect your Airtop account.',
 			};
 		}
 
-		const response = await airtopApiCall<{
-			data?: { windows: Window[] };
-		}>({
+		if (!sessionId) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please select a session first.',
+			};
+		}
+
+		const response = await airtopApiCall<{ data?: { windows: Window[] } }>({
 			apiKey: auth as string,
 			method: HttpMethod.GET,
 			resourceUri: `/sessions/${sessionId}/windows`,
@@ -74,7 +80,7 @@ export const windowId = Property.Dropdown({
 		return {
 			disabled: false,
 			options: windows.map((win) => ({
-				label: win.windowId,
+				label: `${win.windowId} (${win.targetId})`,
 				value: win.windowId,
 			})),
 		};
@@ -83,8 +89,8 @@ export const windowId = Property.Dropdown({
 
 export const fileId = Property.Dropdown({
 	displayName: 'File',
-	refreshers: [],
 	required: true,
+	refreshers: [],
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {
@@ -94,21 +100,17 @@ export const fileId = Property.Dropdown({
 			};
 		}
 
-		const response = await airtopApiCall<any>({
+		const response = await airtopApiCall<{ data?: { files: File[] } }>({
 			apiKey: auth as string,
 			method: HttpMethod.GET,
 			resourceUri: '/files',
-			query: {
-				limit: 1000,
-				page: 1,
-			},
 		});
 
 		const files = response?.data?.files ?? [];
 
 		return {
 			disabled: false,
-			options: files.map((file: any) => ({
+			options: files.map((file) => ({
 				label: `${file.fileName} (${file.fileType})`,
 				value: file.id,
 			})),
