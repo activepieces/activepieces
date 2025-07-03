@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from '../common';
 
 export const getFormResponses = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -71,32 +72,36 @@ export const getFormResponses = createAction({
     })
   },
   async run(context) {
-   
-    const apiKey = (context.auth as Record<string, string>)['apiKey'];
-    if (!apiKey) {
-      throw new Error('API Key is required for authentication.');
-    }
+    const apiKey = context.auth as string;
 
     const formId = context.propsValue['formId'];
     const queryParams: Record<string, any> = {};
-    if (context.propsValue['limit'] !== undefined) queryParams['limit'] = context.propsValue['limit'];
-    if (context.propsValue['afterDate'] !== undefined) queryParams['afterDate'] = context.propsValue['afterDate'];
-    if (context.propsValue['beforeDate'] !== undefined) queryParams['beforeDate'] = context.propsValue['beforeDate'];
-    if (context.propsValue['offset'] !== undefined) queryParams['offset'] = context.propsValue['offset'];
-    if (context.propsValue['status'] !== undefined) queryParams['status'] = context.propsValue['status'];
-    if (context.propsValue['includeEditLink'] !== undefined) queryParams['includeEditLink'] = context.propsValue['includeEditLink'];
-    if (context.propsValue['includePreview'] !== undefined) queryParams['includePreview'] = context.propsValue['includePreview'];
-    if (context.propsValue['sort'] !== undefined) queryParams['sort'] = context.propsValue['sort'];
-    if (context.propsValue['search'] !== undefined) queryParams['search'] = context.propsValue['search'];
+    if (context.propsValue['limit'] !== undefined)
+      queryParams['limit'] = context.propsValue['limit'];
+    if (context.propsValue['afterDate'] !== undefined)
+      queryParams['afterDate'] = context.propsValue['afterDate'];
+    if (context.propsValue['beforeDate'] !== undefined)
+      queryParams['beforeDate'] = context.propsValue['beforeDate'];
+    if (context.propsValue['offset'] !== undefined)
+      queryParams['offset'] = context.propsValue['offset'];
+    if (context.propsValue['status'] !== undefined)
+      queryParams['status'] = context.propsValue['status'];
+    if (context.propsValue['includeEditLink'] !== undefined)
+      queryParams['includeEditLink'] = context.propsValue['includeEditLink'];
+    if (context.propsValue['includePreview'] !== undefined)
+      queryParams['includePreview'] = context.propsValue['includePreview'];
+    if (context.propsValue['sort'] !== undefined)
+      queryParams['sort'] = context.propsValue['sort'];
+    if (context.propsValue['search'] !== undefined)
+      queryParams['search'] = context.propsValue['search'];
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.fillout.com/v1/api/forms/${formId}/submissions`,
-      headers: {
-        Authorization: `Bearer ${apiKey}`
-      },
+    const response = await makeRequest(
+      apiKey,
+      HttpMethod.GET,
+      `/forms/${formId}/submissions`,
       queryParams
-    });
-    return response.body;
+    );
+
+    return response;
   },
 });

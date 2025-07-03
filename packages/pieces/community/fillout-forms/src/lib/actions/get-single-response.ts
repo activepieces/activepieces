@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from '../common';
 
 export const getSingleResponse = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -24,24 +25,15 @@ export const getSingleResponse = createAction({
     })
   },
   async run(context) {
+    const apiKey = context.auth as string;
+
     const formId = context.propsValue['formId'];
     const submissionId = context.propsValue['submissionId'];
-
-    const queryParams: Record<string, any> = {};
-    
-    const apiKey = (context.auth as Record<string, string>)['apiKey'];
-    if (!apiKey) {
-      throw new Error('API Key is required for authentication.');
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.fillout.com/v1/api/forms/${formId}/submissions/${submissionId}`,
-      headers: {
-        Authorization: `Bearer ${apiKey}`
-      },
-      queryParams
-    });
-    return response.body;
+    const response = await makeRequest(
+      apiKey,
+      HttpMethod.GET,
+      `/forms/${formId}/submissions/${submissionId}`
+    );
+    return response;
   },
 });
