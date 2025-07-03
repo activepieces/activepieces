@@ -33,9 +33,10 @@ type ToolCallOutput = {
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const output = block.output && (block.output as ToolCallOutput).content?.[0]?.text ? JSON.parse((block.output as ToolCallOutput).content[0].text) : '';
-  const resolvedFields = block.output && (block.output as ToolCallOutput).resolvedFields ? (block.output as ToolCallOutput).resolvedFields : {}; 
-  const markAsComplete = block.output && ((block.output as ToolCallOutput).success === true || (block.output as ToolCallOutput).success === undefined);
+  const outputAsToolCallOutput = block.output as ToolCallOutput;
+  const output = block.output && outputAsToolCallOutput.content?.[0]?.text ? JSON.parse(outputAsToolCallOutput.content[0].text) : '';
+  const resolvedFields = block.output && outputAsToolCallOutput.resolvedFields ? outputAsToolCallOutput.resolvedFields : {}; 
+  const markAsComplete = block.output && (outputAsToolCallOutput.success === true || outputAsToolCallOutput.success === undefined);
    return (
     <Accordion type="multiple" defaultValue={[]}>
       <AccordionItem value={`block-${index}`}>
