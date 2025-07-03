@@ -4,7 +4,7 @@ import { airtopApiCall } from './client';
 
 export const airtopAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
-	description: `You can get your API key from [Airtop settings](https://app.airtop.ai/settings).`,
+	description: `You can get your API key from [Airtop Dashboard](https://portal.airtop.ai/api-keys).`,
 	required: true,
 	validate: async ({ auth }) => {
 		try {
