@@ -2,20 +2,20 @@ import { HttpMethod } from "@activepieces/pieces-common";
 import { PieceAuth } from "@activepieces/pieces-framework";
 import { makeRequest } from ".";
 
-export const cognitoFormsAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
+export const pinterestAuth = PieceAuth.SecretText({
+  displayName: 'Pinterest Access Token',
   required: true,
-  description: `
-  `,
-  validate: async ({ auth }) => {
-    try {
-      await makeRequest(auth as string, HttpMethod.GET, '/forms');
-      return { valid: true };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API Key.',
-      };
-    }
-  },
+  description: 'Your Pinterest OAuth2 access token.',
+  // validate: async ({ auth }) => {
+  //   try {
+  
+  //     await makeRequest(auth as string, HttpMethod.GET, '/user_account');
+  //     return { valid: true };
+  //   } catch {
+  //     return {
+  //       valid: false,
+  //       error: 'Invalid Pinterest Access Token.',
+  //     };
+  //   }
+  // },
 });

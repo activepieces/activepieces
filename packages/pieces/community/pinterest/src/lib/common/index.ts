@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export const BASE_URL = 'https://www.cognitoforms.com/api';
+export const BASE_URL = 'https://api.pinterest.com/v5';
 
 export async function makeRequest(
   apiKey: string,
