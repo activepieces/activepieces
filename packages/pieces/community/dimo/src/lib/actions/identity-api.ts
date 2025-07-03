@@ -6,33 +6,55 @@ export const identityApiAction = createAction({
   auth: dimoAuth,
   name: 'identity_api',
   displayName: 'Identity API (GraphQL)',
-  description: 'Query DIMO Identity API using GraphQL - open catalog of vehicles, devices, and rewards (no authentication required)',
+  description: 'Query DIMO Identity API - public catalog of vehicles, devices, manufacturers, and rewards (no authentication required)',
   props: {
     queryType: Property.StaticDropdown({
       displayName: 'Query Type',
       description: 'Choose a pre-built query or write custom GraphQL',
       required: true,
-      defaultValue: 'custom',
+      defaultValue: 'vehicles_by_owner',
       options: {
         options: [
           { label: 'Custom GraphQL Query', value: 'custom' },
+          
+          // Vehicle queries
           { label: 'Get Vehicle by Token ID', value: 'vehicle_by_token' },
           { label: 'Get Vehicles by Owner', value: 'vehicles_by_owner' },
-          { label: 'Get Total Vehicles Count', value: 'total_vehicles' },
-          { label: 'Get Manufacturer Info', value: 'manufacturer_info' },
-          { label: 'Get Developer License Info', value: 'dev_license_info' },
-          { label: 'Get Rewards by Owner', value: 'rewards_by_owner' },
+          { label: 'Get Vehicles by Privileged User', value: 'vehicles_by_privileged' },
+          
+          // AftermarketDevice queries
+          { label: 'Get Aftermarket Device by Token ID', value: 'aftermarket_device' },
+          { label: 'Get Aftermarket Devices by Owner', value: 'aftermarket_devices_by_owner' },
+          { label: 'Get Aftermarket Devices by Manufacturer', value: 'aftermarket_devices_by_manufacturer' },
+          
+          // Manufacturer queries
+          { label: 'Get Manufacturer by Name/Token ID', value: 'manufacturer_info' },
+          
+          // DCN queries
+          { label: 'Get DCN by Name', value: 'dcn_by_name' },
+          { label: 'Get DCNs by Owner', value: 'dcns_by_owner' },
+          
+          // Node queries
+          { label: 'Get Node by ID', value: 'node_by_id' },
+          
+          // Rewards/Earnings
+          { label: 'Get User Rewards', value: 'user_rewards' },
+          { label: 'Get Vehicle Earnings', value: 'vehicle_earnings' },
         ],
       },
     }),
+    
+    // Custom query
     customQuery: Property.LongText({
       displayName: 'Custom GraphQL Query',
-      description: 'Enter your GraphQL query here',
+      description: 'Enter your custom GraphQL query',
       required: false,
     }),
-    vehicleTokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
+    
+    // Common parameters
+    tokenId: Property.Number({
+      displayName: 'Token ID',
+      description: 'Token ID (for vehicles, aftermarket devices, manufacturers, etc.)',
       required: false,
     }),
     ownerAddress: Property.ShortText({
@@ -40,32 +62,90 @@ export const identityApiAction = createAction({
       description: '0x Ethereum address of the owner',
       required: false,
     }),
+    privilegedAddress: Property.ShortText({
+      displayName: 'Privileged Address',
+      description: '0x Ethereum address of the privileged user',
+      required: false,
+    }),
     manufacturerName: Property.ShortText({
       displayName: 'Manufacturer Name',
-      description: 'Name of the manufacturer (e.g., Tesla)',
+      description: 'Name of the manufacturer (e.g., "Tesla")',
       required: false,
     }),
-    manufacturerTokenId: Property.Number({
-      displayName: 'Manufacturer Token ID',
-      description: 'Token ID of the manufacturer',
+    manufacturerId: Property.Number({
+      displayName: 'Manufacturer ID',
+      description: 'ID of the manufacturer',
       required: false,
     }),
-    devLicenseTokenId: Property.Number({
-      displayName: 'Developer License Token ID',
-      description: 'Token ID of the developer license',
+    dcnName: Property.ShortText({
+      displayName: 'DCN Name',
+      description: 'DIMO Canonical Name (e.g., "elonmusk.dimo")',
       required: false,
     }),
+    nodeId: Property.ShortText({
+      displayName: 'Node ID',
+      description: 'Global node identifier (e.g., "AD_kc1P8Q==")',
+      required: false,
+    }),
+    userAddress: Property.ShortText({
+      displayName: 'User Address',
+      description: '0x Ethereum address for rewards lookup',
+      required: false,
+    }),
+    
+    // Pagination
     first: Property.Number({
       displayName: 'First (Limit)',
-      description: 'Number of records to return (default: 10)',
+      description: 'Number of records to return from the beginning',
       required: false,
       defaultValue: 10,
     }),
+    last: Property.Number({
+      displayName: 'Last',
+      description: 'Number of records to return from the end',
+      required: false,
+    }),
+    after: Property.ShortText({
+      displayName: 'After (Cursor)',
+      description: 'Cursor for pagination - returns records after this cursor',
+      required: false,
+    }),
+    before: Property.ShortText({
+      displayName: 'Before (Cursor)',
+      description: 'Cursor for pagination - returns records before this cursor',
+      required: false,
+    }),
   },
+  
   async run(context) {
-    const { queryType, customQuery, vehicleTokenId, ownerAddress, manufacturerName, manufacturerTokenId, devLicenseTokenId, first } = context.propsValue;
+    const { 
+      queryType, 
+      customQuery, 
+      tokenId, 
+      ownerAddress, 
+      privilegedAddress,
+      manufacturerName, 
+      manufacturerId,
+      dcnName,
+      nodeId,
+      userAddress,
+      first, 
+      last, 
+      after, 
+      before 
+    } = context.propsValue;
     
     let graphqlQuery = '';
+    
+    // Build pagination arguments
+    const buildPaginationArgs = () => {
+      const args = [];
+      if (first) args.push(`first: ${first}`);
+      if (last) args.push(`last: ${last}`);
+      if (after) args.push(`after: "${after}"`);
+      if (before) args.push(`before: "${before}"`);
+      return args.join(', ');
+    };
     
     switch (queryType) {
       case 'custom':
@@ -76,42 +156,61 @@ export const identityApiAction = createAction({
         break;
         
       case 'vehicle_by_token':
-        if (!vehicleTokenId) {
-          throw new Error('Vehicle Token ID is required for this query type');
+        if (!tokenId) {
+          throw new Error('Token ID is required for this query type');
         }
         graphqlQuery = `
-          query GetVehicleByTokenId {
-            vehicle(tokenId: ${vehicleTokenId}) {
-              id
-              tokenId
-              name
-              image
+          query GetVehicleDetails {
+            vehicle(tokenId: ${tokenId}) {
               owner
-              mintedAt
-              manufacturer {
-                name
-                tokenId
-              }
+              tokenId
               definition {
+                id
                 make
                 model
                 year
-                deviceType
               }
               aftermarketDevice {
-                name
-                serial
-                manufacturer {
-                  name
-                }
-              }
-              syntheticDevice {
                 tokenId
-                integrationId
+                address
+                owner
+                serial
+                imei
+                devEUI
+                mintedAt
+                claimedAt
+                beneficiary
               }
               dcn {
-                name
-                node
+                tokenId
+                owner
+                mintedAt
+                expiresAt
+              }
+              earnings {
+                totalTokens
+                history(first: 5) {
+                  edges {
+                    node {
+                      week
+                      beneficiary
+                      connectionStreak
+                      streakTokens
+                      aftermarketDeviceTokens
+                      syntheticDeviceTokens
+                      sentAt
+                    }
+                  }
+                }
+              }
+              sacds(first: 10) {
+                nodes {
+                  permissions
+                  grantee
+                  source
+                  createdAt
+                  expiresAt
+                }
               }
             }
           }`;
@@ -121,10 +220,17 @@ export const identityApiAction = createAction({
         if (!ownerAddress) {
           throw new Error('Owner Address is required for this query type');
         }
+        const ownerPaginationArgs = buildPaginationArgs();
         graphqlQuery = `
           query GetVehiclesByOwner {
-            vehicles(filterBy: {owner: "${ownerAddress}"}, first: ${first || 10}) {
+            vehicles(${ownerPaginationArgs ? ownerPaginationArgs + ', ' : ''}filterBy: {owner: "${ownerAddress}"}) {
               totalCount
+              pageInfo {
+                startCursor
+                endCursor
+                hasPreviousPage
+                hasNextPage
+              }
               nodes {
                 id
                 tokenId
@@ -133,96 +239,330 @@ export const identityApiAction = createAction({
                 owner
                 mintedAt
                 definition {
-                  make
+                  id
                   model
                   year
+                }
+                aftermarketDevice {
+                  name
+                  serial
+                }
+                syntheticDevice {
+                  integrationId
                 }
               }
             }
           }`;
         break;
         
-      case 'total_vehicles':
+      case 'vehicles_by_privileged':
+        if (!privilegedAddress) {
+          throw new Error('Privileged Address is required for this query type');
+        }
+        const privilegedPaginationArgs = buildPaginationArgs();
         graphqlQuery = `
-          query GetTotalVehicles {
-            vehicles(first: 1) {
+          query GetVehiclesByPrivileged {
+            vehicles(${privilegedPaginationArgs ? privilegedPaginationArgs + ', ' : ''}filterBy: {privileged: "${privilegedAddress}"}) {
               totalCount
+              pageInfo {
+                startCursor
+                endCursor
+                hasPreviousPage
+                hasNextPage
+              }
+              nodes {
+                id
+                tokenId
+                name
+                image
+                owner
+                mintedAt
+              }
+            }
+          }`;
+        break;
+        
+      case 'aftermarket_device':
+        if (!tokenId) {
+          throw new Error('Token ID is required for this query type');
+        }
+        graphqlQuery = `
+          query GetAftermarketDevice {
+            aftermarketDevice(by: {tokenId: ${tokenId}}) {
+              id
+              tokenId
+              address
+              owner
+              serial
+              imei
+              devEUI
+              mintedAt
+              claimedAt
+              beneficiary
+              name
+              image
+              vehicle {
+                id
+                tokenId
+                name
+                owner
+              }
+              earnings {
+                totalTokens
+                history(first: 5) {
+                  edges {
+                    node {
+                      week
+                      aftermarketDeviceTokens
+                      sentAt
+                    }
+                  }
+                }
+              }
+            }
+          }`;
+        break;
+        
+      case 'aftermarket_devices_by_owner':
+        if (!ownerAddress) {
+          throw new Error('Owner Address is required for this query type');
+        }
+        const adOwnerPaginationArgs = buildPaginationArgs();
+        graphqlQuery = `
+          query GetAftermarketDevicesByOwner {
+            aftermarketDevices(${adOwnerPaginationArgs ? adOwnerPaginationArgs + ', ' : ''}filterBy: {owner: "${ownerAddress}"}) {
+              totalCount
+              pageInfo {
+                startCursor
+                endCursor
+                hasPreviousPage
+                hasNextPage
+              }
+              nodes {
+                id
+                tokenId
+                address
+                owner
+                serial
+                name
+                image
+                mintedAt
+                claimedAt
+                manufacturer {
+                  name
+                }
+                vehicle {
+                  tokenId
+                  name
+                }
+              }
+            }
+          }`;
+        break;
+        
+      case 'aftermarket_devices_by_manufacturer':
+        if (!manufacturerId) {
+          throw new Error('Manufacturer ID is required for this query type');
+        }
+        const adMfgPaginationArgs = buildPaginationArgs();
+        graphqlQuery = `
+          query GetAftermarketDevicesByManufacturer {
+            aftermarketDevices(${adMfgPaginationArgs ? adMfgPaginationArgs + ', ' : ''}filterBy: {manufacturerId: ${manufacturerId}}) {
+              totalCount
+              pageInfo {
+                startCursor
+                endCursor
+                hasPreviousPage
+                hasNextPage
+              }
+              nodes {
+                id
+                tokenId
+                address
+                owner
+                serial
+                name
+                image
+                mintedAt
+                claimedAt
+                vehicle {
+                  tokenId
+                  name
+                }
+              }
             }
           }`;
         break;
         
       case 'manufacturer_info':
-        if (!manufacturerName && !manufacturerTokenId) {
-          throw new Error('Either Manufacturer Name or Manufacturer Token ID is required for this query type');
+        if (!manufacturerName && !tokenId) {
+          throw new Error('Either Manufacturer Name or Token ID is required for this query type');
         }
-        const manufacturerFilter = manufacturerName ? `name: "${manufacturerName}"` : `tokenId: ${manufacturerTokenId}`;
+        const manufacturerFilter = manufacturerName ? `name: "${manufacturerName}"` : `tokenId: ${tokenId}`;
+        const mfgDevicePaginationArgs = buildPaginationArgs() || 'first: 10';
         graphqlQuery = `
           query GetManufacturerInfo {
-            manufacturer(by: { ${manufacturerFilter} }) {
+            manufacturer(by: {${manufacturerFilter}}) {
               id
               tokenId
               name
               owner
               mintedAt
-              aftermarketDevices(first: ${first || 10}) {
+              aftermarketDevices(${mfgDevicePaginationArgs}) {
                 totalCount
+                pageInfo {
+                  startCursor
+                  endCursor
+                  hasPreviousPage
+                  hasNextPage
+                }
                 nodes {
+                  id
+                  tokenId
                   name
                   serial
-                  tokenId
+                  owner
+                  mintedAt
                 }
               }
             }
           }`;
         break;
         
-      case 'dev_license_info':
-        if (!devLicenseTokenId) {
-          throw new Error('Developer License Token ID is required for this query type');
+      case 'dcn_by_name':
+        if (!dcnName) {
+          throw new Error('DCN Name is required for this query type');
         }
         graphqlQuery = `
-          query GetDevLicenseInfo {
-            developerLicense(by: { tokenId: ${devLicenseTokenId} }) {
+          query GetDCNByName {
+            dcn(by: {name: "${dcnName}"}) {
+              node
               tokenId
+              name
               owner
-              clientId
-              alias
               mintedAt
-              redirectURIs(first: 10) {
-                nodes {
-                  uri
-                  enabledAt
-                }
+              expiresAt
+              vehicle {
+                id
+                tokenId
+                name
+                owner
               }
             }
           }`;
         break;
         
-      case 'rewards_by_owner':
+      case 'dcns_by_owner':
         if (!ownerAddress) {
           throw new Error('Owner Address is required for this query type');
         }
+        const dcnPaginationArgs = buildPaginationArgs();
         graphqlQuery = `
-          query GetRewardsByOwner {
-            rewards(user: "${ownerAddress}") {
-              totalTokens
-            }
-            vehicles(filterBy: {owner: "${ownerAddress}"}, first: ${first || 10}) {
+          query GetDCNsByOwner {
+            dcns(${dcnPaginationArgs ? dcnPaginationArgs + ', ' : ''}filterBy: {owner: "${ownerAddress}"}) {
+              totalCount
+              pageInfo {
+                startCursor
+                endCursor
+                hasPreviousPage
+                hasNextPage
+              }
               nodes {
                 tokenId
-                earnings {
-                  totalTokens
-                  history(first: 5) {
-                    edges {
-                      node {
-                        week
-                        aftermarketDeviceTokens
-                        syntheticDeviceTokens
-                        streakTokens
-                        sentAt
-                        beneficiary
-                        connectionStreak
-                      }
+                name
+                owner
+                mintedAt
+                expiresAt
+                vehicle {
+                  tokenId
+                  name
+                }
+              }
+            }
+          }`;
+        break;
+        
+      case 'node_by_id':
+        if (!nodeId) {
+          throw new Error('Node ID is required for this query type');
+        }
+        graphqlQuery = `
+          query GetNodeById {
+            node(id: "${nodeId}") {
+              id
+              ... on AftermarketDevice {
+                serial
+                imei
+                devEUI
+                claimedAt
+                beneficiary
+                name
+                image
+                vehicle {
+                  tokenId
+                  name
+                }
+              }
+              ... on Manufacturer {
+                id
+                tokenId
+                name
+                owner
+                mintedAt
+              }
+              ... on Vehicle {
+                id
+                tokenId
+                name
+                image
+                owner
+                mintedAt
+              }
+            }
+          }`;
+        break;
+        
+      case 'user_rewards':
+        if (!userAddress) {
+          throw new Error('User Address is required for this query type');
+        }
+        const rewardsPaginationArgs = buildPaginationArgs() || 'first: 10';
+        graphqlQuery = `
+          query GetUserRewards {
+            rewards(user: "${userAddress}") {
+              totalTokens
+            }
+          }`;
+        break;
+        
+      case 'vehicle_earnings':
+        if (!tokenId) {
+          throw new Error('Token ID is required for this query type');
+        }
+        const earningsPaginationArgs = buildPaginationArgs() || 'first: 10';
+        graphqlQuery = `
+          query GetVehicleEarnings {
+            vehicle(tokenId: ${tokenId}) {
+              tokenId
+              earnings {
+                totalTokens
+                history(${earningsPaginationArgs}) {
+                  totalCount
+                  pageInfo {
+                    startCursor
+                    endCursor
+                    hasPreviousPage
+                    hasNextPage
+                  }
+                  edges {
+                    node {
+                      week
+                      beneficiary
+                      connectionStreak
+                      streakTokens
+                      aftermarketDeviceTokens
+                      syntheticDeviceTokens
+                      sentAt
                     }
                   }
                 }
@@ -251,8 +591,36 @@ export const identityApiAction = createAction({
         throw new Error(`GraphQL errors: ${JSON.stringify(response.body.errors)}`);
       }
 
-      return response.body.data;
+      return {
+        data: response.body.data,
+        queryInfo: {
+          queryType,
+          parameters: {
+            tokenId,
+            ownerAddress,
+            privilegedAddress,
+            manufacturerName,
+            manufacturerId,
+            dcnName,
+            nodeId,
+            userAddress,
+          },
+          pagination: {
+            first,
+            last,
+            after,
+            before,
+          },
+        },
+      };
     } catch (error: any) {
+      if (error.response) {
+        const statusCode = error.response.status;
+        const errorBody = error.response.body;
+        
+        throw new Error(`Identity API failed (${statusCode}): ${errorBody?.message || JSON.stringify(errorBody) || error.message}`);
+      }
+      
       throw new Error(`Identity API request failed: ${error.message}`);
     }
   },

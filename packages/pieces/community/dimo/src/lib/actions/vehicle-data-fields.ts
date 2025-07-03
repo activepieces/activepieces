@@ -8,6 +8,34 @@ export const vehicleDataFieldsAction = createAction({
   displayName: 'Vehicle Data Fields Lookup',
   description: 'Look up available data fields for a given vehicle (requires Vehicle JWT)',
   props: {
+    vehicleJwt: Property.ShortText({
+      displayName: 'Vehicle JWT',
+      description: 'Vehicle JWT obtained from Token Exchange API (expires in 10 minutes). Leave empty to auto-exchange using settings below.',
+      required: false,
+    }),
+    autoExchange: Property.Checkbox({
+      displayName: 'Auto-Exchange for Vehicle JWT',
+      description: 'Automatically get Vehicle JWT using Token Exchange API (requires privileges below)',
+      required: false,
+      defaultValue: false,
+    }),
+    privileges: Property.StaticMultiSelectDropdown({
+      displayName: 'Privileges (for Auto-Exchange)',
+      description: 'Required if Auto-Exchange is enabled. Data fields lookup requires Privilege 1 or 6.',
+      required: false,
+      options: {
+        options: [
+          { label: 'All-time, non-location data (Privilege 1)', value: 1 },
+          { label: 'Commands (Privilege 2)', value: 2 },
+          { label: 'Current location (Privilege 3)', value: 3 },
+          { label: 'All-time location (Privilege 4)', value: 4 },
+          { label: 'View VIN credentials (Privilege 5)', value: 5 },
+          { label: 'Live data streams (Privilege 6)', value: 6 },
+          { label: 'Raw data (Privilege 7)', value: 7 },
+          { label: 'Approximate location (Privilege 8)', value: 8 }
+        ],
+      },
+    }),
     vehicleTokenId: Property.Number({
       displayName: 'Vehicle Token ID',
       description: 'The Vehicle token ID to look up available data fields for',
@@ -15,10 +43,49 @@ export const vehicleDataFieldsAction = createAction({
     }),
   },
   async run(context) {
-    const { vehicleTokenId } = context.propsValue;
+    const { vehicleJwt, autoExchange, privileges, vehicleTokenId } = context.propsValue;
     
-    if (!context.auth.vehicleJwt) {
-      throw new Error('Vehicle JWT is required for Vehicle Data Fields lookup. Please provide a Vehicle JWT in the authentication configuration or use the Token Exchange API action first.');
+    let finalVehicleJwt = vehicleJwt;
+    
+    // Auto-exchange for Vehicle JWT if needed
+    if (!finalVehicleJwt && autoExchange) {
+      if (!privileges || privileges.length === 0) {
+        throw new Error('Privileges are required when Auto-Exchange is enabled. For data fields lookup, recommend Privilege 1 (All-time, non-location data) or Privilege 6 (Live data streams).');
+      }
+      
+      if (!context.auth.developerJwt) {
+        throw new Error('Developer JWT is required for auto-exchange. Please configure it in the connection settings.');
+      }
+      
+      try {
+        // Call Token Exchange API internally
+        const tokenExchangeResponse = await httpClient.sendRequest({
+          method: HttpMethod.POST,
+          url: 'https://token-exchange-api.dimo.zone/v1/tokens/exchange',
+          body: {
+            nftContractAddress: '0xbA5738a18d83D41847dfFbDC6101d37C69c9B0cF',
+            privileges: privileges,
+            tokenId: vehicleTokenId,
+          },
+          headers: {
+            'Authorization': `Bearer ${context.auth.developerJwt}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!tokenExchangeResponse.body.token) {
+          throw new Error('Failed to auto-exchange for Vehicle JWT. Please use manual Token Exchange API or provide Vehicle JWT directly.');
+        }
+        
+        finalVehicleJwt = tokenExchangeResponse.body.token;
+        
+      } catch (error: any) {
+        throw new Error(`Auto-exchange failed: ${error.message}. Try using the Token Exchange API action manually.`);
+      }
+    }
+    
+    if (!finalVehicleJwt) {
+      throw new Error('Vehicle JWT is required for Vehicle Data Fields lookup. Either provide a Vehicle JWT directly, enable Auto-Exchange with privileges, or use the "Token Exchange API" action first.');
     }
 
     try {
@@ -34,7 +101,7 @@ export const vehicleDataFieldsAction = createAction({
           `,
         },
         headers: {
-          'Authorization': `Bearer ${context.auth.vehicleJwt}`,
+          'Authorization': `Bearer ${finalVehicleJwt}`,
           'Content-Type': 'application/json',
         },
       });
@@ -49,6 +116,7 @@ export const vehicleDataFieldsAction = createAction({
         vehicleTokenId,
         availableSignals,
         totalSignals: availableSignals.length,
+        autoExchangeUsed: autoExchange && !vehicleJwt,
         signalCategories: {
           basic: availableSignals.filter((s: string) => ['speed', 'isIgnitionOn', 'powertrainTransmissionTravelledDistance'].includes(s)),
           location: availableSignals.filter((s: string) => s.includes('Location')),

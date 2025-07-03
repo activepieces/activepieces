@@ -24,38 +24,19 @@ import { tirePressureTrigger } from "./lib/triggers/tire-pressure-trigger";
 
 export const dimoAuth = PieceAuth.CustomAuth({
   props: {
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description: 'DIMO API base URL',
-      required: true,
-      defaultValue: 'https://api.dimo.zone',
-    }),
-    vehicleJwt: PieceAuth.SecretText({
-      displayName: 'Vehicle JWT',
-      description: 'JWT token for vehicle-specific operations (Attestation, Telemetry, etc.)',
-      required: false,
-    }),
     developerJwt: PieceAuth.SecretText({
       displayName: 'Developer JWT', 
-      description: 'JWT token for developer operations (Device Definition, Token Exchange, Webhooks)',
-      required: false,
+      description: 'JWT token for API access. Generate in DIMO Console: console.dimo.org > Webhooks > Generate developer JWT',
+      required: true,
     }),
   },
   required: true,
   validate: async ({ auth }) => {
-    // Validate at least one JWT is provided
-    if (!auth.vehicleJwt && !auth.developerJwt) {
+    // Developer JWT is required as primary authentication
+    if (!auth.developerJwt) {
       return {
         valid: false,
-        error: 'At least one JWT token (Vehicle JWT or Developer JWT) is required',
-      };
-    }
-    
-    // Validate base URL format
-    if (!auth.baseUrl.match(/^https?:\/\//)) {
-      return {
-        valid: false,
-        error: 'Base URL must be a valid HTTP or HTTPS URL',
+        error: 'Developer JWT is required. Generate one at console.dimo.org > Webhooks > Generate developer JWT',
       };
     }
     
@@ -67,7 +48,7 @@ export const dimoAuth = PieceAuth.CustomAuth({
 
     export const dimo = createPiece({
   displayName: "DIMO",
-  description: "DIMO is an open-source connected vehicle protocol built on blockchain technology",
+  description: "DIMO is an open-source connected vehicle protocol built on blockchain technology. Use 'Token Exchange API' to get Vehicle JWTs for specific operations.",
   auth: dimoAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/dimo.png",

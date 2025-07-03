@@ -8,6 +8,34 @@ export const attestationApiAction = createAction({
   displayName: 'Attestation API',
   description: 'Generate verifiable proof about vehicle data - currently supports VIN Verifiable Credentials (requires Vehicle JWT)',
   props: {
+    vehicleJwt: Property.ShortText({
+      displayName: 'Vehicle JWT',
+      description: 'Vehicle JWT obtained from Token Exchange API (expires in 10 minutes). Leave empty to auto-exchange using settings below.',
+      required: false,
+    }),
+    autoExchange: Property.Checkbox({
+      displayName: 'Auto-Exchange for Vehicle JWT',
+      description: 'Automatically get Vehicle JWT using Token Exchange API (requires privileges below)',
+      required: false,
+      defaultValue: false,
+    }),
+    privileges: Property.StaticMultiSelectDropdown({
+      displayName: 'Privileges (for Auto-Exchange)',
+      description: 'Required if Auto-Exchange is enabled. VIN credentials require Privilege 5.',
+      required: false,
+      options: {
+        options: [
+          { label: 'All-time, non-location data (Privilege 1)', value: 1 },
+          { label: 'Commands (Privilege 2)', value: 2 },
+          { label: 'Current location (Privilege 3)', value: 3 },
+          { label: 'All-time location (Privilege 4)', value: 4 },
+          { label: 'View VIN credentials (Privilege 5)', value: 5 },
+          { label: 'Live data streams (Privilege 6)', value: 6 },
+          { label: 'Raw data (Privilege 7)', value: 7 },
+          { label: 'Approximate location (Privilege 8)', value: 8 }
+        ],
+      },
+    }),
     vehicleTokenId: Property.Number({
       displayName: 'Vehicle Token ID',
       description: 'The Vehicle token ID for which to generate the VIN Verifiable Credential',
@@ -26,11 +54,50 @@ export const attestationApiAction = createAction({
     }),
   },
   async run(context) {
-    const { vehicleTokenId, operationType } = context.propsValue;
+    const { vehicleJwt, autoExchange, privileges, vehicleTokenId, operationType } = context.propsValue;
+    
+    let finalVehicleJwt = vehicleJwt;
+    
+    // Auto-exchange for Vehicle JWT if needed
+    if (!finalVehicleJwt && autoExchange) {
+      if (!privileges || privileges.length === 0) {
+        throw new Error('Privileges are required when Auto-Exchange is enabled. For VIN credentials, you need Privilege 5 (View VIN credentials).');
+      }
+      
+      if (!context.auth.developerJwt) {
+        throw new Error('Developer JWT is required for auto-exchange. Please configure it in the connection settings.');
+      }
+      
+      try {
+        // Call Token Exchange API internally
+        const tokenExchangeResponse = await httpClient.sendRequest({
+          method: HttpMethod.POST,
+          url: 'https://token-exchange-api.dimo.zone/v1/tokens/exchange',
+          body: {
+            nftContractAddress: '0xbA5738a18d83D41847dfFbDC6101d37C69c9B0cF',
+            privileges: privileges,
+            tokenId: vehicleTokenId,
+          },
+          headers: {
+            'Authorization': `Bearer ${context.auth.developerJwt}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!tokenExchangeResponse.body.token) {
+          throw new Error('Failed to auto-exchange for Vehicle JWT. Please use manual Token Exchange API or provide Vehicle JWT directly.');
+        }
+        
+        finalVehicleJwt = tokenExchangeResponse.body.token;
+        
+      } catch (error: any) {
+        throw new Error(`Auto-exchange failed: ${error.message}. Try using the Token Exchange API action manually.`);
+      }
+    }
     
     // Check if Vehicle JWT is provided
-    if (!context.auth.vehicleJwt) {
-      throw new Error('Vehicle JWT is required for Attestation API. Please provide a Vehicle JWT in the authentication configuration or use the Token Exchange API action first.');
+    if (!finalVehicleJwt) {
+      throw new Error('Vehicle JWT is required for Attestation API. Either provide a Vehicle JWT directly, enable Auto-Exchange with privileges, or use the "Token Exchange API" action first.');
     }
 
     if (operationType !== 'vin_vc') {
@@ -42,7 +109,7 @@ export const attestationApiAction = createAction({
         method: HttpMethod.POST,
         url: `https://attestation-api.dimo.zone/v1/vc/vin/${vehicleTokenId}`,
         headers: {
-          'Authorization': `Bearer ${context.auth.vehicleJwt}`,
+          'Authorization': `Bearer ${finalVehicleJwt}`,
           'Content-Type': 'application/json',
         },
       });
@@ -69,19 +136,14 @@ export const attestationApiAction = createAction({
           vcQuery,
           vehicleTokenId,
         },
+        autoExchangeUsed: autoExchange && !vehicleJwt,
         usage: {
           description: 'Use the vcQuery on the vcUrl to retrieve the VIN Verifiable Credential',
           example: `
             GraphQL Query: ${vcQuery}
             Endpoint: ${vcUrl}
             
-            You can now use this query in the Telemetry API to get the VIN:
-            query {
-              vinVCLatest(tokenId: ${vehicleTokenId}) {
-                rawVC
-                vin
-              }
-            }
+            Note: This verifiable credential can be used to prove vehicle ownership or VIN authenticity to third parties. The VIN data is contained within the verifiable credential itself, not accessible through the Telemetry API.
           `,
         },
         nextSteps: {
