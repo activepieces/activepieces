@@ -1,6 +1,8 @@
 import { t } from 'i18next';
 import { Loader2, Wrench, CircleCheck, CircleX } from 'lucide-react';
 
+import { CodeMirrorJsonViewer } from '@/components/code-mirror-json-viewer';
+import { ApMarkdown } from '@/components/custom/markdown';
 import {
   Accordion,
   AccordionItem,
@@ -14,8 +16,6 @@ import {
   ToolCallContentBlock,
   ToolCallStatus,
 } from '@activepieces/shared';
-import { CodeMirrorJsonViewer } from '@/components/code-mirror-json-viewer';
-import { ApMarkdown } from '@/components/custom/markdown';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -29,15 +29,24 @@ type ToolCallOutput = {
     text: string;
   }[];
   resolvedFields: Record<string, unknown>;
-}
+};
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const outputAsToolCallOutput = block.output as ToolCallOutput;
-  const output = block.output && outputAsToolCallOutput.content?.[0]?.text ? JSON.parse(outputAsToolCallOutput.content[0].text) : '';
-  const resolvedFields = block.output && outputAsToolCallOutput.resolvedFields ? outputAsToolCallOutput.resolvedFields : {}; 
-  const markAsComplete = block.output && (outputAsToolCallOutput.success === true || outputAsToolCallOutput.success === undefined);
-   return (
+  const output =
+    block.output && outputAsToolCallOutput.content?.[0]?.text
+      ? JSON.parse(outputAsToolCallOutput.content[0].text)
+      : '';
+  const resolvedFields =
+    block.output && outputAsToolCallOutput.resolvedFields
+      ? outputAsToolCallOutput.resolvedFields
+      : {};
+  const markAsComplete =
+    block.output &&
+    (outputAsToolCallOutput.success === true ||
+      outputAsToolCallOutput.success === undefined);
+  return (
     <Accordion type="multiple" defaultValue={[]}>
       <AccordionItem value={`block-${index}`}>
         <AccordionTrigger className="flex items-center gap-3 transition-colors">
@@ -78,13 +87,22 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
               <div className="text-xs font-medium text-muted-foreground">
                 {t('Instructions')}
               </div>
-              <ApMarkdown variant={MarkdownVariant.BORDERLESS} markdown={JSON.stringify(block.input?.instructions ?? block.input)}  />
+              <ApMarkdown
+                variant={MarkdownVariant.BORDERLESS}
+                markdown={JSON.stringify(
+                  block.input?.instructions ?? block.input,
+                )}
+              />
             </div>
             {!isNil(resolvedFields) && (
-                <CodeMirrorJsonViewer json={resolvedFields} hideDownload={true} title={t('Resolved Fields')} />
+              <CodeMirrorJsonViewer
+                json={resolvedFields}
+                hideDownload={true}
+                title={t('Resolved Fields')}
+              />
             )}
             {!isNil(output) && (
-                <CodeMirrorJsonViewer json={output} title={t('Result')} />  
+              <CodeMirrorJsonViewer json={output} title={t('Result')} />
             )}
           </div>
         </AccordionContent>

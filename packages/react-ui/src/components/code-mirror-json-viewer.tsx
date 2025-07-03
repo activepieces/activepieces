@@ -20,19 +20,19 @@ type CodeMirrorJsonViewerProps = {
 };
 
 export const CodeMirrorJsonViewer = React.memo(
-  ({ 
-    json: unclearJson, 
-    title, 
-    hideDownload = false, 
+  ({
+    json: unclearJson,
+    title,
+    hideDownload = false,
     readOnly = true,
     maxHeight,
-    backgroundColor = '#fafafa'
+    backgroundColor = '#fafafa',
   }: CodeMirrorJsonViewerProps) => {
     const { theme } = useTheme();
     const [copied, setCopied] = useState(false);
-    
+
     const editorTheme = theme === 'dark' ? githubDark : githubLight;
-    
+
     const formattedJson = React.useMemo(() => {
       if (isNil(unclearJson)) {
         return unclearJson === null ? 'null' : 'undefined';
