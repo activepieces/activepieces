@@ -17,4 +17,7 @@ function hashSHA256(input: string): string {
 export const cryptoUtils = {
     generateRandomPassword,
     hashSHA256,
+    async hashObject(obj: Record<string, unknown>): Promise<string> {
+        return hashSHA256(JSON.stringify(obj))
+    },
 }
