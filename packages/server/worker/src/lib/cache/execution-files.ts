@@ -23,7 +23,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         pieces,
         codeSteps,
         customPiecesPath,
-        runEnvironment,
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
@@ -32,7 +31,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
 
         const startTimeCode = performance.now()
         await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
-        assertNotNullOrUndefined(runEnvironment, 'Run environment is required')
         // This is sequential to ensure the worker machine is not overloaded
         for (const artifact of codeSteps) {
             await codeBuilder(log).processCodeStep({
@@ -97,5 +95,4 @@ type ProvisionParams = {
     pieces: PiecePackage[]
     codeSteps: CodeArtifact[]
     customPiecesPath: string
-    runEnvironment?: RunEnvironment
 }
