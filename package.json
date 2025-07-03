@@ -429,6 +429,12 @@
   "nx": {
     "includedScripts": []
   },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node"
   },
