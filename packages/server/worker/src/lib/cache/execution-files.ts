@@ -1,6 +1,6 @@
 import path from 'path'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, ExecutionMode, PiecePackage, PieceType, RunEnvironment } from '@activepieces/shared'
+import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { CodeArtifact } from '../runner/engine-runner-types'

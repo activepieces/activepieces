@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 export function TasksUsage({

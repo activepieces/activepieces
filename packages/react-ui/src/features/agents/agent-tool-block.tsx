@@ -1,8 +1,8 @@
 import { t } from 'i18next';
 import { Loader2, Wrench, CircleCheck, CircleX } from 'lucide-react';
 
-import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import {
   Accordion,
   AccordionItem,
@@ -35,12 +35,17 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const outputAsToolCallOutput = block.output as ToolCallOutput | null;
 
-
   const hasInstructions = !isNil(block.input?.instructions);
-  const resolvedFields = !isNil(outputAsToolCallOutput?.resolvedFields) ? outputAsToolCallOutput.resolvedFields : null;
-  const output = !isNil(outputAsToolCallOutput?.content) ? JSON.parse(outputAsToolCallOutput.content[0].text) : null;
+  const resolvedFields = !isNil(outputAsToolCallOutput?.resolvedFields)
+    ? outputAsToolCallOutput.resolvedFields
+    : null;
+  const output = !isNil(outputAsToolCallOutput?.content)
+    ? JSON.parse(outputAsToolCallOutput.content[0].text)
+    : null;
 
-  const markAsComplete = !isNil(outputAsToolCallOutput?.success) ? outputAsToolCallOutput.success : true;
+  const markAsComplete = !isNil(outputAsToolCallOutput?.success)
+    ? outputAsToolCallOutput.success
+    : true;
 
   return (
     <Accordion type="multiple" defaultValue={[`block-${index}`]}>
@@ -79,7 +84,6 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         </AccordionTrigger>
         <AccordionContent>
           <div className="space-y-3">
-
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-muted-foreground">
                 {hasInstructions ? t('Instructions') : t('Input')}
@@ -87,15 +91,10 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
               {hasInstructions ? (
                 <ApMarkdown
                   variant={MarkdownVariant.BORDERLESS}
-                  markdown={JSON.stringify(
-                    block.input?.instructions
-                  )}
+                  markdown={JSON.stringify(block.input?.instructions)}
                 />
               ) : (
-                <SimpleJsonViewer
-                  data={block.input}
-                  hideCopyButton={true}
-                />
+                <SimpleJsonViewer data={block.input} hideCopyButton={true} />
               )}
             </div>
             {!isNil(resolvedFields) && (
@@ -103,10 +102,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                 <div className="text-xs font-medium text-muted-foreground">
                   {t('Resolved Fields')}
                 </div>
-                <SimpleJsonViewer
-                  data={resolvedFields}
-                  hideCopyButton={true}
-                />
+                <SimpleJsonViewer data={resolvedFields} hideCopyButton={true} />
               </div>
             )}
             {!isNil(output) && (
@@ -114,10 +110,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                 <div className="text-xs font-medium text-muted-foreground">
                   {t('Result')}
                 </div>
-                <SimpleJsonViewer
-                  data={output}
-                  hideCopyButton={true}
-                />
+                <SimpleJsonViewer data={output} hideCopyButton={true} />
               </div>
             )}
           </div>
