@@ -2,6 +2,7 @@ import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework
 import { createFunnelParticipant } from './lib/actions/create-funnel-participant';
 import { newFunnelParticipant } from './lib/triggers/new-funnel-participant';
 import { newWebinarParticipant } from './lib/triggers/new-webinar-participant';
+import { newAuthEvent } from './lib/triggers/new-auth-event';
 
 export const coasyAuth = PieceAuth.CustomAuth({
   required: true,
@@ -23,11 +24,11 @@ export const coasyAuth = PieceAuth.CustomAuth({
 export const coasy = createPiece({
   displayName: 'Coasy',
   auth: coasyAuth,
-  description: 'Communicate with Coasy',
+  description: 'Communicate with Coasy!',
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://console.achtsamkeitsakademie.de/favicon/apple-icon.png',
   authors: ["christian-schab"],
   actions: [createFunnelParticipant],
-  triggers: [newFunnelParticipant, newWebinarParticipant]
+  triggers: [newFunnelParticipant, newWebinarParticipant, newAuthEvent]
 });
 

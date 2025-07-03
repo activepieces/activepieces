@@ -1,7 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { coasyAuth } from '../..';
 import { createCoasyTrigger, destroyCoasyTrigger } from '../common/triggers';
-import { CoasyClient } from '../common/coasyClient';
 
 const triggerName = "NEW_FUNNEL_PARTICIPANT";
 

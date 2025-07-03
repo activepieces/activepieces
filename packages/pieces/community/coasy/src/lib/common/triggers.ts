@@ -23,6 +23,14 @@ export interface DestroyTriggerRequest {
   store: Store;
 }
 
+export interface TestTriggerRequest {
+  triggerName: string;
+  auth:  StaticPropsValue<{
+    baseUrl: ShortTextProperty<true>,
+    apiKey: SecretTextProperty<true>
+  }>
+}
+
 export const createCoasyTrigger = async (request: CreateTriggerRequest) => {
   const { triggerName, webhookUrl, filter, auth, store} = request;
   const client = new CoasyClient(auth.baseUrl, auth.apiKey);
@@ -38,4 +46,13 @@ export const destroyCoasyTrigger = async (request: DestroyTriggerRequest) =>  {
 
   const client = new CoasyClient(auth.baseUrl, auth.apiKey);
   await client.destroyTrigger(webhookId);
+}
+
+export const testCoasyTrigger = async (request: TestTriggerRequest): Promise<any[]> => {
+  const { triggerName, auth} = request;
+
+  const client = new CoasyClient(auth.baseUrl, auth.apiKey);
+  const response = await client.listTriggerEvents(triggerName);
+
+  return [{ test: true}];
 }
