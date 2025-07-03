@@ -169,7 +169,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -586,6 +586,9 @@
       ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
+      ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
       ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
