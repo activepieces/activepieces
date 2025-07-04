@@ -16,9 +16,7 @@ USER INSTRUCTIONS:
 {userInstructions}
 
 IMPORTANT:
-- For DYNAMIC properties, for each value, wrap the keys inside the options property inside an object with the same property name, and assign the array to the property name. For example, if the property is "values", return: { "values": [ { ...optionKeys }, ... ] }.
 - For dropdown properties, select values from the provided options array only
-- For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
 - Must include all required properties, even if the user does not provide a value
 - For CHECKBOX properties, return true or false
 - For SHORT_TEXT and LONG_TEXT properties, return string values
@@ -233,22 +231,23 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
     }
 
     if (property.type === PropertyType.DYNAMIC) {
-        const dynamicSchema: z.ZodTypeAny = z.object(Object.fromEntries(
-            await Promise.all(
-                Object.entries(options).map(async ([key, value]) => [
-                    key, 
-                    (await buildZodSchemaForPieceProperty({
-                        property: value,
-                        logger,
-                        input,
-                        projectId,
-                        propertyName,
-                        actionMetadata,
-                        piecePackage,
-                        depth: depth + 1,
-                    })).schema,
-                ]),
-            )))
+        const optionsSchema =  await Promise.all(
+            Object.entries(options).map(async ([key, value]) => [
+                key, 
+                (await buildZodSchemaForPieceProperty({
+                    property: value,
+                    logger,
+                    input,
+                    projectId,
+                    propertyName,
+                    actionMetadata,
+                    piecePackage,
+                    depth: depth + 1,
+                })).schema,
+            ]),
+        )
+        const optionsSchemaEntries = Object.fromEntries(optionsSchema)
+        const dynamicSchema: z.ZodTypeAny = z.object(optionsSchemaEntries)
         return {
             schema: z.object({ [propertyName]: dynamicSchema }),
             value: resolvedPropertyData.result,
