@@ -22,5 +22,25 @@ export const CreateAIProviderRequest = Type.Object({
 
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
 
+export const AIUsage = Type.Object({
+    ...BaseModelSchema,
+    provider: Type.String({ minLength: 1 }),
+    model: Type.String({ minLength: 1 }),
+    cost: Type.Number({ minimum: 0 }),
+    projectId: Type.String(),
+})
+
+export type AIUsage = Static<typeof AIUsage>
+
+export const AIErrorResponse = Type.Object({
+    error: Type.Object({
+        message: Type.String(),
+        type: Type.String(),
+        code: Type.String(),
+    }),
+})
+
+export type AIErrorResponse = Static<typeof AIErrorResponse>
+
 export * from './supported-ai-providers'
 export * from './ai-sdk'

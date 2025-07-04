@@ -14,8 +14,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
-        includedTasks: {
-            type: Number,
+        plan: {
+            type: String,
+            nullable: true,
         },
         tasksLimit: {
             type: Number,
@@ -24,8 +25,32 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsLimit: {
+        aiCreditsOverageLimit: {
             type: Number,
+            nullable: true,
+        },
+        aiCreditsOverageState: {
+            type: String,
+            nullable: true,
+        },
+        eligibleForTrial: {
+            type: Boolean,
+            nullable: false,
+        },
+        stripeSubscriptionStartDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionEndDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionCancelDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripePaymentMethod: {
+            type: String,
             nullable: true,
         },
         environmentsEnabled: {
@@ -88,6 +113,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
+        agentsLimit: {
+            type: Number,
+            nullable: true,
+        },
         stripeSubscriptionStatus: {
             type: String,
             nullable: true,
@@ -109,6 +138,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         tablesLimit: {
             type: Number,
             nullable: true,
+        },
+        agentsEnabled: {
+            type: Boolean,
         },
         mcpLimit: {
             type: Number,

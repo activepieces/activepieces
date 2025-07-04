@@ -1,5 +1,6 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -84,7 +85,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
         return response.json()
     },
-    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null  > {
+    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {
             return null
         }
@@ -126,9 +127,13 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await deactivatePlatformUsersOtherThanAdmin(platformId)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
+        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         await platformService.update({
             id: platformId,
             plan: {
+                plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
+                licenseKey: key.key,
+                licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
                 showPoweredBy: key.showPoweredBy,
@@ -139,6 +144,12 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 manageProjectsEnabled: key.manageProjectsEnabled,
                 managePiecesEnabled: key.managePiecesEnabled,
+                activeFlowsLimit: undefined,
+                agentsLimit: undefined,
+                mcpLimit: undefined,
+                projectsLimit: undefined,
+                tablesLimit: undefined,
+                userSeatsLimit: undefined,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
@@ -153,6 +164,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
         platformId,
+        cursorRequest: null,
+        limit: 1000,
     })
     const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
         return userService.update({

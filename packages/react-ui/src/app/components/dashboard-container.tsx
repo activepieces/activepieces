@@ -1,14 +1,18 @@
 import { t } from 'i18next';
-import { ListTodo, Package, Table2, Workflow } from 'lucide-react';
+import { Bot, ListTodo, Package, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
+import mcpDark from '@/assets/img/custom/mcp-dark.svg';
+import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
+import { useTheme } from '@/components/theme-provider';
+import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -33,7 +37,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
+  setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({
@@ -42,11 +46,17 @@ export function DashboardContainer({
   hideHeader,
   removeBottomPadding,
 }: DashboardContainerProps) {
+  const { theme } = useTheme();
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BILLING,
+  );
+
   const [isAlertClosed, setIsAlertClosed] = useState(false);
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -83,7 +93,6 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: <Workflow />,
     label: t('Flows'),
-    name: t('Products'),
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
@@ -97,10 +106,27 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
-    icon: McpSvg,
+    icon: (
+      <img
+        src={theme === 'dark' ? mcpDark : mcpLight}
+        alt="MCP"
+        className="color-foreground"
+      />
+    ),
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
+  };
+
+  const agentsLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/agents'),
+    label: t('Agents'),
+    icon: <Bot />,
+    showInEmbed: false,
+    hasPermission: true,
+    isSubItem: false,
+    name: t('Products'),
   };
 
   const tablesLink: SidebarLink = {
@@ -124,11 +150,12 @@ export function DashboardContainer({
   };
 
   const items: SidebarItem[] = [
+    agentsLink,
     flowsLink,
-    releasesLink,
-    mcpLink,
     tablesLink,
+    mcpLink,
     todosLink,
+    releasesLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter)
@@ -152,6 +179,7 @@ export function DashboardContainer({
         >
           {children}
         </SidebarComponent>
+        {showBilling && <WelcomeTrialDialog />}
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

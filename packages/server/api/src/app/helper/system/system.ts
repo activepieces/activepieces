@@ -67,7 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
-    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '2000',
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -76,11 +76,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '20',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
     [AppSystemProp.SHOW_CHANGELOG]: 'true',
-    [AppSystemProp.MAX_MCPS_PER_PROJECT]: '3',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
+    [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
 }
 
 let globalLogger: FastifyBaseLogger

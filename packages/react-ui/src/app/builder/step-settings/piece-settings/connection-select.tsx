@@ -52,8 +52,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const form = useFormContext<PieceAction | PieceTrigger>();
 
-  console.info('ConnectionSelect');
-
   const {
     data: connections,
     isLoading: isLoadingConnections,

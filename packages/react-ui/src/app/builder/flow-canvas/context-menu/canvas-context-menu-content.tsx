@@ -26,6 +26,7 @@ import {
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -56,16 +57,25 @@ const ShortcutWrapper = ({
 };
 
 export const CanvasContextMenuContent = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  exitStepSettings,
-  readonly,
-  actionsToPaste,
-  setPieceSelectorStep,
   contextMenuType,
 }: CanvasContextMenuProps) => {
+  const [
+    selectedNodes,
+    applyOperation,
+    selectedStep,
+    flowVersion,
+    exitStepSettings,
+    readonly,
+    setOpenedPieceSelectorStepNameOrAddButtonId,
+  ] = useBuilderStateContext((state) => [
+    state.selectedNodes,
+    state.applyOperation,
+    state.selectedStep,
+    state.flowVersion,
+    state.exitStepSettings,
+    state.readonly,
+    state.setOpenedPieceSelectorStepNameOrAddButtonId,
+  ]);
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
@@ -74,7 +84,7 @@ export const CanvasContextMenuContent = ({
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
   );
-  const disabledPaste = actionsToPaste.length === 0;
+
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
     flowVersion.trigger,
@@ -131,7 +141,7 @@ export const CanvasContextMenuContent = ({
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
-            setPieceSelectorStep(selectedNodes[0]);
+            setOpenedPieceSelectorStepNameOrAddButtonId(selectedNodes[0]);
           }}
           className="flex items-center gap-2"
         >
@@ -191,16 +201,10 @@ export const CanvasContextMenuContent = ({
 
         {showPasteAfterLastStep && (
           <ContextMenuItem
-            disabled={disabledPaste}
             onClick={() => {
               const pasteLocation = getLastLocationAsPasteLocation(flowVersion);
               if (pasteLocation) {
-                pasteNodes(
-                  actionsToPaste,
-                  flowVersion,
-                  pasteLocation,
-                  applyOperation,
-                );
+                pasteNodes(flowVersion, pasteLocation, applyOperation);
               }
             }}
             className="flex items-center gap-2"
@@ -212,10 +216,8 @@ export const CanvasContextMenuContent = ({
 
         {showPasteAsFirstLoopAction && (
           <ContextMenuItem
-            disabled={disabledPaste}
             onClick={() => {
               pasteNodes(
-                actionsToPaste,
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
@@ -234,10 +236,8 @@ export const CanvasContextMenuContent = ({
 
         {showPasteAfterCurrentStep && (
           <ContextMenuItem
-            disabled={disabledPaste}
             onClick={() => {
               pasteNodes(
-                actionsToPaste,
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
@@ -254,7 +254,7 @@ export const CanvasContextMenuContent = ({
           </ContextMenuItem>
         )}
 
-        {showPasteAsBranchChild && !disabledPaste && (
+        {showPasteAsBranchChild && (
           <ContextMenuSub>
             <ContextMenuSubTrigger className="flex items-center gap-2">
               <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
@@ -268,7 +268,6 @@ export const CanvasContextMenuContent = ({
                       key={branch.branchName}
                       onClick={() => {
                         pasteNodes(
-                          actionsToPaste,
                           flowVersion,
                           {
                             parentStepName: selectedNodes[0],
@@ -296,7 +295,6 @@ export const CanvasContextMenuContent = ({
                     },
                   });
                   pasteNodes(
-                    actionsToPaste,
                     flowVersion,
                     {
                       parentStepName: firstSelectedStep.name,
@@ -315,12 +313,6 @@ export const CanvasContextMenuContent = ({
           </ContextMenuSub>
         )}
 
-        {showPasteAsBranchChild && disabledPaste && (
-          <ContextMenuItem disabled={true} className="flex items-center gap-2">
-            <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-            {t('Paste Inside Branch')}
-          </ContextMenuItem>
-        )}
         {showDelete && (
           <>
             <ContextMenuSeparator />
