@@ -8,7 +8,11 @@ import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { ArrayProperty, ArraySubProps, PropertyType } from '@activepieces/pieces-framework';
+import {
+  ArrayProperty,
+  ArraySubProps,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
