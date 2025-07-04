@@ -18,9 +18,6 @@ USER INSTRUCTIONS:
 IMPORTANT:
 - For dropdown properties, select values from the provided options array only
 - Must include all required properties, even if the user does not provide a value
-- For CHECKBOX properties, return true or false
-- For SHORT_TEXT and LONG_TEXT properties, return string values
-- For NUMBER properties, return numeric values
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from user instructions when available
 
