@@ -17,7 +17,7 @@ export const findFormByTitle = createAction({
   },
   async run(context) {
     const apiKey = context.auth as string;
-    const response = await makeRequest(apiKey, HttpMethod.GET, `/forms`);
+    const response = await makeRequest(apiKey, HttpMethod.GET, `/forms`, undefined);
    
     const forms = response as Array<{ name: string; formId: string }>;
     const searchTitle = context.propsValue['title'].toLowerCase();
