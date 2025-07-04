@@ -6,6 +6,7 @@ import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 import dayjs from 'dayjs';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
+import { MarkdownVariant } from '@activepieces/shared';
 
 const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -70,6 +71,10 @@ export const newFile = createTrigger({
 	description:
 		'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
 	props: {
+		markdown:Property.MarkDown({
+			variant:MarkdownVariant.INFO,
+			value:'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.'
+		}),
 		folderPath: Property.ShortText({
 			displayName: 'Folder Path',
 			required: false,
