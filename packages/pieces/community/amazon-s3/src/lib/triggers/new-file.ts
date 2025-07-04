@@ -16,11 +16,14 @@ const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?:
 
 		const bucketFiles = [];
 
+		const MAX_TOTAL_FILES = 10000;
+		let totalFetched = 0;
+
 		let hasMore = true;
 		let nextToken: string | undefined;
 
 		do {
-			const params:ListObjectsV2CommandInput = {
+			const params: ListObjectsV2CommandInput = {
 				Bucket: auth.bucket,
 				MaxKeys: isTest ? 10 : 1000,
 				ContinuationToken: nextToken,
@@ -37,13 +40,20 @@ const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?:
 
 			const items = response.Contents ?? [];
 
+			// Check if adding these items would exceed the 10,000 limit
+			if (totalFetched + items.length > MAX_TOTAL_FILES) {
+				const remaining = MAX_TOTAL_FILES - totalFetched;
+				bucketFiles.push(...items.slice(0, remaining));
+				break;
+			}
+
 			bucketFiles.push(...items);
+			totalFetched += items.length;
 
 			if (isTest) break;
 
 			hasMore = !!response.IsTruncated;
 			nextToken = response.NextContinuationToken ?? undefined;
-
 		} while (hasMore);
 
 		return bucketFiles.map((file) => ({
@@ -57,7 +67,8 @@ export const newFile = createTrigger({
 	auth: amazonS3Auth,
 	name: 'new_file',
 	displayName: 'New or Updated File',
-	description: 'Trigger when a new file is added or an existing file is updated.',
+	description:
+		'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
 	props: {
 		folderPath: Property.ShortText({
 			displayName: 'Folder Path',
