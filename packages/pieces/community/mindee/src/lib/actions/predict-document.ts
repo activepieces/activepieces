@@ -10,32 +10,10 @@ export const mindeePredictDocumentAction = createAction({
   displayName: 'Extract Document',
   description: 'Parse details of a document using OCR.',
   props: {
-    account_name: Property.ShortText({
-      displayName: 'Account Name',
-      description:
-        'Refers to your username or organization name with which you signed up with.',
+    model_id: Property.ShortText({
+      displayName: 'Model ID',
+      description: 'The Mindee Model ID to use for the inference.',
       required: true,
-      defaultValue: 'mindee',
-    }),
-    api_name: Property.StaticDropdown({
-      displayName: 'API Name',
-      description: 'Refers to the name of the API your are using.',
-      required: true,
-      defaultValue: 'full',
-      options: {
-        disabled: false,
-        options: [
-          {
-            value: 'bank_account_details/v1',
-            label: 'Bank Account Details OCR',
-          },
-          { value: 'expense_reports/v4', label: 'Receipt OCR' },
-          { value: 'passport/v1', label: 'Passport OCR' },
-          { value: 'invoices/v3', label: 'Invoice OCR' },
-          { value: 'proof_of_address/v1', label: 'Proof of Address OCR' },
-          { value: 'financial_document/v1', label: 'Financial Documents OCR' },
-        ],
-      },
     }),
     file: Property.LongText({
       displayName: 'File URL',
@@ -43,30 +21,53 @@ export const mindeePredictDocumentAction = createAction({
         'Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats',
       required: true,
     }),
+    webhook_ids: Property.LongText({
+      displayName: 'Webhook IDs (comma separated)',
+      description: 'Optional: Comma separated list of webhook UUIDs to call after processing.',
+      required: false,
+    }),
+    rag: Property.Checkbox({
+      displayName: 'Enable RAG (Retrieval-Augmented Generation)',
+      description: 'Optional: Activate Retrieval-Augmented Generation.',
+      required: false,
+      defaultValue: false,
+    }),
+    alias: Property.ShortText({
+      displayName: 'Alias',
+      description: 'Optional: Use an alias to link the file to your own DB.',
+      required: false,
+    }),
   },
-  run: async ({ auth, propsValue: { api_name, account_name, file } }) => {
+  run: async ({ auth, propsValue: { model_id, file, webhook_ids, rag, alias } }) => {
     let headers,
       body = {};
 
     try {
       const form = new FormData();
-
-      if (['https:', 'http:'].includes(new URL(file).protocol))
-        form.append('document', await getRemoteFile(file));
-      else form.append('document', createReadStream(file));
-
+      if (["https:", "http:"].includes(new URL(file).protocol))
+        form.append("file", await getRemoteFile(file), { filename: 'upload' });
+      else form.append("file", createReadStream(file));
+      form.append("model_id", model_id);
+      if (webhook_ids) {
+        // API expects an array of UUIDs
+        const ids = webhook_ids.split(',').map((id: string) => id.trim()).filter(Boolean);
+        for (const id of ids) form.append('webhook_ids', id);
+      }
+      if (rag) form.append('rag', 'true');
+      if (alias) form.append('alias', alias);
       body = form;
       headers = { ...form.getHeaders() };
     } catch (_) {
-      body = { document: file };
+      // fallback to JSON (not recommended for file upload)
+      body = { model_id, file, webhook_ids: webhook_ids ? webhook_ids.split(',').map((id: string) => id.trim()) : undefined, rag, alias };
       headers = { 'Content-Type': 'application/json' };
     }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://api.mindee.net/v1/products/${account_name}/${api_name}/predict`,
+      url: `https://api-v2.mindee.net/v2/inferences/enqueue`,
       headers: {
-        Authorization: `Token ${auth as string}`,
+        Authorization: `${auth as string}`,
         ...headers,
       },
       body: body,
@@ -76,7 +77,7 @@ export const mindeePredictDocumentAction = createAction({
   },
 });
 
-async function getRemoteFile(url: string): Promise<ArrayBuffer> {
+async function getRemoteFile(url: string): Promise<Buffer> {
   const response = await fetch(url);
-  return await response.arrayBuffer();
+  return Buffer.from(await response.arrayBuffer());
 }
