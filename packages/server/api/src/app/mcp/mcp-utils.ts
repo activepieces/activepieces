@@ -19,9 +19,9 @@ IMPORTANT:
 - For dropdown, multi-select dropdown, and static dropdown properties, you must select values from the provided options array only.
 - For array properties, you must select values from the provided options array only.
 - For dynamic properties, you must select values from the provided options array only.
-- Must include all required properties, even if the user does not provide a value
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from user instructions when available
+- Must include all required properties, even if the user does not provide a value. If a required field is missing, look up the correct value or provide a reasonable default—otherwise, the task may fail.
 
 `
 
