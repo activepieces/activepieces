@@ -5,6 +5,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 import dayjs from 'dayjs';
+import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 
 const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -19,7 +20,7 @@ const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?:
 		let nextToken: string | undefined;
 
 		do {
-			const params: any = {
+			const params:ListObjectsV2CommandInput = {
 				Bucket: auth.bucket,
 				MaxKeys: isTest ? 10 : 1000,
 				ContinuationToken: nextToken,
