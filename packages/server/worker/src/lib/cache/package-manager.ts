@@ -35,7 +35,31 @@ const runCommand = async (
         log.debug({ path, command, args }, '[PackageManager#execute]')
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
-        return await execPromise(commandLine, { cwd: path })
+        
+        // Pass environment variables, especially GITHUB_TOKEN for accessing GitHub Package Registry
+        const env: NodeJS.ProcessEnv = {
+            ...process.env,
+            // Ensure npm/pnpm can access GitHub packages if GITHUB_TOKEN is available
+            ...(process.env['GITHUB_TOKEN'] && { GITHUB_TOKEN: process.env['GITHUB_TOKEN'] }),
+        }
+        
+        // Check if there's a local .npmrc file and set it via environment variable
+        const localNpmrc = fsPath.join(path, '.npmrc')
+        const npmrcExists = await fileExists(localNpmrc)
+        if (npmrcExists) {
+            env['npm_config_userconfig'] = localNpmrc
+            log.debug({ npmrcPath: localNpmrc }, '[PackageManager#runCommand] Using local .npmrc')
+        }
+        
+        log.debug({
+            hasGithubToken: !!process.env['GITHUB_TOKEN'],
+            githubTokenLength: process.env['GITHUB_TOKEN']?.length,
+            cwd: path,
+            command: commandLine,
+            usingLocalNpmrc: !!env['npm_config_userconfig']
+        }, '[PackageManager#runCommand] Environment debug info')
+        
+        return await execPromise(commandLine, { cwd: path, env })
     }
     catch (error) {
         const contextKey = '[PackageManager#runCommand]'
@@ -81,6 +105,23 @@ export const packageManager = (log: FastifyBaseLogger) => ({
                     stderr: 'N/A',
                 }
             }
+            
+            // Copy .npmrc file to sandbox if it exists in workspace root
+            try {
+                const workspaceRoot = process.cwd()
+                const sourceNpmrc = fsPath.join(workspaceRoot, '.npmrc')
+                const targetNpmrc = fsPath.join(path, '.npmrc')
+                
+                const npmrcExists = await fileExists(sourceNpmrc)
+                if (npmrcExists) {
+                    await fs.copyFile(sourceNpmrc, targetNpmrc)
+                    log.debug({ sourceNpmrc, targetNpmrc }, 'Copied .npmrc to sandbox')
+                }
+            }
+            catch (error) {
+                log.warn({ error }, 'Failed to copy .npmrc to sandbox, continuing without it')
+            }
+            
             // It must be awaited so it only releases the lock after the command is done
             const result = await runCommand(path, 'init', log)
             return result
@@ -99,6 +140,47 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         linkPath,
         packageName,
     }: LinkParams): Promise<PackageManagerOutput> {
+        // Ensure .npmrc is available in sandbox before linking
+        try {
+            const workspaceRoot = process.cwd()
+            const sourceNpmrc = fsPath.join(workspaceRoot, '.npmrc')
+            const targetNpmrc = fsPath.join(path, '.npmrc')
+            
+            const npmrcExists = await fileExists(sourceNpmrc)
+            const targetNpmrcExists = await fileExists(targetNpmrc)
+            
+            log.debug({
+                workspaceRoot,
+                sourceNpmrc,
+                targetNpmrc,
+                npmrcExists,
+                targetNpmrcExists,
+            }, '[PackageManager#link] .npmrc debug info')
+            
+            if (npmrcExists && !targetNpmrcExists) {
+                await fs.copyFile(sourceNpmrc, targetNpmrc)
+                log.debug('Copied .npmrc to sandbox directory')
+                
+                // Read and log the contents to verify
+                const npmrcContent = await fs.readFile(targetNpmrc, 'utf-8')
+                log.debug({
+                    npmrcContent: npmrcContent.split('\n').map(line => 
+                        line.includes('authToken') ? line.replace(/=.+/, '=[hidden]') : line
+                    ).join('\n')
+                }, '[PackageManager#link] .npmrc content')
+            } else if (targetNpmrcExists) {
+                // If it already exists, check its content
+                const npmrcContent = await fs.readFile(targetNpmrc, 'utf-8')
+                log.debug({
+                    npmrcContent: npmrcContent.split('\n').map(line => 
+                        line.includes('authToken') ? line.replace(/=.+/, '=[hidden]') : line
+                    ).join('\n')
+                }, '[PackageManager#link] existing .npmrc content')
+            }
+        } catch (error) {
+            log.error({ error }, 'Failed to copy .npmrc file')
+        }
+
         const config = [
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
