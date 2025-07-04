@@ -128,7 +128,7 @@ export function EditProjectDialog({
                         type="button"
                         tabIndex={-1}
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('tasks', '')}
+                        onClick={() => form.setValue('tasks', undefined)}
                       >
                         {t('Clear')}
                       </Button>
@@ -156,7 +156,7 @@ export function EditProjectDialog({
                         type="button"
                         tabIndex={-1}
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('aiCredits', '')}
+                        onClick={() => form.setValue('aiCredits', undefined)}
                       >
                         {t('Clear')}
                       </Button>
