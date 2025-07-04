@@ -3,43 +3,80 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
+import { formIdDropdown } from '../common/props';
+import { filloutFormsAuth } from '../../index';
 const markdown = `
 To set up the trigger for new form responses, follow these steps:
-1. Open your Fillout form in Edit mode
-2. At the top, you’ll see four tabs, click on the Integrate tab
-3. Inside the Integrate tab, select Webhook.  
-4. Add a new webhook with this URL:
+
+1. **Open your Fillout form** in Edit mode
+2. **Navigate to Integrations**: At the top of the form editor, click on the **Integrate** tab
+3.  Scroll down to **Select Webhook**: In the Integrate tab, click on **Webhook**
+4. **Add the webhook URL**: 
+   - Click "Add new webhook"
+   - Enter this URL in the webhook URL field:
    \`\`\`text
    {{webhookUrl}}
    \`\`\`
-4. Click Test to verify the webhook
-5. Once verified, click Finish Setup
-Your flow will now trigger whenever someone submits your form.
+5. **Configure the webhook**:
+   - Set the HTTP method to **POST**
+   - Leave the headers empty (default is fine)
+6. **Test the webhook**: Click **Test** to verify the connection
+7. **Save the webhook**: Once verified, click **Finish Setup**
+
+✅ **Important**: Make sure your selected form above matches the form you're setting up the webhook for.
+
+Your flow will now trigger whenever someone submits your form!
 `;
 export const newFormResponse = createTrigger({
+  auth: filloutFormsAuth,
   name: 'newFormResponse',
   displayName: 'New Form Response',
   description:
     'Fires when a new submission is received for a selected Fillout form.',
   props: {
-    formId: Property.ShortText({
-      displayName: 'Form ID',
-      description:
-        'The ID of the Fillout form to watch for new responses. Find this in your Fillout form URL.',
-      required: true,
-    }),
+    formId: formIdDropdown,
     instructions: Property.MarkDown({
       value: markdown,
     }),
   },
   sampleData: {
-    responseId: 'abc123',
-    formId: 'xyz789',
-    answers: [
-      { question: 'Name', answer: 'John Doe' },
-      { question: 'Email', answer: 'john@example.com' },
+    questions: [
+      {
+        id: '5AtgG35AAZVcrSVfRubvp1',
+        name: 'What is your name?',
+        type: 'ShortAnswer',
+        value: 'John Doe'
+      },
+      {
+        id: 'gRBWVbE2fut2oiAMprdZpY',
+        name: 'What is your email?',
+        type: 'Email',
+        value: 'john@example.com'
+      },
+      {
+        id: 'hP4bHA1CgvyD2LKhBnnGHy',
+        name: 'Pick your favorite color',
+        type: 'MultipleChoice',
+        value: 'Blue'
+      }
     ],
-    submittedAt: '2024-06-01T12:00:00Z',
+    calculations: [
+      {
+        id: 'abcdef',
+        name: 'Price',
+        type: 'number',
+        value: '12.50'
+      }
+    ],
+    urlParameters: [
+      {
+        id: 'email',
+        name: 'email',
+        value: 'john@example.com'
+      }
+    ],
+    submissionId: 'abc123',
+    submissionTime: '2024-05-16T23:20:05.324Z'
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

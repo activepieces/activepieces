@@ -1,18 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
+import { formIdDropdown } from '../common/props';
+import { filloutFormsAuth } from '../../index';
 
 export const getFormResponses = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  auth: filloutFormsAuth,
   name: 'getFormResponses',
   displayName: 'Get Form Responses',
-  description: 'Fetch all responses for a Fillout form, with optional filters.',
+  description: 'Fetch all responses for a Fillout form, with optional filters. Returns an object with "responses" array, "totalResponses" count, and "pageCount".',
   props: {
-    formId: Property.ShortText({
-      displayName: 'Form ID',
-      required: true,
-      description: 'The public identifier of your Fillout form.'
-    }),
+    formId: formIdDropdown,
     limit: Property.Number({
       displayName: 'Limit',
       required: false,
@@ -38,11 +36,10 @@ export const getFormResponses = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Finished', value: 'finished' },
-          { label: 'In Progress', value: 'in_progress' }
+          { label: 'In Progress (unfinished)', value: 'in_progress' }
         ]
       },
-      description: 'Submission status to filter by.'
+      description: 'By default, only finished submissions are returned. Select "In Progress" to get unfinished submissions instead.'
     }),
     includeEditLink: Property.Checkbox({
       displayName: 'Include Edit Link',
