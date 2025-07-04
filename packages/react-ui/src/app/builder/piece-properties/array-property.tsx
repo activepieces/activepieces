@@ -8,11 +8,7 @@ import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import {
-  ArrayProperty,
-  ArraySubProps,
-  PropertyType,
-} from '@activepieces/pieces-framework';
+import { ArrayProperty, ArraySubProps, PropertyType } from '@activepieces/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -49,6 +45,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.DATE_TIME:
         return {
           ...acc,
           [key]: null,
