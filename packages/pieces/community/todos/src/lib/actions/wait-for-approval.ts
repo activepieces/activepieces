@@ -16,6 +16,11 @@ export const waitForApproval = createAction({
       description: 'The ID of the task to wait for approval',
       required: true,
     }),
+    webhooksQueryParams: Property.Object({
+      displayName: 'Webhooks Query Params',
+      description: 'The query params to be passed to the approval webhook',
+      required: false,
+    }),
   },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -37,6 +42,7 @@ export const waitForApproval = createAction({
     const response = await httpClient.sendRequest(request);
     return {
       status: response.body.status.name,
+      message: response.body.status.message,
     };
   },
   async run(ctx) {
@@ -52,6 +58,7 @@ export const waitForApproval = createAction({
     } else {
       return {
         status: ctx.resumePayload.queryParams['status'],
+        message: ctx.resumePayload.queryParams['message'],
       };
     }
   },
