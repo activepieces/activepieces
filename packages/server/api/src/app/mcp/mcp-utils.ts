@@ -196,7 +196,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
             const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.object(Object.fromEntries(entries))) }) : z.array(z.object(Object.fromEntries(entries)))
             return { schema, value: property }
         }
-        const schema = z.object({ [propertyName]: z.array(z.string()) })
+        const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.string()) }) : z.array(z.string())
         return { schema, value: property }
     }
 
