@@ -87,6 +87,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
         case PropertyType.DATE_TIME:
+        case PropertyType.FILE:
             schema = z.string()
             break
         case PropertyType.NUMBER:
@@ -103,13 +104,25 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             schema = z.record(z.string(), z.unknown())
             break
         case PropertyType.MULTI_SELECT_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
             schema = z.array(z.string())
             break
         case PropertyType.DROPDOWN:
+        case PropertyType.STATIC_DROPDOWN:
+        case PropertyType.COLOR:
+        case PropertyType.SECRET_TEXT:
+        case PropertyType.BASIC_AUTH:
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OAUTH2:
             schema = z.string()
             break
-        default:
+        case PropertyType.MARKDOWN:
+            schema = z.unknown().optional()
+            break
+        case PropertyType.CUSTOM:
+        case PropertyType.DYNAMIC:
             schema = z.unknown()
+            break
     }
 
     if (property.defaultValue) {
@@ -255,7 +268,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
     }
 
     return {
-        schema: z.object({ [propertyName]: piecePropertyToZod(property) }),
+        schema: depth === 0 ? z.object({ [propertyName]: piecePropertyToZod(property) }) : piecePropertyToZod(property),
         value: options,
     }
 }
