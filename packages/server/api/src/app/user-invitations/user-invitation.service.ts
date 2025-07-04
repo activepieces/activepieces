@@ -12,9 +12,9 @@ import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
-import { projectService } from '../project/project-service'
 
 const repo = repoFactory(UserInvitationEntity)
 
