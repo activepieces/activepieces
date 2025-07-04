@@ -1,8 +1,8 @@
 import { ALL_PRINCIPAL_TYPES, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { changelogService } from './changelog.service'
-import { userService } from '../user/user-service'
 import { Type } from '@sinclair/typebox'
+import { userService } from '../user/user-service'
+import { changelogService } from './changelog.service'
 
 export const changelogController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListChangelogsRequest, async (request) => {
@@ -11,7 +11,7 @@ export const changelogController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/dismiss', DismissChangelogRequest, async (request) => {
         const { date } = request.body
         const user = await userService.getOrThrow({ id: request.principal.id })
-        return await userService.update({
+        return userService.update({
             id: user.id,
             platformId: request.principal.platform.id,
             lastChangelogDismissed: date,

@@ -1,4 +1,7 @@
-import { DismissChangelogRequest, ListChangelogsResponse } from '@activepieces/shared';
+import {
+  DismissChangelogRequest,
+  ListChangelogsResponse,
+} from '@activepieces/shared';
 
 import { api } from './api';
 
