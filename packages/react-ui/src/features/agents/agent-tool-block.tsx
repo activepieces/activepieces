@@ -43,7 +43,6 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const outputAsToolCallOutput = block.output as ToolCallOutput | null;
 
-
   const hasInstructions = !isNil(block.input?.instructions);
   const resolvedFields = !isNil(outputAsToolCallOutput?.resolvedFields)
     ? outputAsToolCallOutput.resolvedFields

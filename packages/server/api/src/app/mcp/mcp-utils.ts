@@ -16,13 +16,8 @@ USER INSTRUCTIONS:
 {userInstructions}
 
 IMPORTANT:
-- For DYNAMIC properties, for each value, wrap the keys inside the options property inside an object with the same property name, and assign the array to the property name. For example, if the property is "values", return: { "values": [ { ...optionKeys }, ... ] }.
 - For dropdown properties, select values from the provided options array only
-- For ARRAY properties with nested properties (like A, B, C), return: [{"A": "value1", "B": "value2", "C": "value3"}]
 - Must include all required properties, even if the user does not provide a value
-- For CHECKBOX properties, return true or false
-- For SHORT_TEXT and LONG_TEXT properties, return string values
-- For NUMBER properties, return numeric values
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from user instructions when available
 
@@ -89,6 +84,7 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
         case PropertyType.DATE_TIME:
+        case PropertyType.FILE:
             schema = z.string()
             break
         case PropertyType.NUMBER:
@@ -105,13 +101,25 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             schema = z.record(z.string(), z.unknown())
             break
         case PropertyType.MULTI_SELECT_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
             schema = z.array(z.string())
             break
         case PropertyType.DROPDOWN:
+        case PropertyType.STATIC_DROPDOWN:
+        case PropertyType.COLOR:
+        case PropertyType.SECRET_TEXT:
+        case PropertyType.BASIC_AUTH:
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.OAUTH2:
             schema = z.string()
             break
-        default:
+        case PropertyType.MARKDOWN:
+            schema = z.unknown().optional()
+            break
+        case PropertyType.CUSTOM:
+        case PropertyType.DYNAMIC:
             schema = z.unknown()
+            break
     }
 
     if (property.defaultValue) {
@@ -198,7 +206,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
             const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.object(Object.fromEntries(entries))) }) : z.array(z.object(Object.fromEntries(entries)))
             return { schema, value: property }
         }
-        const schema = z.object({ [propertyName]: z.array(z.string()) })
+        const schema = depth === 0 ? z.object({ [propertyName]: z.array(z.string()) }) : z.array(z.string())
         return { schema, value: property }
     }
 
@@ -233,22 +241,23 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
     }
 
     if (property.type === PropertyType.DYNAMIC) {
-        const dynamicSchema: z.ZodTypeAny = z.object(Object.fromEntries(
-            await Promise.all(
-                Object.entries(options).map(async ([key, value]) => [
-                    key, 
-                    (await buildZodSchemaForPieceProperty({
-                        property: value,
-                        logger,
-                        input,
-                        projectId,
-                        propertyName,
-                        actionMetadata,
-                        piecePackage,
-                        depth: depth + 1,
-                    })).schema,
-                ]),
-            )))
+        const optionsSchema =  await Promise.all(
+            Object.entries(options).map(async ([key, value]) => [
+                key, 
+                (await buildZodSchemaForPieceProperty({
+                    property: value,
+                    logger,
+                    input,
+                    projectId,
+                    propertyName,
+                    actionMetadata,
+                    piecePackage,
+                    depth: depth + 1,
+                })).schema,
+            ]),
+        )
+        const optionsSchemaEntries = Object.fromEntries(optionsSchema)
+        const dynamicSchema: z.ZodTypeAny = z.object(optionsSchemaEntries)
         return {
             schema: z.object({ [propertyName]: dynamicSchema }),
             value: resolvedPropertyData.result,
@@ -256,7 +265,7 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
     }
 
     return {
-        schema: z.object({ [propertyName]: piecePropertyToZod(property) }),
+        schema: depth === 0 ? z.object({ [propertyName]: piecePropertyToZod(property) }) : piecePropertyToZod(property),
         value: options,
     }
 }
