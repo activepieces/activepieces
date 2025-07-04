@@ -19,11 +19,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { Permission, PlatformRole, ApFlagId } from '@activepieces/shared';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { projectApi } from '@/lib/project-api';
+import {
+  Permission,
+  PlatformRole,
+  ApFlagId,
+  ProjectWithLimits,
+  ApErrorParams,
+  ErrorCode,
+} from '@activepieces/shared';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -53,6 +64,7 @@ export function EditProjectDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
   const { updateCurrentProject } = projectHooks.useCurrentProject();
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -64,20 +76,51 @@ export function EditProjectDialog({
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const mutation = useMutation({
-    mutationFn: (values: FormValues) => {
-      const request = {
-        displayName: values.projectName,
-        externalId:
-          values.externalId?.trim() !== '' ? values.externalId : undefined,
-        plan: {
-          tasks: parseInt(values.tasks),
-          aiCredits: parseInt(values.aiCredits),
-        },
-      };
+  const mutation = useMutation<
+    ProjectWithLimits,
+    Error,
+    {
+      displayName: string;
+      externalId?: string;
+      plan: { tasks: number | undefined; aiCredits?: number | undefined };
+    }
+  >({
+    mutationFn: (request) => {
       updateCurrentProject(queryClient, request);
+      return projectApi.update(authenticationSession.getProjectId()!, {
+        ...request,
+        externalId:
+          request.externalId?.trim() !== '' ? request.externalId : undefined,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
+        duration: 3000,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['current-project'],
+      });
       onClose();
-      return Promise.resolve();
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        const apError = error.response?.data as ApErrorParams;
+        switch (apError.code) {
+          case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
+            form.setError('root.serverError', {
+              message: t('The external ID is already taken.'),
+            });
+            break;
+          }
+          default: {
+            console.log(error);
+            toast(INTERNAL_ERROR_TOAST);
+            break;
+          }
+        }
+      }
     },
   });
 
@@ -91,7 +134,18 @@ export function EditProjectDialog({
         <Form {...form}>
           <form
             className="space-y-4"
-            onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+            onSubmit={form.handleSubmit((values) =>
+              mutation.mutate({
+                displayName: values.projectName,
+                externalId: values.externalId,
+                plan: {
+                  tasks: values.tasks ? parseInt(values.tasks) : undefined,
+                  aiCredits: values.aiCredits
+                    ? parseInt(values.aiCredits)
+                    : undefined,
+                },
+              }),
+            )}
           >
             <FormField
               name="projectName"
@@ -128,7 +182,7 @@ export function EditProjectDialog({
                         type="button"
                         tabIndex={-1}
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('tasks', undefined)}
+                        onClick={() => form.setValue('tasks', '')}
                       >
                         {t('Clear')}
                       </Button>
@@ -156,7 +210,7 @@ export function EditProjectDialog({
                         type="button"
                         tabIndex={-1}
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('aiCredits', undefined)}
+                        onClick={() => form.setValue('aiCredits', '')}
                       >
                         {t('Clear')}
                       </Button>
