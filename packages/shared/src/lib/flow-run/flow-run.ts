@@ -27,8 +27,6 @@ export const FlowRun = Type.Object({
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
     flowDisplayName: Type.String(),
-    // TODO remove this, and create migration to remove it
-    terminationReason: Type.Optional(Type.String()),
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),

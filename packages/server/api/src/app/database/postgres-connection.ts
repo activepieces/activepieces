@@ -24,7 +24,6 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
-import { AddTrialFlagInPlatform1751394161203 } from './migration/1751394161203-AddTrialFlagInPlatform'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -237,8 +236,10 @@ import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgr
 import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
+import { AddTrialFlagInPlatform1751394161203 } from './migration/postgres/1751394161203-AddTrialFlagInPlatform'
 import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
+import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -404,7 +405,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RegenerateIssuesTable1750392148590,
         RemoveProjectIdFromIndex1750712746125,
         RevertTodoActivties1751217652277,
-
+        RemoveTerminationReason1751728035816,
     ]
 
     const edition = system.getEdition()
