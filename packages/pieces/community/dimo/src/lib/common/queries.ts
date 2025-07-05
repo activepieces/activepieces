@@ -1,14 +1,12 @@
-export const IDENTITY_BASE_URL = "https://identity-api.dimo.zone/query"
-
-export const commonQueries = {
-    generalInfo: `
+export const IdentityQueries = {
+	generalInfo: `
         {
           vehicles(first: 10) {
             totalCount
           }
         }
     `,
-    getDeveloperLicenseInfo: `
+	getDeveloperLicenseInfo: `
         {
           developerLicense(by: { tokenId: <devLicenseTokenId> }) {
             owner
@@ -25,7 +23,7 @@ export const commonQueries = {
           }
         }
     `,
-    getVehicleByDevLicense: `
+	getVehicleByDevLicense: `
         {
           vehicles(filterBy: { privileged: "<devLicense0x>" }, first: 100) {
             nodes {
@@ -40,14 +38,14 @@ export const commonQueries = {
           }
         }
     `,
-    getTotalVehicleCountForOwner: `
+	getTotalVehicleCountForOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             totalCount
           }
         }
     `,
-    getVehicleMMYByOwner: `
+	getVehicleMMYByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -61,7 +59,7 @@ export const commonQueries = {
           }
         }
     `,
-    getVehicleMMYByTokenId: `
+	getVehicleMMYByTokenId: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             owner
@@ -73,7 +71,7 @@ export const commonQueries = {
           }
         }
     `,
-    getSacdForVehicle: `
+	getSacdForVehicle: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             sacds(first: 10) {
@@ -88,14 +86,14 @@ export const commonQueries = {
           }
         }
     `,
-    getRewardsByOwner: `
+	getRewardsByOwner: `
         {
           rewards(user: "<ownerAddress>") {
             totalTokens
           }
         }
     `,
-    getRewardHistoryByOwner: `
+	getRewardHistoryByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 10) {
             nodes {
@@ -119,7 +117,7 @@ export const commonQueries = {
           }
         }
     `,
-    getDeviceDefinitionByTokenId: `
+	getDeviceDefinitionByTokenId: `
         {
           vehicle(tokenId: <vehicleTokenId>) {
             definition {
@@ -128,7 +126,7 @@ export const commonQueries = {
           }
         }
     `,
-    getDeviceDefinitionByDefinitionId: `
+	getDeviceDefinitionByDefinitionId: `
         {
           deviceDefinition(by: { id: "<deviceDefinitionId>" }) {
             year
@@ -140,7 +138,7 @@ export const commonQueries = {
           }
         }
     `,
-    getOwnerVehicles: `
+	getOwnerVehicles: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -156,7 +154,7 @@ export const commonQueries = {
           }
         }
     `,
-    getDeveloperSharedVehiclesFromOwner: `
+	getDeveloperSharedVehiclesFromOwner: `
         {
           vehicles(filterBy: { privileged: "<devLicense0x>", owner: "<ownerAddress>" }, first: 100) {
             totalCount
@@ -174,7 +172,7 @@ export const commonQueries = {
           }
         }
     `,
-    getDCNsByOwner: `
+	getDCNsByOwner: `
         {
           vehicles(filterBy: { owner: "<ownerAddress>" }, first: 100) {
             nodes {
@@ -189,4 +187,60 @@ export const commonQueries = {
           }
         }
     `,
-}
+};
+
+export const TelemetryQueries = {
+	avaiableSignals: `
+    query {
+      availableSignals(tokenId: <tokenId>)
+    }
+  `,
+	signals: `
+    query {
+      signals(
+        tokenId: <tokenId>,
+        interval: "<interval>",
+        from: "<startDate>", to: "<endDate>"
+      ) {
+        speed(agg: MED)
+        powertrainType(agg: RAND)
+        powertrainRange(agg: MIN)
+        exteriorAirTemperature(agg: MAX)
+        vehicleIdentificationModel(agg: RAND)
+        chassisAxleRow1WheelLeftTirePressure(agg: MIN)
+        timestamp
+      }
+    }
+  `,
+	getDailyAvgSpeedOfVehicle: `
+    query {
+      signals(
+        tokenId: <tokenId>,
+        from: "<startDate>", to: "<endDate>",
+        interval: "<interval>"
+      ) {
+        timestamp
+        avgSpeed: speed(agg: AVG)
+      }
+    }
+  `,
+	getMaxSpeedOfVehicle: `
+    query {
+      signals(
+        tokenId: <tokenId>,
+        from: "<startDate>", to: "<endDate>",
+        interval: "<interval>"
+      ) {
+        timestamp
+        maxSpeed: speed(agg: MAX)
+      }
+    }
+  `,
+	getVinVcLatest: `
+    query {
+      vinVCLatest(tokenId: <tokenId>) {
+        vin
+      }
+    }
+  `,
+};

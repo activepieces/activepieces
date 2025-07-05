@@ -1,55 +1,41 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { getHeaders, handleFailures } from "../../helpers";
-import { httpClient,HttpMethod } from "@activepieces/pieces-common";
-import { dimoNftContractAddress, exchangeTokenEndpoint } from "./constant";
-import { TokenExchangeResponse } from "./type";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
+import { DimoClient } from '../../common/helpers';
 
-export const tokenExchangeApiAction = createAction({
-    auth: dimoAuth,
-    name: "vehicle-jwt-token-exchange-api",
-    displayName: "Vehicle JWT via Token Exchange API",
-    description: "Creates a token exchange to obtain a Vehicle JWT. The response will provide a short-lived token that last you 10 minutes to access additional vehicle information such as Trips and Telemetry data",
-    props: {
-        vehicleTokenId : Property.Number({
-            displayName : "Vehicle Token ID",
-            description : "The ID of the vehicle for getting Vehicle JWT",
-            required : true,
-        }),
-        privileges : Property.StaticMultiSelectDropdown({
-            displayName : "Privileges",
-            description : "Privileges are the permissions that the owner of the vehicle shared with you",
-            required : true,
-            options : {
-                options: [
-                    { label: 'All-time, non-location data (1)', value: 1 },
-                    { label: 'Commands (2)', value: 2 },
-                    { label: 'Current location (3)', value: 3 },
-                    { label: 'All-time location (4)', value: 4 },
-                    { label: 'View VIN credentials (5)', value: 5 },
-                    { label: 'Live data streams (6)', value: 6 },
-                  ],
-            }
-        })
-    },
-    run: async (ctx) => {
-        const {vehicleTokenId, privileges} = ctx.propsValue
-        const { developerJwt } = ctx.auth;
+const tokenExchangeApiAction = createAction({
+	auth: dimoAuth,
+	name: 'get-vehicle-jwt',
+	displayName: 'Token Exchange : Get Vehicle JWT',
+	description: 'Creates a token exchange to obtain a Vehicle JWT.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			description: 'The ID of the vehicle for getting Vehicle JWT.',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId } = context.propsValue;
 
-        const response = await httpClient.sendRequest<TokenExchangeResponse>({
-            method : HttpMethod.POST,
-            url : exchangeTokenEndpoint,
-            body : {
-                tokenId : vehicleTokenId,
-                privileges,
-                nftContractAddress : dimoNftContractAddress
-            },
-            headers : getHeaders(developerJwt),
-        })
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
 
-        handleFailures(response)
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
 
-        return {
-            vehicleJwt : response.body.token
-        }
-}})
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			return {vehicleJwt};
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
+});
+
+export const tokenExchangeApiActions = [tokenExchangeApiAction];

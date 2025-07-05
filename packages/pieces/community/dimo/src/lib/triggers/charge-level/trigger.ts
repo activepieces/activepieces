@@ -1,195 +1,210 @@
-import { httpClient } from "@activepieces/pieces-common";
-import { createTrigger, TriggerStrategy, Property } from "@activepieces/pieces-framework";
-import { WebhookInfo, WebhookPayload, WebhookDefinition, TriggerField, vehicleEventTriggerToText, NumericTriggerField } from "../../models";
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
-import { getHeaders, handleFailures } from "../../helpers";
-import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown, verificationTokenInput } from "../common";
-import { WebhookHandshakeStrategy } from "@activepieces/shared";
+import { DimoClient } from '../../common/helpers';
+import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
+import { TriggerField } from '../../common/constants';
+import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
+
+const TRIGGER_KEY = 'dimo-charge-level-trigger';
 
 export const chargeLevelTrigger = createTrigger({
-  auth: dimoAuth,
-  name: 'charge-level-trigger',
-  displayName: 'Charge Level Trigger',
-  description: 'Triggers when vehicle battery charge level meets the specified condition - requires Developer JWT',
-  type: TriggerStrategy.WEBHOOK,
-  handshakeConfiguration: {
-    strategy: WebhookHandshakeStrategy.NONE,
-  },
-  props: {
-    vehicleTokenIds: Property.Array({
-      displayName: 'Vehicle Token IDs',
-      description: 'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
-      required: false,
-    }),
-    operator: operatorStaticDropdown,
-    chargePercentage: Property.Number({
-      displayName: 'Charge Percentage (%)',
-      description: 'The battery charge level percentage (0-100%) to compare against',
-      required: true,
-    }),
-    triggerFrequency: Property.StaticDropdown({
-      displayName: 'Trigger Frequency',
-      description: 'How often the webhook should fire when condition is met',
-      required: true,
-      defaultValue: 'Realtime',
-      options: {
-        options: [
-          { label: 'Real-time (continuous)', value: 'Realtime' },
-          { label: 'Hourly', value: 'Hourly' },
-        ],
-      },
-    }),
-    verificationToken: verificationTokenInput
-  },
-  sampleData: {
-    tokenId: 17,
-    timestamp: '2025-05-07T22:50:23Z',
-    name: 'powertrainTractionBatteryStateOfChargeCurrent',
-    valueNumber: 73.2,
-    valueString: '',
-    source: '0xF26421509Efe92861a587482100c6d728aBf1CD0',
-    producer: 'did:nft:137:0x9c94C395cBcBDe662235E0A9d3bB87Ad708561BA_31700',
-    cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
-  },
-  async onEnable(context) {
-    const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } = context.propsValue;
-    const { developerJwt } = context.auth;
+	auth: dimoAuth,
+	name: 'charge-level-trigger',
+	displayName: 'Charge Level Trigger',
+	description: 'Triggers when vehicle battery charge level meets the specified condition.',
+	type: TriggerStrategy.WEBHOOK,
+	props: {
+		vehicleTokenIds: Property.Array({
+			displayName: 'Vehicle Token IDs',
+			description:
+				'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions).',
+			required: false,
+		}),
+		operator: operatorStaticDropdown,
+		chargePercentage: Property.Number({
+			displayName: 'Charge Percentage (%)',
+			description: 'The battery charge level percentage (0-100%) to compare against.',
+			required: true,
+		}),
+		triggerFrequency: Property.StaticDropdown({
+			displayName: 'Trigger Frequency',
+			description: 'How often the webhook should fire when condition is met.',
+			required: true,
+			defaultValue: 'Realtime',
+			options: {
+				options: [
+					{ label: 'Real-time (continuous)', value: 'Realtime' },
+					{ label: 'Hourly', value: 'Hourly' },
+				],
+			},
+		}),
+		verificationToken: verificationTokenInput,
+	},
+	handshakeConfiguration: {
+		strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+		paramName: 'verification',
+	},
+	async onHandshake(context) {
+		return {
+			body: context.propsValue.verificationToken,
+			headers: {
+				'Content-Type': 'text/plain',
+			},
+			status: 200,
+		};
+	},
+	async onEnable(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
 
+		const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } =
+			context.propsValue;
 
-    // Validate charge percentage
-    if (chargePercentage < 0 || chargePercentage > 100) {
-      throw new Error('Charge percentage must be between 0 and 100');
-    }
-    const webhookDef: WebhookDefinition = {
-      service: 'Telemetry',
-      data: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
-      trigger: {
-        field: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent as NumericTriggerField,
-        operator,
-        value: chargePercentage,
-      },
-      setup: triggerFrequency as 'Realtime' | 'Hourly',
-      description: `Charge level trigger: ${operator} ${chargePercentage}%`,
-      targetUri: context.webhookUrl,
-      status: 'Active',
-    };
-    const webhookResponse = await httpClient.sendRequest({
-      method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
-      url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
-      body: {
-        service: webhookDef.service,
-        data: webhookDef.data,
-        trigger: vehicleEventTriggerToText(webhookDef.trigger),
-        setup: webhookDef.setup,
-        description: webhookDef.description,
-        target_uri: webhookDef.targetUri,
-        status: webhookDef.status,
-        verification_token: verificationToken
-      },
-      headers: getHeaders(developerJwt),
-    });
-    handleFailures(webhookResponse);
-    if (!webhookResponse.body.id) {
-      throw new Error('Failed to create webhook: No webhook ID returned');
-    }
-    const webhookId = webhookResponse.body.id;
-    const subscribedVehicles: number[] = [];
-    // Step 2: Subscribe vehicles to the webhook
-    if (vehicleTokenIds && vehicleTokenIds.length > 0) {
-      await Promise.all(
-        vehicleTokenIds.map(async (tokenId) => {
-          const res = await httpClient.sendRequest({
-            method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
-            url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(developerJwt),
-          });
-          handleFailures(res);
-          subscribedVehicles.push(Number(tokenId));
-        })
-      );
-    } else {
-      const res = await httpClient.sendRequest({
-        method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
-        url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(developerJwt),
-      });
-      handleFailures(res);
-    }
-    // Store webhook info for cleanup
-    await context.store.put<WebhookInfo>('webhook_info', {
-      webhookId,
-      verificationToken
-    });
-  },
-  async onDisable(context) {
-    try {
-      const { developerJwt } = context.auth;
-      const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-      if (webhookInfo?.webhookId && developerJwt) {
-        const unsubscribeAllVehicles = await httpClient.sendRequest({
-          method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
-          url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
-          headers: getHeaders(developerJwt),
-        });
-        handleFailures(unsubscribeAllVehicles);
-        // Delete the webhook configuration
-        await httpClient.sendRequest({
-          method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
-          url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-          headers: getHeaders(developerJwt),
-        });
-      }
-    } catch (error) {
-      console.warn('Failed to cleanup webhook:', error);
-    }
-  },
-  async onHandshake(context) {
-    return {
-      body: context.propsValue.verificationToken,
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      status: 200,
-    }
-  },
-  async run(context) {
-    const webhookBody = context.payload.body as WebhookPayload;
+		// Validate charge percentage
+		if (chargePercentage < 0 || chargePercentage > 100) {
+			throw new Error('Charge percentage must be between 0 and 100');
+		}
 
-    // Validate webhook payload structure
-    if (!webhookBody || typeof webhookBody !== 'object') {
-      throw new Error('Invalid webhook payload');
-    }
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
 
-    // Verify this is a charge level event
-    if (webhookBody.name !== 'powertrainTractionBatteryStateOfChargeCurrent') {
-      throw new Error('Received non-charge-level webhook event');
-    }
+		const ids: string[] =
+			vehicleTokenIds && Array.isArray(vehicleTokenIds) && vehicleTokenIds.length > 0
+				? vehicleTokenIds.map(String)
+				: [];
 
-    const chargePercentage = webhookBody.valueNumber;
+		const webhookPayload: CreateWebhookParams = {
+			service: 'Telemetry',
+			data: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
+			trigger: {
+				field: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
+				operator,
+				value: chargePercentage,
+			},
+			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			description: `Charge level trigger: ${operator} ${chargePercentage}%`,
+			targetUri: context.webhookUrl,
+			status: 'Active',
+			verification_token: verificationToken,
+		};
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+			const createWebhookResponse = await dimo.createWebhook({
+				developerJwt,
+				params: webhookPayload,
+			});
 
-    // Return the webhook data with comprehensive charge level information
-    return [
-      {
-        vehicleTokenId: webhookBody.tokenId,
-        timestamp: webhookBody.timestamp,
-        signal: webhookBody.name,
-        chargePercentage: chargePercentage,
-        chargeLevel: chargePercentage >= 80 ? 'High' : chargePercentage >= 50 ? 'Medium' : chargePercentage >= 20 ? 'Low' : 'Critical',
-        isLowBattery: chargePercentage < 20,
-        isCriticalBattery: chargePercentage < 10,
-        rawValue: webhookBody.valueNumber,
-        source: webhookBody.source,
-        producer: webhookBody.producer,
-        eventId: webhookBody.cloudEventId,
-        triggerInfo: {
-          conditionMet: true,
-          operator: context.propsValue.operator,
-          threshold: context.propsValue.chargePercentage,
-          actualValue: chargePercentage,
-          unit: '%',
-        },
-      },
-    ];
-  },
+			const webhookId = createWebhookResponse.id;
+
+			if (ids.length === 0) {
+				await dimo.subscribeAllVehicles({
+					developerJwt,
+					webhookId,
+				});
+			} else {
+				await Promise.all(
+					ids.map(async (tokenId) => {
+						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
+					}),
+				);
+			}
+			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
+				webhookId,
+				verificationToken,
+			});
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
+	async onDisable(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+		const webhookInfo = await context.store.get<WebhookInfo>(TRIGGER_KEY);
+		if (webhookInfo) {
+			try {
+				const developerJwt = await dimo.getDeveloperJwt();
+
+				const webhookId = webhookInfo.webhookId;
+
+				await dimo.unsubscribeAllVehicles({ developerJwt, webhookId });
+				await dimo.deleteWebhook({ developerJwt, webhookId });
+			} catch (err) {
+				const message = (err as HttpError).message;
+				throw new Error(message);
+			}
+		}
+	},
+	async run(context) {
+		const webhookBody = context.payload.body as WebhookPayload;
+
+		if (
+			!webhookBody ||
+			typeof webhookBody !== 'object' ||
+			webhookBody.name !== TriggerField.PowertrainTractionBatteryStateOfChargeCurrent
+		) {
+			return [];
+		}
+		const chargePercentage = webhookBody.valueNumber;
+
+		// Return the webhook data with comprehensive charge level information
+		return [
+			{
+				vehicleTokenId: webhookBody.tokenId,
+				timestamp: webhookBody.timestamp,
+				signal: webhookBody.name,
+				chargePercentage: chargePercentage,
+				chargeLevel:
+					chargePercentage >= 80
+						? 'High'
+						: chargePercentage >= 50
+						? 'Medium'
+						: chargePercentage >= 20
+						? 'Low'
+						: 'Critical',
+				isLowBattery: chargePercentage < 20,
+				isCriticalBattery: chargePercentage < 10,
+				rawValue: webhookBody.valueNumber,
+				source: webhookBody.source,
+				producer: webhookBody.producer,
+				eventId: webhookBody.cloudEventId,
+				triggerInfo: {
+					conditionMet: true,
+					operator: context.propsValue.operator,
+					threshold: context.propsValue.chargePercentage,
+					actualValue: chargePercentage,
+					unit: '%',
+				},
+			},
+		];
+	},
+	sampleData: {
+		vehicleTokenId: 17,
+		timestamp: '2025-05-07T22:50:23Z',
+		signal: 'powertrainTractionBatteryStateOfChargeCurrent',
+		chargePercentage: 73.2,
+		chargeLevel: 'Medium',
+		isLowBattery: false,
+		isCriticalBattery: false,
+
+		rawValue: 73.2,
+		source: '0xF26421509Efe92861a587482100c6d728aBf1CD0',
+		producer: 'did:nft:137:0x9c94C395cBcBDe662235E0A9d3bB87Ad708561BA_31700',
+		eventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
+		triggerInfo: {
+			conditionMet: true,
+			operator: 'less_than',
+			threshold: 80,
+			actualValue: 73.2,
+			unit: '%',
+		},
+	},
 });

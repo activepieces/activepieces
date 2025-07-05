@@ -1,233 +1,330 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { commonQueries, TELEMETRY_API_BASE_URL } from './constant';
+import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
-import { getHeaders, handleFailures } from '../../helpers';
-import { getVehicleToken } from '../token-exchange/helper';
+import { DimoClient } from '../../common/helpers';
+import { TelemetryQueries } from '../../common/queries';
 
-// Ortak GraphQL request helper
-async function sendTelemetryGraphQLRequest(query: string, tokenId: number, developerJwt: string) {
-  const vehicleJwt = await getVehicleToken(developerJwt, tokenId);
-  const response = await httpClient.sendRequest({
-    method: HttpMethod.POST,
-    url: TELEMETRY_API_BASE_URL,
-    body: { query },
-    headers: getHeaders(vehicleJwt),
-  });
+const telemetryApiCustomQueryAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-api-custom-query',
+	displayName: 'Telemetry : Custom Query',
+	description: 'Query DIMO Telemetry API using a custom GraphQL query.',
+	props: {
+		customQuery: Property.LongText({
+			displayName: 'Custom GraphQL Query.',
+			required: true,
+		}),
+		variables: Property.Json({
+			displayName: 'Variables',
+			required: false,
+		}),
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID.',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
 
-  handleFailures(response);
+		const { customQuery, vehicleTokenId, variables = {} } = context.propsValue;
 
-  return {
-    body : response.body
-  }
-}
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
 
-export const telemetryApiCustomQueryAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-api-custom-query',
-  displayName: 'Telemetry API (Custom GraphQL)',
-  description: 'Query DIMO Telemetry API using a custom GraphQL query.',
-  props: {
-    customQuery: Property.LongText({
-      displayName: 'Custom GraphQL Query',
-      description: 'Enter your GraphQL query here',
-      required: true,
-    }),
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { customQuery, tokenId } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!customQuery) {
-      throw new Error('Custom GraphQL query is required.');
-    }
-    if (!tokenId) {
-      throw new Error('tokenId is required for Telemetry API.');
-    }
-    if (!developerJwt) {
-      throw new Error('developerJwt is required for Telemetry API.');
-    }
-    return await sendTelemetryGraphQLRequest(customQuery, tokenId, developerJwt);
-  },
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query: customQuery,
+				variables,
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
 });
 
-export const availableSignalsAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-available-signals',
-  displayName: 'Telemetry: Available Signals',
-  description: 'Get a list of available signals for a specific vehicle',
-  props: {
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { tokenId } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!tokenId) throw new Error('tokenId is required');
-    if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.avaiableSignals.replace("<tokenId>", String(tokenId));
-    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
-  },
+const availableSignalsAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-available-signals',
+	displayName: 'Telemetry : Available Signals',
+	description: 'Get a list of available signals for a specific vehicle.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.avaiableSignals.replace('<tokenId>', String(vehicleTokenId));
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
 });
 
-export const signalsAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-signals',
-  displayName: 'Telemetry: Signals',
-  description: 'Get a selection of available signals for a specific vehicle',
-  props: {
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-    startDate: Property.DateTime({
-      displayName: 'Start Date',
-      description: 'Start date for the query',
-      required: true,
-    }),
-    endDate: Property.DateTime({
-      displayName: 'End Date',
-      description: 'End date for the query',
-      required: true,
-    }),
-    interval: Property.ShortText({
-      displayName: 'Interval',
-      description: 'Interval (e.g. 24h)',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { tokenId, startDate, endDate, interval } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!tokenId) throw new Error('tokenId is required');
-    if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.signals
-    .replace("<tokenId>", String(tokenId))
-    .replace("<startDate>", startDate)
-    .replace("<endDate>", endDate)
-    .replace("<interval>", interval)
-    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
-  },
+const signalsAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-signals',
+	displayName: 'Telemetry : Signals',
+	description: 'Get a selection of available signals for a specific vehicle.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			required: true,
+		}),
+		startDate: Property.DateTime({
+			displayName: 'Start Date',
+			description: 'Start date for the query.',
+			required: true,
+		}),
+		endDate: Property.DateTime({
+			displayName: 'End Date',
+			description: 'End date for the query.',
+			required: true,
+		}),
+		interval: Property.ShortText({
+			displayName: 'Interval',
+			description: 'Interval (e.g. 24h).',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.signals
+				.replace('<tokenId>', String(vehicleTokenId))
+				.replace('<startDate>', startDate)
+				.replace('<endDate>', endDate)
+				.replace('<interval>', interval);
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
 });
 
-export const getDailyAvgSpeedOfVehicleAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-daily-avg-speed',
-  displayName: 'Telemetry: Daily Avg Speed',
-  description: 'Get the average speed of a vehicle over a specific time period',
-  props: {
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-    startDate: Property.DateTime({
-      displayName: 'Start Date',
-      description: 'Start date for the query (YYYY-MM-DD)',
-      required: true,
-    }),
-    endDate: Property.DateTime({
-      displayName: 'End Date',
-      description: 'End date for the query (YYYY-MM-DD)',
-      required: true,
-    }),
-    interval: Property.ShortText({
-      displayName: 'Interval',
-      description: 'Interval (e.g. 24h)',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { tokenId, startDate, endDate, interval } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!tokenId) throw new Error('tokenId is required');
-    if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getDailyAvgSpeedOfVehicle
-    .replace("<tokenId>", String(tokenId))
-    .replace("<startDate>", startDate)
-    .replace("<endDate>", endDate)
-    .replace("<interval>", interval)
-    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
-  },
+const getDailyAvgSpeedOfVehicleAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-daily-avg-speed',
+	displayName: 'Telemetry : Daily Avg Speed',
+	description: 'Get the average speed of a vehicle over a specific time period.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			required: true,
+		}),
+		startDate: Property.DateTime({
+			displayName: 'Start Date',
+			description: 'Start date for the query (YYYY-MM-DD).',
+			required: true,
+		}),
+		endDate: Property.DateTime({
+			displayName: 'End Date',
+			description: 'End date for the query (YYYY-MM-DD).',
+			required: true,
+		}),
+		interval: Property.ShortText({
+			displayName: 'Interval',
+			description: 'Interval (e.g. 24h).',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.getDailyAvgSpeedOfVehicle
+				.replace('<tokenId>', String(vehicleTokenId))
+				.replace('<startDate>', startDate)
+				.replace('<endDate>', endDate)
+				.replace('<interval>', interval);
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
 });
 
-export const getMaxSpeedOfVehicleAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-max-speed',
-  displayName: 'Telemetry: Max Speed',
-  description: 'Get the maximum speed of a vehicle over a specific time period',
-  props: {
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-    startDate: Property.DateTime({
-      displayName: 'Start Date',
-      description: 'Start date for the query (YYYY-MM-DD)',
-      required: true,
-    }),
-    endDate: Property.DateTime({
-      displayName: 'End Date',
-      description: 'End date for the query (YYYY-MM-DD)',
-      required: true,
-    }),
-    interval: Property.ShortText({
-      displayName: 'Interval',
-      description: 'Interval (e.g. 24h)',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { tokenId, startDate, endDate, interval } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!tokenId) throw new Error('tokenId is required');
-    if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getMaxSpeedOfVehicle
-      .replace("<tokenId>", String(tokenId))
-      .replace("<startDate>", startDate)
-      .replace("<endDate>", endDate)
-      .replace("<interval>", interval)
-    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
-  },
+const getMaxSpeedOfVehicleAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-max-speed',
+	displayName: 'Telemetry : Max Speed',
+	description: 'Get the maximum speed of a vehicle over a specific time period.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			required: true,
+		}),
+		startDate: Property.DateTime({
+			displayName: 'Start Date',
+			description: 'Start date for the query (YYYY-MM-DD).',
+			required: true,
+		}),
+		endDate: Property.DateTime({
+			displayName: 'End Date',
+			description: 'End date for the query (YYYY-MM-DD).',
+			required: true,
+		}),
+		interval: Property.ShortText({
+			displayName: 'Interval',
+			description: 'Interval (e.g. 24h)',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.getMaxSpeedOfVehicle
+				.replace('<tokenId>', String(vehicleTokenId))
+				.replace('<startDate>', startDate)
+				.replace('<endDate>', endDate)
+				.replace('<interval>', interval);
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
 });
 
-export const getVinVcLatestAction = createAction({
-  auth: dimoAuth,
-  name: 'telemetry-vin-vc-latest',
-  displayName: 'Telemetry: VIN VC Latest',
-  description: 'Get the latest VIN and Vehicle Configuration for a specific vehicle',
-  props: {
-    tokenId: Property.Number({
-      displayName: 'Vehicle Token ID',
-      description: 'The ERC-721 token ID of the vehicle',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { tokenId } = context.propsValue;
-    const { developerJwt } = context.auth;
-    if (!tokenId) throw new Error('tokenId is required');
-    if (!developerJwt) throw new Error('developerJwt is required');
-    const query = commonQueries.getVinVcLatest.replace("<tokenId>", String(tokenId));
-    return await sendTelemetryGraphQLRequest(query, tokenId, developerJwt);
-  },
-});
+const getVinVcLatestAction = createAction({
+	auth: dimoAuth,
+	name: 'telemetry-vin-vc-latest',
+	displayName: 'Telemetry : VIN VC Latest',
+	description: 'Get the latest VIN and Vehicle Configuration for a specific vehicle.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
 
+		const { vehicleTokenId } = context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
+
+			const query = TelemetryQueries.getVinVcLatest.replace('<tokenId>', String(vehicleTokenId));
+
+			const response = await dimo.sendTelemetryGraphQLRequest({
+				vehiclejwt: vehicleJwt,
+				query,
+				variables: {},
+			});
+
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
+});
 
 export const telemetryApiActions = [
-  telemetryApiCustomQueryAction,
-  availableSignalsAction,
-  signalsAction,
-  getDailyAvgSpeedOfVehicleAction,
-  getMaxSpeedOfVehicleAction,
-  getVinVcLatestAction,
+	telemetryApiCustomQueryAction,
+	availableSignalsAction,
+	signalsAction,
+	getDailyAvgSpeedOfVehicleAction,
+	getMaxSpeedOfVehicleAction,
+	getVinVcLatestAction,
 ];
