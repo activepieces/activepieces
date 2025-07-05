@@ -122,14 +122,13 @@ export const RunsTable = () => {
         type: 'select',
         title: t('Status'),
         accessorKey: 'status',
-        options: Object.values(FlowRunStatus)
-          .map((status) => {
-            return {
-              label: formatUtils.convertEnumToHumanReadable(status),
-              value: status,
-              icon: flowRunUtils.getStatusIcon(status).Icon,
-            };
-          }),
+        options: Object.values(FlowRunStatus).map((status) => {
+          return {
+            label: formatUtils.convertEnumToHumanReadable(status),
+            value: status,
+            icon: flowRunUtils.getStatusIcon(status).Icon,
+          };
+        }),
         icon: CheckIcon,
       } as const,
       {
