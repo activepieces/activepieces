@@ -1,5 +1,8 @@
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { clicksendAuth } from './common/auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import {clicksendAuth} from "../../index"
+import { makeRequest } from '../common';
+import { countryDropdown } from '../common/props';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const sendMms = createAction({
   auth: clicksendAuth,
@@ -33,37 +36,41 @@ export const sendMms = createAction({
       description: 'Recipient phone number in E.164 format (e.g. +61411111111)',
       required: true,
     }),
-    country: Property.ShortText({
-      displayName: 'Country',
-      description: 'Recipient country code (e.g. AU)',
-      required: true,
+    country: countryDropdown,
+    source: Property.ShortText({
+      displayName: 'Source',
+      description: 'Source identifier (e.g., "php", "api", etc.)',
+      required: false,
+      defaultValue: 'api',
     }),
   },
   async run({ auth, propsValue }) {
-    const { media_file, subject, from, body, to, country } = propsValue;
+    const { media_file, subject, from, body, to, country, source } = propsValue;
     const { username, password } = auth;
-    const encoded = Buffer.from(`${username}:${password}`).toString('base64');
-    const response = await fetch('https://rest.clicksend.com/v3/mms/send', {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${encoded}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        media_file,
-        messages: [
-          {
-            source: 'api',
-            subject,
-            from,
-            body,
-            to,
-            country,
-          },
-        ],
-      }),
-    });
-    const data = await response.json();
-    return data;
+    const apiKey = `${username}:${password}`;
+
+    const requestBody = {
+      media_file,
+      messages: [
+        {
+          source: source || 'api',
+          subject,
+          from,
+          body,
+          to,
+          country,
+        },
+      ],
+    };
+
+    const response = await makeRequest(
+      apiKey,
+      HttpMethod.POST,
+      `/mms/send`,
+      undefined,
+      requestBody
+    );
+
+    return response;
   },
 });
