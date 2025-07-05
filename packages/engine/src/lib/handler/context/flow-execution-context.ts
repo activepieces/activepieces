@@ -14,7 +14,7 @@ export type VerdictResponse = {
     reason: FlowRunStatus.PAUSED
     pauseMetadata: PauseMetadata
 } | {
-    reason: FlowRunStatus.STOPPED
+    reason: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse
 } | {
     reason: FlowRunStatus.INTERNAL_ERROR
@@ -225,16 +225,11 @@ export class FlowExecutorContext {
             }
             case ExecutionVerdict.SUCCEEDED: {
                 const verdictResponse = this.verdictResponse
-                if (verdictResponse?.reason === FlowRunStatus.STOPPED) {
-                    return {
-                        ...baseExecutionOutput,
-                        status: FlowRunStatus.STOPPED,
-                        response: verdictResponse.stopResponse,
-                    }
-                }
+
                 return {
                     ...baseExecutionOutput,
                     status: FlowRunStatus.SUCCEEDED,
+                    response: !isNil(verdictResponse) && 'stopResponse' in verdictResponse ? verdictResponse.stopResponse : undefined,
                 }
             }
         }

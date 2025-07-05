@@ -152,7 +152,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (params.hookResponse.type === 'stopped') {
             assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: FlowRunStatus.STOPPED,
+                reason: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             }).increaseTask()
         }
@@ -183,7 +183,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
     switch (hookResponse.type) {
         case 'stopped':
-            return hookResponse.response.response
         case 'respond':
             return hookResponse.response.response
         case 'paused':
