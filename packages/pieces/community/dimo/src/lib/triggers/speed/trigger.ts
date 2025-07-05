@@ -1,182 +1,183 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient } from '@activepieces/pieces-common';
-import { getHeaders, handleFailures } from '../../helpers';
-import {  TriggerField, WebhookDefinition, WebhookInfo, WebhookPayload } from '../../models';
-import { VEHICLE_EVENTS_OPERATIONS } from '../../actions/vehicle-events/constant';
-import { operatorStaticDropdown, verificationTokenInput } from '../common';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { DimoClient } from '../../common/helpers';
+import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
+import { TriggerField } from '../../common/constants';
+import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
+
+const TRIGGER_KEY = 'dimo-speed-trigger';
 
 export const speedTrigger = createTrigger({
-  auth: dimoAuth,
-  name: 'speed-trigger',
-  displayName: 'Speed Trigger',
-  description:
-    'Triggers when vehicle speed meets specified conditions (requires Developer JWT)',
-  type: TriggerStrategy.WEBHOOK,
-  handshakeConfiguration: {
-    strategy: WebhookHandshakeStrategy.NONE,
-  },
-  props: {
-    vehicleTokenIds: Property.Array({
-      displayName: 'Vehicle Token IDs',
-      description:
-        'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions)',
-      required: false,
-    }),
-    operator: operatorStaticDropdown,
-    speedValue: Property.Number({
-      displayName: 'Speed Value (km/h)',
-      description: 'Speed value to compare against in kilometers per hour',
-      required: true,
-    }),
-    triggerFrequency: Property.StaticDropdown({
-      displayName: 'Trigger Frequency',
-      description: 'How often the webhook should fire when condition is met',
-      required: true,
-      defaultValue: 'Realtime',
-      options: {
-        options: [
-          { label: 'Real-time', value: 'Realtime' },
-          { label: 'Hourly', value: 'Hourly' },
-        ],
-      },
-    }),
-    verificationToken: verificationTokenInput,
-  },
-  sampleData: {
-    tokenId: 17,
-    timestamp: '2025-05-07T22:50:23Z',
-    name: 'speed',
-    valueNumber: 65.5,
-    valueString: '',
-    source: '0xF26421509Efe92861a587482100c6d728aBf1CD0',
-    producer: 'did:nft:137:0x9c94C395cBcBDe662235E0A9d3bB87Ad708561BA_31700',
-    cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
-  },
-  async onEnable(context) {
-    const {
-      vehicleTokenIds,
-      operator,
-      speedValue,
-      triggerFrequency,
-      verificationToken,
-    } = context.propsValue;
-    const { developerJwt } = context.auth;
-    const ids: string[] =
-      vehicleTokenIds &&
-      Array.isArray(vehicleTokenIds) &&
-      vehicleTokenIds.length > 0
-        ? vehicleTokenIds.map(String)
-        : [];
-    const webhookDef: WebhookDefinition = {
-      service: 'Telemetry',
-      data: TriggerField.Speed,
-      trigger: {
-        field: TriggerField.Speed,
-        operator,
-        value: speedValue,
-      },
-      setup: triggerFrequency as 'Realtime' | 'Hourly',
-      description: `Speed trigger: ${operator} ${speedValue} km/h`,
-      targetUri: context.webhookUrl,
-      status: 'Active',
-    };
-    // Create Webhook
-    const webhookResponse = await httpClient.sendRequest({
-      method: VEHICLE_EVENTS_OPERATIONS.createWebhook.method,
-      url: VEHICLE_EVENTS_OPERATIONS.createWebhook.url({}),
-      body: {
-        service: webhookDef.service,
-        data: webhookDef.data,
-        trigger: webhookDef.trigger,
-        setup: webhookDef.setup,
-        description: webhookDef.description,
-        target_uri: webhookDef.targetUri,
-        status: webhookDef.status,
-        verification_token: verificationToken
-      },
-      headers: getHeaders(developerJwt),
-    });
-    handleFailures(webhookResponse);
-    const webhookId = webhookResponse.body.id;
-    if (ids.length === 0) {
-      const res = await httpClient.sendRequest({
-        method: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.method,
-        url: VEHICLE_EVENTS_OPERATIONS.subscribeAllVehicles.url({ webhookId }),
-        headers: getHeaders(developerJwt),
-      });
-      handleFailures(res);
-    } else {
-      await Promise.all(
-        ids.map(async (tokenId) => {
-          const res = await httpClient.sendRequest({
-            method: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.method,
-            url: VEHICLE_EVENTS_OPERATIONS.subscribeVehicle.url({ webhookId, tokenId: Number(tokenId) }),
-            headers: getHeaders(developerJwt),
-          });
-          handleFailures(res);
-        })
-      );
-    }
-    await context.store.put<WebhookInfo>('webhook_info', {
-      webhookId,
-      verificationToken
-    });
-  },
-  async onDisable(context) {
-    const { developerJwt } = context.auth;
-    const webhookInfo = await context.store.get<WebhookInfo>('webhook_info');
-    if (!webhookInfo) {
-      throw new Error(
-        'No webhook info found in store. Trigger may not have been enabled.'
-      );
-    }
-    const unsubscribeAllVehicles = await httpClient.sendRequest({
-      method: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.method,
-      url: VEHICLE_EVENTS_OPERATIONS.unsubscribeAllVehicles.url({ webhookId: webhookInfo.webhookId }),
-      headers: getHeaders(developerJwt),
-    });
-    handleFailures(unsubscribeAllVehicles);
-    const res = await httpClient.sendRequest({
-      method: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.method,
-      url: VEHICLE_EVENTS_OPERATIONS.deleteWebhook.url({ webhookId: webhookInfo.webhookId }),
-      headers: getHeaders(developerJwt),
-    });
-    handleFailures(res);
-  },
-    async onHandshake(context) {
+	auth: dimoAuth,
+	name: 'speed-trigger',
+	displayName: 'Speed Trigger',
+	description: 'Triggers when vehicle speed meets specified conditions.',
+	type: TriggerStrategy.WEBHOOK,
 
-      return {
-        body : context.propsValue.verificationToken,
-        headers : {
-          'Content-Type': 'text/plain',
-        },
-        status: 200,
-      }
-  },
-  async run(context) {
-    const webhookBody = context.payload.body as WebhookPayload;
-    if (!webhookBody || typeof webhookBody !== 'object') {
-      throw new Error('Invalid webhook payload');
-    }
-    if (webhookBody.name !== TriggerField.Speed) {
-      throw new Error('Received non-speed webhook event');
-    }
-    return [
-      {
-        ...webhookBody,
-        triggerInfo: {
-          conditionMet: true,
-          actualValue: webhookBody.valueNumber,
-          configuredOperator: context.propsValue.operator,
-          configuredValue: context.propsValue.speedValue,
-        },
-      },
-    ];
-  },
+	props: {
+		vehicleTokenIds: Property.Array({
+			displayName: 'Vehicle Token IDs',
+			description:
+				'List of vehicle token IDs to monitor (leave empty to monitor all vehicles with permissions).',
+			required: false,
+		}),
+		operator: operatorStaticDropdown,
+		speedValue: Property.Number({
+			displayName: 'Speed Value (km/h)',
+			description: 'Speed value to compare against in kilometers per hour',
+			required: true,
+		}),
+		triggerFrequency: Property.StaticDropdown({
+			displayName: 'Trigger Frequency',
+			description: 'How often the webhook should fire when condition is met',
+			required: true,
+			defaultValue: 'Realtime',
+			options: {
+				options: [
+					{ label: 'Real-time', value: 'Realtime' },
+					{ label: 'Hourly', value: 'Hourly' },
+				],
+			},
+		}),
+		verificationToken: verificationTokenInput,
+	},
+	handshakeConfiguration: {
+		strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+		paramName: 'verification',
+	},
+	async onHandshake(context) {
+		return {
+			body: context.propsValue.verificationToken,
+			headers: {
+				'Content-Type': 'text/plain',
+			},
+			status: 200,
+		};
+	},
+
+	async onEnable(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+
+		const { vehicleTokenIds, operator, speedValue, triggerFrequency, verificationToken } =
+			context.propsValue;
+
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+
+		const ids: string[] =
+			vehicleTokenIds && Array.isArray(vehicleTokenIds) && vehicleTokenIds.length > 0
+				? vehicleTokenIds.map(String)
+				: [];
+
+		const webhookPayload: CreateWebhookParams = {
+			service: 'Telemetry',
+			data: TriggerField.Speed,
+			trigger: {
+				field: TriggerField.Speed,
+				operator,
+				value: speedValue,
+			},
+			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			description: `Speed trigger: ${operator} ${speedValue} km/h`,
+			targetUri: context.webhookUrl,
+			status: 'Active',
+			verification_token: verificationToken,
+		};
+
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
+			const createWebhookResponse = await dimo.createWebhook({
+				developerJwt,
+				params: webhookPayload,
+			});
+
+			const webhookId = createWebhookResponse.id;
+
+			if (ids.length === 0) {
+				await dimo.subscribeAllVehicles({
+					developerJwt,
+					webhookId,
+				});
+			} else {
+				await Promise.all(
+					ids.map(async (tokenId) => {
+						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
+					}),
+				);
+			}
+			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
+				webhookId,
+				verificationToken,
+			});
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
+	async onDisable(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+		const webhookInfo = await context.store.get<WebhookInfo>(TRIGGER_KEY);
+		if (webhookInfo) {
+			try {
+				const developerJwt = await dimo.getDeveloperJwt();
+
+				const webhookId = webhookInfo.webhookId;
+
+				await dimo.unsubscribeAllVehicles({ developerJwt, webhookId });
+				await dimo.deleteWebhook({ developerJwt, webhookId });
+			} catch (err) {
+				const message = (err as HttpError).message;
+				throw new Error(message);
+			}
+		}
+	},
+
+	async run(context) {
+		const webhookBody = context.payload.body as WebhookPayload;
+		if (
+			!webhookBody ||
+			typeof webhookBody !== 'object' ||
+			webhookBody.name !== TriggerField.Speed
+		) {
+			return [];
+		}
+
+		return [
+			{
+				...webhookBody,
+				triggerInfo: {
+					conditionMet: true,
+					actualValue: webhookBody.valueNumber,
+					configuredOperator: context.propsValue.operator,
+					configuredValue: context.propsValue.speedValue,
+				},
+			},
+		];
+	},
+	sampleData: {
+		tokenId: 17,
+		timestamp: '2025-05-07T22:50:23Z',
+		name: 'speed',
+		valueNumber: 65.5,
+		valueString: '',
+		source: '0xF26421509Efe92861a587482100c6d728aBf1CD0',
+		producer: 'did:nft:137:0x9c94C395cBcBDe662235E0A9d3bB87Ad708561BA_31700',
+		cloudEventId: '2wmskfxoQk8r4chUZCat7tSnJLN',
+		triggerInfo: {
+			conditionMet: true,
+			actualValue: 65.5,
+			configuredOperator: 'less_than',
+			configuredValue: 80,
+		},
+	},
 });

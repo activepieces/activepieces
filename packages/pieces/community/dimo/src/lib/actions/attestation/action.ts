@@ -1,40 +1,42 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { AttestationResponse } from "./type";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { CREATE_VC_ENDPOINT } from "./constant";
-import { getHeaders, handleFailures } from "../../helpers";
-import { dimoAuth } from "../../../index";
-import { getVehicleToken } from "../token-exchange/helper";
-// import { vehicleAuth } from '../../../index';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { dimoAuth } from '../../../index';
+import { DimoClient } from '../../common/helpers';
+import { HttpError } from '@activepieces/pieces-common';
 
-export const attestationApiAction = createAction({
-    auth: dimoAuth, // Will be set to dimoAuth in the piece
-    name: "generate-vehicle-vc-attestation-api",
-    displayName: "Generate Vehicle VC via Attestation API",
-    description: "Generates the VIN VC for a given vehicle if it has never been created, or if it has expired. If an unexpired VC is found, returns the VC.",
-    props: {
-        vehicleTokenId : Property.Number({
-            displayName : "Vehicle Token ID",
-            description : "The ID of the vehicle for getting Attestation VC",
-            required : true,
-        }),
-    },
-    run : async (ctx) => {
-        const {vehicleTokenId} = ctx.propsValue
+const createVinVcAction = createAction({
+	auth: dimoAuth,
+	name: 'create-vin-vc',
+	displayName: 'Attestation : Create VIN VC',
+	description: 'Generates the VIN VC for a given vehicle.',
+	props: {
+		vehicleTokenId: Property.Number({
+			displayName: 'Vehicle Token ID',
+			description: 'The ID of the vehicle for generating VIN Verifiable Credential for.',
+			required: true,
+		}),
+	},
+	async run(context) {
+		const { clientId, apiKey, redirectUri } = context.auth;
+		const { vehicleTokenId } = context.propsValue;
 
-        // Vehicle JWT gerektiren yerde getVehicleToken kullan
-        const vehicleJwt = await getVehicleToken(ctx.auth.developerJwt, vehicleTokenId);
+		const dimo = new DimoClient({
+			clientId,
+			apiKey,
+			redirectUri,
+		});
+		try {
+			const developerJwt = await dimo.getDeveloperJwt();
 
-        const response = await httpClient.sendRequest<AttestationResponse>({
-          method: HttpMethod.POST,
-          url: CREATE_VC_ENDPOINT.replace("{0}", vehicleTokenId.toString()),
-          headers : getHeaders(vehicleJwt),
-        })
+			const vehicleJwt = await dimo.getVehicleJwt({ developerJwt, tokenId: vehicleTokenId });
 
-        handleFailures(response)
+			const response = await dimo.createVinVC({ vehicleJwt, tokenId: vehicleTokenId });
 
-        return {
-          body : response.body
-        }
-    }
-})
+			return response;
+		} catch (err) {
+			const message = (err as HttpError).message;
+			throw new Error(message);
+		}
+	},
+});
+
+export const attestationApiActions = [createVinVcAction];
