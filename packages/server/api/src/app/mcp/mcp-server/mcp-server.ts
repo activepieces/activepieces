@@ -284,7 +284,7 @@ async function initializeOpenAIModel({
     platformId,
     projectId,
 }: InitializeOpenAIModelParams): Promise<LanguageModelV1> {
-    const model = 'gpt-4o-mini'
+    const model = 'gpt-4o'
     const baseUrl = await domainHelper.getPublicApiUrl({
         path: '/v1/ai-providers/proxy/openai/v1/',
         platformId,
@@ -356,23 +356,32 @@ async function extractActionParametersFromUserInstructions({
 
             const propertySchemaValues = propertySchemas.map(({ value }) => value).filter(value => value !== null)
 
-            const { object: extractedValue } = await generateObject({
-                model: aiModel,
-                schema: z.object(schemaObject),
-                prompt: mcpUtils.buildFinalExtractionPrompt({
-                    parameterExtractionPrompt,
-                    propertySchemaValues,
-                }),
-            })
+            try {
+                const { object: extractedValue } = await generateObject({
+                    model: aiModel,
+                    schema: z.object(schemaObject),
+                    prompt: mcpUtils.buildFinalExtractionPrompt({
+                        parameterExtractionPrompt,
+                        propertySchemaValues,
+                    }),
+                })
 
-            const extractedParameters = Object.fromEntries(
-                Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
-            )
-
-            return {
-                ...accumulatedParameters,
-                ...extractedParameters,
-                'auth': connectionReference,
+                const extractedParameters = Object.fromEntries(
+                    Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
+                )
+    
+                return {
+                    ...accumulatedParameters,
+                    ...extractedParameters,
+                    'auth': connectionReference,
+                }
+            }
+            catch (error) {
+                logger.error({ error }, 'FailedToExtractParametersFromAI')
+                return {
+                    ...accumulatedParameters,
+                    'auth': connectionReference,
+                }
             }
         }, 
         Promise.resolve({ 'auth': connectionReference }),

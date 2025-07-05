@@ -59,13 +59,12 @@ export type FlatLanguageModelPricing = {
 }
 
 export type TieredLanguageModelPricing = {
+    promptThreshold: number
     input: {
-        threshold: number
         underThresholdRate: number
         overThresholdRate: number
     }
     output: {
-        threshold: number
         underThresholdRate: number
         overThresholdRate: number
     }
@@ -354,13 +353,12 @@ It is strongly recommended that you add your credit card information to your Ope
                 instance: google('gemini-2.5-pro'),
                 functionCalling: true,
                 pricing: {
+                    promptThreshold: 200_000,
                     input: {
-                        threshold: 200_000,
                         underThresholdRate: 1.25,
                         overThresholdRate: 2.50,
                     },
                     output: {
-                        threshold: 200_000,
                         underThresholdRate: 10.00,
                         overThresholdRate: 15.00,
                     },
