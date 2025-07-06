@@ -32,14 +32,23 @@ export const getPageComments = createAction({
     let hasMore = true;
 
     while (hasMore) {
-      const response = await notion.comments.list({
-        block_id: page_id,
-        start_cursor: cursor,
-      });
+      try {
+        const response = await notion.comments.list({
+          block_id: page_id,
+          start_cursor: cursor,
+        });
 
-      allComments.push(...response.results);
-      hasMore = response.has_more;
-      cursor = response.next_cursor || undefined;
+        allComments.push(...response.results);
+        hasMore = response.has_more;
+        cursor = response.next_cursor || undefined;
+      } catch (error: any) {
+        if (error.message?.includes('permissions')) {
+          throw new Error(
+            'Integration lacks required "read comments" capability.'
+          );
+        }
+        throw error;
+      }
     }
 
     const commentsByDiscussion: { [key: string]: any[] } = {};

@@ -12,7 +12,6 @@ import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
-import { isNil } from '@activepieces/shared';
 
 export const newComment = createTrigger({
   auth: notionAuth,
@@ -53,7 +52,7 @@ export const newComment = createTrigger({
         },
         plain_text: 'Good DX',
         href: null,
-      }
+      },
     ],
     display_name: {
       type: 'integration',
@@ -106,8 +105,12 @@ const polling: Polling<OAuth2PropertyValue, { page_id: string | undefined }> = {
       lastCreatedDate = lastItem;
     }
 
-    const items = await getComments(auth, propsValue.page_id!, lastCreatedDate);
-    return items.map((item: any) => {
+    const items = await getComments(
+      auth,
+      propsValue.page_id || '',
+      lastCreatedDate
+    );
+    return items.map((item) => {
       const comment = item as { created_time: string; id: string };
       return {
         id: comment.id + '|' + dayjs(comment.created_time).valueOf(),
@@ -129,28 +132,42 @@ const getComments = async (
 
   let cursor;
   let hasMore = true;
+  let shouldContinue = true;
+
   const results = [];
 
   do {
-    const response = await notion.comments.list({
-      start_cursor: cursor,
-      block_id: page_id,
-    });
+    try {
+      const response = await notion.comments.list({
+        start_cursor: cursor,
+        block_id: page_id,
+      });
 
-    hasMore = response.has_more;
-    cursor = response.next_cursor ?? undefined;
+      hasMore = response.has_more;
+      cursor = response.next_cursor ?? undefined;
 
-    const filteredComments = startDate
-      ? response.results.filter((comment: any) =>
-          dayjs(comment.created_time).isAfter(dayjs(startDate))
-        )
-      : response.results;
-
-    results.push(...filteredComments);
-  } while (hasMore && !isNil(startDate));
+      for (const comment of response.results) {
+        if (
+          startDate &&
+          !dayjs(comment.created_time).isAfter(dayjs(startDate))
+        ) {
+          shouldContinue = false;
+          break;
+        }
+        results.push(comment);
+      }
+    } catch (error) {
+      if ((error as Error).message?.includes('permissions')) {
+        throw new Error(
+          'Integration lacks required "read comments" capability.'
+        );
+      }
+      throw error;
+    }
+  } while (hasMore && shouldContinue);
 
   return results.sort(
-    (a: any, b: any) =>
+    (a: { created_time: string }, b: { created_time: string }) =>
       dayjs(b.created_time).valueOf() - dayjs(a.created_time).valueOf()
   );
 };

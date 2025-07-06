@@ -50,12 +50,29 @@ export const addComment = createAction({
       page_id: page_id,
     };
 
-    const response = await notion.comments.create(commentData);
+    try {
+      const response = await notion.comments.create(commentData);
+      if (response.object === 'comment' && Object.keys(response).length <= 2) {
+        return {
+          success: true,
+          message: 'Comment added to page successfully (partial response)',
+          comment_id: response.id,
+          note: 'Full comment details not available. Your integration may need "read comments" capability for complete response.',
+        };
+      }
 
-    return {
-      success: true,
-      message: 'Comment added to page successfully',
-      comment: response,
-    };
+      return {
+        success: true,
+        message: 'Comment added to page successfully',
+        comment: response,
+      };
+    } catch (error: any) {
+      if (error.message?.includes('permissions')) {
+        throw new Error(
+          'Integration lacks required comment capabilities. Please ensure your Notion integration has "Insert comments" capability enabled.'
+        );
+      }
+      throw error;
+    }
   },
 });
