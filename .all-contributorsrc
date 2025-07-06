@@ -1895,6 +1895,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "yusuf-cirak",
+      "name": "Yusuf Çırak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81169996?v=4",
+      "profile": "https://yusufcirak.net",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
