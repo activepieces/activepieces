@@ -1,5 +1,5 @@
 import { databaseConnection } from './database-connection'
-import { databaseSeeds } from './migration/postgres/seeds'
+import { databaseSeeds } from './seeds'
 
 export async function initializeDatabase({ runMigrations }: { runMigrations: boolean }   ) {
     await databaseConnection().initialize()
