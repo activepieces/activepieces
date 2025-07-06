@@ -43,6 +43,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
+import { UpgradeAgentPieceVersion1751834548223 } from './migration/common/1751834548223-UpgradeAgentPieceVersion'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -240,7 +241,6 @@ import { AddTrialFlagInPlatform1751394161203 } from './migration/postgres/175139
 import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
-import { UpgradeAgentPieceVersion1751834548223 } from './migration/common/1751834548223-UpgradeAgentPieceVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

@@ -1,17 +1,17 @@
 import {
     ActivepiecesError,
-    apId,
     ApId,
+    apId,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
     isNil,
     McpTool,
+    mcpToolNaming,
     McpToolType,
     McpWithTools,
     SeekPage,
     spreadIfDefined,
-    mcpToolNaming,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -198,7 +198,7 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
                 },
                 toolNames: {
                     [flow.id]: mcpToolNaming.fixTool(publishedVersion.displayName, tool.id, tool.type),
-                }
+                },
             }
         }
     }
