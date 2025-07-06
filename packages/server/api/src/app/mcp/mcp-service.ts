@@ -11,6 +11,7 @@ import {
     McpWithTools,
     SeekPage,
     spreadIfDefined,
+    mcpToolNaming,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -86,7 +87,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         const enrichedTools = await Promise.all(mcp.tools.map((tool) => enrichTool(tool, mcp.projectId, _log))).then(tools => tools.filter(tool => tool !== null))
         return {
             ...mcp,
-            tools: enrichedTools,
+            tools: enrichedTools.map(tool => tool.tool),
+            toolNameMapping: enrichedTools.reduce((acc: Record<string, string>, tool) => {
+                Object.entries(tool.toolNames).forEach(([key, value]) => {
+                    acc[key] = value
+                })
+                return acc
+            }, {}),
         }
     },
 
@@ -148,13 +155,21 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
 })
 
-async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<McpTool | null> {
+async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<EnrichedToolResult | null> {
     switch (tool.type) {
         case McpToolType.PIECE: {
+            const toolNames: Record<string, string> = tool.pieceMetadata?.actionNames.reduce((acc: Record<string, string>, actionName) => {
+                const key = `${tool.pieceMetadata?.pieceName}:${actionName}`
+                acc[key] = mcpToolNaming.fixTool(actionName, tool.id, tool.type)
+                return acc
+            }, {}) || {}
             return {
-                ...tool,
-                pieceMetadata: tool.pieceMetadata,
-                flowId: undefined,
+                tool: {
+                    ...tool,
+                    pieceMetadata: tool.pieceMetadata,
+                    flowId: undefined,
+                },
+                toolNames,
             }
         }
         case McpToolType.FLOW: {
@@ -173,12 +188,17 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
                 versionId: flow.publishedVersionId,
             })
             return {
-                ...tool,
-                pieceMetadata: undefined,
-                flow: {
-                    ...flow,
-                    version: publishedVersion,
+                tool: {
+                    ...tool,
+                    pieceMetadata: undefined,
+                    flow: {
+                        ...flow,
+                        version: publishedVersion,
+                    },
                 },
+                toolNames: {
+                    [flow.id]: mcpToolNaming.fixTool(publishedVersion.displayName, tool.id, tool.type),
+                }
             }
         }
     }
@@ -221,6 +241,11 @@ type UpdateParams = {
     token?: string
     name?: string
     tools?: Omit<McpTool, 'created' | 'updated' | 'id'>[]
+}
+
+type EnrichedToolResult = {
+    tool: McpTool
+    toolNames: Record<string, string>
 }
 
 type CountParams = {

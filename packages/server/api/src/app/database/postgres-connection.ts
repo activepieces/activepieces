@@ -240,6 +240,7 @@ import { AddTrialFlagInPlatform1751394161203 } from './migration/postgres/175139
 import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
+import { UpgradeAgentPieceVersion1751834548223 } from './migration/common/1751834548223-UpgradeAgentPieceVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -406,6 +407,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveProjectIdFromIndex1750712746125,
         RevertTodoActivties1751217652277,
         RemoveTerminationReason1751728035816,
+        UpgradeAgentPieceVersion1751834548223,
     ]
 
     const edition = system.getEdition()
