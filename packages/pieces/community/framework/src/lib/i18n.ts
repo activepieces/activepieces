@@ -1,24 +1,33 @@
 import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
-import { LocalesEnum } from "@activepieces/shared"
+import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
 import keys from '../../translation-keys.json'
 
-function translateProperty(object: Record<string, unknown>, path: string, i18n: Record<string, string>) {
+
+
+/**This function translates a property inside a piece, i.e description, displayName, etc... 
+ * 
+ * @param pieceModelOrProperty - The piece model or property to translate
+ * @param path - The path to the property to translate, i.e auth.username.displayName
+ * @param i18n - The i18n object
+ */
+function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: string, i18n: Record<string, string>) {
   const parsedKeys = path.split('.');
   if (parsedKeys[0] === '*') {
-    return Object.values(object).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
+    return Object.values(pieceModelOrProperty).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
   }
-  const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
+  const nextObject = pieceModelOrProperty[parsedKeys[0]] as Record<string, unknown>;
   if (!nextObject) {
     return;
   }
   if (parsedKeys.length > 1) {
     return translateProperty(nextObject, parsedKeys.slice(1).join('.'), i18n);
   }
-  const valueInI18n = i18n[object[parsedKeys[0]] as string]
+  const propertyValue = pieceModelOrProperty[parsedKeys[0]] as string
+  const valueInI18n = i18n[propertyValue.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]
   if (valueInI18n) {
-    object[parsedKeys[0]] = valueInI18n
+    pieceModelOrProperty[parsedKeys[0]] = valueInI18n
   }
 }
 
