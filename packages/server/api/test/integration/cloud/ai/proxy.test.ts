@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, ErrorCode, FlatLanguageModelPricing, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'
@@ -151,6 +151,62 @@ describe('AI Providers Proxy', () => {
                 // assert
                 const { input: inputCost, output: outputCost } = model?.pricing as FlatLanguageModelPricing
                 const totalCost = calculateTokensCost(usage.prompt_tokens, inputCost) + calculateTokensCost(usage.completion_tokens, outputCost)
+
+                const aiUsage = await pollForAIUsage(mockProject.id, 'openai')
+                expect(aiUsage?.cost).toBe(totalCost)
+            })
+
+            it('should record the usage cost of a DALL-E 3 image generation request', async () => {
+                // arrange
+                const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                    platform: {
+                        id: CLOUD_PLATFORM_ID,
+                    },
+                    plan: {
+                        includedAiCredits: 10,
+                    },
+                })
+                await mockAndSaveAIProvider({
+                    platformId: mockPlatform.id,
+                    provider: 'openai',
+                    config: {
+                        apiKey: openaiKey,
+                    },
+                })
+
+                const mockToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    id: mockOwner.id,
+                    platform: {
+                        id: mockPlatform.id,
+                    },
+                })
+
+                const model = getProviderConfig('openai')?.imageModels.find(model => model.instance.modelId === 'dall-e-3')
+                const size = '1024x1024'
+                const quality = 'standard'
+                const imageCount = 1
+
+                // act
+                await app?.inject({
+                    method: 'POST',
+                    url: '/v1/ai-providers/proxy/openai/v1/images/generations',
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                    body: {
+                        model: model?.instance.modelId,
+                        prompt: 'A beautiful sunset over mountains',
+                        size,
+                        quality,
+                    },
+                })
+
+                // assert
+                const pricing = model?.pricing as DALLE3PricingPerImage
+                const imageCost = pricing[quality][size as keyof typeof pricing[typeof quality]]
+                const totalCost = imageCost * imageCount
 
                 const aiUsage = await pollForAIUsage(mockProject.id, 'openai')
                 expect(aiUsage?.cost).toBe(totalCost)
@@ -335,13 +391,10 @@ describe('AI Providers Proxy', () => {
                 }
 
                 // assert
-                const { input: inputPricing, output: outputPricing } = model?.pricing as TieredLanguageModelPricing
-                const inputCost = usageMetadata.promptTokenCount <= inputPricing.threshold 
-                    ? inputPricing.underThresholdRate 
-                    : inputPricing.overThresholdRate
-                const outputCost = usageMetadata.candidatesTokenCount <= outputPricing.threshold 
-                    ? outputPricing.underThresholdRate 
-                    : outputPricing.overThresholdRate
+                const { input: inputPricing, output: outputPricing, promptThreshold } = model?.pricing as TieredLanguageModelPricing
+                const isUnderThreshold = usageMetadata.promptTokenCount <= promptThreshold
+                const inputCost = isUnderThreshold ? inputPricing.underThresholdRate : inputPricing.overThresholdRate
+                const outputCost = isUnderThreshold ? outputPricing.underThresholdRate : outputPricing.overThresholdRate
 
                 const totalCost = calculateTokensCost(usageMetadata.promptTokenCount, inputCost) + 
                     calculateTokensCost(usageMetadata.candidatesTokenCount + (usageMetadata.thoughtsTokenCount ?? 0), outputCost)
