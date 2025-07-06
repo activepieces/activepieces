@@ -769,7 +769,7 @@ describe('AI Providers Proxy', () => {
 /**
  * Polls for AI usage data because response is returned before Ai usage is recorded
  */
-async function pollForAIUsage(projectId: string, provider: string, maxAttempts = 10): Promise<AIUsageSchema | null> {
+async function pollForAIUsage(projectId: string, provider: string, maxAttempts = 4): Promise<AIUsageSchema | null> {
     let tries = 0
     let aiUsage: AIUsageSchema | null = null
     
