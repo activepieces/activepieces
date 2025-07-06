@@ -14,6 +14,14 @@ import { newDatabaseItem } from './lib/triggers/new-database-item';
 import { updatedDatabaseItem } from './lib/triggers/updated-database-item';
 import { findDatabaseItem } from './lib/actions/find-item';
 import { getPageOrBlockChildren } from './lib/actions/get-page-or-block-children';
+import { addComment } from './lib/actions/add-comment';
+import { archiveDatabaseItem } from './lib/actions/archive-database-item';
+import { restoreDatabaseItem } from './lib/actions/restore-database-item';
+import { retrieveDatabase } from './lib/actions/retrieve-database';
+import { findPage } from './lib/actions/find-page';
+import { getPageComments } from './lib/actions/get-page-comments';
+import { newComment } from './lib/triggers/new-comment';
+import { updatedPage } from './lib/triggers/updated-page';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -39,6 +47,7 @@ export const notion = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'Sanket6652',
   ],
   auth: notionAuth,
   actions: [
@@ -48,6 +57,12 @@ export const notion = createPiece({
     createPage,
     appendToPage,
     getPageOrBlockChildren,
+    addComment,
+    restoreDatabaseItem,
+    archiveDatabaseItem,
+    retrieveDatabase,
+    findPage,
+    getPageComments,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.notion.com/v1',
       auth: notionAuth,
@@ -56,5 +71,5 @@ export const notion = createPiece({
       }),
     }),
   ],
-  triggers: [newDatabaseItem, updatedDatabaseItem],
+  triggers: [newDatabaseItem, updatedDatabaseItem, newComment, updatedPage],
 });
