@@ -56,6 +56,7 @@ export type ProjectPlan = Static<typeof ProjectPlan>
 export const Project = Type.Object({
     ...BaseModelSchema,
     deleted: Nullable(Type.String()),
+    locked: Type.Boolean({ default: false }),
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),

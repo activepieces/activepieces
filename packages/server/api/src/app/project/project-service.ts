@@ -36,6 +36,7 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
+            locked: false,
             notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
             releasesEnabled: false,
         }

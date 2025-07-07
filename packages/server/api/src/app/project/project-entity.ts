@@ -46,6 +46,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             deleteDate: true,
             nullable: true,
         },
+        locked: {
+            type: Boolean,
+            default: false
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,
