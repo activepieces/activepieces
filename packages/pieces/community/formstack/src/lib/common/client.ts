@@ -17,8 +17,8 @@ export async function makeRequest(
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
-            queryParams,
             body,
+            queryParams,
         });
 
         return response.body;
