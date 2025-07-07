@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoApiCall } from '../common/client';
 import { klaviyoAuth } from '../common/auth';
 
-export const getTagsAction = createAction({
+export const findTagsAction = createAction({
   auth: klaviyoAuth,
   name: 'get-tags',
   displayName: 'Get Tags',

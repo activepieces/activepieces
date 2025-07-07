@@ -7,7 +7,7 @@ import { klaviyoApiCall } from '../common/client';
 
 const TRIGGER_KEY = 'klaviyo-profile-added-webhook-id';
 
-export const profileAddedToListOrSegmentTrigger = createTrigger({
+export const profileAddedTrigger = createTrigger({
   auth: klaviyoAuth,
   name: 'profile-added-to-list-segment',
   displayName: 'Profile Added to List/Segment',
