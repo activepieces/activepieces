@@ -45,15 +45,12 @@ export const listMessages = createAction({
   async run(context) {
     const { status, startAt, endAt } = context.propsValue;
     const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string };
-    
+
     let allMessages: MessageResult[] = [];
     let nextPageToken: string | undefined = undefined;
 
     do {
-      // Simple rate limiting - wait 20ms between requests (50 req/sec)
-      await sleep(20);
-
-      const response: ApiResponse = await httpClient.sendRequest({
+      const response = await makeRequestWithRetry({
         method: HttpMethod.GET,
         url: `https://api.bird.com/workspaces/${auth.workspaceId}/channels/${auth.channelId}/messages`,
         queryParams: {
@@ -95,4 +92,16 @@ interface ApiResponse {
   };
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+async function makeRequestWithRetry(request: any, maxRetries = 3, attempt = 1): Promise<ApiResponse> {
+  try {
+    return await httpClient.sendRequest(request);
+  } catch (error: any) {
+    if (error.response?.status === 429 && attempt < maxRetries) {
+      // Get retry-after from header or default to exponential backoff
+      const retryAfter = parseInt(error.response.headers?.['retry-after']) || Math.min(Math.pow(2, attempt) * 1000, 8000);
+      await new Promise(resolve => setTimeout(resolve, retryAfter));
+      return makeRequestWithRetry(request, maxRetries, attempt + 1);
+    }
+    throw error;
+  }
+}
