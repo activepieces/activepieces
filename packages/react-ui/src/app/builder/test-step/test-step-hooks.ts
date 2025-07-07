@@ -240,16 +240,21 @@ export const testStepHooks = {
       },
     });
   },
+  /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
   useTestAction: ({
     currentStep,
     setErrorMessage,
     setConsoleLogs,
     onSuccess,
+    onProgress,
+    mutationKey,
   }: {
     currentStep: Action;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
+    onProgress?: (progress: StepRunResponse) => void;
+    mutationKey?: string[];
   }) => {
     const socket = useSocket();
     const { flowVersionId } = useRequiredStateToTestSteps().builderState;
@@ -257,16 +262,29 @@ export const testStepHooks = {
       currentStep.name,
     );
 
-    return useMutation<StepRunResponse, Error, StepRunResponse | undefined>({
-      mutationFn: async (preExistingSampleData?: StepRunResponse) => {
-        const testStepResponse =
-          preExistingSampleData ??
-          (await flowRunsApi.testStep(socket, {
+    return useMutation<StepRunResponse, Error, TestActionMutationParams>({
+      mutationKey,
+      mutationFn: async (params: TestActionMutationParams) => {
+        if (!isNil(params?.preExistingSampleData)) {
+          return params.preExistingSampleData;
+        }
+        const response = await flowRunsApi.testStep(
+          socket,
+          {
             flowVersionId,
             stepName: currentStep.name,
-          }));
-
-        return testStepResponse;
+          },
+          (progress) => {
+            if (params?.abortSignal?.aborted) {
+              throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
+            }
+            onProgress?.(progress);
+          },
+        );
+        if (params?.abortSignal?.aborted) {
+          throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
+        }
+        return response;
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
         const { success, standardOutput, standardError } = testStepResponse;
@@ -290,6 +308,9 @@ export const testStepHooks = {
         }
       },
       onError: (error) => {
+        if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
+          return;
+        }
         console.error(error);
         toast(INTERNAL_ERROR_TOAST);
       },
@@ -306,3 +327,12 @@ const useRequiredStateToTestSteps = () => {
   }));
   return { form, builderState };
 };
+
+type TestActionMutationParams =
+  | {
+      preExistingSampleData?: StepRunResponse;
+      abortSignal?: AbortSignal;
+    }
+  | undefined;
+
+const CANCEL_TEST_STEP_ERROR_MESSAGE = 'Test step aborted';

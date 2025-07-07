@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type { McpWithTools } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
@@ -117,7 +117,7 @@ export function McpPieceDialog({
           flowId: tool.flowId,
         })) || [];
 
-      if (!selectedPiece || selectedActions.length === 0) return;
+      if (!selectedPiece) return;
 
       const existingToolIndex = currentTools.findIndex(
         (tool) =>

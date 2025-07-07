@@ -196,6 +196,9 @@
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
+      "@activepieces/piece-cognito-forms": [
+        "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -253,6 +256,9 @@
       ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
+      ],
+      "@activepieces/piece-dimo": [
+        "packages/pieces/community/dimo/src/index.ts"
       ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
@@ -401,6 +407,9 @@
       ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-heygen": [
+        "packages/pieces/community/heygen/src/index.ts"
       ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
@@ -738,6 +747,9 @@
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
+      ],
+      "@activepieces/piece-smartsheet": [
+        "packages/pieces/community/smartsheet/src/index.ts"
       ],
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"

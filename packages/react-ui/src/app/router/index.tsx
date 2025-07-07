@@ -13,13 +13,15 @@ import { ChatPage } from '@/app/routes/chat';
 // import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 // import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 // import { SSOPage } from '@/app/routes/platform/security/sso';
-// import AIProvidersPage from '@/app/routes/platform/setup/ai';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
 // import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { Error } from '@/features/billing/components/error';
+import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
 
@@ -56,7 +58,6 @@ import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
 // import AlertsPage from '../routes/settings/alerts';
 // import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
 // import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -82,7 +83,7 @@ const SettingsRerouter = () => {
   return fragmentWithoutHash ? (
     <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
   ) : (
-    <Navigate to="/settings/general" replace />
+    <Navigate to="/settings/team" replace />
   );
 };
 
@@ -333,18 +334,6 @@ const routes = [
   // }),
 
   ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.general,
-    element: (
-      <DashboardContainer>
-        <PageTitle title="General">
-          <ProjectSettingsLayout>
-            <GeneralPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: projectSettingsRoutes.pieces,
     element: (
       <DashboardContainer>
@@ -513,16 +502,16 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  // {
-  //   path: '/platform/setup/ai',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="AI">
-  //         <AIProvidersPage />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
+  {
+    path: '/platform/setup/ai',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="AI">
+          <AIProvidersPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
   // {
   //   path: '/platform/security/api-keys',
   //   element: (
@@ -569,6 +558,26 @@ const routes = [
   //     <PlatformAdminContainer>
   //       <PageTitle title="Billing">
   //         <SettingsBilling />
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/setup/billing/success',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="Billing">
+  //         <Success />
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/setup/billing/error',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="Billing">
+  //         <Error />
   //       </PageTitle>
   //     </PlatformAdminContainer>
   //   ),
@@ -623,36 +632,36 @@ const routes = [
   //     </PlatformAdminContainer>
   //   ),
   // },
-  // {
-  //   path: '/platform/setup',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="Platform Setup">
-  //         <Navigate to="/platform/setup/ai" replace />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
-  // {
-  //   path: '/platform/infrastructure',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="Platform Infrastructure">
-  //         <Navigate to="/platform/infrastructure/workers" replace />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
-  // {
-  //   path: '/platform/security',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="Platform Security">
-  //         <Navigate to="/platform/security/audit-logs" replace />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
+  {
+    path: '/platform/setup',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Setup">
+          <Navigate to="/platform/setup/ai" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Infrastructure">
+          <Navigate to="/platform/infrastructure/workers" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/security',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Security">
+          <Navigate to="/platform/security/audit-logs" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
   {
     path: '/redirect',
     element: <RedirectPage></RedirectPage>,

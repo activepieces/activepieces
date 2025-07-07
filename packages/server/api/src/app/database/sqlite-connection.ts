@@ -46,6 +46,8 @@ import { RemoveUniqueOnFlowSqlite1750093133906 } from './migration/sqlite/175009
 import { ChangeContentTodoActivity1750822236348 } from './migration/sqlite/1750822236348-change-content-todo-activity'
 import { RegenerateIssueTable1750822955988 } from './migration/sqlite/1750822955988-regenerate-issue-table'
 import { UpdateAppConnectionIndexes1750823093554 } from './migration/sqlite/1750823093554-update-app-connection-indexes'
+import { RevertTodoActivtiesSqlite1751217307674 } from './migration/sqlite/1751217307674-RevertTodoActivtiesSqlite'
+import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -68,6 +70,8 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RevertTodoActivtiesSqlite1751217307674,
+        RemoveTerminationReasonSqlite1751727630516,
         UpdateAppConnectionIndexes1750823093554,
         RegenerateIssueTable1750822955988,
         ChangeContentTodoActivity1750822236348,

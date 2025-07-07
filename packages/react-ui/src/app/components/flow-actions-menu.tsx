@@ -129,12 +129,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     flowsHooks.useExportFlows();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        className="rounded-full p-2 hover:bg-muted cursor-pointer"
-        asChild
-      >
-        {children}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent
         noAnimationOnOut={true}
         onCloseAutoFocus={(e) => e.preventDefault()}

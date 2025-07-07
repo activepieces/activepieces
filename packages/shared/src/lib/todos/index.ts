@@ -1,9 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Agent } from '../agents'
 import { BaseModelSchema, Nullable } from '../common'
 import { PopulatedFlow } from '../flows'
 import { UserWithMetaInformation } from '../user'
-import { RichContentBlock } from './content'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
@@ -22,27 +20,6 @@ export const RESOLVED_STATUS = {
     description: 'Resolved',
     variant: STATUS_VARIANT.POSITIVE,
 }
-
-
-export const AGENT_RESOLVED_STATUS_OPTION = {
-    name: 'Resolved',
-    description: 'Resolved',
-    variant: STATUS_VARIANT.POSITIVE,
-    continueFlow: true,
-}
-
-export const AGENT_REJECTED_STATUS_OPTION = {
-    name: 'Failed',
-    description: 'Failed',
-    variant: STATUS_VARIANT.NEGATIVE,
-    continueFlow: false,
-}
-
-export const AGENT_STATUS_OPTIONS = [
-    AGENT_RESOLVED_STATUS_OPTION,
-    AGENT_REJECTED_STATUS_OPTION,
-]    
-
 
 export const STATUS_COLORS: Record<STATUS_VARIANT, StatusColor> = {
     [STATUS_VARIANT.POSITIVE]: {
@@ -109,7 +86,6 @@ export const Todo = Type.Object({
     assigneeId: Nullable(Type.String()),
     locked: Type.Boolean(),
     resolveUrl: Nullable(Type.String()),
-    agentId: Nullable(Type.String()),
     environment: Type.Enum(TodoEnvironment),
 })
 
@@ -118,7 +94,6 @@ export type Todo = Static<typeof Todo>
 export const PopulatedTodo = Type.Composite([Todo, Type.Object({
     assignee: Nullable(UserWithMetaInformation),
     createdByUser: Nullable(UserWithMetaInformation),
-    agent: Nullable(Agent),
     flow: Nullable(PopulatedFlow),
 })])
 
@@ -133,8 +108,7 @@ export const TodoActivity = Type.Object({
     ...BaseModelSchema,
     todoId: Type.String(),
     userId: Nullable(Type.String()),
-    agentId: Nullable(Type.String()),
-    content: Type.Array(RichContentBlock),
+    content: Type.String(),
 })
 
 export type TodoActivity = Static<typeof TodoActivity>
@@ -142,7 +116,6 @@ export type TodoActivity = Static<typeof TodoActivity>
 
 export const TodoActivityWithUser = Type.Composite([TodoActivity, Type.Object({
     user: Nullable(UserWithMetaInformation),
-    agent: Nullable(Agent),
 })])
 
 export type TodoActivityWithUser = Static<typeof TodoActivityWithUser>

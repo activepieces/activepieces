@@ -8,7 +8,7 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
@@ -21,7 +21,6 @@ const disallowedRoutes = [
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
   '/v1/authn/local/verify-email',
-  '/v1/flags',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',
   '/v1/otp',
@@ -60,16 +59,17 @@ function request<TResponse>(
   const unAuthenticated = disallowedRoutes.some((route) =>
     url.startsWith(route),
   );
+
   return axios({
     url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
-      Authorization:
-        config.headers?.Authorization ??
-        (unAuthenticated || !isApWebsite
-          ? undefined
-          : `Bearer ${authenticationSession.getToken()}`),
+      Authorization: getToken(
+        unAuthenticated,
+        isApWebsite,
+        authenticationSession.getToken(),
+      ),
     },
   })
     .then((response) =>
@@ -88,9 +88,30 @@ function request<TResponse>(
     });
 }
 
+function getToken(
+  unAuthenticated: boolean,
+  isApWebsite: boolean,
+  token: string | null,
+) {
+  if (unAuthenticated || !isApWebsite) {
+    return undefined;
+  }
+  if (isNil(token)) {
+    return undefined;
+  }
+  return `Bearer ${token}`;
+}
+
 export type HttpError = AxiosError<unknown, AxiosResponse<unknown>>;
 
 export const api = {
+  isApError(error: unknown, errorCode: ErrorCode): error is HttpError {
+    if (!isAxiosError(error)) {
+      return false;
+    }
+    const responseData = error.response?.data as ApErrorParams;
+    return responseData.code === errorCode;
+  },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },

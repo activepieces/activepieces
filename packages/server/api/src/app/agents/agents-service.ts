@@ -1,19 +1,21 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, Todo } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+// import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
-import { todoService } from '../todos/todo.service'
 import { AgentEntity } from './agent-entity'
-import { agentExecutor } from './agent-executor'
 
-const agentRepo = repoFactory(AgentEntity)
+export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
+        // await checkQuotaOrThrow({
+        //     platformId: params.platformId,
+        //     metric: PlatformUsageMetric.AGENTS,
+        // })
         const mcp = await mcpService(log).create({
             name: params.displayName,
             projectId: params.projectId,
@@ -37,10 +39,13 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             mcpId: mcp.id,
             agentId: agent.id,
         })
-        return enrichAgent(log, agent)
+        return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
-        await agentRepo().update(params.id, {
+        await agentRepo().update({
+            id: params.id,
+            projectId: params.projectId,
+        }, {
             ...spreadIfDefined('displayName', params.displayName),
             ...spreadIfDefined('systemPrompt', params.systemPrompt),
             ...spreadIfDefined('description', params.description),
@@ -48,27 +53,17 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('outputType', params.outputType),
             ...spreadIfDefined('outputFields', params.outputFields),
         })
-        return this.getOneOrThrow({ id: params.id })
-    },
-    async run(params: RunParams): Promise<Todo> {
-        const agent = await this.getOneOrThrow({ id: params.id })
-        return agentExecutor(log).execute({
-            agent,
-            userId: params.userId,
-            prompt: params.prompt,
-            socket: params.socket,
-            callbackUrl: params.callbackUrl,
-        })
+        return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
     async getOne(params: GetOneParams): Promise<Agent | null> {
         const agent = await agentRepo().findOneBy({ id: params.id })
         if (isNil(agent)) {
             return null
         }
-        return enrichAgent(log, agent)
+        return agent
     },
     async getOneOrThrow(params: GetOneParams): Promise<Agent> {
-        const agent = await this.getOne(params)
+        const agent = await this.getOne({ id: params.id, projectId: params.projectId })
         if (isNil(agent)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -80,7 +75,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         return agent
     },
     async delete(params: DeleteParams): Promise<void> {
-        const agent = await this.getOneOrThrow({ id: params.id })
+        const agent = await this.getOneOrThrow({ id: params.id, projectId: params.projectId })
         await agentRepo().delete({
             id: agent.id,
         })
@@ -106,10 +101,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        const enrichedData = await Promise.all(data.map(async (agent) => enrichAgent(log, agent)))
 
         return paginationHelper.createPage<Agent>(
-            enrichedData,
+            data,
             cursor,
         )
     },
@@ -119,26 +113,7 @@ function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
 }
 
-async function enrichAgent(log: FastifyBaseLogger, agent: Agent): Promise<Agent> {
-    const taskCompleted = await getTaskCompleted(log, agent.id)
-    return {
-        ...agent,
-        taskCompleted,
-    }
-}
-async function getTaskCompleted(log: FastifyBaseLogger, agentId: string): Promise<number> {
-    return todoService(log).countBy({
-        agentId,
-    })
-}
 
-type RunParams = {
-    id: string
-    prompt: string
-    userId?: string
-    socket: Socket
-    callbackUrl?: string
-}
 
 
 type ListParams = {
@@ -162,12 +137,15 @@ type UpdateParams = {
     testPrompt?: string
     outputType?: string
     outputFields?: AgentOutputField[]
+    projectId: string
 }
 
 type GetOneParams = {
     id: string
+    projectId: string
 }
 
 type DeleteParams = {
     id: string
+    projectId: string
 }

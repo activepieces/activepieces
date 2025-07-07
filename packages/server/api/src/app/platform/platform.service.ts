@@ -1,6 +1,7 @@
-// import { OPENSOURCE_PLAN } from '@activepieces/ee-shared'
+// import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    AiOverageState,
     ApEdition,
     apId,
     ErrorCode,
@@ -23,21 +24,27 @@ import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 const DEFAULT_PLAN = {
+    eligibleForTrial: false,
     embeddingEnabled: false,
     tablesEnabled: true,
     todosEnabled: true,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    includedTasks: 0,
+    tasksLimit: undefined,
+
+    agentsEnabled: true,
     includedAiCredits: 0,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     environmentsEnabled: false,
+    agentsLimit: undefined,
     analyticsEnabled: false,
     showPoweredBy: false,
+
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: true,
     customAppearanceEnabled: false,
-    tasksLimit: undefined,
     manageProjectsEnabled: false,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
@@ -187,11 +194,17 @@ export const platformService = {
         if (isNil(platform)) {
             return null
         }
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        return enrichPlatformWithPlan(platform)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
@@ -200,20 +213,22 @@ export const platformService = {
     },
 }
 
-async function enrichPlatformWithPlan(platform: Platform): Promise<PlatformWithoutSensitiveData> {
-    const plan = await getPlan(platform)
-    return {
-        ...platform,
-        plan,
-    }
-}
+
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
-    // const edition = system.getEdition()
-    // if (edition === ApEdition.COMMUNITY) {
-    //     return DEFAULT_PLAN
-    // }
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return {
+            ...DEFAULT_PLAN,
+            stripeSubscriptionStartDate: 0,
+            stripeSubscriptionEndDate: 0,
+        }
+    }
     // return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
-    return DEFAULT_PLAN
+    return {
+        ...DEFAULT_PLAN,
+        stripeSubscriptionStartDate: 0,
+        stripeSubscriptionEndDate: 0,
+    }
 }
 
 type AddParams = {

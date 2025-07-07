@@ -86,7 +86,7 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
+          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
@@ -108,9 +108,7 @@ export const CustomTooltipLink = ({
                 : null}
               <span className="text-sm">{label}</span>
             </div>
-            {(label === 'MCP' || label === 'Agents') && (
-              <BetaBadge showTooltip={false} />
-            )}
+            {label === 'Agents' && <BetaBadge showTooltip={false} />}
           </div>
           {locked && (
             <LockKeyhole className="size-4 stroke-[2px]" color="grey" />
@@ -257,7 +255,7 @@ export function SidebarComponent({
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 px-10 py-6', {
+          className={cn('px-10 py-6 w-full', {
             'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,
@@ -315,7 +313,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="py-0 gap-2  rounded-lg">
+                <SidebarMenuButton>
                   {item.icon && <item.icon className="size-4" />}
                   <span>{item.label}</span>
                   <SidebarMenuAction asChild>

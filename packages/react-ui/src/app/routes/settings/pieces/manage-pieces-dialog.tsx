@@ -21,7 +21,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { PiecesFilterType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../../components/custom/multi-select-piece-property';
-import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
+import { piecesHooks } from '../../../../features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '../../../../lib/authentication-session';
 import { projectApi } from '../../../../lib/project-api';
 

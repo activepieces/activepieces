@@ -40,8 +40,8 @@ import {
   oauthAppsQueries,
   PieceToClientIdMap,
 } from '../../features/connections/lib/oauth-apps-hooks';
+import { formUtils } from '../../features/pieces/lib/form-utils';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
-import { formUtils } from '../builder/piece-properties/form-utils';
 
 type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;

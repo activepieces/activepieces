@@ -1,7 +1,8 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PlatformUsageMetric, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+// import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
 import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -12,23 +13,27 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.post('/', CreateMcpRequest, async (req) => {
+        // await checkQuotaOrThrow({
+        //     platformId: req.principal.platform.id,
+        //     metric: PlatformUsageMetric.MCPS,
+        // })
         const projectId = req.body.projectId
         return mcpService(req.log).create({
             projectId,
             name: req.body.name,
         })
     })
-    
+
     app.get('/', GetMcpsRequest, async (req) => {
         const projectId = req.query.projectId
-        
+
         const result = await mcpService(req.log).list({
             projectId,
             cursorRequest: req.query.cursor ?? null,
             limit: req.query.limit ?? DEFAULT_PAGE_SIZE,
             name: req.query.name ?? undefined,
         })
-        
+
         return result
     })
 
@@ -36,6 +41,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
         const mcpId = req.params.id
         return mcpService(req.log).getOrThrow({
             mcpId,
+            projectId: req.principal.projectId,
         })
     })
 
@@ -139,7 +145,7 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
         permissions: [Permission.READ_MCP],
     },
     schema: {
