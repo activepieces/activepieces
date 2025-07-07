@@ -411,6 +411,7 @@
     "verdaccio": "6.1.2",
     "vite": "6.3.5",
     "vite-plugin-checker": "0.7.2",
+    "vite-plugin-html": "3.2.2",
     "vitest": "3.0.8",
     "wait-on": "7.2.0",
     "webpack": "5.98.0",
