@@ -23,6 +23,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
+    const stepStartTime = performance.now()
     const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
@@ -41,7 +42,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             updateImmediate: true,
         }).catch((e) => {
-            console.error('error sending update', e) 
+            console.error('error sending update', e)
         })
 
         assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
@@ -54,14 +55,16 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED)).increaseTask()
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).increaseTask()
     }
     catch (e) {
         const handledError = handleExecutionError(e)
 
+
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
             .setErrorMessage(handledError.message)
+            .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
