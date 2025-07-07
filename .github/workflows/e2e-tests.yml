@@ -1,0 +1,28 @@
+name: E2E Tests
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run E2E tests
+        run: npx nx run tests-e2e:test-scenarios
+        env:
+          AP_E2E_EMAIL: ${{ secrets.AP_E2E_EMAIL }}
+          AP_E2E_PASSWORD: ${{ secrets.AP_E2E_PASSWORD }}
