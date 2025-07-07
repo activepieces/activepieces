@@ -1,0 +1,19 @@
+{
+  "PDF": "PDF",
+  "Extract Text": "Извлечь текст",
+  "Convert to Image": "Преобразовать в изображение",
+  "Text to PDF": "Текст в PDF",
+  "Image to PDF": "Изображение в PDF",
+  "Extract text from PDF file or url": "Извлечь текст из PDF файла или url",
+  "Convert a PDF file or URL to an image": "Преобразовать PDF файл или URL в изображение",
+  "Convert text to PDF": "Преобразовать текст в PDF",
+  "Convert image to PDF": "Преобразовать изображение в PDF",
+  "PDF File or URL": "PDF файл или URL",
+  "Output Image Type": "Тип изображения вывода",
+  "text": "текст",
+  "image": "изображение",
+  "Enter text to convert": "Введите текст для преобразования",
+  "Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page": "Изображение должно быть png, jpeg или jpg и он будет масштабирован вниз по размеру страницы, когда изображение больше страницы A4",
+  "Single Combined Image": "Одно комбинированное изображение",
+  "Separate Image for Each Page": "Отдельное изображение для каждой страницы"
+}
