@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { serialize } from 'node:v8'
 import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
@@ -43,7 +42,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
         }
     },
 
-    async runScript({ script, scriptContext, functions}) {
+    async runScript({ script, scriptContext, functions }) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 

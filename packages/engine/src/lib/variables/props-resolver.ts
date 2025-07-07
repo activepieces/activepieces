@@ -175,6 +175,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
     return null
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
     try {
         const codeSandbox = await initCodeSandbox()
