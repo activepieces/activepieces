@@ -1,4 +1,4 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -85,7 +85,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     })
 
                     await Promise.all(operation.newTableState.fields.map(async (field) => {
-                        const existingField = fields.find((f) => f.externalId === field.externalId) 
+                        const existingField = fields.find((f) => f.externalId === field.externalId)
                         if (!isNil(existingField)) {
                             await fieldService.update({
                                 projectId,
@@ -118,7 +118,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         continue
                     }
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flowId: flowUpdated.id, projectId, status: FlowStatus.ENABLED }))
+                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowUpdated, projectId }))
                     break
                 }
                 case ProjectOperationType.CREATE_FLOW: {
@@ -126,7 +126,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         continue
                     }
                     const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
-                    publishJobs.push(projectStateHelper(log).republishFlow({ flowId: flowCreated.id, projectId, status: FlowStatus.ENABLED }))
+                    publishJobs.push(projectStateHelper(log).republishFlow({ flow: flowCreated, projectId }))
                     break
                 }
                 case ProjectOperationType.DELETE_FLOW: {
@@ -195,7 +195,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 fields,
             }
         }))
-        
+
         return {
             flows: allPopulatedFlows,
             connections,
@@ -205,7 +205,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
 })
 
 async function handleCreateField(projectId: ProjectId, field: FieldState, tableId: string) {
-    switch (field.type) {   
+    switch (field.type) {
         case FieldType.STATIC_DROPDOWN: {
             assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
             await fieldService.create({

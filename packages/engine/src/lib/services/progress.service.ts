@@ -1,5 +1,6 @@
 import crypto from 'crypto'
-import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { OutputContext } from '@activepieces/pieces-framework'
+import { ActionType, assertNotNullOrUndefined, FileLocation, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -55,10 +56,47 @@ export const progressService = {
             body: JSON.stringify(request),
         })
     },
+    createOutputContext: (params: CreateOutputContextParams): OutputContext => {
+        const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
+        return {
+            update: async (params: { data: unknown }) => {
+
+                if (engineConstants.testSingleStepMode) {
+                    assertNotNullOrUndefined(engineConstants.httpRequestId, 'httpRequestId is required when running in test single step mode')
+                    await notifyFrontend(engineConstants, {
+                        type: WebsocketClientEvent.TEST_STEP_PROGRESS,
+                        data: {
+                            id: engineConstants.httpRequestId,
+                            success: true,
+                            input: stepOutput.input,
+                            output: params.data,
+                            standardError: '',
+                            standardOutput: '',
+                            sampleDataFileId: undefined,
+                        },
+                    })
+                }
+                else {
+                    await sendUpdateRunRequest({
+                        engineConstants,
+                        flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
+                        updateImmediate: true,
+                    })
+                }
+            },
+        }
+    },
+}
+
+type CreateOutputContextParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    stepName: string
+    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
 }
 
 const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
-    if (params.engineConstants.isRunningApTests) {
+    if (params.engineConstants.isRunningApTests || params.engineConstants.testSingleStepMode) {
         return
     }
     await lock.runExclusive(async () => {
@@ -79,6 +117,7 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
+            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -96,7 +135,12 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             }
             await uploadExecutionState(responseBody.uploadUrl, executionState)
         }
-        await notifyFrontend(engineConstants, engineConstants.flowRunId)
+        await notifyFrontend(engineConstants, {
+            type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
+            data: {
+                runId: engineConstants.flowRunId,
+            },
+        })
     })
 }
 
@@ -125,10 +169,7 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
     })
 }
 
-const notifyFrontend = async (engineConstants: EngineConstants, runId: string): Promise<void> => {
-    const request: NotifyFrontendRequest = {
-        runId,
-    }
+const notifyFrontend = async (engineConstants: EngineConstants, request: NotifyFrontendRequest): Promise<void> => {
     await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
         method: 'POST',
         headers: {
@@ -143,4 +184,25 @@ type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     updateImmediate?: boolean
+}
+
+export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
+    if (!steps) {
+        return undefined
+    }
+
+    const failedStep = Object.entries(steps).find(([_, step]) => {
+        const stepOutput = step as StepOutput
+        if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+            const loopOutput = stepOutput as LoopStepOutput
+            return loopOutput.output?.iterations.some(iteration =>
+                Object.values(iteration).some(iterationStep =>
+                    (iterationStep as StepOutput).status === StepOutputStatus.FAILED,
+                ),
+            )
+        }
+        return stepOutput.status === StepOutputStatus.FAILED
+    })
+
+    return failedStep?.[0]
 }

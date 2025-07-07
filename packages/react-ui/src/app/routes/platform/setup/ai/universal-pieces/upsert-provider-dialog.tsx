@@ -18,27 +18,25 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
-import type { AiProviderMetadata } from '@activepieces/pieces-common';
-import { AiProviderConfig } from '@activepieces/shared';
+import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { SupportedAIProvider } from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
-const EnableAiProviderConfigInput = Type.Composite([
-  Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
-  Type.Object({
-    id: Type.Optional(Type.String()),
-  }),
-]);
-export type EnableAiProviderConfigInput = Static<
-  typeof EnableAiProviderConfigInput
->;
+const UpsertAIProviderInput = Type.Object({
+  provider: Type.String(),
+  apiKey: Type.String(),
+});
+
+export type UpsertAIProviderInput = Static<typeof UpsertAIProviderInput>;
 
 type UpsertAIProviderDialogProps = {
-  provider: EnableAiProviderConfigInput;
-  providerMetadata: AiProviderMetadata;
+  provider: string;
+  providerMetadata: SupportedAIProvider;
   children: React.ReactNode;
   onSave: () => void;
+  isConfigured?: boolean;
 };
 
 export const UpsertAIProviderDialog = ({
@@ -46,37 +44,29 @@ export const UpsertAIProviderDialog = ({
   onSave,
   provider,
   providerMetadata,
+  isConfigured = false,
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm({
-    resolver: typeboxResolver(EnableAiProviderConfigInput),
-    defaultValues: provider,
+  const form = useForm<UpsertAIProviderInput>({
+    resolver: typeboxResolver(UpsertAIProviderInput),
+    defaultValues: {
+      provider,
+      apiKey: '',
+    },
   });
+
+  const { refetch } = flagsHooks.useFlags();
 
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
-    mutationFn: () => {
-      const headerValue =
-        form.getValues().config.defaultHeaders[providerMetadata.auth.name];
-      const defaultHeaders =
-        typeof headerValue === 'string' && headerValue.trim() !== ''
-          ? {
-              [providerMetadata.auth.name]:
-                providerMetadata.auth.mapper(headerValue),
-            }
-          : {};
-      return aiProviderApi.upsert({
-        ...form.getValues(),
-        config: {
-          ...form.getValues().config,
-          defaultHeaders,
-        },
-      });
+    mutationFn: (): Promise<void> => {
+      return aiProviderApi.upsert(form.getValues());
     },
-    onSuccess: (data) => {
-      form.reset(data);
+    onSuccess: () => {
+      form.reset({ provider, apiKey: '' });
       setOpen(false);
+      refetch();
       onSave();
     },
     onError: () => {
@@ -90,7 +80,7 @@ export const UpsertAIProviderDialog = ({
       open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset(provider);
+          form.reset({ provider, apiKey: '' });
         }
         setOpen(open);
       }}
@@ -99,55 +89,30 @@ export const UpsertAIProviderDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')} (
-            {providerMetadata.label})
+            {isConfigured ? t('Update AI Provider') : t('Enable AI Provider')} (
+            {providerMetadata.displayName})
           </DialogTitle>
         </DialogHeader>
 
-        {providerMetadata.instructionsMarkdown && (
+        {providerMetadata.markdown && (
           <div className="mb-4">
-            <ApMarkdown
-              markdown={providerMetadata.instructionsMarkdown}
-            ></ApMarkdown>
+            <ApMarkdown markdown={providerMetadata.markdown}></ApMarkdown>
           </div>
         )}
 
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
-              name="baseUrl"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2" itemType="url">
-                  <Label htmlFor="baseUrl">{t('Base URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    type="url"
-                    id="baseUrl"
-                    placeholder={t('Base URL')}
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name={`config.defaultHeaders.${providerMetadata.auth.name}`}
-              defaultValue={provider.id ? '' : undefined}
+              name="apiKey"
               render={({ field }) => (
                 <FormItem className="grid space-y-3">
-                  <Label
-                    htmlFor={`config.defaultHeaders.${providerMetadata.auth.name}`}
-                  >
-                    {t('API Key')}
-                  </Label>
+                  <Label htmlFor="apiKey">{t('API Key')}</Label>
                   <div className="flex gap-2 items-center justify-center">
                     <Input
                       autoFocus
                       {...field}
                       required
-                      id={`config.defaultHeaders.${providerMetadata.auth.name}`}
+                      id="apiKey"
                       placeholder={t('sk_************************')}
                       className="rounded-sm"
                     />

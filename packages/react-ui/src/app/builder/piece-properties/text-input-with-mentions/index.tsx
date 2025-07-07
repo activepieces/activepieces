@@ -8,7 +8,7 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import './tip-tap.css';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 
@@ -72,7 +72,7 @@ export const TextInputWithMentions = ({
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );
-  const stepsMetadata = piecesHooks
+  const stepsMetadata = stepsHooks
     .useStepsMetadata(steps)
     .map(({ data: metadata }, index) => {
       if (metadata) {
@@ -111,7 +111,7 @@ export const TextInputWithMentions = ({
       attributes: {
         class: cn(
           className ??
-            ' w-full rounded-sm border border-input bg-background px-3 min-h-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+            ' w-full rounded-sm border shadow-sm border-input bg-background px-3 min-h-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
           textMentionUtils.inputWithMentionsCssClass,
           {
             'cursor-not-allowed opacity-50': disabled,

@@ -15,6 +15,7 @@ import {
     SigningKey,
 } from '@activepieces/ee-shared'
 import {
+    AiOverageState,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -60,6 +61,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
+import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
@@ -195,18 +197,20 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
-        aiCreditsLimit: platformPlan?.aiCreditsLimit ?? 0,
+        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
         stripeSubscriptionId: undefined,
-        tasksLimit: platformPlan?.tasksLimit ?? 0,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
-        includedTasks: platformPlan?.includedTasks ?? 0,
-        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        tasksLimit: platformPlan?.tasksLimit ?? 0,
+        aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
+        aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
@@ -225,6 +229,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         todosEnabled: platformPlan?.todosEnabled ?? false,
         alertsEnabled: platformPlan?.alertsEnabled ?? false,
+        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
+        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -242,7 +248,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         pinnedPieces: platform?.pinnedPieces ?? [],
-        defaultLocale: platform?.defaultLocale,
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         filteredPieceBehavior:
