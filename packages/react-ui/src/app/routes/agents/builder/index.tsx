@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ArrowLeft } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -18,6 +19,8 @@ interface AgentBuilderProps {
   trigger: ReactNode;
   agent?: Agent;
   refetch: () => void;
+  onChange?: (agent: Agent) => void;
+  hideUseAgentButton?: boolean;
 }
 
 export const AgentBuilder = ({
@@ -26,16 +29,18 @@ export const AgentBuilder = ({
   refetch,
   trigger,
   agent,
+  onChange,
+  hideUseAgentButton,
 }: AgentBuilderProps) => {
   return (
     <Drawer
       open={isOpen}
       onOpenChange={onOpenChange}
-      className="w-full overflow-auto"
       dismissible={false}
+      direction="right"
     >
       {trigger}
-      <DrawerContent>
+      <DrawerContent className="w-full overflow-auto">
         <DrawerHeader>
           <div className="p-4">
             <div className="flex items-center gap-1 justify-between">
@@ -49,7 +54,9 @@ export const AgentBuilder = ({
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <DrawerTitle>
-                  {agent ? 'Edit Agent' : 'Agent Builder'}
+                  {agent
+                    ? `${t('Edit')} ${agent?.displayName}`
+                    : `${t('Creating Agent')}...`}
                 </DrawerTitle>
               </div>
             </div>
@@ -61,7 +68,12 @@ export const AgentBuilder = ({
             className="w-full max-w-3xl px-4"
             style={{ maxHeight: 'calc(100vh - 80px)' }}
           >
-            <AgentSettings agent={agent} refetch={refetch} />
+            <AgentSettings
+              agent={agent}
+              refetch={refetch}
+              onChange={onChange}
+              hideUseAgentButton={hideUseAgentButton}
+            />
           </div>
         </div>
       </DrawerContent>

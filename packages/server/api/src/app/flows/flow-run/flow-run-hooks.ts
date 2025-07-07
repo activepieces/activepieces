@@ -4,10 +4,10 @@ import { FastifyBaseLogger } from 'fastify'
 // import { alertsService } from '../../ee/alerts/alerts-service'
 // import { emailService } from '../../ee/helper/email/email-service'
 // import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
-// import { BillingUsageType, platformUsageService } from '../../ee/platform/platform-usage-service'
+// import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
-import { projectService } from '../../project/project-service'
+// import { projectService } from '../../project/project-service'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -25,12 +25,12 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         if (isNil(flowRun.tasks) || !paidEditions) {
             return
         }
-        // const { consumedProjectUsage } = await platformUsageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
+        // const { projectTasksUsage } = await platformUsageService(log).increaseTasksUsage(flowRun.projectId, flowRun.tasks)
         // await sendQuotaAlertIfNeeded({
         //     projectId: flowRun.projectId,
-        //     consumedTasks: consumedProjectUsage,
+        //     consumedTasks: projectTasksUsage,
         //     createdAt: dayjs().toISOString(),
-        //     previousConsumedTasks: consumedProjectUsage - flowRun.tasks,
+        //     previousConsumedTasks: projectTasksUsage - flowRun.tasks,
         //     log,
         // })
     },
@@ -52,7 +52,8 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
     // if (!tasksPerMonth) {
     //     return
     // }
-    // const resetDate = platformUsageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
+
+    // const { startDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
     // const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     // const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 
@@ -62,7 +63,7 @@ async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsum
     //         await emailService(log).sendQuotaAlert({
     //             templateName,
     //             projectId,
-    //             resetDate: dayjs(resetDate).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+    //             resetDate: dayjs.unix(startDate).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
     //         })
     //     }
     // }

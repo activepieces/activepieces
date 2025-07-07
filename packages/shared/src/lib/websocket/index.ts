@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
-import { RichContentBlock } from '../todos/content'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
     ASK_COPILOT_FINISHED = 'ASK_COPILOT_FINISHED',
+    TEST_STEP_PROGRESS = 'TEST_STEP_PROGRESS',
     TEST_STEP_FINISHED = 'TEST_STEP_FINISHED',
     REFRESH_PIECE = 'REFRESH_PIECE',
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
@@ -23,7 +23,7 @@ export type TodoChanged = Static<typeof TodoChanged>
 export const TodoActivityChanged = Type.Object({
     activityId: Type.String(),  
     todoId: Type.String(),
-    content: Type.Array(RichContentBlock),      
+    content: Type.String(),
 
 })
 

@@ -17,10 +17,6 @@ export const extractStructuredData = createAction({
 			description: 'Text to extract structured data from.',
 			required: false,
 		}),
-		markdown:Property.MarkDown({
-			variant:MarkdownVariant.INFO,
-			value:`OpenAI supports only images. All other file types will be ignored. To process PDFs, use the Convert to Image action.`,
-		}),
 		files: Property.Array({
 			displayName: 'Files',
 			required: false,

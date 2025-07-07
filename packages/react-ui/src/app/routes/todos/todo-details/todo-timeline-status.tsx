@@ -1,10 +1,6 @@
-import {
-  AGENT_REJECTED_STATUS_OPTION,
-  AGENT_RESOLVED_STATUS_OPTION,
-  isNil,
-  STATUS_VARIANT,
-  Todo,
-} from '@activepieces/shared';
+import { t } from 'i18next';
+
+import { STATUS_VARIANT, Todo } from '@activepieces/shared';
 
 interface TodoTimelineStatusProps {
   todo: Todo;
@@ -26,21 +22,8 @@ export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
       <div
         className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}
       >
-        {getStatusMessage(todo)}
+        {t(`This todo is now marked as ${todo.status.name}`)}
       </div>
     </div>
   );
 };
-
-function getStatusMessage(todo: Todo) {
-  if (!isNil(todo.agentId)) {
-    if (todo.status.name === AGENT_RESOLVED_STATUS_OPTION.name) {
-      return 'The agent has completed the task';
-    }
-    if (todo.status.name === AGENT_REJECTED_STATUS_OPTION.name) {
-      return 'The agent were unable to complete the task';
-    }
-  }
-
-  return `This todo is now marked as ${todo.status.name}`;
-}

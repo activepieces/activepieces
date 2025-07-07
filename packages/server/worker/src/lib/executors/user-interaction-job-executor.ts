@@ -44,6 +44,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     sampleData: jobData.sampleData,
                     projectId: jobData.projectId,
                     runEnvironment: jobData.runEnvironment,
+                    requestId: jobData.requestId,
                 })
                 break
             case UserInteractionJobType.EXECUTE_TOOL:

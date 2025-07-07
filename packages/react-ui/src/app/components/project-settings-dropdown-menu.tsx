@@ -1,7 +1,9 @@
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission, isNil } from '@activepieces/shared';
@@ -27,10 +30,13 @@ export type ProjectSettingsLinkItem = {
   href: string;
   icon: JSX.Element;
   hasPermission?: boolean;
+  onClick?: () => void;
 };
 
 const ProjectSettingsDropdownMenu = () => {
   const location = useLocation();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { project } = projectHooks.useCurrentProject();
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -42,6 +48,9 @@ const ProjectSettingsDropdownMenu = () => {
       title: t('General'),
       href: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       icon: <Settings className="w-4 h-4" />,
+      onClick: () => {
+        setEditDialogOpen(true);
+      },
     },
 
     {
@@ -82,39 +91,67 @@ const ProjectSettingsDropdownMenu = () => {
     .filter(filterOnPermission);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Project Settings')}</TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[180px] space-y-2">
-        {/* <AppearanceSettings /> */}
-        {filteredLinkItems.map((item) => (
-          <DropdownMenuItem key={item.title} className="p-0">
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                buttonVariants({ variant: 'ghost', size: 'sm' }),
-                'gap-x-2 w-full justify-start',
-                {
-                  'bg-accent text-primary': linkActive(item),
-                },
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('Project Settings')}
+            </TooltipContent>
+          </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[180px] space-y-2">
+          {/* <AppearanceSettings /> */}
+          {filteredLinkItems.map((item) => (
+            <DropdownMenuItem key={item.title} className="p-0">
+              {item.onClick ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn('gap-x-2 w-full justify-start', {
+                    'bg-accent text-primary': linkActive(item),
+                  })}
+                  onClick={item.onClick}
+                >
+                  {item.icon}
+                  {item.title}
+                </Button>
+              ) : (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'sm' }),
+                    'gap-x-2 w-full justify-start',
+                    {
+                      'bg-accent text-primary': linkActive(item),
+                    },
+                  )}
+                >
+                  {item.icon}
+                  {item.title}
+                </Link>
               )}
-            >
-              {item.icon}
-              {item.title}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <EditProjectDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        initialValues={{
+          projectName: project?.displayName,
+          tasks: project?.plan?.tasks?.toString() ?? '',
+          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
+        }}
+      />
+    </>
   );
 };
 

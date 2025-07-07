@@ -79,6 +79,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 engineToken: constants.engineToken,
             }),
+            output: progressService.createOutputContext({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                stepName: action.name,
+                stepOutput,
+            }),
             flows: createFlowsContext({
                 engineToken: constants.engineToken,
                 internalApiUrl: constants.internalApiUrl,
@@ -146,7 +152,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (params.hookResponse.type === 'stopped') {
             assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: FlowRunStatus.STOPPED,
+                reason: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             }).increaseTask()
         }
@@ -177,7 +183,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
     switch (hookResponse.type) {
         case 'stopped':
-            return hookResponse.response.response
         case 'respond':
             return hookResponse.response.response
         case 'paused':

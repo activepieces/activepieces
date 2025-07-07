@@ -74,8 +74,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
-        const { runId } = request.body
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+        const { type, data } = request.body
+        app.io.to(request.principal.projectId).emit(type, data)
     })
 
     app.post('/update-run', UpdateRunProgress, async (request) => {
@@ -83,7 +83,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
 
-        const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED, FlowRunStatus.STOPPED]
+        const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
             await engineResponseWatcher(request.log).publish(
                 httpRequestId,
@@ -92,9 +92,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
 
-        const runWithoutSteps = await flowRunService(request.log).updateStatus({
+        const runWithoutSteps = await flowRunService(request.log).updateRun({
             flowRunId: runId,
-            status: getTerminalStatus(runDetails.status),
+            status: runDetails.status,
             tasks: runDetails.tasks,
             duration: runDetails.duration,
             projectId: request.principal.projectId,
@@ -150,7 +150,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         if (edition === ApEdition.COMMUNITY) {
             return {}
         }
-        // const exceededLimit = await projectLimitsService(request.log).tasksExceededLimit(request.principal.projectId)
+        // const exceededLimit = await projectLimitsService(request.log).checkTasksExceededLimit(request.principal.projectId)
         const exceededLimit = await platformPlanService(request.log).flowRunsExceeded(request.principal.projectId)
         if (exceededLimit) {
             throw new ActivepiecesError({
@@ -248,10 +248,10 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
         case FlowRunStatus.PAUSED:
         case FlowRunStatus.QUOTA_EXCEEDED:
         case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-        case FlowRunStatus.STOPPED:
         case FlowRunStatus.SUCCEEDED:
             await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.COMPLETED, token: enginePrincipal.queueToken!, message: 'Flow succeeded' })
             break
+        case FlowRunStatus.QUEUED:
         case FlowRunStatus.RUNNING:
             break
         case FlowRunStatus.INTERNAL_ERROR:
@@ -262,13 +262,6 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
 
 
 
-const getTerminalStatus = (
-    status: FlowRunStatus,
-): FlowRunStatus => {
-    return status == FlowRunStatus.STOPPED
-        ? FlowRunStatus.SUCCEEDED
-        : status
-}
 
 const GetAllFlowsByProjectParams = {
     config: {

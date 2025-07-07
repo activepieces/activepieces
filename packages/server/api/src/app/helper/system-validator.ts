@@ -158,12 +158,10 @@ const systemPropValidators: {
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
     [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
 
     // MCP
-    [AppSystemProp.MAX_MCPS_PER_PROJECT]: numberValidator,
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
