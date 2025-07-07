@@ -300,6 +300,9 @@
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
       ],
+      "@activepieces/piece-fillout-forms": [
+        "packages/pieces/community/fillout-forms/src/index.ts"
+      ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
       ],

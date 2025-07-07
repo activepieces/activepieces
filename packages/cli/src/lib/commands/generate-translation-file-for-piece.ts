@@ -7,6 +7,8 @@ import { join } from 'node:path';
 import { exec } from '../utils/exec';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import keys from '../../../../pieces/community/framework/translation-keys.json';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '../../../../shared/src/lib/pieces/utils';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);
@@ -39,18 +41,17 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-
 const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
   try {
     keys.forEach(key => {
       const value = getPropertyValue(piece, key)
       if (value) {
         if (typeof value === 'string') {
-          translation[value] = value
+          translation[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = value
         }
         else if (Array.isArray(value)) {
           value.forEach(item => {
-            translation[item] = item
+            translation[item.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = item
           })
         }
       }
