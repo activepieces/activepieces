@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddLockedColumnToProject1751878623268 implements MigrationInterface {
     name = 'AddLockedColumnToProject1751878623268'
@@ -7,13 +7,13 @@ export class AddLockedColumnToProject1751878623268 implements MigrationInterface
         await queryRunner.query(`
             ALTER TABLE "project"
             ADD "locked" boolean NOT NULL DEFAULT false
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "locked"
-        `);
+        `)
     }
 
 }

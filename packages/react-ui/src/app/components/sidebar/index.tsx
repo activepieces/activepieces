@@ -9,6 +9,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { ProjectLockedAlert } from '@/components/custom/project-locked-alert';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -178,6 +179,7 @@ export function SidebarComponent({
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const location = useLocation();
   const { checkAccess } = useAuthorization();
 
@@ -256,6 +258,7 @@ export function SidebarComponent({
             'pb-0': removeBottomPadding,
           })}
         >
+          <ProjectLockedAlert />
           {children}
         </div>
       </div>

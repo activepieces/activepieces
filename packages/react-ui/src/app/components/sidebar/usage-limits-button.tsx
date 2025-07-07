@@ -21,31 +21,31 @@ import { FlagGuard } from '../flag-guard';
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
   const nextReset = dayjs.unix(nextResetDate);
-  
+
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
-  
+
   const diffInMonths = nextReset.diff(now, 'months');
   if (diffInMonths > 0) {
     return `${diffInMonths} ${t('months')}`;
   }
-  
+
   const diffInDays = nextReset.diff(now, 'days');
   if (diffInDays > 0) {
     return `${diffInDays} ${t('days')}`;
   }
-  
+
   const diffInHours = nextReset.diff(now, 'hours');
   if (diffInHours > 0) {
     return `${diffInHours} ${t('hours')}`;
   }
-  
+
   const diffInMinutes = nextReset.diff(now, 'minutes');
   if (diffInMinutes > 0) {
     return `${diffInMinutes} ${t('minutes')}`;
   }
-  
+
   return t('Today');
 };
 
@@ -53,10 +53,10 @@ const getTrialProgress = (trialStartDate: number, trialEndDate: number) => {
   const now = dayjs();
   const trialStart = dayjs.unix(trialStartDate);
   const trialEnd = dayjs.unix(trialEndDate);
-  
+
   const totalDays = trialEnd.diff(trialStart, 'days');
   const elapsedDays = now.diff(trialStart, 'days');
-  
+
   return Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
 };
 
@@ -131,23 +131,25 @@ const UsageLimitsButton = React.memo(() => {
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
 
-          {isTrial && platform.plan.stripeSubscriptionEndDate && platform.plan.stripeSubscriptionStartDate && (
-            <div className="flex flex-col gap-4">
-              <TrialProgress
-                trialEndDate={platform.plan.stripeSubscriptionEndDate}
-                trialStartDate={platform.plan.stripeSubscriptionStartDate}
-              />
-              <Button
-                variant="default"
-                size="sm"
-                className="w-full"
-                onClick={() => setManagePlanOpen(true)}
-              >
-                <Rocket className="w-4 h-4 mr-2" />
-                {t('Upgrade Plan')}
-              </Button>
-            </div>
-          )}
+          {isTrial &&
+            platform.plan.stripeSubscriptionEndDate &&
+            platform.plan.stripeSubscriptionStartDate && (
+              <div className="flex flex-col gap-4">
+                <TrialProgress
+                  trialEndDate={platform.plan.stripeSubscriptionEndDate}
+                  trialStartDate={platform.plan.stripeSubscriptionStartDate}
+                />
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setManagePlanOpen(true)}
+                >
+                  <Rocket className="w-4 h-4 mr-2" />
+                  {t('Upgrade Plan')}
+                </Button>
+              </div>
+            )}
         </div>
         {!isTrial && (
           <div className="text-xs text-muted-foreground flex justify-between w-full">
@@ -171,7 +173,13 @@ const UsageLimitsButton = React.memo(() => {
   );
 });
 
-const TrialProgress = ({ trialStartDate, trialEndDate }: { trialStartDate: number, trialEndDate: number }) => {
+const TrialProgress = ({
+  trialStartDate,
+  trialEndDate,
+}: {
+  trialStartDate: number;
+  trialEndDate: number;
+}) => {
   const progressPercentage = getTrialProgress(trialStartDate, trialEndDate);
 
   return (

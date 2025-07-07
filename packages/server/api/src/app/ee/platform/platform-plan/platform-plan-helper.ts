@@ -1,8 +1,8 @@
 import { ActivepiecesError, ApEdition, ErrorCode, isNil, PlatformUsageMetric } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
+import { projectService } from '../../../project/project-service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
-import { projectService } from '../../../project/project-service'
 
 const edition = system.getEdition()
 
@@ -77,7 +77,7 @@ export async function checkProjectNotLockedOrThrow(projectId?: string): Promise<
             throw new ActivepiecesError({
                 code: ErrorCode.PROJECT_LOCKED,
                 params: {
-                    message: `Project: ${projectId} is locked`
+                    message: 'Project is locked',
                 },
             })
         }

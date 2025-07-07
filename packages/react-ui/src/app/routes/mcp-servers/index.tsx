@@ -16,7 +16,11 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import {
+  INTERNAL_ERROR_TOAST,
+  PROJECT_LOCKED_MESSAGE,
+  toast,
+} from '@/components/ui/use-toast';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
@@ -67,6 +71,8 @@ const McpServersPage = () => {
       onError: (err: Error) => {
         if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
           setUpgradeDialogOpen(true);
+        } else if (api.isApError(err, ErrorCode.PROJECT_LOCKED)) {
+          toast(PROJECT_LOCKED_MESSAGE);
         } else {
           toast(INTERNAL_ERROR_TOAST);
         }

@@ -48,7 +48,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         locked: {
             type: Boolean,
-            default: false
+            default: false,
         },
         ownerId: ApIdSchema,
         displayName: {

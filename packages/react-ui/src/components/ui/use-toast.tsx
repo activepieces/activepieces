@@ -18,6 +18,14 @@ export const INTERNAL_ERROR_TOAST: ToasterToast = {
   duration: 3000,
 };
 
+export const PROJECT_LOCKED_MESSAGE: ToasterToast = {
+  id: 'project-locked',
+  title: 'Project Locked',
+  description: `Project is locked, plase upgrade or contact admin`,
+  variant: 'default',
+  duration: 3000,
+};
+
 export const UNSAVED_CHANGES_TOAST: ToasterToast = {
   id: 'unsaved-changes',
   title: 'Unsaved Changes',

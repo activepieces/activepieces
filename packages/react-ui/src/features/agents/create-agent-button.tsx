@@ -6,7 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import {
+  INTERNAL_ERROR_TOAST,
+  PROJECT_LOCKED_MESSAGE,
+  toast,
+} from '@/components/ui/use-toast';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { api } from '@/lib/api';
 import { Agent, ErrorCode } from '@activepieces/shared';
@@ -43,6 +47,8 @@ export const CreateAgentButton = ({
         onError: (err: Error) => {
           if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
             setShowUpgradeDialog(true);
+          } else if (api.isApError(err, ErrorCode.PROJECT_LOCKED)) {
+            toast(PROJECT_LOCKED_MESSAGE);
           } else {
             toast(INTERNAL_ERROR_TOAST);
           }

@@ -501,7 +501,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddTrialFlagInPlatform1751394161203,
                 UpdateAiCredits1751404517528,
                 AddAiOverageState1751466404493,
-                AddLockedColumnToProject1751878623268
+                AddLockedColumnToProject1751878623268,
             )
             break
         case ApEdition.COMMUNITY:

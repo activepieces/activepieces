@@ -1,13 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import {
+  CheckIcon,
+  Package,
+  Pencil,
+  Plus,
+  Trash,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -28,7 +35,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
 
@@ -105,6 +112,23 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     },
   },
   {
+    accessorKey: 'locked',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Status')} />
+    ),
+    cell: ({ row }) => {
+      const locked = row.original.locked;
+      return (
+        <Badge
+          variant={locked ? 'destructive' : 'accent'}
+          className="rounded-sm"
+        >
+          {locked ? 'Locked' : 'Open'}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: 'createdAt',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Created')} />
@@ -117,14 +141,17 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
-
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('External ID')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.externalId}</div>;
+      const displayValue =
+        isNil(row.original.externalId) || row.original.externalId?.length === 0
+          ? '-'
+          : row.original.externalId;
+      return <div className="text-left">{displayValue}</div>;
     },
   },
 ];

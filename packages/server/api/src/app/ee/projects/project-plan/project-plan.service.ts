@@ -14,10 +14,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
+import { checkProjectNotLockedOrThrow } from '../../platform/platform-plan/platform-plan-helper'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
-import { checkProjectNotLockedOrThrow } from '../../platform/platform-plan/platform-plan-helper'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 const edition = system.getEdition()
