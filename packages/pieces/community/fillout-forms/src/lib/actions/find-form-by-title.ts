@@ -7,7 +7,7 @@ export const findFormByTitle = createAction({
   auth: filloutFormsAuth,
   name: 'findFormByTitle',
   displayName: 'Find Form by Title',
-  description: 'Search through available forms by title to get the form ID for future use.',
+  description: 'Finds an existing forms by title.',
   props: {
     title: Property.ShortText({
       displayName: 'Form Title',
