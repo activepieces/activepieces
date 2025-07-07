@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { serialize } from 'node:v8'
 import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
@@ -42,7 +43,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
         }
     },
 
-    async runScript({ script, scriptContext }) {
+    async runScript({ script, scriptContext, functions}) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -53,10 +54,13 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
+            const serializedFunctions = Object.values(functions).map(func => serialize(func)).join('\n')
+            const scriptWithFunctions = `${serializedFunctions}\n${script}`
+
             return await executeIsolate({
                 isolate,
                 isolateContext,
-                code: script,
+                code: scriptWithFunctions,
             })
         }
         finally {

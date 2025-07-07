@@ -37,4 +37,10 @@ type RunScriptParams = {
      * A key-value map of variables available to the script during execution.
      */
     scriptContext: Record<string, unknown>
+
+    /**
+     * A key-value map of functions that are available to the script during execution.
+     */
+    functions: Record<string, unknown>
+
 }
