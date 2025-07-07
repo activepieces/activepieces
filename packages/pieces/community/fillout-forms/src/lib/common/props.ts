@@ -10,7 +10,7 @@ export const formIdDropdown = Property.Dropdown({
     if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please connect your Fillout Forms account',
+        placeholder: 'Please connect your Fillout Forms account.',
         options: [],
       };
     }

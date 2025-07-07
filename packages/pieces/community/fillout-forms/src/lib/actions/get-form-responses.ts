@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown } from '../common/props';
 import { filloutFormsAuth } from '../../index';
@@ -8,7 +8,7 @@ export const getFormResponses = createAction({
   auth: filloutFormsAuth,
   name: 'getFormResponses',
   displayName: 'Get Form Responses',
-  description: 'Fetch all responses for a Fillout form, with optional filters. Returns an object with "responses" array, "totalResponses" count, and "pageCount".',
+  description: 'Fetch all responses for a Fillout form, with optional filters.',
   props: {
     formId: formIdDropdown,
     limit: Property.Number({
