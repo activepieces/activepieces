@@ -12,6 +12,7 @@ import { createContactList } from './lib/actions/create-contact-list';
 import { searchContactByEmail } from './lib/actions/search-contact-by-email';
 import { searchContactByPhone } from './lib/actions/search-contact-by-phone';
 import { searchContactLists } from './lib/actions/search-contact-lists';
+import { newIncomingSms } from './lib/triggers/new-incoming-sms';
 
 export const clicksendAuth = PieceAuth.BasicAuth({
   required: true,
@@ -44,5 +45,5 @@ export const clicksend = createPiece({
     searchContactByPhone,
     searchContactLists
   ],
-  triggers: [],
+  triggers: [newIncomingSms],
 });
