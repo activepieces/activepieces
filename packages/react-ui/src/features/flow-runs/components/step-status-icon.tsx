@@ -8,10 +8,12 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
-import { StepOutputStatus } from '@activepieces/shared';
+import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;
+  runStatus?: FlowRunStatus;
   size: '3' | '4' | '5';
 };
 
@@ -23,9 +25,12 @@ const statusText = {
   [StepOutputStatus.FAILED]: t('Step Failed'),
 };
 
-const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
+const StepStatusIcon = React.memo(({ status, size, runStatus }: StepStatusIconProps) => {
   const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 
+  if(runStatus === FlowRunStatus.RUNNING && status === StepOutputStatus.RUNNING) {
+    return <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild>
