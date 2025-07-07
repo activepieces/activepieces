@@ -117,7 +117,7 @@ export function McpPieceDialog({
           flowId: tool.flowId,
         })) || [];
 
-      if (!selectedPiece || selectedActions.length === 0) return;
+      if (!selectedPiece) return;
 
       const existingToolIndex = currentTools.findIndex(
         (tool) =>

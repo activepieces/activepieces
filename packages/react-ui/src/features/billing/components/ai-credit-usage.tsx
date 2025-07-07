@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Sparkles, Info, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -15,68 +15,113 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  AiOverageState,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
-export function AICreditUsage({
-  platformSubscription,
-}: {
+interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
-}) {
-  const queryClient = useQueryClient();
+}
 
+export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
+  const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
 
   const planIncludedCredits = plan.includedAiCredits;
-  const usageBasedLimit = plan.aiCreditsLimit;
-  const totalCreditsUsed = usage.aiCredits || 0;
+  const overageLimit = plan.aiCreditsOverageLimit;
+  const totalCreditsUsed = usage.aiCredits;
+
+  const aiOverrageState =
+    plan.aiCreditsOverageState ??
+    plan.aiCreditsOverageState ??
+    AiOverageState.NOT_ALLOWED;
 
   const isFreePlan = plan.plan === PlanName.FREE;
   const isTrial =
     plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
 
+  const overageConfig = useMemo(() => {
+    const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
+    const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
+    return {
+      allowed: isAllowed,
+      enabled: isEnabled,
+      canToggle: !isFreePlan && !isTrial && isAllowed,
+    };
+  }, [aiOverrageState, isFreePlan, isTrial]);
+
   const [usageBasedEnabled, setUsageBasedEnabled] = useState(
-    !isNil(usageBasedLimit),
+    overageConfig.enabled,
   );
-  const [usageLimit, setUsageLimit] = useState<number>(usageBasedLimit ?? 500);
+  const [usageLimit, setUsageLimit] = useState<number>(overageLimit ?? 500);
 
-  const { mutate: setAiCreditUsageLimit, isPending } =
-    billingMutations.useSetAiCreditUsageLimit(queryClient);
+  const {
+    mutate: setAiCreditOverageLimit,
+    isPending: settingAiCreditsOverageLimit,
+  } = billingMutations.useSetAiCreditOverageLimit(queryClient);
 
-  const creditsUsedFromPlan = Math.min(totalCreditsUsed, planIncludedCredits);
-  const overageCreditsUsed = Math.max(
-    0,
-    totalCreditsUsed - planIncludedCredits,
-  );
+  const {
+    mutate: toggleAiCreditsOverageEnabled,
+    isPending: togglingAiCreditsOverageEnabled,
+  } = billingMutations.useToggleAiCreditOverageEnabled(queryClient);
 
-  const planUsagePercentage = Math.min(
-    100,
-    Math.round((creditsUsedFromPlan / planIncludedCredits) * 100),
-  );
-  const overageUsagePercentage =
-    usageBasedEnabled && usageBasedLimit
-      ? Math.min(100, Math.round((overageCreditsUsed / usageBasedLimit) * 100))
-      : 0;
+  const creditMetrics = useMemo(() => {
+    const creditsUsedFromPlan = Math.min(totalCreditsUsed, planIncludedCredits);
+    const overageCreditsUsed = Math.max(
+      0,
+      totalCreditsUsed - planIncludedCredits,
+    );
 
-  const isPlanLimitApproaching = planUsagePercentage > 80;
-  const isPlanLimitExceeded = totalCreditsUsed > planIncludedCredits;
-  const isOverageLimitApproaching = overageUsagePercentage > 80;
+    const planUsagePercentage = Math.min(
+      100,
+      Math.round((creditsUsedFromPlan / planIncludedCredits) * 100),
+    );
 
-  const handleSaveAiCreditUsageLimit = () => {
-    setAiCreditUsageLimit({ limit: usageLimit });
-  };
+    const overageUsagePercentage =
+      usageBasedEnabled && overageLimit
+        ? Math.min(100, Math.round((overageCreditsUsed / overageLimit) * 100))
+        : 0;
 
-  const handleEnableAiCreditUsage = () => {
-    setAiCreditUsageLimit(
-      { limit: usageBasedEnabled ? undefined : 500 },
+    return {
+      creditsUsedFromPlan,
+      overageCreditsUsed,
+      planUsagePercentage,
+      overageUsagePercentage,
+      isPlanLimitApproaching: planUsagePercentage > 80,
+      isPlanLimitExceeded: totalCreditsUsed > planIncludedCredits,
+      isOverageLimitApproaching: overageUsagePercentage > 80,
+    };
+  }, [totalCreditsUsed, planIncludedCredits, usageBasedEnabled, overageLimit]);
+
+  const handleSaveAiCreditUsageLimit = useCallback(() => {
+    setAiCreditOverageLimit({ limit: usageLimit });
+  }, [setAiCreditOverageLimit, usageLimit]);
+
+  const handleToggleAiCreditUsage = useCallback(() => {
+    const newState = usageBasedEnabled
+      ? AiOverageState.ALLOWED_BUT_OFF
+      : AiOverageState.ALLOWED_AND_ON;
+
+    toggleAiCreditsOverageEnabled(
+      { state: newState },
       {
         onSuccess: () => {
           setUsageBasedEnabled(!usageBasedEnabled);
         },
       },
     );
-  };
+  }, [usageBasedEnabled, toggleAiCreditsOverageEnabled]);
+
+  useEffect(() => {
+    setUsageBasedEnabled(overageConfig.enabled);
+  }, [overageConfig.enabled]);
+
+  useEffect(() => {
+    setUsageLimit(overageLimit ?? 500);
+  }, [overageLimit]);
 
   return (
     <Card className="w-full">
@@ -93,15 +138,15 @@ export function AICreditUsage({
               </p>
             </div>
           </div>
-          {!isFreePlan && !isTrial && (
+          {overageConfig.canToggle && (
             <div className="flex items-center gap-3 py-2">
               <span className="text-sm font-medium">
                 {t('Usage Based Billing')}
               </span>
               <Switch
                 checked={usageBasedEnabled}
-                disabled={isPending}
-                onCheckedChange={handleEnableAiCreditUsage}
+                disabled={togglingAiCreditsOverageEnabled}
+                onCheckedChange={handleToggleAiCreditUsage}
               />
             </div>
           )}
@@ -125,24 +170,27 @@ export function AICreditUsage({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {creditsUsedFromPlan.toLocaleString()} /{' '}
-                {planIncludedCredits.toLocaleString()}
+                {creditMetrics.creditsUsedFromPlan} / {planIncludedCredits}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Included')}
               </span>
             </div>
-            <Progress value={planUsagePercentage} className="w-full" />
+            <Progress
+              value={creditMetrics.planUsagePercentage}
+              className="w-full"
+            />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {planUsagePercentage}% of plan credits used
+                {creditMetrics.planUsagePercentage}% of plan credits used
               </span>
-              {isPlanLimitApproaching && !isPlanLimitExceeded && (
-                <span className="text-orange-600 font-medium">
-                  Approaching limit
-                </span>
-              )}
-              {isPlanLimitExceeded && (
+              {creditMetrics.isPlanLimitApproaching &&
+                !creditMetrics.isPlanLimitExceeded && (
+                  <span className="text-orange-600 font-medium">
+                    Approaching limit
+                  </span>
+                )}
+              {creditMetrics.isPlanLimitExceeded && (
                 <span className="text-destructive font-medium">
                   Plan limit exceeded
                 </span>
@@ -151,7 +199,7 @@ export function AICreditUsage({
           </div>
         </div>
 
-        {usageBasedEnabled && !isFreePlan && !isTrial && (
+        {usageBasedEnabled && overageConfig.canToggle && (
           <>
             <Separator />
 
@@ -173,19 +221,22 @@ export function AICreditUsage({
               <div className="rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">
-                    {overageCreditsUsed.toLocaleString()} /{' '}
-                    {usageBasedLimit?.toLocaleString() ?? 'unknown'}
+                    {creditMetrics.overageCreditsUsed} /{' '}
+                    {overageLimit ?? 'unknown'}
                   </span>
                   <span className="text-xs font-medium text-muted-foreground">
                     {t('Usage Limit')}
                   </span>
                 </div>
-                <Progress value={overageUsagePercentage} className="w-full" />
+                <Progress
+                  value={creditMetrics.overageUsagePercentage}
+                  className="w-full"
+                />
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {overageUsagePercentage}% of usage limit used
+                    {creditMetrics.overageUsagePercentage}% of usage limit used
                   </span>
-                  {isOverageLimitApproaching && (
+                  {creditMetrics.isOverageLimitApproaching && (
                     <span className="text-destructive font-medium">
                       Approaching usage limit
                     </span>
@@ -221,10 +272,10 @@ export function AICreditUsage({
                   </div>
                   <Button
                     onClick={handleSaveAiCreditUsageLimit}
-                    disabled={isPending}
+                    disabled={settingAiCreditsOverageLimit}
                     className="whitespace-nowrap"
                   >
-                    {isPending && (
+                    {settingAiCreditsOverageLimit && (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     )}
                     {t('Save Limit')}
@@ -239,7 +290,7 @@ export function AICreditUsage({
             </div>
 
             <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
-              {t('$1 per 1000 additional credit beyond plan limit')}
+              {t('$1 per 1000 additional credits beyond plan limit')}
             </div>
           </>
         )}

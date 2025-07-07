@@ -1,14 +1,13 @@
-import { PlatformPlanLimits } from '@activepieces/shared'
+import { AiOverageState, PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
-
-
 
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tasksLimit: 1000,
-    aiCreditsLimit: undefined,
     includedAiCredits: 200,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     activeFlowsLimit: 2,
     eligibleForTrial: true,
     userSeatsLimit: 1,
@@ -47,6 +46,8 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         userSeatsLimit,
         agentsEnabled: true,
         includedAiCredits: 200,
+        aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
+        aiCreditsOverageLimit: undefined,
         activeFlowsLimit: undefined,
         projectsLimit: 1,
         mcpLimit: 1,
@@ -79,9 +80,10 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
     tasksLimit: undefined,
-    aiCreditsLimit: undefined,
-    eligibleForTrial: false,
     includedAiCredits: 500,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+    eligibleForTrial: false,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -115,9 +117,10 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
     tasksLimit: undefined,
-    aiCreditsLimit: undefined,
-    eligibleForTrial: false,
     includedAiCredits: 1000,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+    eligibleForTrial: false,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
@@ -158,6 +161,8 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
 
     agentsEnabled: true,
     includedAiCredits: 0,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     environmentsEnabled: false,
     agentsLimit: undefined,
     analyticsEnabled: false,

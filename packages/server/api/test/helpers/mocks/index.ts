@@ -15,6 +15,7 @@ import {
     SigningKey,
 } from '@activepieces/ee-shared'
 import {
+    AiOverageState,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -196,18 +197,20 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
-        aiCreditsLimit: platformPlan?.aiCreditsLimit ?? 0,
+        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
         tasksLimit: platformPlan?.tasksLimit ?? 0,
-        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
+        aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
+        aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,

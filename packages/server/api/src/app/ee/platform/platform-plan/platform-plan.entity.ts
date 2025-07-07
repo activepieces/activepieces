@@ -25,8 +25,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsLimit: {
+        aiCreditsOverageLimit: {
             type: Number,
+            nullable: true,
+        },
+        aiCreditsOverageState: {
+            type: String,
             nullable: true,
         },
         eligibleForTrial: {
