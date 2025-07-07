@@ -18,26 +18,24 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
+import { ErrorCode, FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const { data: maxTables } = flagsHooks.useFlag(
-    ApFlagId.MAX_TABLES_PER_PROJECT,
-  );
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -85,17 +83,8 @@ const ApTablesPage = () => {
       );
     },
     onError: (err: Error) => {
-      if (
-        api.isError(err) &&
-        err.response?.status === api.httpStatus.Conflict
-      ) {
-        toast({
-          title: t('Max tables reached'),
-          description: t(`You can't create more than {maxTables} tables`, {
-            maxTables,
-          }),
-          variant: 'destructive',
-        });
+      if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
+        setShowUpgradeDialog(true);
       } else {
         toast(INTERNAL_ERROR_TOAST);
       }
@@ -112,6 +101,7 @@ const ApTablesPage = () => {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -132,6 +122,7 @@ const ApTablesPage = () => {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
@@ -279,7 +270,6 @@ const ApTablesPage = () => {
         </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <Button
-            size="sm"
             onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
             disabled={!userHasTableWritePermission}
@@ -289,7 +279,11 @@ const ApTablesPage = () => {
           </Button>
         </PermissionNeededTooltip>
       </div>
-
+      <UpgradeHookDialog
+        metric="tables"
+        open={showUpgradeDialog}
+        setOpen={setShowUpgradeDialog}
+      />
       <DataTable
         filters={[
           {

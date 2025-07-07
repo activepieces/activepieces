@@ -165,6 +165,7 @@ function TodosPage() {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -200,6 +201,7 @@ function TodosPage() {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
@@ -247,10 +249,8 @@ function TodosPage() {
             <ApAvatar
               size="small"
               type={todoUtils.getAuthorType(row.original)}
-              fullName={authorName}
+              fullName={authorName ?? ''}
               userEmail={row.original.createdByUser?.email ?? ''}
-              pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
-              profileUrl={todoUtils.getAuthorProfileUrl(row.original)}
             />
             <div>{authorName}</div>
           </div>
@@ -263,26 +263,6 @@ function TodosPage() {
         <DataTableColumnHeader column={column} title={t('Assigned to')} />
       ),
       cell: ({ row }) => {
-        const hasAgent = row.original.agent;
-        if (hasAgent) {
-          return (
-            <div className="text-left">
-              <ApAvatar
-                type="agent"
-                size="small"
-                includeName={true}
-                pictureUrl={row.original.agent?.profilePictureUrl}
-                profileUrl={
-                  row.original.agent?.id
-                    ? `/agents/${row.original.agent.id}`
-                    : undefined
-                }
-                fullName={row.original.agent?.displayName ?? ''}
-              />
-            </div>
-          );
-        }
-
         return (
           <div className="text-left">
             {row.original.assignee && (

@@ -4,6 +4,7 @@ import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 export type AIUsageSchema = AIUsage & {
     project: Project
+    platformId: string
 }
 
 export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
@@ -13,6 +14,9 @@ export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
         provider: {
             type: String,
             nullable: false,
+        },
+        platformId: {
+            type: String,
         },
         model: {
             type: String,
@@ -30,7 +34,7 @@ export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
     indices: [
         {
             name: 'idx_ai_usage_project_created',
-            columns: ['projectId', 'created'],
+            columns: ['platformId', 'created', 'projectId'],
         },
     ],
     relations: {

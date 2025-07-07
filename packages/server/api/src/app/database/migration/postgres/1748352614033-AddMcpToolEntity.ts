@@ -76,7 +76,7 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
         log.info('Starting migration AddMcpToolEntity1748352614033')
 
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id"
+            DROP INDEX "mcp_project_id"
         `)
         await queryRunner.query(`
             CREATE TABLE "mcp_tool" (
@@ -146,16 +146,16 @@ export class AddMcpToolEntity1748352614033 implements MigrationInterface {
             ALTER TABLE "mcp_tool" DROP CONSTRAINT "FK_ff5eb8d6e2b6375d0d98569d5fb"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id"
+            DROP INDEX "mcp_project_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp" DROP COLUMN "name"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_tool_flow_id"
+            DROP INDEX "idx_mcp_tool_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_tool_mcp_id"
+            DROP INDEX "idx_mcp_tool_mcp_id"
         `)
         await queryRunner.query(`
             DROP TABLE "mcp_tool"

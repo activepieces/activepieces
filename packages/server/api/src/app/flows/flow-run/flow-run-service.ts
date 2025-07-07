@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -22,6 +22,7 @@ import {
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
+    SampleDataFileType,
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -192,7 +193,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         return null
     },
-    async updateStatus({
+    updateRunStatusAsync({ flowRunId, status }: UpdateRunStatusParams): void {
+        rejectedPromiseHandler(flowRunRepo().update(flowRunId, { status }), log)
+    },
+    async updateRun({
         flowRunId,
         status,
         tasks,
@@ -209,7 +213,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             status,
             ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
-            terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
             failedStepName: failedStepName ?? undefined,
@@ -249,7 +252,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowDisplayName: flowVersion.displayName,
         }, log)
 
-        flowRun.status = FlowRunStatus.RUNNING
+        flowRun.status = FlowRunStatus.QUEUED
 
         const savedFlowRun = await flowRunRepo().save(flowRun)
         const priority = await getJobPriority(synchronousHandlerId)
@@ -274,7 +277,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
-            fileType: FileType.SAMPLE_DATA,
+            type: SampleDataFileType.OUTPUT,
         })
         return this.start({
             projectId,
@@ -527,6 +530,11 @@ type UpdateLogs = {
     projectId: ProjectId
     executionStateString: string | undefined
     executionStateContentLength: number
+}
+
+type UpdateRunStatusParams = {
+    flowRunId: FlowRunId
+    status: FlowRunStatus
 }
 
 type FinishParams = {

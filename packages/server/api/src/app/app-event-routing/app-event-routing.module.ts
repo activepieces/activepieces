@@ -14,6 +14,7 @@ import {
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
+    FlowStatus,
     isNil,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -133,7 +134,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         runEnvironment: RunEnvironment.PRODUCTION,
                         saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionIdToRun,
-                        execute: true,
+                        execute: flow.status === FlowStatus.ENABLED,
                     },
                     priority: DEFAULT_PRIORITY,
                 })

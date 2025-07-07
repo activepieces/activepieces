@@ -17,7 +17,7 @@ import { LockedAlert } from '@/components/ui/locked-alert';
 import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
@@ -64,6 +64,7 @@ const PlatformPiecesPage = () => {
                 table.getIsAllPageRowsSelected() ||
                 (table.getIsSomePageRowsSelected() && 'indeterminate')
               }
+              variant="secondary"
               onCheckedChange={(value) =>
                 table.toggleAllPageRowsSelected(!!value)
               }
@@ -71,6 +72,7 @@ const PlatformPiecesPage = () => {
           ),
           cell: ({ row }) => (
             <Checkbox
+              variant="secondary"
               checked={row.getIsSelected()}
               onCheckedChange={(value) => {
                 row.toggleSelected(!!value);

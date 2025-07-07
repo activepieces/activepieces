@@ -1,4 +1,4 @@
-import { Agent, Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
+import { Flow, FlowRun, Platform, Project, Todo, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -12,7 +12,6 @@ export type TodoSchema = Todo & {
     flow: Flow
     run: FlowRun
     assignee: User
-    agent: Agent
     createdByUser: User
 }
 
@@ -27,7 +26,7 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         description: {
             type: String,
             nullable: true,
-        },  
+        },
         environment: {
             type: String,
             nullable: false,
@@ -51,10 +50,6 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         projectId: {
             ...ApIdSchema,
             nullable: false,
-        },
-        agentId: {
-            ...ApIdSchema,
-            nullable: true,
         },
         createdByUserId: {
             ...ApIdSchema,
@@ -91,10 +86,6 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             name: 'idx_todo_platform_id',
             columns: ['platformId'],
         },
-        {
-            name: 'idx_todo_agent_id',
-            columns: ['agentId'],
-        },
     ],
     relations: {
         platform: {
@@ -110,12 +101,6 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         createdByUser: {
             type: 'many-to-one',
             target: 'user',
-            cascade: true,
-            onDelete: 'CASCADE',
-        },
-        agent: {
-            type: 'many-to-one',
-            target: 'agent',
             cascade: true,
             onDelete: 'CASCADE',
         },

@@ -21,7 +21,9 @@ export const pieceListUtils = {
 
         return enterpriseFilteringUtils.filter({
             pieces: userBasedPieces,
+            includeHidden: params.includeHidden,
             platformId: params.platformId,
+            projectId: params.projectId,
         })
     },
 }

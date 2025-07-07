@@ -30,6 +30,9 @@
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
+      "@activepieces/piece-acuity-scheduling": [
+        "packages/pieces/community/acuity-scheduling/src/index.ts"
+      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
@@ -86,6 +89,9 @@
       ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
+      ],
+      "@activepieces/piece-attio": [
+        "packages/pieces/community/attio/src/index.ts"
       ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
@@ -160,6 +166,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-circle": [
+        "packages/pieces/community/circle/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
@@ -190,6 +199,9 @@
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
+      "@activepieces/piece-cognito-forms": [
+        "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -211,6 +223,9 @@
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
+      "@activepieces/piece-crisp": [
+        "packages/pieces/community/crisp/src/index.ts"
+      ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
       ],
@@ -230,6 +245,9 @@
       "@activepieces/piece-datocms": [
         "packages/pieces/community/datocms/src/index.ts"
       ],
+      "@activepieces/piece-deepgram": [
+        "packages/pieces/community/deepgram/src/index.ts"
+      ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
@@ -241,6 +259,9 @@
       ],
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
+      ],
+      "@activepieces/piece-dimo": [
+        "packages/pieces/community/dimo/src/index.ts"
       ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
@@ -278,6 +299,9 @@
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-fillout-forms": [
+        "packages/pieces/community/fillout-forms/src/index.ts"
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
@@ -389,6 +413,9 @@
       ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-heygen": [
+        "packages/pieces/community/heygen/src/index.ts"
       ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
@@ -639,6 +666,9 @@
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
       ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
@@ -723,6 +753,9 @@
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
+      ],
+      "@activepieces/piece-smartsheet": [
+        "packages/pieces/community/smartsheet/src/index.ts"
       ],
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"

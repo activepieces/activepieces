@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -64,15 +64,8 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun } = params
 
-        if (isNil(flow)) {
-            return {
-                status: StatusCodes.GONE,
-                body: {},
-                headers: {},
-            }
-        }
         if (saveSampleData) {
             rejectedPromiseHandler(savePayload({
                 flow,
@@ -84,7 +77,7 @@ export const webhookHandler = {
             }), logger)
         }
 
-        const disabledFlow = flow.status !== FlowStatus.ENABLED
+        const disabledFlow = flow.status !== FlowStatus.ENABLED && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
 
         if (disabledFlow) {
             return {
@@ -94,7 +87,7 @@ export const webhookHandler = {
             }
         }
 
-        await flowRunService(logger).start({
+        const createdRun = await flowRunService(logger).start({
             environment: runEnvironment,
             flowVersionId: flowVersionIdToRun,
             payload,
@@ -105,6 +98,8 @@ export const webhookHandler = {
             executionType: ExecutionType.BEGIN,
             progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
         })
+
+        params.onRunCreated?.(createdRun)
 
         return engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
@@ -149,10 +144,12 @@ type SyncWebhookParams = {
     saveSampleData: boolean
     projectId: ProjectId
     runEnvironment: RunEnvironment
+    flowVersionToRun: WebhookFlowVersionToRun
     flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string
     synchronousHandlerId: string
-    flowVersionIdToRun: FlowVersionId
+    flowVersionIdToRun: FlowVersionId   
+    onRunCreated?: (run: FlowRun) => void
 }
 

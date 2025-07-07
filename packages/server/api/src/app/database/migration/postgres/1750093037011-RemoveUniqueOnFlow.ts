@@ -8,7 +8,7 @@ export class RemoveUniqueOnFlow1750093037011 implements MigrationInterface {
             ALTER TABLE "issue" DROP CONSTRAINT "fk_issue_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue" DROP CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f"
@@ -27,7 +27,7 @@ export class RemoveUniqueOnFlow1750093037011 implements MigrationInterface {
             ALTER TABLE "issue" DROP CONSTRAINT "fk_issue_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"

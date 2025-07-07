@@ -11,7 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
@@ -23,9 +23,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
+import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
-import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -34,6 +33,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
+import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -82,7 +82,7 @@ const StepSettingsContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
@@ -143,16 +143,14 @@ const StepSettingsContainer = () => {
     },
   });
 
-  const actionOrTriggerDisplayName = selectedStep.settings.actionName
-    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
-    : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
-
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
+  const showActionErrorHandlingForm =
+    [ActionType.CODE, ActionType.PIECE].includes(
+      modifiedStep.type as ActionType,
+    ) && !isNil(stepMetadata);
   return (
     <Form {...form}>
       <form
@@ -199,15 +197,8 @@ const StepSettingsContainer = () => {
           <ResizablePanel defaultSize={55}>
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
-                {stepMetadata && (
-                  <PieceCardInfo
-                    piece={stepMetadata}
-                    customizedInputs={
-                      selectedStep.settings?.inputUiInfo?.customizedInputs
-                    }
-                    actionOrTriggerDisplayName={actionOrTriggerDisplayName}
-                  ></PieceCardInfo>
-                )}
+                <StepCard step={modifiedStep}></StepCard>
+
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>
                 )}
@@ -231,20 +222,18 @@ const StepSettingsContainer = () => {
                     readonly={readonly}
                   ></PieceSettings>
                 )}
-                {[ActionType.CODE, ActionType.PIECE].includes(
-                  modifiedStep.type as ActionType,
-                ) && (
+                {showActionErrorHandlingForm && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.continueOnFailure
                             ?.hide
                         : false
                     }
                     disabled={readonly}
                     hideRetryOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
+                      stepMetadata.type === ActionType.PIECE
+                        ? stepMetadata.errorHandlingOptions?.retryOnFailure
                             ?.hide
                         : false
                     }

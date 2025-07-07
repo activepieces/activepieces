@@ -1,56 +1,68 @@
-import { TodoDetails } from '@/app/routes/todos/todo-details';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { todoActivityApi } from '@/features/todos/lib/todos-activitiy-api';
-import {
-  Action,
-  agentMarkdownParser,
-  AgentTestResult,
-} from '@activepieces/shared';
+import { t } from 'i18next';
 
-import { testStepHooks } from '../test-step-hooks';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
+import {
+  AgentTestResult,
+  AgentStepBlock,
+  StepRunResponse,
+  AgentTaskStatus,
+  isNil,
+} from '@activepieces/shared';
 
 type AgentTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  todoId: string;
-  currentStep: Action;
+  agentProgress: StepRunResponse | null;
+  isTesting: boolean;
+  agentId: string;
 };
 
 function AgentTestingDialog({
   open,
   onOpenChange,
-  todoId,
-  currentStep,
+  agentProgress,
+  agentId,
 }: AgentTestingDialogProps) {
-  const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-    currentStep.name,
-  );
-
-  const handleStatusChange = async () => {
-    const activities = await todoActivityApi.list(todoId, {
-      limit: 100,
-    });
-    const agentResult: AgentTestResult = agentMarkdownParser.findAgentResult({
-      todoId,
-      output: activities.data[activities.data.length - 1].content,
-    });
-    updateSampleData({
-      response: {
-        output: agentResult,
-        success: true,
-      },
-    });
-    onOpenChange(false);
-  };
-
+  const agentResult = agentProgress?.output as AgentTestResult | undefined;
+  const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
+  const prompt =
+    !isNil(agentProgress?.input) &&
+    'prompt' in (agentProgress.input as { prompt: string })
+      ? (agentProgress.input as { prompt: string }).prompt
+      : '';
+  const isDone =
+    agentResult?.status === AgentTaskStatus.COMPLETED ||
+    agentResult?.status === AgentTaskStatus.FAILED;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl p-0 overflow-hidden">
-        <TodoDetails
-          todoId={todoId}
-          className="h-[90vh] py-3 px-6"
-          onStatusChange={handleStatusChange}
-        />
+      <DialogContent className="w-full max-w-[42rem] overflow-hidden ">
+        <DialogHeader>
+          <DialogTitle>{t('Agent Test Results')}</DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] min-h-[40vh] ">
+          <AgentTimeline
+            agentId={agentId}
+            steps={agentSteps}
+            className="h-full p-0 pr-3 max-w-[39.25rem]"
+            prompt={prompt}
+            isDone={isDone}
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

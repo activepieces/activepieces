@@ -2197,6 +2197,83 @@
           "displayOrder"
         ]
       },
+      "user": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACTIVE"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "INACTIVE"
+                ]
+              }
+            ]
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastChangelogDismissed": {
+            "type": "string",
+            "nullable": true
+          },
+          "platformId": {
+            "type": "string",
+            "nullable": true
+          },
+          "platformRole": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ADMIN"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "MEMBER"
+                ]
+              }
+            ]
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "status",
+          "platformRole",
+          "lastName",
+          "created",
+          "updated"
+        ]
+      },
       "user-invitation": {
         "type": "object",
         "properties": {
@@ -8686,7 +8763,24 @@
                       },
                       "request": {
                         "type": "object",
-                        "properties": {}
+                        "properties": {
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ENABLED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DISABLED"
+                                ]
+                              }
+                            ]
+                          }
+                        }
                       }
                     },
                     "required": [
@@ -11006,6 +11100,51 @@
                       "type",
                       "request"
                     ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "SAVE_SAMPLE_DATA"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "stepName": {
+                            "type": "string"
+                          },
+                          "payload": {},
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INPUT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OUTPUT"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "stepName",
+                          "payload",
+                          "type"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
                   }
                 ]
               }
@@ -11432,10 +11571,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -11706,172 +11842,6 @@
       }
     },
     "/v1/sample-data": {
-      "post": {
-        "tags": [
-          "sample-data"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "flowVersionId": {
-                    "type": "string"
-                  },
-                  "projectId": {
-                    "type": "string"
-                  },
-                  "stepName": {
-                    "type": "string"
-                  },
-                  "payload": {},
-                  "fileType": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "UNKNOWN"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "FLOW_RUN_LOG"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PACKAGE_ARCHIVE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "FLOW_STEP_FILE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "SAMPLE_DATA"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "SAMPLE_DATA_INPUT"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "TRIGGER_EVENT_FILE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PROJECT_RELEASE"
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "flowVersionId",
-                  "projectId",
-                  "stepName",
-                  "payload"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "size": {
-                      "type": "number"
-                    },
-                    "type": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "UNKNOWN"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "FLOW_RUN_LOG"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "PACKAGE_ARCHIVE"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "FLOW_STEP_FILE"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "SAMPLE_DATA"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "SAMPLE_DATA_INPUT"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "TRIGGER_EVENT_FILE"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "PROJECT_RELEASE"
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "type"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "sample-data"
@@ -11915,56 +11885,20 @@
                 {
                   "type": "string",
                   "enum": [
-                    "UNKNOWN"
+                    "INPUT"
                   ]
                 },
                 {
                   "type": "string",
                   "enum": [
-                    "FLOW_RUN_LOG"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "PACKAGE_ARCHIVE"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "FLOW_STEP_FILE"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "SAMPLE_DATA"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "SAMPLE_DATA_INPUT"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "TRIGGER_EVENT_FILE"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "PROJECT_RELEASE"
+                    "OUTPUT"
                   ]
                 }
               ]
             },
             "in": "query",
-            "name": "fileType",
-            "required": false
+            "name": "type",
+            "required": true
           }
         ],
         "security": [
@@ -13463,10 +13397,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -13589,10 +13520,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -13763,6 +13691,9 @@
                         "licenseKey": {
                           "type": "string"
                         },
+                        "licenseExpiresAt": {
+                          "type": "string"
+                        },
                         "stripeCustomerId": {
                           "type": "string"
                         },
@@ -13813,12 +13744,6 @@
                         "alertsEnabled",
                         "ssoEnabled"
                       ]
-                    },
-                    "hasLicenseKey": {
-                      "type": "boolean"
-                    },
-                    "licenseExpiresAt": {
-                      "type": "string"
                     },
                     "id": {
                       "type": "string"
@@ -16327,10 +16252,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -17024,6 +16946,152 @@
         }
       }
     },
+    "/v1/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "description": "List users",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalId",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ACTIVE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INACTIVE"
+                                ]
+                              }
+                            ]
+                          },
+                          "externalId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "lastChangelogDismissed": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "platformId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "platformRole": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ADMIN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MEMBER"
+                                ]
+                              }
+                            ]
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "email",
+                          "firstName",
+                          "status",
+                          "platformRole",
+                          "lastName",
+                          "created",
+                          "updated"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/user-invitations": {
       "post": {
         "tags": [
@@ -17491,10 +17559,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -17574,10 +17639,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -19387,10 +19449,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }
@@ -21828,10 +21887,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "not": {}
-                  }
+                  "not": {}
                 }
               }
             }

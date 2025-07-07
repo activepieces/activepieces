@@ -90,14 +90,12 @@ const initialPermissions = [
     description: 'Read and write tables',
     read: [Permission.READ_TABLE],
     write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
-    disableNone: true,
   },
   {
     name: 'Todos',
     description: 'Read and write todos',
     read: [Permission.READ_TODOS],
     write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
-    disableNone: true,
   },
   {
     name: 'MCP',

@@ -22,9 +22,10 @@ import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { aiProvidersStrategies, Usage } from './providers'
+import { StreamingParser } from './providers/types'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
+export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
@@ -104,15 +105,6 @@ export const aiProviderService = {
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
-    async increaseProjectAIUsage(params: IncreaseProjectAIUsageParams): Promise<void> {
-        await aiUsageRepo().insert({
-            id: apId(),
-            projectId: params.projectId,
-            provider: params.provider,
-            model: params.model,
-            cost: params.cost,
-        })
-    },
 
     calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
         const providerStrategy = aiProvidersStrategies[provider]
@@ -128,6 +120,21 @@ export const aiProviderService = {
     isModelSupported(provider: string, model: string): boolean {
         const providerConfig = getProviderConfig(provider)!
         return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
+    },
+
+    isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.isStreaming(request)
+    },
+
+    providerSupportsStreaming(provider: string): boolean {
+        const providerConfig = getProviderConfig(provider)!
+        return providerConfig.streaming
+    },
+
+    streamingParser(provider: string): StreamingParser {
+        const providerStrategy = aiProvidersStrategies[provider]
+        return providerStrategy.streamingParser!()
     },
 }
 
@@ -152,13 +159,4 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
         return undefined
     }
     return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-}
-
-
-
-type IncreaseProjectAIUsageParams = {
-    projectId: string
-    provider: string
-    model: string
-    cost: number
 }

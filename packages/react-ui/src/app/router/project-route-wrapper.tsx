@@ -4,8 +4,8 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
-  DEFAULT_REDIRECT_PATH,
   FROM_QUERY_PARAM,
+  useDefaultRedirectPath,
 } from '@/lib/navigation-utils';
 import { determineDefaultRoute } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
@@ -56,7 +56,8 @@ const RedirectToCurrentProjectRoute: React.FC<
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const from = searchParams.get(FROM_QUERY_PARAM) ?? DEFAULT_REDIRECT_PATH;
+  const defaultRedirectPath = useDefaultRedirectPath();
+  const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   if (isNil(currentProjectId)) {
     return (
       <Navigate

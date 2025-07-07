@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { STATUS_VARIANT, Todo } from '@activepieces/shared';
 
 interface TodoTimelineStatusProps {
@@ -11,7 +13,7 @@ export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
 
   const bgColor = {
     [STATUS_VARIANT.POSITIVE]: 'bg-emerald-700',
-    [STATUS_VARIANT.NEGATIVE]: 'bg-rose-700',
+    [STATUS_VARIANT.NEGATIVE]: 'bg-destructive-300',
     [STATUS_VARIANT.NEUTRAL]: 'bg-gray-700',
   }[todo.status.variant];
 
@@ -20,7 +22,7 @@ export const TodoTimelineStatus = ({ todo }: TodoTimelineStatusProps) => {
       <div
         className={`${bgColor} text-background text-sm rounded-sm py-1 px-4`}
       >
-        This todo is now marked as {todo.status.name}
+        {t(`This todo is now marked as ${todo.status.name}`)}
       </div>
     </div>
   );
