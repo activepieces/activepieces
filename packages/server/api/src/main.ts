@@ -4,6 +4,7 @@ import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { initializeLock } from './app/helper/lock'
 import { system } from './app/helper/system/system'
+import { onstartService } from './app/onstart/onstart.service'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
 
@@ -19,6 +20,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
         if (system.isApp()) {
             await appPostBoot(app)
         }
+        await onstartService.onstart()
     }
     catch (err) {
         app.log.error(err)
