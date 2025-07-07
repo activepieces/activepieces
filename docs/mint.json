@@ -44,6 +44,10 @@
       "url": "developers"
     },
     {
+      "name": "Embedding",
+      "url": "embedding"
+    },
+    {
       "name": "API Reference",
       "url": "endpoints"
     },
@@ -129,12 +133,21 @@
       "group": "Engineering Playbooks",
       "icon": "code",
       "pages": [
+        "handbook/engineering/playbooks/run-ee",
         "handbook/engineering/playbooks/setup-incident-io",
         "handbook/engineering/playbooks/releases",
         "handbook/engineering/playbooks/infrastructure",
         "handbook/engineering/playbooks/bullboard",
         "handbook/engineering/playbooks/database-migration",
-        "handbook/engineering/playbooks/product-announcement"
+        "handbook/engineering/playbooks/product-announcement",
+        "handbook/engineering/playbooks/frontend-best-practices"
+      ]
+    },
+    {
+      "group": "Product",
+      "icon": "tool",
+      "pages": [
+        "handbook/product/interface-design"
       ]
     },
     {
@@ -148,6 +161,14 @@
             "endpoints/projects/create",
             "endpoints/projects/update",
             "endpoints/projects/list"
+          ]
+        },
+        {
+          "group": "Users",
+          "icon": "user",
+          "pages": [
+            "endpoints/users/schema",
+            "endpoints/users/list"
           ]
         },
         {
@@ -204,8 +225,7 @@
           "group": "Sample Data",
           "icon": "database",
           "pages": [
-            "endpoints/sample-data/get",
-            "endpoints/sample-data/save"
+            "endpoints/sample-data/get"
           ]
         },
         {
@@ -275,17 +295,6 @@
             "endpoints/mcp-servers/rotate",
             "endpoints/mcp-servers/update"
           ]
-        },
-        {
-          "group": "MCP pieces",
-          "icon": "plug",
-          "pages": [
-            "endpoints/mcp-pieces/schema",
-            "endpoints/mcp-pieces/add",
-            "endpoints/mcp-pieces/delete",
-            "endpoints/mcp-pieces/update",
-            "endpoints/mcp-pieces/list"
-          ]
         }
       ]
     },
@@ -341,7 +350,8 @@
         "install/architecture/overview",
         "install/architecture/workers",
         "install/architecture/engine",
-        "install/architecture/stack"
+        "install/architecture/stack",
+        "install/architecture/performance"
       ]
     },
     {
@@ -398,16 +408,8 @@
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
         "developers/piece-reference/custom-api-calls",
-        "developers/piece-reference/i18n"
-      ]
-    },
-    {
-      "group": "Universal AI",
-      "pages": [
-        "developers/unified-ai/overview",
-        "developers/unified-ai/chat",
-        "developers/unified-ai/function-calling",
-        "developers/unified-ai/image"
+        "developers/piece-reference/i18n",
+        "developers/piece-reference/ai-providers"
       ]
     },
     {
@@ -421,21 +423,27 @@
       ]
     },
     {
-      "group": "Embedding",
+      "group": "Essentials",
       "pages": [
         "embedding/overview",
         "embedding/provision-users",
-        "embedding/embed-builder",
-        "embedding/mcps",
-        "embedding/navigation",
+        "embedding/embed-builder"
+      ]
+    },
+   
+    {
+      "group": "Misc",
+      "pages": [
         "embedding/customize-pieces",
         "embedding/embed-connections",
-        "embedding/sdk-server-requests",
-        "embedding/sdk-changelog"
+        "embedding/navigation",
+        "embedding/predefined-connection",
+        "embedding/sdk-changelog",
+        "embedding/sdk-server-requests"
       ]
     },
     {
-      "group": "Admin Console",
+      "group": "Platform Admin",
       "pages": [
         "admin-console/overview",
         "admin-console/appearance",
@@ -530,6 +538,10 @@
     {
       "source": "/embedding/embed-builder/embed-iframe",
       "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/predefined-connection/overview",
+      "destination": "/embedding/predefined-connection"
     }
   ]
 }

@@ -6,7 +6,7 @@ import { flowStructureUtil } from '@activepieces/shared';
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
-import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
+import { stepsHooks } from '../../../features/pieces/lib/steps-hooks';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorTreeNode } from './type';
@@ -52,7 +52,7 @@ const DataSelectorNodeContent = ({
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
   const stepMetadata = step
-    ? piecesHooks.useStepMetadata({ step }).stepMetadata
+    ? stepsHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;

@@ -41,6 +41,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     app.post('/:id/push', PushRepoRequestSchema, async (request) => {
         return gitRepoService(request.log).push({
             id: request.params.id,
+            platformId: request.principal.platform.id,
             userId: request.principal.id,
             request: request.body,
             log: request.log,
