@@ -1,0 +1,12 @@
+{
+  "RSS Feed": "RSS 源",
+  "Stay updated with RSS feeds": "随时更新 RSS 源",
+  "New Item In Feed": "新闻源中的新项目",
+  "New Items in Multiple Feeds": "多种源中的新项目",
+  "Runs when a new item is added in the RSS feed": "当一个新项目添加到RSS feed时运行",
+  "Runs when a new item is added in one of the RSS feed": "当一个RSS种子中添加一个新项目时运行",
+  "RSS Feed URL": "RSS Feed URL",
+  "RSS Feed URLs": "RSS Feed URL",
+  "Single RSS feed URL": "单个RSS feed URL",
+  "List of RSS feed URLs": "RSS feed URL 列表"
+}
