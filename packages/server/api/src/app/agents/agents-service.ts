@@ -14,6 +14,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
         await checkQuotaOrThrow({
             platformId: params.platformId,
+            projectId: params.projectId,
             metric: PlatformUsageMetric.AGENTS,
         })
         const mcp = await mcpService(log).create({

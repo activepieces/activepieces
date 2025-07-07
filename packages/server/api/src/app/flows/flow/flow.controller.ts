@@ -74,6 +74,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         if (turnOnFlow || publishDisabledFlow) {
             await checkQuotaOrThrow({
                 platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
                 metric: PlatformUsageMetric.ACTIVE_FLOWS,
             })
         }

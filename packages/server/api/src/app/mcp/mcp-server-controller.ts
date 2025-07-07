@@ -15,6 +15,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateMcpRequest, async (req) => {
         await checkQuotaOrThrow({
             platformId: req.principal.platform.id,
+            projectId: req.principal.projectId,
             metric: PlatformUsageMetric.MCPS,
         })
         const projectId = req.body.projectId

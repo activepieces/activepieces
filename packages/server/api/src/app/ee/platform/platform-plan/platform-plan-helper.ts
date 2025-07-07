@@ -2,11 +2,13 @@ import { ActivepiecesError, ApEdition, ErrorCode, isNil, PlatformUsageMetric } f
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
+import { projectService } from '../../../project/project-service'
 
 const edition = system.getEdition()
 
 type QuotaCheckParams = {
     platformId: string
+    projectId?: string
     metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_TOKENS | PlatformUsageMetric.TASKS>
 }
 
@@ -30,10 +32,13 @@ const METRIC_TO_USAGE_MAPPING = {
 
 
 export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void> {
+    const { platformId, projectId, metric } = params
+
     if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
         return
     }
-    const { platformId, metric } = params
+
+    await checkProjectNotLockedOrThrow(projectId) 
 
     const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
     const platformUsage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
@@ -60,5 +65,21 @@ export async function checkQuotaOrThrow(params: QuotaCheckParams): Promise<void>
                 metric,
             },
         })
+    }
+}
+
+
+export async function checkProjectNotLockedOrThrow(projectId?: string): Promise<void> {
+    if (!isNil(projectId)) {
+        const project = await projectService.getOneOrThrow(projectId)
+
+        if (project.locked) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_LOCKED,
+                params: {
+                    message: `Project: ${projectId} is locked`
+                },
+            })
+        }
     }
 }

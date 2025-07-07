@@ -51,6 +51,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
 
         await checkQuotaOrThrow({
             platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
             metric: PlatformUsageMetric.USER_SEATS,
         })
 

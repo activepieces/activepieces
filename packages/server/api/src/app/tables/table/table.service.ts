@@ -38,6 +38,7 @@ export const tableService = {
         const platformId = await projectService.getPlatformId(projectId)
         await checkQuotaOrThrow({
             platformId,
+            projectId,
             metric: PlatformUsageMetric.TABLES,
         })
 

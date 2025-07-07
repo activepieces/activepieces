@@ -17,6 +17,7 @@ import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
+import { checkProjectNotLockedOrThrow } from '../../platform/platform-plan/platform-plan-helper'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 const edition = system.getEdition()
@@ -50,23 +51,20 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         if (edition === ApEdition.COMMUNITY) {
             return false
         }
-        try {
-            // TODO (@abuaboud): optmize this by not querying the database
-            const projectPlan = await getOrCreateDefaultPlan(projectId)
-            if (!projectPlan) {
-                return false
-            }
-            const platformId = await projectService.getPlatformId(projectId)
-            const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
+        await checkProjectNotLockedOrThrow(projectId)
+
+        try {
+            const platformId = await projectService.getPlatformId(projectId)
             const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-            const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformPlan)
+            const { startDate, endDate } = await platformPlanService(log).getBillingDates(platformPlan)
 
             const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate })
             const platformTasksUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
 
             const tasksPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformTasksUsage, log, usageType: 'tasks' })
-            const tasksPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' })
+            const tasksPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' })
+
             return tasksPorjectLimit || tasksPlatformLimit
         }
         catch (e) {
@@ -81,19 +79,25 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             return false
         }
 
-        const platformId = await projectService.getPlatformId(projectId)
-        const { manageProjectsEnabled } = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        await checkProjectNotLockedOrThrow(projectId)
 
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformPlan)
+        try {
+            const platformId = await projectService.getPlatformId(projectId)
+            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            const { startDate, endDate } = await platformPlanService(log).getBillingDates(platformPlan)
 
-        const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
-        const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
+            const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
+            const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
 
-        const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'ai_credits' })
-        const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'ai_credits' })
+            const aiCreditPlatformLimit = await platformReachedLimit({ platformId, platformUsage: platformAICreditUsage, log, usageType: 'ai_credits' })
+            const aiCreditPorjectLimit = await projectReachedLimit({ projectId, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'ai_credits' })
 
-        return aiCreditPlatformLimit || aiCreditPorjectLimit
+            return aiCreditPlatformLimit || aiCreditPorjectLimit
+        }
+        catch (e) {
+            exceptionHandler.handle(e, log)
+            return false
+        }
     },
 })
 
