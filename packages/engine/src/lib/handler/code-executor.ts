@@ -4,6 +4,7 @@ import { ActionType, assertNotNullOrUndefined, CodeAction, GenericStepOutput, St
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { progressService } from '../services/progress.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
@@ -30,10 +31,19 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     const stepOutput = GenericStepOutput.create({
         input: censoredInput,
         type: ActionType.CODE,
-        status: StepOutputStatus.SUCCEEDED,
+        status: StepOutputStatus.RUNNING,
     })
 
     try {
+
+        progressService.sendUpdate({
+            engineConstants: constants,
+            flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+            updateImmediate: true,
+        }).catch((e) => {
+            console.error('error sending update', e) 
+        })
+
         assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
         const codeModule: CodeModule = await importFresh(artifactPath)
@@ -44,7 +54,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED)).increaseTask()
     }
     catch (e) {
         const handledError = handleExecutionError(e)
