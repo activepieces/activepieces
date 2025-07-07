@@ -54,7 +54,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
-            const serializedFunctions = Object.values(functions).map(func => serialize(func)).join('\n')
+            const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
             const scriptWithFunctions = `${serializedFunctions}\n${script}`
 
             return await executeIsolate({

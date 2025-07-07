@@ -41,6 +41,6 @@ type RunScriptParams = {
     /**
      * A key-value map of functions that are available to the script during execution.
      */
-    functions: Record<string, unknown>
+    functions: Record<string, Function>
 
 }

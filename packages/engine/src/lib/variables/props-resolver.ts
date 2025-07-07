@@ -1,5 +1,4 @@
 import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
-import serialize from 'serialize-javascript'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -176,7 +175,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
     return null
 }
 
-async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, unknown>): Promise<unknown> {
+async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
     try {
         const codeSandbox = await initCodeSandbox()
 
