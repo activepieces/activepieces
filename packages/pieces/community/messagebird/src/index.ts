@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { sendSMSAction } from './lib/actions/send-sms.action';
 import { PieceCategory } from '@activepieces/shared';
 import { birdAuth } from './lib/auth';
+import { listMessages } from './lib/actions/list-messages';
 
 export const messagebird = createPiece({
   displayName: 'Bird',
@@ -11,6 +12,6 @@ export const messagebird = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/messagebird.png',
   categories: [PieceCategory.MARKETING, PieceCategory.COMMUNICATION],
   authors: ['kishanprmr', 'geekyme'],
-  actions: [sendSMSAction],
+  actions: [sendSMSAction,listMessages],
   triggers: [],
 });
