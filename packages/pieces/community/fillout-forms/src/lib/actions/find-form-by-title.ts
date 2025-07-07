@@ -24,6 +24,9 @@ export const findFormByTitle = createAction({
     const matches = forms.filter((f) =>
       f.name.toLowerCase().includes(searchTitle)
     );
-    return matches;
+    return {
+      found:matches.length>0,
+      result:matches
+    };
   },
 });
