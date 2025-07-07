@@ -85,7 +85,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
                 updateImmediate: true,
             }).catch((e) => {
-                console.error('error sending update', e) 
+                console.error('error sending update', e)
             })
         }
         const context: ActionContext = {
@@ -178,7 +178,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setDuration(stepEndTime - stepStartTime)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
         const handledError = handleExecutionError(e)
