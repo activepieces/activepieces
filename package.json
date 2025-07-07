@@ -356,6 +356,7 @@
     "@types/react-lottie": "1.2.10",
     "@types/recharts": "1.8.29",
     "@types/semver": "7.5.6",
+    "@types/serialize-javascript": "5.0.4",
     "@types/snowflake-sdk": "1.6.20",
     "@types/sqlstring": "2.3.2",
     "@types/ssh2-sftp-client": "9.0.0",
