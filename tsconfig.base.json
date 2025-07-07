@@ -169,7 +169,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -293,6 +293,9 @@
       ],
       "@activepieces/piece-forms": [
         "packages/pieces/community/forms/src/index.ts"
+      ],
+      "@activepieces/piece-formstack": [
+        "packages/pieces/community/formstack/src/index.ts"
       ],
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
