@@ -43,7 +43,6 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
-import { UpgradeAgentPieceVersion1751834548223 } from './migration/common/1751834548223-UpgradeAgentPieceVersion'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -407,7 +406,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveProjectIdFromIndex1750712746125,
         RevertTodoActivties1751217652277,
         RemoveTerminationReason1751728035816,
-        UpgradeAgentPieceVersion1751834548223,
     ]
 
     const edition = system.getEdition()
