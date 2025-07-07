@@ -1,5 +1,4 @@
-import { createPiece, PieceAuth, Property, OAuth2AuthorizationMethod } from "@activepieces/pieces-framework";
-import { OAuth2GrantType } from "@activepieces/shared";
+import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { findInvoiceAction } from "./actions/find-invoice";
 import { findCustomerAction } from "./actions/find-customer";
 import { findPaymentAction } from "./actions/find-payment";
@@ -13,43 +12,38 @@ import { newCustomer } from "./triggers/new-customer";
 import { newDeposit } from "./triggers/new-deposit";
 import { newTransfer } from "./triggers/new-transfer";
 
-const QUICKBOOKS_AUTH_URL = 'https://appcenter.intuit.com/connect/oauth2';
-// const QUICKBOOKS_TOKEN_URL_SANDBOX = 'https://sandbox-oauth.platform.intuit.com/oauth2/v1/tokens/bearer'; // Commenting out old sandbox URL
-const QUICKBOOKS_TOKEN_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer'; // Using one token URL
-
 export const quickbooksAuth = PieceAuth.OAuth2({
-  description: "Connect your QuickBooks account",
-  props: {
-    environment: Property.StaticDropdown({
-      displayName: 'Environment',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'Sandbox',
-            // value no longer directly constructs the URL, but still useful for user selection and potentially other logic
-            value: 'sandbox'
-          },
-          {
-            label: 'Production',
-            value: 'production'
-          }
-        ]
-      }
-    })
-  },
-  authUrl: QUICKBOOKS_AUTH_URL,
-  tokenUrl: QUICKBOOKS_TOKEN_URL, // Using the unified token URL
-  required: true,
-  grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-  scope: [
-    'com.intuit.quickbooks.accounting'
-  ]
+	description: 'You can find Company ID under **settings->Additional Info**.',
+	required: true,
+	props: {
+		companyId: Property.ShortText({
+			displayName: 'Company ID',
+			required: true,
+		}),
+		environment: Property.StaticDropdown({
+			displayName: 'Environment',
+			required: true,
+			options: {
+				options: [
+					{
+						label: 'Sandbox',
+						value: 'sandbox',
+					},
+					{
+						label: 'Production',
+						value: 'production',
+					},
+				],
+			},
+		}),
+	},
+	authUrl: 'https://appcenter.intuit.com/connect/oauth2',
+	tokenUrl: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
+	scope: ['com.intuit.quickbooks.accounting'],
 });
 
 export const quickbooks = createPiece({
-  displayName: "Quickbooks",
+  displayName: "Quickbooks Online",
   auth: quickbooksAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/quickbooks.png",
