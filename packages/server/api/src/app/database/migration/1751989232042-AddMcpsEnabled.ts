@@ -12,7 +12,6 @@ export class AddMcpsEnabled1751989232042 implements MigrationInterface {
             ADD "mcpsEnabled" boolean
         `)
         await queryRunner.query(`
-            ALTER TABLE "platform_plan"
             UPDATE "platform_plan"
             SET "mcpsEnabled" = true
         `)
