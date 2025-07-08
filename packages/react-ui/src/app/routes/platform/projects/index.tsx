@@ -41,7 +41,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      const locked = row.original.locked;
+      const locked = row.original.plan.locked;
 
       return (
         <div className="text-left flex items-center justify-start ">

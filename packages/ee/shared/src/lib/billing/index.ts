@@ -3,9 +3,10 @@ import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 import Stripe from 'stripe'
 
-export type FlowPlanLimits = {
+export type ProjectPlanLimits = {
     nickname: string
     tasks: number | null
+    locked: boolean
     pieces: string[]
     aiCredits: number | null
     piecesFilterType: PiecesFilterType

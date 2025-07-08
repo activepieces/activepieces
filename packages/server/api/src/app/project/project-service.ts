@@ -16,7 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
@@ -28,7 +28,7 @@ export const projectRepo = repoFactory(ProjectEntity)
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
 
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             metric: PlatformUsageMetric.PROJECTS,
         })
@@ -36,7 +36,6 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            locked: false,
             notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
             releasesEnabled: false,
         }
@@ -92,7 +91,6 @@ export const projectService = {
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
-                ...spreadIfDefined('locked', request.locked),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -254,7 +252,6 @@ type UpdateParams = {
     notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
-    locked?: boolean
 }
 
 type CreateParams = {

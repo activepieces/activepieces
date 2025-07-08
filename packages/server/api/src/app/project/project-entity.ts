@@ -45,11 +45,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: TIMESTAMP_COLUMN_TYPE,
             deleteDate: true,
             nullable: true,
-        },
-        locked: {
-            type: Boolean,
-            default: false,
-        },
+        }, 
         ownerId: ApIdSchema,
         displayName: {
             type: String,

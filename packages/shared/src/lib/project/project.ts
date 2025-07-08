@@ -44,6 +44,7 @@ export type ProjectPlanId = string
 export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
+    locked: Type.Boolean({ default: false }),
     name: Type.String(),
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
@@ -56,7 +57,6 @@ export type ProjectPlan = Static<typeof ProjectPlan>
 export const Project = Type.Object({
     ...BaseModelSchema,
     deleted: Nullable(Type.String()),
-    locked: Type.Boolean({ default: false }),
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),

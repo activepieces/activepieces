@@ -16,7 +16,7 @@ export const ProjectLockedAlert = () => {
   );
   const { checkAccess } = useAuthorization();
 
-  if (!project.locked || !location.pathname.startsWith('/project')) {
+  if (!project.plan.locked || !location.pathname.startsWith('/project')) {
     return null;
   }
 
