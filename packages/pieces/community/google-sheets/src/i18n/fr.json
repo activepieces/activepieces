@@ -111,7 +111,7 @@
   "JSON": "JSON",
   "Column Names": "Noms de colonnes",
   "Comma Separated Values (.csv)": "Valeurs séparées par des virgules (.csv)",
-  "Tab Separated Values (.tsv)": "Onglet Separated Values (.tsv)",
+  "Tab Separated Values (.tsv)": "Valeurs séparées par des tabulations (.tsv)",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",
