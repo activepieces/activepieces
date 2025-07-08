@@ -38,7 +38,7 @@ export const SimulationNote = ({
       </div>
 
       {note && (
-        <Alert >
+        <Alert>
           <AlertCircle className="h-4 w-4 text-warning" />
           <div className="flex flex-col gap-1">
             <AlertTitle>{t('Action Required')}:</AlertTitle>

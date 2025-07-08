@@ -204,12 +204,8 @@ const FlowVersionDetailsCard = React.memo(
                 disabled={isPending || isDraftPending}
                 size={'icon'}
               >
-                {(isPending || isDraftPending) && (
-                  <LoadingSpinner  />
-                )}
-                {!isPending && !isDraftPending && (
-                  <DotsVerticalIcon />
-                )}
+                {(isPending || isDraftPending) && <LoadingSpinner />}
+                {!isPending && !isDraftPending && <DotsVerticalIcon />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">

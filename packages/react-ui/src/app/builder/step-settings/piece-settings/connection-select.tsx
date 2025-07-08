@@ -5,6 +5,7 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import { FormField, FormLabel } from '@/components/ui/form';
 import {
@@ -28,7 +29,6 @@ import {
   PieceTrigger,
   isNil,
 } from '@activepieces/shared';
-import { SearchableSelect } from '@/components/custom/searchable-select';
 
 type ConnectionSelectProps = {
   disabled: boolean;
@@ -83,20 +83,20 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
         <>
           {isLoadingConnections && (
             <div className="flex flex-col gap-2">
-            <FormLabel>
-              {t('Connections')} <span className="text-destructive">*</span>
-            </FormLabel>
-               <SearchableSelect
-               options={[]}
-               disabled={true}
-               loading={isLoadingConnections}
-               placeholder={t('Select a connection')}
-               value={field.value as React.Key}
-               onChange={(value) => field.onChange(value)}
-               showDeselect={false}
-               onRefresh={() => {}}
-               showRefresh={false}
-             />
+              <FormLabel>
+                {t('Connections')} <span className="text-destructive">*</span>
+              </FormLabel>
+              <SearchableSelect
+                options={[]}
+                disabled={true}
+                loading={isLoadingConnections}
+                placeholder={t('Select a connection')}
+                value={field.value as React.Key}
+                onChange={(value) => field.onChange(value)}
+                showDeselect={false}
+                onRefresh={() => {}}
+                showRefresh={false}
+              />
             </div>
           )}
           {!isLoadingConnections && (

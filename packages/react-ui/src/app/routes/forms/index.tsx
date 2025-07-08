@@ -33,7 +33,7 @@ export const FormPage = () => {
     <>
       {isLoading && (
         <div className="bg-background flex h-screen w-screen items-center justify-center ">
-          <LoadingSpinner ></LoadingSpinner>
+          <LoadingSpinner></LoadingSpinner>
         </div>
       )}
       {isError && (

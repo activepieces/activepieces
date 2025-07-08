@@ -9,7 +9,6 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-
 const Select = SelectPrimitive.Root;
 
 const SelectGroup = SelectPrimitive.Group;
@@ -136,8 +135,6 @@ const SelectItem = React.forwardRef<
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
-
-
 
 const SelectAction = React.forwardRef<
   HTMLDivElement,
