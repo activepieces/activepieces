@@ -11,7 +11,7 @@ export const getPageComments = createAction({
   auth: notionAuth,
   name: 'get_page_comments',
   displayName: 'Get Page Comments',
-  description: 'Fetches unresolved comments from page.',
+  description: 'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
   props: {
     page_id: notionCommon.page,
   },
@@ -78,14 +78,23 @@ export const getPageComments = createAction({
         new Date(a.created_time).getTime() - new Date(b.created_time).getTime()
     );
 
+    const threadCount = Object.keys(commentsByDiscussion).length;
+    
     return {
       success: true,
       totalComments: allComments.length,
       pageComments: pageComments,
       discussionThreads: commentsByDiscussion,
-      discussionCount: Object.keys(commentsByDiscussion).length,
+      discussionCount: threadCount,
       allComments: allComments,
-      message: `Retrieved ${allComments.length} comments from page`,
+      summary: {
+        totalComments: allComments.length,
+        discussionThreads: threadCount,
+        standaloneComments: pageComments.length,
+      },
+      message: allComments.length === 0 
+        ? `📝 No comments found on this page yet.`
+        : `💬 Successfully retrieved ${allComments.length} comment${allComments.length === 1 ? '' : 's'} from page${threadCount > 0 ? ` organized into ${threadCount} discussion thread${threadCount === 1 ? '' : 's'}` : ''}.`,
     };
   },
 });

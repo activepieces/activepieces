@@ -16,7 +16,7 @@ export const updatedPage = createTrigger({
   auth: notionAuth,
   name: 'updated_page',
   displayName: 'Updated Page',
-  description: 'Trigger a sync process when documentation is updated.',
+  description: 'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',
   props: {},
   sampleData: {
     object: 'page',

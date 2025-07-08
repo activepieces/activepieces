@@ -47,7 +47,8 @@ export const notion = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
-    'EzhilShanmugham'
+    'ezhil56x',
+    'onyedikachi-david'
   ],
   auth: notionAuth,
   actions: [

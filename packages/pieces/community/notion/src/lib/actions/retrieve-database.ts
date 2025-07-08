@@ -14,8 +14,8 @@ import {
 export const retrieveDatabase = createAction({
   auth: notionAuth,
   name: 'retrieve_database',
-  displayName: 'Retrieve Database',
-  description: 'Build dynamic forms based on DB structure.',
+  displayName: 'Retrieve Database Structure',
+  description: 'Get detailed information about a Notion database including all its properties, field types, and configuration. Perfect for building dynamic forms, validation rules, or understanding database schemas.',
   props: {
     database_id: notionCommon.database_id,
   },
@@ -178,11 +178,21 @@ export const retrieveDatabase = createAction({
       }
     );
 
+    const totalProperties = Object.keys(formStructure.properties).length;
+    
     return {
       success: true,
       database: database,
       formStructure: formStructure,
-      message: 'Database structure retrieved successfully',
+      summary: {
+        title: formStructure.title || 'Untitled Database',
+        totalProperties: totalProperties,
+        propertyTypes: Object.values(formStructure.propertyTypes).reduce((acc: Record<string, number>, type) => {
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {}),
+      },
+      message: `📊 Database structure retrieved successfully! Found ${totalProperties} properties including ${Object.keys(formStructure.selectOptions).length} dropdown fields and ${Object.keys(formStructure.statusOptions).length} status fields.`,
     };
   },
 });

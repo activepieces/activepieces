@@ -10,22 +10,22 @@ export const findPage = createAction({
   auth: notionAuth,
   name: 'find_page',
   displayName: 'Find Page',
-  description: 'Search for a page by title text, with exact-match option.',
+  description: 'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
   props: {
     title: Property.ShortText({
       displayName: 'Page Title',
-      description: 'The title text to search for',
+      description: 'Enter the page title or part of the title you want to search for',
       required: true,
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
-      description: 'Whether to search for exact title match or partial match',
+      description: 'Enable this to find pages with exactly the same title. Disable for partial matching (finds pages containing your search term).',
       required: false,
       defaultValue: false,
     }),
     limit: Property.Number({
-      displayName: 'Result Limit',
-      description: 'Maximum number of pages to return (1-100)',
+      displayName: 'Maximum Results',
+      description: 'How many pages to return at most (between 1 and 100)',
       required: false,
       defaultValue: 10,
     }),
@@ -98,6 +98,11 @@ export const findPage = createAction({
       properties: page.properties,
     }));
 
+    const matchType = exact_match ? 'exact match' : 'partial match';
+    const resultMessage = filteredPages.length === 0 
+      ? `🔍 No pages found matching "${title}" (${matchType}). Try using partial matching or check your search term.`
+      : `🔍 Found ${filteredPages.length} page${filteredPages.length === 1 ? '' : 's'} matching "${title}" (${matchType})${formattedResults.length < filteredPages.length ? `, showing first ${formattedResults.length}` : ''}.`;
+
     return {
       success: true,
       searchTerm: title,
@@ -105,9 +110,14 @@ export const findPage = createAction({
       totalFound: filteredPages.length,
       returned: formattedResults.length,
       pages: formattedResults,
-      message: `Found ${filteredPages.length} page(s) matching "${title}"${
-        exact_match ? ' (exact match)' : ' (partial match)'
-      }`,
+      summary: {
+        searchTerm: title,
+        matchType: matchType,
+        totalFound: filteredPages.length,
+        returned: formattedResults.length,
+        hasMore: filteredPages.length > formattedResults.length,
+      },
+      message: resultMessage,
     };
   },
 });

@@ -11,7 +11,7 @@ export const notionCommon = {
   database_id: Property.Dropdown<string>({
     displayName: 'Database',
     required: true,
-    description: 'Select the database you want to use',
+    description: 'Choose the Notion database you want to work with from your workspace',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -74,6 +74,61 @@ export const notionCommon = {
           };
         }),
       };
+    },
+  }),
+  archived_database_item_id: Property.Dropdown({
+    displayName: 'Archived Item',
+    description: 'Choose which archived item to restore from the selected database',
+    required: true,
+    refreshers: ['database_id'],
+    options: async ({ auth, database_id }) => {
+      if (!auth || !database_id) {
+        return {
+          disabled: true,
+          placeholder: 'Please connect your Notion account first and select a database',
+          options: [],
+        };
+      }
+
+      try {
+        const notion = new Client({
+          auth: (auth as OAuth2PropertyValue).access_token,
+          notionVersion: '2022-02-22',
+        });
+        
+        const { results } = await notion.databases.query({
+          database_id: database_id as string,
+          filter_properties: ['title'],
+          archived: true, // Only fetch archived items
+        });
+
+        if (results.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No archived items found in this database',
+          };
+        }
+
+        return {
+          disabled: false,
+          placeholder: 'Select an archived item to restore',
+          options: results.map((item: any) => {
+            const property: any = Object.values(item.properties)[0];
+            const title = property?.title?.[0]?.plain_text || 'Untitled';
+            return {
+              label: `${title} (archived)`,
+              value: item.id,
+            };
+          }),
+        };
+      } catch (error: any) {
+        return {
+          disabled: true,
+          placeholder: 'Error loading archived items. Please check your database permissions.',
+          options: [],
+        };
+      }
     },
   }),
   databaseFields: Property.DynamicProperties({
@@ -206,7 +261,7 @@ export const notionCommon = {
     displayName: 'Page',
     required: true,
     description:
-      'Select the page you want to use. Only your most recently edited 100 pages will appear.',
+      'Choose the Notion page you want to work with. This list shows your 100 most recently edited pages for easy selection.',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
