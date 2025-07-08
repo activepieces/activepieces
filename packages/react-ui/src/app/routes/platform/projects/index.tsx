@@ -1,14 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -42,7 +41,14 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.displayName}</div>;
+      const locked = row.original.locked;
+
+      return (
+        <div className="text-left flex items-center justify-start ">
+          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
+          {row.original.displayName}
+        </div>
+      );
     },
   },
   {
@@ -102,23 +108,6 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
           {row.original.analytics.activeFlows} /{' '}
           {row.original.analytics.totalFlows}
         </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'locked',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
-    ),
-    cell: ({ row }) => {
-      const locked = row.original.locked;
-      return (
-        <Badge
-          variant={locked ? 'destructive' : 'accent'}
-          className="rounded-sm"
-        >
-          {locked ? 'Locked' : 'Open'}
-        </Badge>
       );
     },
   },

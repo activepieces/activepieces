@@ -36,7 +36,7 @@ export const ProjectLockedAlert = () => {
               )}{' '}
               <strong>
                 {t(
-                  'You will not be able to access or use this project until the limit is increased.',
+                  'You will not be able to access paied features untill limits are increased.',
                 )}
               </strong>
               <br />

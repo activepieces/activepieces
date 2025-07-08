@@ -11,7 +11,7 @@ import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
-import { handleResourceLockingAndUnlocking } from './platform-plan-helper'
+import { handleResourceLocking } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
@@ -89,7 +89,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const hasExtraUsers = extraUsers > 0
                         const isUserSeatsUpgraded = isBusinessPlan && hasExtraUsers
 
-                        await handleResourceLockingAndUnlocking({ platformId, newLimits })
+                        await handleResourceLocking({ platformId, newLimits })
 
                         if (!isFreePlan && isUserSeatsUpgraded) {
                             newLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
