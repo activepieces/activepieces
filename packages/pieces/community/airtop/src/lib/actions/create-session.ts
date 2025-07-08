@@ -1,5 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+	createAction,
+	DynamicPropsValue,
+	InputPropertyMap,
+	Property,
+	PropertyContext,
+} from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 
@@ -21,9 +27,39 @@ export const createSessionAction = createAction({
 		}),
 		useAirtopProxy: Property.Checkbox({
 			displayName: 'Use Airtop Proxy?',
-			description: 'Enable Airtop-provided proxy. If disabled, use custom proxy config.',
+			description: 'Enable Airtop-provided proxy. If disabled, configure a custom proxy.',
 			required: false,
 			defaultValue: true,
+		}),
+		proxyConfig: Property.DynamicProperties({
+			displayName: 'Custom Proxy Configuration',
+			refreshers: ['useAirtopProxy'],
+			required: false,
+			props: async (propsValue: Record<string, unknown>, _ctx: PropertyContext): Promise<InputPropertyMap> => {
+				const useAirtopProxy = propsValue['useAirtopProxy'] as boolean | undefined;
+
+				if (useAirtopProxy === false) {
+					return {
+						proxyUrl: Property.ShortText({
+							displayName: 'Proxy URL',
+							description: 'The full proxy URL (e.g. http://user:pass@host:port)',
+							required: true,
+						}),
+						proxyCountry: Property.ShortText({
+							displayName: 'Proxy Country (ISO-2)',
+							description: 'Country code like US/IN. Use "global" for random countries.',
+							required: false,
+						}),
+						proxySticky: Property.Checkbox({
+							displayName: 'Sticky IP',
+							description: 'Try to keep the same IP address for up to 30 minutes.',
+							defaultValue: true,
+							required: false,
+						}),
+					};
+				}
+				return {};
+			},
 		}),
 		solveCaptcha: Property.Checkbox({
 			displayName: 'Solve Captcha',
@@ -36,6 +72,7 @@ export const createSessionAction = createAction({
 			required: false,
 		}),
 	},
+
 	async run(context) {
 		const {
 			profileName,
@@ -43,22 +80,48 @@ export const createSessionAction = createAction({
 			useAirtopProxy,
 			solveCaptcha,
 			timeoutMinutes,
-		} = context.propsValue;
+			proxyConfig,
+		} = context.propsValue as {
+			profileName?: string;
+			extensionIds?: string[];
+			useAirtopProxy?: boolean;
+			solveCaptcha?: boolean;
+			timeoutMinutes?: number;
+			proxyConfig?: {
+				proxyUrl?: string;
+				proxyCountry?: string;
+				proxySticky?: boolean;
+			};
+		};
 
 		const config: Record<string, any> = {};
 
 		if (profileName) config['profileName'] = profileName;
 		if (extensionIds) config['extensionIds'] = extensionIds;
-		if (typeof useAirtopProxy !== 'undefined') config['proxy'] = useAirtopProxy;
 		if (typeof solveCaptcha !== 'undefined') config['solveCaptcha'] = solveCaptcha;
 		if (timeoutMinutes) config['timeoutMinutes'] = timeoutMinutes;
+
+		if (useAirtopProxy === false) {
+			const proxyObject: Record<string, any> = {
+				url: proxyConfig?.proxyUrl,
+			};
+
+			if (proxyConfig?.proxyCountry) proxyObject['country'] = proxyConfig.proxyCountry;
+			if (typeof proxyConfig?.proxySticky === 'boolean') {
+				proxyObject['sticky'] = proxyConfig.proxySticky;
+			}
+
+			config['proxy'] = proxyObject;
+		} else {
+			config['proxy'] = true;
+		}
 
 		const response = await airtopApiCall({
 			apiKey: context.auth,
 			method: HttpMethod.POST,
 			resourceUri: '/sessions',
 			body: {
-				configuration: Object.keys(config).length > 0 ? config : undefined,
+				configuration: config,
 			},
 		});
 

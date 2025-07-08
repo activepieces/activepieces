@@ -3,6 +3,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const pageQueryAction = createAction({
 	name: 'page-query',
@@ -22,10 +24,45 @@ export const pageQueryAction = createAction({
 			description: 'An optional ID for your internal tracking.',
 			required: false,
 		}),
+		outputSchema: Property.LongText({
+			displayName: 'Output Schema (JSON)',
+			description: 'JSON schema defining the structure of the output',
+			required: false,
+		}),
+		includeVisualAnalysis: Property.StaticDropdown({
+			displayName: 'Visual Analysis',
+			description: 'Whether to include visual analysis of the page',
+			defaultValue: 'auto',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Auto (Default)', value: 'auto' },
+					{ label: 'Enabled', value: 'enabled' },
+					{ label: 'Disabled', value: 'disabled' },
+				],
+			},
+		}),
+		optimizeUrls: Property.StaticDropdown({
+			displayName: 'Optimize URLs',
+			description: 'Improve scraping performance by optimizing URLs',
+			defaultValue: 'auto',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Auto (Default)', value: 'auto' },
+					{ label: 'Enabled', value: 'enabled' },
+					{ label: 'Disabled', value: 'disabled' },
+				],
+			},
+		}),
 		costThresholdCredits: Property.Number({
-			displayName: 'Cost Threshold (Credits)',
-			description:
-				'If specified, cancels the request if the credit threshold is exceeded. Set 0 to disable.',
+			displayName: 'Maximum Credits to Spend',
+			description: 'Abort if the credit cost exceeds this amount. Set to 0 to disable.',
+			required: false,
+		}),
+		timeThresholdSeconds: Property.Number({
+			displayName: 'Maximum Time (Seconds)',
+			description: 'Abort if the operation takes longer than this. Set to 0 to disable.',
 			required: false,
 		}),
 		followPaginationLinks: Property.Checkbox({
@@ -33,20 +70,9 @@ export const pageQueryAction = createAction({
 			description:
 				'If enabled, Airtop will attempt to load more content from pagination, scrolling, etc.',
 			required: false,
-		}),
-		timeThresholdSeconds: Property.Number({
-			displayName: 'Time Threshold (Seconds)',
-			description:
-				'If specified, cancels the request if time threshold is exceeded. Set 0 to disable.',
-			required: false,
-		}),
-		configuration: Property.Object({
-			displayName: 'Configuration',
-			description: 'Optional request configuration (includeVisualAnalysis, outputSchema, scrape, etc).',
-			required: false,
-		}),
+		})
 	},
-	async run(context) {
+	async run({ propsValue, auth }) {
 		const {
 			sessionId,
 			windowId,
@@ -55,8 +81,45 @@ export const pageQueryAction = createAction({
 			costThresholdCredits,
 			followPaginationLinks,
 			timeThresholdSeconds,
-			configuration,
-		} = context.propsValue;
+			outputSchema,
+			includeVisualAnalysis,
+			optimizeUrls,
+		} = propsValue;
+
+		await propsValidation.validateZod(propsValue, {
+			costThresholdCredits: z.number().min(0).optional(),
+			timeThresholdSeconds: z.number().min(0).optional(),
+		});
+
+		const configuration: Record<string, any> = {};
+
+		if (outputSchema) {
+			configuration['outputSchema'] = outputSchema;
+		}
+
+		if (optimizeUrls) {
+			configuration['scrape'] = {
+				optimizeUrls,
+			};
+		}
+
+		if (includeVisualAnalysis) {
+			configuration['experimental'] = {
+				includeVisualAnalysis,
+			};
+		}
+
+		if (typeof costThresholdCredits === 'number') {
+			configuration['costThresholdCredits'] = costThresholdCredits;
+		}
+
+		if (typeof followPaginationLinks === 'boolean') {
+			configuration['followPaginationLinks'] = followPaginationLinks;
+		}
+
+		if (typeof timeThresholdSeconds === 'number') {
+			configuration['timeThresholdSeconds'] = timeThresholdSeconds;
+		}
 
 		const body: Record<string, any> = {
 			prompt,
@@ -65,21 +128,13 @@ export const pageQueryAction = createAction({
 		if (clientRequestId) {
 			body['clientRequestId'] = clientRequestId;
 		}
-		if (typeof costThresholdCredits === 'number') {
-			body['costThresholdCredits'] = costThresholdCredits;
-		}
-		if (typeof followPaginationLinks === 'boolean') {
-			body['followPaginationLinks'] = followPaginationLinks;
-		}
-		if (typeof timeThresholdSeconds === 'number') {
-			body['timeThresholdSeconds'] = timeThresholdSeconds;
-		}
-		if (configuration && Object.keys(configuration).length > 0) {
+
+		if (Object.keys(configuration).length > 0) {
 			body['configuration'] = configuration;
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: auth,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/page-query`,
 			body,

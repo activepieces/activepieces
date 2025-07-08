@@ -3,6 +3,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const paginatedExtractionAction = createAction({
 	name: 'paginated-extraction',
@@ -22,23 +24,64 @@ export const paginatedExtractionAction = createAction({
 			description: 'Optional ID to track this request.',
 			required: false,
 		}),
+		outputSchema: Property.LongText({
+			displayName: 'Output Schema (JSON)',
+			description: 'JSON schema defining the structure of the output.',
+			required: false,
+		}),
+		scrollWithin: Property.ShortText({
+			displayName: 'Scroll Within',
+			description: 'Describe the scrollable area (e.g. "results container in middle of page").',
+			required: false,
+		}),
+		paginationMode: Property.StaticDropdown({
+			displayName: 'How to Load More Content',
+			defaultValue: 'auto',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Auto (Recommended)', value: 'auto' },
+					{ label: 'Click Next/Previous Links', value: 'paginated' },
+					{ label: 'Infinite Scroll', value: 'infinite-scroll' },
+				],
+			},
+		}),
+		interactionMode: Property.StaticDropdown({
+			displayName: 'Speed vs Accuracy',
+			defaultValue: 'auto',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Auto (Balanced)', value: 'auto' },
+					{ label: 'More Accurate (Slower)', value: 'accurate' },
+					{ label: 'Faster (Less Accurate)', value: 'cost-efficient' },
+				],
+			},
+		}),
+		optimizeUrls: Property.StaticDropdown({
+			displayName: 'Optimize URLs',
+			defaultValue: 'auto',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Auto (Default)', value: 'auto' },
+					{ label: 'Enabled', value: 'enabled' },
+					{ label: 'Disabled', value: 'disabled' },
+				],
+			},
+		}),
 		costThresholdCredits: Property.Number({
-			displayName: 'Cost Threshold (Credits)',
-			description: 'Cancel if the credit threshold is exceeded. Set 0 to disable.',
+			displayName: 'Maximum Credits to Spend',
+			description: 'Abort if the credit cost exceeds this amount. Set to 0 to disable.',
 			required: false,
 		}),
 		timeThresholdSeconds: Property.Number({
-			displayName: 'Time Threshold (Seconds)',
-			description: 'Cancel if the request exceeds this time. Set 0 to disable.',
+			displayName: 'Maximum Time (Seconds)',
+			description: 'Abort if the operation takes longer than this. Set to 0 to disable.',
 			required: false,
 		}),
-		configuration: Property.Object({
-			displayName: 'Configuration',
-			description: 'Request configuration',
-			required: false
-		}),
 	},
-	async run(context) {
+	async run({ propsValue, auth }) {
 		const {
 			sessionId,
 			windowId,
@@ -46,8 +89,43 @@ export const paginatedExtractionAction = createAction({
 			clientRequestId,
 			costThresholdCredits,
 			timeThresholdSeconds,
-			configuration,
-		} = context.propsValue;
+			outputSchema,
+			scrollWithin,
+			paginationMode,
+			interactionMode,
+			optimizeUrls,
+		} = propsValue;
+
+		await propsValidation.validateZod(propsValue, {
+			costThresholdCredits: z.number().min(0).optional(),
+			timeThresholdSeconds: z.number().min(0).optional(),
+		});
+
+		const configuration: Record<string, any> = {};
+
+		if (outputSchema) {
+			configuration['outputSchema'] = outputSchema;
+		}
+		if (scrollWithin) {
+			configuration['scrollWithin'] = scrollWithin;
+		}
+		if (paginationMode) {
+			configuration['paginationMode'] = paginationMode;
+		}
+		if (interactionMode) {
+			configuration['interactionMode'] = interactionMode;
+		}
+		if (optimizeUrls) {
+			configuration['scrape'] = {
+				optimizeUrls,
+			};
+		}
+		if (typeof costThresholdCredits === 'number') {
+			configuration['costThresholdCredits'] = costThresholdCredits;
+		}
+		if (typeof timeThresholdSeconds === 'number') {
+			configuration['timeThresholdSeconds'] = timeThresholdSeconds;
+		}
 
 		const body: Record<string, any> = {
 			prompt,
@@ -57,28 +135,17 @@ export const paginatedExtractionAction = createAction({
 			body['clientRequestId'] = clientRequestId;
 		}
 
-		const config: Record<string, any> = configuration ?? {};
-
-		if (typeof costThresholdCredits === 'number') {
-			config['costThresholdCredits'] = costThresholdCredits;
-		}
-
-		if (typeof timeThresholdSeconds === 'number') {
-			config['timeThresholdSeconds'] = timeThresholdSeconds;
-		}
-
-		if (Object.keys(config).length > 0) {
-			body['configuration'] = config;
+		if (Object.keys(configuration).length > 0) {
+			body['configuration'] = configuration;
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: auth,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/paginated-extraction`,
 			body,
 		});
 
 		return response;
-	}
-
+	},
 });

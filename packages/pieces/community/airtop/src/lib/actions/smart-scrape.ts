@@ -3,6 +3,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const smartScrapeAction = createAction({
 	name: 'smart-scrape',
@@ -18,13 +20,13 @@ export const smartScrapeAction = createAction({
 			required: false,
 		}),
 		costThresholdCredits: Property.Number({
-			displayName: 'Cost Threshold (Credits)',
-			description: 'Cancel if the operation exceeds this credit threshold. Set 0 to disable.',
+			displayName: 'Maximum Credits to Spend',
+			description: 'Abort if the credit cost exceeds this amount. Set to 0 to disable.',
 			required: false,
 		}),
 		timeThresholdSeconds: Property.Number({
-			displayName: 'Time Threshold (Seconds)',
-			description: 'Cancel if the operation exceeds this time threshold. Set 0 to disable.',
+			displayName: 'Maximum Time (Seconds)',
+			description: 'Abort if the operation takes longer than this. Set to 0 to disable.',
 			required: false,
 		}),
 	},
@@ -37,12 +39,21 @@ export const smartScrapeAction = createAction({
 			timeThresholdSeconds,
 		} = context.propsValue;
 
+		await propsValidation.validateZod(context.propsValue, {
+			costThresholdCredits: z.number().min(0).optional(),
+			timeThresholdSeconds: z.number().min(0).optional(),
+		});
+
 		const body: Record<string, any> = {};
 
-		if (clientRequestId) body['clientRequestId'] = clientRequestId;
+		if (clientRequestId) {
+			body['clientRequestId'] = clientRequestId;
+		}
+
 		if (typeof costThresholdCredits === 'number') {
 			body['costThresholdCredits'] = costThresholdCredits;
 		}
+
 		if (typeof timeThresholdSeconds === 'number') {
 			body['timeThresholdSeconds'] = timeThresholdSeconds;
 		}
