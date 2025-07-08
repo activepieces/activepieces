@@ -2,7 +2,7 @@ import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./p
 import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
-import keys from '../../translation-keys.json'
+import pathsToValuesToTranslate from '../../translation-keys.json'
 
 
 
@@ -108,7 +108,7 @@ const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel
       return piece
     }
     const translatedPiece: T = JSON.parse(JSON.stringify(piece))
-    keys.forEach(key => {
+    pathsToValuesToTranslate.forEach(key => {
       translateProperty(translatedPiece, key, target)
     })
     return translatedPiece
@@ -143,5 +143,6 @@ const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefi
 
 export const pieceTranslation = {
   translatePiece,
-  initializeI18n
+  initializeI18n,
+  pathsToValuesToTranslate
 }
