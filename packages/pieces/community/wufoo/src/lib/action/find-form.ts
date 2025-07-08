@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios from 'axios';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const findForm = createAction({
   name: 'find_form',
@@ -20,13 +20,16 @@ export const findForm = createAction({
   async run({ auth, propsValue }) {
     const { subdomain, search } = propsValue;
     const url = `https://${subdomain}.wufoo.com/api/v3/forms.json`;
-    const response = await axios.get(url, {
-      auth: {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BASIC,
         username: auth as string,
-        password: 'footastic',
+        password: 'x',
       },
     });
-    const forms = response.data.Forms || [];
+    const forms = response.body.Forms || [];
     return forms.find((form: any) => form.Hash === search || form.Name === search) || null;
   },
 }); 

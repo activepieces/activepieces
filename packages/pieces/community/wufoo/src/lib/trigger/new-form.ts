@@ -1,7 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import axios from 'axios';
-
-const WUFOO_DUMMY_PASSWORD = 'x'; // Wufoo requires any password, value is ignored
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const newForm = createTrigger({
   name: 'new_form',
@@ -27,13 +25,16 @@ export const newForm = createTrigger({
     const { auth, propsValue } = context;
     const { subdomain } = propsValue;
     const url = `https://${subdomain}.wufoo.com/api/v3/forms.json`;
-    const response = await axios.get(url, {
-      auth: {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BASIC,
         username: auth as string,
-        password: WUFOO_DUMMY_PASSWORD, // Wufoo requires any password, value is ignored
+        password: 'x',
       },
     });
-    const forms = response.data.Forms || [];
+    const forms = response.body.Forms || [];
     return forms;
   },
 }); 

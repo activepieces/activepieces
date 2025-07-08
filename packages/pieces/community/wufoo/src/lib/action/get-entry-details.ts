@@ -1,7 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios from 'axios';
-
-const WUFOO_DUMMY_PASSWORD = 'x'; // Wufoo requires any password, value is ignored
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 
 export const getEntryDetails = createAction({
   name: 'get_entry_details',
@@ -27,12 +25,15 @@ export const getEntryDetails = createAction({
   async run({ auth, propsValue }) {
     const { subdomain, formHash, entryId } = propsValue;
     const url = `https://${subdomain}.wufoo.com/api/v3/forms/${formHash}/entries/${entryId}.json`;
-    const response = await axios.get(url, {
-      auth: {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BASIC,
         username: auth as string,
-        password: WUFOO_DUMMY_PASSWORD, // Wufoo requires any password, value is ignored
+        password: 'x',
       },
     });
-    return response.data;
+    return response.body;
   },
 }); 

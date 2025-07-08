@@ -13,7 +13,7 @@
       auth: PieceAuth.SecretText({
         displayName: 'API Key',
         required: true,
-        description: 'Your Wufoo API Key. Find it in your Wufoo account under API Information.'
+        description: 'Enter your Wufoo API Key. This key is required to authenticate API requests and access your Wufoo forms and entries. You can find your API Key by logging into your Wufoo account, selecting any form, clicking the "More" dropdown, and choosing "API Information". The API Key will be displayed at the top of the page.'
       }),
       authors: ['your-github-username'],
       actions: [createFormEntry, findForm, getEntryDetails, findSubmissionByFieldValue],
