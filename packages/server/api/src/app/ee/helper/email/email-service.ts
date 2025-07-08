@@ -13,9 +13,7 @@ import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-
 const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
@@ -198,57 +196,60 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-
     async sendThreeDaysLeftOnTrialEmail(
         platformId: string,
-        customerEmail: string,
+        email: string,
+        firstName?: string,
     ): Promise<void> {
 
         await emailSender(log).send({
-            emails: [customerEmail],
+            emails: [email],
             platformId,
             templateData: {
                 name: '3-days-left-on-trial',
                 vars: {
                     year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
                 },
             },
         })
 
     },
 
-
     async sendOneDayLeftOnTrial(
         platformId: string,
-        customerEmail: string,
+        email: string,
+        firstName?: string,
     ): Promise<void> {
 
         await emailSender(log).send({
-            emails: [customerEmail],
+            emails: [email],
             platformId,
             templateData: {
                 name: '1-day-left-on-trial',
                 vars: {
                     year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
                 },
             },
         })
 
     },
 
-
     async sendWellcomeToTrialEmail(
         platformId: string,
-        customerEmail: string,
+        email: string,
+        firstName?: string,
     ): Promise<void> {
 
         await emailSender(log).send({
-            emails: [customerEmail],
+            emails: [email],
             platformId,
             templateData: {
                 name: 'wellcome-to-trial',
                 vars: {
                     year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
                 },
             },
         })
@@ -256,16 +257,18 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
     async sendSevenDaysInTrialEmail(
         platformId: string,
-        customerEmail: string,
+        email: string,
+        firstName?: string,
     ): Promise<void> {
 
         await emailSender(log).send({
-            emails: [customerEmail],
+            emails: [email],
             platformId,
             templateData: {
                 name: '7-days-in-trial',
                 vars: {
                     year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
                 },
             },
         })

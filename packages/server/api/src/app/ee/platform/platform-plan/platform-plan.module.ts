@@ -45,7 +45,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { platformId, customerEmail } = data
+        const { platformId, email, firstName } = data
 
         const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId as string)
@@ -54,7 +54,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        await emailService(log).sendSevenDaysInTrialEmail(platformId, customerEmail)
+        await emailService(log).sendSevenDaysInTrialEmail(platformId, email, firstName)
         log.info(`Sent & 7 days in trial email for platfrom, ${platformId}`)
     })
 
@@ -65,7 +65,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { platformId, customerEmail } = data
+        const { platformId, email, firstName } = data
 
         const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const subscription = await stripe.subscriptions.retrieve(platformBilling.stripeSubscriptionId as string)
@@ -74,7 +74,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        await emailService(log).sendOneDayLeftOnTrial(platformId, customerEmail)
+        await emailService(log).sendOneDayLeftOnTrial(platformId, email, firstName)
         log.info(`Sent 1 day left on trial email for platfrom, ${platformId}`)
     })
 

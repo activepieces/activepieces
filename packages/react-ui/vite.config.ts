@@ -10,13 +10,11 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev
-    ? 'Activepieces'
-    : "${AP_APP_TITLE}";
+  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
 
   const AP_FAVICON = isDev
     ? 'https://activepieces.com/favicon.ico'
-    : "${AP_FAVICON_URL}";
+    : '${AP_FAVICON_URL}';
 
   return {
     root: __dirname,
@@ -72,9 +70,9 @@ export default defineConfig(({ command, mode }) => {
         inject: {
           data: {
             apTitle: AP_TITLE,
-            apFavicon: AP_FAVICON
-          }
-        }
+            apFavicon: AP_FAVICON,
+          },
+        },
       }),
       checker({
         typescript: {

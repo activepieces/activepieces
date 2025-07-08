@@ -3,14 +3,13 @@ import { RouteOff } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowStructureUtil, StepOutputStatus } from '@activepieces/shared';
+import { flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
@@ -38,7 +37,11 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
   return (
     <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
       {stepStatusInRun && (
-        <StepStatusIcon status={stepStatusInRun} size="4" runStatus={run?.status}></StepStatusIcon>
+        <StepStatusIcon
+          status={stepStatusInRun}
+          size="4"
+          runStatus={run?.status}
+        ></StepStatusIcon>
       )}
       {isSkipped && (
         <Tooltip>
