@@ -17,7 +17,6 @@ import { FlowOperationType, TriggerType } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
 
-import PieceSelectorIntro from './piece-selector-intro';
 import { PiecesCardList } from './pieces-card-list';
 
 type PieceSelectorProps = {
@@ -61,8 +60,7 @@ const PieceSelector = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const showPiecesList =
-    selectedPieceGroupType || searchQuery.length > 0 || isMobile;
+
   const listHeight = Math.min(listHeightRef.current, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -148,16 +146,6 @@ const PieceSelector = ({
               height: listHeight + 'px',
             }}
           >
-            {!showPiecesList && (
-              <PieceSelectorIntro
-                isForTrigger={
-                  operation.type === FlowOperationType.UPDATE_TRIGGER
-                }
-                setSelectedPieceGroupType={setSelectedPieceGroupType}
-              />
-            )}
-
-            {showPiecesList && (
               <PiecesCardList
                 listHeight={listHeight}
                 //need to add the id to the key to force a re-render the virtualized list
@@ -168,8 +156,8 @@ const PieceSelector = ({
                 stepToReplacePieceDisplayName={
                   isMobile ? undefined : stepToReplacePieceDisplayName
                 }
-              />
-            )}
+                />
+   
           </div>
         </>
       </PopoverContent>
