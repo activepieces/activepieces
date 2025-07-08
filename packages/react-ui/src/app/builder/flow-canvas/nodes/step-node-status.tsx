@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { FlowRunStatus, flowStructureUtil, isNil } from '@activepieces/shared';
+import { flowStructureUtil, StepOutputStatus } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
@@ -34,17 +34,12 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
     );
   }, [stepName, run, loopIndexes, flowVersion]);
   const isSkipped = flowCanvasUtils.isSkipped(stepName, flowVersion.trigger);
-  const stillRunning =
-    isNil(stepStatusInRun) &&
-    run?.status === FlowRunStatus.RUNNING &&
-    !isSkipped;
 
   return (
     <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
       {stepStatusInRun && (
-        <StepStatusIcon status={stepStatusInRun} size="4"></StepStatusIcon>
+        <StepStatusIcon status={stepStatusInRun} size="4" runStatus={run?.status}></StepStatusIcon>
       )}
-      {stillRunning && <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>}
       {isSkipped && (
         <Tooltip>
           <TooltipTrigger asChild>
