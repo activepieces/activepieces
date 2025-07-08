@@ -21,7 +21,12 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import type { PopulatedFlow } from '@activepieces/shared';
-import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
+import {
+  McpTool,
+  McpToolType,
+  TriggerType,
+  McpWithTools,
+} from '@activepieces/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
 
@@ -74,14 +79,13 @@ export function McpFlowDialog({
       const newTools = selectedFlows.map((flowId) => ({
         type: McpToolType.FLOW,
         mcpId: mcp.id,
-        pieceMetadata: undefined,
         flowId: flowId,
       }));
 
       const nonFlowTools = mcp.tools.filter(
         (tool) => tool.type !== McpToolType.FLOW,
       );
-      const updatedTools = [...nonFlowTools, ...newTools];
+      const updatedTools = [...nonFlowTools, ...newTools] as McpTool[];
 
       return await mcpApi.update(mcp.id, { tools: updatedTools });
     },

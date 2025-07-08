@@ -25,7 +25,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import type { McpWithTools } from '@activepieces/shared';
+import type { McpPieceTool, McpTool, McpWithTools } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
@@ -37,6 +37,11 @@ type McpPieceDialogProps = {
   open: boolean;
   onSuccess: () => void;
   onClose: () => void;
+};
+
+export type ActionInfo = {
+  actionName: string;
+  actionDisplayName: string;
 };
 
 export function McpPieceDialog({
@@ -60,7 +65,7 @@ export function McpPieceDialog({
 
   const [selectedPiece, setSelectedPiece] =
     useState<PieceStepMetadataWithSuggestions | null>(null);
-  const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [selectedActions, setSelectedActions] = useState<ActionInfo[]>([]);
 
   const pieceMetadata = useMemo(() => {
     return (
@@ -72,26 +77,34 @@ export function McpPieceDialog({
   }, [metadata]);
 
   const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
-    const existingTool = mcp?.tools?.find(
+    const existingTools = mcp?.tools?.filter(
       (tool) =>
         tool.type === McpToolType.PIECE &&
         tool.pieceMetadata?.pieceName === piece.pieceName,
-    );
+    ) as McpPieceTool[];
 
-    if (existingTool && existingTool.type === McpToolType.PIECE) {
-      setSelectedActions(existingTool.pieceMetadata?.actionNames || []);
+    if (existingTools && existingTools.length > 0) {
+      setSelectedActions(
+        existingTools.map((tool) => ({
+          actionName: tool.pieceMetadata?.actionName,
+          actionDisplayName: tool.pieceMetadata?.actionDisplayName,
+        })),
+      );
       setSelectedConnectionExternalId(
-        existingTool.pieceMetadata?.connectionExternalId || null,
+        existingTools[0].pieceMetadata?.connectionExternalId || null,
       );
     }
 
     setSelectedPiece(piece);
   };
 
-  const handleActionSelect = (action: string) => {
+  const handleActionSelect = (action: ActionInfo) => {
     setSelectedActions((prev) => {
-      const newSelected = prev.includes(action)
-        ? prev.filter((a) => a !== action)
+      const isAlreadySelected = prev.some(
+        (a) => a.actionName === action.actionName,
+      );
+      const newSelected = isAlreadySelected
+        ? prev.filter((a) => a.actionName !== action.actionName)
         : [...prev, action];
       return newSelected;
     });
@@ -100,7 +113,10 @@ export function McpPieceDialog({
   const handleSelectAll = (checked: boolean) => {
     if (checked && selectedPiece) {
       setSelectedActions(
-        selectedPiece.suggestedActions?.map((a) => a.name) ?? [],
+        selectedPiece.suggestedActions?.map((a) => ({
+          actionName: a.name,
+          actionDisplayName: a.displayName,
+        })) ?? [],
       );
     } else {
       setSelectedActions([]);
@@ -110,43 +126,48 @@ export function McpPieceDialog({
   const { isPending, mutate: saveTool } = useMutation({
     mutationFn: async () => {
       const currentTools =
-        mcp?.tools?.map((tool) => ({
-          type: tool.type,
-          mcpId: tool.mcpId,
-          pieceMetadata: tool.pieceMetadata,
-          flowId: tool.flowId,
-        })) || [];
+        mcp?.tools
+          ?.map((tool) => {
+            switch (tool.type) {
+              case McpToolType.PIECE: {
+                return {
+                  type: tool.type,
+                  mcpId: tool.mcpId,
+                  pieceMetadata: tool.pieceMetadata,
+                };
+              }
+              case McpToolType.FLOW: {
+                return {
+                  type: tool.type,
+                  mcpId: tool.mcpId,
+                  flowId: tool.flowId,
+                };
+              }
+            }
+          })
+          .filter(
+            (tool) =>
+              tool.pieceMetadata?.pieceName !== selectedPiece?.pieceName,
+          ) || [];
 
       if (!selectedPiece) return;
 
-      const existingToolIndex = currentTools.findIndex(
-        (tool) =>
-          tool.type === McpToolType.PIECE &&
-          tool.pieceMetadata?.pieceName === selectedPiece.pieceName,
-      );
-
-      const newTool = {
+      const newTools = selectedActions.map((action) => ({
         type: McpToolType.PIECE,
         mcpId: mcp.id,
         pieceMetadata: {
           pieceName: selectedPiece.pieceName,
-          actionNames: selectedActions,
+          actionName: action.actionName,
+          actionDisplayName: action.actionDisplayName,
           pieceVersion: selectedPiece.pieceVersion,
           logoUrl: selectedPiece.logoUrl,
           connectionExternalId: selectedConnectionExternalId ?? undefined,
         },
-        flowId: undefined,
-      };
+      }));
 
-      let updatedTools;
-      if (existingToolIndex >= 0) {
-        updatedTools = [...currentTools];
-        updatedTools[existingToolIndex] = newTool;
-      } else {
-        updatedTools = [...currentTools, newTool];
-      }
+      const updatedTools = [...currentTools, ...newTools];
 
-      return await mcpApi.update(mcp.id, { tools: updatedTools });
+      return await mcpApi.update(mcp.id, { tools: updatedTools as McpTool[] });
     },
     onSuccess: () => {
       onSuccess?.();

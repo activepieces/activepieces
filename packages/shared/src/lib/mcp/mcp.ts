@@ -19,7 +19,6 @@ export const McpWithTools = Type.Composite([
     Mcp,
     Type.Object({
         tools: Type.Array(McpTool),
-        toolNameMapping: Type.Record(Type.String(), Type.String()),
     }),
 ])
 

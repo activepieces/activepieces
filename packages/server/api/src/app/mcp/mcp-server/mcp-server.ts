@@ -5,9 +5,10 @@ import {
     EngineResponseStatus,
     ExecuteActionResponse,
     isNil,
+    McpFlowTool,
+    McpPieceTool,
     McpPieceToolData,
     McpRunStatus,
-    McpTool,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
@@ -65,7 +66,7 @@ export async function createMcpServer({
 
 async function addPieceToServer(
     server: McpServer,
-    mcpTool: McpTool,
+    mcpTool: McpPieceTool,
     projectId: string,
     platformId: string,
     logger: FastifyBaseLogger,
@@ -82,102 +83,99 @@ async function addPieceToServer(
         platformId,
     })
 
-    const toolActionsNames = Object.keys(pieceMetadata.actions).filter(action => toolPieceMetadata.actionNames.includes(action))
-    for (const action of toolActionsNames) {
-        const actionMetadata = pieceMetadata.actions[action]
-        const actionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)       
-        const toolSchema = {
-            instructions: z.string().describe(
-                'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.',
-            ),
-        }
-        const toolDescription = `
-        This tool is used to execute the ${actionMetadata.name} (${actionMetadata.displayName}) action for the piece: ${pieceMetadata.name} (${pieceMetadata.displayName}).
-        ${actionMetadata.description}
-        `
-        server.tool(
-            actionName,
-            toolDescription,
-            toolSchema,
-            async (params) => {
-                const piecePackage = await getPiecePackageWithoutArchive(
-                    logger, 
-                    projectId, 
-                    platformId, 
-                    {
-                        packageType: pieceMetadata.packageType,
-                        pieceName: pieceMetadata.name,
-                        pieceVersion: pieceMetadata.version,
-                        pieceType: pieceMetadata.pieceType,
-                    },
-                )
-                const parsedInputs = await extractActionParametersFromUserInstructions({
-                    actionMetadata,
-                    toolPieceMetadata,
-                    userInstructions: params.instructions,
-                    piecePackage,
-                    platformId,
-                    projectId,
-                    logger,
-                })
+    const actionMetadata = pieceMetadata.actions[toolPieceMetadata.actionName]
+    const toolActionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
+    const toolSchema = {
+        instructions: z.string().describe(
+            'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.',
+        ),
+    }
+    const toolDescription = `
+    This tool is used to execute the ${actionMetadata.name} (${actionMetadata.displayName}) action for the piece: ${pieceMetadata.name} (${pieceMetadata.displayName}).
+    ${actionMetadata.description}
+    `
+    server.tool(
+        toolActionName,
+        toolDescription,
+        toolSchema,
+        async (params) => {
+            const piecePackage = await getPiecePackageWithoutArchive(
+                logger, 
+                projectId, 
+                platformId, 
+                {
+                    packageType: pieceMetadata.packageType,
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                    pieceType: pieceMetadata.pieceType,
+                },
+            )
+            const parsedInputs = await extractActionParametersFromUserInstructions({
+                actionMetadata,
+                toolPieceMetadata,
+                userInstructions: params.instructions,
+                piecePackage,
+                platformId,
+                projectId,
+                logger,
+            })
 
-                const result = await userInteractionWatcher(logger)
-                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                    jobType: UserInteractionJobType.EXECUTE_TOOL,
-                    actionName: action,
+            const result = await userInteractionWatcher(logger)
+                .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                jobType: UserInteractionJobType.EXECUTE_TOOL,
+                actionName: toolPieceMetadata.actionName,
+                pieceName: toolPieceMetadata.pieceName,
+                pieceVersion: toolPieceMetadata.pieceVersion,
+                packageType: pieceMetadata.packageType,
+                pieceType: pieceMetadata.pieceType,
+                input: parsedInputs,
+                projectId,
+            })
+
+            trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
+            const success = result.status === EngineResponseStatus.OK && result.result.success
+
+            await mcpRunService(logger).create({
+                mcpId: mcpTool.mcpId,
+                toolId: mcpTool.id,
+                projectId,
+                metadata: {
                     pieceName: toolPieceMetadata.pieceName,
                     pieceVersion: toolPieceMetadata.pieceVersion,
-                    packageType: pieceMetadata.packageType,
-                    pieceType: pieceMetadata.pieceType,
-                    input: parsedInputs,
-                    projectId,
-                })
+                    actionName: toolPieceMetadata.actionName,
+                },
+                input: params,
+                output: result.result.output as Record<string, unknown>,
+                status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
+            })
 
-                trackToolCall({ mcpId: mcpTool.mcpId, toolName: actionName, projectId, logger })
-                const success = result.status === EngineResponseStatus.OK && result.result.success
-
-                await mcpRunService(logger).create({
-                    mcpId: mcpTool.mcpId,
-                    toolId: mcpTool.id,
-                    projectId,
-                    metadata: {
-                        pieceName: toolPieceMetadata.pieceName,
-                        pieceVersion: toolPieceMetadata.pieceVersion,
-                        actionName: action,
-                    },
-                    input: params,
-                    output: result.result.output as Record<string, unknown>,
-                    status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
-                })
-
-                if (success) {
-                    return {
-                        success: true,
-                        content: [{
-                            type: 'text',
-                            text: `${JSON.stringify(result.result.output, null, 2)}`,
-                        }],
-                        resolvedFields: parsedInputs,
-                    }
+            if (success) {
+                return {
+                    success: true,
+                    content: [{
+                        type: 'text',
+                        text: `${JSON.stringify(result.result.output, null, 2)}`,
+                    }],
+                    resolvedFields: parsedInputs,
                 }
-                else {
-                    return {
-                        success: false,
-                        content: [{
-                            type: 'text',
-                            text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
-                        }],
-                        resolvedFields: parsedInputs,
-                    }
+            }
+            else {
+                return {
+                    success: false,
+                    content: [{
+                        type: 'text',
+                        text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
+                    }],
+                    resolvedFields: parsedInputs,
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
 async function addFlowToServer(
     server: McpServer,
-    mcpTool: McpTool,
+    mcpTool: McpFlowTool,
     mcpId: string,
     projectId: string,
     logger: FastifyBaseLogger,

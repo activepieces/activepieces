@@ -122,13 +122,9 @@ function isMarkAsComplete(block: AgentStepBlock): boolean {
 function findActionName(toolName: string, mcp: McpWithTools): string | undefined {
     for (const tool of mcp.tools) {
         if (tool.type === McpToolType.PIECE && !isNil(tool.pieceMetadata)) {
-            const actionName = tool.pieceMetadata?.actionNames?.find((action) => {
-                const actionName = `${tool.pieceMetadata?.pieceName}:${action}`
-                const toolNameMapping = mcp.toolNameMapping[actionName]
-                return toolNameMapping === toolName
-            })
-            if (actionName) {
-                return actionName
+            const actionName = mcpToolNaming.fixTool(tool.pieceMetadata?.actionName, tool.id, McpToolType.PIECE)
+            if (tool.toolName === actionName) {
+                return tool.pieceMetadata?.actionName
             }
         }
     }
@@ -151,7 +147,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
             }
             case McpToolType.FLOW: {
                 assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
-                return mcp.toolNameMapping[tool.flowId] === toolName
+                return tool.toolName === toolName
             }
         }
     })

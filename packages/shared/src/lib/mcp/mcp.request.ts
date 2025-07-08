@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { McpTool } from './tools/mcp-tool'
+import { DiscriminatedUnion } from '../common/base-model'
+import { McpPieceToolData, McpToolType } from './tools/mcp-tool'
 
 export const ListMcpsRequest = Type.Object({
     limit: Type.Optional(Type.Number({})),
@@ -18,10 +19,21 @@ export const CreateMcpRequestBody = Type.Object({
 
 export type CreateMcpRequestBody = Static<typeof CreateMcpRequestBody>
 
+const McpToolRequest =  DiscriminatedUnion('type', [
+    Type.Object({
+        type: Type.Literal(McpToolType.PIECE),
+        pieceMetadata: McpPieceToolData,
+    }),
+    Type.Object({
+        type: Type.Literal(McpToolType.FLOW),
+        flowId: Type.String(),
+    }),
+])
+
 
 export const UpdateMcpRequestBody = Type.Object({
     name: Type.Optional(Type.String({})),
-    tools: Type.Optional(Type.Array( Type.Omit(McpTool, ['id', 'created', 'updated']))),
+    tools: Type.Optional(Type.Array(McpToolRequest)),
 })
 
 export type UpdateMcpRequestBody = Static<typeof UpdateMcpRequestBody>
