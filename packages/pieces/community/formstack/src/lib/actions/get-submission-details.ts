@@ -25,8 +25,8 @@ export const getSubmissionDetails = createAction({
   async run(context) {
     const authentication = context.auth as OAuth2PropertyValue;
     const accessToken = authentication['access_token'];
+    
     const {
-      form_id,
       submission_id,
       encryption_password,
     } = context.propsValue

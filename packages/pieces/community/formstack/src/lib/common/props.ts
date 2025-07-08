@@ -61,12 +61,12 @@ export const submissionIdDropdown = Property.Dropdown({
     const forms = await makeRequest(
       accessToken,
       HttpMethod.GET,
-      `/form/${form_id}/.json`,
+      `/form/${form_id}/submission.json`,
       {}
     );
-    const options = forms.forms.map((field: { id: string; name: string }) => {
+    const options = forms.submissions.map((field: { id: string }) => {
       return {
-        label: field.name,
+        label: field.id,
         value: field.id,
       };
     });
