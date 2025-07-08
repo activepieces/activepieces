@@ -12,7 +12,8 @@ export const createPage = createAction({
   auth: notionAuth,
   name: 'createPage',
   displayName: 'Create Page',
-  description: 'Create a page under a parent page.',
+  description:
+    'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',
   props: {
     pageId: notionCommon.page,
     title: Property.ShortText({
