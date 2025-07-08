@@ -1,14 +1,14 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-interface KommoAuth {
+interface KlaviyoAuth {
     api_key: string;
     private_api_key: string;
 }
 
-export const baseurl = `https://a.klaviyo.com/api`;
+export const BASE_URL = `https://a.klaviyo.com/api`;
 
 export async function makeRequest(
-    auth: KommoAuth,
+    auth: KlaviyoAuth,
     method: HttpMethod,
     path: string,
     body?: unknown
@@ -16,16 +16,13 @@ export async function makeRequest(
 
     const response = await httpClient.sendRequest({
         method,
-        url: baseurl,
+        url: `${BASE_URL}${path}`,
         headers: {
-            Authorization: `${auth.api_key} ${auth.private_api_key}`,
-            'Content-Type': 'application/json',
+            'Authorization': `${auth.api_key} ${auth.private_api_key}`,
             'accept': 'application/vnd.api+json',
             'revision': '2025-04-15',
-
         },
         body,
     });
-
     return response.body;
 }

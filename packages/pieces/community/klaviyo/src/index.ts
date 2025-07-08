@@ -2,6 +2,7 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 
 import { klaviyoAuth } from "./lib/common/auth";
+import { createProfile } from "./lib/actions/create-profile";
 
 export const klaviyo = createPiece({
   displayName: "Klaviyo",
@@ -9,6 +10,6 @@ export const klaviyo = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/klaviyo.png",
   authors: ['Sanket6652'],
-  actions: [],
+  actions: [createProfile],
   triggers: [],
 });

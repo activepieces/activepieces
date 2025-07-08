@@ -1,4 +1,6 @@
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { makeRequest } from "./client";
+import { HttpMethod } from "@activepieces/pieces-common";
 
 export const klaviyoAuth = PieceAuth.CustomAuth({
     
@@ -15,17 +17,26 @@ export const klaviyoAuth = PieceAuth.CustomAuth({
             required: true
         })
     },
-    // Optional Validation
-    // validate: async ({ auth }) => {
-    //     if (auth) {
-    //         return {
-    //             valid: true,
-    //         }
-    //     }
-    //     return {
-    //         valid: false,
-    //         error: 'Invalid Api Key'
-    //     }
-    // },
+    validate: async ({ auth }) => {
+        if (auth) {
+            try {
+                await makeRequest(auth, HttpMethod.GET, '/accounts', {});
+                return {
+                    valid: true,
+                }
+            } catch (error) {
+                return {
+                    valid: false,
+                    error: 'Invalid Api Key'
+                }
+            }
+
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
+
+    },
     required: true
 })
