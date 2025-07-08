@@ -1,5 +1,5 @@
 {
-  "Date Helper": "Date Helper",
+  "Date Helper": "Assistant de rendez-vous",
   "Manipulate, format, and extract time units for all your date and time needs.": "Manipulate, format, and extract time units for all your date and time needs.",
   "Get Current Date": "Get Current Date",
   "Format Date": "Format Date",
@@ -28,7 +28,7 @@
   "Ending date format": "Ending date format",
   "Unit": "Unité",
   "Expression": "Expression",
-  "Weekday": "Weekday",
+  "Weekday": "Jour de la semaine",
   "24h Time": "24h Time",
   "Use Current Time": "Use Current Time",
   "Month": "Month",
@@ -42,7 +42,7 @@
   "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute": "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute",
   "The weekday that you would like to get the date and time of.": "The weekday that you would like to get the date and time of.",
   "The time that you would like to get the date and time of. This must be in 24h format.": "The time that you would like to get the date and time of. This must be in 24h format.",
-  "If checked, the current time will be used instead of the time specified above.": "If checked, the current time will be used instead of the time specified above.",
+  "If checked, the current time will be used instead of the time specified above.": "Si cette case est cochée, l'heure actuelle sera utilisée à la place de l'heure spécifiée ci-dessus.",
   "The month that you would like to get the date and time of.": "The month that you would like to get the date and time of.",
   "The day of the month that you would like to get the date and time of.": "The day of the month that you would like to get the date and time of.",
   "DDD MMM DD YYYY HH:mm:ss (Sun Sep 17 2023 11:23:58)": "DDD MMM DD YYYY HH:mm:ss (Sun Sep 17 2023 11:23:58)",
@@ -494,7 +494,7 @@
   "Friday": "Friday",
   "Saturday": "Saturday",
   "January": "January",
-  "February": "February",
+  "February": "Février",
   "March": "March",
   "April": "April",
   "May": "May",
@@ -504,5 +504,5 @@
   "September": "September",
   "October": "October",
   "November": "November",
-  "December": "December"
+  "December": "Décembre"
 }
