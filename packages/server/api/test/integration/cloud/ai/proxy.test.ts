@@ -251,6 +251,7 @@ describe('AI Providers Proxy', () => {
                     url: '/v1/ai-providers/proxy/anthropic/v1/messages',
                     headers: {
                         authorization: `Bearer ${mockToken}`,
+                        'anthropic-version': '2023-06-01',
                     },
                     body: {
                         model: model?.instance.modelId,
@@ -260,6 +261,7 @@ describe('AI Providers Proxy', () => {
                                 content: 'Hello, how are you?',
                             },
                         ],
+                        max_tokens: 100,
                     },
                 })
                 const data = response?.json()
@@ -308,6 +310,7 @@ describe('AI Providers Proxy', () => {
                     url: '/v1/ai-providers/proxy/anthropic/v1/messages',
                     headers: {
                         authorization: `Bearer ${mockToken}`,
+                        'anthropic-version': '2023-06-01',
                     },
                     body: {
                         model: model?.instance.modelId,
@@ -317,6 +320,7 @@ describe('AI Providers Proxy', () => {
                                 content: 'Hello, how are you?',
                             },
                         ],
+                        max_tokens: 100,
                         stream: true,
                     },
                 })
