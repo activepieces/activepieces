@@ -63,6 +63,20 @@ export const projectService = {
         })
     },
 
+    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
+        const projects = await projectRepo().find({
+            select: {
+                id: true,
+            },
+            where: {
+                platformId,
+                deleted: IsNull(),
+            },
+        })
+
+        return projects.map((project) => project.id)
+    },
+
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
@@ -78,6 +92,7 @@ export const projectService = {
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
+                ...spreadIfDefined('locked', request.locked),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -239,6 +254,7 @@ type UpdateParams = {
     notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
+    locked?: boolean
 }
 
 type CreateParams = {

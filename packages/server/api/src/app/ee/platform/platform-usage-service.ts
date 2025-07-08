@@ -12,7 +12,7 @@ import { system } from '../../helper/system/system'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { mcpRepo } from '../../mcp/mcp-service'
-import { projectRepo, projectService } from '../../project/project-service'
+import { projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
@@ -82,7 +82,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         await redisConnection.del(platformAiCreditRedisKey)
 
-        const projectIds = await getProjectIds(platformId)
+        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
         for (const projectId of projectIds) {
             const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
             await redisConnection.del(projectTasksRedisKey)
@@ -222,7 +222,7 @@ async function getUsage(
 
 
 async function getActiveFlows(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const activeFlows = await flowRepo().count({
         where: {
             projectId: In(projectIds),
@@ -233,7 +233,7 @@ async function getActiveFlows(platformId: string): Promise<number> {
 }
 
 async function getTables(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const tables = await tableRepo().count({
         where: {
             projectId: In(projectIds),
@@ -243,12 +243,12 @@ async function getTables(platformId: string): Promise<number> {
 }
 
 async function getProjectsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     return projectIds.length
 }
 
 async function getMCPsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const mcpIds = await mcpRepo().count({
         where: {
             projectId: In(projectIds),
@@ -259,7 +259,7 @@ async function getMCPsCount(platformId: string): Promise<number> {
 }
 
 async function getAgentsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const agents = await agentRepo().count({
         where: {
             projectId: In(projectIds),
@@ -277,21 +277,6 @@ async function getActiveUsers(platformId: string): Promise<number> {
     })
     return activeUsers
 }
-
-async function getProjectIds(platformId: string): Promise<string[]> {
-    const projects = await projectRepo().find({
-        select: {
-            id: true,
-        },
-        where: {
-            platformId,
-            deleted: IsNull(),
-        },
-
-    })
-    return projects.map((project) => project.id)
-}
-
 
 type IncreaseProjectAIUsageParams = {
     platformId: string
