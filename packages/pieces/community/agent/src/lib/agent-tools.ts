@@ -21,16 +21,12 @@ export const agentTools = async (params: AgentToolsParams) => {
     }
 }
 
-// @ts-ignore
 async function buildInternalTools(params: AgentToolsParams) {
     return {
-        // @ts-ignore
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
-            // @ts-ignore
             parameters: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
                 output: await getStructuredOutput(params.agent),
-                // @ts-ignore
             }) : z.object({}),
             execute: async () => {
                 return 'Marked as Complete'
