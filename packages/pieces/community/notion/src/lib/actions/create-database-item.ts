@@ -13,7 +13,8 @@ export const createDatabaseItem = createAction({
   auth: notionAuth,
   name: 'create_database_item',
   displayName: 'Create Database Item',
-  description: 'Add a new item to a Notion database with custom field values and optional content. Ideal for creating tasks, records, or entries in structured databases.',
+  description:
+    'Add a new item to a Notion database with custom field values and optional content. Ideal for creating tasks, records, or entries in structured databases.',
   props: {
     database_id: notionCommon.database_id,
     databaseFields: notionCommon.databaseFields,
