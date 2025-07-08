@@ -5,6 +5,7 @@ import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -25,13 +26,12 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { ErrorCode, FieldType, Permission, Table } from '@activepieces/shared';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -267,7 +267,7 @@ const ApTablesPage = () => {
       locked={!platform.plan.tablesEnabled}
       lockTitle={t('Tables')}
       lockDescription={t(
-        'Create and manage your tables to store your automation data'
+        'Create and manage your tables to store your automation data',
       )}
     >
       <div className="flex-col w-full gap-4">

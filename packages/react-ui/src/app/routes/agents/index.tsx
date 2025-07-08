@@ -1,12 +1,12 @@
 import { t } from 'i18next';
 import { useState } from 'react';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { TableTitle } from '@/components/custom/table-title';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { Agent, ApFlagId } from '@activepieces/shared';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { Agent, ApFlagId } from '@activepieces/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -58,7 +58,7 @@ export const AgentsPage = () => {
       locked={!platform.plan.agentsEnabled}
       lockTitle={t('AI Agents')}
       lockDescription={t(
-        'Create AI agents that can interact with all pieces and be used inside your flows'
+        'Create AI agents that can interact with all pieces and be used inside your flows',
       )}
     >
       <div className="flex items-center justify-between">

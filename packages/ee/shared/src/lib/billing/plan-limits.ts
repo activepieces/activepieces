@@ -1,4 +1,4 @@
-import { AiOverageState, LicenseKeyEntity, PlatformPlanLimits } from '@activepieces/shared'
+import { AiOverageState, PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
 

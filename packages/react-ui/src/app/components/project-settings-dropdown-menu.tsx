@@ -17,7 +17,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -38,7 +37,6 @@ const ProjectSettingsDropdownMenu = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const { project } = projectHooks.useCurrentProject();
 
-  const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const linkActive = (item: ProjectSettingsLinkItem) =>
     location.pathname.startsWith(item.href);
@@ -83,8 +81,7 @@ const ProjectSettingsDropdownMenu = () => {
   const filterOnPermission = (item: ProjectSettingsLinkItem) =>
     isNil(item.hasPermission) || item.hasPermission;
 
-  const filteredLinkItems = linkItems
-    .filter(filterOnPermission);
+  const filteredLinkItems = linkItems.filter(filterOnPermission);
 
   return (
     <>

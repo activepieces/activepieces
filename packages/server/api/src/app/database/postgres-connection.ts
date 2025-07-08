@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+import { AddMcpsEnabled1751989232042 } from './migration/1751989232042-AddMcpsEnabled'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -241,7 +242,6 @@ import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
-import { AddMcpsEnabled1751989232042 } from './migration/1751989232042-AddMcpsEnabled'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -503,7 +503,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddTrialFlagInPlatform1751394161203,
                 UpdateAiCredits1751404517528,
                 AddAiOverageState1751466404493,
-                AddMcpsEnabled1751989232042
+                AddMcpsEnabled1751989232042,
             )
             break
         case ApEdition.COMMUNITY:

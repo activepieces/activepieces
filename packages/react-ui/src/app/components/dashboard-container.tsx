@@ -37,7 +37,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (_isAlertClosed: boolean) => { },
+  setIsAlertClosed: (_isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({
@@ -68,7 +68,6 @@ export function DashboardContainer({
     }
     return true;
   };
-
 
   const releasesLink: SidebarLink = {
     type: 'link',
@@ -149,8 +148,7 @@ export function DashboardContainer({
     mcpLink,
     todosLink,
     releasesLink,
-  ]
-    .filter(permissionFilter)
+  ].filter(permissionFilter);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>

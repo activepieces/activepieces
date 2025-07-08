@@ -4,6 +4,7 @@ import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -21,13 +22,12 @@ import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ErrorCode, McpWithTools, Permission } from '@activepieces/shared';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 
 import { McpToolsIcon } from './mcp-tools-icon';
 
