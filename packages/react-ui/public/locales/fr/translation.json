@@ -491,7 +491,7 @@
   "The number of projects with at least one enabled flow": "Le nombre de projets avec au moins un flux activé",
   "Active Users": "Utilisateurs actifs",
   "The number of users logged in the last 30 days": "Le nombre d'utilisateurs connectés dans les 30 derniers jours",
-  "Out of {totalusers} total users": "Out of {totalusers} total users",
+  "Out of {totalusers} total users": "Sur un total de {totalusers} utilisateurs",
   "Pieces Used": "Pièces utilisées",
   "The number of unique pieces used across all flows": "Le nombre de pièces uniques utilisées sur tous les flux",
   "Flows with AI": "Flux avec l'IA",
