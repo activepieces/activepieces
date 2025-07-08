@@ -19,10 +19,17 @@ export const newFormEntry = createTrigger({
       description: 'The hash of the form to watch.'
     })
   },
+  sampleData: {
+    EntryId: '1',
+    DateCreated: '2024-01-01 12:00:00',
+    Field1: 'Sample Value',
+    Field2: 'Another Value',
+  },
   type: TriggerStrategy.POLLING,
   async onEnable() {},
   async onDisable() {},
-  async run({ auth, propsValue, lastFetchEpochMS }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const { subdomain, formHash } = propsValue;
     const url = `https://${subdomain}.wufoo.com/api/v3/forms/${formHash}/entries.json`;
     const response = await axios.get(url, {
@@ -32,10 +39,6 @@ export const newFormEntry = createTrigger({
       },
     });
     const entries = response.data.Entries || [];
-    // Only return entries created after lastFetchEpochMS
-    return entries.filter((entry: any) => {
-      const created = new Date(entry.DateCreated).getTime();
-      return !lastFetchEpochMS || created > lastFetchEpochMS;
-    });
+    return entries;
   },
 }); 

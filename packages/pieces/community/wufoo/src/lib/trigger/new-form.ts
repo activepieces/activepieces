@@ -14,10 +14,17 @@ export const newForm = createTrigger({
       description: 'Your Wufoo account subdomain (e.g., myaccount for https://myaccount.wufoo.com)'
     })
   },
+  sampleData: {
+    Hash: 'a1b2c3',
+    Name: 'Sample Form',
+    DateCreated: '2024-01-01 12:00:00',
+    Description: 'A sample Wufoo form',
+  },
   type: TriggerStrategy.POLLING,
   async onEnable() {},
   async onDisable() {},
-  async run({ auth, propsValue, lastFetchEpochMS }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const { subdomain } = propsValue;
     const url = `https://${subdomain}.wufoo.com/api/v3/forms.json`;
     const response = await axios.get(url, {
@@ -27,10 +34,6 @@ export const newForm = createTrigger({
       },
     });
     const forms = response.data.Forms || [];
-    // Only return forms created after lastFetchEpochMS
-    return forms.filter((form: any) => {
-      const created = new Date(form.DateCreated).getTime();
-      return !lastFetchEpochMS || created > lastFetchEpochMS;
-    });
+    return forms;
   },
 }); 
