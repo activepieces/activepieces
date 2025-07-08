@@ -5,7 +5,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 type OldMcpPieceToolData = {
     pieceName: string
     pieceVersion: string
-    actionNames: string
+    actionNames: string[]
     logoUrl: string
     connectionExternalId: string | null
 }
@@ -45,7 +45,7 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
 
         for (const mcpTool of mcpTools) {            
             const { pieceMetadata: pieceMetadataString, ...rest } = mcpTool
-            const pieceMetadata: OldMcpPieceToolData = pieceMetadataString as OldMcpPieceToolData
+            const pieceMetadata = pieceMetadataString as OldMcpPieceToolData
             const { actionNames, ...restPieceMetadata } = pieceMetadata
             
             for (const actionName of actionNames) {
