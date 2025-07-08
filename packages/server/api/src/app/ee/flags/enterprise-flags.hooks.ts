@@ -43,7 +43,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.SHOW_CHANGELOG] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING] = !platformUtils.isEnterpriseCustomerOnCloud(platformWithPlan) && system.getEdition() === ApEdition.CLOUD
+        modifiedFlags[ApFlagId.SHOW_BILLING] = !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan) && system.getEdition() === ApEdition.CLOUD
         modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({

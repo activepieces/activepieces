@@ -101,7 +101,7 @@ export const aiProviderService = {
         if (cloudPlatformId === userPlatformId) return cloudPlatformId
 
         const platform = await platformService.getOneWithPlanOrThrow(userPlatformId)
-        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        const isEnterpriseCustomer = platformUtils.isCustomerOnDedicatedDomain(platform)
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
