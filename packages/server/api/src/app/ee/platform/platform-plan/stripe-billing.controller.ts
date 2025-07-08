@@ -172,11 +172,6 @@ const WebhookRequest = {
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
     const user = await userIdentityService(system.globalLogger()).getIdentityByEmail(customerEmail)
 
-
-    console.log("33333333333333333333333333333333333")
-    console.log(user?.firstName)
-    console.log("33333333333333333333333333333333333")
-
     await emailService(log).sendWellcomeToTrialEmail(platformId, customerEmail as string, user?.firstName)
     await systemJobsSchedule(log).upsertJob({
         job: {
