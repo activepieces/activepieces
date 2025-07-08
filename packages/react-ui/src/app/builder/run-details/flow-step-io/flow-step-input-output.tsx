@@ -16,7 +16,8 @@ type FlowStepInputOutputProps = {
 const FlowStepInputOutput = React.memo(
   ({ stepDetails, selectedStep }: FlowStepInputOutputProps) => {
     const stepOutput = stepDetails.errorMessage ?? stepDetails.output;
-    const outputExists = 'output' in stepDetails || 'errorMessage' in stepDetails;
+    const outputExists =
+      'output' in stepDetails || 'errorMessage' in stepDetails;
     return (
       <ScrollArea className="h-full p-4">
         <div className="flex flex-col gap-4">

@@ -5,6 +5,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
@@ -119,12 +120,14 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             break
                         }
 
+                        const user = await userIdentityService(system.globalLogger()).getIdentityByEmail(customer.email)
                         await systemJobsSchedule(request.log).upsertJob({
                             job: {
                                 name: SystemJobName.ONE_DAY_LEFT_ON_TRIAL,
                                 data: {
                                     platformId: platformPlan.platformId,
-                                    customerEmail: customer.email as string,
+                                    email: customer.email as string,
+                                    firstName: user?.firstName,
                                 },
                                 jobId: `one-day-left-on-trial-${platformPlan}-${customer.email}`,
                             },
@@ -134,7 +137,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             },
                         })
 
-                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email)
+                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email, user?.firstName)
                         break
                     }
                     default:
@@ -167,13 +170,22 @@ const WebhookRequest = {
 
 
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
-    await emailService(log).sendWellcomeToTrialEmail(platformId, customerEmail as string)
+    const user = await userIdentityService(system.globalLogger()).getIdentityByEmail(customerEmail)
+
+
+    console.log("33333333333333333333333333333333333")
+    console.log(user?.firstName)
+    console.log("33333333333333333333333333333333333")
+
+    await emailService(log).sendWellcomeToTrialEmail(platformId, customerEmail as string, user?.firstName)
     await systemJobsSchedule(log).upsertJob({
         job: {
             name: SystemJobName.SEVEN_DAYS_IN_TRIAL,
             data: {
                 platformId,
-                customerEmail,
+                email: customerEmail,
+                firstName: user?.firstName,
+
             },
             jobId: `7-days-left-on-trial-${platformId}-${customerEmail}`,
         },
