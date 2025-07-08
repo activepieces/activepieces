@@ -138,8 +138,7 @@ const EmbeddedConnectionDialogContent = ({
         {isLoadingPiece && (
           <div className="flex justify-center items-center">
             <LoadingSpinner
-              size={50}
-              className="stroke-background"
+              className="stroke-background size-[50px]"
             ></LoadingSpinner>
           </div>
         )}

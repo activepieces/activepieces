@@ -10,28 +10,17 @@ export const LoadingScreen = ({
   brightSpinner = false,
   mode = 'fullscreen',
 }: LoadingScreenProps) => {
-  switch (mode) {
-    case 'fullscreen':
-      return (
-        <div className="flex h-screen w-screen items-center justify-center">
-          <LoadingSpinner
+
+
+  return <div className={cn('flex h-screen w-screen items-center justify-center', {
+    'h-full w-full': mode === 'container',
+  })}>
+  <LoadingSpinner
             className={cn({
               '!stroke-background': brightSpinner,
             })}
-            size={50}
+            isLarge={true}
           ></LoadingSpinner>
-        </div>
-      );
-    case 'container':
-      return (
-        <div className="flex h-full w-full items-center justify-center">
-          <LoadingSpinner
-            className={cn({
-              '!stroke-background': brightSpinner,
-            })}
-            size={50}
-          />
-        </div>
-      );
-  }
+  </div>
+ 
 };

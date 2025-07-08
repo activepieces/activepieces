@@ -20,7 +20,7 @@ export const SimulationNote = ({
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex gap-2 items-center justify-center w-full">
-        <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
+        <LoadingSpinner className="size-4"></LoadingSpinner>
         <div>{t('Testing Trigger')}</div>
         <div className="flex-grow"></div>
 

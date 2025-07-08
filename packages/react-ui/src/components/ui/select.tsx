@@ -9,7 +9,6 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-import { LoadingSpinner } from './spinner';
 
 const Select = SelectPrimitive.Root;
 
@@ -138,24 +137,7 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-type SelectItemProps = {
-  className?: string;
-};
-const SelectLoader = React.forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className }, ref) => (
-    <SelectItem
-      key="none"
-      disabled={true}
-      ref={ref}
-      value="random-value"
-      className={cn('flex items-center justify-center w-full', className)}
-    >
-      <LoadingSpinner />
-    </SelectItem>
-  ),
-);
-SelectLoader.displayName = 'SelectLoader';
-export { SelectLoader };
+
 
 const SelectAction = React.forwardRef<
   HTMLDivElement,
