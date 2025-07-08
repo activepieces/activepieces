@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import axios from 'axios';
 
+const WUFOO_DUMMY_PASSWORD = 'x'; // Wufoo requires any password, value is ignored
+
 export const getEntryDetails = createAction({
   name: 'get_entry_details',
   displayName: 'Get Entry Details',
@@ -28,7 +30,7 @@ export const getEntryDetails = createAction({
     const response = await axios.get(url, {
       auth: {
         username: auth as string,
-        password: 'footastic',
+        password: WUFOO_DUMMY_PASSWORD, // Wufoo requires any password, value is ignored
       },
     });
     return response.data;

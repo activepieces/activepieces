@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import axios from 'axios';
 
+const WUFOO_DUMMY_PASSWORD = 'x'; // Wufoo requires any password, value is ignored
+
 export const createFormEntry = createAction({
   name: 'create_form_entry',
   displayName: 'Create Form Entry',
@@ -28,7 +30,7 @@ export const createFormEntry = createAction({
     const response = await axios.post(url, entry, {
       auth: {
         username: auth as string,
-        password: 'footastic', // Wufoo requires any password
+        password: WUFOO_DUMMY_PASSWORD, // Wufoo requires any password, value is ignored
       },
     });
     return response.data;

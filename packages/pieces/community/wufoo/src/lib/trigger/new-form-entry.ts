@@ -1,6 +1,8 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import axios from 'axios';
 
+const WUFOO_DUMMY_PASSWORD = 'x'; // Wufoo requires any password, value is ignored
+
 export const newFormEntry = createTrigger({
   name: 'new_form_entry',
   displayName: 'New Form Entry',
@@ -26,7 +28,7 @@ export const newFormEntry = createTrigger({
     const response = await axios.get(url, {
       auth: {
         username: auth as string,
-        password: 'footastic',
+        password: WUFOO_DUMMY_PASSWORD, // Wufoo requires any password, value is ignored
       },
     });
     const entries = response.data.Entries || [];
