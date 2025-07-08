@@ -70,7 +70,7 @@ type OneDayLeftOnTrialTemplateData = BaseEmailTemplateData<'1-day-left-on-trial'
     year: string
 }>
 
-type WellcomeToTrialTemplateData = BaseEmailTemplateData<'wellcome-to-trial', {
+type WelcomeToTrialTemplateData = BaseEmailTemplateData<'welcome-to-trial', {
     year: string
 }>
 
@@ -88,7 +88,7 @@ export type EmailTemplateData =
   | TriggerFailureThresholdTemplateData
   | ThreeDaysLeftOnTrialTemplateData
   | OneDayLeftOnTrialTemplateData
-  | WellcomeToTrialTemplateData
+  | WelcomeToTrialTemplateData
   | SevenDaysInTrialTemplateData
 
 type SendArgs = {

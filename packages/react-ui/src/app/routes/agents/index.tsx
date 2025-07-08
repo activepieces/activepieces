@@ -5,6 +5,8 @@ import { TableTitle } from '@/components/custom/table-title';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { Agent, ApFlagId } from '@activepieces/shared';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';
@@ -16,8 +18,9 @@ import { AgentBuilder } from './builder';
 export const AgentsPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | undefined>();
+  const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: isAgentsEnabled } = flagsHooks.useFlag<boolean>(
+  const { data: isisAgentsConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.AGENTS_CONFIGURED,
   );
 
@@ -50,7 +53,14 @@ export const AgentsPage = () => {
   }
 
   return (
-    <>
+    <LockedFeatureGuard
+      featureKey="AGENTS"
+      locked={!platform.plan.agentsEnabled}
+      lockTitle={t('AI Agents')}
+      lockDescription={t(
+        'Create AI agents that can interact with all pieces and be used inside your flows'
+      )}
+    >
       <div className="flex items-center justify-between">
         <TableTitle
           beta={true}
@@ -71,7 +81,7 @@ export const AgentsPage = () => {
           trigger={
             <CreateAgentButton
               onAgentCreated={handleAgentCreated}
-              isAgentsEnabled={isAgentsEnabled ?? false}
+              isAgentsConfigured={isisAgentsConfigured ?? false}
             />
           }
         />
@@ -106,6 +116,6 @@ export const AgentsPage = () => {
           </div>
         )}
       </div>
-    </>
+    </LockedFeatureGuard>
   );
 };

@@ -1,4 +1,4 @@
-import { AiOverageState, PlatformPlanLimits } from '@activepieces/shared'
+import { AiOverageState, LicenseKeyEntity, PlatformPlanLimits } from '@activepieces/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
 
@@ -15,10 +15,11 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesLimit: 1,
     mcpLimit: 1,
     agentsLimit: 0,
-    agentsEnabled: true,
 
+    agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
+    mcpsEnabled: true,
 
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
@@ -34,7 +35,6 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
-    alertsEnabled: false,
     ssoEnabled: false,
 }
 
@@ -44,7 +44,6 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         plan: planname,
         tasksLimit,
         userSeatsLimit,
-        agentsEnabled: true,
         includedAiCredits: 200,
         aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
         aiCreditsOverageLimit: undefined,
@@ -55,8 +54,10 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         agentsLimit: 5,
         eligibleForTrial: false,
 
-        todosEnabled: false,
+        agentsEnabled: true,
         tablesEnabled: true,
+        todosEnabled: true,
+        mcpsEnabled: true,
 
         embeddingEnabled: false,
         globalConnectionsEnabled: false,
@@ -72,7 +73,6 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit }:
         projectRolesEnabled: true,
         customDomainsEnabled: false,
         apiKeysEnabled: false,
-        alertsEnabled: false,
         ssoEnabled: false,
 
     }
@@ -94,6 +94,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
+    mcpsEnabled: true,
 
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
@@ -107,7 +108,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
-    alertsEnabled: false,
     ssoEnabled: false,
     showPoweredBy: false,
     auditLogEnabled: false,
@@ -128,9 +128,11 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesLimit: undefined,
     agentsLimit: undefined,
 
+    agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
-    agentsEnabled: true,
+    mcpsEnabled: true,
+
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
@@ -143,7 +145,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectRolesEnabled: true,
     customDomainsEnabled: false,
     apiKeysEnabled: true,
-    alertsEnabled: true,
     ssoEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
@@ -153,12 +154,14 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     eligibleForTrial: false,
     embeddingEnabled: false,
-    tablesEnabled: true,
-    todosEnabled: true,
+
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     tasksLimit: undefined,
 
+    mcpsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
     agentsEnabled: true,
     includedAiCredits: 0,
     aiCreditsOverageLimit: undefined,
@@ -176,9 +179,9 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
-    alertsEnabled: false,
     ssoEnabled: false,
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
 }
+
