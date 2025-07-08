@@ -10,7 +10,8 @@ export const archiveDatabaseItem = createAction({
   auth: notionAuth,
   name: 'archive_database_item',
   displayName: 'Archive Database Item',
-  description: 'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',
+  description:
+    'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,
@@ -40,14 +41,15 @@ export const archiveDatabaseItem = createAction({
       // Get the item title for better user feedback
       let itemTitle = 'Database item';
       let itemUrl = undefined;
-      
+
       if ('properties' in response && response.properties) {
         const firstProperty = Object.values(response.properties)[0];
         if (firstProperty && 'title' in firstProperty && firstProperty.title) {
-          itemTitle = (firstProperty.title as any)[0]?.plain_text || 'Untitled item';
+          itemTitle =
+            (firstProperty.title as any)[0]?.plain_text || 'Untitled item';
         }
       }
-      
+
       if ('url' in response) {
         itemUrl = response.url;
       }
@@ -65,12 +67,15 @@ export const archiveDatabaseItem = createAction({
         fullResponse: response,
       };
     } catch (error: any) {
-      if (error.message?.includes('permissions') || error.message?.includes('unauthorized')) {
+      if (
+        error.message?.includes('permissions') ||
+        error.message?.includes('unauthorized')
+      ) {
         throw new Error(
           'Unable to archive item: Your Notion integration may lack edit permissions for this database. Please check your integration permissions in Notion.'
         );
       }
-      
+
       if (error.message?.includes('not_found')) {
         throw new Error(
           'The selected item could not be found. It may have been deleted or moved to a different database.'

@@ -11,12 +11,14 @@ export const addComment = createAction({
   auth: notionAuth,
   name: 'add_comment',
   displayName: 'Add Comment',
-  description: 'Add a comment to any Notion page to start discussions, provide feedback, or leave notes for team collaboration.',
+  description:
+    'Add a comment to any Notion page to start discussions, provide feedback, or leave notes for team collaboration.',
   props: {
     page_id: notionCommon.page,
     comment_text: Property.LongText({
       displayName: 'Comment Text',
-      description: 'Enter your comment text. Supports plain text and will be posted as a new comment thread on the selected page.',
+      description:
+        'Enter your comment text. Supports plain text and will be posted as a new comment thread on the selected page.',
       required: true,
     }),
   },
@@ -55,7 +57,8 @@ export const addComment = createAction({
       if (response.object === 'comment' && Object.keys(response).length <= 2) {
         return {
           success: true,
-          message: '💬 Comment posted successfully! Your comment has been added to the page.',
+          message:
+            '💬 Comment posted successfully! Your comment has been added to the page.',
           comment_id: response.id,
           note: 'Limited comment details available. To see full comment content, ensure your Notion integration has "Read comments" capability enabled in your workspace settings.',
         };
@@ -63,7 +66,8 @@ export const addComment = createAction({
 
       return {
         success: true,
-        message: '💬 Comment posted successfully! Your comment has been added to the page.',
+        message:
+          '💬 Comment posted successfully! Your comment has been added to the page.',
         comment: response,
       };
     } catch (error: any) {

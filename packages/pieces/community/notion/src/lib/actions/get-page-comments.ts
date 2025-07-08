@@ -1,7 +1,6 @@
 import {
   createAction,
   OAuth2PropertyValue,
-  Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
@@ -11,7 +10,8 @@ export const getPageComments = createAction({
   auth: notionAuth,
   name: 'get_page_comments',
   displayName: 'Get Page Comments',
-  description: 'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
+  description:
+    'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
   props: {
     page_id: notionCommon.page,
   },
@@ -79,7 +79,7 @@ export const getPageComments = createAction({
     );
 
     const threadCount = Object.keys(commentsByDiscussion).length;
-    
+
     return {
       success: true,
       totalComments: allComments.length,
@@ -92,9 +92,18 @@ export const getPageComments = createAction({
         discussionThreads: threadCount,
         standaloneComments: pageComments.length,
       },
-      message: allComments.length === 0 
-        ? `📝 No comments found on this page yet.`
-        : `💬 Successfully retrieved ${allComments.length} comment${allComments.length === 1 ? '' : 's'} from page${threadCount > 0 ? ` organized into ${threadCount} discussion thread${threadCount === 1 ? '' : 's'}` : ''}.`,
+      message:
+        allComments.length === 0
+          ? `📝 No comments found on this page yet.`
+          : `💬 Successfully retrieved ${allComments.length} comment${
+              allComments.length === 1 ? '' : 's'
+            } from page${
+              threadCount > 0
+                ? ` organized into ${threadCount} discussion thread${
+                    threadCount === 1 ? '' : 's'
+                  }`
+                : ''
+            }.`,
     };
   },
 });

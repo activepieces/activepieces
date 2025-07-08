@@ -10,16 +10,19 @@ export const findPage = createAction({
   auth: notionAuth,
   name: 'find_page',
   displayName: 'Find Page',
-  description: 'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
+  description:
+    'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
   props: {
     title: Property.ShortText({
       displayName: 'Page Title',
-      description: 'Enter the page title or part of the title you want to search for',
+      description:
+        'Enter the page title or part of the title you want to search for',
       required: true,
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
-      description: 'Enable this to find pages with exactly the same title. Disable for partial matching (finds pages containing your search term).',
+      description:
+        'Enable this to find pages with exactly the same title. Disable for partial matching (finds pages containing your search term).',
       required: false,
       defaultValue: false,
     }),
@@ -99,9 +102,16 @@ export const findPage = createAction({
     }));
 
     const matchType = exact_match ? 'exact match' : 'partial match';
-    const resultMessage = filteredPages.length === 0 
-      ? `🔍 No pages found matching "${title}" (${matchType}). Try using partial matching or check your search term.`
-      : `🔍 Found ${filteredPages.length} page${filteredPages.length === 1 ? '' : 's'} matching "${title}" (${matchType})${formattedResults.length < filteredPages.length ? `, showing first ${formattedResults.length}` : ''}.`;
+    const resultMessage =
+      filteredPages.length === 0
+        ? `🔍 No pages found matching "${title}" (${matchType}). Try using partial matching or check your search term.`
+        : `🔍 Found ${filteredPages.length} page${
+            filteredPages.length === 1 ? '' : 's'
+          } matching "${title}" (${matchType})${
+            formattedResults.length < filteredPages.length
+              ? `, showing first ${formattedResults.length}`
+              : ''
+          }.`;
 
     return {
       success: true,
@@ -125,7 +135,7 @@ export const findPage = createAction({
 function extractPageTitle(page: any): string | null {
   try {
     if (page.properties) {
-      for (const [key, prop] of Object.entries(page.properties)) {
+      for (const [, prop] of Object.entries(page.properties)) {
         if ((prop as any).type === 'title') {
           const titleArray = (prop as any).title;
           if (titleArray && titleArray.length > 0) {

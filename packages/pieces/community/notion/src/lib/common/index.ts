@@ -11,7 +11,8 @@ export const notionCommon = {
   database_id: Property.Dropdown<string>({
     displayName: 'Database',
     required: true,
-    description: 'Choose the Notion database you want to work with from your workspace',
+    description:
+      'Choose the Notion database you want to work with from your workspace',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -78,14 +79,16 @@ export const notionCommon = {
   }),
   archived_database_item_id: Property.Dropdown({
     displayName: 'Archived Item',
-    description: 'Choose which archived item to restore from the selected database',
+    description:
+      'Choose which archived item to restore from the selected database',
     required: true,
     refreshers: ['database_id'],
     options: async ({ auth, database_id }) => {
       if (!auth || !database_id) {
         return {
           disabled: true,
-          placeholder: 'Please connect your Notion account first and select a database',
+          placeholder:
+            'Please connect your Notion account first and select a database',
           options: [],
         };
       }
@@ -95,7 +98,7 @@ export const notionCommon = {
           auth: (auth as OAuth2PropertyValue).access_token,
           notionVersion: '2022-02-22',
         });
-        
+
         const { results } = await notion.databases.query({
           database_id: database_id as string,
           filter_properties: ['title'],
@@ -125,7 +128,8 @@ export const notionCommon = {
       } catch (error: any) {
         return {
           disabled: true,
-          placeholder: 'Error loading archived items. Please check your database permissions.',
+          placeholder:
+            'Error loading archived items. Please check your database permissions.',
           options: [],
         };
       }

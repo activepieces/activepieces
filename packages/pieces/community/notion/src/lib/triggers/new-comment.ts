@@ -17,7 +17,8 @@ export const newComment = createTrigger({
   auth: notionAuth,
   name: 'new_comment',
   displayName: 'New Comment',
-  description: 'Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.',
+  description:
+    'Triggers whenever someone adds a new comment to a specific Notion page. Perfect for notifications, review workflows, or automated responses to team feedback.',
   props: {
     page_id: notionCommon.page,
   },

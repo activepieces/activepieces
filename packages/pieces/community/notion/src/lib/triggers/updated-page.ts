@@ -16,7 +16,8 @@ export const updatedPage = createTrigger({
   auth: notionAuth,
   name: 'updated_page',
   displayName: 'Updated Page',
-  description: 'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',
+  description:
+    'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',
   props: {},
   sampleData: {
     object: 'page',
@@ -105,7 +106,7 @@ export const updatedPage = createTrigger({
 
 const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId }) => {
+  items: async ({ auth, lastItemId }) => {
     const lastItem = lastItemId as string;
     let lastEditedDate: Date | undefined;
 
