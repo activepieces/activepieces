@@ -32,7 +32,8 @@ const DEFAULT_PLAN = {
     customRolesEnabled: false,
     tasksLimit: undefined,
 
-    agentsEnabled: true,
+    agentsEnabled: false,
+    mcpsEnabled: true,
     includedAiCredits: 0,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
@@ -56,13 +57,13 @@ const DEFAULT_PLAN = {
     stripeSubscriptionStatus: undefined,
 }
 
-const repo = repoFactory<Platform>(PlatformEntity)
+export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
-        const count = await repo().count()
+        const count = await platformRepo().count()
         return count > 0
     },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
@@ -110,7 +111,7 @@ export const platformService = {
             pinnedPieces: [],
         }
 
-        const savedPlatform = await repo().save(newPlatform)
+        const savedPlatform = await platformRepo().save(newPlatform)
 
         await userService.addOwnerToPlatform({
             id: ownerId,
@@ -121,10 +122,10 @@ export const platformService = {
     },
 
     async getAll(): Promise<Platform[]> {
-        return repo().find()
+        return platformRepo().find()
     },
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo().findOne({
+        return platformRepo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -168,11 +169,11 @@ export const platformService = {
         //         ...params.plan,
         //     })
         // }
-        return repo().save(updatedPlatform)
+        return platformRepo().save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo().findOneBy({
+        const platform = await platformRepo().findOneBy({
             id,
         })
 
@@ -207,7 +208,7 @@ export const platformService = {
         }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo().findOneBy({
+        return platformRepo().findOneBy({
             id,
         })
     },

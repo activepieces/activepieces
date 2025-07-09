@@ -56,7 +56,6 @@ export const flowExecutor = {
             }
             const handler = this.getExecutorForAction(currentAction.type)
 
-            const stepStartTime = performance.now()
             progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
@@ -68,11 +67,6 @@ export const flowExecutor = {
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
-            })
-            const stepEndTime = performance.now()
-            flowExecutionContext = flowExecutionContext.setStepDuration({
-                stepName: currentAction.name,
-                duration: stepEndTime - stepStartTime,
             })
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {

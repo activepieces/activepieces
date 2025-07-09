@@ -1,6 +1,3 @@
-
-
-// import { PlanName } from '@activepieces/ee-shared'
 import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 // import { customDomainService } from '../ee/custom-domains/custom-domain.service'
@@ -23,13 +20,12 @@ export const platformUtils = {
         // return oldestPlatform?.id ?? null
         return null
     },
-    isEnterpriseCustomerOnCloud(platform: PlatformWithoutSensitiveData): boolean {
+    isCustomerOnDedicatedDomain(platform: PlatformWithoutSensitiveData): boolean {
         const edition = system.getEdition()
         if (edition !== ApEdition.CLOUD) {
             return false
         }
-        // return platform.plan.plan === PlanName.ENTERPRISE
-        return false
+        return platform.plan.customDomainsEnabled
     },
 }
 
