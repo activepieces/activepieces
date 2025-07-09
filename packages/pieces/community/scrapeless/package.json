@@ -5,7 +5,5 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@scrapeless-ai/sdk": "1.5.1",
-    "tslib": "^2.3.0"
-  }
+    "@scrapeless-ai/sdk": "1.5.1"  }
 }

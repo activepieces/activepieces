@@ -1,6 +1,5 @@
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { ValidationResult } from "../types";
-import { SCRAPEELESS_API_KEY_VALIDATION_URL } from "../constants";
 
 export class ScrapelessValidator {
 
@@ -14,21 +13,16 @@ export class ScrapelessValidator {
     }
 
     const response =await httpClient.sendRequest({
-      url: `${SCRAPEELESS_API_KEY_VALIDATION_URL}`,
+      url: 'https://api.scrapeless.com/api/v1/me',
       method: HttpMethod.GET,
-      queryParams: {
-        'api_key': apiKey
+      headers:{
+        'x-api-token':apiKey
       }
     });
 
     if(response.status !== 200) {
       errors.push('Invalid API key');
     }
-
-    console.log('1', response)
-
-
-
     return {
       isValid: errors.length === 0,
       errors,

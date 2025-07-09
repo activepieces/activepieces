@@ -1,6 +1,3 @@
-export const SCRAPEELESS_API_KEY_VALIDATION_URL =
-  'https://backend.scrapeless.com/app/api/v1/access-tokens/check/neQ1SREuZwIaaEinUkFcqMwTbMeDLix9';
-
 export const googleTrendsDataTypeOptions = [
   {
     label: 'Auto complete',
