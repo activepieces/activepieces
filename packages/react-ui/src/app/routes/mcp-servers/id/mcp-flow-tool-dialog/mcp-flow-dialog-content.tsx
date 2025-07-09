@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PopulatedFlow } from '@activepieces/shared';
 
-import { CreateFlowButton } from './create-flow-button';
+import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { mcpFlowDialogUtils } from './mcp-flow-dialog-utils';
 
 interface McpFlowDialogContentProps {
@@ -51,7 +51,7 @@ export const McpFlowDialogContent = ({
   return (
     <ScrollArea className="flex-grow overflow-y-auto rounded-md">
       <div className="grid grid-cols-4 gap-4">
-        <CreateFlowButton />
+        <CreateMcpFlowButton />
 
         {filteredFlows.map((flow) => {
           const tooltip = mcpFlowDialogUtils.getFlowTooltip(flow);

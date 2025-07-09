@@ -65,7 +65,9 @@ export enum PlatformUsageMetric {
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
+    AGENTS = 'agents',
     TABLES = 'tables',
+    MCPS = 'mcps',
 }
 
 
@@ -74,25 +76,36 @@ export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
-    mcp: Type.Number(),
+    mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
+    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
+export enum AiOverageState {
+    NOT_ALLOWED = 'not_allowed',
+    ALLOWED_BUT_OFF = 'allowed_but_off',
+    ALLOWED_AND_ON = 'allowed_an_on',
+}
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    includedTasks: Type.Number(),
-    includedAiCredits: Type.Number(),
     tasksLimit: Type.Optional(Type.Number()),
-    aiCreditsLimit: Type.Optional(Type.Number()),
+    includedAiCredits: Type.Number(),
+    aiCreditsOverageLimit: Type.Optional(Type.Number()),
+    aiCreditsOverageState: Type.Optional(Type.String()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    agentsEnabled: Type.Boolean(),
+    mcpsEnabled: Type.Boolean(),
+    tablesEnabled: Type.Boolean(),
+    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
@@ -104,11 +117,9 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    eligibleForTrial: Type.Boolean(),
 
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
 
-    alertsEnabled: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),
@@ -117,6 +128,10 @@ export const PlatformPlan = Type.Object({
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
+    stripeSubscriptionStartDate: Type.Optional(Type.Number()),
+    stripeSubscriptionEndDate: Type.Optional(Type.Number()),
+    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    stripePaymentMethod: Type.Optional(Type.String()),
 
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),
@@ -191,7 +206,9 @@ export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiv
 export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.String(),
+    nextBillingDate: Type.Number(),
+    nextBillingAmount: Type.Number(),
+    cancelAt: Type.Optional(Type.Number()),
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>

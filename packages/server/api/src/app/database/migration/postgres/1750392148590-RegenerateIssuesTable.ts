@@ -9,7 +9,7 @@ export class RegenerateIssuesTable1750392148590 implements MigrationInterface {
             WHERE "stepName" IS NULL
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"
@@ -23,7 +23,7 @@ export class RegenerateIssuesTable1750392148590 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"

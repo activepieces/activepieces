@@ -4,6 +4,7 @@ import {
   CircleX,
   PauseCircleIcon,
   PauseIcon,
+  Play,
   Timer,
   X,
 } from 'lucide-react';
@@ -64,17 +65,17 @@ export const flowRunUtils = {
     Icon: typeof Timer | typeof Check | typeof PauseIcon | typeof X;
   } {
     switch (status) {
-      case FlowRunStatus.RUNNING:
+      case FlowRunStatus.QUEUED:
         return {
           variant: 'default',
           Icon: Timer,
         };
-      case FlowRunStatus.SUCCEEDED:
+      case FlowRunStatus.RUNNING:
         return {
-          variant: 'success',
-          Icon: Check,
+          variant: 'default',
+          Icon: Play,
         };
-      case FlowRunStatus.STOPPED:
+      case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
           Icon: Check,
@@ -139,12 +140,12 @@ function findLoopsState(
 
 function findLastStepWithStatus(
   runStatus: FlowRunStatus,
-  steps: Record<string, StepOutput>,
+  steps: Record<string, StepOutput> | undefined,
 ): string | null {
-  if (
-    runStatus === FlowRunStatus.STOPPED ||
-    runStatus === FlowRunStatus.SUCCEEDED
-  ) {
+  if (isNil(steps)) {
+    return null;
+  }
+  if (runStatus === FlowRunStatus.SUCCEEDED) {
     return null;
   }
   const stepStatus = isFailedState(runStatus)

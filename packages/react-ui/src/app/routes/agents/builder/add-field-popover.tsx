@@ -123,7 +123,7 @@ export const AddFieldPopover = ({ onAddField }: AddFieldPopoverProps) => {
           <Button
             className="w-full"
             onClick={handleAdd}
-            variant={'secondary'}
+            variant={'accent'}
             disabled={
               !fieldType || !fieldName.trim() || !fieldDescription.trim()
             }

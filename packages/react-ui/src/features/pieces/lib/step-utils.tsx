@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { agentsApi } from '@/features/agents/lib/agents-api';
 import {
   ErrorHandlingOptionsParam,
@@ -15,13 +17,62 @@ import {
   Trigger,
 } from '@activepieces/shared';
 
-import { piecesApi } from './pieces-api';
-import { CORE_STEP_METADATA } from './steps-hooks';
 import {
   PieceStepMetadata,
+  PrimitiveStepMetadata,
   StepMetadata,
-  StepMetadataWithStepName,
-} from './types';
+  StepMetadataWithActionOrTriggerOrAgentDisplayName,
+} from '../../../lib/types';
+
+import { piecesApi } from './pieces-api';
+
+export const CORE_STEP_METADATA: Record<
+  Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
+  PrimitiveStepMetadata
+> = {
+  [ActionType.CODE]: {
+    displayName: t('Code'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+    description: t('Powerful Node.js & TypeScript code with npm'),
+    type: ActionType.CODE as const,
+  },
+  [ActionType.LOOP_ON_ITEMS]: {
+    displayName: t('Loop on Items'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+    description: 'Iterate over a list of items',
+    type: ActionType.LOOP_ON_ITEMS as const,
+  },
+  [ActionType.ROUTER]: {
+    displayName: t('Router'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    description: t('Split your flow into branches depending on condition(s)'),
+    type: ActionType.ROUTER as const,
+  },
+  [TriggerType.EMPTY]: {
+    displayName: t('Empty Trigger'),
+    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+    description: t('Empty Trigger'),
+    type: TriggerType.EMPTY as const,
+  },
+} as const;
+export const CORE_ACTIONS_METADATA = [
+  CORE_STEP_METADATA[ActionType.CODE],
+  CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
+  CORE_STEP_METADATA[ActionType.ROUTER],
+] as const;
+
+export const TODO_ACTIONS = {
+  createTodo: 'createTodo',
+  createTodoAndWait: 'createTodoAndWait',
+  waitForApproval: 'wait_for_approval',
+};
+
+export const HIDDEN_ACTIONS = [
+  {
+    pieceName: '@activepieces/piece-todos',
+    actions: [TODO_ACTIONS.createTodoAndWait, TODO_ACTIONS.waitForApproval],
+  },
+];
 
 export const stepUtils = {
   getKeys(step: Action | Trigger, locale: LocalesEnum): (string | undefined)[] {
@@ -34,13 +85,13 @@ export const stepUtils = {
         ? step.customLogoUrl
         : undefined
       : undefined;
-    const agentId = getAgentId(step);
-    return [pieceName, pieceVersion, customLogoUrl, agentId, locale];
+    const agentId = stepUtils.getAgentId(step);
+    return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
   },
   async getMetadata(
     step: Action | Trigger,
     locale: LocalesEnum,
-  ): Promise<StepMetadataWithStepName> {
+  ): Promise<StepMetadataWithActionOrTriggerOrAgentDisplayName> {
     const customLogoUrl =
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
@@ -51,7 +102,7 @@ export const stepUtils = {
         return {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
-          stepDisplayName: step.displayName,
+          actionOrTriggerOrAgentDisplayName: '',
         };
       case ActionType.PIECE:
       case TriggerType.PIECE: {
@@ -60,26 +111,37 @@ export const stepUtils = {
           version: step.settings.pieceVersion,
           locale: locale,
         });
-        const metadata = stepUtils.mapPieceToMetadata(
+        const metadata = stepUtils.mapPieceToMetadata({
           piece,
-          step.type === ActionType.PIECE ? 'action' : 'trigger',
-        );
-        const dataToOverride = await getDataToOverride(step);
+          type: step.type === ActionType.PIECE ? 'action' : 'trigger',
+        });
+        const agentMetadata = await getAgentMetadata(step);
+        const agentDisplayName = agentMetadata.displayName;
+        const actionOrTriggerDisplayName =
+          step.type === ActionType.PIECE
+            ? piece.actions[step.settings.actionName!].displayName
+            : piece.triggers[step.settings.triggerName!].displayName;
         return {
           ...metadata,
-          stepDisplayName: step.displayName,
-          ...spreadIfDefined('logoUrl', customLogoUrl),
-          ...spreadIfDefined('description', piece.description),
+          ...spreadIfDefined('logoUrl', agentMetadata.logoUrl ?? customLogoUrl),
+          ...spreadIfDefined(
+            'description',
+            agentMetadata.description ?? piece.description,
+          ),
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          ...dataToOverride,
+          actionOrTriggerOrAgentDisplayName:
+            agentDisplayName ?? actionOrTriggerDisplayName,
         };
       }
     }
   },
-  mapPieceToMetadata(
-    piece: PieceMetadataModelSummary | PieceMetadataModel,
-    type: 'action' | 'trigger',
-  ): Omit<PieceStepMetadata, 'stepDisplayName'> {
+  mapPieceToMetadata({
+    piece,
+    type,
+  }: {
+    piece: PieceMetadataModelSummary | PieceMetadataModel;
+    type: 'action' | 'trigger';
+  }): Omit<PieceStepMetadata, 'stepDisplayName'> {
     return {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,
@@ -99,15 +161,23 @@ export const stepUtils = {
       action.settings.pieceName === '@activepieces/piece-agent'
     );
   },
+  getAgentId(action: Step) {
+    if (!stepUtils.isAgentPiece(action)) {
+      return undefined;
+    }
+    return 'input' in action.settings && 'agentId' in action.settings.input
+      ? (action.settings.input.agentId as string)
+      : undefined;
+  },
 };
 
-async function getDataToOverride(
+async function getAgentMetadata(
   step: Action | Trigger,
 ): Promise<
   Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
 > {
   if (stepUtils.isAgentPiece(step)) {
-    const agentId = getAgentId(step);
+    const agentId = stepUtils.getAgentId(step);
     if (!agentId) {
       return {};
     }
@@ -118,18 +188,10 @@ async function getDataToOverride(
     return {
       logoUrl: agent.profilePictureUrl,
       description: agent.description,
+      displayName: agent.displayName,
     };
   }
   return {};
-}
-
-function getAgentId(action: Step) {
-  if (!stepUtils.isAgentPiece(action)) {
-    return undefined;
-  }
-  return 'input' in action.settings && 'agentId' in action.settings.input
-    ? (action.settings.input.agentId as string)
-    : undefined;
 }
 
 function mapErrorHandlingOptions(
@@ -139,30 +201,29 @@ function mapErrorHandlingOptions(
   if (flowStructureUtil.isTrigger(step.type)) {
     return {
       continueOnFailure: {
-        hide: false,
+        hide: true,
       },
       retryOnFailure: {
-        hide: false,
+        hide: true,
       },
     };
   }
   const selectedAction =
     step.type === ActionType.PIECE
-      ? piece?.actions[step.settings.actionName!]
+      ? piece.actions[step.settings.actionName!]
       : null;
+  const errorHandlingOptions = selectedAction?.errorHandlingOptions;
+  if (errorHandlingOptions) {
+    return errorHandlingOptions;
+  }
   return {
     continueOnFailure: {
-      hide:
-        selectedAction?.errorHandlingOptions?.continueOnFailure?.hide ?? false,
-      defaultValue:
-        selectedAction?.errorHandlingOptions?.continueOnFailure?.defaultValue ??
-        false,
+      hide: false,
+      defaultValue: false,
     },
     retryOnFailure: {
-      hide: selectedAction?.errorHandlingOptions?.retryOnFailure?.hide ?? false,
-      defaultValue:
-        selectedAction?.errorHandlingOptions?.retryOnFailure?.defaultValue ??
-        false,
+      hide: false,
+      defaultValue: false,
     },
   };
 }

@@ -39,7 +39,7 @@ describe('flow with response', () => {
         })
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({
-            reason: FlowRunStatus.STOPPED,
+            reason: FlowRunStatus.SUCCEEDED,
             stopResponse: response,
         })
         expect(result.steps.http.output).toEqual(response)

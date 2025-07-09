@@ -5,9 +5,9 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.14.1",
+    "@activepieces/pieces-framework": "0.14.3",
     "@activepieces/server-shared": "0.0.2",
-    "@activepieces/shared": "0.14.3",
+    "@activepieces/shared": "0.16.0",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "axios": "1.8.3",
@@ -18,7 +18,7 @@
     "async-mutex": "0.4.0",
     "chalk": "4.1.2",
     "chokidar": "3.6.0",
-    "ws": "8.18.2",
+    "ws": "8.18.3",
     "nanoid": "3.3.8",
     "tree-kill": "1.2.2"
   }

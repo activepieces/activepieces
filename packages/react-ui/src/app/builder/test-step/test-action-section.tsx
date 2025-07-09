@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
+import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import {
   Action,
@@ -15,6 +16,7 @@ import {
   PopulatedTodo,
   flowStructureUtil,
   isNil,
+  StepRunResponse,
 } from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
@@ -80,6 +82,9 @@ const TestStepSectionImplementation = React.memo(
     );
     const socket = useSocket();
     const [todoId, setTodoId] = useState<string | null>(null);
+    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(
+      null,
+    );
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[currentStep.name],
@@ -87,8 +92,11 @@ const TestStepSectionImplementation = React.memo(
       };
     });
     const form = useFormContext<ActionWithoutNext>();
+    const abortControllerRef = useRef<AbortController>(new AbortController());
+    const [mutationKey, setMutationKey] = useState<string[]>([]);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
+        mutationKey,
         currentStep,
         setErrorMessage,
         setConsoleLogs,
@@ -97,6 +105,11 @@ const TestStepSectionImplementation = React.memo(
             `settings.inputUiInfo.lastTestDate`,
             dayjs().toISOString(),
           );
+        },
+        onProgress: (progress: any) => {
+          if (isRunAgent(currentStep)) {
+            setAgentProgress(progress);
+          }
         },
       });
 
@@ -120,14 +133,11 @@ const TestStepSectionImplementation = React.memo(
 
     const handleRunAgent = async () => {
       setActiveDialog(DialogType.AGENT);
-      const testStepResponse = await flowRunsApi.testStep(socket, {
-        flowVersionId,
-        stepName: currentStep.name,
+      setAgentProgress(null);
+      abortControllerRef.current = new AbortController();
+      testAction({
+        abortSignal: abortControllerRef.current.signal,
       });
-      const output = testStepResponse.output as { todoId: string };
-      if (testStepResponse.success && !isNil(output)) {
-        setTodoId(output.todoId as string);
-      }
     };
 
     const onTestButtonClick = async () => {
@@ -145,10 +155,13 @@ const TestStepSectionImplementation = React.memo(
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
       setTodoId(null);
+      setAgentProgress(null);
+      abortControllerRef.current.abort();
+      setMutationKey([Date.now().toString()]);
     };
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
-
+    const agentId = stepUtils.getAgentId(currentStep);
     return (
       <>
         {!sampleDataExists && (
@@ -209,13 +222,13 @@ const TestStepSectionImplementation = React.memo(
             />
           )}
         {activeDialog === DialogType.AGENT &&
-          currentStep.type === ActionType.PIECE &&
-          todoId && (
+          currentStep.type === ActionType.PIECE && (
             <AgentTestingDialog
               open={true}
               onOpenChange={(open) => !open && handleCloseDialog()}
-              todoId={todoId}
-              currentStep={currentStep}
+              agentProgress={agentProgress}
+              isTesting={isTesting}
+              agentId={agentId ?? ''}
             />
           )}
         {activeDialog === DialogType.WEBHOOK && (
