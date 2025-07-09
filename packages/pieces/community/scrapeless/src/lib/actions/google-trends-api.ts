@@ -6,7 +6,7 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const googleTrendsApi = createAction({
   auth: scrapelessApiAuth,
   name: 'google_trends_api',
-  displayName: 'Google Trends API',
+  displayName: 'Google Trends',
   description: 'Access popular keyword and interest data from Google Trends.',
 
   props: {

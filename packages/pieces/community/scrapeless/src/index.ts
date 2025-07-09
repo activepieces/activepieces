@@ -5,6 +5,8 @@ import { crawlScrapeApi } from './lib/actions/crawl-scrape';
 import { crawlCrawlApi } from './lib/actions/crawl-crawl';
 import { googleTrendsApi } from './lib/actions/google-trends-api';
 import { universalScrapingApi } from './lib/actions/universal-scraping-api';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 
 export const scrapelessApiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -56,13 +58,23 @@ export const scrapeless = createPiece({
   auth: scrapelessApiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapeless.png',
+  categories:[PieceCategory.PRODUCTIVITY],
   authors: ['sunorains'],
   actions: [
     googleSearchApi,
     crawlScrapeApi,
     crawlCrawlApi,
     googleTrendsApi,
-    universalScrapingApi
+    universalScrapingApi,
+    createCustomApiCallAction({
+      auth:scrapelessApiAuth,
+      baseUrl:()=>'https://api.scrapeless.com/api/v1',
+      authMapping:async(auth)=>{
+        return{
+          'x-api-token':auth as string
+        }
+      }
+    })
   ],
   triggers: [],
 });

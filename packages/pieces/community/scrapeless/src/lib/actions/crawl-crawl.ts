@@ -5,8 +5,8 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const crawlCrawlApi = createAction({
   auth: scrapelessApiAuth,
   name: 'crawl_crawl',
-  displayName: 'Crawl data from all pages',
-  description: 'Crawl a website and its linked pages to extract comprehensive data',
+  displayName: 'Crawl Data from All Pages',
+  description: 'Crawls a website and its linked pages to extract comprehensive data.',
   props: {
     url: Property.ShortText({
       displayName: 'URL to Crawl',

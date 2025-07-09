@@ -5,8 +5,8 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const crawlScrapeApi = createAction({
   auth: scrapelessApiAuth,
   name: 'crawl_scrape',
-  displayName: 'Scrape data from a single webpage',
-  description: ' Extract data from a single webpage.',
+  displayName: 'Scrape Webpage Data',
+  description: 'Extracts data from a single webpage.',
 
 
   props: {
