@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "activepieces.fullname" . }}
+  labels:
+    {{- include "activepieces.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "activepieces.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "activepieces.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "activepieces.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP
+          env:
+            # Core Activepieces configuration
+            - name: AP_FRONTEND_URL
+              value: {{ .Values.activepieces.frontendUrl | quote }}
+            - name: AP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-secrets
+                  key: encryption-key
+            - name: AP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: AP_ENVIRONMENT
+              value: {{ .Values.activepieces.environment | quote }}
+            - name: AP_EXECUTION_MODE
+              value: {{ .Values.activepieces.executionMode | quote }}
+            - name: AP_TELEMETRY_ENABLED
+              value: {{ .Values.activepieces.telemetryEnabled | quote }}
+            - name: AP_TEMPLATES_SOURCE_URL
+              value: {{ .Values.activepieces.templatesSourceUrl | quote }}
+            - name: AP_FLOW_WORKER_CONCURRENCY
+              value: {{ .Values.activepieces.flowWorkerConcurrency | quote }}
+            - name: AP_SCHEDULED_WORKER_CONCURRENCY
+              value: {{ .Values.activepieces.scheduledWorkerConcurrency | quote }}
+            - name: AP_TRIGGER_DEFAULT_POLL_INTERVAL
+              value: {{ .Values.activepieces.triggerDefaultPollInterval | quote }}
+            - name: AP_TRIGGER_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.triggerTimeoutSeconds | quote }}
+            - name: AP_FLOW_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.flowTimeoutSeconds | quote }}
+            - name: AP_WEBHOOK_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.webhookTimeoutSeconds | quote }}
+            - name: AP_EXECUTION_DATA_RETENTION_DAYS
+              value: {{ .Values.activepieces.executionDataRetentionDays | quote }}
+            {{- if .Values.postgresql.enabled }}
+            # PostgreSQL configuration
+            - name: AP_DB_TYPE
+              value: "POSTGRES"
+            - name: AP_POSTGRES_DATABASE
+              value: {{ .Values.postgresql.auth.database | quote }}
+            - name: AP_POSTGRES_HOST
+              value: {{ .Values.postgresql.host | default (printf "%s-postgresql" (include "activepieces.fullname" .)) | quote }}
+            - name: AP_POSTGRES_PORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: AP_POSTGRES_USERNAME
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: AP_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-postgresql
+                  key: password
+            - name: AP_POSTGRES_USE_SSL
+              value: {{ .Values.postgresql.useSSL | quote }}
+            {{- else }}
+            # SQLite configuration (fallback)
+            - name: AP_DB_TYPE
+              value: "SQLITE3"
+            {{- end }}
+            {{- if .Values.redis.enabled }}
+            # Redis configuration
+            - name: AP_QUEUE_MODE
+              value: "REDIS"
+            - name: AP_REDIS_HOST
+              value: {{ .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) | quote }}
+            - name: AP_REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            - name: AP_REDIS_USE_SSL
+              value: {{ .Values.redis.useSSL | quote }}
+            {{- if .Values.redis.auth.enabled }}
+            - name: AP_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-redis
+                  key: redis-password
+            {{- end }}
+            {{- else }}
+            # Memory queue (fallback)
+            - name: AP_QUEUE_MODE
+              value: "MEMORY"
+            {{- end }}
+            # Engine path
+            - name: AP_ENGINE_EXECUTABLE_PATH
+              value: {{ .Values.activepieces.engineExecutablePath | quote }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
