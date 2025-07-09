@@ -1,3 +1,6 @@
+import { ArrowLeftIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
@@ -16,10 +19,28 @@ const PiecesSearchInput = ({
   searchInputRef,
   onSearchChange,
 }: PiecesSearchInputProps) => {
-  const { resetToBeforeNoneWasSelected: resetToPreviousValue, setSelectedTab } =
-    usePieceSelectorTabs();
+  const {
+    resetToBeforeNoneWasSelected: resetToPreviousValue,
+    setSelectedTab,
+    selectedPieceInExplore,
+    selectedTab,
+    setSelectedPieceInExplore,
+  } = usePieceSelectorTabs();
+  const showBackButton =
+    selectedPieceInExplore && selectedTab === PieceSelectorTabType.EXPLORE;
   return (
-    <div className="p-2">
+    <div className="p-2 flex gap-2 items-center">
+      {showBackButton && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setSelectedPieceInExplore(null);
+          }}
+        >
+          <ArrowLeftIcon className="size-4" />
+        </Button>
+      )}
       <SearchInput
         placeholder="Search"
         value={searchQuery}
