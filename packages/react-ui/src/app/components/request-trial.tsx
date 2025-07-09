@@ -3,6 +3,9 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -39,11 +42,38 @@ export const RequestTrial = ({
   buttonVariant = 'default',
 }: RequestTrialProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { data: flags } = flagsHooks.useFlags();
+  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+  const selfHosted = edition !== ApEdition.CLOUD;
+
+  const createQueryParams = () => {
+    const params = {
+      firstName: currentUser?.firstName || '',
+      lastName: currentUser?.lastName || '',
+      email: currentUser?.email || '',
+      featureKey,
+      flags: btoa(JSON.stringify(flags)),
+    };
+
+    return Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&');
+  };
+
+  const handleClick = () =>
+    selfHosted
+      ? window.open(
+          `https://www.activepieces.com/sales?${createQueryParams()}`,
+          '_blank',
+          'noopener noreferrer',
+        )
+      : setIsOpen(true);
 
   return (
     <>
-      <Button variant={buttonVariant} onClick={() => setIsOpen(true)}>
-        {t('Upgrade Now')}
+      <Button variant={buttonVariant} onClick={handleClick}>
+        {selfHosted ? t('Contact Sales') : t('Upgrade Now')}
       </Button>
       <ManagePlanDialog open={isOpen} setOpen={setIsOpen} />
     </>
