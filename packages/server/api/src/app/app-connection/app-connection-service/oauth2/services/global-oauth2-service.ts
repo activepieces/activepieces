@@ -3,7 +3,6 @@ import {
     AppConnectionType,
     CloudOAuth2ConnectionValue,
     isNil,
-    PlatformOAuth2ConnectionValue,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../../helper/domain-helper'
@@ -55,7 +54,7 @@ export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
         projectId,
         platformId,
         connectionValue,
-    }: RefreshOAuth2Request<CloudOAuth2ConnectionValue>): Promise<PlatformOAuth2ConnectionValue> => {
+    }: RefreshOAuth2Request<CloudOAuth2ConnectionValue>): Promise<CloudOAuth2ConnectionValue> => {
         const oauth2App = await globalOAuthAppService.getWithSecret({ pieceName, clientId: connectionValue.client_id })
         const newValue = await credentialsOauth2Service(log).refresh({
             pieceName,
@@ -75,13 +74,12 @@ export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
             access_token: newValue.access_token,
             claimed_at: newValue.claimed_at,
             refresh_token: newValue.refresh_token,
-            redirect_url: newValue.redirect_url,
             scope: newValue.scope,
             token_url: newValue.token_url,
             data: newValue.data,
             props: newValue.props,
             authorization_method: newValue.authorization_method,
-            type: AppConnectionType.PLATFORM_OAUTH2,
+            type: AppConnectionType.CLOUD_OAUTH2,
         }
     },
 })

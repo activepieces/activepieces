@@ -104,8 +104,14 @@ export const oauthAppsQueries = {
         //   : await oauthAppsApi.listCloudOAuthApps(edition);
 
         // Todo (Rupal): Ideally, we should use cloud auth and modify it to suit our needs but this will do. i.e. global oauth apps
-        const apps = await oauthAppsApi.listOAuthAppsCredentials({ limit: 10000, cursor: undefined});
-        const cloudApps = await oauthAppsApi.listGlobalOAuthAppsCredentials({ limit: 10000, cursor: undefined});
+        const apps = await oauthAppsApi.listOAuthAppsCredentials({
+          limit: 10000,
+          cursor: undefined,
+        });
+        const cloudApps = await oauthAppsApi.listGlobalOAuthAppsCredentials({
+          limit: 10000,
+          cursor: undefined,
+        });
 
         const appsMap: PieceToClientIdMap = {};
         // Object.keys(cloudApps).forEach((key) => {
@@ -115,13 +121,12 @@ export const oauthAppsQueries = {
         //   };
         // });
 
+        // Use global oauth apps as cloud apps
         cloudApps.data.forEach((app) => {
-          Object.keys(cloudApps).forEach((key) => {
-            appsMap[`${app.pieceName}-${AppConnectionType.CLOUD_OAUTH2}`] = {
-              type: AppConnectionType.CLOUD_OAUTH2,
-              clientId: app.clientId,
-            };
-          });
+          appsMap[`${app.pieceName}-${AppConnectionType.CLOUD_OAUTH2}`] = {
+            type: AppConnectionType.CLOUD_OAUTH2,
+            clientId: app.clientId,
+          };
         });
 
         apps.data.forEach((app) => {
