@@ -11,7 +11,7 @@
   "Get single record by its id.": "Obtenir un enregistrement unique par son identifiant.",
   "Find records in a table with filters.": "Rechercher les enregistrements dans une table avec des filtres.",
   "Table Name": "Nom de la table",
-  "Records": "Records",
+  "Records": "Enregistrements",
   "Records IDs": "ID d'enregistrements",
   "Record ID": "ID de l'enregistrement",
   "Values": "Valeurs",
