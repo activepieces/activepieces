@@ -3,7 +3,7 @@ import { makeRequest } from "./client";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 export const klaviyoAuth = PieceAuth.CustomAuth({
-    
+
     description: 'Enter custom authentication details',
     props: {
         api_key: Property.ShortText({
@@ -11,16 +11,11 @@ export const klaviyoAuth = PieceAuth.CustomAuth({
             description: '',
             required: true,
         }),
-        private_api_key: PieceAuth.SecretText({
-            displayName: 'Private Api Key',
-            description: '',
-            required: true
-        })
     },
     validate: async ({ auth }) => {
         if (auth) {
             try {
-                await makeRequest(auth, HttpMethod.GET, '/accounts', {});
+                await makeRequest(auth.api_key, HttpMethod.GET, '/accounts', {});
                 return {
                     valid: true,
                 }

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { countryDropdown } from '../common/props';
+import { countryCodeDropdown, countryDropdown } from '../common/props';
 
 export const createProfile = createAction({
   auth: klaviyoAuth,
@@ -15,6 +15,7 @@ export const createProfile = createAction({
       description: "Individual's email address",
       required: true,
     }),
+    country_code: countryCodeDropdown,
     phone_number: Property.ShortText({
       displayName: 'Phone Number',
       description: "Individual's phone number in E.164 format",
@@ -23,7 +24,7 @@ export const createProfile = createAction({
     external_id: Property.ShortText({
       displayName: 'External ID',
       description: 'A unique identifier for the profile in an external system',
-      required: true,
+      required: false,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
@@ -43,39 +44,40 @@ export const createProfile = createAction({
     locale: Property.ShortText({
       displayName: 'Locale',
       description: 'Locale (IETF BCP 47 language tag, e.g., en-US)',
-      required: true,
+      required: false,
     }),
     title: Property.ShortText({
       displayName: 'Title',
       description: 'Job title eg. Regional Manager',
-      required: true,
+      required: false,
     }),
     image: Property.ShortText({
       displayName: 'Image URL',
       description: 'URL to profile image',
-      required: true,
+      required: false,
     }),
     address1: Property.ShortText({
       displayName: 'Address 1',
       description: "Street address",
-      required: true,
+      required: false,
     }),
     address2: Property.ShortText({
       displayName: 'Address 2',
       description: "Street address",
-      required: true,
+      required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
-      required: true,
+      required: false,
     }),
     country: countryDropdown,
   },
   async run(context) {
 
-    const { api_key, private_api_key } = context.auth
+    const { api_key } = context.auth
     const {
       email,
+      country_code,
       phone_number,
       external_id,
       first_name,
@@ -92,7 +94,7 @@ export const createProfile = createAction({
 
     const attributes: Record<string, any> = {};
     if (email) attributes['email'] = email;
-    if (phone_number) attributes['phone_number'] = phone_number;
+    if (phone_number) attributes['phone_number'] = country_code + phone_number;
     if (external_id) attributes['external_id'] = external_id;
     if (first_name) attributes['first_name'] = first_name;
     if (last_name) attributes['last_name'] = last_name;
@@ -100,7 +102,7 @@ export const createProfile = createAction({
     if (locale) attributes['locale'] = locale;
     if (title) attributes['title'] = title;
     if (image) attributes['image'] = image;
-    if (location) attributes['location'] = {
+    if (country) attributes['location'] = {
       address1, address2, city, country
     };
 
@@ -112,7 +114,7 @@ export const createProfile = createAction({
       },
     };
     return await makeRequest(
-      { api_key, private_api_key },
+      api_key,
       HttpMethod.POST,
       '/profiles',
       body
