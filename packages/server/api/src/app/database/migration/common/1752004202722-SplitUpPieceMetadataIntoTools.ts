@@ -45,7 +45,10 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
 
         for (const mcpTool of mcpTools) {   
             const { pieceMetadata: pieceMetadataString, ...rest } = mcpTool
-            const pieceMetadata = JSON.parse(pieceMetadataString) as OldMcpPieceToolData
+            const pieceMetadata = typeof pieceMetadataString === 'string' 
+                ? JSON.parse(pieceMetadataString) as OldMcpPieceToolData
+                : pieceMetadataString as OldMcpPieceToolData
+                
             const { actionNames, ...restPieceMetadata } = pieceMetadata
             
             for (const actionName of actionNames) {
