@@ -131,7 +131,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         '3-days-left-on-trial': 'Your trial ends in 3 days – 10 free templates to boost your productivity 🌟',
         '1-day-left-on-trial': 'Last call! Keep your automation running smoothly',
         '7-days-in-trial': '7 Days in – Here\'s how to level up your automation',
-        'wellcome-to-trial': 'Welcome aboard! 🚀 Here\'s how to maximize your Activepieces experience',
+        'welcome-to-trial': 'Welcome aboard! 🚀 Here\'s how to maximize your Activepieces experience',
         'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
         'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
