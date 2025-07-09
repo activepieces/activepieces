@@ -554,6 +554,9 @@
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
+       "@activepieces/piece-microsoft-power-bi": [
+        "packages/pieces/community/microsoft-power-bi/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
       ],

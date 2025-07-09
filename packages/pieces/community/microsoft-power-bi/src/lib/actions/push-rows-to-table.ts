@@ -1,34 +1,34 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MicrosoftPowerBiAuthType } from '../../index';
+import { microsoftPowerBiAuth } from '../../index';
 
 type PowerBIRow = {
     [key: string]: string | number | boolean | null | undefined;
 };
 
-export const pushRowsToDatasetTable = createAction({
+export const pushRowsToDatasetTableAction = createAction({
+    auth:microsoftPowerBiAuth,
     name: 'push_rows_to_dataset_table',
     displayName: 'Push Rows to Dataset Table',
     description: 'Add rows to a table in a Power BI dataset (supports Push, Streaming, and PushStreaming modes)',
-    requireAuth: true,
     props: {
         dataset_id: Property.Dropdown({
             displayName: 'Dataset',
-            description: 'Select a dataset',
+            description: 'Select a dataset.',
             required: true,
             refreshers: ['auth'],
             options: async (propsValue) => {
-                const auth = propsValue['auth'] as MicrosoftPowerBiAuthType;
+                const auth = propsValue['auth'] as OAuth2PropertyValue;
                 if (!auth) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: 'Please authenticate first'
+                        placeholder: 'Please authenticate first.'
                     };
                 }
 
                 try {
-                    const response = await httpClient.sendRequest({
+                    const response = await httpClient.sendRequest<{value:{name:string,id:string}[]}>({
                         method: HttpMethod.GET,
                         url: 'https://api.powerbi.com/v1.0/myorg/datasets',
                         headers: {
@@ -37,7 +37,7 @@ export const pushRowsToDatasetTable = createAction({
                     });
 
                     return {
-                        options: response.body.value.map((dataset: any) => ({
+                        options: response.body.value.map((dataset) => ({
                             label: dataset.name,
                             value: dataset.id
                         }))
@@ -58,7 +58,7 @@ export const pushRowsToDatasetTable = createAction({
             required: true,
             refreshers: ['auth', 'dataset_id'],
             options: async (propsValue) => {
-                const auth = propsValue['auth'] as MicrosoftPowerBiAuthType;
+                const auth = propsValue['auth'] as OAuth2PropertyValue;
                 const datasetId = propsValue['dataset_id'] as string;
                 if (!auth || !datasetId) {
                     return {
@@ -69,7 +69,7 @@ export const pushRowsToDatasetTable = createAction({
                 }
 
                 try {
-                    const response = await httpClient.sendRequest({
+                    const response = await httpClient.sendRequest<{value:{name:string}[]}>({
                         method: HttpMethod.GET,
                         url: `https://api.powerbi.com/v1.0/myorg/datasets/${datasetId}/tables`,
                         headers: {
@@ -78,7 +78,7 @@ export const pushRowsToDatasetTable = createAction({
                     });
 
                     return {
-                        options: response.body.value.map((table: any) => ({
+                        options: response.body.value.map((table) => ({
                             label: table.name,
                             value: table.name
                         }))
@@ -116,7 +116,7 @@ export const pushRowsToDatasetTable = createAction({
         })
     },
     async run(context) {
-        const auth = context.auth as MicrosoftPowerBiAuthType;
+        const auth = context.auth;
         const datasetId = context.propsValue.dataset_id;
         const tableName = context.propsValue.table_name;
         let rows: PowerBIRow[];
@@ -208,7 +208,7 @@ export const pushRowsToDatasetTable = createAction({
                 sentData: rows,
                 datasetInfo: datasetResponse.body,
                 tables: tableResponse.body,
-                refreshAttempt: refreshResponse
+                refreshAttempt: refreshResponse?.body
             };
         } catch (error) {
             console.error('Error pushing data to Power BI:', error);

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MicrosoftPowerBiAuthType } from '../../index';
+import { microsoftPowerBiAuth } from '../../index';
 
 type ColumnDefinition = {
     name: string;
@@ -14,11 +14,11 @@ type TableDefinition = {
 
 type DatasetMode = 'Push' | 'Streaming' | 'PushStreaming';
 
-export const createDataset = createAction({
+export const createDatasetAction = createAction({
+    auth:microsoftPowerBiAuth,
     name: 'create_dataset',
     displayName: 'Create Dataset',
-    description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode)',
-    requireAuth: true,
+    description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode).',
     props: {
         dataset_name: Property.ShortText({
             displayName: 'Dataset Name',
@@ -57,7 +57,7 @@ export const createDataset = createAction({
         })
     },
     async run(context) {
-        const auth = context.auth as MicrosoftPowerBiAuthType;
+        const auth = context.auth;
         const datasetName = context.propsValue.dataset_name;
         const mode = context.propsValue.mode as DatasetMode;
                 
