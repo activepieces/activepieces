@@ -49,6 +49,11 @@ export const userPlatformProjectController: FastifyPluginAsyncTypebox = async (f
     })
 }
 
+async function getPlatformsForUser(identityId: string, platformId: string) {
+    const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
+    return platforms
+}
+
 const ListProjectRequestForUser = {
     config: {
         allowedPrincipals: [PrincipalType.USER],

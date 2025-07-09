@@ -51,11 +51,12 @@ import { AddIssueEntity1750056987397 } from './migration/postgres/1750056987397-
 import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
 import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
 import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
+import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
 import { ChangeContentTodoActivity1750821502601 } from './migration/postgres/1750821502601-change-content-todo-activity'
 import { UpdateAppConnectonIndexes1750821766494 } from './migration/postgres/1750821766494-update-app-connection-indexes'
 import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
-import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
+import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -69,6 +70,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddFlowVersionToIssue1751927222122,
         AddPlatformIdToAiUsage1750526457504,
         RemoveTerminationReason1751728035816,
         RevertTodoActivties1751217652277,

@@ -28,7 +28,7 @@ export function PlatformAdminContainer({
   const [setupOpen, setSetupOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [infrastructureOpen, setInfrastructureOpen] = useState(false);
-  // const { platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
@@ -46,6 +46,7 @@ export function PlatformAdminContainer({
     //   icon: <LineChart />,
     //   locked: isLocked(!platform.plan.analyticsEnabled),
     //   isSubItem: false,
+    //   show: true,
     // },
     {
       type: 'link',
@@ -54,6 +55,7 @@ export function PlatformAdminContainer({
       icon: <LayoutGrid />,
       locked: false && isLocked(!platform.plan.manageProjectsEnabled),
       isSubItem: false,
+      show: true,
     },
     {
       type: 'link',
@@ -61,6 +63,7 @@ export function PlatformAdminContainer({
       label: t('Users'),
       icon: <Users />,
       isSubItem: false,
+      show: true,
     },
     {
       type: 'group',
@@ -76,36 +79,42 @@ export function PlatformAdminContainer({
         //   to: '/platform/setup/ai',
         //   label: t('AI'),
         //   isSubItem: true,
+        //   show: true,
         // },
         // {
         //   type: 'link',
         //   to: '/platform/setup/branding',
         //   label: t('Branding'),
         //   isSubItem: true,
+        //   show: true,
         // },
         // {
         //   type: 'link',
         //   to: '/platform/setup/connections',
         //   label: t('Global Connections'),
         //   isSubItem: true,
+        //   show: true,
         // },
         // {
         //   type: 'link',
         //   to: '/platform/setup/pieces',
         //   label: t('Pieces'),
         //   isSubItem: true,
+        //   show: true,
         // },
         {
           type: 'link',
           to: '/platform/setup/templates',
           label: t('Templates'),
           isSubItem: true,
+          show: true,
         },
         // {
         //   type: 'link',
         //   to: '/platform/setup/license-key',
         //   label: t('License Key'),
         //   isSubItem: true,
+        //   show: true,
         // },
       ],
     },
@@ -123,53 +132,35 @@ export function PlatformAdminContainer({
     //       to: '/platform/security/audit-logs',
     //       label: t('Audit Logs'),
     //       isSubItem: true,
+    //       show: true,
     //     },
     //     {
     //       type: 'link',
     //       to: '/platform/security/sso',
     //       label: t('Single Sign On'),
     //       isSubItem: true,
+    //       show: true,
     //     },
     //     {
     //       type: 'link',
     //       to: '/platform/security/signing-keys',
     //       label: t('Signing Keys'),
     //       isSubItem: true,
+    //       show: true,
     //     },
     //     {
     //       type: 'link',
     //       to: '/platform/security/project-roles',
     //       label: t('Project Roles'),
     //       isSubItem: true,
+    //       show: true,
     //     },
     //     {
     //       type: 'link',
     //       to: '/platform/security/api-keys',
     //       label: t('API Keys'),
     //       isSubItem: true,
-    //     },
-    //   ],
-    // },
-    // {
-    //   type: 'group',
-    //   label: t('Infrastructure'),
-    //   icon: Server,
-    //   defaultOpen: false,
-    //   open: infrastructureOpen,
-    //   setOpen: setInfrastructureOpen,
-    //   isActive: (pathname: string) => pathname.includes('/infrastructure'),
-    //   items: [
-    //     {
-    //       type: 'link',
-    //       to: '/platform/infrastructure/workers',
-    //       label: t('Workers'),
-    //       isSubItem: true,
-    //     },
-    //     {
-    //       type: 'link',
-    //       to: '/platform/infrastructure/health',
-    //       label: t('Health'),
-    //       isSubItem: true,
+    //       show: true,
     //     },
     //   ],
     // },
@@ -187,12 +178,14 @@ export function PlatformAdminContainer({
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
           isSubItem: true,
+          show: true,
         },
       ],
     },
@@ -213,6 +206,7 @@ export function PlatformAdminContainer({
         to: '/platform/setup/billing',
         label: t('Billing'),
         isSubItem: true,
+        show: true,
       });
     }
   }

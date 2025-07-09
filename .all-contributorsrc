@@ -1904,6 +1904,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ezhil56x",
+      "name": "Ezhil Shanmugham",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103899034?v=4",
+      "profile": "https://ezhil.dev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

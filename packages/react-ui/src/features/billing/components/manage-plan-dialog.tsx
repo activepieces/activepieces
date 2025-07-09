@@ -11,6 +11,11 @@ import {
 import { billingQueries } from '@/features/billing/lib/billing-hooks';
 // import { planData } from '@/features/billing/lib/data';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { Button } from '@/components/ui/button';
+import { useNewWindow } from '@/lib/navigation-utils';
+import { supportUrl } from '@activepieces/shared';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 
 type ManagePlanDialogProps = {
   metric?: 'activeFlows' | 'mcp' | 'tables' | 'userSeats' | 'agents';
@@ -34,6 +39,7 @@ export const ManagePlanDialog: FC<ManagePlanDialogProps> = ({
   setOpen,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const openNewWindow = useNewWindow();
 
   const { data: platformBillingInformation } =
     billingQueries.usePlatformSubscription(platform.id);
@@ -54,6 +60,15 @@ export const ManagePlanDialog: FC<ManagePlanDialogProps> = ({
             )}
           </DialogTitle>
         </DialogHeader>
+
+        <Button
+          variant="ghost"
+          className="gap-2 px-2"
+          onClick={() => openNewWindow(supportUrl)}
+        >
+          <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+          {t('Support')}
+        </Button>
 
         {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {planData.plans.map((plan) => (
