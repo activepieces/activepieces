@@ -25,7 +25,6 @@ import { aiProvidersStrategies, Usage } from './providers'
 import { StreamingParser } from './providers/types'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
