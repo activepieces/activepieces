@@ -38,6 +38,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     resolvedInput: RouterActionSettings
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
+    const stepStartTime = performance.now()
 
     const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
         return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
@@ -51,6 +52,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return fallback
     })
 
+    const stepEndTime = performance.now()
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
@@ -59,7 +61,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             branchIndex: index + 1,
             evaluation: evaluatedConditions[index],
         })),
-    })
+    }).setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
     try {
