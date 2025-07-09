@@ -136,30 +136,7 @@ export class FlowExecutorContext {
         return stateAtPath[stepName]
     }
 
-    public setStepDuration({ stepName, duration }: SetStepDurationParams): FlowExecutorContext {
-        const steps = {
-            ...this.steps,
-        }
 
-        const targetMap = getStateAtPath({
-            steps,
-            currentPath: this.currentPath,
-        })
-
-        const stepOutput = targetMap[stepName]
-
-        if (isNil(stepOutput)) {
-            console.error(`[FlowExecutorContext#setStepDuration] Step ${stepName} not found in current path`)
-            return this
-        }
-
-        targetMap[stepName].duration = duration
-
-        return new FlowExecutorContext({
-            ...this,
-            steps,
-        })
-    }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
         return new FlowExecutorContext({
@@ -273,7 +250,4 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     return targetMap
 }
 
-type SetStepDurationParams = {
-    stepName: string
-    duration: number
-}
+

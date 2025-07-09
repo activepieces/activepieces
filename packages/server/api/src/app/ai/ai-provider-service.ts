@@ -20,7 +20,6 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { aiProvidersStrategies, Usage } from './providers'
 import { StreamingParser } from './providers/types'
 
@@ -100,7 +99,7 @@ export const aiProviderService = {
         if (cloudPlatformId === userPlatformId) return cloudPlatformId
 
         const platform = await platformService.getOneWithPlanOrThrow(userPlatformId)
-        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        const isEnterpriseCustomer = platformUtils.isCustomerOnDedicatedDomain(platform)
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 

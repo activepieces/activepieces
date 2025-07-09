@@ -4,6 +4,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
 import { agentRepo } from '../../agents/agents-service'
+import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
+import { repoFactory } from '../../core/db/repo-factory'
 import { getRedisConnection } from '../../database/redis-connection'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
@@ -17,6 +19,8 @@ import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
+
+const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
