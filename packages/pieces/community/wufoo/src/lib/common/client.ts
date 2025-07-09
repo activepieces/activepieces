@@ -16,10 +16,7 @@ export type WufooApiCallParams = {
   resourceUri: string;
   query?: Record<string, string | number | string[] | undefined>;
   body?: any;
-  auth: {
-    apiKey: string;
-    subdomain: string;
-  };
+  auth: WufooAuthProps;
 };
 
 export async function wufooApiCall<T extends HttpMessageBody>({
@@ -30,12 +27,12 @@ export async function wufooApiCall<T extends HttpMessageBody>({
   auth,
 }: WufooApiCallParams): Promise<T> {
   const { apiKey, subdomain } = auth;
-  const qs: QueryParams = {};
+  const queryParams: QueryParams = {};
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== null && value !== undefined) {
-        qs[key] = String(value);
+        queryParams[key] = String(value);
       }
     }
   }
@@ -44,11 +41,12 @@ export async function wufooApiCall<T extends HttpMessageBody>({
 
   const request: HttpRequest = {
     method,
-    url: baseUrl + resourceUri,
+    url: `${baseUrl}${resourceUri}`,
     headers: {
       Authorization: `Basic ${Buffer.from(`${apiKey}:footastic`).toString('base64')}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    queryParams: qs,
+    queryParams,
     body,
   };
 

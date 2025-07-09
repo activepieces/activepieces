@@ -7,8 +7,8 @@ import { formIdentifier } from '../common/props';
 export const findFormAction = createAction({
   auth: wufooAuth,
   name: 'find-form',
-  displayName: 'Find Form by Name or ID',
-  description: 'Retrieve a form’s details by its name or hash (identifier).',
+  displayName: 'Find Form by Name or Hash',
+  description: 'Retrieve form details by name or hash (identifier).',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

@@ -1,6 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
 import { wufooApiCall } from './client';
 
 interface WufooForm {
@@ -10,46 +9,53 @@ interface WufooForm {
 }
 
 export const formIdentifier = Property.Dropdown({
-  displayName: 'Form Identifier (Name or Hash)',
-  description: 'Select a form by title (easy URL) or permanent hash.',
+  displayName: 'Form Identifier (Name and Hash)',
+  description: 'Select a Wufoo form to work with.',
   required: true,
-  refreshers: ['subdomain'],
-  options: async ({ auth, propsValue }) => {
-    const { subdomain } = propsValue as { subdomain?: string };
+  refreshers: [],
+  options: async ({ auth }) => {
+    const { apiKey, subdomain } = auth as { apiKey: string; subdomain: string };
 
-    if (!auth || !subdomain) {
+    if (!apiKey || !subdomain) {
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please connect your account and provide subdomain.',
+        placeholder: 'Please connect your Wufoo account.',
       };
     }
 
-    const response = await wufooApiCall<{ Forms: WufooForm[] }>({
-      auth: {
-        apiKey: auth as string,
-        subdomain: subdomain as string,
-      },
-      method: HttpMethod.GET,
-      resourceUri: `https://${subdomain}.wufoo.com/api/v3/forms.json`,
-    });
+    let response: { Forms: WufooForm[] };
 
-    if (!response || !Array.isArray(response.Forms)) {
+    try {
+      response = await wufooApiCall<{ Forms: WufooForm[] }>({
+        auth: { apiKey, subdomain },
+        method: HttpMethod.GET,
+        resourceUri: '/forms.json',
+      });
+    } catch (e) {
       return {
         disabled: true,
         options: [],
-        placeholder: 'No forms found or error fetching forms.',
+        placeholder: `Error fetching forms: ${(e as Error).message}`,
       };
     }
 
-    const options = response.Forms.map((form) => ({
-      label: `${form.Name} (${form.Hash})`,
-      value: form.Hash,
-    }));
+    const forms = Array.isArray(response.Forms) ? response.Forms : [];
+
+    if (forms.length === 0) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'No forms found in your account.',
+      };
+    }
 
     return {
       disabled: false,
-      options,
+      options: forms.map((form) => ({
+        label: `${form.Name} (${form.Hash})`,
+        value: form.Hash,
+      })),
     };
   },
 });

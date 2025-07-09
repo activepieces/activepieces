@@ -2,46 +2,42 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { wufooAuth } from '../../index';
 import { wufooApiCall } from '../common/client';
-import { Property } from '@activepieces/pieces-framework';
 
 const LAST_FORM_IDS_KEY = 'wufoo-last-form-ids';
 
 export const newFormTrigger = createTrigger({
   auth: wufooAuth,
-  name: 'new-form-created',
+  name: 'new_form_created',
   displayName: 'New Form Created',
-  description: 'Triggers when a new form is created in the Wufoo account.',
+  description: 'Triggers when a new form is created in your Wufoo account.',
   type: TriggerStrategy.POLLING,
-  props: {
-    subdomain: Property.ShortText({
-      displayName: 'Wufoo Subdomain',
-      description: 'Your Wufoo account subdomain (e.g., `fishbowl` in `https://fishbowl.wufoo.com`).',
-      required: true,
-    }),
-  },
+  props: {},
+
   async onEnable(context) {
-    const { subdomain } = context.propsValue;
+    const { apiKey, subdomain } = context.auth;
 
     const response = await wufooApiCall<{ Forms: any[] }>({
-      auth: context.auth,
+      auth: { apiKey, subdomain },
       method: HttpMethod.GET,
-      resourceUri: `https://${subdomain}.wufoo.com/api/v3/forms.json`,
+      resourceUri: '/forms.json',
     });
 
-    const hashes = response.Forms.map((f) => f.Hash);
+    const hashes = response.Forms.map((form) => form.Hash);
     await context.store.put<string[]>(LAST_FORM_IDS_KEY, hashes);
   },
-  async onDisable() {
-  },
-  async run(context) {
-    const { subdomain } = context.propsValue;
 
-    const prevHashes = await context.store.get<string[]>(LAST_FORM_IDS_KEY) || [];
+  async onDisable() {
+    // No cleanup needed for polling
+  },
+
+  async run(context) {
+    const { apiKey, subdomain } = context.auth;
+    const previousHashes = await context.store.get<string[]>(LAST_FORM_IDS_KEY) || [];
 
     const response = await wufooApiCall<{ Forms: any[] }>({
-      auth: context.auth,
+      auth: { apiKey, subdomain },
       method: HttpMethod.GET,
-      resourceUri: `https://${subdomain}.wufoo.com/api/v3/forms.json`,
+      resourceUri: '/forms.json',
     });
 
     const allForms = response.Forms;
@@ -49,21 +45,22 @@ export const newFormTrigger = createTrigger({
 
     await context.store.put<string[]>(LAST_FORM_IDS_KEY, currentHashes);
 
-    const newForms = allForms.filter((f) => !prevHashes.includes(f.Hash));
-
+    const newForms = allForms.filter((f) => !previousHashes.includes(f.Hash));
     return newForms;
   },
+
   async test(context) {
-    const { subdomain } = context.propsValue;
+    const { apiKey, subdomain } = context.auth;
 
     const response = await wufooApiCall<{ Forms: any[] }>({
-      auth: context.auth,
+      auth: { apiKey, subdomain },
       method: HttpMethod.GET,
-      resourceUri: `https://${subdomain}.wufoo.com/api/v3/forms.json`,
+      resourceUri: '/forms.json',
     });
 
     return response.Forms.slice(0, 1);
   },
+
   sampleData: {
     Name: 'Contact Form',
     Hash: 's1afea8b1vk0jf7',
