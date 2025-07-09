@@ -27,14 +27,32 @@ import {
 export const flowRunUtils = {
   findLastStepWithStatus,
   findLoopsState,
-  extractStepOutput,
+  extractStepOutput: (
+    stepName: string,
+    loopIndexes: Record<string, number>,
+    output: Record<string, StepOutput>,
+    trigger: Trigger,
+  ): StepOutput | undefined => {
+    const stepOutput = output[stepName];
+    if (!isNil(stepOutput)) {
+      return stepOutput;
+    }
+    const parents: LoopOnItemsAction[] = flowStructureUtil
+      .findPathToStep(trigger, stepName)
+      .filter((p) => p.type === ActionType.LOOP_ON_ITEMS && flowStructureUtil.isChildOf(p, stepName)) as LoopOnItemsAction[];
+
+    if (parents.length > 0) {
+      return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
+    }
+    return undefined;
+  },
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
-      | typeof Timer
-      | typeof CircleCheck
-      | typeof PauseCircleIcon
-      | typeof CircleX;
+    | typeof Timer
+    | typeof CircleCheck
+    | typeof PauseCircleIcon
+    | typeof CircleX;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -196,49 +214,19 @@ function getLoopChildStepOutput(
   if (parents.length === 0) {
     return undefined;
   }
-  let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as
-    | LoopStepOutput
-    | undefined;
-
-  let index = 0;
-  while (index < parents.length) {
+  let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as LoopStepOutput | undefined;
+  for (let index = 0; index < parents.length; index++) {
     const currentParentName = parents[index].name;
-    if (
-      childOutput &&
-      childOutput.output &&
-      childOutput.output.iterations[loopIndexes[currentParentName]]
-    ) {
+    if (loopIndexes[currentParentName] === -1) {
+      return undefined;
+    }
+    if (childOutput && childOutput.output && childOutput.output.iterations[loopIndexes[currentParentName]]) {
       const stepName =
         index + 1 < parents.length ? parents[index + 1].name : childName;
       childOutput = childOutput.output.iterations[
         loopIndexes[parents[index].name]
       ][stepName] as LoopStepOutput | undefined;
     }
-    index++;
   }
   return childOutput;
-}
-
-function extractStepOutput(
-  stepName: string,
-  loopIndexes: Record<string, number>,
-  output: Record<string, StepOutput>,
-  trigger: Trigger,
-): StepOutput | undefined {
-  const stepOutput = output[stepName];
-  if (stepOutput) {
-    return stepOutput;
-  }
-  const parents: LoopOnItemsAction[] = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (p) =>
-        p.type === ActionType.LOOP_ON_ITEMS &&
-        flowStructureUtil.isChildOf(p, stepName),
-    ) as LoopOnItemsAction[];
-
-  if (parents.length > 0) {
-    return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
-  }
-  return undefined;
 }
