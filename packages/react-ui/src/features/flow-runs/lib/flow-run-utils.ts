@@ -39,7 +39,11 @@ export const flowRunUtils = {
     }
     const parents: LoopOnItemsAction[] = flowStructureUtil
       .findPathToStep(trigger, stepName)
-      .filter((p) => p.type === ActionType.LOOP_ON_ITEMS && flowStructureUtil.isChildOf(p, stepName)) as LoopOnItemsAction[];
+      .filter(
+        (p) =>
+          p.type === ActionType.LOOP_ON_ITEMS &&
+          flowStructureUtil.isChildOf(p, stepName),
+      ) as LoopOnItemsAction[];
 
     if (parents.length > 0) {
       return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
@@ -49,10 +53,10 @@ export const flowRunUtils = {
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
-    | typeof Timer
-    | typeof CircleCheck
-    | typeof PauseCircleIcon
-    | typeof CircleX;
+      | typeof Timer
+      | typeof CircleCheck
+      | typeof PauseCircleIcon
+      | typeof CircleX;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -214,13 +218,19 @@ function getLoopChildStepOutput(
   if (parents.length === 0) {
     return undefined;
   }
-  let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as LoopStepOutput | undefined;
+  let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as
+    | LoopStepOutput
+    | undefined;
   for (let index = 0; index < parents.length; index++) {
     const currentParentName = parents[index].name;
     if (loopIndexes[currentParentName] === -1) {
       return undefined;
     }
-    if (childOutput && childOutput.output && childOutput.output.iterations[loopIndexes[currentParentName]]) {
+    if (
+      childOutput &&
+      childOutput.output &&
+      childOutput.output.iterations[loopIndexes[currentParentName]]
+    ) {
       const stepName =
         index + 1 < parents.length ? parents[index + 1].name : childName;
       childOutput = childOutput.output.iterations[
