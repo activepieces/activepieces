@@ -43,9 +43,9 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
             }
         }
 
-        for (const mcpTool of mcpTools) {            
+        for (const mcpTool of mcpTools) {   
             const { pieceMetadata: pieceMetadataString, ...rest } = mcpTool
-            const pieceMetadata = pieceMetadataString as OldMcpPieceToolData
+            const pieceMetadata = JSON.parse(pieceMetadataString) as OldMcpPieceToolData
             const { actionNames, ...restPieceMetadata } = pieceMetadata
             
             for (const actionName of actionNames) {
@@ -64,7 +64,7 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
                     INSERT INTO "mcp_tool" 
                     ("id", "mcpId", "type", "pieceMetadata", "flowId", "created", "updated")
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                `, [toolId, tool.mcpId, McpToolType.PIECE, tool.pieceMetadata, tool.flowId, tool.created, tool.updated])
+                `, [toolId, tool.mcpId, McpToolType.PIECE, JSON.stringify(tool.pieceMetadata), tool.flowId, tool.created, tool.updated])
 
                 const toolRuns = await queryRunner.query(`
                     SELECT * FROM "mcp_run" WHERE "metadata"->>'pieceName' = $1 AND "metadata"->>'actionName' = $2
