@@ -15,7 +15,7 @@
         required: true,
         description: 'Enter your Wufoo API Key. This key is required to authenticate API requests and access your Wufoo forms and entries. You can find your API Key by logging into your Wufoo account, selecting any form, clicking the "More" dropdown, and choosing "API Information". The API Key will be displayed at the top of the page.'
       }),
-      authors: ['your-github-username'],
+      authors: ['sparkybug'],
       actions: [createFormEntry, findForm, getEntryDetails, findSubmissionByFieldValue],
       triggers: [newFormEntry, newForm],
     });
