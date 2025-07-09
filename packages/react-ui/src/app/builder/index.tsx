@@ -25,7 +25,6 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
-  FlowState,
   FlowVersionState,
   PieceTrigger,
   TriggerType,
