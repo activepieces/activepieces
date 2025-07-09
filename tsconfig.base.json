@@ -715,6 +715,9 @@
       "@activepieces/piece-scrapegrapghai": [
         "packages/pieces/community/scrapegrapghai/src/index.ts"
       ],
+      "@activepieces/piece-scrapeless": [
+        "packages/pieces/community/scrapeless/src/index.ts"
+      ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
