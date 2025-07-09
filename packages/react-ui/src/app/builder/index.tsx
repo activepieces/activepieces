@@ -25,6 +25,8 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
+  FlowState,
+  FlowVersionState,
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
@@ -143,12 +145,13 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
   const { pieceModel, refetch: refetchPiece } =
-    piecesHooks.useMostRecentAndExactPieceVersion({
+    piecesHooks.usePieceModelForStepSettings({
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
       enabled:
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
+      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
 
   const socket = useSocket();
