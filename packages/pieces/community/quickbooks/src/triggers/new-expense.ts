@@ -1,136 +1,86 @@
 import {
-    Property,
-    TriggerStrategy,
-    createTrigger,
-    TriggerHookContext,
-} from "@activepieces/pieces-framework";
-import crypto from 'node:crypto';
+  TriggerStrategy,
+  createTrigger,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../index';
+import {
+  DedupeStrategy,
+  httpClient,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { QuickbooksPurchase } from '../lib/types';
+import dayjs from 'dayjs';
 
-interface QuickBooksEntity {
-    name: string;
-    id: string;
-    operation: string;
-    lastUpdated: string;
-}
+const polling: Polling<
+  PiecePropValueSchema<typeof quickbooksAuth>,
+  Record<string, unknown>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  async items({ auth, lastFetchEpochMS }) {
+    const { access_token } = auth;
+    const companyId = auth.props?.['companyId'];
+    const environment = auth.props?.['environment'];
 
-interface QuickBooksWebhookPayload {
-    eventNotifications: {
-        realmId: string;
-        dataChangeEvent?: {
-            entities: QuickBooksEntity[];
-        };
-    }[];
-}
+    const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
 
-const markdownDescription = `
-**Setup Instructions:**
+    const query =
+      lastFetchEpochMS === 0
+        ? `SELECT * FROM Purchase ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
+        : `SELECT * FROM Purchase WHERE Metadata.CreateTime >= '${dayjs(
+            lastFetchEpochMS
+          ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
-1.  **Copy the Webhook URL:** Copy the URL provided below.
-2.  **QuickBooks Developer Dashboard:** Log in to your QuickBooks Developer dashboard.
-3.  **Select App:** Navigate to the dashboard and select the relevant app.
-4.  **Add Webhook Endpoint:** Go to the "Webhooks" section (under Production or Development, as appropriate).
-5.  **Paste URL:** Paste the copied Webhook URL into the "Endpoint URL" field.
-6.  **Select Events:** Choose the **Purchase** entity and select the desired operations (e.g., Create, Update). **Ensure you select at least the 'Create' event for this trigger.** This trigger fires when an expense (Purchase) is recorded.
-7.  **Get Verifier Token:** After saving, QuickBooks will provide a "Verifier token".
-8.  **Paste Verifier Token:** Paste this token into the "Webhook Verifier Token" field below in this trigger setup.
-9.  **Save Trigger:** Save this Activepieces trigger configuration.
+    const response = await httpClient.sendRequest<
+      QuickbooksEntityResponse<QuickbooksPurchase>
+    >({
+      method: HttpMethod.GET,
+      url: `${apiUrl}/query`,
+      queryParams: { query: query, minorversion: '70' },
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: 'application/json',
+      },
+    });
 
-**Important:** Ensure your Activepieces flow is **published** for the webhook to function correctly. QuickBooks requires the endpoint to be active.
-`;
+    const purchases = response.body.QueryResponse?.['Purchase'] ?? [];
+
+    return purchases.map((purchase) => ({
+      epochMilliSeconds: dayjs(purchase.MetaData?.CreateTime).valueOf(),
+      data: purchase,
+    }));
+  },
+};
 
 export const newExpense = createTrigger({
-    auth: quickbooksAuth,
-    name: 'new_expense',
-    displayName: 'New or Updated Expense (Purchase) (Webhook)',
-    description: 'Triggers when an Expense (Purchase) is created or updated in QuickBooks (requires webhook setup).',
-    props: {
-        description: Property.MarkDown({
-            value: markdownDescription,
-        }),
-        verifier_token: Property.ShortText({
-            displayName: 'Webhook Verifier Token',
-            description: 'Paste the Verifier Token provided by QuickBooks here. This is sensitive.',
-            required: true,
-        }),
-    },
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context: TriggerHookContext<typeof quickbooksAuth, Record<string, any>, TriggerStrategy.WEBHOOK>): Promise<void> {
-        const verifierToken = context.propsValue['verifier_token'] as string;
-        await context.store.put('quickbooks_expense_verifier_token', verifierToken); // Unique store key
-        console.info(`QuickBooks 'New Expense' Webhook Enabled. User needs to configure endpoint in QuickBooks UI: ${context.webhookUrl}`);
-    },
-    async onDisable(context: TriggerHookContext<typeof quickbooksAuth, Record<string, any>, TriggerStrategy.WEBHOOK>): Promise<void> {
-        await context.store.delete('quickbooks_expense_verifier_token'); // Unique store key
-        console.info(`QuickBooks 'New Expense' Webhook Disabled. Please manually remove the webhook from your QuickBooks Developer Dashboard: ${context.webhookUrl}`);
-    },
-    async run(context: TriggerHookContext<typeof quickbooksAuth, Record<string, any>, TriggerStrategy.WEBHOOK>): Promise<QuickBooksEntity[]> {
-        const signature = context.payload.headers['intuit-signature'] as string | undefined;
-        const bodyString = JSON.stringify(context.payload.body);
-        const storedToken = await context.store.get<string>('quickbooks_expense_verifier_token'); // Unique store key
-
-        if (!signature) {
-            console.warn("Signature missing from QuickBooks webhook request.");
-            throw new Error("Forbidden: Missing intuit-signature header.");
-        }
-
-        if (!storedToken) {
-            console.error("Verifier token not found in store. Trigger might need re-enabling.");
-            throw new Error("Internal Error: Verifier token not configured.");
-        }
-
-        const hash = crypto.createHmac('sha256', storedToken).update(bodyString).digest('base64');
-
-        if (signature !== hash) {
-            console.warn("Invalid signature received from QuickBooks webhook. Expected:", hash, "Received:", signature);
-            throw new Error("Forbidden: Invalid intuit-signature.");
-        }
-
-        console.log('QuickBooks Expense/Purchase Webhook Payload Received & Verified:', context.payload.body);
-
-        const notificationPayload = context.payload.body as QuickBooksWebhookPayload;
-        if (!notificationPayload?.eventNotifications?.length) {
-            console.log("Received empty or invalid payload structure from QuickBooks.");
-            return [];
-        }
-
-        const relevantEntities: QuickBooksEntity[] = [];
-        for (const notification of notificationPayload.eventNotifications) {
-            if (notification.dataChangeEvent?.entities) {
-                for (const entity of notification.dataChangeEvent.entities) {
-                    if (entity.name === 'Purchase') { // Filter for Purchase entity
-                        relevantEntities.push(entity);
-                    }
-                }
-            }
-        }
-
-        if (relevantEntities.length === 0) {
-            console.log("No relevant Purchase entities found in the webhook payload.");
-            return [];
-        }
-
-        // Note: The payload only contains the ID. User will need a subsequent
-        // action step (like 'Create Expense' maybe? Or a generic 'Get Purchase' if we add it)
-        // to get full details.
-        console.log(`Returning ${relevantEntities.length} expense/purchase events.`);
-        return relevantEntities;
-    },
-    sampleData: {
-        "eventNotifications": [
-            {
-                "realmId": "9130352061586111",
-                "dataChangeEvent": {
-                    "entities": [
-                        {
-                            "name": "Purchase",
-                            "id": "789",
-                            "operation": "Create",
-                            "lastUpdated": "2024-07-31T14:00:00Z"
-                        }
-                    ]
-                }
-            }
-        ]
-    },
-}); 
+  auth: quickbooksAuth,
+  name: 'new_expense',
+  displayName: 'New Expense (Purchase)',
+  description: 'Triggers when an Expense (Purchase) is created.',
+  props: {},
+  type: TriggerStrategy.POLLING,
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, context);
+  },
+  sampleData: undefined,
+});
