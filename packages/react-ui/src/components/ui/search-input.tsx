@@ -9,12 +9,10 @@ export type SearchInputProps = Omit<
   'onChange'
 > & {
   onChange: (value: string) => void;
-  showDeselect: boolean;
-  showBackButton?: boolean;
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ type, showDeselect, showBackButton, ...props }, ref) => {
+  ({ type, ...props }, ref) => {
     return (
       <div className="flex-grow flex  items-center gap-2 w-full  bg-background px-3 focus-within:outline-none first:disabled:cursor-not-allowed first:disabled:opacity-50 box-border">
         <Search className="size-4 shrink-0 opacity-50"></Search>
@@ -25,7 +23,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           {...props}
           onChange={(e) => props.onChange(e.target.value)}
         />
-        {showDeselect && (
+        {props.value !== '' && (
           <SelectUtilButton
             tooltipText={t('Clear')}
             onClick={(e) => {
