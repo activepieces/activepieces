@@ -660,6 +660,9 @@
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
+       "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
       ],
