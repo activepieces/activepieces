@@ -8,7 +8,6 @@ import {
   useRef,
 } from 'react';
 import { usePrevious } from 'react-use';
-import semVer from 'semver';
 import { create, useStore } from 'zustand';
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
@@ -30,8 +29,8 @@ import {
   isNil,
   StepLocationRelativeToParent,
   FlowRunStatus,
-  ActionType,
   apId,
+  StepSettings,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -59,7 +58,6 @@ import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 const flowUpdatesQueue = new PromiseQueue();
-
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
 export function useBuilderStateContext<T>(
@@ -166,7 +164,7 @@ export type BuilderState = {
   handleAddingOrUpdatingStep: (props: {
     pieceSelectorItem: PieceSelectorItem;
     operation: PieceSelectorOperation;
-    settings?: Record<string, unknown>;
+    overrideSettings?: StepSettings;
     selectStepAfter: boolean;
     customLogoUrl?: string;
   }) => string;
@@ -575,7 +573,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       handleAddingOrUpdatingStep: ({
         pieceSelectorItem,
         operation,
-        settings,
+        overrideSettings,
         selectStepAfter,
         customLogoUrl,
       }): string => {
@@ -585,11 +583,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           flowVersion,
           setOpenedPieceSelectorStepNameOrAddButtonId,
         } = get();
-
         const defaultValues = pieceSelectorUtils.getDefaultStepValues({
           stepName: getStepNameFromOperationType(operation, flowVersion),
           pieceSelectorItem,
-          settings,
+          overrideDefaultSettings: overrideSettings,
         });
         const isTrigger =
           defaultValues.type === TriggerType.PIECE ||
@@ -605,20 +602,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                   rightSidebar: RightSideBarType.PIECE_SETTINGS,
                 };
               });
-            }
-            const isSameTrigger =
-              defaultValues.settings.triggerName ===
-                flowVersion.trigger.settings.triggerName &&
-              defaultValues.settings.pieceName ===
-                flowVersion.trigger.settings.pieceName;
-            const isSameTriggerVersion =
-              isSameTrigger &&
-              semVer.satisfies(
-                defaultValues.settings.pieceVersion,
-                flowVersion.trigger.settings.pieceVersion,
-              );
-            if (isSameTrigger && isSameTriggerVersion) {
-              break;
             }
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
@@ -666,37 +649,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             ) {
               break;
             }
-
-            const isSamePieceAction =
-              currentAction.type === ActionType.PIECE &&
-              defaultValues.type === ActionType.PIECE &&
-              defaultValues.settings.actionName ===
-                currentAction.settings.actionName &&
-              defaultValues.settings.pieceName ===
-                currentAction.settings.pieceName;
-            const isSamePieceVersion =
-              isSamePieceAction &&
-              semVer.satisfies(
-                defaultValues.settings.pieceVersion,
-                currentAction.settings.pieceVersion,
-              );
-            const isSameAgentId =
-              isSamePieceAction &&
-              defaultValues.settings.input.agentId ===
-                currentAction.settings.input.agentId;
-
-            const isSameCoreAction =
-              currentAction.type !== ActionType.PIECE &&
-              defaultValues.type !== ActionType.PIECE &&
-              defaultValues.type === currentAction.type;
-
-            if (
-              isSameCoreAction ||
-              (isSamePieceAction && isSamePieceVersion && isSameAgentId)
-            ) {
-              break;
-            }
-
             applyOperation({
               type: FlowOperationType.UPDATE_ACTION,
               request: {
@@ -957,10 +909,11 @@ export const useIsFocusInsideListMapperModeInput = ({
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
 export const useFocusOnStep = () => {
-  const currentRun = useBuilderStateContext((state) => state.run);
-  const setSelectedStep = useBuilderStateContext(
-    (state) => state.selectStepByName,
-  );
+  const [currentRun, selectStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.selectStepByName,
+  ]);
+
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
     previousStatus ?? FlowRunStatus.RUNNING,
@@ -969,12 +922,15 @@ export const useFocusOnStep = () => {
   const lastStep = usePrevious(currentStep);
 
   const { fitView } = useReactFlow();
-  if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
-    setTimeout(() => {
-      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-      setSelectedStep(currentStep);
-    });
-  }
+  useEffect(() => {
+    if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
+      setTimeout(() => {
+        console.log('focusing on step', currentStep);
+        fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+        selectStep(currentStep);
+      });
+    }
+  }, [lastStep, currentStep, selectStep, fitView]);
 };
 
 export const useResizeCanvas = (

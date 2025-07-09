@@ -202,6 +202,9 @@
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
       ],
+      "@activepieces/piece-cognito-forms": [
+        "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -260,6 +263,9 @@
       "@activepieces/piece-devin": [
         "packages/pieces/community/devin/src/index.ts"
       ],
+      "@activepieces/piece-dimo": [
+        "packages/pieces/community/dimo/src/index.ts"
+      ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
@@ -296,6 +302,9 @@
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-fillout-forms": [
+        "packages/pieces/community/fillout-forms/src/index.ts"
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"

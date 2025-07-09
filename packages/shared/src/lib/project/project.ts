@@ -78,7 +78,6 @@ export type Project = Static<typeof Project>
 export const ProjectWithLimits = Type.Composite([
     Type.Omit(Project, ['deleted']),
     Type.Object({
-        platformSubscriptionStatus: Type.Optional(Type.String()),
         usage: ProjectUsage,
         plan: ProjectPlan,
         analytics: projectAnalytics,

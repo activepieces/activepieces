@@ -297,8 +297,8 @@ export const httpSendRequestAction = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
-        return proxied_response.data;
+        const proxied_response = await httpClient.sendRequest(request, axiosClient);
+        return proxied_response.body;
       }
       return await httpClient.sendRequest(request);
     } catch (error) {

@@ -128,13 +128,14 @@ export function FlowChat({
       }
 
       scrollToBottom();
-
+      const isDraft = mode === ChatDrawerSource.TEST_FLOW;
+      const isTestStep = mode === ChatDrawerSource.TEST_STEP;
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatSessionId,
         message: savedInput,
         files: savedFiles,
-        mode: mode === ChatDrawerSource.TEST_STEP ? 'test' : 'draft',
+        mode: isDraft ? 'draft' : isTestStep ? 'test' : 'locked',
       });
     },
 

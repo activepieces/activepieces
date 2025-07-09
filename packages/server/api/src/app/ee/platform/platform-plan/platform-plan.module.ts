@@ -54,7 +54,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        await emailService(log).sendSevenDaysInTrialEmail(platformId, customerEmail)
+        await emailService(log).sendTrialReminder(platformId, customerEmail, '7-days-in-trial')
         log.info(`Sent & 7 days in trial email for platfrom, ${platformId}`)
     })
 
@@ -74,7 +74,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        await emailService(log).sendOneDayLeftOnTrial(platformId, customerEmail)
+        await emailService(log).sendTrialReminder(platformId, customerEmail, '1-day-left-on-trial')
         log.info(`Sent 1 day left on trial email for platfrom, ${platformId}`)
     })
 

@@ -28,7 +28,7 @@ const CreateAgentActionItem = ({
   operation,
   hidePieceIconAndDescription,
 }: CreateAgentActionItemProps) => {
-  const { data: isAgentsEnabled } = flagsHooks.useFlag<boolean>(
+  const { data: isAgentsConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.AGENTS_CONFIGURED,
   );
   const [isAgentBuilderOpen, setIsAgentBuilderOpen] = useState(false);
@@ -55,6 +55,7 @@ const CreateAgentActionItem = ({
         onChange={(agent) => {
           setAgent(agent);
         }}
+        hideUseAgentButton={true}
         onOpenChange={(open) => {
           setIsAgentBuilderOpen(open);
           if (!open) {
@@ -78,7 +79,7 @@ const CreateAgentActionItem = ({
               createAgentPieceSelectorItem.pieceMetadata
             }
             onClick={() => {
-              if (!isAgentsEnabled) {
+              if (!isAgentsConfigured) {
                 toast({
                   title: t('Connect to OpenAI'),
                   description: t(

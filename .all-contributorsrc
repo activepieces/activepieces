@@ -1886,6 +1886,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "marapper",
+      "name": "Sergey Bondar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1397054?v=4",
+      "profile": "https://github.com/marapper",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "yusuf-cirak",
+      "name": "Yusuf Çırak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/81169996?v=4",
+      "profile": "https://yusufcirak.net",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ezhil56x",
+      "name": "Ezhil Shanmugham",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103899034?v=4",
+      "profile": "https://ezhil.dev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

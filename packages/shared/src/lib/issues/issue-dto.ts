@@ -17,6 +17,7 @@ export const Issue = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,
     flowId: ApId,
+    flowVersionId: ApId,
     status: Type.Enum(IssueStatus),
     stepName: Type.Optional(Type.String()),
     lastOccurrence: Type.String(),

@@ -26,9 +26,9 @@ async function buildInternalTools(params: AgentToolsParams) {
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
-            parameters: z.object({
+            parameters: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
                 output: await getStructuredOutput(params.agent),
-            }),
+            }) : z.object({}),
             execute: async () => {
                 return 'Marked as Complete'
             },
@@ -54,9 +54,6 @@ async function getMcpClient(params: AgentToolsParams) {
 
 
 async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
-    if (agent.outputType !== AgentOutputType.STRUCTURED_OUTPUT) {
-        return z.string()
-    }
     const outputFields = agent.outputFields ?? []
     const shape: ZodRawShape = {}
 

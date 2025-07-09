@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
 import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 export function TasksUsage({
@@ -19,7 +18,7 @@ export function TasksUsage({
   platformSubscription: PlatformBillingInformation;
 }) {
   const { plan, usage } = platformSubscription;
-  const isFreePlan = plan.plan === PlanName.FREE;
+  const hasTaskLimit = !isNil(plan.tasksLimit);
   const currentTasks = usage.tasks || 0;
   const includedTasks = plan.tasksLimit;
   const usagePercentage =
@@ -70,22 +69,22 @@ export function TasksUsage({
                   : `/ ${includedTasks.toLocaleString()}`}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
-                {isFreePlan ? t('Plan Limit') : t('Fair Usage')}
+                {hasTaskLimit ? t('Plan Limit') : t('Fair Usage')}
               </span>
             </div>
 
             <Progress
-              value={isFreePlan ? usagePercentage : 0}
-              className={cn('w-full', !isFreePlan && 'bg-primary/40')}
+              value={hasTaskLimit ? usagePercentage : 0}
+              className={cn('w-full', !hasTaskLimit && 'bg-primary/40')}
             />
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {isFreePlan
+                {hasTaskLimit
                   ? `${usagePercentage}% of plan allocation used`
                   : 'Unlimited usage under fair usage policy'}
               </span>
-              {isFreePlan && usagePercentage > 80 && (
+              {hasTaskLimit && usagePercentage > 80 && (
                 <span className="text-destructive font-medium">
                   Approaching limit
                 </span>

@@ -10,7 +10,6 @@ import { SonnerToaster } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
-import { platformUserApi } from '@/lib/platform-user-api';
 import { isNil, Changelog, ApFlagId } from '@activepieces/shared';
 
 interface ChangelogToastProps {
@@ -144,9 +143,7 @@ export const ChangelogProvider = () => {
   const handleDismiss = async (id: string | number, date: string) => {
     sonnerToast.dismiss(id);
     if (user) {
-      await platformUserApi.update(user.id, {
-        lastChangelogDismissed: date,
-      });
+      await changelogApi.dismiss({ date });
     }
   };
 

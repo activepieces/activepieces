@@ -49,6 +49,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.DATE_TIME:
         return {
           ...acc,
           [key]: null,
