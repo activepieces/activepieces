@@ -19,11 +19,21 @@ export const hoverElementAction = createAction({
 			description: 'Describe the element to hover, e.g. "the search box input in the top right corner".',
 			required: true,
 		}),
+		clientRequestId: Property.ShortText({
+			displayName: 'Client Request ID',
+			description: 'Optional ID to track this request.',
+			required: false,
+		}),
+		scrollWithin: Property.ShortText({
+			displayName: 'Scroll Within',
+			description: 'Describe the scrollable area to search within (e.g. "main content area").',
+			required: false,
+		}),
 		analysisScope: Property.StaticDropdown({
 			displayName: 'Page Analysis Scope',
+			description: 'Controls how much of the page is visually analyzed (default: auto).',
 			defaultValue: 'auto',
 			required: false,
-			description: 'Controls how much of the page is visually analyzed.',
 			options: {
 				disabled: false,
 				options: [
@@ -34,29 +44,9 @@ export const hoverElementAction = createAction({
 				],
 			},
 		}),
-		overlapPercentage: Property.Number({
-			displayName: 'Overlap Percentage',
-			description: 'Chunk overlap percentage for visual scan (default 30).',
-			required: false,
-			defaultValue: 30,
-		}),
-		partitionDirection: Property.StaticDropdown({
-			displayName: 'Partition Direction',
-			description: 'Screenshot partitioning direction (default vertical).',
-			required: false,
-			defaultValue: 'vertical',
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'Vertical', value: 'vertical' },
-					{ label: 'Horizontal', value: 'horizontal' },
-					{ label: 'Bidirectional', value: 'bidirectional' },
-				],
-			},
-		}),
 		resultSelectionStrategy: Property.StaticDropdown({
 			displayName: 'Result Selection Strategy',
-			description: 'Strategy to select the visual element.',
+			description: 'How to select from multiple matches (default: auto).',
 			required: false,
 			defaultValue: 'auto',
 			options: {
@@ -68,20 +58,59 @@ export const hoverElementAction = createAction({
 				],
 			},
 		}),
-		maxScanScrolls: Property.Number({
-			displayName: 'Max Scan Scrolls',
-			description: 'Max scrolls in scan mode (default 50).',
+		partitionDirection: Property.StaticDropdown({
+			displayName: 'Partition Direction',
+			description: 'How to partition screenshots for analysis (default: vertical).',
 			required: false,
-			defaultValue: 50,
+			defaultValue: 'vertical',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'Vertical', value: 'vertical' },
+					{ label: 'Horizontal', value: 'horizontal' },
+					{ label: 'Bidirectional', value: 'bidirectional' },
+				],
+			},
+		}),
+		maxScanScrolls: Property.Number({
+			displayName: 'Maximum Scan Scrolls',
+			description: 'Maximum number of scrolls in scan mode (default: 50).',
+			required: false,
 		}),
 		scanScrollDelay: Property.Number({
 			displayName: 'Scan Scroll Delay (ms)',
-			description: 'Delay between scrolls during visual scan. Default 1000ms.',
+			description: 'Delay between scrolls in scan mode (default: 1000ms).',
 			required: false,
-			defaultValue: 1000,
 		}),
-		clientRequestId: Property.ShortText({
-			displayName: 'Client Request ID',
+		overlapPercentage: Property.Number({
+			displayName: 'Overlap Percentage',
+			description: 'Percentage of overlap between screenshot chunks (default: 30).',
+			required: false,
+		}),
+		waitForNavigation: Property.Checkbox({
+			displayName: 'Wait for Navigation',
+			description: 'Wait for page navigation to complete after hovering (default: false).',
+			required: false,
+			defaultValue: false,
+		}),
+		navigationWaitUntil: Property.StaticDropdown({
+			displayName: 'Navigation Wait Until',
+			description: 'When to consider navigation complete (default: load).',
+			required: false,
+			defaultValue: 'load',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'load', value: 'load' },
+					{ label: 'domcontentloaded', value: 'domcontentloaded' },
+					{ label: 'networkidle0', value: 'networkidle0' },
+					{ label: 'networkidle2', value: 'networkidle2' },
+				],
+			},
+		}),
+		navigationTimeoutSeconds: Property.Number({
+			displayName: 'Navigation Timeout (Seconds)',
+			description: 'Max seconds to wait for navigation (default: 30).',
 			required: false,
 		}),
 		costThresholdCredits: Property.Number({
@@ -101,12 +130,16 @@ export const hoverElementAction = createAction({
 			windowId,
 			elementDescription,
 			clientRequestId,
+			scrollWithin,
 			analysisScope,
-			overlapPercentage,
-			partitionDirection,
 			resultSelectionStrategy,
+			partitionDirection,
 			maxScanScrolls,
 			scanScrollDelay,
+			overlapPercentage,
+			waitForNavigation,
+			navigationWaitUntil,
+			navigationTimeoutSeconds,
 			costThresholdCredits,
 			timeThresholdSeconds,
 		} = propsValue;
@@ -114,26 +147,64 @@ export const hoverElementAction = createAction({
 		await propsValidation.validateZod(propsValue, {
 			costThresholdCredits: z.number().min(0).optional(),
 			timeThresholdSeconds: z.number().min(0).optional(),
-			overlapPercentage: z.number().min(0).max(100).optional(),
-			maxScanScrolls: z.number().min(0).optional(),
+			navigationTimeoutSeconds: z.number().min(0).optional(),
+			maxScanScrolls: z.number().min(1).optional(),
 			scanScrollDelay: z.number().min(0).optional(),
+			overlapPercentage: z.number().min(0).max(100).optional(),
 		});
 
-		const configuration: Record<string, any> = {
-			visualAnalysis: {},
-		};
+		const configuration: Record<string, any> = {};
 
-		if (analysisScope) configuration['scope'] = analysisScope;
-		if (overlapPercentage !== undefined) configuration['visualAnalysis'].overlapPercentage = overlapPercentage;
-		if (partitionDirection) configuration['visualAnalysis'].partitionDirection = partitionDirection;
-		if (resultSelectionStrategy) configuration['visualAnalysis'].resultSelectionStrategy = resultSelectionStrategy;
-		if (maxScanScrolls !== undefined) configuration['visualAnalysis'].maxScanScrolls = maxScanScrolls;
-		if (scanScrollDelay !== undefined) configuration['visualAnalysis'].scanScrollDelay = scanScrollDelay;
-		if (costThresholdCredits !== undefined) configuration['costThresholdCredits'] = costThresholdCredits;
-		if (timeThresholdSeconds !== undefined) configuration['timeThresholdSeconds'] = timeThresholdSeconds;
+		if (scrollWithin) {
+			configuration['experimental'] = {
+				scrollWithin,
+			};
+		}
 
-		if (Object.keys(configuration['visualAnalysis']).length === 0) {
-			delete configuration['visualAnalysis'];
+		const visualAnalysis: Record<string, any> = {};
+		
+		visualAnalysis['scope'] = analysisScope;
+		
+		if (resultSelectionStrategy !== 'auto') {
+			visualAnalysis['resultSelectionStrategy'] = resultSelectionStrategy;
+		}
+		
+		if (partitionDirection !== 'vertical') {
+			visualAnalysis['partitionDirection'] = partitionDirection;
+		}
+		
+		if (typeof maxScanScrolls === 'number') {
+			visualAnalysis['maxScanScrolls'] = maxScanScrolls;
+		}
+		
+		if (typeof scanScrollDelay === 'number') {
+			visualAnalysis['scanScrollDelay'] = scanScrollDelay;
+		}
+		
+		if (typeof overlapPercentage === 'number') {
+			visualAnalysis['overlapPercentage'] = overlapPercentage;
+		}
+		
+		configuration['visualAnalysis'] = visualAnalysis;
+
+		if (waitForNavigation) {
+			const waitForNavigationConfig: Record<string, any> = {};
+			if (navigationWaitUntil !== 'load') {
+				waitForNavigationConfig['waitUntil'] = navigationWaitUntil;
+			}
+			if (typeof navigationTimeoutSeconds === 'number') {
+				waitForNavigationConfig['timeoutSeconds'] = navigationTimeoutSeconds;
+			}
+			
+			configuration['waitForNavigationConfig'] = waitForNavigationConfig;
+		}
+
+		if (typeof costThresholdCredits === 'number') {
+			configuration['costThresholdCredits'] = costThresholdCredits;
+		}
+		
+		if (typeof timeThresholdSeconds === 'number') {
+			configuration['timeThresholdSeconds'] = timeThresholdSeconds;
 		}
 
 		const body: Record<string, any> = {

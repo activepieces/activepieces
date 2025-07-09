@@ -25,33 +25,36 @@ export const typeAction = createAction({
 		}),
 		clearInputField: Property.Checkbox({
 			displayName: 'Clear Input Field Before Typing',
+			description: 'Clear the input field before typing text.',
 			defaultValue: false,
 			required: false,
 		}),
 		pressEnterKey: Property.Checkbox({
 			displayName: 'Press Enter After Typing',
+			description: 'Press Enter key after typing text.',
 			defaultValue: false,
 			required: false,
 		}),
 		pressTabKey: Property.Checkbox({
 			displayName: 'Press Tab After Typing',
+			description: 'Press Tab key after typing text (after Enter if both enabled).',
 			defaultValue: false,
 			required: false,
 		}),
 		waitForNavigation: Property.Checkbox({
 			displayName: 'Wait for Navigation After Typing',
-			description: 'Wait for page navigation to complete after typing.',
+			description: 'Wait for page navigation to complete after typing (default: false).',
 			defaultValue: false,
 			required: false,
 		}),
 		navigationTimeoutSeconds: Property.Number({
 			displayName: 'Navigation Timeout (Seconds)',
-			description: 'Max time to wait for navigation after typing. Default: 30.',
+			description: 'Max time to wait for navigation after typing (default: 30).',
 			required: false,
 		}),
 		navigationWaitUntil: Property.StaticDropdown({
 			displayName: 'Navigation Wait Strategy',
-			description: 'Condition to consider navigation complete.',
+			description: 'Condition to consider navigation complete (default: load).',
 			required: false,
 			defaultValue: 'load',
 			options: {
@@ -65,7 +68,7 @@ export const typeAction = createAction({
 		}),
 		analysisScope: Property.StaticDropdown({
 			displayName: 'Page Analysis Scope',
-			description: 'Controls how much of the page is analyzed to find the input.',
+			description: 'Controls how much of the page is analyzed to find the input (default: auto).',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -79,16 +82,17 @@ export const typeAction = createAction({
 		}),
 		visualAnalysisMaxScrolls: Property.Number({
 			displayName: 'Max Scrolls (Scan Mode)',
-			description: 'Defaults to 50. Applies only in scan mode.',
+			description: 'Maximum number of scrolls in scan mode (default: 50).',
 			required: false,
 		}),
 		visualAnalysisOverlap: Property.Number({
 			displayName: 'Chunk Overlap (%)',
-			description: 'Defaults to 30. Overlap between visual chunks.',
+			description: 'Percentage of overlap between visual chunks (default: 30).',
 			required: false,
 		}),
 		visualAnalysisDirection: Property.StaticDropdown({
 			displayName: 'Partition Direction',
+			description: 'Direction to partition screenshots (default: vertical).',
 			required: false,
 			defaultValue: 'vertical',
 			options: {
@@ -101,6 +105,7 @@ export const typeAction = createAction({
 		}),
 		visualAnalysisStrategy: Property.StaticDropdown({
 			displayName: 'Result Selection Strategy',
+			description: 'How to select from multiple matches (default: auto).',
 			required: false,
 			defaultValue: 'auto',
 			options: {
@@ -113,7 +118,7 @@ export const typeAction = createAction({
 		}),
 		visualAnalysisScrollDelay: Property.Number({
 			displayName: 'Scroll Delay (ms)',
-			description: 'Delay between scrolls. Default: 1000ms.',
+			description: 'Delay between scrolls in scan mode (default: 1000ms).',
 			required: false,
 		}),
 		scrollWithin: Property.ShortText({
@@ -165,6 +170,7 @@ export const typeAction = createAction({
 			costThresholdCredits: z.number().min(0).optional(),
 			timeThresholdSeconds: z.number().min(0).optional(),
 			navigationTimeoutSeconds: z.number().min(0).optional(),
+			visualAnalysisMaxScrolls: z.number().min(1).optional(),
 			visualAnalysisOverlap: z.number().min(0).max(100).optional(),
 			visualAnalysisScrollDelay: z.number().min(0).optional(),
 		});
@@ -173,33 +179,76 @@ export const typeAction = createAction({
 			text,
 		};
 
-		if (elementDescription) body['elementDescription'] = elementDescription;
-		if (clearInputField !== undefined) body['clearInputField'] = clearInputField;
-		if (pressEnterKey !== undefined) body['pressEnterKey'] = pressEnterKey;
-		if (pressTabKey !== undefined) body['pressTabKey'] = pressTabKey;
-		if (clientRequestId) body['clientRequestId'] = clientRequestId;
-
-		const visualAnalysis: Record<string, any> = {};
-		if (analysisScope) visualAnalysis['scope'] = analysisScope;
-		if (visualAnalysisMaxScrolls) visualAnalysis['maxScanScrolls'] = visualAnalysisMaxScrolls;
-		if (visualAnalysisOverlap) visualAnalysis['overlapPercentage'] = visualAnalysisOverlap;
-		if (visualAnalysisDirection) visualAnalysis['partitionDirection'] = visualAnalysisDirection;
-		if (visualAnalysisStrategy) visualAnalysis['resultSelectionStrategy'] = visualAnalysisStrategy;
-		if (visualAnalysisScrollDelay) visualAnalysis['scanScrollDelay'] = visualAnalysisScrollDelay;
-
-		const waitForNavigationConfig: Record<string, any> = {};
-		if (navigationTimeoutSeconds) waitForNavigationConfig['timeoutSeconds'] = navigationTimeoutSeconds;
-		if (navigationWaitUntil) waitForNavigationConfig['waitUntil'] = navigationWaitUntil;
+		if (elementDescription) {
+			body['elementDescription'] = elementDescription;
+		}
+		if (clearInputField === true) {
+			body['clearInputField'] = clearInputField;
+		}
+		if (pressEnterKey === true) {
+			body['pressEnterKey'] = pressEnterKey;
+		}
+		if (pressTabKey === true) {
+			body['pressTabKey'] = pressTabKey;
+		}
+		if (clientRequestId) {
+			body['clientRequestId'] = clientRequestId;
+		}
 
 		const configuration: Record<string, any> = {};
-		if (Object.keys(visualAnalysis).length > 0) configuration['visualAnalysis'] = visualAnalysis;
-		if (scrollWithin) configuration['scrollWithin'] = scrollWithin;
-		if (waitForNavigation && Object.keys(waitForNavigationConfig).length > 0) {
-			configuration['waitForNavigationConfig'] = waitForNavigationConfig;
+
+		const visualAnalysis: Record<string, any> = {};
+		if (analysisScope !== 'auto') {
+			visualAnalysis['scope'] = analysisScope;
 		}
-		if (waitForNavigation) configuration['waitForNavigation'] = true;
-		if (typeof costThresholdCredits === 'number') configuration['costThresholdCredits'] = costThresholdCredits;
-		if (typeof timeThresholdSeconds === 'number') configuration['timeThresholdSeconds'] = timeThresholdSeconds;
+		if (typeof visualAnalysisMaxScrolls === 'number') {
+			visualAnalysis['maxScanScrolls'] = visualAnalysisMaxScrolls;
+		}
+		if (typeof visualAnalysisOverlap === 'number') {
+			visualAnalysis['overlapPercentage'] = visualAnalysisOverlap;
+		}
+		if (visualAnalysisDirection !== 'vertical') {
+			visualAnalysis['partitionDirection'] = visualAnalysisDirection;
+		}
+		if (visualAnalysisStrategy !== 'auto') {
+			visualAnalysis['resultSelectionStrategy'] = visualAnalysisStrategy;
+		}
+		if (typeof visualAnalysisScrollDelay === 'number') {
+			visualAnalysis['scanScrollDelay'] = visualAnalysisScrollDelay;
+		}
+
+		if (Object.keys(visualAnalysis).length > 0) {
+			configuration['visualAnalysis'] = visualAnalysis;
+		}
+
+		if (scrollWithin) {
+			configuration['experimental'] = {
+				scrollWithin,
+			};
+		}
+
+		if (waitForNavigation) {
+			configuration['waitForNavigation'] = true;
+			
+			const waitForNavigationConfig: Record<string, any> = {};
+			if (typeof navigationTimeoutSeconds === 'number') {
+				waitForNavigationConfig['timeoutSeconds'] = navigationTimeoutSeconds;
+			}
+			if (navigationWaitUntil !== 'load') {
+				waitForNavigationConfig['waitUntil'] = navigationWaitUntil;
+			}
+			
+			if (Object.keys(waitForNavigationConfig).length > 0) {
+				configuration['waitForNavigationConfig'] = waitForNavigationConfig;
+			}
+		}
+
+		if (typeof costThresholdCredits === 'number') {
+			configuration['costThresholdCredits'] = costThresholdCredits;
+		}
+		if (typeof timeThresholdSeconds === 'number') {
+			configuration['timeThresholdSeconds'] = timeThresholdSeconds;
+		}
 
 		if (Object.keys(configuration).length > 0) {
 			body['configuration'] = configuration;

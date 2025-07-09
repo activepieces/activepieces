@@ -1,4 +1,4 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import {
 	createAction,
 	DynamicPropsValue,
@@ -8,6 +8,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
+import { z } from 'zod';
 
 export const createSessionAction = createAction({
 	name: 'create-session',
@@ -40,23 +41,94 @@ export const createSessionAction = createAction({
 
 				if (useAirtopProxy === false) {
 					return {
+						proxyType: Property.StaticDropdown({
+							displayName: 'Proxy Configuration Type',
+							description: 'Choose how to configure your proxy settings',
+							required: true,
+							defaultValue: 'simple',
+							options: {
+								options: [
+									{ label: 'Simple URL Only', value: 'simple' },
+									{ label: 'With Country/Sticky Settings', value: 'country_sticky' },
+									{ label: 'With Authentication', value: 'auth' },
+									{ label: 'Multiple Proxies (Domain Patterns)', value: 'multiple' },
+								],
+							},
+						}),
 						proxyUrl: Property.ShortText({
 							displayName: 'Proxy URL',
-							description: 'The full proxy URL (e.g. http://user:pass@host:port)',
+							description: 'The proxy URL (e.g., http://proxy.example.com:8080)',
 							required: true,
 						}),
-						proxyCountry: Property.ShortText({
-							displayName: 'Proxy Country (ISO-2)',
-							description: 'Country code like US/IN. Use "global" for random countries.',
-							required: false,
-						}),
-						proxySticky: Property.Checkbox({
-							displayName: 'Sticky IP',
-							description: 'Try to keep the same IP address for up to 30 minutes.',
-							defaultValue: true,
-							required: false,
-						}),
 					};
+				}
+				return {};
+			},
+		}),
+		proxyAdvanced: Property.DynamicProperties({
+			displayName: 'Advanced Proxy Settings',
+			refreshers: ['useAirtopProxy', 'proxyConfig'],
+			required: false,
+			props: async (propsValue: Record<string, unknown>, _ctx: PropertyContext): Promise<InputPropertyMap> => {
+				const useAirtopProxy = propsValue['useAirtopProxy'] as boolean | undefined;
+				const proxyConfig = propsValue['proxyConfig'] as any;
+				
+				if (useAirtopProxy === false && proxyConfig?.proxyType) {
+					const proxyType = proxyConfig.proxyType;
+					
+					if (proxyType === 'country_sticky') {
+						return {
+							proxyCountry: Property.ShortText({
+								displayName: 'Country Code',
+								description: 'ISO 3166-1 alpha-2 format (e.g., "US", "GB"). Use "global" for random countries.',
+								required: false,
+								defaultValue: 'US',
+							}),
+							proxySticky: Property.Checkbox({
+								displayName: 'Sticky IP',
+								description: 'Try to maintain the same IP address for up to 30 minutes',
+								required: false,
+								defaultValue: true,
+							}),
+						};
+					}
+					
+					if (proxyType === 'auth') {
+						return {
+							proxyUsername: Property.ShortText({
+								displayName: 'Username',
+								description: 'Username for proxy authentication',
+								required: false,
+							}),
+							proxyPassword: Property.ShortText({
+								displayName: 'Password',
+								description: 'Password for proxy authentication',
+								required: false,
+							}),
+						};
+					}
+					
+					if (proxyType === 'multiple') {
+						return {
+							proxyList: Property.Array({
+								displayName: 'Proxy List',
+								description: 'Configure multiple proxies with domain patterns',
+								required: true,
+								properties: {
+									domainPattern: Property.ShortText({
+										displayName: 'Domain Pattern',
+										description: 'Domain pattern (e.g., "*.example.com"). Use ? for single character, * for multiple.',
+										required: true,
+									}),
+									relayUrl: Property.ShortText({
+										displayName: 'Proxy URL',
+										description: 'Proxy URL for this domain pattern',
+										required: true,
+									}),
+								},
+							}),
+						};
+					}
 				}
 				return {};
 			},
@@ -67,8 +139,8 @@ export const createSessionAction = createAction({
 			required: false,
 		}),
 		timeoutMinutes: Property.Number({
-			displayName: 'Timeout (minutes)',
-			description: 'Idle timeout in minutes (1 - 10080). Defaults to 10.',
+			displayName: 'Session Timeout (minutes)',
+			description: 'How long before the session times out due to inactivity (1-10080 minutes). Default: 10.',
 			required: false,
 		}),
 	},
@@ -81,6 +153,7 @@ export const createSessionAction = createAction({
 			solveCaptcha,
 			timeoutMinutes,
 			proxyConfig,
+			proxyAdvanced,
 		} = context.propsValue as {
 			profileName?: string;
 			extensionIds?: string[];
@@ -88,11 +161,24 @@ export const createSessionAction = createAction({
 			solveCaptcha?: boolean;
 			timeoutMinutes?: number;
 			proxyConfig?: {
+				proxyType?: string;
 				proxyUrl?: string;
+			};
+			proxyAdvanced?: {
 				proxyCountry?: string;
 				proxySticky?: boolean;
+				proxyUsername?: string;
+				proxyPassword?: string;
+				proxyList?: Array<{
+					domainPattern: string;
+					relayUrl: string;
+				}>;
 			};
 		};
+
+		await propsValidation.validateZod(context.propsValue, {
+			timeoutMinutes: z.number().min(1).max(10080).optional(),
+		});
 
 		const config: Record<string, any> = {};
 
@@ -101,18 +187,34 @@ export const createSessionAction = createAction({
 		if (typeof solveCaptcha !== 'undefined') config['solveCaptcha'] = solveCaptcha;
 		if (timeoutMinutes) config['timeoutMinutes'] = timeoutMinutes;
 
-		if (useAirtopProxy === false) {
-			const proxyObject: Record<string, any> = {
-				url: proxyConfig?.proxyUrl,
-			};
-
-			if (proxyConfig?.proxyCountry) proxyObject['country'] = proxyConfig.proxyCountry;
-			if (typeof proxyConfig?.proxySticky === 'boolean') {
-				proxyObject['sticky'] = proxyConfig.proxySticky;
+		if (useAirtopProxy === false && proxyConfig?.proxyUrl) {
+			const proxyType = proxyConfig.proxyType;
+			
+			if (proxyType === 'simple') {
+				config['proxy'] = proxyConfig.proxyUrl;
+			} else if (proxyType === 'country_sticky') {
+				config['proxy'] = {
+					country: proxyAdvanced?.proxyCountry || 'US',
+					sticky: proxyAdvanced?.proxySticky !== false,
+				};
+			} else if (proxyType === 'auth') {
+				const proxyObj: any = {
+					url: proxyConfig.proxyUrl,
+				};
+				if (proxyAdvanced?.proxyUsername) {
+					proxyObj.username = proxyAdvanced.proxyUsername;
+				}
+				if (proxyAdvanced?.proxyPassword) {
+					proxyObj.password = proxyAdvanced.proxyPassword;
+				}
+				config['proxy'] = proxyObj;
+			} else if (proxyType === 'multiple' && proxyAdvanced?.proxyList) {
+				config['proxy'] = proxyAdvanced.proxyList.map((proxy) => ({
+					domainPattern: proxy.domainPattern,
+					relay: proxy.relayUrl,
+				}));
 			}
-
-			config['proxy'] = proxyObject;
-		} else {
+		} else if (useAirtopProxy !== false) {
 			config['proxy'] = true;
 		}
 

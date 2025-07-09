@@ -1,5 +1,5 @@
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue, InputPropertyMap, PropertyContext } from '@activepieces/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { sessionId, windowId } from '../common/props';
@@ -9,116 +9,139 @@ export const takeScreenshotAction = createAction({
 	name: 'take-screenshot',
 	auth: airtopAuth,
 	displayName: 'Take Screenshot',
-	description: 'Captures a screenshot of the current browser window.',
+	description: 'Captures a screenshot of the current window.',
 	props: {
 		sessionId: sessionId,
 		windowId: windowId,
 		clientRequestId: Property.ShortText({
 			displayName: 'Client Request ID',
-			description: 'Optional ID to help track this request.',
+			description: 'Optional ID for tracking this request',
 			required: false,
 		}),
 		format: Property.StaticDropdown({
 			displayName: 'Screenshot Format',
-			description: 'Choose whether to return a base64 image or a downloadable URL.',
-			defaultValue: 'base64',
+			description: 'How to return the screenshot. Default: base64 for viewport, url for page/scan',
 			required: false,
+			defaultValue: 'base64',
 			options: {
 				options: [
-					{ label: 'Base64 (Inline)', value: 'base64' },
-					{ label: 'URL (Download Link)', value: 'url' },
+					{ label: 'Base64 Data (Default for Viewport)', value: 'base64' },
+					{ label: 'Download URL (Default for Page/Scan)', value: 'url' },
+				],
+			},
+		}),
+		scope: Property.StaticDropdown({
+			displayName: 'Screenshot Scope',
+			description: 'What part of the page to capture. Default: auto',
+			required: false,
+			defaultValue: 'auto',
+			options: {
+				options: [
+					{ label: 'Auto (Recommended)', value: 'auto' },
+					{ label: 'Current View Only', value: 'viewport' },
+					{ label: 'Full Page', value: 'page' },
+					{ label: 'Scan Mode (For Problem Pages)', value: 'scan' },
 				],
 			},
 		}),
 		maxHeight: Property.Number({
-			displayName: 'Max Height (px)',
-			description: 'Maximum height of the screenshot. Aspect ratio preserved.',
+			displayName: 'Max Height (pixels)',
+			description: 'Maximum height of screenshot. Will scale down if needed, preserving aspect ratio.',
 			required: false,
 		}),
 		maxWidth: Property.Number({
-			displayName: 'Max Width (px)',
-			description: 'Maximum width of the screenshot. Aspect ratio preserved.',
+			displayName: 'Max Width (pixels)',
+			description: 'Maximum width of screenshot. Will scale down if needed, preserving aspect ratio.',
 			required: false,
 		}),
 		quality: Property.Number({
 			displayName: 'JPEG Quality (1-100)',
-			description: 'Controls compression quality (higher = better). Default varies.',
+			description: 'Image quality for JPEG compression. Higher = better quality. Note: Feature in development.',
 			required: false,
 		}),
-		scope: Property.StaticDropdown({
-			displayName: 'Screenshot Scope',
-			description: 'Determines how much of the page to capture.',
-			defaultValue: 'auto',
+		enableVisualAnalysis: Property.Checkbox({
+			displayName: 'Enable Advanced Visual Analysis',
+			description: 'Enable advanced visual analysis features for better page processing',
 			required: false,
-			options: {
-				options: [
-					{ label: 'Auto (Recommended)', value: 'auto' },
-					{ label: 'Viewport Only', value: 'viewport' },
-					{ label: 'Full Page', value: 'page' },
-					{ label: 'Scan Mode', value: 'scan' },
-				],
-			},
+			defaultValue: false,
 		}),
-		visualAnalysisMaxScrolls: Property.Number({
-			displayName: 'Max Scrolls (Scan Mode)',
-			description: 'Max number of scrolls when using scan mode. Default: 50.',
+		visualAnalysisConfig: Property.DynamicProperties({
+			displayName: 'Visual Analysis Settings',
+			refreshers: ['enableVisualAnalysis'],
 			required: false,
-		}),
-		visualAnalysisOverlap: Property.Number({
-			displayName: 'Chunk Overlap (%)',
-			description: 'Overlap between screenshot chunks. Default: 30%.',
-			required: false,
-		}),
-		visualAnalysisDirection: Property.StaticDropdown({
-			displayName: 'Partition Direction',
-			required: false,
-			defaultValue: 'vertical',
-			options: {
-				options: [
-					{ label: 'Vertical', value: 'vertical' },
-					{ label: 'Horizontal', value: 'horizontal' },
-					{ label: 'Bidirectional', value: 'bidirectional' },
-				],
-			},
-		}),
-		visualAnalysisResultStrategy: Property.StaticDropdown({
-			displayName: 'Result Selection Strategy',
-			required: false,
-			defaultValue: 'auto',
-			options: {
-				options: [
-					{ label: 'Auto (Default)', value: 'auto' },
-					{ label: 'First Match', value: 'first' },
-					{ label: 'Best Match', value: 'bestMatch' },
-				],
-			},
-		}),
-		visualAnalysisScrollDelay: Property.Number({
-			displayName: 'Scroll Delay (ms)',
-			description: 'Delay between scrolls in scan mode. Default: 1000ms.',
-			required: false,
-		}),
-		visualAnalysisScope: Property.StaticDropdown({
-			displayName: 'Visual Analysis Scope',
-			defaultValue: 'auto',
-			required: false,
-			options: {
-				options: [
-					{ label: 'Auto (Recommended)', value: 'auto' },
-					{ label: 'Viewport Only', value: 'viewport' },
-					{ label: 'Full Page', value: 'page' },
-					{ label: 'Scan Mode', value: 'scan' },
-				],
+			props: async (propsValue: Record<string, unknown>, _ctx: PropertyContext): Promise<InputPropertyMap> => {
+				const enableVisualAnalysis = propsValue['enableVisualAnalysis'] as boolean | undefined;
+
+				if (enableVisualAnalysis) {
+					return {
+						analysisScope: Property.StaticDropdown({
+							displayName: 'Analysis Scope',
+							description: 'Override main scope setting for visual analysis. Default: auto',
+							required: false,
+							defaultValue: 'auto',
+							options: {
+								options: [
+									{ label: 'Auto (Recommended)', value: 'auto' },
+									{ label: 'Current View Only', value: 'viewport' },
+									{ label: 'Full Page', value: 'page' },
+									{ label: 'Scan Mode', value: 'scan' },
+								],
+							},
+						}),
+						partitionDirection: Property.StaticDropdown({
+							displayName: 'Partition Direction',
+							description: 'How to split the screenshot into chunks. Default: vertical',
+							required: false,
+							defaultValue: 'vertical',
+							options: {
+								options: [
+									{ label: 'Vertical (Recommended)', value: 'vertical' },
+									{ label: 'Horizontal', value: 'horizontal' },
+									{ label: 'Both Directions', value: 'bidirectional' },
+								],
+							},
+						}),
+						resultSelectionStrategy: Property.StaticDropdown({
+							displayName: 'Result Selection Strategy',
+							description: 'How to select the best match when multiple results found. Default: auto',
+							required: false,
+							defaultValue: 'auto',
+							options: {
+								options: [
+									{ label: 'Auto (Let System Decide)', value: 'auto' },
+									{ label: 'First Match Found', value: 'first' },
+									{ label: 'Best Match Overall', value: 'bestMatch' },
+								],
+							},
+						}),
+						maxScanScrolls: Property.Number({
+							displayName: 'Max Scan Scrolls',
+							description: 'Maximum number of scrolls in scan mode. Default: 50',
+							required: false,
+						}),
+						overlapPercentage: Property.Number({
+							displayName: 'Overlap Percentage',
+							description: 'Percentage of overlap between screenshot chunks. Default: 30',
+							required: false,
+						}),
+						scanScrollDelay: Property.Number({
+							displayName: 'Scroll Delay (ms)',
+							description: 'Delay between scrolls in scan mode. Default: 1000ms',
+							required: false,
+						}),
+					};
+				}
+				return {};
 			},
 		}),
 		costThresholdCredits: Property.Number({
 			displayName: 'Maximum Credits to Spend',
-			description: 'Abort if the credit usage exceeds this amount. Set 0 to disable.',
+			description: 'Stop screenshot if it costs more than this. Leave blank for default limit.',
 			required: false,
 		}),
 		timeThresholdSeconds: Property.Number({
-			displayName: 'Maximum Time (Seconds)',
-			description: 'Abort if it takes longer than this time. Set 0 to disable.',
+			displayName: 'Maximum Time (seconds)',
+			description: 'Stop screenshot if it takes longer than this. Leave blank for default timeout.',
 			required: false,
 		}),
 	},
@@ -128,21 +151,39 @@ export const takeScreenshotAction = createAction({
 			windowId,
 			clientRequestId,
 			format,
+			scope,
 			maxHeight,
 			maxWidth,
 			quality,
-			scope,
-			visualAnalysisMaxScrolls,
-			visualAnalysisOverlap,
-			visualAnalysisDirection,
-			visualAnalysisResultStrategy,
-			visualAnalysisScrollDelay,
-			visualAnalysisScope,
+			enableVisualAnalysis,
+			visualAnalysisConfig,
 			costThresholdCredits,
 			timeThresholdSeconds,
-		} = context.propsValue;
+		} = context.propsValue as {
+			sessionId: string;
+			windowId: string;
+			clientRequestId?: string;
+			format?: string;
+			scope?: string;
+			maxHeight?: number;
+			maxWidth?: number;
+			quality?: number;
+			enableVisualAnalysis?: boolean;
+			visualAnalysisConfig?: {
+				analysisScope?: string;
+				partitionDirection?: string;
+				resultSelectionStrategy?: string;
+				maxScanScrolls?: number;
+				overlapPercentage?: number;
+				scanScrollDelay?: number;
+			};
+			costThresholdCredits?: number;
+			timeThresholdSeconds?: number;
+		};
 
 		await propsValidation.validateZod(context.propsValue, {
+			maxHeight: z.number().positive().optional(),
+			maxWidth: z.number().positive().optional(),
 			quality: z.number().min(1).max(100).optional(),
 			costThresholdCredits: z.number().min(0).optional(),
 			timeThresholdSeconds: z.number().min(0).optional(),
@@ -150,31 +191,70 @@ export const takeScreenshotAction = createAction({
 
 		const body: Record<string, any> = {};
 
-		if (clientRequestId) body['clientRequestId'] = clientRequestId;
-		if (typeof costThresholdCredits === 'number') body['costThresholdCredits'] = costThresholdCredits;
-		if (typeof timeThresholdSeconds === 'number') body['timeThresholdSeconds'] = timeThresholdSeconds;
+		if (clientRequestId) {
+			body['clientRequestId'] = clientRequestId;
+		}
+		if (typeof costThresholdCredits === 'number') {
+			body['costThresholdCredits'] = costThresholdCredits;
+		}
+		if (typeof timeThresholdSeconds === 'number') {
+			body['timeThresholdSeconds'] = timeThresholdSeconds;
+		}
 
-		const screenshot: Record<string, any> = {};
-		if (format) screenshot['format'] = format;
-		if (maxHeight) screenshot['maxHeight'] = maxHeight;
-		if (maxWidth) screenshot['maxWidth'] = maxWidth;
-		if (quality) screenshot['quality'] = quality;
-		if (scope) screenshot['scope'] = scope;
+		const config: Record<string, any> = {};
 
+		const screenshotConfig: Record<string, any> = {};
+		if (format && format !== 'base64') {
+			screenshotConfig['format'] = format;
+		}
+		if (typeof maxHeight === 'number') {
+			screenshotConfig['maxHeight'] = maxHeight;
+		}
+		if (typeof maxWidth === 'number') {
+			screenshotConfig['maxWidth'] = maxWidth;
+		}
+		if (typeof quality === 'number') {
+			screenshotConfig['quality'] = quality;
+		}
+
+		if (Object.keys(screenshotConfig).length > 0) {
+			config['screenshot'] = screenshotConfig;
+		}
+
+		// Visual analysis configuration - always include scope here, never at top level
 		const visualAnalysis: Record<string, any> = {};
-		if (visualAnalysisMaxScrolls) visualAnalysis['maxScanScrolls'] = visualAnalysisMaxScrolls;
-		if (visualAnalysisOverlap) visualAnalysis['overlapPercentage'] = visualAnalysisOverlap;
-		if (visualAnalysisDirection) visualAnalysis['partitionDirection'] = visualAnalysisDirection;
-		if (visualAnalysisResultStrategy) visualAnalysis['resultSelectionStrategy'] = visualAnalysisResultStrategy;
-		if (visualAnalysisScrollDelay) visualAnalysis['scanScrollDelay'] = visualAnalysisScrollDelay;
-		if (visualAnalysisScope) visualAnalysis['scope'] = visualAnalysisScope;
+		
+		// Use the main scope setting or override from visual analysis config
+		const effectiveScope = (enableVisualAnalysis && visualAnalysisConfig?.analysisScope) || scope;
+		if (effectiveScope && effectiveScope !== 'auto') {
+			visualAnalysis['scope'] = effectiveScope;
+		}
 
-		const configuration: Record<string, any> = {};
-		if (Object.keys(screenshot).length > 0) configuration['screenshot'] = screenshot;
-		if (Object.keys(visualAnalysis).length > 0) configuration['visualAnalysis'] = visualAnalysis;
+		// Add other visual analysis settings if enabled
+		if (enableVisualAnalysis && visualAnalysisConfig) {
+			if (visualAnalysisConfig.partitionDirection && visualAnalysisConfig.partitionDirection !== 'vertical') {
+				visualAnalysis['partitionDirection'] = visualAnalysisConfig.partitionDirection;
+			}
+			if (visualAnalysisConfig.resultSelectionStrategy && visualAnalysisConfig.resultSelectionStrategy !== 'auto') {
+				visualAnalysis['resultSelectionStrategy'] = visualAnalysisConfig.resultSelectionStrategy;
+			}
+			if (typeof visualAnalysisConfig.maxScanScrolls === 'number') {
+				visualAnalysis['maxScanScrolls'] = visualAnalysisConfig.maxScanScrolls;
+			}
+			if (typeof visualAnalysisConfig.overlapPercentage === 'number') {
+				visualAnalysis['overlapPercentage'] = visualAnalysisConfig.overlapPercentage;
+			}
+			if (typeof visualAnalysisConfig.scanScrollDelay === 'number') {
+				visualAnalysis['scanScrollDelay'] = visualAnalysisConfig.scanScrollDelay;
+			}
+		}
 
-		if (Object.keys(configuration).length > 0) {
-			body['configuration'] = configuration;
+		if (Object.keys(visualAnalysis).length > 0) {
+			config['visualAnalysis'] = visualAnalysis;
+		}
+
+		if (Object.keys(config).length > 0) {
+			body['configuration'] = config;
 		}
 
 		const response = await airtopApiCall({

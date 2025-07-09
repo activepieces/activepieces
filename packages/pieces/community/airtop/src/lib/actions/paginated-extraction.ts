@@ -26,7 +26,7 @@ export const paginatedExtractionAction = createAction({
 		}),
 		outputSchema: Property.LongText({
 			displayName: 'Output Schema (JSON)',
-			description: 'JSON schema defining the structure of the output.',
+			description: 'JSON schema defining the structure of the output. Must be valid JSON schema format.',
 			required: false,
 		}),
 		scrollWithin: Property.ShortText({
@@ -36,6 +36,7 @@ export const paginatedExtractionAction = createAction({
 		}),
 		paginationMode: Property.StaticDropdown({
 			displayName: 'How to Load More Content',
+			description: 'Choose how to navigate through pages (default: auto)',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -48,6 +49,7 @@ export const paginatedExtractionAction = createAction({
 		}),
 		interactionMode: Property.StaticDropdown({
 			displayName: 'Speed vs Accuracy',
+			description: 'Balance between speed and accuracy (default: auto)',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -60,6 +62,7 @@ export const paginatedExtractionAction = createAction({
 		}),
 		optimizeUrls: Property.StaticDropdown({
 			displayName: 'Optimize URLs',
+			description: 'Improve scraping performance by optimizing URLs (default: auto)',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -99,6 +102,15 @@ export const paginatedExtractionAction = createAction({
 		await propsValidation.validateZod(propsValue, {
 			costThresholdCredits: z.number().min(0).optional(),
 			timeThresholdSeconds: z.number().min(0).optional(),
+			outputSchema: z.string().refine((val) => {
+				if (!val) return true;
+				try {
+					JSON.parse(val);
+					return true;
+				} catch {
+					return false;
+				}
+			}, { message: 'Must be valid JSON format' }).optional(),
 		});
 
 		const configuration: Record<string, any> = {};
@@ -106,23 +118,31 @@ export const paginatedExtractionAction = createAction({
 		if (outputSchema) {
 			configuration['outputSchema'] = outputSchema;
 		}
+
 		if (scrollWithin) {
-			configuration['scrollWithin'] = scrollWithin;
+			configuration['experimental'] = {
+				scrollWithin,
+			};
 		}
-		if (paginationMode) {
+
+		if (paginationMode !== 'auto') {
 			configuration['paginationMode'] = paginationMode;
 		}
-		if (interactionMode) {
+
+		if (interactionMode !== 'auto') {
 			configuration['interactionMode'] = interactionMode;
 		}
-		if (optimizeUrls) {
+
+		if (optimizeUrls !== 'auto') {
 			configuration['scrape'] = {
 				optimizeUrls,
 			};
 		}
+
 		if (typeof costThresholdCredits === 'number') {
 			configuration['costThresholdCredits'] = costThresholdCredits;
 		}
+
 		if (typeof timeThresholdSeconds === 'number') {
 			configuration['timeThresholdSeconds'] = timeThresholdSeconds;
 		}

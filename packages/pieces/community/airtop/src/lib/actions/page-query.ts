@@ -26,12 +26,12 @@ export const pageQueryAction = createAction({
 		}),
 		outputSchema: Property.LongText({
 			displayName: 'Output Schema (JSON)',
-			description: 'JSON schema defining the structure of the output',
+			description: 'JSON schema defining the structure of the output. Must be valid JSON schema format.',
 			required: false,
 		}),
 		includeVisualAnalysis: Property.StaticDropdown({
 			displayName: 'Visual Analysis',
-			description: 'Whether to include visual analysis of the page',
+			description: 'Whether to include visual analysis of the page (default: auto)',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -44,7 +44,7 @@ export const pageQueryAction = createAction({
 		}),
 		optimizeUrls: Property.StaticDropdown({
 			displayName: 'Optimize URLs',
-			description: 'Improve scraping performance by optimizing URLs',
+			description: 'Improve scraping performance by optimizing URLs (default: auto)',
 			defaultValue: 'auto',
 			required: false,
 			options: {
@@ -68,7 +68,7 @@ export const pageQueryAction = createAction({
 		followPaginationLinks: Property.Checkbox({
 			displayName: 'Follow Pagination Links',
 			description:
-				'If enabled, Airtop will attempt to load more content from pagination, scrolling, etc.',
+				'If enabled, Airtop will attempt to load more content from pagination, scrolling, etc. (default: false)',
 			required: false,
 		})
 	},
@@ -89,6 +89,15 @@ export const pageQueryAction = createAction({
 		await propsValidation.validateZod(propsValue, {
 			costThresholdCredits: z.number().min(0).optional(),
 			timeThresholdSeconds: z.number().min(0).optional(),
+			outputSchema: z.string().refine((val) => {
+				if (!val) return true;
+				try {
+					JSON.parse(val);
+					return true;
+				} catch {
+					return false;
+				}
+			}, { message: 'Must be valid JSON format' }).optional(),
 		});
 
 		const configuration: Record<string, any> = {};
@@ -97,13 +106,13 @@ export const pageQueryAction = createAction({
 			configuration['outputSchema'] = outputSchema;
 		}
 
-		if (optimizeUrls) {
+		if (optimizeUrls !== 'auto') {
 			configuration['scrape'] = {
 				optimizeUrls,
 			};
 		}
 
-		if (includeVisualAnalysis) {
+		if (includeVisualAnalysis !== 'auto') {
 			configuration['experimental'] = {
 				includeVisualAnalysis,
 			};
@@ -113,7 +122,7 @@ export const pageQueryAction = createAction({
 			configuration['costThresholdCredits'] = costThresholdCredits;
 		}
 
-		if (typeof followPaginationLinks === 'boolean') {
+		if (followPaginationLinks === true) {
 			configuration['followPaginationLinks'] = followPaginationLinks;
 		}
 
