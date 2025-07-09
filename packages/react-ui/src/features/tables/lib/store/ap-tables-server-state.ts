@@ -118,5 +118,6 @@ export const createServerState = (
       clonedRecords = JSON.parse(JSON.stringify(records));
     },
     fields: clonedFields,
+    records: clonedRecords,
   };
 };

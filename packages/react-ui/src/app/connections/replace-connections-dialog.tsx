@@ -1,12 +1,12 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { GlobeIcon } from 'lucide-react';
+import { GlobeIcon, WorkflowIcon } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,14 +21,15 @@ import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import {
+  appConnectionsMutations,
+  appConnectionsQueries,
+} from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { cn } from '@/lib/utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
-
-import { ConnectionFlowCard } from './connection-flow-card';
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;
@@ -58,42 +59,21 @@ const ReplaceConnectionsDialog = ({
   const { toast } = useToast();
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
 
-  const { data: connections, isLoading: connectionsLoading } = useQuery({
-    queryKey: ['appConnections', projectId, dialogOpen],
-    queryFn: () => {
-      return appConnectionsApi.list({
+  const { data: connections, isLoading: connectionsLoading } =
+    appConnectionsQueries.useAppConnections({
+      request: {
         projectId,
-        cursor: undefined,
         limit: 1000,
-      });
-    },
-    enabled: dialogOpen,
-  });
+      },
+      extraKeys: [projectId, dialogOpen],
+      enabled: dialogOpen,
+    });
 
-  const { mutate: replaceConnections, isPending: isReplacing } = useMutation({
-    mutationFn: async (values: FormData) => {
-      await appConnectionsApi.replace({
-        sourceAppConnectionId: values.sourceConnections.id,
-        targetAppConnectionId: values.replacedWithConnection.id,
-        projectId: projectId,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Connections replaced successfully'),
-      });
-      setDialogOpen(false);
-      onConnectionMerged();
-    },
-    onError: () => {
-      toast({
-        title: t('Error'),
-        description: t('Failed to replace connections'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const { mutate: replaceConnections, isPending: isReplacing } =
+    appConnectionsMutations.useReplaceConnections({
+      setDialogOpen,
+      refetch: onConnectionMerged,
+    });
 
   const { mutate: fetchAffectedFlows, isPending: isFetchingAffectedFlows } =
     useMutation({
@@ -209,7 +189,11 @@ const ReplaceConnectionsDialog = ({
       return;
     }
 
-    replaceConnections(values);
+    replaceConnections({
+      sourceAppConnectionId: values.sourceConnections.id,
+      targetAppConnectionId: values.replacedWithConnection.id,
+      projectId: projectId,
+    });
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -218,6 +202,7 @@ const ReplaceConnectionsDialog = ({
     setStep(STEP.SELECT);
     setAffectedFlows([]);
   };
+  const navigate = useNavigate();
 
   return (
     <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -231,14 +216,14 @@ const ReplaceConnectionsDialog = ({
           </DialogTitle>
           <DialogDescription>
             {step === STEP.SELECT ? (
-              t('Replace one connection with another.')
+              t(
+                'This will replace one connection with another connection, existing flows will be changed to use the new connection, and the old connection will be deleted.',
+              )
             ) : (
               <>
-                {t('This action requires ')}
-                <span className="font-bold text-black">
-                  {t('reconnecting')}
-                </span>
-                {t(' any associated MCP pieces.')}
+                {t(
+                  'Existing MCP servers will not be changed automatically, you have to reconnect them manually.',
+                )}
               </>
             )}
           </DialogDescription>
@@ -300,7 +285,7 @@ const ReplaceConnectionsDialog = ({
                     name="sourceConnections"
                     render={({ field }) => (
                       <div className="flex flex-col gap-2">
-                        <Label>{t('Connection to Replace')}</Label>
+                        <Label>{t('Connection to replace')}</Label>
                         <SearchableSelect
                           value={field.value?.id}
                           loading={connectionsLoading}
@@ -396,14 +381,6 @@ const ReplaceConnectionsDialog = ({
                       )}
                     />
                   )}
-
-                  <Alert>
-                    <AlertDescription>
-                      {t(
-                        'All flows will be changed to use the replaced with connection',
-                      )}
-                    </AlertDescription>
-                  </Alert>
                 </>
               )}
 
@@ -433,15 +410,33 @@ const ReplaceConnectionsDialog = ({
                     {t('No flows will be affected by this change')}
                   </span>
                 ) : (
-                  affectedFlows.map((flow, index) => (
-                    <ConnectionFlowCard key={index} flow={flow} />
+                  affectedFlows.map((flow) => (
+                    <div
+                      className="flex items-center justify-between"
+                      key={flow.id}
+                    >
+                      <div className="flex items-center gap-2">
+                        <WorkflowIcon className="w-5 h-5" />
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-foreground truncate text-base"
+                          onClick={() => {
+                            navigate(
+                              `/projects/${flow.projectId}/flows/${flow.id}`,
+                            );
+                          }}
+                        >
+                          {flow.version.displayName}
+                        </Button>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
             </ScrollArea>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={handleBack}>
+              <Button type="button" variant="accent" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

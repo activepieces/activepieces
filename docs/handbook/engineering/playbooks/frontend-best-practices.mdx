@@ -1,0 +1,253 @@
+---
+title: "Frontend Best Practices"
+icon: 'lightbulb'
+---
+
+## Overview
+
+Our frontend codebase is large and constantly growing, with multiple developers contributing to it. Establishing consistent rules across key areas like data fetching and state management will make the code easier to follow, refactor, and test. It will also help newcomers understand existing patterns and adopt them quickly.
+
+## Data Fetching with React Query
+
+### Hook Organization
+
+All `useMutation` and `useQuery` hooks should be grouped by domain/feature in a single location: `features/lib/feature-hooks.ts`. Never call data fetching hooks directly from component bodies.
+
+**Benefits:**
+- Easier refactoring and testing
+- Simplified mocking for tests
+- Cleaner components focused on UI logic
+- Reduced clutter in `.tsx` files
+
+#### ❌ Don't do
+```tsx
+// UserProfile.tsx
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { updateUser, getUser } from '../api/users';
+
+function UserProfile({ userId }) {
+  const { data: user } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => getUser(userId)
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      // refetch logic here
+    }
+  });
+
+  return (
+    <div>
+      {/* UI logic */}
+    </div>
+  );
+}
+```
+
+#### ✅ Do
+```tsx
+// features/users/lib/user-hooks.ts
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { updateUser, getUser } from '../api/users';
+import { userKeys } from './user-keys';
+
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: userKeys.detail(userId),
+    queryFn: () => getUser(userId)
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+    }
+  });
+}
+
+// UserProfile.tsx
+import { useUser, useUpdateUser } from '../lib/user-hooks';
+
+function UserProfile({ userId }) {
+  const { data: user } = useUser(userId);
+  const updateUserMutation = useUpdateUser();
+
+  return (
+    <div>
+      {/* Clean UI logic only */}
+    </div>
+  );
+}
+```
+
+### Query Keys Management
+
+Query keys should be unique identifiers for specific queries. Avoid using boolean values, empty strings, or inconsistent patterns.
+
+**Best Practice:** Group all query keys in one centralized location (inside the hooks file) for easy management and refactoring.
+
+```tsx
+// features/users/lib/user-hooks.ts
+export const userKeys = {
+  all: ['users'] as const,
+  lists: () => [...userKeys.all, 'list'] as const,
+  list: (filters: string) => [...userKeys.lists(), { filters }] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
+  preferences: (id: string) => [...userKeys.detail(id), 'preferences'] as const,
+};
+
+// Usage examples:
+// userKeys.all          // ['users']
+// userKeys.list('active') // ['users', 'list', { filters: 'active' }]
+// userKeys.detail('123')  // ['users', 'detail', '123']
+```
+
+**Benefits:**
+- Easy key renaming and refactoring
+- Consistent key structure across the app
+- Better query specificity control
+- Centralized key management
+
+### Refetch vs Query Invalidation
+
+Prefer using `invalidateQueries` over passing `refetch` functions between components. This approach is more maintainable and easier to understand.
+
+#### ❌ Don't do
+```tsx
+function UserList() {
+  const { data: users, refetch } = useUsers();
+  
+  return (
+    <div>
+      <UserForm onSuccess={refetch} />
+      <EditUserModal onSuccess={refetch} />
+      {/* Passing refetch everywhere */}
+    </div>
+  );
+}
+```
+
+#### ✅ Do 
+```tsx
+// In your mutation hooks
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    }
+  });
+}
+
+// Components don't need to handle refetching
+function UserList() {
+  const { data: users } = useUsers();
+  
+  return (
+    <div>
+      <UserForm /> {/* Handles its own invalidation */}
+      <EditUserModal /> {/* Handles its own invalidation */}
+    </div>
+  );
+}
+```
+
+## Dialog State Management
+
+Use a centralized store or context to manage all dialog states in one place. This eliminates the need to pass local state between different components and provides global access to dialog controls.
+
+### Implementation Example
+
+```tsx
+// stores/dialog-store.ts
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+interface DialogState {
+  createUser: boolean;
+  editUser: boolean;
+  deleteConfirmation: boolean;
+  // Add more dialogs as needed
+}
+
+interface DialogStore {
+  dialogs: DialogState;
+  setDialog: (dialog: keyof DialogState, isOpen: boolean) => void;
+}
+
+export const useDialogStore = create<DialogStore>()(
+  immer((set) => ({
+    dialogs: {
+      createUser: false,
+      editUser: false,
+      deleteConfirmation: false,
+    },
+    setDialog: (dialog, isOpen) =>
+      set((state) => {
+        state.dialogs[dialog] = isOpen;
+      }),
+  }))
+);
+
+// Usage in components
+function UserManagement() {
+  const { dialogs, setDialog } = useDialogStore();
+
+  return (
+    <div>
+      <button onClick={() => setDialog('createUser', true)}>
+        Create User
+      </button>
+      
+      <CreateUserDialog 
+        open={dialogs.createUser}
+        onClose={() => setDialog('createUser', false)}
+      />
+      
+      <EditUserDialog 
+        open={dialogs.editUser}
+        onClose={() => setDialog('editUser', false)}
+      />
+    </div>
+  );
+}
+
+// Any component can control dialogs - no provider needed
+function Sidebar() {
+  const setDialog = useDialogStore((state) => state.setDialog);
+
+  return (
+    <button onClick={() => setDialog('d', true)}>
+      Quick Create User
+    </button>
+  );
+}
+
+// You can also use selectors for better performance
+function UserDialog() {
+  const isOpen = useDialogStore((state) => state.dialogs.createUser);
+  const setDialog = useDialogStore((state) => state.setDialog);
+
+  return (
+    <CreateUserDialog 
+      open={isOpen}
+      onClose={() => setDialog('createUser', false)}
+    />
+  );
+}
+```
+**Benefits:**
+- Centralized dialog state management
+- No prop drilling of dialog states
+- Easy to open/close dialogs from anywhere in the app
+- Consistent dialog behavior across the application
+- Simplified component logic

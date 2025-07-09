@@ -1,8 +1,8 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { userHooks } from '@/hooks/user-hooks';
+import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -22,7 +22,11 @@ export type FeatureKey =
   | 'ENTERPRISE_PIECES'
   | 'UNIVERSAL_AI'
   | 'SIGNING_KEYS'
-  | 'CUSTOM_ROLES';
+  | 'CUSTOM_ROLES'
+  | 'AGENTS'
+  | 'TABLES'
+  | 'TODOS'
+  | 'MCPS';
 
 type RequestTrialProps = {
   featureKey: FeatureKey;
@@ -34,34 +38,14 @@ export const RequestTrial = ({
   featureKey,
   buttonVariant = 'default',
 }: RequestTrialProps) => {
-  const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-
-  const createQueryParams = () => {
-    const params = {
-      firstName: currentUser?.firstName || '',
-      lastName: currentUser?.lastName || '',
-      email: currentUser?.email || '',
-      featureKey,
-      flags: btoa(JSON.stringify(flags)),
-    };
-
-    return Object.entries(params)
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join('&');
-  };
-
-  const handleClick = () => {
-    window.open(
-      `https://www.activepieces.com/sales?${createQueryParams()}`,
-      '_blank',
-      'noopener noreferrer',
-    );
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Button variant={buttonVariant} onClick={handleClick}>
-      {t('Contact Sales')}
-    </Button>
+    <>
+      <Button variant={buttonVariant} onClick={() => setIsOpen(true)}>
+        {t('Upgrade Now')}
+      </Button>
+      <ManagePlanDialog open={isOpen} setOpen={setIsOpen} />
+    </>
   );
 };

@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,7 +30,7 @@ import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -67,9 +68,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
+          {row.original.plan.aiCredits
+            ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>
       );
@@ -155,6 +156,9 @@ export default function ProjectsPage() {
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogInitialValues, setEditDialogInitialValues] =
+    useState<any>(null);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -354,6 +358,36 @@ export default function ProjectsPage() {
     }
   };
 
+  const actions = [
+    (row: ProjectWithLimits) => {
+      return (
+        <div className="flex items-end justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="size-8 p-0"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setEditDialogInitialValues({
+                    projectName: row.displayName,
+                    tasks: row.plan?.tasks?.toString() ?? '',
+                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
+                  });
+                  setEditDialogOpen(true);
+                }}
+              >
+                <Pencil className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
+          </Tooltip>
+        </div>
+      );
+    },
+  ];
+
   return (
     <LockedFeatureGuard
       featureKey="PROJECTS"
@@ -393,33 +427,12 @@ export default function ProjectsPage() {
           page={data}
           isLoading={isLoading}
           bulkActions={bulkActions}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-end justify-end">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="size-8 p-0"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          await setCurrentProject(queryClient, row);
-                          navigate('/settings/general');
-                        }}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {t('Edit project')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-          ]}
+          actions={actions}
+        />
+        <EditProjectDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          initialValues={editDialogInitialValues}
         />
       </div>
     </LockedFeatureGuard>
