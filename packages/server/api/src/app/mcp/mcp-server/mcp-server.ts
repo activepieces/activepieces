@@ -110,63 +110,90 @@ async function addPieceToServer(
                     pieceType: pieceMetadata.pieceType,
                 },
             )
-            const parsedInputs = await extractActionParametersFromUserInstructions({
-                actionMetadata,
-                toolPieceMetadata,
-                userInstructions: params.instructions,
-                piecePackage,
-                platformId,
-                projectId,
-                logger,
-            })
+            try {
+                const parsedInputs = await extractActionParametersFromUserInstructions({
+                    actionMetadata,
+                    toolPieceMetadata,
+                    userInstructions: params.instructions,
+                    piecePackage,
+                    platformId,
+                    projectId,
+                    logger,
+                })
 
-            const result = await userInteractionWatcher(logger)
-                .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-                jobType: UserInteractionJobType.EXECUTE_TOOL,
-                actionName: toolPieceMetadata.actionName,
-                pieceName: toolPieceMetadata.pieceName,
-                pieceVersion: toolPieceMetadata.pieceVersion,
-                packageType: pieceMetadata.packageType,
-                pieceType: pieceMetadata.pieceType,
-                input: parsedInputs,
-                projectId,
-            })
-
-            trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
-            const success = result.status === EngineResponseStatus.OK && result.result.success
-
-            await mcpRunService(logger).create({
-                mcpId: mcpTool.mcpId,
-                toolId: mcpTool.id,
-                projectId,
-                metadata: {
+                const result = await userInteractionWatcher(logger)
+                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                    jobType: UserInteractionJobType.EXECUTE_TOOL,
+                    actionName: toolPieceMetadata.actionName,
                     pieceName: toolPieceMetadata.pieceName,
                     pieceVersion: toolPieceMetadata.pieceVersion,
-                    actionName: toolPieceMetadata.actionName,
-                },
-                input: params,
-                output: result.result.output as Record<string, unknown>,
-                status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
-            })
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    input: parsedInputs,
+                    projectId,
+                })
 
-            if (success) {
-                return {
-                    success: true,
-                    content: [{
-                        type: 'text',
-                        text: `${JSON.stringify(result.result.output, null, 2)}`,
-                    }],
-                    resolvedFields: parsedInputs,
+                trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
+                const success = result.status === EngineResponseStatus.OK && result.result.success
+
+                await mcpRunService(logger).create({
+                    mcpId: mcpTool.mcpId,
+                    toolId: mcpTool.id,
+                    projectId,
+                    metadata: {
+                        pieceName: toolPieceMetadata.pieceName,
+                        pieceVersion: toolPieceMetadata.pieceVersion,
+                        actionName: toolPieceMetadata.actionName,
+                    },
+                    input: params,
+                    output: result.result.output as Record<string, unknown>,
+                    status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
+                })
+
+                if (success) {
+                    return {
+                        success: true,
+                        content: [{
+                            type: 'text',
+                            text: `${JSON.stringify(result.result.output, null, 2)}`,
+                        }],
+                        resolvedFields: parsedInputs,
+                    }
+                }
+                else {
+                    return {
+                        success: false,
+                        content: [{
+                            type: 'text',
+                            text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
+                        }],
+                        resolvedFields: parsedInputs,
+                    }
                 }
             }
-            else {
+            catch (error) {
+                const isOpenAIProviderNotConnected = error instanceof Error && (error.name === 'AI_RetryError' || error.name === 'AI_APICallError')
+                const errorMessage = isOpenAIProviderNotConnected ? 'Please check if you have connected your OpenAI provider to Activepieces.' : JSON.stringify(error, null, 2)
+                await mcpRunService(logger).create({
+                    mcpId: mcpTool.mcpId,
+                    toolId: mcpTool.id,
+                    projectId,
+                    metadata: {
+                        pieceName: toolPieceMetadata.pieceName,
+                        pieceVersion: toolPieceMetadata.pieceVersion,
+                        actionName: toolPieceMetadata.actionName,
+                    },
+                    input: params,
+                    output: { error: errorMessage },
+                    status: McpRunStatus.FAILED,
+                })
+
                 return {
                     success: false,
                     content: [{
                         type: 'text',
-                        text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
+                        text: errorMessage,
                     }],
-                    resolvedFields: parsedInputs,
                 }
             }
         },
@@ -376,10 +403,7 @@ async function extractActionParametersFromUserInstructions({
             }
             catch (error) {
                 logger.error({ error }, 'FailedToExtractParametersFromAI')
-                return {
-                    ...accumulatedParameters,
-                    'auth': connectionReference,
-                }
+                throw error
             }
         }, 
         Promise.resolve({ 'auth': connectionReference }),
