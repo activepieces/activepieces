@@ -48,7 +48,7 @@ export const wufoo = createPiece({
   auth: wufooAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/wufoo.png',
-  authors: ['krushnarout'],
+  authors: ['krushnarout','onyedikachi-david'],
   actions: [
     createFormEntryAction,
     findFormAction,

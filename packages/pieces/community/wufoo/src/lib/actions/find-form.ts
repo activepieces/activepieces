@@ -8,12 +8,14 @@ export const findFormAction = createAction({
   auth: wufooAuth,
   name: 'find-form',
   displayName: 'Find Form by Name or Hash',
-  description: 'Retrieve form details by name or hash (identifier).',
+  description: 'Retrieve comprehensive details about a Wufoo form including metadata, settings, entry counts, and configuration information. Essential for understanding form structure and analytics.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({
       displayName: 'Response Format',
+      description: 'Choose the format for the API response. JSON is recommended for most integrations.',
       required: true,
+      defaultValue: 'json',
       options: {
         disabled: false,
         options: [
@@ -24,13 +26,13 @@ export const findFormAction = createAction({
     }),
     includeTodayCount: Property.Checkbox({
       displayName: 'Include Today Count',
-      description: 'Include the number of entries submitted today.',
+      description: 'Include the number of entries submitted today in the response. Useful for daily analytics and monitoring.',
       required: false,
       defaultValue: false,
     }),
     pretty: Property.Checkbox({
       displayName: 'Pretty Print',
-      description: 'Format the response for readability.',
+      description: 'Format the response for enhanced readability. Recommended for debugging and manual review.',
       required: false,
       defaultValue: false,
     }),
@@ -38,16 +40,92 @@ export const findFormAction = createAction({
   async run(context) {
     const { formIdentifier, format, includeTodayCount, pretty } = context.propsValue;
 
-    const response = await wufooApiCall({
-      method: HttpMethod.GET,
-      auth: context.auth,
-      resourceUri: `/forms/${formIdentifier}.${format}`,
-      query: {
-        includeTodayCount: includeTodayCount ? 'true' : 'false',
-        pretty: pretty ? 'true' : 'false',
-      },
-    });
+    try {
+      const response = await wufooApiCall<WufooFormResponse>({
+        method: HttpMethod.GET,
+        auth: context.auth,
+        resourceUri: `/forms/${formIdentifier}.${format}`,
+        query: {
+          includeTodayCount: includeTodayCount ? 'true' : 'false',
+          pretty: pretty ? 'true' : 'false',
+        },
+      });
 
-    return response;
+      if (format === 'json' && response && typeof response === 'object') {
+        const formData = response as WufooFormResponse;
+        
+        return {
+          success: true,
+          message: 'Form details retrieved successfully',
+          form: {
+            name: formData.Name,
+            description: formData.Description,
+            hash: formData.Hash,
+            url: formData.Url,
+            isPublic: formData.IsPublic === '1',
+            language: formData.Language,
+            redirectMessage: formData.RedirectMessage,
+            entryLimit: parseInt(formData.EntryLimit || '0'),
+            todayCount: formData.EntryCountToday ? parseInt(formData.EntryCountToday) : undefined,
+            dateCreated: formData.DateCreated,
+            dateUpdated: formData.DateUpdated,
+            startDate: formData.StartDate,
+            endDate: formData.EndDate,
+            fieldsLink: formData.LinkFields,
+            entriesLink: formData.LinkEntries,
+            entriesCountLink: formData.LinkEntriesCount,
+          },
+          rawResponse: response,
+        };
+      } else {
+        return {
+          success: true,
+          message: 'Form details retrieved successfully',
+          response: response,
+        };
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error(
+          `Form not found: The form with identifier "${formIdentifier}" does not exist or you do not have access to it. Please verify the form identifier and your permissions.`
+        );
+      }
+      
+      if (error.response?.status === 403) {
+        throw new Error(
+          'Access denied: You do not have permission to view this form. Please check your Wufoo account permissions and API key scope.'
+        );
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error(
+          'Authentication failed: Please verify your API key and subdomain are correct in the connection settings.'
+        );
+      }
+      
+      throw new Error(
+        `Failed to retrieve form details: ${error.message || 'Unknown error occurred'}. Please check your form identifier and try again.`
+      );
+    }
   },
 });
+
+
+interface WufooFormResponse {
+  Name: string;
+  Description?: string;
+  Hash: string;
+  Url: string;
+  IsPublic: string;
+  Language: string;
+  RedirectMessage?: string;
+  EntryLimit?: string;
+  EntryCountToday?: string;
+  DateCreated: string;
+  DateUpdated: string;
+  StartDate: string;
+  EndDate: string;
+  LinkFields?: string;
+  LinkEntries?: string;
+  LinkEntriesCount?: string;
+}

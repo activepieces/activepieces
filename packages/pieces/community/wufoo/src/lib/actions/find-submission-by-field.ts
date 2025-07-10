@@ -8,13 +8,14 @@ export const findSubmissionByFieldAction = createAction({
   auth: wufooAuth,
   name: 'find-submission-by-field',
   displayName: 'Find Submission by Field Value',
-  description:
-    'Search submissions by matching a specific field value (e.g. email, name) in a form.',
+  description: 'Search for existing form submissions based on specific field values. Perfect for deduplication, checking existing data, and lookup operations before creating new entries.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({
       displayName: 'Response Format',
+      description: 'Choose the format for the API response. JSON is recommended for most workflows.',
       required: true,
+      defaultValue: 'json',
       options: {
         disabled: false,
         options: [
@@ -23,86 +24,200 @@ export const findSubmissionByFieldAction = createAction({
         ],
       },
     }),
+    
     fieldId: Property.ShortText({
       displayName: 'Field ID',
-      description:
-        'The API Field ID to search by (e.g. Field1 for name, Field218 for email). You can find these via the Form Fields API or API Info page.',
+      description: 'The form field to search in (e.g., Field1 for first name, Field218 for email). You can find Field IDs in the form builder or via the Form Fields API.',
       required: true,
     }),
-    matchValue: Property.ShortText({
-      displayName: 'Match Value',
-      description: 'The exact value to search for in the field.',
+    
+    searchValue: Property.ShortText({
+      displayName: 'Search Value',
+      description: 'The value to search for in the specified field. For exact matches, use the complete value.',
       required: true,
     }),
-    operator: Property.StaticDropdown({
-      displayName: 'Match Operator',
-      required: false,
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Is Equal To', value: 'Is_equal_to' },
-          { label: 'Is Not Equal To', value: 'Is_not_equal_to' },
-          { label: 'Contains', value: 'Contains' },
-          { label: 'Does Not Contain', value: 'Does_not_contain' },
-          { label: 'Begins With', value: 'Begins_with' },
-          { label: 'Ends With', value: 'Ends_with' },
-        ],
-      },
+    
+    matchType: Property.StaticDropdown({
+      displayName: 'Match Type',
+      description: 'How to match the search value with field data. Choose based on your use case.',
+      required: true,
       defaultValue: 'Is_equal_to',
-    }),
-    matchMode: Property.StaticDropdown({
-      displayName: 'Match Mode',
-      description: 'Use AND or OR if combining with more filters (optional)',
-      required: false,
       options: {
         disabled: false,
         options: [
-          { label: 'AND', value: 'AND' },
-          { label: 'OR', value: 'OR' },
+          { label: 'Exact Match', value: 'Is_equal_to' },
+          { label: 'Contains Text', value: 'Contains' },
+          { label: 'Starts With', value: 'Begins_with' },
+          { label: 'Ends With', value: 'Ends_with' },
+          { label: 'Does Not Contain', value: 'Does_not_contain' },
+          { label: 'Is Not Equal To', value: 'Is_not_equal_to' },
         ],
       },
     }),
-    pageStart: Property.Number({
-      displayName: 'Page Start',
+    
+    maxResults: Property.Number({
+      displayName: 'Maximum Results',
+      description: 'Limit the number of results returned (1-50). Lower numbers are faster for deduplication checks.',
       required: false,
-      defaultValue: 0,
+      defaultValue: 10,
     }),
-    pageSize: Property.Number({
-      displayName: 'Page Size',
-      description: 'Number of results to return (max 100).',
+    
+    sortOrder: Property.StaticDropdown({
+      displayName: 'Sort Order',
+      description: 'Order to return results. "Newest First" is best for finding recent duplicates.',
       required: false,
-      defaultValue: 25,
+      defaultValue: 'DESC',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Newest First', value: 'DESC' },
+          { label: 'Oldest First', value: 'ASC' },
+        ],
+      },
+    }),
+    
+    includeMetadata: Property.Checkbox({
+      displayName: 'Include Metadata',
+      description: 'Include additional information like submission date, IP address, and creation details.',
+      required: false,
+      defaultValue: false,
     }),
   },
+  
   async run(context) {
     const {
       formIdentifier,
       format,
       fieldId,
-      matchValue,
-      operator,
-      matchMode,
-      pageStart,
-      pageSize,
+      searchValue,
+      matchType,
+      maxResults,
+      sortOrder,
+      includeMetadata,
     } = context.propsValue;
 
-    const query: Record<string, string> = {
-      [`Filter1`]: `${fieldId}+${operator}+${encodeURIComponent(matchValue)}`,
-      pageStart: String(pageStart ?? 0),
-      pageSize: String(pageSize ?? 25),
-    };
+    try {
+      const query: Record<string, string> = {
+        pageStart: '0',
+        pageSize: String(Math.min(maxResults ?? 10, 50)),
+        system: includeMetadata ? 'true' : 'false',
+        pretty: 'false',
+        
+        Filter1: `${fieldId}+${matchType}+${encodeURIComponent(searchValue)}`,
+        
+        sort: 'EntryId',
+        sortDirection: sortOrder || 'DESC',
+      };
 
-    if (matchMode) {
-      query['match'] = matchMode;
+      const response = await wufooApiCall<WufooEntriesResponse>({
+        method: HttpMethod.GET,
+        auth: context.auth,
+        resourceUri: `/forms/${formIdentifier}/entries.${format}`,
+        query,
+      });
+
+      if (format === 'json' && response && typeof response === 'object') {
+        const entriesData = response as WufooEntriesResponse;
+        const entries = entriesData.Entries || [];
+        
+        const result = {
+          success: true,
+          found: entries.length > 0,
+          message: entries.length > 0 
+            ? `Found ${entries.length} submission(s) matching the search criteria`
+            : `No submissions found with ${fieldId} ${matchType.replace('_', ' ').toLowerCase()} "${searchValue}"`,
+          
+          searchCriteria: {
+            fieldId,
+            searchValue,
+            matchType: matchType.replace('_', ' ').toLowerCase(),
+            formIdentifier,
+          },
+          
+          resultCount: entries.length,
+          
+          firstMatch: entries.length > 0 ? {
+            entryId: entries[0].EntryId,
+            dateCreated: entries[0].DateCreated,
+            matchedFieldValue: entries[0][fieldId],
+            
+             keyFields: {
+               [fieldId]: entries[0][fieldId],
+               ...(entries[0]['Field1'] && { name_first: entries[0]['Field1'] }),
+               ...(entries[0]['Field2'] && { name_last: entries[0]['Field2'] }),
+               ...(entries[0]['Field218'] && { email: entries[0]['Field218'] }),
+               ...(entries[0]['Field220'] && { phone: entries[0]['Field220'] }),
+             },
+          } : null,
+          
+          allMatches: entries.map(entry => ({
+            entryId: entry.EntryId,
+            dateCreated: entry.DateCreated,
+            dateUpdated: entry.DateUpdated,
+            matchedFieldValue: entry[fieldId],
+            
+            allFields: Object.keys(entry)
+              .filter(key => !['EntryId', 'DateCreated', 'DateUpdated', 'CreatedBy', 'UpdatedBy'].includes(key))
+              .reduce((acc, key) => {
+                acc[key] = entry[key];
+                return acc;
+              }, {} as Record<string, any>),
+          })),
+          
+          rawResponse: response,
+        };
+        
+        return result;
+      } else {
+        return {
+          success: true,
+          message: 'Search completed successfully',
+          response: response,
+        };
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        throw new Error(
+          `Form not found: The form with identifier "${formIdentifier}" does not exist. Please verify the form identifier is correct.`
+        );
+      }
+      
+      if (error.response?.status === 400) {
+        throw new Error(
+          `Invalid search parameters: The field ID "${fieldId}" may not exist in this form, or the search value contains invalid characters. Please check the field ID and search value.`
+        );
+      }
+      
+      if (error.response?.status === 403) {
+        throw new Error(
+          'Access denied: You do not have permission to search entries in this form. Please check your Wufoo account permissions.'
+        );
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error(
+          'Authentication failed: Please verify your API key and subdomain are correct in the connection settings.'
+        );
+      }
+      
+      throw new Error(
+        `Search failed: ${error.message || 'Unknown error occurred'}. Please check your search parameters and try again.`
+      );
     }
-
-    const response = await wufooApiCall({
-      method: HttpMethod.GET,
-      auth: context.auth,
-      resourceUri: `/forms/${formIdentifier}/entries.${format}`,
-      query,
-    });
-
-    return response;
   },
 });
+
+interface WufooEntriesResponse {
+  Entries: WufooEntry[];
+}
+
+
+interface WufooEntry {
+  EntryId: string;
+  DateCreated: string;
+  DateUpdated: string;
+  CreatedBy: string;
+  UpdatedBy: string | null;
+
+  [key: string]: any;
+}
