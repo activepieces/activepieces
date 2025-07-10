@@ -111,97 +111,119 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+persistence:
+  enabled: true
+  size: 2Gi
+  mountPath: "/usr/src/app/cache"
 
-# Additional volumeMounts on the output Deployment definition.
+volumes: []
 volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
 
-# Activepieces specific configuration
 activepieces:
-  # Frontend URL - this should be the public URL where Activepieces will be accessible
   frontendUrl: "http://localhost:4200"
-  
-  # Encryption key for connections (32-character hex string)
-  # Generate with: openssl rand -hex 16
-  encryptionKey: ""
-  
-  # JWT secret for generating tokens (32-character hex string)
-  # Generate with: openssl rand -hex 32
-  jwtSecret: ""
-  
-  # Execution mode: SANDBOXED, UNSANDBOXED, or SANDBOX_CODE_ONLY
   executionMode: "SANDBOX_CODE_ONLY"
-  
-  # Environment
   environment: "prod"
-
   telemetryEnabled: true
-  
-  # Templates source URL
   templatesSourceUrl: "https://cloud.activepieces.com/api/v1/flow-templates"
-  
-  # Worker concurrency settings
   flowWorkerConcurrency: 10
   scheduledWorkerConcurrency: 10
-  
-  # Trigger settings
   triggerDefaultPollInterval: 5
   triggerTimeoutSeconds: 60
-  
-  # Flow timeout
   flowTimeoutSeconds: 600
-  
-  # Webhook timeout
   webhookTimeoutSeconds: 30
-  
-  # Data retention
   executionDataRetentionDays: 30
-  
-  # Engine configuration
+  issueArchiveDays: 30
+  pausedFlowTimeoutDays: 14
+  logLevel: "info"
+  logPretty: false
+  apiRateLimiting:
+    authn:
+      enabled: false
+      max: 100
+      window: 60
+  projectRateLimiter:
+    enabled: false
+  piecesSource: "DB"
+  devPieces: false
+  piecesSyncMode: "DB"
+
+  # Misc
+  clientRealIpHeader: ""
+  apiKey: ""
+  internalUrl: ""
+  maxConcurrentJobsPerProject: ""
+  perplexityBaseUrl: ""
+  configPath: ""
+  featurebaseApiKey: ""
+  showChangelog: true
+  enableFlowOnPublish: true
+  appWebhookSecrets: ""
+  maxFileSizeMb: ""
+  sandboxMemoryLimit: "256m"
+  sandboxPropagatedEnvVars: ""
+  triggerFailuresThreshold: ""
   engineExecutablePath: "dist/packages/engine/main.js"
 
-
-# PostgreSQL dependency configuration
 postgresql:
   enabled: true
-  # PostgreSQL connection settings
-  host: ""  # Will default to generated service name if empty
+  host: ""
   port: 5432
   useSSL: false
+  url: ""
   auth:
     database: "activepieces"
     username: "postgres"
-    # Generate with: openssl rand -hex 32
     password: ""
   primary:
     persistence:
       enabled: true
-      # size: 8Gi
 
-# Redis dependency configuration
 redis:
   enabled: true
-  # Redis connection settings
-  host: ""  # Will default to generated service name if empty
+  host: ""
   port: 6379
   useSSL: false
+  db: 0
+  url: ""
+  type: "standalone"
+  sentinel:
+    name: ""
+    hosts: ""
+    role: ""
+  failedJob:
+    retentionDays: 7
+    retentionMaxCount: 100
   auth:
-    enabled: false
+    enabled: true
+    password: ""
   master:
     persistence:
       enabled: true
-      # size: 8Gi
+
+smtp:
+  enabled: false
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  senderEmail: ""
+  senderName: ""
+
+s3:
+  enabled: false
+  accessKeyId: ""
+  secretAccessKey: ""
+  bucket: ""
+  endpoint: ""
+  region: ""
+  useSignedUrls: false
+  useIrsa: false
+
+queueUi:
+  enabled: false
+  username: ""
+  password: ""

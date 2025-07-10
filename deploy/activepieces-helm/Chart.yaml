@@ -1,6 +1,7 @@
 apiVersion: v2
 name: activepieces
 description: A Helm chart for Activepieces
+icon: https://cdn.activepieces.com/brand/logo.svg
 
 # A chart can be either an 'application' or a 'library' chart.
 #
