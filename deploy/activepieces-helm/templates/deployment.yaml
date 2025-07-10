@@ -252,7 +252,7 @@ spec:
               value: "REDIS"
             {{- if .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) }}
             - name: AP_REDIS_HOST
-              value: {{ .Values.redis.host | default (printf "%s-redis-master" .Release.Name) | quote }}
+              value: {{ .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) | quote }}
             {{- end }}
             {{- if .Values.redis.port }}
             - name: AP_REDIS_PORT

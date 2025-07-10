@@ -129,15 +129,15 @@ activepieces:
   environment: "prod"
   telemetryEnabled: true
   templatesSourceUrl: "https://cloud.activepieces.com/api/v1/flow-templates"
-  flowWorkerConcurrency: 
-  scheduledWorkerConcurrency: 
-  triggerDefaultPollInterval: 
-  triggerTimeoutSeconds: 
-  flowTimeoutSeconds: 
-  webhookTimeoutSeconds: 
-  executionDataRetentionDays: 
-  issueArchiveDays: 
-  pausedFlowTimeoutDays: 
+  flowWorkerConcurrency: ""
+  scheduledWorkerConcurrency: ""
+  triggerDefaultPollInterval: ""
+  triggerTimeoutSeconds: ""
+  flowTimeoutSeconds: ""
+  webhookTimeoutSeconds: ""
+  executionDataRetentionDays: ""
+  issueArchiveDays: ""
+  pausedFlowTimeoutDays: ""
   logLevel: "info"
   logPretty: false
   apiRateLimiting:
@@ -177,6 +177,7 @@ postgresql:
   auth:
     database: "activepieces"
     username: "postgres"
+    # password is automatically generated if not provided
     password: ""
   primary:
     persistence:
@@ -200,6 +201,7 @@ redis:
     retentionMaxCount: 100
   auth:
     enabled: true
+    # password is automatically generated if not provided
     password: ""
   master:
     persistence:
