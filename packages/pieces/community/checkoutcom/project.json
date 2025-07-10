@@ -1,0 +1,37 @@
+{
+  "name": "pieces-checkout",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/checkoutcom/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/checkoutcom",
+        "tsConfig": "packages/pieces/community/checkoutcom/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/checkoutcom/package.json",
+        "main": "packages/pieces/community/checkoutcom/src/index.ts",
+        "assets": [
+          "packages/pieces/community/checkoutcom/*.md",
+          {
+            "input": "packages/pieces/community/checkoutcom/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+} 
