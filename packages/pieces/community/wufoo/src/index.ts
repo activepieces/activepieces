@@ -12,7 +12,7 @@ import { newFormEntryTrigger } from './lib/triggers/new-form-entry';
 import { newFormTrigger } from './lib/triggers/new-form';
 
 export const wufooAuth = PieceAuth.CustomAuth({
-  description: 'Enter your Wufoo API Key and Subdomain',
+  description: 'Enter your Wufoo API Key and Subdomain.',
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
@@ -44,7 +44,7 @@ export const wufooAuth = PieceAuth.CustomAuth({
 });
 
 export const wufoo = createPiece({
-  displayName: 'wufoo (Wufoo)',
+  displayName: 'Wufoo',
   auth: wufooAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/wufoo.png',
