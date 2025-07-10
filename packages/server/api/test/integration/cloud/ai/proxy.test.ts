@@ -31,6 +31,9 @@ const geminiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
 const replicateKey = process.env.REPLICATE_API_TOKEN
 
 describe('AI Providers Proxy', () => {
+    it('prevent empty test suite', async () => {
+        // Prevent empty test suite
+    })
     if (openaiKey) {
         describe('OpenAI', () => {
             it('should record the usage cost of a chat completion request', async () => {
@@ -766,6 +769,7 @@ describe('AI Providers Proxy', () => {
             })
         })
     }
+
 
 })
 
