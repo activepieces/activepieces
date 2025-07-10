@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { listId } from '../common/props';
 
 export const subscribeProfileAction = createAction({
 	auth: klaviyoAuth,
@@ -10,11 +11,7 @@ export const subscribeProfileAction = createAction({
 	description:
 		'Subscribes one or more profiles to email/SMS marketing. Optionally adds to a list. If `historical_import` is true, `consented_at` must be provided for each profile.',
 	props: {
-		listId: Property.ShortText({
-			displayName: 'List ID',
-			required: false,
-			description: 'Optional: ID of the list to subscribe the profiles to.',
-		}),
+		listId: listId,
 		historicalImport: Property.Checkbox({
 			displayName: 'Historical Import',
 			required: false,

@@ -2,21 +2,19 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { profileId } from '../common/props';
 
 export const updateProfileAction = createAction({
 	auth: klaviyoAuth,
 	name: 'update-profile',
 	displayName: 'Update Profile',
-	description: 'Updates a Klaviyo profile by ID. Setting a field to null will clear it. Omitting it will leave it unchanged.',
+	description:
+		'Updates a Klaviyo profile by ID. Setting a field to null will clear it. Omitting it will leave it unchanged.',
 	props: {
-		profileId: Property.ShortText({
-			displayName: 'Profile ID',
-			required: true,
-			description: 'The ID of the Klaviyo profile to update.',
-		}),
+		profileId: profileId,
 		email: Property.ShortText({
 			displayName: 'Email',
-			required: false,
+			required: false
 		}),
 		phoneNumber: Property.ShortText({
 			displayName: 'Phone Number',
@@ -25,40 +23,77 @@ export const updateProfileAction = createAction({
 		}),
 		externalId: Property.ShortText({
 			displayName: 'External ID',
-			required: false,
+			required: false
 		}),
 		anonymousId: Property.ShortText({
 			displayName: 'Anonymous ID',
-			required: false,
+			required: false
 		}),
 		firstName: Property.ShortText({
 			displayName: 'First Name',
-			required: false,
+			required: false
 		}),
 		lastName: Property.ShortText({
 			displayName: 'Last Name',
-			required: false,
+			required: false
 		}),
 		organization: Property.ShortText({
 			displayName: 'Organization',
-			required: false,
+			required: false
 		}),
 		locale: Property.ShortText({
 			displayName: 'Locale',
-			required: false,
+			required: false
 		}),
 		title: Property.ShortText({
 			displayName: 'Title',
-			required: false,
+			required: false
 		}),
 		image: Property.ShortText({
 			displayName: 'Image URL',
 			required: false,
+			description: 'URL pointing to the profile image',
 		}),
-		location: Property.Json({
-			displayName: 'Location',
+		address1: Property.ShortText({
+			displayName: 'Address Line 1',
+			required: false
+		}),
+		address2: Property.ShortText({
+			displayName: 'Address Line 2',
+			required: false
+		}),
+		city: Property.ShortText({
+			displayName: 'City',
+			required: false
+		}),
+		country: Property.ShortText({
+			displayName: 'Country',
+			required: false
+		}),
+		region: Property.ShortText({
+			displayName: 'Region/State',
+			required: false
+		}),
+		zip: Property.ShortText({
+			displayName: 'Zip Code',
+			required: false
+		}),
+		timezone: Property.ShortText({
+			displayName: 'Timezone',
 			required: false,
-			description: 'Location object, e.g. { "city": "London", "country": "GB" }',
+			description: 'IANA time zone name, e.g. America/New_York',
+		}),
+		ip: Property.ShortText({
+			displayName: 'IP Address',
+			required: false
+		}),
+		latitude: Property.ShortText({
+			displayName: 'Latitude',
+			required: false
+		}),
+		longitude: Property.ShortText({
+			displayName: 'Longitude',
+			required: false
 		}),
 		properties: Property.Json({
 			displayName: 'Custom Properties',
@@ -89,11 +124,39 @@ export const updateProfileAction = createAction({
 			locale,
 			title,
 			image,
-			location,
+			address1,
+			address2,
+			city,
+			country,
+			region,
+			zip,
+			timezone,
+			ip,
+			latitude,
+			longitude,
 			properties,
 			patchProperties,
 			additionalFields,
 		} = propsValue;
+
+		const location: Record<string, string | undefined> = {
+			address1,
+			address2,
+			city,
+			country,
+			region,
+			zip,
+			timezone,
+			ip,
+			latitude,
+			longitude,
+		};
+
+		Object.keys(location).forEach((key) => {
+			if (location[key] === undefined || location[key] === '') {
+				delete location[key];
+			}
+		});
 
 		const attributes: Record<string, any> = {
 			email,
@@ -106,7 +169,7 @@ export const updateProfileAction = createAction({
 			locale,
 			title,
 			image,
-			location,
+			location: Object.keys(location).length > 0 ? location : undefined,
 			properties,
 		};
 
@@ -145,6 +208,11 @@ export const updateProfileAction = createAction({
 			method: HttpMethod.PATCH,
 			resourceUri: `/profiles/${profileId}`,
 			query,
+			headers: {
+				revision: '2025-04-15',
+				'content-type': 'application/vnd.api+json',
+				accept: 'application/vnd.api+json',
+			},
 			body,
 		});
 

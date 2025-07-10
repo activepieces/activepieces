@@ -11,11 +11,11 @@ export const createProfileAction = createAction({
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
-			required: false,
+			required: true,
 		}),
 		phoneNumber: Property.ShortText({
 			displayName: 'Phone Number',
-			required: false,
+			required: true,
 			description: 'Phone number in E.164 format',
 		}),
 		externalId: Property.ShortText({
@@ -25,11 +25,11 @@ export const createProfileAction = createAction({
 		}),
 		firstName: Property.ShortText({
 			displayName: 'First Name',
-			required: false,
+			required: true,
 		}),
 		lastName: Property.ShortText({
 			displayName: 'Last Name',
-			required: false,
+			required: true,
 		}),
 		organization: Property.ShortText({
 			displayName: 'Organization',
@@ -50,10 +50,46 @@ export const createProfileAction = createAction({
 			required: false,
 			description: 'URL pointing to the profile image',
 		}),
-		location: Property.Json({
-			displayName: 'Location',
+		address1: Property.ShortText({
+			displayName: 'Address Line 1',
+			required: true,
+		}),
+		address2: Property.ShortText({
+			displayName: 'Address Line 2',
 			required: false,
-			description: 'Location object, e.g. { "city": "London", "country": "GB" }',
+		}),
+		city: Property.ShortText({
+			displayName: 'City',
+			required: true,
+		}),
+		country: Property.ShortText({
+			displayName: 'Country',
+			required: true,
+		}),
+		region: Property.ShortText({
+			displayName: 'Region/State',
+			required: true,
+		}),
+		zip: Property.ShortText({
+			displayName: 'Zip Code',
+			required: true,
+		}),
+		timezone: Property.ShortText({
+			displayName: 'Timezone',
+			required: false,
+			description: 'IANA time zone name, e.g. America/New_York',
+		}),
+		ip: Property.ShortText({
+			displayName: 'IP Address',
+			required: false,
+		}),
+		latitude: Property.ShortText({
+			displayName: 'Latitude',
+			required: false,
+		}),
+		longitude: Property.ShortText({
+			displayName: 'Longitude',
+			required: false,
 		}),
 		properties: Property.Json({
 			displayName: 'Custom Properties',
@@ -77,10 +113,38 @@ export const createProfileAction = createAction({
 			locale,
 			title,
 			image,
-			location,
+			address1,
+			address2,
+			city,
+			country,
+			region,
+			zip,
+			timezone,
+			ip,
+			latitude,
+			longitude,
 			properties,
 			additionalFields,
 		} = propsValue;
+
+		const location: Record<string, string | undefined> = {
+			address1,
+			address2,
+			city,
+			country,
+			region,
+			zip,
+			timezone,
+			ip,
+			latitude,
+			longitude,
+		};
+
+		Object.keys(location).forEach((key) => {
+			if (location[key] === undefined || location[key] === '') {
+				delete location[key];
+			}
+		});
 
 		const attributes: Record<string, any> = {
 			email,
@@ -92,7 +156,7 @@ export const createProfileAction = createAction({
 			locale,
 			title,
 			image,
-			location,
+			location: Object.keys(location).length > 0 ? location : undefined,
 			properties,
 		};
 
@@ -119,6 +183,11 @@ export const createProfileAction = createAction({
 			method: HttpMethod.POST,
 			resourceUri: '/profiles',
 			query,
+			headers: {
+				revision: '2025-04-15',
+				'content-type': 'application/vnd.api+json',
+				accept: 'application/vnd.api+json',
+			},
 			body: {
 				data: {
 					type: 'profile',

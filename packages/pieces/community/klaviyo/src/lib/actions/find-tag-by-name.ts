@@ -10,9 +10,9 @@ export const findTagsAction = createAction({
   description: 'Retrieve a list of tags in the Klaviyo account.',
   props: {
     nameFilter: Property.ShortText({
-      displayName: 'Filter by Name',
+      displayName: 'Name Contains',
       required: false,
-      description: 'Filter tags by name using "contains", "starts-with", etc.',
+      description: 'Filter tags where name contains this string.',
     }),
     sort: Property.StaticDropdown({
       displayName: 'Sort By',
@@ -29,22 +29,35 @@ export const findTagsAction = createAction({
     pageCursor: Property.ShortText({
       displayName: 'Page Cursor',
       required: false,
-      description: 'For paginating through results. Use next/prev cursor from response.',
+      description: 'Cursor for pagination.',
     }),
   },
   async run({ auth, propsValue }) {
     const { nameFilter, sort, pageCursor } = propsValue;
 
     const query: Record<string, string> = {};
-    if (nameFilter) query['filter'] = `name:contains:${nameFilter}`;
-    if (sort) query['sort'] = sort;
-    if (pageCursor) query['page[cursor]'] = pageCursor;
+
+    if (nameFilter?.trim()) {
+      query['filter'] = `contains(name,"${nameFilter.trim()}")`;
+    }
+
+    if (sort) {
+      query['sort'] = sort;
+    }
+
+    if (pageCursor) {
+      query['page[cursor]'] = pageCursor;
+    }
 
     const response = await klaviyoApiCall({
       apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: '/tags',
       query,
+      headers: {
+        accept: 'application/vnd.api+json',
+        revision: '2025-04-15',
+      },
     });
 
     return response;

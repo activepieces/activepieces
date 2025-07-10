@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { listId } from '../common/props';
 
 export const unsubscribeProfileAction = createAction({
 	auth: klaviyoAuth,
@@ -9,15 +10,11 @@ export const unsubscribeProfileAction = createAction({
 	displayName: 'Unsubscribe Profile',
 	description: 'Unsubscribes one or more profiles from email/SMS marketing. A new profile will be created if it doesn’t exist.',
 	props: {
-		listId: Property.ShortText({
-			displayName: 'List ID',
-			required: false,
-			description: 'Optional: List ID to unsubscribe profiles from. If omitted, global unsubscription will apply.',
-		}),
+		listId: listId,
 		profiles: Property.Json({
 			displayName: 'Profiles',
 			description:
-				'An array of profiles to unsubscribe. Each must include at least `email` or `phone_number`.',
+				'An array of profiles to unsubscribe. Each must include `attributes.email` or `attributes.phone_number`. Example: [{ "type": "profile", "attributes": { "email": "user@example.com" } }]',
 			required: true,
 		}),
 	},
@@ -34,6 +31,15 @@ export const unsubscribeProfileAction = createAction({
 
 		if (profiles.length > 100) {
 			throw new Error('Maximum of 100 profiles can be unsubscribed at once.');
+		}
+
+		for (const profile of profiles) {
+			if (
+				!profile?.attributes?.email &&
+				!profile?.attributes?.phone_number
+			) {
+				throw new Error('Each profile must include at least `attributes.email` or `attributes.phone_number`.');
+			}
 		}
 
 		const body: any = {

@@ -7,7 +7,7 @@ export const findProfileAction = createAction({
 	auth: klaviyoAuth,
 	name: 'find-profile',
 	displayName: 'Find Profile by Email or Phone',
-	description: 'Find a Klaviyo profile by email or phone number.',
+	description: 'Find a Klaviyo profile using an email address or phone number.',
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',
@@ -21,7 +21,7 @@ export const findProfileAction = createAction({
 		additionalFields: Property.StaticMultiSelectDropdown({
 			displayName: 'Additional Fields',
 			required: false,
-			description: 'Request additional fields like subscriptions or predictive_analytics in the response.',
+			description: 'Include additional fields like subscriptions or predictive analytics in the response.',
 			options: {
 				options: [
 					{ label: 'Subscriptions', value: 'subscriptions' },
@@ -33,28 +33,38 @@ export const findProfileAction = createAction({
 			displayName: 'Results Limit',
 			required: false,
 			defaultValue: 1,
-			description: 'Max number of profiles to return. Default is 1.',
+			description: 'Maximum number of profiles to return. Default is 1.',
+		}),
+		pageCursor: Property.ShortText({
+			displayName: 'Page Cursor',
+			required: false,
+			description: 'Cursor for pagination.',
 		}),
 	},
+
 	async run({ auth, propsValue }) {
-		const { email, phoneNumber, additionalFields, pageSize } = propsValue;
+		const { email, phoneNumber, additionalFields, pageSize, pageCursor } = propsValue;
 
 		if (!email && !phoneNumber) {
-			throw new Error('You must provide either an email or phone number.');
+			throw new Error('You must provide either an email or a phone number.');
 		}
-
-		const filterParts: string[] = [];
-		if (email) filterParts.push(`email:${email}`);
-		if (phoneNumber) filterParts.push(`phone_number:${phoneNumber}`);
-		const filter = filterParts.join(',');
 
 		const query: Record<string, string> = {
 			'page[size]': (pageSize ?? 1).toString(),
-			filter,
 		};
+
+		const filterParts: string[] = [];
+		if (email) filterParts.push(`equals(email,"${email}")`);
+		if (phoneNumber) filterParts.push(`equals(phone_number,"${phoneNumber}")`);
+
+		query['filter'] = filterParts.join(',');
 
 		if (additionalFields?.length) {
 			query['additional-fields[profile]'] = additionalFields.join(',');
+		}
+
+		if (pageCursor) {
+			query['page[cursor]'] = pageCursor;
 		}
 
 		const response = await klaviyoApiCall({
@@ -62,6 +72,10 @@ export const findProfileAction = createAction({
 			method: HttpMethod.GET,
 			resourceUri: '/profiles',
 			query,
+			headers: {
+				accept: 'application/vnd.api+json',
+				revision: '2025-04-15',
+			},
 		});
 
 		return response;

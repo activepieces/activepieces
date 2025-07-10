@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { listId } from '../common/props';
 
 export const removeProfileFromListAction = createAction({
 	auth: klaviyoAuth,
@@ -9,11 +10,7 @@ export const removeProfileFromListAction = createAction({
 	displayName: 'Remove Profile from List',
 	description: 'Removes one or more Klaviyo profiles from a specific list by profile ID.',
 	props: {
-		listId: Property.ShortText({
-			displayName: 'List ID',
-			required: true,
-			description: 'The ID of the list from which to remove the profiles.',
-		}),
+		listId: listId,
 		profileIds: Property.Json({
 			displayName: 'Profile IDs',
 			required: true,

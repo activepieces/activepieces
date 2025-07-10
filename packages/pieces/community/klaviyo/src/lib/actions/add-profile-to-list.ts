@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { listId } from '../common/props';
 
 export const addProfileToListAction = createAction({
 	auth: klaviyoAuth,
@@ -9,11 +10,7 @@ export const addProfileToListAction = createAction({
 	displayName: 'Add Profile to List',
 	description: 'Adds one or more Klaviyo profiles to a specified list by profile ID.',
 	props: {
-		listId: Property.ShortText({
-			displayName: 'List ID',
-			required: true,
-			description: 'The ID of the list you want to add the profiles to.',
-		}),
+		listId: listId,
 		profileIds: Property.Json({
 			displayName: 'Profile IDs',
 			required: true,

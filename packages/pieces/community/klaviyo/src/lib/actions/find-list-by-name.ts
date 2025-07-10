@@ -1,53 +1,30 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../common/auth';
 import { klaviyoApiCall } from '../common/client';
+import { listId } from '../common/props';
 
 export const findListByNameAction = createAction({
   auth: klaviyoAuth,
-  name: 'find-list-by-name',
-  displayName: 'Find List by Name',
-  description: 'Find a Klaviyo list by its name.',
+  name: 'find-list-by-id',
+  displayName: 'Find List',
+  description: 'Retrieve detailed information about a specific list.',
   props: {
-    name: Property.ShortText({
-      displayName: 'List Name',
-      required: true,
-    }),
+    listId,
   },
   async run({ auth, propsValue }) {
-    const { name } = propsValue;
+    const { listId } = propsValue;
 
     const response = await klaviyoApiCall({
       apiKey: auth,
       method: HttpMethod.GET,
-      resourceUri: '/lists',
-      query: {
-        'filter': `name:${name}`,
-        'page[size]': '10',
+      resourceUri: `/lists/${listId}`,
+      headers: {
+        revision: '2025-04-15',
+        accept: 'application/vnd.api+json',
       },
     });
 
-    const typedResponse = response as {
-      data: {
-        id: string;
-        type: string;
-        attributes: {
-          name: string;
-          created?: string;
-          updated?: string;
-          opt_in_process?: string;
-        };
-      }[];
-    };
-
-    const matched = typedResponse.data?.find(
-      (list) => list.attributes.name.toLowerCase() === name.toLowerCase()
-    );
-
-    if (!matched) {
-      throw new Error(`No list found with name "${name}"`);
-    }
-
-    return matched;
+    return response;
   },
 });
