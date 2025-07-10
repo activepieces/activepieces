@@ -110,17 +110,36 @@ export const dynamicFormFields = Property.DynamicProperties({
         resourceUri: `/forms/${formIdentifier}/fields.${responseFormat}`,
       });
 
+      let parsedResponse = response;
+      if (typeof response === 'string' && response.includes('OUTPUT =')) {
+        const match = response.match(/OUTPUT = ({.*?});/);
+        if (match) {
+          try {
+            parsedResponse = JSON.parse(match[1]);
+          } catch (e) {
+            console.error('Error parsing Wufoo fields response:', e);
+            parsedResponse = response;
+          }
+        }
+      }
+
       let fields: WufooFormField[] = [];
       
       if (responseFormat === 'json') {
-        fields = (response as WufooFormFieldsResponse).Fields || [];
+        if (parsedResponse && typeof parsedResponse === 'object') {
+          fields = (parsedResponse as WufooFormFieldsResponse).Fields || [];
+        }
       } else if (responseFormat === 'xml') {
-        if (response && typeof response === 'object') {
-          const fieldsContainer = response.Fields || response;
-          if (Array.isArray(fieldsContainer.Field)) {
-            fields = fieldsContainer.Field;
-          } else if (fieldsContainer.Field) {
-            fields = [fieldsContainer.Field];
+        if (parsedResponse && typeof parsedResponse === 'object') {
+          if ((parsedResponse as any).Fields && Array.isArray((parsedResponse as any).Fields)) {
+            fields = (parsedResponse as any).Fields;
+          } else {
+            const fieldsContainer = parsedResponse.Fields || parsedResponse;
+            if (Array.isArray(fieldsContainer.Field)) {
+              fields = fieldsContainer.Field;
+            } else if (fieldsContainer.Field) {
+              fields = [fieldsContainer.Field];
+            }
           }
         }
       }
@@ -198,7 +217,7 @@ export const dynamicFormFields = Property.DynamicProperties({
           case 'radio':
             if (field.Choices && field.Choices.length > 0) {
               const options = field.Choices
-                .filter(choice => choice.Label && choice.Label.trim() !== '') // Filter empty labels
+                .filter(choice => choice.Label && choice.Label.trim() !== '')
                 .map((choice) => ({
                   label: choice.Label,
                   value: choice.Label,

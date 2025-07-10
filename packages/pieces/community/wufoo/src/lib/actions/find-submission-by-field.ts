@@ -109,15 +109,27 @@ export const findSubmissionByFieldAction = createAction({
         sortDirection: sortOrder || 'DESC',
       };
 
-      const response = await wufooApiCall<WufooEntriesResponse>({
+      const response = await wufooApiCall<WufooEntriesResponse | string>({
         method: HttpMethod.GET,
         auth: context.auth,
         resourceUri: `/forms/${formIdentifier}/entries.${format}`,
         query,
       });
 
-      if (format === 'json' && response && typeof response === 'object') {
-        const entriesData = response as WufooEntriesResponse;
+      let parsedResponse = response;
+      if (typeof response === 'string' && response.includes('OUTPUT =')) {
+        const match = response.match(/OUTPUT = ({.*?});/);
+        if (match) {
+          try {
+            parsedResponse = JSON.parse(match[1]);
+          } catch (e) {
+            parsedResponse = response;
+          }
+        }
+      }
+
+      if (format === 'json' && parsedResponse && typeof parsedResponse === 'object') {
+        const entriesData = parsedResponse as WufooEntriesResponse;
         const entries = entriesData.Entries || [];
         
         const result = {
@@ -164,7 +176,7 @@ export const findSubmissionByFieldAction = createAction({
               }, {} as Record<string, any>),
           })),
           
-          rawResponse: response,
+          rawResponse: parsedResponse,
         };
         
         return result;
@@ -172,7 +184,7 @@ export const findSubmissionByFieldAction = createAction({
         return {
           success: true,
           message: 'Search completed successfully',
-          response: response,
+          response: parsedResponse,
         };
       }
     } catch (error: any) {

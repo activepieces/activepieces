@@ -158,12 +158,7 @@ export const getEntryDetailsAction = createAction({
       defaultValue: false,
     }),
     
-    pretty: Property.Checkbox({
-      displayName: 'Pretty Print',
-      description: 'Format the response for enhanced readability. Useful for debugging and manual review.',
-      required: false,
-      defaultValue: false,
-    }),
+
   },
   
   async run(context) {
@@ -183,7 +178,6 @@ export const getEntryDetailsAction = createAction({
       pageStart,
       pageSize,
       includeSystem,
-      pretty,
     } = context.propsValue;
 
     try {
@@ -191,7 +185,7 @@ export const getEntryDetailsAction = createAction({
         pageStart: String(pageStart ?? 0),
         pageSize: String(Math.min(pageSize ?? 25, 100)),
         system: includeSystem ? 'true' : 'false',
-        pretty: pretty ? 'true' : 'false',
+        pretty: 'false', // Always false to avoid HTML wrapper
       };
 
       let filterCount = 0;
@@ -222,15 +216,27 @@ export const getEntryDetailsAction = createAction({
         }
       }
 
-      const response = await wufooApiCall<WufooEntriesResponse>({
+      const response = await wufooApiCall<WufooEntriesResponse | string>({
         method: HttpMethod.GET,
         auth: context.auth,
         resourceUri: `/forms/${formIdentifier}/entries.${format}`,
         query,
       });
 
-      if (format === 'json' && response && typeof response === 'object') {
-        const entriesData = response as WufooEntriesResponse;
+      let parsedResponse = response;
+      if (typeof response === 'string' && response.includes('OUTPUT =')) {
+        const match = response.match(/OUTPUT = ({.*?});/);
+        if (match) {
+          try {
+            parsedResponse = JSON.parse(match[1]);
+          } catch (e) {
+            parsedResponse = response;
+          }
+        }
+      }
+
+      if (format === 'json' && parsedResponse && typeof parsedResponse === 'object') {
+        const entriesData = parsedResponse as WufooEntriesResponse;
         const entries = entriesData.Entries || [];
         
         return {
@@ -261,13 +267,13 @@ export const getEntryDetailsAction = createAction({
             
             rawEntry: entry,
           })),
-          rawResponse: response,
+          rawResponse: parsedResponse,
         };
       } else {
         return {
           success: true,
           message: 'Entries retrieved successfully',
-          response: response,
+          response: parsedResponse,
         };
       }
     } catch (error: any) {

@@ -30,29 +30,43 @@ export const findFormAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    pretty: Property.Checkbox({
-      displayName: 'Pretty Print',
-      description: 'Format the response for enhanced readability. Recommended for debugging and manual review.',
-      required: false,
-      defaultValue: false,
-    }),
+
   },
   async run(context) {
-    const { formIdentifier, format, includeTodayCount, pretty } = context.propsValue;
+    const { formIdentifier, format, includeTodayCount } = context.propsValue;
 
     try {
-      const response = await wufooApiCall<WufooFormResponse>({
+      const response = await wufooApiCall<WufooFormResponse | string>({
         method: HttpMethod.GET,
         auth: context.auth,
         resourceUri: `/forms/${formIdentifier}.${format}`,
         query: {
           includeTodayCount: includeTodayCount ? 'true' : 'false',
-          pretty: pretty ? 'true' : 'false',
+          pretty: 'false',
         },
       });
 
-      if (format === 'json' && response && typeof response === 'object') {
-        const formData = response as WufooFormResponse;
+      let parsedResponse = response;
+      if (typeof response === 'string' && response.includes('OUTPUT =')) {
+        const match = response.match(/OUTPUT = ({.*?});/);
+        if (match) {
+          try {
+            parsedResponse = JSON.parse(match[1]);
+          } catch (e) {
+            parsedResponse = response;
+          }
+        }
+      }
+
+      if (format === 'json' && parsedResponse && typeof parsedResponse === 'object') {
+        let formData: WufooFormResponse;
+        if (Array.isArray(parsedResponse)) {
+          formData = parsedResponse[0] as WufooFormResponse;
+        } else if ((parsedResponse as any).Forms && Array.isArray((parsedResponse as any).Forms)) {
+          formData = (parsedResponse as any).Forms[0] as WufooFormResponse;
+        } else {
+          formData = parsedResponse as WufooFormResponse;
+        }
         
         return {
           success: true,
@@ -75,13 +89,13 @@ export const findFormAction = createAction({
             entriesLink: formData.LinkEntries,
             entriesCountLink: formData.LinkEntriesCount,
           },
-          rawResponse: response,
+          rawResponse: parsedResponse,
         };
       } else {
         return {
           success: true,
           message: 'Form details retrieved successfully',
-          response: response,
+          response: parsedResponse,
         };
       }
     } catch (error: any) {
