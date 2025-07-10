@@ -119,17 +119,6 @@ function isMarkAsComplete(block: AgentStepBlock): boolean {
     return block.type === ContentBlockType.TOOL_CALL && block.toolName === agentbuiltInToolsNames.markAsComplete
 }
 
-function findActionName(toolName: string, mcp: McpWithTools): string | undefined {
-    for (const tool of mcp.tools) {
-        if (tool.type === McpToolType.PIECE && !isNil(tool.pieceMetadata)) {
-            const actionName = mcpToolNaming.fixTool(tool.pieceMetadata?.actionName, tool.id, McpToolType.PIECE)
-            if (tool.toolName === actionName) {
-                return tool.pieceMetadata?.actionName
-            }
-        }
-    }
-    return undefined
-}
 
 function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
     if (toolName === agentbuiltInToolsNames.markAsComplete) {
@@ -139,18 +128,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
             displayName: 'Mark as Complete',
         }
     }
-    const tool = mcp.tools.find((tool) => {
-        switch (tool.type) {
-            case McpToolType.PIECE: {
-                const actionName = findActionName(toolName, mcp)
-                return !isNil(actionName)
-            }
-            case McpToolType.FLOW: {
-                assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
-                return tool.toolName === toolName
-            }
-        }
-    })
+    const tool = mcp.tools.find((tool) => tool.toolName === toolName)
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
     }
@@ -158,14 +136,12 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
         case McpToolType.PIECE: {
             const pieceMetadata = tool.pieceMetadata
             assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
-            const actionName = findActionName(toolName, mcp)
-            assertNotNullOrUndefined(actionName, 'Action must be found')
             return {
                 ...baseTool,
                 toolCallType: ToolCallType.PIECE,
                 pieceName: pieceMetadata.pieceName,
                 pieceVersion: pieceMetadata.pieceVersion,
-                actionName,
+                actionName: tool.pieceMetadata.actionName,
             }
         }
         case McpToolType.FLOW: {

@@ -25,7 +25,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import type { McpPieceTool, McpTool, McpWithTools } from '@activepieces/shared';
+import type {
+  McpPieceTool,
+  McpToolRequest,
+  McpWithTools,
+} from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
@@ -78,10 +82,10 @@ export function McpPieceDialog({
 
   const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
     const existingTools = mcp?.tools?.filter(
-      (tool) =>
+      (tool): tool is McpPieceTool =>
         tool.type === McpToolType.PIECE &&
         tool.pieceMetadata?.pieceName === piece.pieceName,
-    ) as McpPieceTool[];
+    );
 
     if (existingTools && existingTools.length > 0) {
       setSelectedActions(
@@ -152,7 +156,7 @@ export function McpPieceDialog({
 
       if (!selectedPiece) return;
 
-      const newTools = selectedActions.map((action) => ({
+      const newTools: McpToolRequest[] = selectedActions.map((action) => ({
         type: McpToolType.PIECE,
         mcpId: mcp.id,
         pieceMetadata: {
@@ -167,7 +171,7 @@ export function McpPieceDialog({
 
       const updatedTools = [...currentTools, ...newTools];
 
-      return await mcpApi.update(mcp.id, { tools: updatedTools as McpTool[] });
+      return await mcpApi.update(mcp.id, { tools: updatedTools });
     },
     onSuccess: () => {
       onSuccess?.();

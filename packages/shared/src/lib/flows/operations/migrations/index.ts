@@ -14,12 +14,8 @@ const migrations: Migration[] = [
     migrateAgentPiece,
 ]
 
-const apply = (flowVersion: FlowVersion, migrationNames?: string[]) => {
-    const migrationsToApply = migrationNames 
-        ? migrations.filter(migration => migrationNames.includes(migration.name))
-        : migrations
-    
-    return migrationsToApply.reduce((acc, migration) => migration.migrate(acc), flowVersion)
+const apply = (flowVersion: FlowVersion) => {
+    return migrations.reduce((acc, migration) => migration.migrate(acc), flowVersion)
 }
 
 export const flowMigrations = {

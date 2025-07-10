@@ -6,13 +6,13 @@ import {
     Cursor,
     ErrorCode,
     isNil,
-    McpFlowTool,
-    McpPieceTool,
     McpTool,
     mcpToolNaming,
+    McpToolRequest,
     McpToolType,
     McpWithTools,
-    SeekPage, spreadIfDefined } from '@activepieces/shared'
+    SeekPage, spreadIfDefined,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { ILike, IsNull } from 'typeorm'
@@ -186,21 +186,19 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
     }
 }
 
-async function findToolId(mcpId: ApId, tool: Omit<McpTool, 'created' | 'updated' | 'id'>): Promise<ApId | undefined> {
+async function findToolId(mcpId: ApId, tool: McpToolRequest) {
     switch (tool.type) {
         case McpToolType.PIECE: {
-            const pieceTool = tool as McpPieceTool
             const result = await mcpToolRepo()
                 .createQueryBuilder('mcp_tool')
                 .where('mcp_tool.mcpId = :mcpId', { mcpId })
                 .andWhere('mcp_tool.type = :type', { type: tool.type })
-                .andWhere('mcp_tool."pieceMetadata"->>\'actionName\' = :actionName', { actionName: pieceTool.pieceMetadata?.actionName })
+                .andWhere('mcp_tool."pieceMetadata"->>\'actionName\' = :actionName', { actionName: tool.pieceMetadata?.actionName })
                 .getOne()
             return result?.id
         }
         case McpToolType.FLOW: {
-            const flowTool = tool as McpFlowTool
-            return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: flowTool.flowId } }).then(tool => tool?.id)
+            return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool?.id)
         }
     }
 }
@@ -222,7 +220,7 @@ type UpdateParams = {
     agentId?: ApId
     token?: string
     name?: string
-    tools?: Omit<McpTool, 'created' | 'updated' | 'id'>[]
+    tools?: McpToolRequest[]
 }
 
 type EnrichedToolResult = McpTool & {

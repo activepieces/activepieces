@@ -1,4 +1,5 @@
-import { flowMigrations, FlowVersion } from '@activepieces/shared'
+import { flowMigrations, FlowVersion, LATEST_SCHEMA_VERSION } from '@activepieces/shared'
+import { IsNull, Not } from 'typeorm'
 import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 
@@ -8,11 +9,18 @@ export const flowVersionMigrationService = {
     async migrate() {
         log.info('Starting flow version migration')
         let count = 0
-        const flowVersions = await flowVersionRepo().find()
-        const migrationsToApply = ['migrate-v2-agent-piece-to-2.0.0']
+        
+        const flowVersions = await flowVersionRepo().find({
+            where: [
+                { schemaVersion: IsNull() },
+                { schemaVersion: Not(LATEST_SCHEMA_VERSION) },
+            ],
+        })
+        log.info(`Found ${flowVersions.length} flow versions to migrate`)
+                
         for (const flowVersion of flowVersions) {
-            const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion, migrationsToApply)
-            if (flowVersion === migratedFlowVersion) {
+            const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
+            if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
                 continue
             }
 
