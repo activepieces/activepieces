@@ -147,8 +147,11 @@ export const dynamicFormFields = Property.DynamicProperties({
       const props: DynamicPropsValue = {};
 
       for (const field of fields) {
+        // Skip system fields (marked with IsSystem: true) and common system field IDs
         if (field.IsSystem || 
-            ['EntryId', 'DateCreated', 'CreatedBy', 'LastUpdated', 'UpdatedBy'].includes(field.ID)) {
+            ['EntryId', 'DateCreated', 'CreatedBy', 'LastUpdated', 'UpdatedBy', 
+             'Status', 'PurchaseTotal', 'Currency', 'TransactionId', 'MerchantType', 
+             'IP', 'LastPage', 'CompleteSubmission'].includes(field.ID)) {
           continue;
         }
 
@@ -202,6 +205,7 @@ export const dynamicFormFields = Property.DynamicProperties({
               displayName: fieldTitle,
               description: `${fieldDescription} (Enter time in HH:MM format)`,
               required: isRequired,
+              defaultValue: field.DefaultVal || undefined,
             });
             break;
 
@@ -210,6 +214,7 @@ export const dynamicFormFields = Property.DynamicProperties({
               displayName: fieldTitle,
               description: `${fieldDescription} (Phone number)`,
               required: isRequired,
+              defaultValue: field.DefaultVal || undefined,
             });
             break;
 
@@ -240,6 +245,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                   displayName: fieldTitle,
                   description: fieldDescription,
                   required: isRequired,
+                  defaultValue: field.DefaultVal || undefined,
                 });
               }
             } else {
@@ -247,6 +253,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                 displayName: fieldTitle,
                 description: fieldDescription,
                 required: isRequired,
+                defaultValue: field.DefaultVal || undefined,
               });
             }
             break;
@@ -274,6 +281,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                 displayName: fieldTitle,
                 description: fieldDescription,
                 required: isRequired,
+                defaultValue: field.DefaultVal === '1' || field.DefaultVal === 'true',
               });
             }
             break;
@@ -286,6 +294,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                   displayName: `${fieldTitle} - ${subField.Label}`,
                   description: `Enter ${subField.Label.toLowerCase()}`,
                   required: isRequired && ['Street Address', 'City'].includes(subField.Label),
+                  defaultValue: subField.DefaultVal || undefined,
                 });
               }
             } else {
@@ -294,6 +303,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                 displayName: fieldTitle,
                 description: `${fieldDescription} (Complete address)`,
                 required: isRequired,
+                defaultValue: field.DefaultVal || undefined,
               });
             }
             break;
@@ -306,6 +316,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                   displayName: `${fieldTitle} - ${subField.Label}`,
                   description: `Enter ${subField.Label.toLowerCase()} name`,
                   required: isRequired,
+                  defaultValue: subField.DefaultVal || undefined,
                 });
               }
             } else {
@@ -313,6 +324,7 @@ export const dynamicFormFields = Property.DynamicProperties({
                 displayName: fieldTitle,
                 description: fieldDescription,
                 required: isRequired,
+                defaultValue: field.DefaultVal || undefined,
               });
             }
             break;
@@ -348,6 +360,14 @@ export const dynamicFormFields = Property.DynamicProperties({
                   },
                 });
               }
+            } else {
+              // Fallback if no choices are provided
+              props[fieldId] = Property.ShortText({
+                displayName: fieldTitle,
+                description: `${fieldDescription} (Likert scale)`,
+                required: isRequired,
+                defaultValue: field.DefaultVal || undefined,
+              });
             }
             break;
 
@@ -356,6 +376,7 @@ export const dynamicFormFields = Property.DynamicProperties({
               displayName: fieldTitle,
               description: `${fieldDescription} (Rating scale)`,
               required: isRequired,
+              defaultValue: field.DefaultVal ? parseFloat(field.DefaultVal) : undefined,
             });
             break;
 
@@ -373,6 +394,7 @@ export const dynamicFormFields = Property.DynamicProperties({
               displayName: fieldTitle,
               description: `${fieldDescription} (Field type: ${field.Type})`,
               required: isRequired,
+              defaultValue: field.DefaultVal || undefined,
             });
             break;
         }
