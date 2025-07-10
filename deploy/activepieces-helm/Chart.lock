@@ -1,9 +1,12 @@
 dependencies:
+- name: kubernetes-secret-generator
+  repository: https://helm.mittwald.de
+  version: 3.4.1
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
   version: 11.7.2
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 17.4.2
-digest: sha256:13715851dca0f2d3ea355bd3d4115910c6a0906d4472c8dbdc1ee37ed1730644
-generated: "2025-07-08T18:23:24.788690682+03:00"
+digest: sha256:61996edf5264511207d5c025e69ced51494d46ef7e41295be13c4c6970277cdb
+generated: "2025-07-10T10:26:15.626833669Z"

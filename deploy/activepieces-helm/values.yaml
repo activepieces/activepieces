@@ -129,15 +129,15 @@ activepieces:
   environment: "prod"
   telemetryEnabled: true
   templatesSourceUrl: "https://cloud.activepieces.com/api/v1/flow-templates"
-  flowWorkerConcurrency: 10
-  scheduledWorkerConcurrency: 10
-  triggerDefaultPollInterval: 5
-  triggerTimeoutSeconds: 60
-  flowTimeoutSeconds: 600
-  webhookTimeoutSeconds: 30
-  executionDataRetentionDays: 30
-  issueArchiveDays: 30
-  pausedFlowTimeoutDays: 14
+  flowWorkerConcurrency: 
+  scheduledWorkerConcurrency: 
+  triggerDefaultPollInterval: 
+  triggerTimeoutSeconds: 
+  flowTimeoutSeconds: 
+  webhookTimeoutSeconds: 
+  executionDataRetentionDays: 
+  issueArchiveDays: 
+  pausedFlowTimeoutDays: 
   logLevel: "info"
   logPretty: false
   apiRateLimiting:
@@ -147,9 +147,9 @@ activepieces:
       window: 60
   projectRateLimiter:
     enabled: false
-  piecesSource: "DB"
+  piecesSource: ""
   devPieces: false
-  piecesSyncMode: "DB"
+  piecesSyncMode: ""
 
   # Misc
   clientRealIpHeader: ""
@@ -163,7 +163,7 @@ activepieces:
   enableFlowOnPublish: true
   appWebhookSecrets: ""
   maxFileSizeMb: ""
-  sandboxMemoryLimit: "256m"
+  sandboxMemoryLimit: ""
   sandboxPropagatedEnvVars: ""
   triggerFailuresThreshold: ""
   engineExecutablePath: "dist/packages/engine/main.js"
@@ -191,6 +191,7 @@ redis:
   url: ""
   type: "standalone"
   sentinel:
+    enabled: false
     name: ""
     hosts: ""
     role: ""

@@ -252,7 +252,7 @@ spec:
               value: "REDIS"
             {{- if .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) }}
             - name: AP_REDIS_HOST
-              value: {{ .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) | quote }}
+              value: {{ .Values.redis.host | default (printf "%s-redis-master" .Release.Name) | quote }}
             {{- end }}
             {{- if .Values.redis.port }}
             - name: AP_REDIS_PORT
@@ -278,9 +278,12 @@ spec:
             - name: AP_REDIS_URL
               value: {{ .Values.redis.url | quote }}
             {{- end }}
-            {{- if .Values.redis.type }}
+            {{- if eq .Values.redis.type "standalone" }}
             - name: AP_REDIS_TYPE
-              value: {{ .Values.redis.type | quote }}
+              value: "DEFAULT"
+            {{- else if eq .Values.redis.type "sentinel" }}
+            - name: AP_REDIS_TYPE
+              value: "SENTINEL"
             {{- end }}
             {{- if .Values.redis.sentinel.role }}
             - name: AP_REDIS_SENTINEL_ROLE
@@ -306,7 +309,7 @@ spec:
             - name: AP_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "activepieces.fullname" . }}-redis
+                  name: {{ .Release.Name }}-redis
                   key: redis-password
             {{- end }}
             {{- else }}
@@ -386,7 +389,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.activepieces.engineExecutablePath }}
-            # Engine path
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
             {{- end }}
