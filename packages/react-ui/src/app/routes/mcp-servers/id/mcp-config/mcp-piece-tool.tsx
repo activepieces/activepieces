@@ -20,8 +20,6 @@ import {
   Permission,
 } from '@activepieces/shared';
 
-import { mcpConfigUtils } from './mcp-config-utils';
-
 type McpPieceToolProps = {
   mcp: McpWithTools;
   tool: McpTool;
@@ -64,7 +62,10 @@ export const McpPieceTool = ({
     pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
   });
 
-  const actionNames = tool.pieceMetadata?.actionNames || [];
+  const actionDisplayName =
+    tool.type === McpToolType.PIECE
+      ? tool.pieceMetadata?.actionDisplayName
+      : undefined;
 
   return (
     <Card key={`piece-${tool.id}`}>
@@ -83,11 +84,8 @@ export const McpPieceTool = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
-              {pieceInfoMap[tool.id]?.displayName || 'Unknown Piece'}
+              {`${pieceInfoMap[tool.id]?.displayName}: ${actionDisplayName}`}
             </h3>
-            <span className="text-xs text-muted-foreground">
-              {mcpConfigUtils.formatNames(actionNames)}
-            </span>
           </div>
         </div>
 

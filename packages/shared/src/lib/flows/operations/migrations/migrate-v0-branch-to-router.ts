@@ -6,6 +6,7 @@ import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
+    name: 'migrate-v0-branch-to-router',
     migrate: (flowVersion: FlowVersion) => {
         if (!isNil(flowVersion.schemaVersion)) {
             return flowVersion

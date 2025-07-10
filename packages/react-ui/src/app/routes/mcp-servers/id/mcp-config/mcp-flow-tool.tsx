@@ -12,10 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { McpTool, Permission } from '@activepieces/shared';
+import {
+  McpFlowTool as McpFlowToolType,
+  Permission,
+} from '@activepieces/shared';
 
 type McpFlowToolProps = {
-  tool: McpTool;
+  tool: McpFlowToolType;
   removeTool: (toolId: string) => Promise<void>;
 };
 

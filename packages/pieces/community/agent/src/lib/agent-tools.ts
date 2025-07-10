@@ -21,7 +21,6 @@ export const agentTools = async (params: AgentToolsParams) => {
     }
 }
 
-
 async function buildInternalTools(params: AgentToolsParams) {
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
