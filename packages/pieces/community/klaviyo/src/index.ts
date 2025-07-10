@@ -20,7 +20,7 @@ export const klaviyo = createPiece({
 	displayName: 'Klaviyo',
 	auth: klaviyoAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://www.klaviyo.com/favicon.ico',
+	logoUrl: 'https://cdn.activepieces.com/pieces/klaviyo.png',
 	authors: ['aryel780'],
 	actions: [
 		addProfileToListAction,
