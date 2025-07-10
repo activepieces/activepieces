@@ -15,16 +15,16 @@ export const findTagByName = createAction({
       required: true,
     }),
   },
-  async run(context) {
-    const { search_query } = context.propsValue;
-    const { api_key } = context.auth
+  async run({auth,propsValue}) {
+    const { search_query } = propsValue;
+    
 
     const filter = `equals(name,"${search_query}")`;
 
-    const query = `?filter=${encodeURIComponent(filter)}&page[size]=20`;
+    const query = `?filter=${encodeURIComponent(filter)}`;
 
     return await makeRequest(
-      api_key,
+      auth as string,
       HttpMethod.GET,
       `/tags${query}`
     );

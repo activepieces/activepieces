@@ -72,9 +72,9 @@ export const createProfile = createAction({
     }),
     country: countryDropdown,
   },
-  async run(context) {
+  async run({auth,propsValue}) {
 
-    const { api_key } = context.auth
+    
     const {
       email,
       country_code,
@@ -90,7 +90,7 @@ export const createProfile = createAction({
       address2,
       city,
       country
-    } = context.propsValue;
+    } = propsValue;
 
     const attributes: Record<string, any> = {};
     if (email) attributes['email'] = email;
@@ -114,7 +114,7 @@ export const createProfile = createAction({
       },
     };
     return await makeRequest(
-      api_key,
+      auth as string,
       HttpMethod.POST,
       '/profiles',
       body

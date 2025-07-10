@@ -6,29 +6,36 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 
 export const addProfileToList = createAction({
-  auth: klaviyoAuth, 
+  auth: klaviyoAuth,
   name: 'addProfileToList',
   displayName: 'Add Profile to List',
-  description: '',
+  description: 'Add a profile to a specific list.',
   props: {
     list_id: listIdDropdown,
     profile_id: profileIdsMultiSelectDropdown
   },
-  async run(context) {
+  async run({ auth, propsValue }) {
     // Action logic here
-    const { api_key } = context.auth
-    const { list_id, profile_id } = context.propsValue
+
+    const { list_id, profile_id } = propsValue
     const data = {
       data: profile_id.map((id: string) => ({
         type: 'profile',
         id,
       })),
     };
-    return await makeRequest(
-      api_key,
+    const response = await makeRequest(
+      auth as string,
       HttpMethod.POST,
       `/lists/${list_id}/relationships/profiles`,
       data
     );
+
+    //If the response is empty or undefined, return a default success message
+    if (!response) {
+      return { message: "Added successfully" };
+    }
+
+    return response;
   },
 });

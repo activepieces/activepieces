@@ -30,7 +30,7 @@ export const profileIdDropdown = Property.Dropdown({
                 options: [],
             };
         }
-        const profiles = await makeRequest(auth as string, HttpMethod.GET, '/', {});
+        const profiles = await makeRequest(auth as string, HttpMethod.GET, '/profiles', {});
 
         // loop through data and map to options
         const options = (profiles.data as KlaviyoProfile[]).map((field) => {
@@ -82,6 +82,40 @@ export const profileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
         };
     },
 });
+export const ListprofileIdsMultiSelectDropdown = Property.MultiSelectDropdown({
+    displayName: 'Profile Ids',
+    description: 'Select one or more Klaviyo profiles',
+    required: true,
+    refreshers: ['auth', 'list_id'],
+    options: async ({ auth, list_id }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            };
+        }
+        // Fetch profiles from the correct endpoint
+        const profiles = await makeRequest(auth as string, HttpMethod.GET, `/lists/${list_id}/profiles`, {});
+
+        // Map profiles to dropdown options with better labels and types
+        const options = (profiles.data as KlaviyoProfile[]).map((field) => {
+            const firstName = field.attributes.first_name || '';
+            const lastName = field.attributes.last_name || '';
+            const email = field.attributes.email || '';
+            const label = [firstName, lastName].filter(Boolean).join(' ') + (email ? ` (${email})` : '');
+            return {
+                label: label || field.id,
+                value: field.id,
+            };
+        });
+
+        return {
+            options,
+        };
+    },
+});
+
 
 export const listIdDropdown = Property.Dropdown({
     displayName: 'List Id',
@@ -95,6 +129,7 @@ export const listIdDropdown = Property.Dropdown({
                 options: [],
             };
         }
+
         const list = await makeRequest(auth as string, HttpMethod.GET, '/lists', {});
 
         // loop through data and map to options
@@ -105,12 +140,42 @@ export const listIdDropdown = Property.Dropdown({
                 value: field.id,
             };
         });
-
         return {
             options,
         };
     },
 })
+
+export const segmentIdDropdown = Property.Dropdown({
+    displayName: 'Segment Id',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                placeholder: 'Connect your account',
+                options: [],
+            };
+        }
+
+        const list = await makeRequest(auth as string, HttpMethod.GET, '/segments', {});
+
+        // loop through data and map to options
+        const options = (list.data as KlaviyoList[]).map((field) => {
+            const name = field.attributes.name || '';
+            return {
+                label: name || field.id,
+                value: field.id,
+            };
+        });
+        return {
+            options,
+        };
+    },
+})
+
+
 
 export const countryDropdown = Property.StaticDropdown({
     displayName: 'Preferred Country',

@@ -10,11 +10,11 @@ const polling: Polling<PiecePropValueSchema<typeof klaviyoAuth>, Record<string, 
     items: async ({ auth, lastFetchEpochMS }) => {
         // Fetch profiles created after the last fetch time
         const since = lastFetchEpochMS ? new Date(lastFetchEpochMS).toISOString() : undefined;
-        let path = '/profiles/?sort=created&fields[profile]=created,email,phone_number,external_id';
-        if (since) {
-            path += `&filter=greater(created,${since})`;
-        }
-        const { api_key } = auth;
+        const path = '/profiles';
+        // if (since) {
+        //     path += `&filter=greater(created,${since})`;
+        // }
+        const api_key = auth as string;
         const response = await makeRequest(api_key as string, HttpMethod.GET, path);
         const items = response.data || [];
         return items.map((item: any) => ({
@@ -25,19 +25,73 @@ const polling: Polling<PiecePropValueSchema<typeof klaviyoAuth>, Record<string, 
 };
 
 
-export const newProfile = createTrigger({
+export const newProfileTrigger = createTrigger({
     auth: klaviyoAuth,
     name: 'newProfile',
     displayName: 'New Profile',
     description: 'Triggers when a new profile is created in the account.',
     props: {},
     sampleData: {
-        id: '01Hfsdfsds',
+        type: "profile",
+        id: "01JZTTZ2NNC8ZCP45SM4J84RG2",
         attributes: {
-            email: 'user@example.com',
-            created: '2024-06-01T12:00:00+00:00',
-            phone_number: '+1234567890',
-            external_id: 'external-123'
+            email: "sarah.mason@klaviyo-demo.com",
+            phone_number: "+15005550006",
+            external_id: null,
+            anonymous_id: null,
+            first_name: "Sarah",
+            last_name: null,
+            organization: null,
+            locale: null,
+            title: "Regional Manager",
+            image: null,
+            created: "2025-07-10T18:53:32+00:00",
+            updated: "2025-07-10T18:53:32+00:00",
+            last_event_date: null,
+            location: {
+                zip: null,
+                country: null,
+                address1: null,
+                address2: null,
+                city: null,
+                latitude: null,
+                region: null,
+                longitude: null,
+                timezone: null,
+                ip: null
+            },
+            properties: {
+                "$phone_number_region": "IN"
+            }
+        },
+        relationships: {
+            lists: {
+                links: {
+                    self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/lists/",
+                    related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/lists/"
+                }
+            },
+            segments: {
+                links: {
+                    self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/segments/",
+                    related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/segments/"
+                }
+            },
+            "push-tokens": {
+                links: {
+                    self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/push-tokens/",
+                    related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/push-tokens/"
+                }
+            },
+            conversation: {
+                links: {
+                    self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/relationships/conversation/",
+                    related: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/conversation/"
+                }
+            }
+        },
+        links: {
+            self: "https://a.klaviyo.com/api/profiles/01JZTTZ2NNC8ZCP45SM4J84RG2/"
         }
     },
     type: TriggerStrategy.POLLING,

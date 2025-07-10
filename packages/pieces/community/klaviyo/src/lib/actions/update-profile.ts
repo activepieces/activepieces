@@ -10,7 +10,7 @@ export const updateProfile = createAction({
   displayName: 'update Profile',
   description: 'update profile to Klaviyo, optionally subscribing to email/SMS.',
   props: {
-    propfile_id: profileIdDropdown,
+    profile_id: profileIdDropdown,
     email: Property.ShortText({
       displayName: 'Email',
       description: "Individual's email address",
@@ -66,13 +66,15 @@ export const updateProfile = createAction({
       displayName: 'City',
       required: false,
     }),
+
     country: countryDropdown,
   },
-  async run(context) {
-    const { api_key } = context.auth
+  async run({ auth, propsValue }) {
+
     const {
-      propfile_id,
+      profile_id,
       email,
+      country_code,
       phone_number,
       external_id,
       first_name,
@@ -84,10 +86,10 @@ export const updateProfile = createAction({
       address2,
       city,
       country
-    } = context.propsValue;
+    } = propsValue;
     const attributes: Record<string, any> = {};
     if (email) attributes['email'] = email;
-    if (phone_number) attributes['phone_number'] = phone_number;
+    if (phone_number) attributes['phone_number'] = country_code + phone_number;
     if (external_id) attributes['external_id'] = external_id;
     if (first_name) attributes['first_name'] = first_name;
     if (last_name) attributes['last_name'] = last_name;
@@ -102,13 +104,14 @@ export const updateProfile = createAction({
     const body = {
       data: {
         type: 'profile',
+        id: profile_id,
         attributes,
       },
     };
     return await makeRequest(
-      api_key,
-      HttpMethod.POST,
-      `/profiles/${propfile_id}`,
+      auth as string,
+      HttpMethod.PATCH,
+      `/profiles/${profile_id}`,
       body
     );
   },

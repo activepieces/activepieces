@@ -7,7 +7,7 @@ export const createList = createAction({
   auth: klaviyoAuth,
   name: 'createList',
   displayName: 'Create List',
-  description: '',
+  description: 'Create a new subscriber list.',
   props: {
     name: Property.ShortText({
       displayName: "List Name",
@@ -15,9 +15,9 @@ export const createList = createAction({
       required: true
     })
   },
-  async run(context) {
-    const { api_key } = context.auth
-    const { name } = context.propsValue;
+  async run({auth,propsValue}) {
+    
+    const { name } = propsValue;
     const data = {
       data: {
         type: 'list',
@@ -27,7 +27,7 @@ export const createList = createAction({
       },
     };
     return await makeRequest(
-      api_key,
+      auth as string,
       HttpMethod.POST,
       `/lists`,
       data

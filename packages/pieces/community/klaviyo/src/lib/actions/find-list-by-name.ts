@@ -7,7 +7,7 @@ export const findListByName = createAction({
   auth: klaviyoAuth,
   name: 'findListByName',
   displayName: 'Find List by Name',
-  description: '',
+  description: 'Search for a list by name ',
   props: {
     search_query: Property.ShortText({
       displayName: 'Search list By Name',
@@ -15,21 +15,21 @@ export const findListByName = createAction({
       required: true,
     }),
   },
-  async run(context) {
+  async run({auth,propsValue}) {
     
-    const { search_query } = context.propsValue;
-    const { api_key } = context.auth
-
-    const filter = `equals(name,"${search_query}")`;
+    const { search_query } = propsValue;
+    
+    //equals(name,['example'])
+    const filter = `equals(name,"['${search_query}']")`;
 
     // Build query string
-    const query = `?filter=${encodeURIComponent(filter)}&page[size]=20`;
+    const query = `?filter=${encodeURIComponent(filter)}`;
 
     // Make the request
     return await makeRequest(
-      api_key,
+      auth as string,
       HttpMethod.GET,
-      `/profiles${query}`
+      `/lists${query}`
     );
   },
 });

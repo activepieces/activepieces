@@ -7,7 +7,7 @@ export const findProfileByEmailPhone = createAction({
   auth: klaviyoAuth,
   name: 'findProfileByEmailPhone',
   displayName: 'Find Profile by Email Phone',
-  description: '',
+  description: 'Locate a profile using email or phone number.',
   props: {
     search_query: Property.ShortText({
       displayName: 'Email or Phone Number',
@@ -15,10 +15,10 @@ export const findProfileByEmailPhone = createAction({
       required: true,
     }),
   },
-  async run(context) {
+  async run({auth,propsValue}) {
     // Action logic here
-    const { search_query } = context.propsValue;
-    const { api_key } = context.auth
+    const { search_query } = propsValue;
+    auth as string
 
     let filter = '';
     if (search_query.includes('@')) {
@@ -32,7 +32,7 @@ export const findProfileByEmailPhone = createAction({
 
     // Make the request
     return await makeRequest(
-      api_key,
+      auth as string,
       HttpMethod.GET,
       `/profiles${query}`
     );
