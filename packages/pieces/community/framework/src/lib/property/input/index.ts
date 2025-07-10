@@ -179,7 +179,8 @@ export const Property = {
       : StaticDropdownProperty<T, false>;
   },
   MultiSelectDropdown<T, R extends boolean = boolean>(
-p0: { displayName: string; required: false; options: {}; }, p1: { label: string; value: string; }, p2: { label: string; value: string; }, request: Properties<MultiSelectDropdownProperty<T, R>>  ): R extends true
+    request: Properties<MultiSelectDropdownProperty<T, R>>
+  ): R extends true
     ? MultiSelectDropdownProperty<T, true>
     : MultiSelectDropdownProperty<T, false> {
     return {
