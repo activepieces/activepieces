@@ -5,14 +5,14 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/form';
+import { FormField, FormLabel } from '@/components/ui/form';
 import {
   Select,
   SelectAction,
   SelectContent,
   SelectItem,
-  SelectLoader,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -82,11 +82,22 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       render={({ field }) => (
         <>
           {isLoadingConnections && (
-            <Select disabled={params.disabled}>
-              <SelectContent>
-                <SelectLoader />
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-2">
+              <FormLabel>
+                {t('Connections')} <span className="text-destructive">*</span>
+              </FormLabel>
+              <SearchableSelect
+                options={[]}
+                disabled={true}
+                loading={isLoadingConnections}
+                placeholder={t('Select a connection')}
+                value={field.value as React.Key}
+                onChange={(value) => field.onChange(value)}
+                showDeselect={false}
+                onRefresh={() => {}}
+                showRefresh={false}
+              />
+            </div>
           )}
           {!isLoadingConnections && (
             <AutoFormFieldWrapper

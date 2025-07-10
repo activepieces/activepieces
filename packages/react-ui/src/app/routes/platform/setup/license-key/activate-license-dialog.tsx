@@ -159,7 +159,7 @@ export const ActivateLicenseDialog = ({
               className="w-full"
             >
               {isPending ? (
-                <LoadingSpinner className="w-4 h-4" />
+                <LoadingSpinner className="size-4" />
               ) : (
                 t('Activate')
               )}
