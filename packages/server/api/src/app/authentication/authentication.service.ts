@@ -169,7 +169,7 @@ async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, p
         })
     }
     const samePlatform = currentPlatformId === platform.id
-    const allowToSwitch = !platformUtils.isEnterpriseCustomerOnCloud(platform) || samePlatform
+    const allowToSwitch = !platformUtils.isCustomerOnDedicatedDomain(platform) || samePlatform
     if (!allowToSwitch) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
@@ -262,7 +262,7 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
-        const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
+        const platform = platforms.find((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
         return platform?.id ?? null
     }
     return null

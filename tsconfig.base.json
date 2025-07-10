@@ -51,6 +51,9 @@
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
+      "@activepieces/piece-airtop": [
+        "packages/pieces/community/airtop/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
@@ -551,6 +554,9 @@
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
+       "@activepieces/piece-microsoft-power-bi": [
+        "packages/pieces/community/microsoft-power-bi/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
       ],
@@ -711,6 +717,9 @@
       ],
       "@activepieces/piece-scrapegrapghai": [
         "packages/pieces/community/scrapegrapghai/src/index.ts"
+      ],
+      "@activepieces/piece-scrapeless": [
+        "packages/pieces/community/scrapeless/src/index.ts"
       ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
