@@ -107,7 +107,7 @@ export const dynamicFormFields = Property.DynamicProperties({
       const response = await wufooApiCall<WufooFormFieldsResponse | any>({
         auth: { apiKey, subdomain },
         method: HttpMethod.GET,
-        resourceUri: `/forms/${formIdentifier}/fields.${responseFormat}`,
+        resourceUri: `/forms/${formIdentifier}/fields.json`,
       });
 
       let parsedResponse = response;
@@ -125,19 +125,19 @@ export const dynamicFormFields = Property.DynamicProperties({
 
       let fields: WufooFormField[] = [];
       
-      if (responseFormat === 'json') {
-        if (parsedResponse && typeof parsedResponse === 'object') {
+      if (parsedResponse && typeof parsedResponse === 'object') {
+        if ((parsedResponse as any).Fields && Array.isArray((parsedResponse as any).Fields)) {
+          fields = (parsedResponse as any).Fields;
+        } else if (responseFormat === 'json') {
           fields = (parsedResponse as WufooFormFieldsResponse).Fields || [];
-        }
-      } else if (responseFormat === 'xml') {
-        if (parsedResponse && typeof parsedResponse === 'object') {
-          if ((parsedResponse as any).Fields && Array.isArray((parsedResponse as any).Fields)) {
-            fields = (parsedResponse as any).Fields;
-          } else {
-            const fieldsContainer = parsedResponse.Fields || parsedResponse;
+        } else if (responseFormat === 'xml') {
+          const fieldsContainer = parsedResponse.Fields || parsedResponse;
+          if (Array.isArray(fieldsContainer)) {
+            fields = fieldsContainer;
+          } else if (fieldsContainer.Field) {
             if (Array.isArray(fieldsContainer.Field)) {
               fields = fieldsContainer.Field;
-            } else if (fieldsContainer.Field) {
+            } else {
               fields = [fieldsContainer.Field];
             }
           }
