@@ -8,7 +8,7 @@ export const getEntryDetailsAction = createAction({
   auth: wufooAuth,
   name: 'get-entry-details',
   displayName: 'Get Entry Details',
-  description: 'Retrieve form entries (submissions) with advanced filtering, sorting, and pagination. Perfect for accessing form data, analyzing submissions, and building reports from your Wufoo forms.',
+  description: 'Get form entries with filtering, sorting, and pagination options.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

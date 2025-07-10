@@ -9,7 +9,7 @@ export const createFormEntryAction = createAction({
   auth: wufooAuth,
   name: 'create-form-entry',
   displayName: 'Create Form Entry',
-  description: 'Submit a new entry to a Wufoo form with an intuitive interface that shows actual field names instead of cryptic Field IDs. Perfect for automating form submissions from other systems.',
+  description: 'Submit a new entry to a Wufoo form with dynamic field selection.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

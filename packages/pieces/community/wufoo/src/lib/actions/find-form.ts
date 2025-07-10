@@ -8,7 +8,7 @@ export const findFormAction = createAction({
   auth: wufooAuth,
   name: 'find-form',
   displayName: 'Find Form by Name or Hash',
-  description: 'Retrieve comprehensive details about a Wufoo form including metadata, settings, entry counts, and configuration information. Essential for understanding form structure and analytics.',
+  description: 'Get details about a Wufoo form including settings, entry counts, and metadata.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({

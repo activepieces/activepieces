@@ -11,7 +11,7 @@ export const newFormEntryTrigger = createTrigger({
   auth: wufooAuth,
   name: 'new_form_entry',
   displayName: 'New Form Entry',
-  description: 'Triggers instantly when someone submits a new entry to your Wufoo form. Perfect for real-time notifications, lead processing, and automated follow-ups.',
+  description: 'Triggers when someone submits a new entry to your Wufoo form.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     formIdentifier: formIdentifier,

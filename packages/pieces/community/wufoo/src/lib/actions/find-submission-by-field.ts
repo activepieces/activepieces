@@ -8,7 +8,7 @@ export const findSubmissionByFieldAction = createAction({
   auth: wufooAuth,
   name: 'find-submission-by-field',
   displayName: 'Find Submission by Field Value',
-  description: 'Search for existing form submissions based on specific field values. Perfect for deduplication, checking existing data, and lookup operations before creating new entries.',
+  description: 'Search for form submissions by field value for deduplication and lookup operations.',
   props: {
     formIdentifier: formIdentifier,
     format: Property.StaticDropdown({
