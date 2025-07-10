@@ -1,5 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 
+import { StepMetadataWithSuggestions } from '@/lib/types';
+
 export enum PieceSelectorTabType {
   EXPLORE = 'EXPLORE',
   AI_AND_AGENTS = 'AI_AND_AGENTS',
@@ -12,6 +14,8 @@ export const PieceSelectorTabsContext = createContext({
   selectedTab: PieceSelectorTabType.EXPLORE,
   setSelectedTab: (tab: PieceSelectorTabType) => {},
   resetToBeforeNoneWasSelected: () => {},
+  setSelectedPieceInExplore: (piece: StepMetadataWithSuggestions | null) => {},
+  selectedPieceInExplore: null as null | StepMetadataWithSuggestions,
 });
 
 export const PieceSelectorTabsProvider = ({
@@ -26,10 +30,14 @@ export const PieceSelectorTabsProvider = ({
   const [selectedTab, setSelectedTab] = useState(initiallySelectedTab);
   const [lastTabBefroeNoneWasSelected, setLastTabBeforeNoneWasSelected] =
     useState(initiallySelectedTab);
+  const [selectedPieceInExplore, setSelectedPieceInExplore] =
+    useState<StepMetadataWithSuggestions | null>(null);
   return (
     <PieceSelectorTabsContext.Provider
       value={{
         selectedTab,
+        setSelectedPieceInExplore,
+        selectedPieceInExplore,
         setSelectedTab: (tab: PieceSelectorTabType) => {
           if (tab !== PieceSelectorTabType.NONE) {
             setLastTabBeforeNoneWasSelected(tab);

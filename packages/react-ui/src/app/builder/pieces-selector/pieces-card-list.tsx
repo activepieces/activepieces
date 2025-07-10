@@ -4,7 +4,10 @@ import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
-import { usePieceSelectorTabs } from '@/features/pieces/lib/piece-selector-tabs-provider';
+import {
+  PieceSelectorTabType,
+  usePieceSelectorTabs,
+} from '@/features/pieces/lib/piece-selector-tabs-provider';
 import {
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   pieceSelectorUtils,
@@ -70,12 +73,15 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   const initialIndexToScrollToInPiecesList = virtualizedItems.findIndex(
     (item) => item.displayName === stepToReplacePieceDisplayName,
   );
+  const { selectedTab } = usePieceSelectorTabs();
 
   const isLoading = isLoadingPieces || isLoadingAgents;
   const showActionsOrTriggersList =
     searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
   const showPiecesList = !noResultsFound && !isLoading;
-  const { selectedTab } = usePieceSelectorTabs();
+  if (selectedTab === PieceSelectorTabType.EXPLORE) {
+    return null;
+  }
   return (
     <>
       <div

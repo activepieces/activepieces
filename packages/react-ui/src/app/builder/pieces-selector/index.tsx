@@ -19,6 +19,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, TriggerType } from '@activepieces/shared';
 
+import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
 type PieceSelectorProps = {
@@ -139,6 +140,7 @@ const PieceSelector = ({
                 height: listHeight + 'px',
               }}
             >
+              <ExploreTabContent operation={operation} />
               <PiecesCardList
                 listHeight={listHeight}
                 //this is done to avoid debounced results when user clears search
