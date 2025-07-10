@@ -243,7 +243,7 @@ import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
-import { AddIndexForSchemaVersionInFlowVersion1752106429970 } from './migration/postgres/1752106429970-AddIndexForSchemaVersionInFlowVersion'
+import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -412,7 +412,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTerminationReason1751728035816,
         AddFlowVersionToIssue1751927222122,
         SplitUpPieceMetadataIntoTools1752004202722,
-        AddIndexForSchemaVersionInFlowVersion1752106429970,
+        AddIndexForSchemaVersionInFlowVersion1752151941009,
     ]
 
     const edition = system.getEdition()
