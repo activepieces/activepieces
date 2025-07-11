@@ -1,19 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocClient, pandadocAuth } from '../common';
 import {
   templateDropdown,
   folderDropdown,
   recipientRoleDropdown,
   customRecipientRoleInput,
   tagDropdown,
-  customTagInput
+  customTagInput,
+  templateFields,
 } from '../common/dynamic-dropdowns';
 
 export const createDocumentFromTemplate = createAction({
   name: 'createDocumentFromTemplate',
   displayName: 'Create Document from Template',
-  description: 'Generate a document from a PandaDoc template with client data',
+  description: 'Creates a document from a PandaDoc Template.',
   auth: pandadocAuth,
   props: {
     template_uuid: templateDropdown,
@@ -54,11 +55,7 @@ export const createDocumentFromTemplate = createAction({
         }),
       },
     }),
-    fields: Property.Object({
-      displayName: 'Fields',
-      description: 'Fields/values to pre-fill in the document',
-      required: false,
-    }),
+    fields: templateFields,
     tokens: Property.Array({
       displayName: 'Variables/Tokens',
       description: 'Pass values for the variables in the template',
@@ -86,7 +83,8 @@ export const createDocumentFromTemplate = createAction({
     }),
     metadata: Property.Object({
       displayName: 'Metadata',
-      description: 'Additional data in key-value format to associate with document',
+      description:
+        'Additional data in key-value format to associate with document',
       required: false,
     }),
   },
@@ -117,7 +115,11 @@ export const createDocumentFromTemplate = createAction({
     };
 
     if (propsValue.fields) {
-      body.fields = propsValue.fields;
+      body.fields = Object.fromEntries(
+        Object.entries(propsValue.fields)
+          .filter(([_, value]) => value !== undefined && value !== '')
+          .map(([key, value]) => [key, { value }])
+      );
     }
 
     if (propsValue.tokens) {
@@ -129,15 +131,17 @@ export const createDocumentFromTemplate = createAction({
     }
 
     if (propsValue.tags) {
-      body.tags = propsValue.tags.map((tagItem: any) => {
-        // Handle tag with custom support
-        if (tagItem.tag === 'custom' && tagItem.custom_tag) {
-          return tagItem.custom_tag;
-        } else if (tagItem.tag !== 'custom') {
-          return tagItem.tag;
-        }
-        return null;
-      }).filter(Boolean);
+      body.tags = propsValue.tags
+        .map((tagItem: any) => {
+          // Handle tag with custom support
+          if (tagItem.tag === 'custom' && tagItem.custom_tag) {
+            return tagItem.custom_tag;
+          } else if (tagItem.tag !== 'custom') {
+            return tagItem.tag;
+          }
+          return null;
+        })
+        .filter(Boolean);
     }
 
     if (propsValue.metadata) {
@@ -145,7 +149,7 @@ export const createDocumentFromTemplate = createAction({
     }
 
     return await pandadocClient.makeRequest(
-      auth as PandaDocAuthType,
+      auth as string,
       HttpMethod.POST,
       '/documents',
       body

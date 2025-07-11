@@ -1,12 +1,12 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocAuth } from '../common';
 
 export const documentStateChanged = createTrigger({
   name: 'documentStateChanged',
   displayName: 'Document State Changed',
-  description: 'Triggers when a document status changes (draft, sent, completed, etc.)',
+  description: 'Triggers when a document status changes.',
   auth: pandadocAuth,
   props: {
     filter_status: Property.StaticMultiSelectDropdown({
@@ -58,15 +58,15 @@ export const documentStateChanged = createTrigger({
       method: HttpMethod.POST,
       url: 'https://api.pandadoc.com/public/v1/webhook-subscriptions',
       headers: {
-        Authorization: `API-Key ${(context.auth as PandaDocAuthType).apiKey}`,
+        Authorization: `API-Key ${(context.auth as string)}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: `Activepieces Document State Changed - ${context.webhookUrl}`,
+        name: `Activepieces Document State Changed`,
         url: context.webhookUrl,
         active: true,
         triggers: ['document_state_changed'],
-        payload: ['id', 'name', 'status', 'recipients', 'date_modified', 'date_sent', 'date_completed']
+        payload: ['fields', 'products', 'tokens', 'metadata', 'pricing'],
       }),
     });
 
@@ -80,7 +80,7 @@ export const documentStateChanged = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.pandadoc.com/public/v1/webhook-subscriptions/${webhookId}`,
           headers: {
-            Authorization: `API-Key ${(context.auth as PandaDocAuthType).apiKey}`,
+            Authorization: `API-Key ${(context.auth as string)}`,
           },
         });
       } catch (error) {

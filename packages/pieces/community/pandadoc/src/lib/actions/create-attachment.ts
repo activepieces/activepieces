@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocClient, pandadocAuth } from '../common';
 import { documentDropdown } from '../common/dynamic-dropdowns';
 
 export const createAttachment = createAction({
   name: 'createAttachment',
   displayName: 'Create Attachment',
-  description: 'Add supplementary files to a document, such as terms and conditions',
+  description: 'Adds an attachment to a document.',
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
@@ -17,7 +17,7 @@ export const createAttachment = createAction({
     }),
     name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Optional name to set for the uploaded file',
+      description: 'Optional name to set for the uploaded file.',
       required: false,
     }),
   },
@@ -31,7 +31,7 @@ export const createAttachment = createAction({
     }
 
     return await pandadocClient.makeRequest(
-      auth as PandaDocAuthType,
+      auth as string,
       HttpMethod.POST,
       `/documents/${propsValue.document_id}/attachments`,
       body

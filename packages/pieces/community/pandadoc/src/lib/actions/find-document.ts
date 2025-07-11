@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocClient, pandadocAuth } from '../common';
 import {
   formDropdown,
   folderDropdown,
@@ -12,8 +12,8 @@ import {
 
 export const findDocument = createAction({
   name: 'findDocument',
-  displayName: 'Find Document',
-  description: 'Locate documents based on name, status, template, or other criteria for further processing',
+  displayName: 'Find Document(s)',
+  description: 'Finds documents based various filter.',
   auth: pandadocAuth,
   props: {
     q: Property.ShortText({
@@ -93,7 +93,7 @@ export const findDocument = createAction({
               name: string;
               date_created: string;
             }>;
-          }>(auth as PandaDocAuthType, HttpMethod.GET, '/templates?count=100');
+          }>(auth as string, HttpMethod.GET, '/templates?count=100');
 
           const options = response.results.map((template) => ({
             label: `${template.name} - ${template.id.substring(0, 8)}...`,
@@ -234,7 +234,7 @@ export const findDocument = createAction({
     const endpoint = queryString ? `/documents?${queryString}` : '/documents';
 
     return await pandadocClient.makeRequest(
-      auth as PandaDocAuthType,
+      auth as string,
       HttpMethod.GET,
       endpoint
     );

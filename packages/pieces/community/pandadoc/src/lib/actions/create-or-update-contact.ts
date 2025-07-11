@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocClient, pandadocAuth } from '../common';
 import {
   countryDropdown,
   customCountryInput,
@@ -15,7 +15,7 @@ import {
 export const createOrUpdateContact = createAction({
   name: 'createOrUpdateContact',
   displayName: 'Create or Update Contact',
-  description: 'Manage contact information within PandaDoc for streamlined communication',
+  description: 'Creates a new or update an existing contact.',
   auth: pandadocAuth,
   props: {
     contact_id: Property.Dropdown({
@@ -40,13 +40,13 @@ export const createOrUpdateContact = createAction({
               last_name: string | null;
               email: string | null;
             }>;
-          }>(auth as PandaDocAuthType, HttpMethod.GET, '/contacts?count=100');
+          }>(auth as string, HttpMethod.GET, '/contacts?count=100');
 
           const options = response.results.map((contact) => {
             const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unnamed';
             const email = contact.email ? ` <${contact.email}>` : '';
             return {
-              label: `${name}${email} - ${contact.id.substring(0, 8)}...`,
+              label: `${name}${email}`,
               value: contact.id,
             };
           });
@@ -165,14 +165,14 @@ export const createOrUpdateContact = createAction({
 
     if (propsValue.contact_id) {
       return await pandadocClient.makeRequest(
-        auth as PandaDocAuthType,
+        auth as string,
         HttpMethod.PATCH,
         `/contacts/${propsValue.contact_id}`,
         body
       );
     } else {
       return await pandadocClient.makeRequest(
-        auth as PandaDocAuthType,
+        auth as string,
         HttpMethod.POST,
         '/contacts',
         body

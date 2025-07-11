@@ -1,11 +1,10 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PandaDocAuthType } from './auth';
 
 const BASE_URL = 'https://api.pandadoc.com/public/v1';
 
 export const pandadocClient = {
   async makeRequest<T = any>(
-    auth: PandaDocAuthType,
+    auth: string,
     method: HttpMethod,
     endpoint: string,
     body?: any
@@ -14,7 +13,7 @@ export const pandadocClient = {
       method,
       url: `${BASE_URL}${endpoint}`,
       headers: {
-        Authorization: `API-Key ${auth.apiKey}`,
+        Authorization: `API-Key ${auth}`,
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -24,7 +23,7 @@ export const pandadocClient = {
   },
 
   async makeFileRequest(
-    auth: PandaDocAuthType,
+    auth: string,
     method: HttpMethod,
     endpoint: string,
     file?: any
@@ -38,7 +37,7 @@ export const pandadocClient = {
       method,
       url: `${BASE_URL}${endpoint}`,
       headers: {
-        Authorization: `API-Key ${auth.apiKey}`,
+        Authorization: `API-Key ${auth}`,
       },
       body: formData,
     });

@@ -1,12 +1,12 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { pandadocAuth, pandadocClient, PandaDocAuthType } from '../common';
+import { pandadocAuth, pandadocClient } from '../common';
 
 export const documentUpdated = createTrigger({
   name: 'documentUpdated',
   displayName: 'Document Updated',
-  description: 'Triggers when a document is updated (content, recipients, or settings changed)',
+  description: 'Triggers when a document is updated.',
   auth: pandadocAuth,
   props: {
     template_filter: Property.MultiSelectDropdown({
@@ -30,7 +30,7 @@ export const documentUpdated = createTrigger({
               name: string;
               date_created: string;
             }>;
-          }>(auth as PandaDocAuthType, HttpMethod.GET, '/templates?count=100');
+          }>(auth as string, HttpMethod.GET, '/templates?count=100');
 
           const options = response.results.map((template) => ({
             label: `${template.name} - ${template.id.substring(0, 8)}...`,
@@ -71,7 +71,7 @@ export const documentUpdated = createTrigger({
               name: string;
               date_created: string;
             }>;
-          }>(auth as PandaDocAuthType, HttpMethod.GET, '/documents/folders?count=100');
+          }>(auth as string, HttpMethod.GET, '/documents/folders?count=100');
 
           const options = response.results.map((folder) => ({
             label: `${folder.name} - ${folder.uuid.substring(0, 8)}...`,
@@ -138,15 +138,15 @@ export const documentUpdated = createTrigger({
       method: HttpMethod.POST,
       url: 'https://api.pandadoc.com/public/v1/webhook-subscriptions',
       headers: {
-        Authorization: `API-Key ${(context.auth as PandaDocAuthType).apiKey}`,
+        Authorization: `API-Key ${(context.auth as string)}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: `Activepieces Document Updated - ${context.webhookUrl}`,
+        name: `Activepieces Document Updated`,
         url: context.webhookUrl,
         active: true,
         triggers: ['document_updated'],
-        payload: ['id', 'name', 'status', 'recipients', 'date_modified', 'content_date_modified', 'template', 'folder_uuid', 'updated_fields']
+        payload: ['fields', 'products', 'tokens', 'metadata', 'pricing'],
       }),
     });
 
@@ -160,7 +160,7 @@ export const documentUpdated = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.pandadoc.com/public/v1/webhook-subscriptions/${webhookId}`,
           headers: {
-            Authorization: `API-Key ${(context.auth as PandaDocAuthType).apiKey}`,
+            Authorization: `API-Key ${(context.auth as string)}`,
           },
         });
       } catch (error) {

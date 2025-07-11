@@ -1,6 +1,6 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, PandaDocAuthType } from './index';
+import { pandadocClient } from './index';
 
 // Documents dropdown
 export const documentDropdown = Property.Dropdown({
@@ -25,10 +25,14 @@ export const documentDropdown = Property.Dropdown({
           status: string;
           date_created: string;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/documents?count=100&order_by=date_created');
+      }>(
+        auth as string,
+        HttpMethod.GET,
+        '/documents?count=100&order_by=date_created'
+      );
 
       const options = response.results.map((doc) => ({
-        label: `${doc.name} (${doc.status.replace('document.', '')}) - ${doc.id.substring(0, 8)}...`,
+        label: doc.name,
         value: doc.id,
       }));
 
@@ -68,10 +72,10 @@ export const templateDropdown = Property.Dropdown({
           name: string;
           date_created: string;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/templates?count=100');
+      }>(auth as string, HttpMethod.GET, '/templates?count=100');
 
       const options = response.results.map((template) => ({
-        label: `${template.name} - ${template.id.substring(0, 8)}...`,
+        label: template.name,
         value: template.id,
       }));
 
@@ -86,6 +90,38 @@ export const templateDropdown = Property.Dropdown({
         options: [],
       };
     }
+  },
+});
+
+export const templateFields = Property.DynamicProperties({
+  displayName: 'Template Fields',
+  refreshers: ['template_uuid'],
+  required: false,
+  props: async ({ auth, template_uuid }) => {
+    if (!auth || !template_uuid) return {};
+
+    const fields: DynamicPropsValue = {};
+
+    const response = await pandadocClient.makeRequest<{
+      fields: Array<{
+        field_id: string;
+        type: string;
+        name: string;
+      }>;
+    }>(
+      auth as unknown as string,
+      HttpMethod.GET,
+      `/templates/${template_uuid}/details`
+    );
+
+    for (const prop of response.fields) {
+      fields[prop.field_id] = Property.ShortText({
+        displayName: prop.name,
+        required: false,
+      });
+    }
+
+    return fields;
   },
 });
 
@@ -111,7 +147,7 @@ export const folderDropdown = Property.Dropdown({
           name: string;
           date_created: string;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/documents/folders?count=100');
+      }>(auth as string, HttpMethod.GET, '/documents/folders?count=100');
 
       const options = response.results.map((folder) => ({
         label: `${folder.name} - ${folder.uuid.substring(0, 8)}...`,
@@ -155,10 +191,12 @@ export const contactDropdown = Property.Dropdown({
           last_name: string | null;
           email: string | null;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/contacts?count=100');
+      }>(auth as string, HttpMethod.GET, '/contacts?count=100');
 
       const options = response.results.map((contact) => {
-        const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unnamed';
+        const name =
+          [contact.first_name, contact.last_name].filter(Boolean).join(' ') ||
+          'Unnamed';
         const email = contact.email ? ` <${contact.email}>` : '';
         return {
           label: `${name}${email} - ${contact.id.substring(0, 8)}...`,
@@ -202,7 +240,7 @@ export const formDropdown = Property.Dropdown({
           name: string;
           status: string;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/forms?count=100');
+      }>(auth as string, HttpMethod.GET, '/forms?count=100');
 
       const options = response.results.map((form) => ({
         label: `${form.name} (${form.status}) - ${form.id.substring(0, 8)}...`,
@@ -248,12 +286,14 @@ export const memberDropdown = Property.Dropdown({
           role: string;
           is_active: boolean;
         }>;
-      }>(auth as PandaDocAuthType, HttpMethod.GET, '/members');
+      }>(auth as string, HttpMethod.GET, '/members');
 
       const options = response.results
         .filter((member) => member.is_active)
         .map((member) => {
-          const name = [member.first_name, member.last_name].filter(Boolean).join(' ') || 'Unnamed';
+          const name =
+            [member.first_name, member.last_name].filter(Boolean).join(' ') ||
+            'Unnamed';
           return {
             label: `${name} (${member.role}) - ${member.email}`,
             value: member.membership_id,
@@ -298,14 +338,20 @@ export const documentAttachmentDropdown = Property.Dropdown({
     }
 
     try {
-      const response = await pandadocClient.makeRequest<Array<{
-        uuid: string;
-        name: string | null;
-        date_created: string;
-      }>>(auth as PandaDocAuthType, HttpMethod.GET, `/documents/${document_id}/attachments`);
+      const response = await pandadocClient.makeRequest<
+        Array<{
+          uuid: string;
+          name: string | null;
+          date_created: string;
+        }>
+      >(
+        auth as string,
+        HttpMethod.GET,
+        `/documents/${document_id}/attachments`
+      );
 
       const options = response.map((attachment) => ({
-        label: `${attachment.name || 'Unnamed Attachment'} - ${attachment.uuid.substring(0, 8)}...`,
+        label: `${attachment.name || 'Unnamed Attachment'}`,
         value: attachment.uuid,
       }));
 
@@ -367,14 +413,16 @@ export const countryDropdown = Property.StaticDropdown({
 // Custom country input field
 export const customCountryInput = Property.ShortText({
   displayName: 'Custom Country',
-  description: 'Enter your country name (only used if "Other" is selected above)',
+  description:
+    'Enter your country name (only used if "Other" is selected above)',
   required: false,
 });
 
 // US/Canada States dropdown with custom input support
 export const stateDropdown = Property.StaticDropdown({
   displayName: 'State/Province',
-  description: 'Select a state/province or choose "Other" to enter a custom value',
+  description:
+    'Select a state/province or choose "Other" to enter a custom value',
   required: false,
   options: {
     options: [
@@ -434,7 +482,10 @@ export const stateDropdown = Property.StaticDropdown({
       { label: 'British Columbia (CA)', value: 'British Columbia' },
       { label: 'Manitoba (CA)', value: 'Manitoba' },
       { label: 'New Brunswick (CA)', value: 'New Brunswick' },
-      { label: 'Newfoundland and Labrador (CA)', value: 'Newfoundland and Labrador' },
+      {
+        label: 'Newfoundland and Labrador (CA)',
+        value: 'Newfoundland and Labrador',
+      },
       { label: 'Northwest Territories (CA)', value: 'Northwest Territories' },
       { label: 'Nova Scotia (CA)', value: 'Nova Scotia' },
       { label: 'Nunavut (CA)', value: 'Nunavut' },
@@ -462,14 +513,16 @@ export const stateDropdown = Property.StaticDropdown({
 // Custom state input field
 export const customStateInput = Property.ShortText({
   displayName: 'Custom State/Province',
-  description: 'Enter your state/province name (only used if "Other" is selected above)',
+  description:
+    'Enter your state/province name (only used if "Other" is selected above)',
   required: false,
 });
 
 // Job title dropdown with custom input support
 export const jobTitleDropdown = Property.StaticDropdown({
   displayName: 'Job Title',
-  description: 'Select a common job title or choose "Other" to enter a custom title',
+  description:
+    'Select a common job title or choose "Other" to enter a custom title',
   required: false,
   options: {
     options: [
@@ -486,7 +539,10 @@ export const jobTitleDropdown = Property.StaticDropdown({
       { label: 'Sales Manager', value: 'Sales Manager' },
       { label: 'Sales Representative', value: 'Sales Representative' },
       { label: 'Account Manager', value: 'Account Manager' },
-      { label: 'Business Development Manager', value: 'Business Development Manager' },
+      {
+        label: 'Business Development Manager',
+        value: 'Business Development Manager',
+      },
       { label: 'Marketing Manager', value: 'Marketing Manager' },
       { label: 'Marketing Coordinator', value: 'Marketing Coordinator' },
       // Technical
@@ -522,14 +578,16 @@ export const jobTitleDropdown = Property.StaticDropdown({
 // Custom job title input field
 export const customJobTitleInput = Property.ShortText({
   displayName: 'Custom Job Title',
-  description: 'Enter a custom job title (only used if "Other" is selected above)',
+  description:
+    'Enter a custom job title (only used if "Other" is selected above)',
   required: false,
 });
 
 // Industry dropdown with custom input support
 export const industryDropdown = Property.StaticDropdown({
   displayName: 'Industry',
-  description: 'Select an industry or choose "Other" to enter a custom industry',
+  description:
+    'Select an industry or choose "Other" to enter a custom industry',
   required: false,
   options: {
     options: [
@@ -548,7 +606,10 @@ export const industryDropdown = Property.StaticDropdown({
       { label: 'Marketing & Advertising', value: 'Marketing & Advertising' },
       { label: 'Media & Entertainment', value: 'Media & Entertainment' },
       { label: 'Telecommunications', value: 'Telecommunications' },
-      { label: 'Transportation & Logistics', value: 'Transportation & Logistics' },
+      {
+        label: 'Transportation & Logistics',
+        value: 'Transportation & Logistics',
+      },
       { label: 'Energy & Utilities', value: 'Energy & Utilities' },
       { label: 'Automotive', value: 'Automotive' },
       { label: 'Aerospace & Defense', value: 'Aerospace & Defense' },
@@ -571,14 +632,16 @@ export const industryDropdown = Property.StaticDropdown({
 // Custom industry input field
 export const customIndustryInput = Property.ShortText({
   displayName: 'Custom Industry',
-  description: 'Enter a custom industry (only used if "Other" is selected above)',
+  description:
+    'Enter a custom industry (only used if "Other" is selected above)',
   required: false,
 });
 
 // Recipient role dropdown with custom input support
 export const recipientRoleDropdown = Property.StaticDropdown({
   displayName: 'Recipient Role',
-  description: 'Select a common recipient role or choose "Other" to enter a custom role',
+  description:
+    'Select a common recipient role or choose "Other" to enter a custom role',
   required: false,
   options: {
     options: [
@@ -610,14 +673,16 @@ export const recipientRoleDropdown = Property.StaticDropdown({
 // Custom recipient role input field
 export const customRecipientRoleInput = Property.ShortText({
   displayName: 'Custom Recipient Role',
-  description: 'Enter a custom recipient role (only used if "Other" is selected above)',
+  description:
+    'Enter a custom recipient role (only used if "Other" is selected above)',
   required: false,
 });
 
 // Watermark text dropdown with custom input support
 export const watermarkTextDropdown = Property.StaticDropdown({
   displayName: 'Watermark Text',
-  description: 'Select common watermark text or choose "Custom" to enter your own',
+  description:
+    'Select common watermark text or choose "Custom" to enter your own',
   required: false,
   options: {
     options: [
@@ -643,7 +708,8 @@ export const watermarkTextDropdown = Property.StaticDropdown({
 // Custom watermark text input field
 export const customWatermarkTextInput = Property.ShortText({
   displayName: 'Custom Watermark Text',
-  description: 'Enter custom watermark text (only used if "Custom" is selected above)',
+  description:
+    'Enter custom watermark text (only used if "Custom" is selected above)',
   required: false,
 });
 

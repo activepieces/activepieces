@@ -13,14 +13,16 @@ import { documentCompleted } from './lib/triggers/document-completed';
 import { documentStateChanged } from './lib/triggers/document-state-changed';
 import { documentUpdated } from './lib/triggers/document-updated';
 
-import { pandadocAuth, PandaDocAuthType } from './lib/common';
+import { pandadocAuth } from './lib/common';
+import { PieceCategory } from '@activepieces/shared';
 
 export const pandadoc = createPiece({
   displayName: 'PandaDoc',
   auth: pandadocAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pandadoc.png',
-  authors: ['activepieces'],
+  categories:[PieceCategory.CONTENT_AND_FILES,PieceCategory.PRODUCTIVITY],
+  authors: ['onyedikachi-david'],
   actions: [
     createDocumentFromTemplate,
     createAttachment,
@@ -33,7 +35,7 @@ export const pandadoc = createPiece({
       baseUrl: () => 'https://api.pandadoc.com/public/v1',
       auth: pandadocAuth,
       authMapping: async (auth) => ({
-        Authorization: `API-Key ${(auth as PandaDocAuthType).apiKey}`,
+        Authorization: `API-Key ${(auth as string)}`,
       }),
     }),
   ],

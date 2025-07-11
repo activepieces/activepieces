@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocClient, pandadocAuth } from '../common';
 import { documentDropdown, documentAttachmentDropdown } from '../common/dynamic-dropdowns';
 
 export const getDocumentAttachments = createAction({
   name: 'getDocumentAttachments',
-  displayName: 'Get Document Attachment Details',
-  description: 'Retrieve details of a specific attachment from a document for review or storage',
+  displayName: 'Get Document Attachment',
+  description: 'Retrieves details of a specific attachment from a document.',
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
@@ -14,7 +14,7 @@ export const getDocumentAttachments = createAction({
   },
   async run({ auth, propsValue }) {
     return await pandadocClient.makeRequest(
-      auth as PandaDocAuthType,
+      auth as string,
       HttpMethod.GET,
       `/documents/${propsValue.document_id}/attachments/${propsValue.attachment_id}`
     );

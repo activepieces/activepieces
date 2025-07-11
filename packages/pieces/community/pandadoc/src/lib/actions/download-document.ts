@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { pandadocAuth, PandaDocAuthType } from '../common';
+import { pandadocAuth } from '../common';
 import { documentDropdown, watermarkTextDropdown, customWatermarkTextInput } from '../common/dynamic-dropdowns';
 
 export const downloadDocument = createAction({
   name: 'downloadDocument',
   displayName: 'Download Document',
-  description: 'Save a completed contract or document as a PDF file with optional watermark customization',
+  description: 'Downloads a document as PDF.',
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
@@ -51,7 +51,7 @@ export const downloadDocument = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue,files }) {
     const queryParams: any = {};
 
     if (propsValue.separate_files) {
@@ -94,20 +94,16 @@ export const downloadDocument = createAction({
       method: HttpMethod.GET,
       url: endpoint,
       headers: {
-        Authorization: `API-Key ${(auth as PandaDocAuthType).apiKey}`,
+        Authorization: `API-Key ${(auth as string)}`,
       },
+      responseType:'arraybuffer'
     });
 
-    return {
-      success: true,
-      document_id: propsValue.document_id,
-      file_data: response.body,
-      content_type: response.headers?.['content-type'] || 'application/pdf',
-      filename: `document_${propsValue.document_id}.${propsValue.separate_files ? 'zip' : 'pdf'}`,
-      download_options: {
-        separate_files: propsValue.separate_files || false,
-        watermark_applied: !!(propsValue.watermark_text || propsValue.watermark_color),
-      },
-    };
+     return {
+      file: await files.write({
+        fileName: 'file.pdf',
+        data: Buffer.from(response.body)
+      })
+    }
   },
 });
