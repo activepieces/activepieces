@@ -333,6 +333,9 @@
       "@activepieces/piece-forms": [
         "packages/pieces/community/forms/src/index.ts"
       ],
+      "@activepieces/piece-formstack": [
+        "packages/pieces/community/formstack/src/index.ts"
+      ],
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
       ],
