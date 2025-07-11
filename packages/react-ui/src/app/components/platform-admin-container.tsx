@@ -74,13 +74,13 @@ export function PlatformAdminContainer({
       setOpen: setSetupOpen,
       isActive: (pathname: string) => pathname.includes('/setup'),
       items: [
-        // {
-        //   type: 'link',
-        //   to: '/platform/setup/ai',
-        //   label: t('AI'),
-        //   isSubItem: true,
-        //   show: true,
-        // },
+        {
+          type: 'link',
+          to: '/platform/setup/ai',
+          label: t('AI'),
+          isSubItem: true,
+          show: true,
+        },
         // {
         //   type: 'link',
         //   to: '/platform/setup/branding',
