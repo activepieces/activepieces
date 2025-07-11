@@ -3,6 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi, clicksendCommon } from '../common';
 import { clicksendAuth } from '../..';
 
+function isValidPhone(phone: string) {
+  return /^\+?[1-9]\d{1,14}$/.test(phone);
+}
+function isValidEmail(email: string) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
 export const clicksendUpdateContact = createAction({
   auth: clicksendAuth,
   name: 'update_contact',
@@ -67,12 +74,12 @@ export const clicksendUpdateContact = createAction({
     }),
   },
   async run(context) {
-    const { 
-      contact_id, 
-      phone_number, 
-      email, 
-      first_name, 
-      last_name, 
+    const {
+      contact_id,
+      phone_number,
+      email,
+      first_name,
+      last_name,
       company_name,
       address_line_1,
       address_line_2,
@@ -81,10 +88,14 @@ export const clicksendUpdateContact = createAction({
       postal_code,
       country
     } = context.propsValue;
-    
+    if (phone_number && !isValidPhone(phone_number)) {
+      throw new Error('Invalid phone number.');
+    }
+    if (email && !isValidEmail(email)) {
+      throw new Error('Invalid email address.');
+    }
     const username = context.auth.username;
     const password = context.auth.password;
-    
     const contactData = {
       ...(phone_number && { phone_number }),
       ...(email && { email }),
@@ -98,12 +109,21 @@ export const clicksendUpdateContact = createAction({
       ...(postal_code && { postal_code }),
       ...(country && { country }),
     };
-
-    return await callClickSendApi(
-      HttpMethod.PUT,
-      `contacts/${contact_id}`,
-      { username, password },
-      contactData
-    );
+    try {
+      return await callClickSendApi(
+        HttpMethod.PUT,
+        `contacts/${contact_id}`,
+        { username, password },
+        contactData
+      );
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        throw new Error('Contact not found.');
+      }
+      if (error?.response?.status === 403) {
+        throw new Error('Permission denied.');
+      }
+      throw error;
+    }
   },
 }); 

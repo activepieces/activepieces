@@ -3,6 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi, clicksendCommon } from '../common';
 import { clicksendAuth } from '../..';
 
+function isValidPhone(phone: string) {
+  return /^\+?[1-9]\d{1,14}$/.test(phone);
+}
+function isValidEmail(email: string) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
 export const clicksendCreateContact = createAction({
   auth: clicksendAuth,
   name: 'create_contact',
@@ -67,12 +74,12 @@ export const clicksendCreateContact = createAction({
     }),
   },
   async run(context) {
-    const { 
-      contact_list_id, 
-      phone_number, 
-      email, 
-      first_name, 
-      last_name, 
+    const {
+      contact_list_id,
+      phone_number,
+      email,
+      first_name,
+      last_name,
       company_name,
       address_line_1,
       address_line_2,
@@ -81,10 +88,14 @@ export const clicksendCreateContact = createAction({
       postal_code,
       country
     } = context.propsValue;
-    
+    if (!phone_number || !isValidPhone(phone_number)) {
+      throw new Error('A valid phone number is required.');
+    }
+    if (email && !isValidEmail(email)) {
+      throw new Error('Invalid email address.');
+    }
     const username = context.auth.username;
     const password = context.auth.password;
-    
     const contactData = {
       phone_number,
       ...(email && { email }),
@@ -98,12 +109,18 @@ export const clicksendCreateContact = createAction({
       ...(postal_code && { postal_code }),
       ...(country && { country }),
     };
-
-    return await callClickSendApi(
-      HttpMethod.POST,
-      `lists/${contact_list_id}/contacts`,
-      { username, password },
-      contactData
-    );
+    try {
+      return await callClickSendApi(
+        HttpMethod.POST,
+        `lists/${contact_list_id}/contacts`,
+        { username, password },
+        contactData
+      );
+    } catch (error: any) {
+      if (error?.response?.body?.response_code === 'ALREADY_EXISTS') {
+        throw new Error('Contact already exists in this list.');
+      }
+      throw error;
+    }
   },
 }); 

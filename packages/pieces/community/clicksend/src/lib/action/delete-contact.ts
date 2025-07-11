@@ -15,11 +15,21 @@ export const clicksendDeleteContact = createAction({
     const { contact_id } = context.propsValue;
     const username = context.auth.username;
     const password = context.auth.password;
-
-    return await callClickSendApi(
-      HttpMethod.DELETE,
-      `contacts/${contact_id}`,
-      { username, password }
-    );
+    try {
+      await callClickSendApi(
+        HttpMethod.DELETE,
+        `contacts/${contact_id}`,
+        { username, password }
+      );
+      return { success: true, message: 'Contact deleted.' };
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        throw new Error('Contact not found.');
+      }
+      if (error?.response?.status === 403) {
+        throw new Error('Permission denied.');
+      }
+      throw error;
+    }
   },
 }); 

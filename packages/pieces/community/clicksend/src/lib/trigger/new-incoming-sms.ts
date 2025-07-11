@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   HttpResponse,
@@ -13,7 +13,23 @@ export const clicksendNewIncomingSms = createTrigger({
   name: 'new_incoming_sms',
   displayName: 'New Incoming SMS',
   description: 'Triggers when a new SMS message is received',
-  props: {},
+  props: {
+    from: Property.ShortText({
+      displayName: 'From (Sender)',
+      description: 'Filter by sender number (optional)',
+      required: false,
+    }),
+    status: Property.ShortText({
+      displayName: 'Status',
+      description: 'Filter by message status (optional)',
+      required: false,
+    }),
+    since: Property.Number({
+      displayName: 'Since (Unix Timestamp)',
+      description: 'Only messages received after this timestamp (optional)',
+      required: false,
+    }),
+  },
   sampleData: {
     message_id: '12345678',
     status: 'RECEIVED',
@@ -38,19 +54,16 @@ export const clicksendNewIncomingSms = createTrigger({
     last_name: 'Doe',
     email: 'john.doe@example.com',
   },
-  // ClickSend supports webhook polling for incoming messages
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     const username = context.auth.username;
     const password = context.auth.password;
-    
-    // Get recent messages to establish baseline
+    let url = 'sms/inbound?limit=20';
     const response = await callClickSendApi<MessagePaginationResponse>(
       HttpMethod.GET,
-      'sms/inbound?limit=20',
+      url,
       { username, password }
     );
-    
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
       lastMessageId:
         response.body.data.length === 0
@@ -65,55 +78,71 @@ export const clicksendNewIncomingSms = createTrigger({
     const username = context.auth.username;
     const password = context.auth.password;
     const newMessages: unknown[] = [];
-    
     const lastMessage = await context.store.get<LastMessage>(
       '_new_incoming_sms_trigger'
     );
-    
     let currentPage = 1;
     let hasMorePages = true;
     let firstMessageId = undefined;
-    
+    const { from, status, since } = context.propsValue;
+    let filterQuery = '';
+    if (from) {
+      filterQuery += `&from=${encodeURIComponent(from)}`;
+    }
+    if (status) {
+      filterQuery += `&status=${encodeURIComponent(status)}`;
+    }
+    if (since) {
+      filterQuery += `&date_from=${since}`;
+    }
     while (hasMorePages) {
-      const res: HttpResponse<MessagePaginationResponse> =
-        await httpClient.sendRequest<MessagePaginationResponse>({
+      let url = `https://rest.clicksend.com/v3/sms/inbound?limit=20&page=${currentPage}${filterQuery}`;
+      let res: HttpResponse<MessagePaginationResponse>;
+      try {
+        res = await httpClient.sendRequest<MessagePaginationResponse>({
           method: HttpMethod.GET,
-          url: `https://rest.clicksend.com/v3/sms/inbound?limit=20&page=${currentPage}`,
+          url,
           authentication: {
             type: AuthenticationType.BASIC,
             username: username,
             password: password,
           },
         });
-      
+      } catch (error: any) {
+        if (error?.response?.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+        if (error?.response?.status === 401) {
+          throw new Error('Authentication failed. Check your ClickSend credentials.');
+        }
+        if (error?.response?.status === 500) {
+          throw new Error('ClickSend internal server error. Try again later.');
+        }
+        throw error;
+      }
       const messages = res.body.data;
-      
       if (!firstMessageId && messages.length > 0) {
         firstMessageId = messages[0].message_id;
       }
-      
       hasMorePages = res.body.meta.pagination.current_page < res.body.meta.pagination.total_pages;
       currentPage++;
-      
       for (let i = 0; i < messages.length; i++) {
         const message = messages[i];
-        
         if (message.message_id === lastMessage?.lastMessageId) {
           hasMorePages = false;
           break;
         }
-        
-        // Only include incoming messages
         if (message.message_direction === 'in') {
+          if (since && message.message_timestamp < since) {
+            continue;
+          }
           newMessages.push(message);
         }
       }
     }
-    
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
       lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
     });
-    
     return newMessages;
   },
 });
