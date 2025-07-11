@@ -1,7 +1,8 @@
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
-  EnableAiCreditUsageParams,
+  ToggleAiCreditsOverageEnabledParams,
+  SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
@@ -19,10 +20,19 @@ export const platformBillingApi = {
   createSubscription(params: CreateSubscriptionParams) {
     return api.post<string>('/v1/platform-billing/create-subscription', params);
   },
-  setAiCreditUsageLimit(params: EnableAiCreditUsageParams) {
+  setAiCreditsOverageLimit(params: SetAiCreditsOverageLimitParams) {
     return api.post<PlatformPlan>(
-      '/v1/platform-billing/set-ai-credit-usage-limit',
+      '/v1/platform-billing/set-ai-credits-overage-limit',
       params,
     );
+  },
+  toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
+    return api.post<PlatformPlan>(
+      '/v1/platform-billing/update-ai-overage-state',
+      params,
+    );
+  },
+  startTrial() {
+    return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
   },
 };

@@ -1,5 +1,5 @@
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
-import { streamText } from "ai"
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
+import { APICallError, streamText } from "ai"
 import { agentCommon } from "./common"
 import { agentTools } from "./agent-tools"
 import { agentMcp } from "./agent-mcp"
@@ -41,6 +41,7 @@ export const agentExecutor = {
                 steps: [],
                 status: AgentTaskStatus.IN_PROGRESS,
                 output: undefined,
+                message: '',
             }
             let currentText = ''
 
@@ -76,6 +77,17 @@ export const agentExecutor = {
                         endTime: new Date().toISOString(),
                         output: chunk.result,
                     }
+                } else if (chunk.type === 'error') {
+                    agentResult.status = AgentTaskStatus.FAILED
+                    if (APICallError.isInstance(chunk.error)) {
+                        const errorResponse = (chunk.error as any)?.data as AIErrorResponse
+                        agentResult.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
+                    }
+                    else {
+                        agentResult.message = concatMarkdown(agentResult.steps) + '\n' + JSON.stringify(chunk.error, null, 2)
+                    }
+                    await params.update(agentResult)
+                    return agentResult
                 }
                 await params.update(agentResult)
             }
@@ -89,6 +101,7 @@ export const agentExecutor = {
             const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
             agentResult.output = markAsComplete?.input
             agentResult.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
+            agentResult.message = concatMarkdown(agentResult.steps)
 
             await params.update(agentResult)
 
@@ -157,6 +170,10 @@ function constructSystemPrompt(agent: Agent) {
     ---
     ${agent.systemPrompt}
     `
+}
+
+function concatMarkdown(blocks: AgentStepBlock[]): string {
+    return blocks.filter((block) => block.type === ContentBlockType.MARKDOWN).map((block) => block.markdown).join('\n')
 }
 
 type ExecuteAgent = {

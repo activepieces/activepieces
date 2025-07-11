@@ -9,7 +9,6 @@ import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
-import { billingQueries } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -19,9 +18,11 @@ import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
 
-const getTimeUntilNextReset = (nextResetDate: string) => {
+const getTimeUntilNextReset = (nextResetDate: number) => {
+  const date = dayjs.unix(nextResetDate).toISOString();
+
   const now = dayjs();
-  const nextReset = dayjs(nextResetDate);
+  const nextReset = dayjs(date);
   const diffInDays = nextReset.diff(now, 'days');
   if (diffInDays > 0) {
     return `${diffInDays} ${t('days')}`;
@@ -38,9 +39,10 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
   return t('Today');
 };
 
-const getTrialProgress = (trialEndDate: string) => {
+const getTrialProgress = (trialEndDate: number) => {
+  const date = dayjs.unix(trialEndDate).toISOString();
   const now = dayjs();
-  const trialEnd = dayjs(trialEndDate);
+  const trialEnd = dayjs(date);
 
   const trialDurationDays = 14;
   const trialStart = trialEnd.subtract(trialDurationDays, 'days');
@@ -53,21 +55,20 @@ const getTrialProgress = (trialEndDate: string) => {
 const UsageLimitsButton = React.memo(() => {
   const [managePlanOpen, setManagePlanOpen] = useState(false);
 
-  const { project } = projectHooks.useCurrentProject();
+  const { project, isPending } = projectHooks.useCurrentProject();
+
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: platformSubscription, isPending } =
-    billingQueries.usePlatformSubscription(platform.id);
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  const status = platformSubscription?.plan.stripeSubscriptionStatus;
+  const status = platform.plan.stripeSubscriptionStatus;
   const isTrial = status === ApSubscriptionStatus.TRIALING;
 
   if (edition === ApEdition.COMMUNITY) {
     return null;
   }
 
-  if (isPending || isNil(platformSubscription)) {
+  if (isPending || isNil(project)) {
     return (
       <div className="flex flex-col gap-2 w-full px-2">
         <Separator className="my-1.5" />
@@ -122,12 +123,10 @@ const UsageLimitsButton = React.memo(() => {
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
 
-          {isTrial && platformSubscription?.plan.stripeSubscriptionEndDate && (
+          {isTrial && platform.plan.stripeSubscriptionEndDate && (
             <div className="flex flex-col gap-4">
               <TrialProgress
-                trialEndDate={dayjs
-                  .unix(platformSubscription.plan.stripeSubscriptionEndDate)
-                  .toISOString()}
+                trialEndDate={platform.plan.stripeSubscriptionEndDate}
               />
               <Button
                 variant="default"
@@ -141,15 +140,11 @@ const UsageLimitsButton = React.memo(() => {
             </div>
           )}
         </div>
-        {platformSubscription?.plan.stripeSubscriptionEndDate && !isTrial && (
+        {!isTrial && (
           <div className="text-xs text-muted-foreground flex justify-between w-full">
             <span>
               {t('Usage resets in')}{' '}
-              {getTimeUntilNextReset(
-                dayjs
-                  .unix(platformSubscription.plan.stripeSubscriptionEndDate)
-                  .toISOString(),
-              )}{' '}
+              {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
             </span>
             <FlagGuard flag={ApFlagId.SHOW_BILLING}>
               <Link to={'/platform/setup/billing'} className="w-fit">
@@ -167,7 +162,7 @@ const UsageLimitsButton = React.memo(() => {
   );
 });
 
-const TrialProgress = ({ trialEndDate }: { trialEndDate: string }) => {
+const TrialProgress = ({ trialEndDate }: { trialEndDate: number }) => {
   const progressPercentage = getTrialProgress(trialEndDate);
 
   return (

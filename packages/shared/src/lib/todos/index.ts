@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 import { PopulatedFlow } from '../flows'
 import { UserWithMetaInformation } from '../user'
-import { AgentStepBlock } from '../agents/content'
 
 export enum STATUS_VARIANT {
     POSITIVE = 'Positive (Green)',
@@ -44,6 +43,7 @@ export type StatusColor = {
 
 export const CreateAndWaitTodoResult = Type.Object({
     status: Type.String(),
+    message: Nullable(Type.String()),
 })
 
 export type CreateAndWaitTodoResult = Static<typeof CreateAndWaitTodoResult>

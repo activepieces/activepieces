@@ -57,19 +57,19 @@ export class AddTodoActivity1748525529096 implements MigrationInterface {
             ALTER TABLE "todo_activity" DROP CONSTRAINT "fk_todo_activity_todo_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_agent_id"
+            DROP INDEX "idx_todo_agent_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "todo" DROP COLUMN "locked"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_activity_agent_id"
+            DROP INDEX "idx_todo_activity_agent_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_activity_user_id"
+            DROP INDEX "idx_todo_activity_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_activity_todo_id"
+            DROP INDEX "idx_todo_activity_todo_id"
         `)
         await queryRunner.query(`
             DROP TABLE "todo_activity"

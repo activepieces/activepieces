@@ -7,10 +7,12 @@ import mcpDark from '@/assets/img/custom/mcp-dark.svg';
 import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
+import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -50,25 +52,22 @@ export function DashboardContainer({
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BILLING,
+  );
+
   const [isAlertClosed, setIsAlertClosed] = useState(false);
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
-  const embedFilter = (link: SidebarItem) => {
-    if (link.type === 'link') {
-      return !embedState.isEmbedded || !!link.showInEmbed;
-    }
-    return true;
-  };
+
   const permissionFilter = (link: SidebarItem) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
     }
     return true;
   };
-
-  const filterAlerts = (item: SidebarItem) =>
-    platform.plan.alertsEnabled || item.label !== t('Alerts');
 
   const releasesLink: SidebarLink = {
     type: 'link',
@@ -77,7 +76,7 @@ export function DashboardContainer({
     label: t('Releases'),
     hasPermission:
       project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
-    showInEmbed: true,
+    show: project.releasesEnabled,
     isSubItem: false,
   };
 
@@ -86,9 +85,9 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: <Workflow />,
     label: t('Flows'),
-    showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    show: true,
     isActive: (pathname) =>
       pathname.includes('/flows') ||
       pathname.includes('/runs') ||
@@ -99,6 +98,7 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcps'),
     label: t('MCP'),
+    show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
     icon: (
       <img
         src={theme === 'dark' ? mcpDark : mcpLight}
@@ -106,7 +106,6 @@ export function DashboardContainer({
         className="color-foreground"
       />
     ),
-    showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
   };
@@ -116,7 +115,7 @@ export function DashboardContainer({
     to: authenticationSession.appendProjectRoutePrefix('/agents'),
     label: t('Agents'),
     icon: <Bot />,
-    showInEmbed: false,
+    show: platform.plan.agentsEnabled || !embedState.isEmbedded,
     hasPermission: true,
     isSubItem: false,
     name: t('Products'),
@@ -126,8 +125,8 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
     label: t('Tables'),
+    show: platform.plan.tablesEnabled || !embedState.isEmbedded,
     icon: <Table2 />,
-    showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
   };
@@ -136,8 +135,8 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/todos'),
     label: t('Todos'),
+    show: platform.plan.todosEnabled || !embedState.isEmbedded,
     icon: <ListTodo />,
-    showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
   };
@@ -149,10 +148,7 @@ export function DashboardContainer({
     mcpLink,
     todosLink,
     releasesLink,
-  ]
-    .filter(embedFilter)
-    .filter(permissionFilter)
-    .filter(filterAlerts);
+  ].filter(permissionFilter);
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -172,6 +168,7 @@ export function DashboardContainer({
         >
           {children}
         </SidebarComponent>
+        {showBilling && <WelcomeTrialDialog />}
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

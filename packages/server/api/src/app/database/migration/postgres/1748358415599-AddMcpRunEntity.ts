@@ -54,13 +54,13 @@ export class AddMcpRunEntity1748358415599 implements MigrationInterface {
             ALTER TABLE "mcp_run" DROP CONSTRAINT "fk_mcp_run_mcp_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_run_project_id"
+            DROP INDEX "idx_mcp_run_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_run_tool_id"
+            DROP INDEX "idx_mcp_run_tool_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_mcp_run_mcp_id"
+            DROP INDEX "idx_mcp_run_mcp_id"
         `)
         await queryRunner.query(`
             DROP TABLE "mcp_run"

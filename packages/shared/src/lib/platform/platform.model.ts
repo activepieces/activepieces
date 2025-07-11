@@ -84,6 +84,11 @@ export const PlatformUsage = Type.Object({
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
+export enum AiOverageState {
+    NOT_ALLOWED = 'not_allowed',
+    ALLOWED_BUT_OFF = 'allowed_but_off',
+    ALLOWED_AND_ON = 'allowed_an_on',
+}
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
@@ -91,12 +96,16 @@ export const PlatformPlan = Type.Object({
     platformId: Type.String(),
     tasksLimit: Type.Optional(Type.Number()),
     includedAiCredits: Type.Number(),
-    aiCreditsLimit: Type.Optional(Type.Number()),
+    aiCreditsOverageLimit: Type.Optional(Type.Number()),
+    aiCreditsOverageState: Type.Optional(Type.String()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     agentsEnabled: Type.Boolean(),
+    mcpsEnabled: Type.Boolean(),
+    tablesEnabled: Type.Boolean(),
+    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
@@ -108,11 +117,9 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    eligibleForTrial: Type.Boolean(),
 
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
 
-    alertsEnabled: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
     
     licenseKey: Type.Optional(Type.String()),
