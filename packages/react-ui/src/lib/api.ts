@@ -64,12 +64,12 @@ function request<TResponse>(
     url: resolvedUrl,
     ...config,
     headers: {
-      ...config.headers,
       Authorization: getToken(
         unAuthenticated,
         isApWebsite,
         authenticationSession.getToken(),
       ),
+      ...config.headers,
     },
   })
     .then((response) =>
@@ -117,12 +117,7 @@ export const api = {
   },
   any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
     request<TResponse>(url, config),
-  get: <TResponse>(
-    url: string,
-    query?: unknown,
-    config?: AxiosRequestConfig,
-    headers?: Record<string, string>,
-  ) =>
+  get: <TResponse>(url: string, query?: unknown, config?: AxiosRequestConfig) =>
     request<TResponse>(url, {
       params: query,
       paramsSerializer: (params) => {
@@ -131,7 +126,6 @@ export const api = {
         });
       },
       ...config,
-      headers: { ...headers },
     }),
   delete: <TResponse>(
     url: string,

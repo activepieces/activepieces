@@ -21,7 +21,7 @@ export const botxApi = ({ BOTX_API_URL, ZERO_API_URL }: BotxApiParams) => ({
     return api.post<ChatBotxResponse>(
       `${BOTX_API_URL}/v1/chat/sse`,
       request,
-      null,
+      undefined,
       {
         Authorization: `Bearer ${authenticationSession.getBotxToken()}`,
       },
@@ -32,10 +32,11 @@ export const botxApi = ({ BOTX_API_URL, ZERO_API_URL }: BotxApiParams) => ({
     if (isNil(BOTX_API_URL)) return Promise.reject('invalid bot URL');
     return api.get<ChatBotxUserMessage[]>(
       `${BOTX_API_URL}/v1/chat`,
-      '',
       undefined,
       {
-        Authorization: `Bearer ${authenticationSession.getBotxToken()}`,
+        headers: {
+          Authorization: `Bearer ${authenticationSession.getBotxToken()}`,
+        },
       },
     );
   },
