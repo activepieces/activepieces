@@ -14,7 +14,7 @@ export const checkout = createPiece({
   displayName: 'Checkout.com',
   auth: checkoutComAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/checkoutcom.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/checkout.png',
   authors: ['sparkybug','onyedikachi-david'],
   actions: [
     createCustomerAction,
