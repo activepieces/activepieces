@@ -45,7 +45,7 @@ const FlowRunPage = () => {
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
       <div className="bg-background flex h-screen w-screen items-center justify-center ">
-        <LoadingSpinner size={50}></LoadingSpinner>
+        <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
   }

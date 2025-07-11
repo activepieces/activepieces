@@ -112,7 +112,7 @@ const DataSelectorNodeContent = ({
         <div className="ml-auto flex flex-shrink-0 gap-2 items-center">
           {showInsertButton && (
             <Button
-              className="z-50 hover:opacity-100 opacity-0 p-0  w-0 group-hover:w-full group-hover:p-1  group-hover:opacity-100 focus:opacity-100"
+              className="z-50 hover:opacity-100  opacity-0 p-0  group-hover:p-1  group-hover:opacity-100 focus:opacity-100"
               variant="basic"
               size="sm"
               onClick={(e) => {

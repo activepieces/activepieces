@@ -127,12 +127,13 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await deactivatePlatformUsersOtherThanAdmin(platformId)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
-        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD;
+        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
         await platformService.update({
             id: platformId,
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
+                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
@@ -144,17 +145,18 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 manageProjectsEnabled: key.manageProjectsEnabled,
                 managePiecesEnabled: key.managePiecesEnabled,
-                activeFlowsLimit: undefined,
                 agentsLimit: undefined,
+                mcpsEnabled: key.mcpsEnabled,
+                todosEnabled: key.todosEnabled,
+                tablesEnabled: key.tablesEnabled,
                 mcpLimit: undefined,
                 projectsLimit: undefined,
                 tablesLimit: undefined,
-                userSeatsLimit: undefined,
+                agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
-                alertsEnabled: key.alertsEnabled,
                 analyticsEnabled: key.analyticsEnabled,
             },
         })
@@ -194,6 +196,8 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
-    flowIssuesEnabled: false,
-    alertsEnabled: false,
+    agentsEnabled: false,
+    mcpsEnabled: false,
+    tablesEnabled: false,
+    todosEnabled: false,
 }

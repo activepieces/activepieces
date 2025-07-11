@@ -1,8 +1,8 @@
 import { ApSubscriptionStatus, checkIsTrialSubscription, DEFAULT_BUSINESS_SEATS, getPlanFromSubscription, PlanName  } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { apDayjs } from '../../../helper/dayjs-helper'
@@ -24,7 +24,9 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const signature = request.headers['stripe-signature'] as string
 
                 const stripe = stripeHelper(request.log).getStripe()
-                assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+                if (isNil(stripe)) {
+                    return await reply.status(StatusCodes.OK).send({ received: true })
+                }
 
                 const webhookSecret = system.getOrThrow(AppSystemProp.STRIPE_WEBHOOK_SECRET)
                 const webhook = stripe.webhooks.constructEvent(
@@ -42,36 +44,31 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const platformId = subscription.metadata.platformId as string
                         const isTrialSubscription = checkIsTrialSubscription(subscription)
 
-                        if (webhook.type === 'customer.subscription.created' && isTrialSubscription) {
-                            await emailService(request.log).sendWellcomeToTrialEmail(platformId, customer.email as string)
-                            await systemJobsSchedule(request.log).upsertJob({
-                                job: {
-                                    name: SystemJobName.SEVEN_DAYS_IN_TRIAL,
-                                    data: {
-                                        platformId,
-                                        customerEmail: customer.email as string,
-                                    },
-                                    jobId: `7-days-left-on-trial-${platformId}-${customer.email}`,
-                                },
-                                schedule: {
-                                    type: 'one-time',
-                                    date: apDayjs().add(7, 'days'),
-                                },
-                            })
+                        const trialSubscriptionStarted = webhook.type === 'customer.subscription.created' && isTrialSubscription
+                        if (trialSubscriptionStarted) {
+                            await sendTrialRelatedEmails(customer.email as string, platformId, request.log) 
                         }
 
-                        if (webhook.type === 'customer.subscription.created' && !isTrialSubscription) {
-                            const customerSubscriptions = await stripe.subscriptions.list({ customer: subscription.customer as string })
-                            const trialSubscription = customerSubscriptions.data.find(sub => checkIsTrialSubscription(sub))
-
-                            if (trialSubscription) {
-                                await stripe.subscriptions.cancel(trialSubscription.id)
-                            }
+                        const noneTrialSubscriptionStarted = webhook.type === 'customer.subscription.created' && !isTrialSubscription
+                        if (noneTrialSubscriptionStarted) {
+                            await cancelTrialSubscription(subscription.customer as string, stripe) 
                         }
 
-                        if (webhook.type === 'customer.subscription.deleted' && isTrialSubscription) {
+                        const trialSubscrptionEnded = webhook.type === 'customer.subscription.deleted' && isTrialSubscription
+                        if (trialSubscrptionEnded) {
                             break
                         }
+
+                        const newPlan = getPlanFromSubscription(subscription)
+                        if (isNil(newPlan)) {
+                            break
+                        }
+
+                        request.log.info('Processing subscription event', {
+                            webhookType: webhook.type,
+                            subscriptionStatus: subscription.status,
+                            newPlan,
+                        })
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
                         const platformPlan = await platformPlanService(request.log).updateByCustomerId({
@@ -84,18 +81,8 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             stripePaymentMethod: subscription.default_payment_method as string ?? undefined,
                         })
             
-                        const newPlan = getPlanFromSubscription(subscription)
                         const extraUsers = subscription.items.data.find(item => item.price.id === USER_PRICE_ID)?.quantity ?? 0
-
-                        request.log.info('Processing subscription event', {
-                            webhookType: webhook.type,
-                            subscriptionStatus: subscription.status,
-                            newPlan,
-                            extraUsers,
-                        })
-
                         const planLimits = platformPlanService(request.log).getPlanLimits(newPlan)
-
                         const isFreePlan = newPlan === PlanName.FREE
                         const isBusinessPlan = newPlan === PlanName.BUSINESS
                         const hasExtraUsers = extraUsers > 0
@@ -147,8 +134,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             },
                         })
 
-                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email)
-
+                        await emailService(request.log).sendTrialReminder(platformPlan.platformId, customer.email, '1-day-left-on-trial')
                         break
                     }
                     default:
@@ -176,4 +162,34 @@ const WebhookRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
         rawBody: true,
     },
+}
+
+
+
+async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
+    await emailService(log).sendTrialReminder(platformId, customerEmail as string, 'welcome-to-trial')
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.SEVEN_DAYS_IN_TRIAL,
+            data: {
+                platformId,
+                customerEmail,
+            },
+            jobId: `7-days-left-on-trial-${platformId}-${customerEmail}`,
+        },
+        schedule: {
+            type: 'one-time',
+            date: apDayjs().add(7, 'days'),
+        },
+    })
+}
+
+
+async function cancelTrialSubscription(customerId: string, stripe: Stripe) {
+    const customerSubscriptions = await stripe.subscriptions.list({ customer: customerId })
+    const trialSubscription = customerSubscriptions.data.find(sub => checkIsTrialSubscription(sub))
+
+    if (trialSubscription) {
+        await stripe.subscriptions.cancel(trialSubscription.id)
+    }
 }
