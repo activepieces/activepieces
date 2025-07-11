@@ -108,7 +108,7 @@ export const useFlowsBulkActions = ({
                       }}
                     >
                       <Button variant="outline" size="sm">
-                        <CornerUpLeft className="h-4 w-4 mr-2" />
+                        <CornerUpLeft className="size-4 mr-2" />
                         {t('Move To')}
                       </Button>
                     </MoveFlowDialog>
@@ -126,9 +126,9 @@ export const useFlowsBulkActions = ({
                   }}
                 >
                   {isExportPending ? (
-                    <LoadingSpinner className="h-4 w-4 mr-2" />
+                    <LoadingSpinner className="size-4 mr-2" />
                   ) : (
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="size-4 mr-2" />
                   )}
                   {isExportPending ? t('Exporting') : t('Export')}
                 </Button>

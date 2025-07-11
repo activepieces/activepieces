@@ -158,46 +158,55 @@ export const notionCommon = {
           database_id: database_id as unknown as string,
         });
         for (const key in properties) {
-          const property = properties[key];
-          if (
-            [
-              'rollup',
-              'button',
-              'files',
-              'verification',
-              'formula',
-              'unique_id',
-              'relation',
-              'created_by',
-              'created_time',
-              'last_edited_by',
-              'last_edited_time',
-            ].includes(property.type)
-          ) {
-            continue;
-          }
-          if (property.type === 'people') {
-            const { results } = await notion.users.list({ page_size: 100 });
-            fields[property.name] = Property.StaticMultiSelectDropdown({
-              displayName: property.name,
-              required: false,
-              options: {
-                disabled: false,
-                options: results
-                  .filter(
-                    (user) => user.type === 'person' && user.name !== null
-                  )
-                  .map((option: { id: string; name: any }) => {
-                    return {
-                      label: option.name,
-                      value: option.id,
-                    };
-                  }),
-              },
-            });
-          } else {
-            fields[property.name] =
-              NotionFieldMapping[property.type].buildActivepieceType(property);
+          try {
+            const property = properties[key];
+            if (
+              [
+                'rollup',
+                'button',
+                'files',
+                'verification',
+                'formula',
+                'unique_id',
+                'relation',
+                'created_by',
+                'created_time',
+                'last_edited_by',
+                'last_edited_time',
+              ].includes(property.type)
+            ) {
+              continue;
+            }
+            if (property.type === 'people') {
+              const { results } = await notion.users.list({ page_size: 100 });
+              fields[property.name] = Property.StaticMultiSelectDropdown({
+                displayName: property.name,
+                required: false,
+                options: {
+                  disabled: false,
+                  options: results
+                    .filter(
+                      (user) => user.type === 'person' && user.name !== null
+                    )
+                    .map((option: { id: string; name: any }) => {
+                      return {
+                        label: option.name,
+                        value: option.id,
+                      };
+                    }),
+                },
+              });
+            } else {
+              fields[property.name] =
+                NotionFieldMapping[property.type].buildActivepieceType(
+                  property
+                );
+            }
+          } catch (e) {
+            console.error(
+              'Notion: could not generate dynamic input property',
+              e
+            );
           }
         }
       } catch (e) {
