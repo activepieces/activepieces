@@ -69,7 +69,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
               )}
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Button variant={'secondary'} onClick={() => navigate('/flows')}>
+              <Button variant={'accent'} onClick={() => navigate('/flows')}>
                 {t('Cancel')}
               </Button>
               <Button loading={isPending} onClick={() => mutate()}>
@@ -92,7 +92,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
   if (!data) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <LoadingSpinner size={50}></LoadingSpinner>
+        <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
   }

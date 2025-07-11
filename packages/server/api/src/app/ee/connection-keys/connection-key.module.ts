@@ -47,7 +47,6 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                     platformId,
                     projectId: request.query.projectId,
                     id: appConnection.id,
-                    userId: request.principal.id,
                 })
             }
         },

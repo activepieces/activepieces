@@ -4,6 +4,7 @@ import {
   CircleX,
   PauseCircleIcon,
   PauseIcon,
+  Play,
   Timer,
   X,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
   FlowRunStatus,
   flowStructureUtil,
   FlowVersion,
+  isFailedState,
   isNil,
   LoopOnItemsAction,
   LoopStepOutput,
@@ -23,9 +25,31 @@ import {
 } from '@activepieces/shared';
 
 export const flowRunUtils = {
-  findFailedStepInOutput,
+  findLastStepWithStatus,
   findLoopsState,
-  extractStepOutput,
+  extractStepOutput: (
+    stepName: string,
+    loopIndexes: Record<string, number>,
+    output: Record<string, StepOutput>,
+    trigger: Trigger,
+  ): StepOutput | undefined => {
+    const stepOutput = output[stepName];
+    if (!isNil(stepOutput)) {
+      return stepOutput;
+    }
+    const parents: LoopOnItemsAction[] = flowStructureUtil
+      .findPathToStep(trigger, stepName)
+      .filter(
+        (p) =>
+          p.type === ActionType.LOOP_ON_ITEMS &&
+          flowStructureUtil.isChildOf(p, stepName),
+      ) as LoopOnItemsAction[];
+
+    if (parents.length > 0) {
+      return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
+    }
+    return undefined;
+  },
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
@@ -63,17 +87,17 @@ export const flowRunUtils = {
     Icon: typeof Timer | typeof Check | typeof PauseIcon | typeof X;
   } {
     switch (status) {
-      case FlowRunStatus.RUNNING:
+      case FlowRunStatus.QUEUED:
         return {
           variant: 'default',
           Icon: Timer,
         };
-      case FlowRunStatus.SUCCEEDED:
+      case FlowRunStatus.RUNNING:
         return {
-          variant: 'success',
-          Icon: Check,
+          variant: 'default',
+          Icon: Play,
         };
-      case FlowRunStatus.STOPPED:
+      case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
           Icon: Check,
@@ -120,7 +144,9 @@ function findLoopsState(
   const loops = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
-  const failedStep = run.steps ? findFailedStepInOutput(run.steps) : null;
+  const failedStep = run.steps
+    ? findLastStepWithStatus(run.status, run.steps)
+    : null;
 
   return loops.reduce(
     (res, step) => ({
@@ -134,27 +160,51 @@ function findLoopsState(
   );
 }
 
-function findFailedStepInOutput(
-  steps: Record<string, StepOutput>,
+function findLastStepWithStatus(
+  runStatus: FlowRunStatus,
+  steps: Record<string, StepOutput> | undefined,
 ): string | null {
+  if (isNil(steps)) {
+    return null;
+  }
+  if (runStatus === FlowRunStatus.SUCCEEDED) {
+    return null;
+  }
+  const stepStatus = isFailedState(runStatus)
+    ? StepOutputStatus.FAILED
+    : undefined;
   return Object.entries(steps).reduce((res, [stepName, step]) => {
-    if (step.status === StepOutputStatus.FAILED) {
-      return stepName;
-    }
     if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
-      return findFailedStepInLoop(step as LoopStepOutput);
+      const latestStepInLoop = findLatestStepInLoop(
+        step as LoopStepOutput,
+        runStatus,
+      );
+      if (!isNil(latestStepInLoop)) {
+        return latestStepInLoop;
+      }
     }
-    return res;
+    if (!isNil(stepStatus)) {
+      if (step.status === stepStatus) {
+        return stepName;
+      }
+      return null;
+    }
+    return stepName;
   }, null as null | string);
 }
 
-function findFailedStepInLoop(loopStepResult: LoopStepOutput): string | null {
+function findLatestStepInLoop(
+  loopStepResult: LoopStepOutput,
+  runStatus: FlowRunStatus,
+): string | null {
   if (!loopStepResult.output) {
     return null;
   }
   for (const iteration of loopStepResult.output.iterations) {
-    const failedStep = findFailedStepInOutput(iteration);
-    if (failedStep) return failedStep;
+    const lastStep = findLastStepWithStatus(runStatus, iteration);
+    if (!isNil(lastStep)) {
+      return lastStep;
+    }
   }
   return null;
 }
@@ -171,10 +221,11 @@ function getLoopChildStepOutput(
   let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as
     | LoopStepOutput
     | undefined;
-
-  let index = 0;
-  while (index < parents.length) {
+  for (let index = 0; index < parents.length; index++) {
     const currentParentName = parents[index].name;
+    if (loopIndexes[currentParentName] === -1) {
+      return undefined;
+    }
     if (
       childOutput &&
       childOutput.output &&
@@ -186,31 +237,6 @@ function getLoopChildStepOutput(
         loopIndexes[parents[index].name]
       ][stepName] as LoopStepOutput | undefined;
     }
-    index++;
   }
   return childOutput;
-}
-
-function extractStepOutput(
-  stepName: string,
-  loopIndexes: Record<string, number>,
-  output: Record<string, StepOutput>,
-  trigger: Trigger,
-): StepOutput | undefined {
-  const stepOutput = output[stepName];
-  if (stepOutput) {
-    return stepOutput;
-  }
-  const parents: LoopOnItemsAction[] = flowStructureUtil
-    .findPathToStep(trigger, stepName)
-    .filter(
-      (p) =>
-        p.type === ActionType.LOOP_ON_ITEMS &&
-        flowStructureUtil.isChildOf(p, stepName),
-    ) as LoopOnItemsAction[];
-
-  if (parents.length > 0) {
-    return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
-  }
-  return undefined;
 }

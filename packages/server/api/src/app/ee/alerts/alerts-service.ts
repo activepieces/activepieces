@@ -1,5 +1,5 @@
-import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
+import { ActivepiecesError, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -14,7 +14,7 @@ import { alertsHandler } from './alerts-handler'
 const repo = repoFactory(AlertEntity)
 
 export const alertsService = (log: FastifyBaseLogger) => ({
-    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
+    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: PopulatedIssue, flowRunId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(issue.projectId)
         const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
         if (platform.plan.embeddingEnabled) {
