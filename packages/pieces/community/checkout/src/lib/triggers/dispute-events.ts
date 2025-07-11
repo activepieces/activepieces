@@ -125,9 +125,6 @@ export const disputeEventsTrigger = createTrigger({
             {
               type: 'webhook',
               url: context.webhookUrl,
-              headers: {
-                'Content-Type': 'application/json',
-              },
             },
           ],
         },

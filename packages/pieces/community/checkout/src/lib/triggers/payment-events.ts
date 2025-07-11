@@ -131,9 +131,6 @@ export const paymentEventsTrigger = createTrigger({
             {
               type: 'webhook',
               url: context.webhookUrl,
-              headers: {
-                'Content-Type': 'application/json',
-              },
             },
           ],
         },
