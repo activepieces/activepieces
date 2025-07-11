@@ -28,6 +28,7 @@ export const createSubmission = createAction({
     }),
     read: Property.Checkbox({
       displayName: 'Read',
+      description:'Flag to mark the submission as read',
       defaultValue: false,
       required: false,
     }),

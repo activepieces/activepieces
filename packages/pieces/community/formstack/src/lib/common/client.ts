@@ -6,8 +6,8 @@ export async function makeRequest(
     accessToken: string,
     method: HttpMethod,
     path: string,
+    body?: unknown,
     queryParams?: Record<string, any>,
-    body?: unknown
 ) {
     try {
         const response = await httpClient.sendRequest({

@@ -20,21 +20,26 @@ export const findFormByNameOrId = createAction({
       description: 'Search by Name or id',
       required: true,
     }),
-
+    folders: Property.Checkbox({
+      displayName: 'folders',
+      description: 'Flag to return forms in lists separated by folder',
+      defaultValue: false,
+      required: false,
+    }),
   },
   async run(context) {
     const authentication = context.auth as OAuth2PropertyValue;
     const accessToken = authentication['access_token'];
 
-    const { search_query } = context.propsValue
-    const queryParams = { search_query }
+    const { search_query, folders } = context.propsValue;
+
 
     const response = await makeRequest(
       accessToken,
       HttpMethod.GET,
-      `/forms.json`,
+      `/forms.json?folders${folders}&search=${search_query}`,
       {},
-      queryParams
+      {}
     );
     return response;
   },
