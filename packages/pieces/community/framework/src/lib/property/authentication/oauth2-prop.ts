@@ -40,6 +40,7 @@ const OAuth2ExtraProps = Type.Object({
   tokenUrl: Type.String(),
   scope: Type.Array(Type.String()),
   pkce: Type.Optional(Type.Boolean()),
+  pkceMethod: Type.Optional(Type.Union([Type.Literal('plain'), Type.Literal('S256')])),
   authorizationMethod: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
   grantType: Type.Optional(Type.Union([Type.Enum(OAuth2GrantType), Type.Literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
   extra: Type.Optional(Type.Record(Type.String(), Type.String())),
@@ -51,6 +52,7 @@ type OAuth2ExtraProps = {
   tokenUrl: string
   scope: string[]
   pkce?: boolean
+  pkceMethod?: 'plain' | 'S256'
   authorizationMethod?: OAuth2AuthorizationMethod
   grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   extra?: Record<string, string>,
