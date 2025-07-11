@@ -42,6 +42,7 @@ import { newUserTrigger } from './lib/triggers/new-user';
 import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
 import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
+import { listUsers } from './lib/actions/list-users';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -138,6 +139,7 @@ export const slack = createPiece({
     findUserByEmailAction,
     findUserByHandleAction,
     findUserByIdAction,
+    listUsers,
     updateMessage,
     createChannelAction,
     updateProfileAction,

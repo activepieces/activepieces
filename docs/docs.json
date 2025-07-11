@@ -368,6 +368,7 @@
               {
                 "group": "Others Options",
                 "pages": [
+                  "install/options/helm",
                   "install/options/easypanel",
                   "install/options/aws",
                   "install/options/gcp",
