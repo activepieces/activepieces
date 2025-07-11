@@ -4,6 +4,25 @@ import { dimoAuth } from '../../../index';
 import { DimoClient } from '../../common/helpers';
 import { TelemetryQueries } from '../../common/queries';
 
+
+const telemetryApiDateInputProps = {
+    startDate: Property.DateTime({
+        displayName: 'Start Date',
+        description: 'Start date for the query in UTC, formatted as 2025-07-07T12:00:00Z',
+        required: true,
+    }),
+    endDate: Property.DateTime({
+        displayName: 'End Date',
+        description: 'End date for the query in UTC, formatted as 2025-07-09T12:00:00Z',
+        required: true,
+    }),
+    interval: Property.ShortText({
+        displayName: 'Interval',
+        description: 'Interval (e.g. 1s, 1m, 1h).',
+        required: true,
+    }),
+}
+
 const telemetryApiCustomQueryAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-api-custom-query',
@@ -105,21 +124,7 @@ const signalsAction = createAction({
 			displayName: 'Vehicle Token ID',
 			required: true,
 		}),
-		startDate: Property.DateTime({
-			displayName: 'Start Date',
-			description: 'Start date for the query.',
-			required: true,
-		}),
-		endDate: Property.DateTime({
-			displayName: 'End Date',
-			description: 'End date for the query.',
-			required: true,
-		}),
-		interval: Property.ShortText({
-			displayName: 'Interval',
-			description: 'Interval (e.g. 24h).',
-			required: true,
-		}),
+        ...telemetryApiDateInputProps,
 	},
 	async run(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
@@ -165,21 +170,7 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 			displayName: 'Vehicle Token ID',
 			required: true,
 		}),
-		startDate: Property.DateTime({
-			displayName: 'Start Date',
-			description: 'Start date for the query (YYYY-MM-DD).',
-			required: true,
-		}),
-		endDate: Property.DateTime({
-			displayName: 'End Date',
-			description: 'End date for the query (YYYY-MM-DD).',
-			required: true,
-		}),
-		interval: Property.ShortText({
-			displayName: 'Interval',
-			description: 'Interval (e.g. 24h).',
-			required: true,
-		}),
+        ...telemetryApiDateInputProps,
 	},
 	async run(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
@@ -226,21 +217,7 @@ const getMaxSpeedOfVehicleAction = createAction({
 			displayName: 'Vehicle Token ID',
 			required: true,
 		}),
-		startDate: Property.DateTime({
-			displayName: 'Start Date',
-			description: 'Start date for the query (YYYY-MM-DD).',
-			required: true,
-		}),
-		endDate: Property.DateTime({
-			displayName: 'End Date',
-			description: 'End date for the query (YYYY-MM-DD).',
-			required: true,
-		}),
-		interval: Property.ShortText({
-			displayName: 'Interval',
-			description: 'Interval (e.g. 24h)',
-			required: true,
-		}),
+        ...telemetryApiDateInputProps,
 	},
 	async run(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;

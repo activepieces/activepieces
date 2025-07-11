@@ -20,12 +20,10 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { aiProvidersStrategies, Usage } from './providers'
 import { StreamingParser } from './providers/types'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-export const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {

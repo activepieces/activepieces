@@ -48,6 +48,9 @@
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
+      "@activepieces/piece-airtop": [
+        "packages/pieces/community/airtop/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
@@ -193,11 +196,11 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
-      "@activepieces/piece-comfyicu": [
-        "packages/pieces/community/comfyicu/src/index.ts"
-      ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
+      "@activepieces/piece-comfyicu": [
+        "packages/pieces/community/comfyicu/src/index.ts"
       ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
@@ -548,6 +551,9 @@
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
+       "@activepieces/piece-microsoft-power-bi": [
+        "packages/pieces/community/microsoft-power-bi/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
       ],
@@ -663,11 +669,11 @@
       "@activepieces/piece-reachinbox": [
         "packages/pieces/community/reachinbox/src/index.ts"
       ],
-      "@activepieces/piece-reddit": [
-        "packages/pieces/community/reddit/src/index.ts"
-      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reddit": [
+        "packages/pieces/community/reddit/src/index.ts"
       ],
       "@activepieces/piece-reoon-verifier": [
         "packages/pieces/community/reoon-verifier/src/index.ts"
@@ -708,6 +714,9 @@
       ],
       "@activepieces/piece-scrapegrapghai": [
         "packages/pieces/community/scrapegrapghai/src/index.ts"
+      ],
+      "@activepieces/piece-scrapeless": [
+        "packages/pieces/community/scrapeless/src/index.ts"
       ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
@@ -912,6 +921,9 @@
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-wufoo": [
+        "packages/pieces/community/wufoo/src/index.ts"
       ],
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"

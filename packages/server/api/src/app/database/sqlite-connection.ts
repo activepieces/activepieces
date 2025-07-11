@@ -47,6 +47,7 @@ import { ChangeContentTodoActivity1750822236348 } from './migration/sqlite/17508
 import { RegenerateIssueTable1750822955988 } from './migration/sqlite/1750822955988-regenerate-issue-table'
 import { UpdateAppConnectionIndexes1750823093554 } from './migration/sqlite/1750823093554-update-app-connection-indexes'
 import { RevertTodoActivtiesSqlite1751217307674 } from './migration/sqlite/1751217307674-RevertTodoActivtiesSqlite'
+import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/1751475726665-AddPlatformIdToAIUsageSqlite'
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 
@@ -73,6 +74,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
         AddFlowVersionToIssueSqlite1751927149586,
         RevertTodoActivtiesSqlite1751217307674,
+        AddPlatformIdToAIUsageSqlite1751475726665,
         RemoveTerminationReasonSqlite1751727630516,
         UpdateAppConnectionIndexes1750823093554,
         RegenerateIssueTable1750822955988,
