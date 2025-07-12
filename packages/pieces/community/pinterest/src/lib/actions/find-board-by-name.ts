@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { adAccountIdDropdown } from '../common/props';
 
 export const findBoardByName = createAction({
   auth: pinterestAuth,
@@ -9,24 +10,55 @@ export const findBoardByName = createAction({
   displayName: 'Find Board by Name',
   description: 'Locate a board by its name for pinning or updates.',
   props: {
-    name: Property.ShortText({
+    name_search: Property.ShortText({
       displayName: 'Board Name',
       required: true,
-      description: 'The name of the board to find.'
-    })
+      description: 'The name of the board to find.',
+    }),
+    ad_account_id: adAccountIdDropdown,
+    bookmark: Property.ShortText({
+      displayName: 'Board Name',
+      required: true,
+      description: 'The name of the board to find.',
+    }),
+    privacy: Property.StaticDropdown({
+      displayName: 'Privacy',
+      required: true,
+      options: {
+        options: [
+          { label: 'All', value: 'ALL' },
+          { label: 'Protected', value: 'PROTECTED' },
+          { label: 'Public', value: 'PUBLIC' },
+          { label: 'Secret', value: 'SECRET' },
+          { label: 'Public and Secret', value: 'PUBLIC_AND_SECRET' },
+        ],
+      },
+      description: 'Select Privacy.',
+    }),
   },
   async run({ auth, propsValue }) {
-    const name = propsValue['name'];
-    // Pinterest API: GET /boards returns all boards, filter by name
-    let bookmark: string | undefined = undefined;
-    let foundBoard = null;
-    do {
-      const params = bookmark ? `?bookmark=${encodeURIComponent(bookmark)}` : '';
-      const response = await makeRequest(auth as string, HttpMethod.GET, `/boards${params}`);
-      const boards = response.items || [];
-      foundBoard = boards.find((b: any) => b.name && b.name.toLowerCase() === name.toLowerCase());
-      bookmark = response.bookmark;
-    } while (!foundBoard && bookmark);
-    return foundBoard;
+    const name_search = propsValue.name_search;
+
+
+    const path = '/boards';
+    const response = await makeRequest(
+      auth.access_token as string,
+      HttpMethod.GET,
+      `${path}`
+    );
+
+    // Filter Boards based on the query
+    const filteredBoards = response.items.filter((board: any) => {
+      const searchText = name_search.toLowerCase();
+      const name = (board.name || '').toLowerCase();
+      return (
+        name.includes(searchText)
+      );
+    });
+
+    return {
+      items: filteredBoards,
+      bookmark: response.bookmark,
+    };
   },
 });

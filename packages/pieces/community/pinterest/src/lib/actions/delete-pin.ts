@@ -15,7 +15,7 @@ export const deletePin = createAction({
   async run({ auth, propsValue }) {
     const { pin_id } = propsValue;
     return await makeRequest(
-      auth as string,
+      auth.access_token as string,
       HttpMethod.DELETE,
       `/pins/${pin_id}`
     );

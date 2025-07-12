@@ -13,7 +13,7 @@ const polling: Polling<PiecePropValueSchema<typeof pinterestAuth>, Record<string
         let boards: any[] = [];
         do {
             const params = bookmark ? `?bookmark=${encodeURIComponent(bookmark)}` : '';
-            const response = await makeRequest(auth as string, HttpMethod.GET, `/boards${params}`);
+            const response = await makeRequest(auth.access_token as string, HttpMethod.GET, `/boards${params}`);
             const items = response.items || [];
             boards = boards.concat(items);
             bookmark = response.bookmark;

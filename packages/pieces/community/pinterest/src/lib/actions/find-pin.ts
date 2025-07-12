@@ -23,22 +23,37 @@ export const findPin = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const query = propsValue['query'];
-    const board_id = propsValue['board_id'];
-    const bookmark = propsValue['bookmark'];
+    const query = propsValue.query;
+
     const path = '/pins';
-    const params: Record<string, string> = {};
-    if (query) params['query'] = query;
-    if (board_id) params['board_id'] = board_id;
-    if (bookmark) params['bookmark'] = bookmark;
-    const queryString =
-      Object.keys(params).length > 0
-        ? '?' + new URLSearchParams(params).toString()
-        : '';
-    return await makeRequest(
-      auth as string,
+    const response = await makeRequest(
+      auth.access_token as string,
       HttpMethod.GET,
-      `${path}${queryString}`
+      `${path}`
     );
+
+    // If no query is provided, return all pins
+    if (!query) {
+      return response;
+    }
+
+    // Filter pins based on the query
+    const filteredPins = response.items.filter((pin: any) => {
+      const searchText = query.toLowerCase();
+      const title = (pin.title || '').toLowerCase();
+      const description = (pin.description || '').toLowerCase();
+      const note = (pin.note || '').toLowerCase();
+
+      return (
+        title.includes(searchText) ||
+        description.includes(searchText) ||
+        note.includes(searchText)
+      );
+    });
+
+    return {
+      items: filteredPins,
+      bookmark: response.bookmark,
+    };
   },
 });

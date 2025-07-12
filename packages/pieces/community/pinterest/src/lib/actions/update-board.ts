@@ -4,6 +4,7 @@ import { pinterestAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { boardIdDropdown } from '../common/props';
 
+
 export const updateBoard = createAction({
   auth: pinterestAuth,
   name: 'updateBoard',
@@ -13,17 +14,17 @@ export const updateBoard = createAction({
     board_id: boardIdDropdown,
     name: Property.ShortText({
       displayName: 'Board Name',
-      required: false,
+      required: true,
       description: 'The new name of the board.'
     }),
     description: Property.LongText({
       displayName: 'Description',
-      required: false,
+      required: true,
       description: 'The new description of the board.'
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
-      required: false,
+      required: true,
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
@@ -39,6 +40,6 @@ export const updateBoard = createAction({
     if (name) body.name = name;
     if (description) body.description = description;
     if (privacy) body.privacy = privacy.toLowerCase();
-    return await makeRequest(auth as string, HttpMethod.PATCH, `/boards/${board_id}`, body);
+    return await makeRequest(auth.access_token as string, HttpMethod.PATCH, `/boards/${board_id}`, body);
   },
 });

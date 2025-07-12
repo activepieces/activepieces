@@ -29,6 +29,12 @@ export const createBoard = createAction({
         ]
       },
       description: 'Set the board as public or secret.'
+    }),
+    is_ads_only: Property.Checkbox({
+      displayName: 'is_ads_only',
+      description: 'If set to true, the board will be ad-only and can store ad-only Pins.',
+      defaultValue: false,
+      required: false
     })
   },
   async run({ auth, propsValue }) {
@@ -38,6 +44,6 @@ export const createBoard = createAction({
       privacy: privacy.toLowerCase(),
     };
     if (description) body.description = description;
-    return await makeRequest(auth as string, HttpMethod.POST, '/boards', body);
+    return await makeRequest(auth.access_token as string, HttpMethod.POST, '/boards', body);
   },
 });
