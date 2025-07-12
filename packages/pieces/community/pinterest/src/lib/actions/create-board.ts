@@ -38,10 +38,11 @@ export const createBoard = createAction({
     })
   },
   async run({ auth, propsValue }) {
-    const { name, description, privacy } = propsValue;
+    const { name, description, privacy, is_ads_only } = propsValue;
     const body: any = {
       name,
-      privacy: privacy.toLowerCase(),
+      privacy,
+      is_ads_only
     };
     if (description) body.description = description;
     return await makeRequest(auth.access_token as string, HttpMethod.POST, '/boards', body);
