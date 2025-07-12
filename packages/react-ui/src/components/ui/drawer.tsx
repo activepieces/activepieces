@@ -5,10 +5,26 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 
 import { cn } from '@/lib/utils';
 
+interface DrawerContentProps extends React.ComponentProps<typeof DrawerPrimitive.Content> {
+  fullscreen?: boolean;
+}
+
 function Drawer({
+  onOpenChange,
+  open,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
+  React.useEffect(() => {
+    if (!open || !onOpenChange) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onOpenChange(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onOpenChange]);
+  return <DrawerPrimitive.Root data-slot="drawer" open={open} onOpenChange={onOpenChange} {...props} />;
 }
 
 function DrawerTrigger({
@@ -32,10 +48,20 @@ function DrawerClose({
 function DrawerContent({
   className,
   children,
+  fullscreen = false,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+}: DrawerContentProps) {
   return (
     <DrawerPortal data-slot="drawer-portal">
+      {fullscreen && (
+        <style>
+          {`
+            [data-vaul-drawer][data-vaul-drawer-direction="right"]::after {
+              display: none !important;
+            }
+          `}
+        </style>
+      )}
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
@@ -44,11 +70,14 @@ function DrawerContent({
           'data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t',
           'data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:shadow-[-10px_0_10px_-3px_rgba(0,0,0,0.1)]',
           'data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:shadow-[10px_0_10px_-3px_rgba(0,0,0,0.1)]',
+          fullscreen && 'w-screen max-w-none',
           className,
         )}
         {...props}
       >
-        <div className="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        {!fullscreen && (
+          <div className="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        )}
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
