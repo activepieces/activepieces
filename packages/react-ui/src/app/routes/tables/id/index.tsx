@@ -1,34 +1,30 @@
-import { t } from 'i18next';
 import { nanoid } from 'nanoid';
 import { useRef, useEffect } from 'react';
-import DataGrid, {
-  DataGridHandle,
-} from 'react-data-grid';
+import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import { useNavigate } from 'react-router-dom';
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-} from '@/components/ui/drawer';
 import { useTheme } from '@/components/theme-provider';
+import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
-import { useTableColumns, mapRecordsToRows } from '@/features/tables/components/table-columns';
+import {
+  useTableColumns,
+  mapRecordsToRows,
+} from '@/features/tables/components/table-columns';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApFlagId, Permission } from '@activepieces/shared';
-import { useNavigate } from 'react-router-dom';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { authenticationSession } from '@/lib/authentication-session';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
-  const projectId = authenticationSession.getProjectId()
+  const projectId = authenticationSession.getProjectId();
   const [
     selectedRecords,
     setSelectedRecords,
@@ -127,7 +123,9 @@ const ApTableEditorPage = () => {
                 rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
                 headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
                 summaryRowHeight={
-                  isAllowedToCreateRecord ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0
+                  isAllowedToCreateRecord
+                    ? ROW_HEIGHT_MAP[RowHeight.DEFAULT]
+                    : 0
                 }
               />
             </div>

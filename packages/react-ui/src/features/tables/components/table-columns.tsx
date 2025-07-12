@@ -5,19 +5,17 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, Permission } from '@activepieces/shared';
 
+import { ClientRecordData } from '../lib/store/ap-tables-client-state';
+import { Row } from '../lib/types';
+
 import { ApFieldHeader } from './ap-field-header';
+import { useTableState } from './ap-table-state-provider';
 import { EditableCell } from './editable-cell';
 import { NewFieldPopup } from './new-field-popup';
 import { SelectColumn } from './select-column';
-import { Row } from '../lib/types';
-import { ClientRecordData } from '../lib/store/ap-tables-client-state';
-import { useTableState } from './ap-table-state-provider';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [
-    fields,
-    updateRecord,
-  ] = useTableState((state) => [
+  const [fields, updateRecord] = useTableState((state) => [
     state.fields,
     state.updateRecord,
   ]);
@@ -107,7 +105,10 @@ export function useTableColumns(createEmptyRecord: () => void) {
   return columns;
 }
 
-export function mapRecordsToRows(records: ClientRecordData[], fields: any[]): Row[] {
+export function mapRecordsToRows(
+  records: ClientRecordData[],
+  fields: any[],
+): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
     const row: Row = { id: record.uuid };
@@ -119,4 +120,4 @@ export function mapRecordsToRows(records: ClientRecordData[], fields: any[]): Ro
     });
     return row;
   });
-} 
+}

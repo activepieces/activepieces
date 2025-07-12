@@ -5,7 +5,8 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 
 import { cn } from '@/lib/utils';
 
-interface DrawerContentProps extends React.ComponentProps<typeof DrawerPrimitive.Content> {
+interface DrawerContentProps
+  extends React.ComponentProps<typeof DrawerPrimitive.Content> {
   fullscreen?: boolean;
 }
 
@@ -24,7 +25,14 @@ function Drawer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onOpenChange]);
-  return <DrawerPrimitive.Root data-slot="drawer" open={open} onOpenChange={onOpenChange} {...props} />;
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      open={open}
+      onOpenChange={onOpenChange}
+      {...props}
+    />
+  );
 }
 
 function DrawerTrigger({
