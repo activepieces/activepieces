@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createRecord } from './lib/actions/create-record';
 import { updateRecord } from './lib/actions/update-record';
 import { deleteRecord } from './lib/actions/delete-record';
@@ -17,9 +18,12 @@ export const ninoxAuth = PieceAuth.SecretText({
 
 export const ninox = createPiece({
   displayName: 'Ninox',
+  description: 'Database and business application platform',
   logoUrl: 'https://ninox.com/favicon.ico',
   auth: ninoxAuth,
-  authors: [],
+  minimumSupportedRelease: '0.30.0',
+  categories: [PieceCategory.PRODUCTIVITY, PieceCategory.DEVELOPER_TOOLS],
+  authors: ['activepieces'],
   actions: [
     createRecord,
     updateRecord,
