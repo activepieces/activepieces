@@ -5,9 +5,9 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 // Replace with your actual API key and secret
-const apiKey = process.env.CLOUDINARY_API_KEY || '***REMOVED***';
-const apiSecret = process.env.CLOUDINARY_API_SECRET || '***REMOVED***';
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'de7qxfvjd';
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'ml_default'; // Set your unsigned preset name here
 
 // Path to a sample file to upload
