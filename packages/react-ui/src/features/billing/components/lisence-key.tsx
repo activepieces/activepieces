@@ -5,46 +5,15 @@ import { t } from 'i18next';
 import { Shield, Zap, AlertTriangle, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatUtils } from '@/lib/utils';
-import {
-  ApEdition,
-  ApFlagId,
-  isNil,
-  PlatformPlanLimits,
-} from '@activepieces/shared';
+import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
-
-const LICENSE_PROPS_MAP = {
-  agentsEnabled: 'Agents Enabled',
-  environmentEnabled: 'Team Collaboration via Git',
-  analyticsEnabled: 'Analytics',
-  auditLogEnabled: 'Audit Log',
-  embeddingEnabled: 'Embedding',
-  managePiecesEnabled: 'Manage Pieces',
-  manageTemplatesEnabled: 'Manage Templates',
-  customAppearanceEnabled: 'Brand Activepieces',
-  manageProjectsEnabled: 'Manage Projects',
-  projectRolesEnabled: 'Project Roles',
-  customDomainsEnabled: 'Custom Domains',
-  apiKeysEnabled: 'API Keys',
-  flowIssuesEnabled: 'Flow Issues',
-  alertsEnabled: 'Alerts',
-  ssoEnabled: 'Single Sign On',
-};
+import { FeatureStatus } from './features-status';
 
 const LicenseKeySchema = Type.Object({
   tempLicenseKey: Type.String({
@@ -54,7 +23,11 @@ const LicenseKeySchema = Type.Object({
 
 type LicenseKeySchema = Static<typeof LicenseKeySchema>;
 
-export const LicenseKey = () => {
+export const LicenseKey = ({
+  platform,
+}: {
+  platform: PlatformWithoutSensitiveData;
+}) => {
   const form = useForm<LicenseKeySchema>({
     resolver: typeboxResolver(LicenseKeySchema),
     defaultValues: {
@@ -62,43 +35,7 @@ export const LicenseKey = () => {
     },
     mode: 'onChange',
   });
-  const { platform } = platformHooks.useCurrentPlatform();
   const [isOpenDialog, setIsOpenDialog] = useState(false);
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
-
-  if (edition === ApEdition.COMMUNITY || showPlatformDemo) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            {t('License Key')}
-          </CardTitle>
-          <CardDescription>
-            {showPlatformDemo &&
-              t(
-                'This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ',
-              )}
-            {edition === ApEdition.COMMUNITY && (
-              <>
-                {t('This feature is not available in your current edition. ')}
-                <Link
-                  className="text-primary hover:underline"
-                  target="_blank"
-                  to="https://www.activepieces.com/docs/install/configuration/overview"
-                >
-                  {t('Learn how to upgrade')}
-                </Link>
-              </>
-            )}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
 
   const handleOpenDialog = () => {
     form.clearErrors();
@@ -125,20 +62,14 @@ export const LicenseKey = () => {
     }
     if (expiresSoon) {
       return (
-        <Badge
-          variant="outline"
-          className="gap-1 border-yellow-500 text-yellow-600"
-        >
+        <Badge variant="accent">
           <AlertTriangle className="w-3 h-3" />
           {t('Expires soon')}
         </Badge>
       );
     }
     return (
-      <Badge
-        variant="outline"
-        className="gap-1 border-green-500 text-green-600"
-      >
+      <Badge variant="success">
         <Check className="w-3 h-3" />
         {t('Active')}
       </Badge>
@@ -189,30 +120,11 @@ export const LicenseKey = () => {
             {getStatusBadge()}
           </div>
         )}
-
         <div>
           <h3 className="text-base font-semibold mb-4">
-            {t('Enterprise Features')}
+            {t('Enabled Features')}
           </h3>
-          <div className="grid grid-cols-3 gap-3">
-            {Object.entries(LICENSE_PROPS_MAP).map(([key, label]) => {
-              const featureEnabled =
-                platform?.plan?.[key as keyof PlatformPlanLimits];
-              return (
-                <div
-                  key={key}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card/50"
-                >
-                  <span className="text-sm font-medium">{t(label)}</span>
-                  {featureEnabled ? (
-                    <Badge variant="default">{t('Enabled')}</Badge>
-                  ) : (
-                    <Badge variant="destructive">{t('Disabled')}</Badge>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <FeatureStatus platform={platform} />
         </div>
 
         <ActivateLicenseDialog

@@ -1,11 +1,14 @@
 import { t } from 'i18next';
+import { Wand } from 'lucide-react';
 import { useState } from 'react';
 
 import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
+import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
@@ -98,7 +101,35 @@ export default function Billing() {
       <AICreditUsage platformSubscription={platformPlanInfo} />
       <TasksUsage platformSubscription={platformPlanInfo} />
 
-      {isEnterprise && <LicenseKey />}
+      {isEnterprise ? (
+        <LicenseKey platform={platform} />
+      ) : (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
+                  <Wand className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {t('Enabled Features')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      'The following features are currently enabled as part of your platform plan.',
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6 p-6">
+            <FeatureStatus platform={platform} />
+          </CardContent>
+        </Card>
+      )}
 
       <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
     </article>
