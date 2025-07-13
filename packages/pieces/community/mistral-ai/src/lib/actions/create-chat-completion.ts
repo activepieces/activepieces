@@ -11,31 +11,11 @@ export const createChatCompletion = createAction({
   description: 'Generate conversational text using instructed context and user input.',
   props: {
     model: modelIdDropdown,
-    // messages: Property.Array({
-    //   displayName: 'Messages',
-    //   description: 'The prompt(s) to generate completions for, encoded as a list of dict with role and content',
-    //   required: true,
-    //   items: Property.Object({
-    //     displayName: 'Message',
-    //     properties: {
-    //       role: Property.StaticDropdown({
-    //         displayName: 'Role',
-    //         description: 'The role of the message author',
-    //         required: true,
-    //         options: [
-    //           { label: 'System', value: 'system' },
-    //           { label: 'User', value: 'user' },
-    //           { label: 'Assistant', value: 'assistant' },
-    //         ],
-    //       }),
-    //       content: Property.LongText({
-    //         displayName: 'Content',
-    //         description: 'The content of the message',
-    //         required: true,
-    //       }),
-    //     },
-    //   }),
-    // }),
+    messages: Property.ShortText({
+      displayName: "Message",
+      description: 'The prompt(s) to generate completions for, encoded as a list of dict with role and content.',
+      required: true
+    }),
     temperature: Property.Number({
       displayName: 'Temperature',
       description: 'What sampling temperature to use, between 0.0 and 0.7. Higher values like 0.7 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
@@ -59,15 +39,11 @@ export const createChatCompletion = createAction({
       required: false,
       defaultValue: false,
     }),
-    // stop: Property.Array({
-    //   displayName: 'Stop',
-    //   description: 'Stop generation if this token is detected. Or if one of these tokens is detected when providing an array',
-    //   required: false,
-    //   items: Property.ShortText({
-    //     displayName: 'Stop Token',
-    //     description: 'Token to stop generation at',
-    //   }),
-    // }),
+    stop: Property.ShortText({
+      displayName: 'Stop',
+      description: 'Stop generation if this token is detected. Or if one of these tokens is detected when providing an array',
+      required: false
+    }),
     random_seed: Property.Number({
       displayName: 'Random Seed',
       description: 'The seed to use for random sampling. If set, different calls will generate deterministic results.',
@@ -157,29 +133,29 @@ export const createChatCompletion = createAction({
       },
     }),
   },
-      async run({ auth, propsValue }) {
-      const {
-        model,
-        temperature,
-        top_p,
-        max_tokens,
-        stream,
-        random_seed,
-        presence_penalty,
-        frequency_penalty,
-        n,
-        safe_prompt,
-      } = propsValue;
+  async run({ auth, propsValue }) {
+    const {
+      model,
+      temperature,
+      top_p,
+      max_tokens,
+      stream,
+      random_seed,
+      presence_penalty,
+      frequency_penalty,
+      n,
+      safe_prompt,
+    } = propsValue;
 
-      const requestBody: any = {
-        model,
-        messages: [
-          {
-            role: 'user',
-            content: 'Who is the best French painter? Answer in one short sentence.'
-          }
-        ],
-      };
+    const requestBody: any = {
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: 'Who is the best French painter? Answer in one short sentence.'
+        }
+      ],
+    };
 
     // Add optional parameters only if they are provided
     if (temperature !== undefined) requestBody.temperature = temperature;

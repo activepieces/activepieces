@@ -1,12 +1,16 @@
 
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createChatCompletion } from "./lib/actions/create-chat-completion";
+import { createEmbeddings } from "./lib/actions/create-embeddings";
+import { listModels } from "./lib/actions/list-models";
+import { uploadFile } from "./lib/actions/upload-file";
 
 export const mistralAi = createPiece({
   displayName: "Mistral-ai",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/mistral-ai.png",
-  authors: [],
-  actions: [],
+  authors: ['Sanket6652'],
+  actions: [createChatCompletion, createEmbeddings, listModels, uploadFile],
   triggers: [],
 });
