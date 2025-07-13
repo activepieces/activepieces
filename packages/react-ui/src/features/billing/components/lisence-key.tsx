@@ -85,7 +85,7 @@ export const LicenseKey = ({
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">{t('Lisence Key')}</h3>
+              <h3 className="text-lg font-semibold">{t('License Key')}</h3>
               <p className="text-sm text-muted-foreground">
                 {t('Activate your platform and unlock enterprise features')}
               </p>
