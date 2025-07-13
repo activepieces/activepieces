@@ -133,6 +133,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
+                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
@@ -150,6 +151,10 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 tablesEnabled: key.tablesEnabled,
                 mcpLimit: undefined,
                 projectsLimit: undefined,
+                userSeatsLimit: undefined,
+                stripeSubscriptionId: undefined,
+                stripeSubscriptionStatus: undefined,
+                eligibleForTrial: false,
                 tablesLimit: undefined,
                 agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
