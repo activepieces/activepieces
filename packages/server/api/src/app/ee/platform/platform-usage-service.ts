@@ -110,25 +110,25 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     },
 
     async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
-        const incrementBy = cost * 1000
         const edition = system.getEdition()
 
         if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
             return { projectAiCreditUsage: 0, platformAiCreditUsage: 0 }
         }
 
+        const incrementBy = roundToDecimals(cost * 1000, 3)
+
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const thirtyDays = 60 * 60 * 24 * 90
+        const ninetyDays = 60 * 60 * 24 * 90
 
         const projectRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
         const projectAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(projectRedisKey, incrementBy))
-
-        await redisConnection.expire(projectRedisKey, thirtyDays)
+        await redisConnection.expire(projectRedisKey, ninetyDays)
 
         const platformRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         const platformAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(platformRedisKey, incrementBy))
-        await redisConnection.expire(platformRedisKey, thirtyDays)
+        await redisConnection.expire(platformRedisKey, ninetyDays)
 
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
@@ -276,6 +276,11 @@ async function getActiveUsers(platformId: string): Promise<number> {
         },
     })
     return activeUsers
+}
+
+function roundToDecimals(value: number, decimals: number): number {
+    const factor = Math.pow(10, decimals)
+    return Math.round(value * factor) / factor
 }
 
 type IncreaseProjectAIUsageParams = {

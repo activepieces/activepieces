@@ -126,7 +126,7 @@ const UsageLimitsButton = React.memo(() => {
           />
           <UsageProgress
             name={t('AI Credits')}
-            value={project.usage.aiCredits}
+            value={Math.round(project.usage.aiCredits)}
             max={project.plan.aiCredits}
             icon={<Sparkles className="w-4 h-4  mr-1" />}
           />
