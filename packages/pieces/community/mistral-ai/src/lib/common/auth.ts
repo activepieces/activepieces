@@ -15,7 +15,7 @@ export const mistralAiAuth = PieceAuth.SecretText({
           error: 'Add Api Key',
         };
       }
-      await makeRequest(auth as string, HttpMethod.GET, '/');
+      await makeRequest(auth as string, HttpMethod.GET, '/models');
       return {
         valid: true,
       };

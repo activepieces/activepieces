@@ -10,7 +10,10 @@ export const createChatCompletion = createAction({
   displayName: 'Create Chat Completion',
   description: 'Generate conversational text using instructed context and user input.',
   props: {
-    model: modelIdDropdown,
+    model: Property.ShortText({
+      displayName: "Model",
+      required: true
+    }),
     messages: Property.ShortText({
       displayName: "Message",
       description: 'The prompt(s) to generate completions for, encoded as a list of dict with role and content.',
@@ -42,7 +45,7 @@ export const createChatCompletion = createAction({
     stop: Property.ShortText({
       displayName: 'Stop',
       description: 'Stop generation if this token is detected. Or if one of these tokens is detected when providing an array',
-      required: false
+      required: true
     }),
     random_seed: Property.Number({
       displayName: 'Random Seed',
@@ -137,6 +140,7 @@ export const createChatCompletion = createAction({
     const {
       model,
       temperature,
+      stop,
       top_p,
       max_tokens,
       stream,
