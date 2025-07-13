@@ -9,7 +9,7 @@ export type IssueFieldMetaData ={
     key:string,
     fieldId:string,
     schema:{
-        type:"string"|"date"|"datetime"|"array"|"number"|"option"|"user"|"group"|"version"|"project"|"issuelink"|"priority"|"issuetype", // "option-with-child",
+        type:"string"|"date"|"datetime"|"array"|"number"|"option"|"user"|"group"|"version"|"project"|"issuelink"|"priority"|"issuetype"|"component", // "option-with-child",
         items:string,
         custom?:string,
         customId?:number,

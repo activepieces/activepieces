@@ -5,23 +5,24 @@ import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import {
+  PieceSelectorTabType,
+  usePieceSelectorTabs,
+} from '@/features/pieces/lib/piece-selector-tabs-provider';
+import {
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   pieceSelectorUtils,
 } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  PieceTagType,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-  tagCategoryName,
   CategorizedStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
   ActionType,
   Agent,
   FlowOperationType,
-  isNil,
   TriggerType,
 } from '@activepieces/shared';
 
@@ -35,7 +36,6 @@ import { PieceCardListItem } from './piece-card-item';
 type PiecesCardListProps = {
   searchQuery: string;
   operation: PieceSelectorOperation;
-  selectedPieceGroupType: PieceTagType | null;
   stepToReplacePieceDisplayName?: string;
   listHeight: number;
 };
@@ -43,7 +43,6 @@ type PiecesCardListProps = {
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   searchQuery,
   operation,
-  selectedPieceGroupType,
   stepToReplacePieceDisplayName,
   listHeight,
 }) => {
@@ -70,20 +69,19 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
     showActionsOrTriggersInsidePiecesList,
     agentsPage?.data,
   );
-  const categoryNameOrPieceDisplayNameToScrollTo =
-    findInitiallyScrolledToCategoryOrPieceDisplayName(
-      selectedPieceGroupType,
-      selectedPieceMetadataInPieceSelector,
-      stepToReplacePieceDisplayName,
-    );
+
   const initialIndexToScrollToInPiecesList = virtualizedItems.findIndex(
-    (item) => item.displayName === categoryNameOrPieceDisplayNameToScrollTo,
+    (item) => item.displayName === stepToReplacePieceDisplayName,
   );
+  const { selectedTab } = usePieceSelectorTabs();
 
   const isLoading = isLoadingPieces || isLoadingAgents;
   const showActionsOrTriggersList =
     searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
   const showPiecesList = !noResultsFound && !isLoading;
+  if (selectedTab === PieceSelectorTabType.EXPLORE) {
+    return null;
+  }
   return (
     <>
       <div
@@ -102,6 +100,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
         {showPiecesList && (
           <VirtualizedScrollArea
+            key={`${selectedTab}-${searchQuery}`}
             initialScroll={{
               index: initialIndexToScrollToInPiecesList,
               clickAfterScroll: true,
@@ -150,27 +149,6 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
 };
 
-const findInitiallyScrolledToCategoryOrPieceDisplayName = (
-  selectedPieceGroupType: PieceTagType | null,
-  selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null,
-  stepToReplacePieceDisplayName: string | undefined,
-) => {
-  if (
-    isNil(selectedPieceMetadataInPieceSelector) &&
-    !isNil(stepToReplacePieceDisplayName) &&
-    selectedPieceGroupType === PieceTagType.ALL
-  ) {
-    return stepToReplacePieceDisplayName;
-  }
-  if (isNil(selectedPieceGroupType)) {
-    return null;
-  }
-  const categoryNameOrPieceDisplayNameToScrollTo =
-    selectedPieceGroupType === PieceTagType.ALL
-      ? selectedPieceMetadataInPieceSelector?.displayName
-      : tagCategoryName[selectedPieceGroupType];
-  return categoryNameOrPieceDisplayNameToScrollTo;
-};
 type VirtualizedItem = {
   id: string;
   displayName: string;
