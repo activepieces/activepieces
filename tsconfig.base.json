@@ -642,6 +642,9 @@
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
+      "@activepieces/piece-placid": [
+        "packages/pieces/community/placid/src/index.ts"
+      ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
       ],
