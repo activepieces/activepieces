@@ -24,6 +24,7 @@ import { Permission } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
+import { InviteAgentTable } from './manage-agents/invite-agent-table';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -106,6 +107,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <InviteAgentTable
+            disabled={!userHasTableWritePermission}
+          />
           {isSaving && (
             <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
               <RefreshCw className="h-4 w-4 animate-spin" />
