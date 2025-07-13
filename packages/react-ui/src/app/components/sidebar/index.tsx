@@ -318,22 +318,25 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items.map((link, index) => (
-                    <SidebarMenuSubItem key={link.label}>
-                      <SidebarMenuButton asChild>
-                        <CustomTooltipLink
-                          to={link.to}
-                          label={link.label}
-                          Icon={link.icon}
-                          key={index}
-                          notification={link.notification}
-                          locked={link.locked}
-                          isActive={link.isActive}
-                          isSubItem={link.isSubItem}
-                        />
-                      </SidebarMenuButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  {item.items.map(
+                    (link, index) =>
+                      link.show && (
+                        <SidebarMenuSubItem key={link.label}>
+                          <SidebarMenuButton asChild>
+                            <CustomTooltipLink
+                              to={link.to}
+                              label={link.label}
+                              Icon={link.icon}
+                              key={index}
+                              notification={link.notification}
+                              locked={link.locked}
+                              isActive={link.isActive}
+                              isSubItem={link.isSubItem}
+                            />
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      ),
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

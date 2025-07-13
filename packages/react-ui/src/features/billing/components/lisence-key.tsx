@@ -2,7 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Shield, Zap, AlertTriangle, Check, X } from 'lucide-react';
+import { Shield, Zap, AlertTriangle, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -160,8 +160,8 @@ export const LicenseKey = () => {
               </p>
             </div>
           </div>
-          <Button size="sm" onClick={handleOpenDialog}>
-            <Zap className="w-4 h-4 mr-2" />
+          <Button size="sm" variant="accent" onClick={handleOpenDialog}>
+            <Zap className="w-4 h-4" />
             {platform.plan.licenseKey
               ? t('Update License')
               : t('Activate License')}
@@ -176,16 +176,14 @@ export const LicenseKey = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full" />
               <div>
                 <p className="text-sm font-medium">{t('License Active')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('Valid until')}{' '}
-                  {formatUtils.formatDateOnly(
-                    dayjs(
-                      isNil(platform.plan.licenseExpiresAt)
-                        ? platform.plan.licenseExpiresAt
-                        : 1752489837,
-                    ).toDate(),
-                  )}
-                </p>
+                {!isNil(platform.plan.licenseExpiresAt) && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('Valid until')}{' '}
+                    {formatUtils.formatDateOnly(
+                      dayjs(platform.plan.licenseExpiresAt).toDate(),
+                    )}
+                  </p>
+                )}
               </div>
             </div>
             {getStatusBadge()}
@@ -207,21 +205,9 @@ export const LicenseKey = () => {
                 >
                   <span className="text-sm font-medium">{t(label)}</span>
                   {featureEnabled ? (
-                    <Badge
-                      variant="outline"
-                      className="gap-1 border-green-500 text-green-600"
-                    >
-                      <Check className="w-3 h-3" />
-                      {t('Enabled')}
-                    </Badge>
+                    <Badge variant="default">{t('Enabled')}</Badge>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className="gap-1 border-red-500 text-red-600"
-                    >
-                      <X className="w-3 h-3" />
-                      {t('Disabled')}
-                    </Badge>
+                    <Badge variant="destructive">{t('Disabled')}</Badge>
                   )}
                 </div>
               );

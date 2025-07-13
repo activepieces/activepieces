@@ -40,4 +40,3 @@ export const ApplyLicenseKeyByEmailRequestBody = Type.Object({
 })
 
 export type ApplyLicenseKeyByEmailRequestBody = Static<typeof ApplyLicenseKeyByEmailRequestBody>
-

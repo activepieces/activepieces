@@ -50,8 +50,9 @@ export const ActivateLicenseDialog = ({
 
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();
-    activateLicenseKey(data.tempLicenseKey);
-    handleClose();
+    activateLicenseKey(data.tempLicenseKey, {
+      onSuccess: () => handleClose(),
+    });
   };
 
   const handleClose = () => {
