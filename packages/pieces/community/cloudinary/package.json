@@ -1,0 +1,21 @@
+{
+  "name": "@activepieces/piece-cloudinary",
+  "version": "0.1.0",
+  "description": "Cloudinary MCP integration for Activepieces. Includes robust standalone scripts for upload, delete, transform, find, usage report, polling, and custom API calls.",
+  "author": "aybanda",
+  "keywords": [
+    "activepieces",
+    "cloudinary",
+    "mcp",
+    "automation",
+    "media",
+    "upload",
+    "integration"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-framework": "*",
+    "axios": "^1.6.7",
+    "form-data": "^4.0.0",
+    "cloudinary": "^2.7.0"
+  }
+} 
