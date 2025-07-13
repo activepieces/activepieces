@@ -73,15 +73,6 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                 `, [toolId, tool.mcpId, McpToolType.PIECE, JSON.stringify(tool.pieceMetadata), tool.flowId, tool.created, tool.updated])
 
-                const toolRuns = await queryRunner.query(`
-                    SELECT * FROM "mcp_run" WHERE "metadata"->>'pieceName' = $1 AND "metadata"->>'actionName' = $2
-                `, [tool.pieceMetadata.pieceName, actionName])
-
-                for (const toolRun of toolRuns) {
-                    await queryRunner.query(`
-                        UPDATE "mcp_run" SET "toolId" = $1 WHERE "id" = $2
-                    `, [toolId, toolRun.id])
-                }
             }
             await queryRunner.query(`
                 DELETE FROM "mcp_tool" WHERE "id" = $1
