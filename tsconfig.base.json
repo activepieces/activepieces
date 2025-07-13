@@ -169,7 +169,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -546,6 +546,9 @@
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-ninox": [
+        "packages/pieces/community/ninox/src/index.ts"
       ],
       "@activepieces/piece-nocodb": [
         "packages/pieces/community/nocodb/src/index.ts"
