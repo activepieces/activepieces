@@ -147,10 +147,10 @@ export type SidebarLink = {
   name?: string;
   icon?: React.ReactNode;
   type: 'link';
+  show: boolean;
   notification?: boolean;
   locked?: boolean;
   hasPermission?: boolean;
-  showInEmbed?: boolean;
   isSubItem: boolean;
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;

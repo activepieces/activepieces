@@ -19,11 +19,11 @@ import { agentHooks } from './lib/agent-hooks';
 
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
-  isAgentsEnabled: boolean;
+  isAgentsConfigured: boolean;
 }
 
 export const CreateAgentButton = ({
-  isAgentsEnabled,
+  isAgentsConfigured,
   onAgentCreated,
 }: CreateAgentButtonProps) => {
   const [open, setOpen] = useState(false);
@@ -62,7 +62,7 @@ export const CreateAgentButton = ({
     navigate('/platform/setup/ai');
   };
 
-  if (isAgentsEnabled) {
+  if (isAgentsConfigured) {
     return (
       <>
         <Button

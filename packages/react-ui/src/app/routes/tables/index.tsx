@@ -5,6 +5,7 @@ import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -29,6 +30,7 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -42,6 +44,7 @@ const ApTablesPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
+  const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -265,60 +268,69 @@ const ApTablesPage = () => {
   }
 
   return (
-    <div className="flex-col w-full gap-4">
-      <div className="flex justify-between items-center">
-        <TableTitle
-          description={t(
-            'Create and manage your tables to store your automation data',
-          )}
-        >
-          {t('Tables')}
-        </TableTitle>
-        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <Button
-            onClick={() => createTable({ name: t('New Table') })}
-            className="flex items-center gap-2"
-            disabled={!userHasTableWritePermission}
+    <LockedFeatureGuard
+      featureKey="TABLES"
+      locked={!platform.plan.tablesEnabled}
+      lockTitle={t('Tables')}
+      lockDescription={t(
+        'Create and manage your tables to store your automation data',
+      )}
+    >
+      <div className="flex-col w-full gap-4">
+        <div className="flex justify-between items-center">
+          <TableTitle
+            description={t(
+              'Create and manage your tables to store your automation data',
+            )}
           >
-            <Plus className="h-4 w-4" />
-            {t('New Table')}
-          </Button>
-        </PermissionNeededTooltip>
+            {t('Tables')}
+          </TableTitle>
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        </div>
+        <UpgradeHookDialog
+          metric="tables"
+          open={showUpgradeDialog}
+          setOpen={setShowUpgradeDialog}
+        />
+        <DataTable
+          filters={[
+            {
+              accessorKey: 'name',
+              type: 'input',
+              title: t('Name'),
+              icon: CheckIcon,
+              options: [],
+            },
+          ]}
+          emptyStateIcon={<Table2 className="size-14" />}
+          emptyStateTextTitle={t('No tables have been created yet')}
+          emptyStateTextDescription={t(
+            'Create a table to get started and start managing your automation data',
+          )}
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          onRowClick={(row, newWindow) => {
+            const path = `/projects/${project.id}/tables/${row.id}`;
+            if (newWindow) {
+              openNewWindow(path);
+            } else {
+              navigate(path);
+            }
+          }}
+          bulkActions={bulkActions}
+        />
       </div>
-      <UpgradeHookDialog
-        metric="tables"
-        open={showUpgradeDialog}
-        setOpen={setShowUpgradeDialog}
-      />
-      <DataTable
-        filters={[
-          {
-            accessorKey: 'name',
-            type: 'input',
-            title: t('Name'),
-            icon: CheckIcon,
-            options: [],
-          },
-        ]}
-        emptyStateIcon={<Table2 className="size-14" />}
-        emptyStateTextTitle={t('No tables have been created yet')}
-        emptyStateTextDescription={t(
-          'Create a table to get started and start managing your automation data',
-        )}
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        onRowClick={(row, newWindow) => {
-          const path = `/projects/${project.id}/tables/${row.id}`;
-          if (newWindow) {
-            openNewWindow(path);
-          } else {
-            navigate(path);
-          }
-        }}
-        bulkActions={bulkActions}
-      />
-    </div>
+    </LockedFeatureGuard>
   );
 };
 

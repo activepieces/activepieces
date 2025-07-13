@@ -34,10 +34,11 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
 }
 
 const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
+    const stepStartTime = performance.now()
     const stepOutput = GenericStepOutput.create({
         input: {},
         type: ActionType.PIECE,
-        status: StepOutputStatus.SUCCEEDED,
+        status: StepOutputStatus.RUNNING,
     })
 
     try {
@@ -61,6 +62,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             throw new Error(JSON.stringify(errors, null, 2))
         }
 
+
         const params: {
             hookResponse: HookResponse
         } = {
@@ -69,7 +71,23 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
+        const outputContext = progressService.createOutputContext({
+            engineConstants: constants,
+            flowExecutorContext: executionState,
+            stepName: action.name,
+            stepOutput,
+        })
+
         const isPaused = executionState.isPaused({ stepName: action.name })
+        if (!isPaused) {
+            progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                updateImmediate: true,
+            }).catch((e) => {
+                console.error('error sending update', e)
+            })
+        }
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
@@ -79,12 +97,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 engineToken: constants.engineToken,
             }),
-            output: progressService.createOutputContext({
-                engineConstants: constants,
-                flowExecutorContext: executionState,
-                stepName: action.name,
-                stepOutput,
-            }),
+            output: outputContext,
             flows: createFlowsContext({
                 engineToken: constants.engineToken,
                 internalApiUrl: constants.internalApiUrl,
@@ -149,22 +162,23 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             })
         }
 
+        const stepEndTime = performance.now()
         if (params.hookResponse.type === 'stopped') {
             assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.SUCCEEDED, {
                 reason: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             }).increaseTask()
         }
         if (params.hookResponse.type === 'paused') {
             assertNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
                 .setVerdict(ExecutionVerdict.PAUSED, {
                     reason: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
         const handledError = handleExecutionError(e)
@@ -172,6 +186,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
             .setErrorMessage(handledError.message)
+            .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
