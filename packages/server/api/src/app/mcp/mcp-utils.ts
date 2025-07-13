@@ -1,7 +1,7 @@
 import { ActionBase, PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { McpProperty, McpPropertyType, PiecePackage } from '@activepieces/shared'
+import { McpProperty, McpPropertyType, PiecePackage, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { z } from 'zod' 
@@ -16,11 +16,11 @@ USER INSTRUCTIONS:
 {userInstructions}
 
 IMPORTANT:
-- For dropdown, multi-select dropdown, and static dropdown properties, you must select values from the provided options array only.
-- For array properties, you must select values from the provided options array only.
-- For dynamic properties, you must select values from the provided options array only.
+- For dropdown, multi-select dropdown, and static dropdown properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
+- For array properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
+- For dynamic properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
-- Use actual values from user instructions when available
+- Use actual values from the user instructions to determine the correct value for each property, either as a hint for selecting options from dropdowns or to fill in the property if possible.
 - Must include all required properties, even if the user does not provide a value. If a required field is missing, look up the correct value or provide a reasonable default—otherwise, the task may fail.
 
 `
@@ -145,6 +145,9 @@ function sortPropertiesByDependencies(properties: PiecePropertyMap): Record<numb
         const hasRefreshers = 'refreshers' in property && property.refreshers && property.refreshers.length > 0
         if (hasRefreshers) {
             for (const refresher of property.refreshers) {
+                if (isNil(properties[refresher])) {
+                    continue
+                }
                 inDegree[key] = (inDegree[key] || 0) + 1
                 graph[refresher] = graph[refresher] ?? []
                 graph[refresher].push(key)
