@@ -5,13 +5,13 @@ export class AddIndexForSchemaVersionInFlowVersion1752151941009 implements Migra
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
+            CREATE INDEX IF NOT EXISTS "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_version_schema_version"
+            DROP INDEX "idx_flow_version_schema_version"
         `)
     }
 
