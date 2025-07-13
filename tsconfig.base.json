@@ -739,6 +739,9 @@
       "@activepieces/piece-sendinblue": [
         "packages/pieces/community/sendinblue/src/index.ts"
       ],
+      "@activepieces/piece-sendpulse": [
+        "packages/pieces/community/sendpulse/src/index.ts"
+      ],
       "@activepieces/piece-sendy": [
         "packages/pieces/community/sendy/src/index.ts"
       ],
