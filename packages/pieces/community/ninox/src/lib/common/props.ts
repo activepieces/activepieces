@@ -147,6 +147,43 @@ export const recordIdDropdown = Property.Dropdown({
   },
 });
 
+export const filenameDropdown = Property.Dropdown({
+  displayName: 'Record ID',
+  description: 'Select the record to update/delete',
+  required: true,
+  refreshers: ['teamid', 'dbid', 'tid','rid'],
+  options: async ({ auth, teamid, dbid, tid, rid }) => {
+    if (!auth || !teamid || !dbid || !tid || !rid) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select a table first',
+      };
+    }
+
+    try {
+      const records = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${rid}/files`
+      );
+      return {
+        disabled: false,
+        options: records.map((record: any) => ({
+          label: `file ${record.name}`,
+          value: record.name,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading records',
+      };
+    }
+  },
+})
+
 // // Dynamic field properties for create/update operations
 export const createDynamicFields = Property.DynamicProperties({
   displayName: 'Record Fields',
