@@ -42,7 +42,7 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
         }
     },
 
-    async runScript({ script, scriptContext }) {
+    async runScript({ script, scriptContext, functions }) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -53,10 +53,13 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
+            const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
+            const scriptWithFunctions = `${serializedFunctions}\n${script}`
+
             return await executeIsolate({
                 isolate,
                 isolateContext,
-                code: script,
+                code: scriptWithFunctions,
             })
         }
         finally {

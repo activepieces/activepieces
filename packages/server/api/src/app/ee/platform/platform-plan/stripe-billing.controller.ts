@@ -11,6 +11,7 @@ import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
+import { PlatformPlanHelper } from './platform-plan-helper'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper, USER_PRICE_ID } from './stripe-helper'
 
@@ -80,16 +81,18 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             cancelDate,
                             stripePaymentMethod: subscription.default_payment_method as string ?? undefined,
                         })
-            
+
                         const extraUsers = subscription.items.data.find(item => item.price.id === USER_PRICE_ID)?.quantity ?? 0
-                        const planLimits = platformPlanService(request.log).getPlanLimits(newPlan)
+                        const newLimits = platformPlanService(request.log).getPlanLimits(newPlan)
                         const isFreePlan = newPlan === PlanName.FREE
                         const isBusinessPlan = newPlan === PlanName.BUSINESS
                         const hasExtraUsers = extraUsers > 0
                         const isUserSeatsUpgraded = isBusinessPlan && hasExtraUsers
 
+                        await PlatformPlanHelper.handleResourceLocking({ platformId, newLimits })
+
                         if (!isFreePlan && isUserSeatsUpgraded) {
-                            planLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
+                            newLimits.userSeatsLimit = DEFAULT_BUSINESS_SEATS + extraUsers
                         } 
 
                         if (isFreePlan || !isUserSeatsUpgraded) {
@@ -97,7 +100,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         }
 
                         await platformPlanService(request.log).update({ 
-                            ...planLimits,
+                            ...newLimits,
                             platformId: platformPlan.platformId,
                             eligibleForTrial: false,
                             stripeSubscriptionId: isFreePlan ? undefined : platformPlan.stripeSubscriptionId,
@@ -134,7 +137,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             },
                         })
 
-                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email)
+                        await emailService(request.log).sendTrialReminder(platformPlan.platformId, customer.email, '1-day-left-on-trial')
                         break
                     }
                     default:
@@ -167,7 +170,7 @@ const WebhookRequest = {
 
 
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
-    await emailService(log).sendWellcomeToTrialEmail(platformId, customerEmail as string)
+    await emailService(log).sendTrialReminder(platformId, customerEmail as string, 'welcome-to-trial')
     await systemJobsSchedule(log).upsertJob({
         job: {
             name: SystemJobName.SEVEN_DAYS_IN_TRIAL,

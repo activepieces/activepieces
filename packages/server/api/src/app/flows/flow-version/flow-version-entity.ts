@@ -51,6 +51,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             columns: ['flowId'],
             unique: false,
         },
+        {
+            name: 'idx_flow_version_schema_version',
+            columns: ['schemaVersion'],
+            unique: false,
+        },
     ],
     relations: {
         updatedByUser: {

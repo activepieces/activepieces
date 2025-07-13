@@ -163,7 +163,7 @@ const FlowRunCard = React.memo(
         <div className="ml-auto font-medium">
           {(isFetchingRun || isRetryingRun) && (
             <Button variant="ghost">
-              <LoadingSpinner className="h-4 w-4"></LoadingSpinner>
+              <LoadingSpinner className="size-4"></LoadingSpinner>
             </Button>
           )}
 
