@@ -19,8 +19,6 @@ const LICENSE_PROPS_MAP = {
   projectRolesEnabled: 'Project Roles',
   customDomainsEnabled: 'Custom Domains',
   apiKeysEnabled: 'API Keys',
-  flowIssuesEnabled: 'Flow Issues',
-  alertsEnabled: 'Alerts',
   ssoEnabled: 'Single Sign On',
 };
 
