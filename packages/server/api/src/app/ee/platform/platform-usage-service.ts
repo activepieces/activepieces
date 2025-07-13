@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, ApEdition, ApEnvironment, apId, FlowStatus, PlatformUsage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, AIUsage, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
@@ -17,6 +17,9 @@ import { projectRepo, projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { Order } from '../../helper/pagination/paginator'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
@@ -113,7 +116,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     },
 
     async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
-        const incrementBy = cost * 1000
+        const incrementBy = calculateCredits(cost)
         const edition = system.getEdition()
 
         if (edition === ApEdition.COMMUNITY) {
@@ -185,7 +188,48 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         return getUsage(projectId, startDate, endDate, metric, 'project')
     },
+
+    async listAICreditsUsage({
+        platformId,
+        cursor,
+        limit,
+    }: ListAICreditsUsageParams): Promise<SeekPage<AICreditsUsageListResponse>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator<AIUsageSchema>({
+            entity: AIUsageEntity,
+            query: {
+                limit,
+                order: Order.DESC,
+                orderBy: 'created',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
+        const query = aiUsageRepo().createQueryBuilder('ai_usage')
+            .select('ai_usage')
+            .addSelect('project.displayName')
+            .leftJoin('ai_usage.project', 'project')
+            .where({
+                platformId,
+            })
+
+        const { data, cursor: newCursor } = await paginator.paginate(query)
+        const result = data.map(row => {
+            const { cost, ...rowWithoutCost } = row
+            return {
+                ...rowWithoutCost,
+                credits: parseFloat(calculateCredits(cost).toFixed(2)),
+                projectName: row.project.displayName,
+            }
+        })
+        return paginationHelper.createPage<AICreditsUsageListResponse>(result, newCursor)
+    },
 })
+
+function calculateCredits(cost: number): number {
+    return cost * 1000
+}
 
 async function getUsage(
     entityId: string,
@@ -316,4 +360,15 @@ type GetPlatformUsageParams = {
     metric: 'tasks' | 'ai_credits'
     startDate: number
     endDate: number
+}
+
+type ListAICreditsUsageParams = {
+    platformId: string
+    cursor: Cursor | null
+    limit: number
+}
+
+type AICreditsUsageListResponse = Omit<AIUsage, 'cost'> & {
+    credits: number
+    projectName: string
 }
