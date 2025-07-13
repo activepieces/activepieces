@@ -20,7 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import type { PopulatedFlow } from '@activepieces/shared';
+import type { McpToolRequest, PopulatedFlow } from '@activepieces/shared';
 import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
@@ -71,14 +71,12 @@ export function McpFlowDialog({
 
   const { isPending, mutate: saveTool } = useMutation({
     mutationFn: async () => {
-      const newTools = selectedFlows.map((flowId) => ({
+      const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
         type: McpToolType.FLOW,
-        mcpId: mcp.id,
-        pieceMetadata: undefined,
         flowId: flowId,
       }));
 
-      const nonFlowTools = mcp.tools.filter(
+      const nonFlowTools: McpToolRequest[] = mcp.tools.filter(
         (tool) => tool.type !== McpToolType.FLOW,
       );
       const updatedTools = [...nonFlowTools, ...newTools];

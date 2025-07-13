@@ -27,10 +27,10 @@ const identityApiCustomQueryAction = createAction({
 	},
 });
 
-const generalInfoAction = createAction({
+const totalVehicleCountAction = createAction({
 	requireAuth: false,
-	name: 'identity-general-info',
-	displayName: 'Identity : General Info',
+	name: 'identity-total-vehicle-count',
+	displayName: 'Identity : Total Vehicle Count',
 	description: 'Get total vehicle count.',
 	props: {},
 	async run() {
@@ -317,7 +317,7 @@ const getDCNsByOwnerAction = createAction({
 
 export const identityApiActions = [
 	identityApiCustomQueryAction,
-	generalInfoAction,
+	totalVehicleCountAction,
 	getDeveloperLicenseInfoAction,
 	getVehicleByDevLicenseAction,
 	getTotalVehicleCountForOwnerAction,

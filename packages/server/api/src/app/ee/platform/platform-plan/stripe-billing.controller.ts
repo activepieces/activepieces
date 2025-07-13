@@ -134,7 +134,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             },
                         })
 
-                        await emailService(request.log).sendThreeDaysLeftOnTrialEmail(platformPlan.platformId, customer.email)
+                        await emailService(request.log).sendTrialReminder(platformPlan.platformId, customer.email, '1-day-left-on-trial')
                         break
                     }
                     default:
@@ -167,7 +167,7 @@ const WebhookRequest = {
 
 
 async function sendTrialRelatedEmails(customerEmail: string, platformId: string, log: FastifyBaseLogger) {
-    await emailService(log).sendWellcomeToTrialEmail(platformId, customerEmail as string)
+    await emailService(log).sendTrialReminder(platformId, customerEmail as string, 'welcome-to-trial')
     await systemJobsSchedule(log).upsertJob({
         job: {
             name: SystemJobName.SEVEN_DAYS_IN_TRIAL,

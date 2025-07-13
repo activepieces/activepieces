@@ -209,7 +209,7 @@ export class DimoClient {
 			}
 
 		const matchingSacd = nodes.find(
-			(sacd: any) => sacd.grantee === this.clientId.toLowerCase(),
+			(sacd: any) => sacd.grantee.toLowerCase() === this.clientId.toLowerCase(),
 		);
 
 		if (!matchingSacd) {
