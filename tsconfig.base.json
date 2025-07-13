@@ -169,7 +169,7 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
-       "@activepieces/piece-close": [
+      "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
       "@activepieces/piece-cloutly": [
@@ -522,6 +522,9 @@
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-mistral-ai": [
+        "packages/pieces/community/mistral-ai/src/index.ts"
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
