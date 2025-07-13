@@ -5,7 +5,12 @@ import {
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
-import { PlatformPlan, PlatformBillingInformation, ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/shared';
+import {
+  PlatformPlan,
+  PlatformBillingInformation,
+  ListAICreditsUsageRequest,
+  ListAICreditsUsageResponse,
+} from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -36,6 +41,9 @@ export const platformBillingApi = {
     return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
   },
   listAiCreditsUsage(params: ListAICreditsUsageRequest) {
-    return api.get<ListAICreditsUsageResponse>('/v1/platform-billing/ai-credits-usage', params);
+    return api.get<ListAICreditsUsageResponse>(
+      '/v1/platform-billing/ai-credits-usage',
+      params,
+    );
   },
 };
