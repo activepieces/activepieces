@@ -1,0 +1,8 @@
+{
+  "name": "pieces-ninox",
+  "root": "packages/pieces/community/ninox",
+  "sourceRoot": "packages/pieces/community/ninox/src",
+  "projectType": "library",
+  "targets": {},
+  "tags": []
+}

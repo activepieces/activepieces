@@ -1,0 +1,6 @@
+{
+  "name": "@activepieces/piece-ninox",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "license": "MIT"
+}
