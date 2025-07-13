@@ -185,7 +185,7 @@ export const piecesHooks = {
     };
     const popularCategory = {
       title: t('Popular'),
-      metadata: [...pinnedPieces, ...popularPieces],
+      metadata: popularPieces
     };
     const allCategory = {
       title: t('All'),
@@ -316,7 +316,7 @@ const isUtilityPiece = (metadata: StepMetadata) =>
   metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE
     ? !isFlowController(metadata)
     : metadata.categories.includes(PieceCategory.CORE) &&
-      !isFlowController(metadata);
+    !isFlowController(metadata);
 
 const isAppPiece = (metadata: StepMetadata) => {
   return (
@@ -338,7 +338,6 @@ const getPinnedPieces = (
 };
 
 const popularPiecesNames = [
-  '@activepieces/piece-agent',
   '@activepieces/piece-google-sheets',
   '@activepieces/piece-slack',
   '@activepieces/piece-notion',
@@ -364,12 +363,13 @@ const getPopularPieces = (
 
 const highlightedPiecesNames = [
   '@activepieces/piece-http',
-  '@activepieces/piece-tables',
-  '@activepieces/piece-todos',
-  '@activepieces/piece-forms',
+  '@activepieces/piece-schedule',
+  '@activepieces/piece-agent',
   '@activepieces/piece-webhook',
-  '@activepieces/piece-text-helper',
-  '@activepieces/piece-date-helper',
+  '@activepieces/piece-tables',
+  '@activepieces/piece-forms',
+  '@activepieces/piece-todos',
+
 ];
 
 const getExploreTabContent = (
@@ -381,10 +381,6 @@ const getExploreTabContent = (
     metadata: [],
   };
 
-  const aiAndAgentsPieces = queryResult.filter((piece) =>
-    isUniversalAiPiece(piece),
-  );
-
   const pinnedPieces = getPinnedPieces(
     queryResult,
     platform.pinnedPieces ?? [],
@@ -393,10 +389,6 @@ const getExploreTabContent = (
     queryResult,
     platform.pinnedPieces ?? [],
   );
-
-  if (pinnedPieces.length > 0) {
-    popularCategory.metadata = [...popularCategory.metadata, ...pinnedPieces];
-  }
 
   if (popularPieces.length > 0) {
     popularCategory.metadata = [...popularCategory.metadata, ...popularPieces];
@@ -408,24 +400,27 @@ const getExploreTabContent = (
   };
   const highlightedPieces = getHighlightedPieces(queryResult);
   const codePiece = queryResult.find((piece) => piece.type === ActionType.CODE);
+  const branchPiece = queryResult.find((piece) => piece.type === ActionType.ROUTER);
+
+  if (pinnedPieces.length > 0) {
+    hightlightedPiecesCategory.metadata = [
+      ...pinnedPieces,
+      ...hightlightedPiecesCategory.metadata,
+    ];
+  }
+
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(
       ...sortByPieceNameOrder(highlightedPieces, highlightedPiecesNames),
     );
   }
+
+  if (branchPiece) {
+    hightlightedPiecesCategory.metadata.splice(0, 0, branchPiece);
+  }
+
   if (codePiece) {
     hightlightedPiecesCategory.metadata.splice(4, 0, codePiece);
-  }
-  if (aiAndAgentsPieces.length > 0) {
-    const agentPiece = aiAndAgentsPieces.find(
-      (piece) =>
-        piece.type === ActionType.PIECE &&
-        piece.pieceName === '@activepieces/piece-agent',
-    );
-    const universalAiPiecesWithoutAgent = aiAndAgentsPieces.filter(
-      (piece) => piece !== agentPiece,
-    );
-    hightlightedPiecesCategory.metadata.push(...universalAiPiecesWithoutAgent);
   }
 
   return [popularCategory, hightlightedPiecesCategory];
