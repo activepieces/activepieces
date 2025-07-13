@@ -170,7 +170,8 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {creditMetrics.creditsUsedFromPlan} / {planIncludedCredits}
+                {Math.round(creditMetrics.creditsUsedFromPlan)} /{' '}
+                {planIncludedCredits}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Included')}
