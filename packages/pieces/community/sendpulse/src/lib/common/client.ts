@@ -1,10 +1,4 @@
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-  HttpMessageBody,
-  QueryParams,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, HttpRequest, HttpMessageBody, QueryParams } from '@activepieces/pieces-common';
 
 export type SendPulseAuthProps = {
   access_token: string;
@@ -29,7 +23,6 @@ export async function sendPulseApiCall<T extends HttpMessageBody>({
   if (!access_token) {
     throw new Error('SendPulse access token is required for authentication');
   }
-
   const queryParams: QueryParams = {};
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -38,9 +31,7 @@ export async function sendPulseApiCall<T extends HttpMessageBody>({
       }
     }
   }
-
   const baseUrl = 'https://api.sendpulse.com';
-
   const request: HttpRequest = {
     method,
     url: `${baseUrl}${resourceUri}`,
@@ -51,7 +42,6 @@ export async function sendPulseApiCall<T extends HttpMessageBody>({
     queryParams,
     body,
   };
-
   try {
     const response = await httpClient.sendRequest<T>(request);
     return response.body;

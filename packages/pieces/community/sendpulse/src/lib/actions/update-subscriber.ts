@@ -1,47 +1,114 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendPulseAuth } from '../common/auth';
-import { mailingListId, emails, variables } from '../common/props';
 import { sendPulseApiCall } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const updateSubscriber = createAction({
   name: 'update_subscriber',
   displayName: 'Update Subscriber',
-  description: 'Update one or more subscribers (by email) with new variables or details.',
+  description: 'Update variables for one or more subscribers by email.',
   auth: sendPulseAuth,
   props: {
-    addressBookId: mailingListId,
-    emails,
-    variables,
+    addressBookId: Property.Number({
+      displayName: 'Mailing List ID',
+      description: 'The ID of the SendPulse address book (mailing list)',
+      required: true,
+    }),
+    emails: Property.Array({
+      displayName: 'Emails',
+      description: 'List of email addresses to update',
+      required: true,
+    }),
+    variables: Property.Array({
+      displayName: 'Variables for Each Email',
+      description: 'Optional JSON strings for each email (same order). Example: {"name":"John","Phone":"123456"}',
+      required: true,
+    }),
   },
   async run({ propsValue, auth }) {
     const { addressBookId, emails, variables } = propsValue;
     if (!emails || emails.length === 0) {
       throw new Error('You must provide at least one email to update.');
     }
-    const batch = [];
-    for (const email of emails) {
-      const subscriber: any = { email };
-      if (variables && Object.keys(variables).length > 0) {
-        subscriber.variables = { ...variables };
-      }
-      batch.push(subscriber);
+    if (!variables || variables.length !== emails.length) {
+      throw new Error('You must provide a variables JSON string for each email (same order).');
     }
-    const body = { emails: batch };
+    const results = [];
+    for (let i = 0; i < emails.length; i++) {
+      const email = emails[i];
+      let vars: any = {};
+      if (variables[i]) {
+        try {
+          vars = JSON.parse(variables[i] as string);
+        } catch (e) {
+          results.push({ success: false, email, error: `Invalid JSON for variables at index ${i}: ${variables[i]}` });
+          continue;
+        }
+      }
+      try {
+        const data = await sendPulseApiCall({
+          method: HttpMethod.PUT,
+          resourceUri: `/addressbooks/${addressBookId}/emails`,
+          body: {
+            emails: [{ email, variables: vars }],
+          },
+          auth,
+        });
+        results.push({ success: true, email, data });
+      } catch (error) {
+        results.push({ success: false, email, error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+    return {
+      message: `Update attempted for ${emails.length} subscriber(s)`,
+      results,
+    };
+  },
+});
+
+export const updateSubscriberPhone = createAction({
+  auth: sendPulseAuth,
+  name: 'update-subscriber-phone',
+  displayName: 'Update Subscriber Phone Number',
+  description: 'Update the phone number of an existing subscriber in a mailing list.',
+  props: {
+    addressBookId: Property.Number({
+      displayName: 'Mailing List ID',
+      description: 'The ID of the SendPulse address book (mailing list)',
+      required: true,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email Address',
+      description: 'Email address of the subscriber to update',
+      required: true,
+    }),
+    phone: Property.ShortText({
+      displayName: 'Phone Number',
+      description: 'The new phone number to assign to the subscriber',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const { addressBookId, email, phone } = context.propsValue;
+    const body = { email, phone };
     try {
-      const data = await sendPulseApiCall({
+      const result = await sendPulseApiCall<{ result: boolean }>({
         method: HttpMethod.PUT,
-        resourceUri: `/addressbooks/${addressBookId}/emails`,
+        auth: context.auth,
+        resourceUri: `/addressbooks/${addressBookId}/phone`,
         body,
-        auth,
       });
-      return {
-        success: true,
-        message: `Updated ${batch.length} subscriber(s) successfully`,
-        data,
-      };
-    } catch (error) {
-      throw new Error(`Failed to update subscriber(s): ${error instanceof Error ? error.message : String(error)}`);
+      if (result.result === true) {
+        return {
+          success: true,
+          message: `Subscriber ${email}'s phone number was updated to ${phone}`,
+        };
+      }
+      throw new Error('SendPulse API returned failure while updating phone.');
+    } catch (error: any) {
+      throw new Error(
+        `SendPulse error: ${error.message || 'Unknown error while updating subscriber phone'}`
+      );
     }
   },
 }); 

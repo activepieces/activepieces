@@ -1,7 +1,7 @@
 import { createPiece } from "@activepieces/pieces-framework";
 import { addSubscriber } from './lib/actions/add-subscriber';
-import { updateSubscriber } from './lib/actions/update-subscriber';
-import { unsubscribeUser } from './lib/actions/unsubscribe-user';
+import { updateSubscriber, updateSubscriberPhone } from './lib/actions/update-subscriber';
+import { unsubscribeUser, deleteContactFromList } from './lib/actions/unsubscribe-user';
 import { deleteContact } from './lib/actions/delete-contact';
 import { changeVariableForSubscriber } from './lib/actions/change-variable-for-subscriber';
 import { newSubscriberTrigger } from './lib/triggers/trigger-new-subscriber';
@@ -19,7 +19,9 @@ export const sendpulse = createPiece({
   actions: [
     addSubscriber,
     updateSubscriber,
+    updateSubscriberPhone,
     unsubscribeUser,
+    deleteContactFromList,
     deleteContact,
     changeVariableForSubscriber,
     createCustomApiCallAction({

@@ -1,62 +1,74 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendPulseAuth } from '../common/auth';
-import { mailingListId, emails, phones, variables, optInType } from '../common/props';
 import { sendPulseApiCall } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addSubscriber = createAction({
-  name: 'add_subscriber',
-  displayName: 'Add Subscriber',
-  description: 'Add one or more subscribers to a mailing list.',
   auth: sendPulseAuth,
+  name: 'add-subscriber',
+  displayName: 'Add Emails to Mailing List',
+  description: 'Adds one or more emails to a mailing list (single-opt-in).',
   props: {
-    addressBookId: mailingListId,
-    emails,
-    phones,
-    variables,
-    optInType,
+    addressBookId: Property.Number({
+      displayName: 'Mailing List ID',
+      description: 'ID of the SendPulse address book (mailing list)',
+      required: true,
+    }),
+    emails: Property.Array({
+      displayName: 'Email Addresses',
+      description: 'List of email addresses (e.g., user@example.com)',
+      required: true,
+    }),
+    variables: Property.Array({
+      displayName: 'Variables for Each Email',
+      description: 'Optional JSON strings for each email (same order). Example: {"name":"John","Phone":"123456"}',
+      required: false,
+    }),
+    tags: Property.Object({
+      displayName: 'Tag IDs',
+      description: 'Optional object with tag IDs, e.g., {"0": 123, "1": 456}',
+      required: false,
+    }),
   },
-  async run({ propsValue, auth }) {
-    const { addressBookId, emails, phones, variables, optInType } = propsValue;
-    if (!emails || emails.length === 0) {
-      throw new Error('You must provide at least one email to add.');
+
+  async run(context) {
+    const { addressBookId, emails, variables, tags } = context.propsValue;
+    const formattedEmails: any[] = [];
+    for (let i = 0; i < emails.length; i++) {
+      const item: any = { email: emails[i] };
+      if (variables && variables[i]) {
+        try {
+          const parsed = JSON.parse(variables[i] as string);
+          item.variables = parsed;
+        } catch (e) {
+          throw new Error(`Invalid JSON for variables at index ${i}: ${variables[i]}`);
+        }
+      }
+      formattedEmails.push(item);
     }
-    const batch = [];
-    for (const email of emails) {
-      const subscriber: any = { email };
-      let vars: any = {};
-      if (variables && Object.keys(variables).length > 0) {
-        vars = { ...variables };
-      }
-      // If a phone is provided for this email, add it as a variable
-      if (phones && phones.length > 0) {
-        // Optionally, you could match phones to emails by index or another logic
-        // Here, we just add the first phone to all, or you can customize as needed
-        vars["Phone"] = phones[0];
-      }
-      if (Object.keys(vars).length > 0) {
-        subscriber.variables = vars;
-      }
-      batch.push(subscriber);
-    }
-    const body: any = { emails: batch };
-    if (optInType) {
-      body.optin = optInType;
+    const requestBody: Record<string, any> = { emails: formattedEmails };
+    if (tags && Object.keys(tags).length > 0) {
+      requestBody['tags'] = Object.values(tags).map(Number);
     }
     try {
-      const data = await sendPulseApiCall({
+      const result = await sendPulseApiCall<{ result: boolean }>({
         method: HttpMethod.POST,
+        auth: context.auth,
         resourceUri: `/addressbooks/${addressBookId}/emails`,
-        body,
-        auth,
+        body: requestBody,
       });
-      return {
-        success: true,
-        message: `Added ${batch.length} subscriber(s) successfully`,
-        data,
-      };
-    } catch (error) {
-      throw new Error(`Failed to add subscriber(s): ${error instanceof Error ? error.message : String(error)}`);
+      if (result.result === true) {
+        return {
+          success: true,
+          message: 'Emails added successfully.',
+          emailsAdded: formattedEmails,
+          mailingListId: addressBookId,
+          tagsAssigned: requestBody['tags'] || [],
+        };
+      }
+      throw new Error('SendPulse API returned failure.');
+    } catch (error: any) {
+      throw new Error(`SendPulse error: ${error.message || 'Unknown error'}`);
     }
   },
 }); 
