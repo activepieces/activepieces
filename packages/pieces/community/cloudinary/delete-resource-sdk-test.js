@@ -1,13 +1,13 @@
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
-  cloud_name: 'de7qxfvjd',
-  api_key: '***REMOVED***',
-  api_secret: '***REMOVED***',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Replace with the public_id of the resource you want to delete
-const publicId = 'sample_ysizwh';
+const publicId = 'sample_bdgcod';
 
 cloudinary.uploader.destroy(publicId, { resource_type: 'image' }, function(error, result) {
   if (error) {

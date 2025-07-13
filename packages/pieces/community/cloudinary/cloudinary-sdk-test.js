@@ -2,9 +2,9 @@ const cloudinary = require('cloudinary').v2;
 const path = require('path');
 
 cloudinary.config({
-  cloud_name: 'de7qxfvjd',
-  api_key: '***REMOVED***', // or your other key
-  api_secret: '***REMOVED***', // or your other secret
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const filePath = path.join(__dirname, 'sample.jpg');

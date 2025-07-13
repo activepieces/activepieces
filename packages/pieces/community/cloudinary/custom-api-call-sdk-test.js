@@ -1,8 +1,8 @@
 const axios = require('axios');
 
-const cloudName = 'de7qxfvjd';
-const apiKey = '***REMOVED***';
-const apiSecret = '***REMOVED***';
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
 // Example: List resources (images)
 const endpoint = `/resources/image`;
