@@ -185,7 +185,7 @@ export const piecesHooks = {
     };
     const popularCategory = {
       title: t('Popular'),
-      metadata: popularPieces
+      metadata: popularPieces,
     };
     const allCategory = {
       title: t('All'),
@@ -316,7 +316,7 @@ const isUtilityPiece = (metadata: StepMetadata) =>
   metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE
     ? !isFlowController(metadata)
     : metadata.categories.includes(PieceCategory.CORE) &&
-    !isFlowController(metadata);
+      !isFlowController(metadata);
 
 const isAppPiece = (metadata: StepMetadata) => {
   return (
@@ -369,7 +369,6 @@ const highlightedPiecesNames = [
   '@activepieces/piece-tables',
   '@activepieces/piece-forms',
   '@activepieces/piece-todos',
-
 ];
 
 const getExploreTabContent = (
@@ -400,7 +399,9 @@ const getExploreTabContent = (
   };
   const highlightedPieces = getHighlightedPieces(queryResult);
   const codePiece = queryResult.find((piece) => piece.type === ActionType.CODE);
-  const branchPiece = queryResult.find((piece) => piece.type === ActionType.ROUTER);
+  const branchPiece = queryResult.find(
+    (piece) => piece.type === ActionType.ROUTER,
+  );
 
   if (pinnedPieces.length > 0) {
     hightlightedPiecesCategory.metadata = [
