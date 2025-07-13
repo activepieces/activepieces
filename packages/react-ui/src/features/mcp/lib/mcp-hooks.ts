@@ -10,6 +10,7 @@ import {
   McpToolMetadata,
   ToolCallContentBlock,
   ToolCallType,
+  McpToolType,
 } from '@activepieces/shared';
 
 import { mcpApi } from './mcp-api';
@@ -75,13 +76,24 @@ export const mcpHooks = {
         const updatedTools =
           mcp?.tools
             ?.filter((tool) => tool.id !== toolId)
-            .map((tool) => ({
-              type: tool.type,
-              mcpId: tool.mcpId,
-              pieceMetadata: tool.pieceMetadata,
-              flowId: tool.flowId,
-            })) || [];
-
+            .map((tool) => {
+              switch (tool.type) {
+                case McpToolType.PIECE: {
+                  return {
+                    type: tool.type,
+                    mcpId: tool.mcpId,
+                    pieceMetadata: tool.pieceMetadata,
+                  };
+                }
+                case McpToolType.FLOW: {
+                  return {
+                    type: tool.type,
+                    mcpId: tool.mcpId,
+                    flowId: tool.flowId,
+                  };
+                }
+              }
+            }) || [];
         return await mcpApi.update(mcpId, { tools: updatedTools });
       },
       onSuccess,
