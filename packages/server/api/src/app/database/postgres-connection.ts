@@ -44,6 +44,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
+import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -241,7 +242,10 @@ import { AddTrialFlagInPlatform1751394161203 } from './migration/postgres/175139
 import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
 import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
+import { AddLockedColumnToProjectPlan1751878623268 } from './migration/postgres/1751878623268-AddLockedColumnToProjectPlan'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
+import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -409,6 +413,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RevertTodoActivties1751217652277,
         RemoveTerminationReason1751728035816,
         AddFlowVersionToIssue1751927222122,
+        SplitUpPieceMetadataIntoTools1752004202722,
+        AddIndexForSchemaVersionInFlowVersion1752151941009,
     ]
 
     const edition = system.getEdition()
@@ -503,6 +509,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddTrialFlagInPlatform1751394161203,
                 UpdateAiCredits1751404517528,
                 AddAiOverageState1751466404493,
+                AddLockedColumnToProjectPlan1751878623268,
                 AddMcpsEnabled1751989232042,
             )
             break

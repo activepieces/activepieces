@@ -16,7 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
@@ -28,7 +28,7 @@ export const projectRepo = repoFactory(ProjectEntity)
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
 
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
             metric: PlatformUsageMetric.PROJECTS,
         })
@@ -60,6 +60,20 @@ export const projectService = {
             id: projectId,
             deleted: IsNull(),
         })
+    },
+
+    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
+        const projects = await projectRepo().find({
+            select: {
+                id: true,
+            },
+            where: {
+                platformId,
+                deleted: IsNull(),
+            },
+        })
+
+        return projects.map((project) => project.id)
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
