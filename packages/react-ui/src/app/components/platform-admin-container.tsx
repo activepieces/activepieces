@@ -108,13 +108,6 @@ export function PlatformAdminContainer({
           isSubItem: true,
           show: true,
         },
-        {
-          type: 'link',
-          to: '/platform/setup/license-key',
-          label: t('License Key'),
-          isSubItem: true,
-          show: true,
-        },
       ],
     },
     {

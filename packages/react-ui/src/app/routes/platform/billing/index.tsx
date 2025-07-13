@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
+import { LicenseKey } from '@/features/billing/components/lisence-key';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { TasksUsage } from '@/features/billing/components/tasks-usage';
 import { UsageCards } from '@/features/billing/components/usage-cards';
@@ -138,6 +139,7 @@ export default function Billing() {
       )}
       <AICreditUsage platformSubscription={platformSubscription} />
       <TasksUsage platformSubscription={platformSubscription} />
+      <LicenseKey />
 
       <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
     </article>
