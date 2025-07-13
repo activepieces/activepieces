@@ -36,10 +36,9 @@ export const uploadFile = createAction({
       const blob = new Blob([file.data], { type: mimeType });
       formData.append('file', blob, file.filename);
 
-      const response = await makeRequest(auth, HttpMethod.POST, path, formData)
+      const response = await makeRequest(auth, HttpMethod.POST, path, formData,'multipart/form-data')
       return {
         success: true,
-        message: 'File uploaded successfully',
         response: response
       };
     } catch (error) {

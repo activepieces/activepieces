@@ -9,7 +9,7 @@ export const NinoxAuth = PieceAuth.SecretText({
     validate: async ({ auth }) => {
         if (auth) {
             try {
-                await makeRequest(auth as string, HttpMethod.GET, '/accounts', {});
+                await makeRequest(auth as string, HttpMethod.GET, '/teams', {});
                 return {
                     valid: true,
                 }

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { NinoxAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { teamidDropdown, databaseIdDropdown, tableIdDropdown } from '../common/props';
+import { teamidDropdown, databaseIdDropdown, tableIdDropdown, tablefieldDropdown } from '../common/props';
 
 export const findRecord = createAction({
   auth: NinoxAuth,
@@ -13,11 +13,7 @@ export const findRecord = createAction({
     teamid: teamidDropdown,
     dbid: databaseIdDropdown,
     tid: tableIdDropdown,
-    searchField: Property.ShortText({
-      displayName: 'Search Field',
-      description: 'The field name to search in (e.g., "First Name", "Email")',
-      required: true,
-    }),
+    searchField: tablefieldDropdown,
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       description: 'The value to search for in the specified field',
@@ -32,18 +28,19 @@ export const findRecord = createAction({
   },
   async run({ auth, propsValue }) {
     const { teamid, dbid, tid, searchField, searchValue, limit } = propsValue;
+
     
-    // Build the query to search for records
-    const query = `(select ${tid} where '${searchField}' = '${searchValue}')`;
-    const path = `/teams/${teamid}/databases/${dbid}/${query}`;
-    
+    const filtersObj = { [searchField as any]: searchValue };
+    const filtersParam = encodeURIComponent(JSON.stringify(filtersObj));
+    const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records?filters=${filtersParam}`;
+
     try {
       const response = await makeRequest(
         auth as string,
         HttpMethod.GET,
         path
       );
-      
+
       // Limit the results if specified
       const results = Array.isArray(response) ? response.slice(0, limit) : response;
       

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { NinoxAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { databaseIdDropdown, recordIdDropdown, tableIdDropdown, teamidDropdown } from '../common/props';
+import { teamidDropdown, databaseIdDropdown, tableIdDropdown, recordIdDropdown, updateDynamicFields } from '../common/props';
 
 export const updateRecord = createAction({
   auth: NinoxAuth,
@@ -12,29 +12,30 @@ export const updateRecord = createAction({
   props: {
     teamid: teamidDropdown,
     dbid: databaseIdDropdown,
-    tid:tableIdDropdown,
-    recordId: recordIdDropdown,
-    updateData: Property.Json({
-      displayName: 'Update Data',
-      description: 'The data to update the record with (JSON object with field names as keys)',
-      required: true,
-      defaultValue: {},
-    }),
+    tid: tableIdDropdown,
+    rid: recordIdDropdown,
+    fields: updateDynamicFields,
   },
   async run({ auth, propsValue }) {
-    const { teamid, dbid, tid, recordId, updateData } = propsValue;
-    
-    const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${recordId}`;
-    
+    const { teamid, dbid, tid, rid, fields } = propsValue;
+
+    const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${rid}`;
+
     try {
       const response = await makeRequest(
         auth as string,
         HttpMethod.PUT,
         path,
-        updateData
+        { fields }
       );
-      
-      return response;
+
+      return {
+        success: true,
+        message: 'Record updated successfully',
+        response: response,
+        updatedFields: fields,
+        recordId: rid
+      };
     } catch (error) {
       throw new Error(`Failed to update record: ${error}`);
     }
