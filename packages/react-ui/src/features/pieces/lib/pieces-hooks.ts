@@ -46,16 +46,17 @@ export const piecesHooks = {
       refetch: query.refetch,
     };
   },
-  useMostRecentAndExactPieceVersion: ({
+  usePieceModelForStepSettings: ({
     name,
     version,
     enabled = true,
-  }: UsePieceAndMostRecentPatchProps) => {
+    getExactVersion,
+  }: UsePieceModelForStepSettings) => {
     const exactVersion = version
       ? flowPieceUtil.getExactVersion(version)
       : undefined;
     const latestPatchVersion = exactVersion
-      ? flowPieceUtil.getNextVersion(exactVersion)
+      ? flowPieceUtil.getMostRecentPatchVersion(exactVersion)
       : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
@@ -68,7 +69,9 @@ export const piecesHooks = {
       enabled,
     });
     return {
-      pieceModel: pieceQuery.pieceModel,
+      pieceModel: getExactVersion
+        ? pieceQuery.pieceModel
+        : latestPatchQuery.pieceModel,
       isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
       isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
       refetch: () => {
@@ -237,10 +240,11 @@ export const piecesHooks = {
   },
 };
 
-type UsePieceAndMostRecentPatchProps = {
+type UsePieceModelForStepSettings = {
   name: string;
   version: string | undefined;
   enabled?: boolean;
+  getExactVersion: boolean;
 };
 
 type UsePieceProps = {

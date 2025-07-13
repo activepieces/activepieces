@@ -24,6 +24,7 @@ import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
+import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -124,8 +125,10 @@ import { ChangeTodoActivityContentFormatSqlite1750364494659 } from './migration/
 import { RevertDescriptionTodoNamingSqlite1750391313307 } from './migration/sqlite/1750391313307-RevertDescriptionTodoNamingSqlite'
 import { RegenerateIssuesTable1750391974657 } from './migration/sqlite/1750391974657-RegenerateIssuesTable'
 import { RevertTodoActivtiesSqlite1751217307674 } from './migration/sqlite/1751217307674-RevertTodoActivtiesSqlite'
+import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/1751475726665-AddPlatformIdToAIUsageSqlite'
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
+import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -266,8 +269,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RegenerateIssuesTable1750391974657,
         RemoveProjectIdFromIndex1750712746125,
         RevertTodoActivtiesSqlite1751217307674,
+        AddPlatformIdToAIUsageSqlite1751475726665,
         RemoveTerminationReasonSqlite1751727630516,
         AddFlowVersionToIssueSqlite1751927149586,
+        SplitUpPieceMetadataIntoTools1752004202722,
+        AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
