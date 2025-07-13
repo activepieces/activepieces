@@ -18,24 +18,31 @@ export const addSubscriber = createAction({
   },
   async run({ propsValue, auth }) {
     const { addressBookId, emails, phones, variables, optInType } = propsValue;
-    if ((!emails || emails.length === 0) && (!phones || phones.length === 0)) {
-      throw new Error('You must provide at least one email or phone to add.');
+    if (!emails || emails.length === 0) {
+      throw new Error('You must provide at least one email to add.');
     }
     const batch = [];
-    if (emails && emails.length > 0) {
-      for (const email of emails) {
-        batch.push({ email, variables });
+    for (const email of emails) {
+      const subscriber: any = { email };
+      let vars: any = {};
+      if (variables && Object.keys(variables).length > 0) {
+        vars = { ...variables };
       }
-    }
-    if (phones && phones.length > 0) {
-      for (const phone of phones) {
-        batch.push({ phone, variables });
+      // If a phone is provided for this email, add it as a variable
+      if (phones && phones.length > 0) {
+        // Optionally, you could match phones to emails by index or another logic
+        // Here, we just add the first phone to all, or you can customize as needed
+        vars["Phone"] = phones[0];
       }
+      if (Object.keys(vars).length > 0) {
+        subscriber.variables = vars;
+      }
+      batch.push(subscriber);
     }
-    if (batch.length === 0) {
-      throw new Error('No valid emails or phones provided for addition.');
+    const body: any = { emails: batch };
+    if (optInType) {
+      body.optin = optInType;
     }
-    const body = { emails: batch, optin: optInType };
     try {
       const data = await sendPulseApiCall({
         method: HttpMethod.POST,
@@ -49,7 +56,7 @@ export const addSubscriber = createAction({
         data,
       };
     } catch (error) {
-      throw new Error(`Failed to add subscriber(s): ${error.message}`);
+      throw new Error(`Failed to add subscriber(s): ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 }); 

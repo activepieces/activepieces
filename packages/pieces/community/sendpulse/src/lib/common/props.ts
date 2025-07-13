@@ -10,50 +10,24 @@ export const email = Property.ShortText({
   displayName: 'Email',
   description: 'The email address of the subscriber.',
   required: false,
-  validate: (value) => {
-    if (!value) return 'Email is required if phone is not provided.';
-    if (!/^\S+@\S+\.\S+$/.test(value)) return 'Invalid email format.';
-    return undefined;
-  },
 });
 
 export const phone = Property.ShortText({
   displayName: 'Phone',
   description: 'The phone number of the subscriber (E.164 format, e.g., +1234567890).',
   required: false,
-  validate: (value) => {
-    if (!value) return undefined;
-    if (!/^\+?[1-9]\d{1,14}$/.test(value)) return 'Invalid phone number format.';
-    return undefined;
-  },
 });
 
 export const emails = Property.Array({
   displayName: 'Emails',
   description: 'A list of email addresses for batch operations.',
   required: false,
-  item: Property.ShortText({
-    displayName: 'Email',
-    required: true,
-    validate: (value) => {
-      if (!/^\S+@\S+\.\S+$/.test(value)) return 'Invalid email format.';
-      return undefined;
-    },
-  }),
 });
 
 export const phones = Property.Array({
   displayName: 'Phones',
   description: 'A list of phone numbers for batch operations.',
   required: false,
-  item: Property.ShortText({
-    displayName: 'Phone',
-    required: true,
-    validate: (value) => {
-      if (!/^\+?[1-9]\d{1,14}$/.test(value)) return 'Invalid phone number format.';
-      return undefined;
-    },
-  }),
 });
 
 export const variables = Property.Object({

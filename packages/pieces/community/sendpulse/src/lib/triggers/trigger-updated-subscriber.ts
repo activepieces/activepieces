@@ -22,7 +22,7 @@ export const updatedSubscriberTrigger = createTrigger({
   async run(context) {
     const payload = context.payload.body;
     const items = Array.isArray(payload) ? payload : [payload];
-    const valid = items.filter(item => item && (item.email || item.phone));
+    const valid = items.filter(item => item && item.email);
     return valid;
   },
 }); 
