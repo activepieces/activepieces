@@ -9,6 +9,7 @@ import { downloadFileFromRecord } from "./lib/actions/download-file-from-record-
 import { findRecord } from "./lib/actions/find-record";
 import { listFilesFromRecord } from "./lib/actions/list-files-from-record";
 import { newRecord } from "./lib/triggers/new-record";
+import { updatedRecord } from "./lib/triggers/updated-record";
 
 export const ninox = createPiece({
   displayName: "Ninox",
@@ -17,5 +18,5 @@ export const ninox = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/ninox.png",
   authors: ['Sanket6652'],
   actions: [createRecord, updateRecord, deleteRecord, uploadFile, downloadFileFromRecord, findRecord, listFilesFromRecord],
-  triggers: [newRecord],
+  triggers: [newRecord, updatedRecord],
 });

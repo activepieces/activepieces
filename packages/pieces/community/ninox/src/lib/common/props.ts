@@ -130,6 +130,7 @@ export const recordIdDropdown = Property.Dropdown({
         HttpMethod.GET,
         `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`
       );
+      console.log(records)
       return {
         disabled: false,
         options: records.map((record: any) => ({
@@ -148,8 +149,8 @@ export const recordIdDropdown = Property.Dropdown({
 });
 
 export const filenameDropdown = Property.Dropdown({
-  displayName: 'Record ID',
-  description: 'Select the record to update/delete',
+  displayName: 'file ID',
+  description: 'Select the file',
   required: true,
   refreshers: ['teamid', 'dbid', 'tid','rid'],
   options: async ({ auth, teamid, dbid, tid, rid }) => {

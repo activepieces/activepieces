@@ -35,13 +35,14 @@ const polling: Polling<
             HttpMethod.GET,
             `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`
         );
+        
         return records
             .filter((record: any) => {
-                const created = dayjs(record.createdAt || record.created_date).valueOf();
+                const created = dayjs(record.createdAt).valueOf();
                 return created > (lastFetchEpochMS ?? 0);
             })
             .map((record: any) => ({
-                epochMilliSeconds: dayjs(record.createdAt || record.created_date).valueOf(),
+                epochMilliSeconds: dayjs(record.createdAt).valueOf(),
                 data: record,
             }));
     },
