@@ -23,8 +23,6 @@ test.describe('Integration Scenarios', () => {
   test('should send Slack message via flow', async ({ page }) => {
     test.setTimeout(120000);
 
-    await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
-    await page.setExtraHTTPHeaders({ 'ngrok-skip-browser-warning': 'true' });
     const config = configUtils.getConfig();
     const channel = 'spam';
     
@@ -70,9 +68,6 @@ test.describe('Integration Scenarios', () => {
 
   test('should handle webhook with dynamic parameters', async ({ page }) => {
     test.setTimeout(120000);
-
-    await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
-    await page.setExtraHTTPHeaders({ 'ngrok-skip-browser-warning': 'true' });
 
     const config = configUtils.getConfig();
     
