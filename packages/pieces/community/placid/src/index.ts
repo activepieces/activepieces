@@ -12,6 +12,7 @@ import { getVideoAction } from './lib/actions/get-video';
 import { newImageTrigger } from './lib/triggers/new-image';
 import { newPdfTrigger } from './lib/triggers/new-pdf';
 import { newVideoTrigger } from './lib/triggers/new-video';
+import { createVideoAction } from './lib/actions/create-video';
 
 export const placid = createPiece({
 	displayName: 'Placid',
@@ -23,6 +24,7 @@ export const placid = createPiece({
     convertFileToUrlAction,
     createImageAction,
     createPdfAction,
+		createVideoAction,
     getImageAction,
     getPdfAction,
     getVideoAction,

@@ -4,32 +4,24 @@ import { placidAuth } from '../common/auth';
 import { placidApiCall } from '../common/client';
 import { templateUuid } from '../common/props';
 
-export const createImageAction = createAction({
-  name: 'create-image',
+export const createVideoAction = createAction({
+  name: 'create-video',
   auth: placidAuth,
-  displayName: 'Create Image',
-  description:
-    'Generate a dynamic image from a specified template using input data.',
+  displayName: 'Create Video',
+  description: 'Generate a dynamic video using one or more templates and clip data.',
   props: {
-    template_uuid: templateUuid,
     webhook_success: Property.ShortText({
       displayName: 'Webhook Success URL',
       required: false,
-    }),
-    create_now: Property.Checkbox({
-      displayName: 'Create Now',
-      required: false,
-      defaultValue: false,
     }),
     passthrough: Property.ShortText({
       displayName: 'Passthrough',
       required: false,
     }),
-    layers: Property.Json({
-      displayName: 'Layers',
+    clips: Property.Json({
+      displayName: 'Clips',
       required: false,
-      description:
-        'Provide all applicable layer properties using layer names from your Placid template.',
+      description: `Array of clip objects (template_uuid, audio, layers, etc).`,
     }),
     to: Property.StaticDropdown({
       displayName: 'Transfer Destination',
@@ -64,7 +56,7 @@ export const createImageAction = createAction({
     path: Property.ShortText({
       displayName: 'File Path',
       required: false,
-      description: 'e.g. `images/output.png` (will overwrite existing files)',
+      description: 'e.g. `videos/my-video.mp4` (will overwrite existing files)',
     }),
     endpoint: Property.ShortText({
       displayName: 'S3 Endpoint',
@@ -84,68 +76,38 @@ export const createImageAction = createAction({
       },
     }),
     modifications_width: Property.ShortText({
-      displayName: 'Image Width',
+      displayName: 'Video Width',
       required: false,
-      description: 'Image width (e.g., 1200). Aspect ratio will be preserved.',
+      description: 'Leave empty to auto size based on first clip.',
     }),
     modifications_height: Property.ShortText({
-      displayName: 'Image Height',
+      displayName: 'Video Height',
       required: false,
-      description: 'Image height (e.g., 800). Aspect ratio will be preserved.',
+      description: 'Leave empty to auto size based on first clip.',
+    }),
+    modifications_fps: Property.ShortText({
+      displayName: 'Frames Per Second (FPS)',
+      required: false,
+      description: 'Defaults to 25. Allowed: 1-30',
     }),
     modifications_filename: Property.ShortText({
       displayName: 'Filename',
       required: false,
-      description:
-        'Custom filename for the generated image (e.g., banner.png).',
+      description: 'Output filename (e.g., my-video.mp4)',
     }),
-    modifications_image_format: Property.StaticDropdown({
-      displayName: 'Image Format',
+    modifications_canvas_background: Property.ShortText({
+      displayName: 'Canvas Background',
       required: false,
-      defaultValue: 'auto',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'JPG', value: 'jpg' },
-          { label: 'PNG', value: 'png' },
-          { label: 'WebP', value: 'webp' },
-        ],
-      },
-    }),
-    modifications_dpi: Property.StaticDropdown({
-      displayName: 'DPI',
-      required: false,
-      defaultValue: '72',
-      options: {
-        disabled: false,
-        options: [
-          { label: '72', value: '72' },
-          { label: '150', value: '150' },
-          { label: '300', value: '300' },
-        ],
-      },
-    }),
-    modifications_color_mode: Property.StaticDropdown({
-      displayName: 'Color Mode',
-      required: false,
-      defaultValue: 'rgb',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'RGB', value: 'rgb' },
-          { label: 'CMYK', value: 'cmyk' },
-        ],
-      },
+      description: 'Default: #000000. Use `blur` for blurred background.',
     }),
   },
+
   async run({ propsValue, auth }) {
     try {
       const {
-        template_uuid,
         webhook_success,
-        create_now,
         passthrough,
+        clips,
         to,
         key,
         secret,
@@ -155,59 +117,51 @@ export const createImageAction = createAction({
         path,
         endpoint,
         visibility,
-				layers,
         modifications_width,
         modifications_height,
+        modifications_fps,
         modifications_filename,
-        modifications_image_format,
-        modifications_dpi,
-        modifications_color_mode,
+        modifications_canvas_background,
       } = propsValue;
+
+      const transfer: Record<string, any> = {
+        to,
+        key,
+        secret,
+        region,
+        bucket,
+        path,
+        visibility,
+      };
+      if (endpoint) transfer['endpoint'] = endpoint;
+      if (token) transfer['token'] = token;
 
       const modifications: Record<string, any> = {};
       if (modifications_width) modifications['width'] = modifications_width;
       if (modifications_height) modifications['height'] = modifications_height;
-      if (modifications_filename)
-        modifications['filename'] = modifications_filename;
-      if (modifications_image_format)
-        modifications['image_format'] = modifications_image_format;
-      if (modifications_dpi) modifications['dpi'] = modifications_dpi;
-      if (modifications_color_mode)
-        modifications['color_mode'] = modifications_color_mode;
-
-      const transfer: Record<string, any> = {};
-      if (to) transfer['to'] = to;
-      if (key) transfer['key'] = key;
-      if (secret) transfer['secret'] = secret;
-      if (token) transfer['token'] = token;
-      if (region) transfer['region'] = region;
-      if (bucket) transfer['bucket'] = bucket;
-      if (path) transfer['path'] = path;
-      if (endpoint) transfer['endpoint'] = endpoint;
-      if (visibility) transfer['visibility'] = visibility;
+      if (modifications_fps) modifications['fps'] = modifications_fps;
+      if (modifications_filename) modifications['filename'] = modifications_filename;
+      if (modifications_canvas_background)
+        modifications['canvas_background'] = modifications_canvas_background;
 
       const body = {
-        template_uuid,
         webhook_success,
-        create_now,
         passthrough,
-        layers,
-        modifications: Object.keys(modifications).length
-          ? modifications
-          : undefined,
-        transfer: Object.keys(transfer).length ? transfer : undefined,
+        clips,
+        transfer,
+        modifications: Object.keys(modifications).length ? modifications : undefined,
       };
 
       const response = await placidApiCall({
         apiKey: auth,
         method: HttpMethod.POST,
-        resourceUri: '/images',
+        resourceUri: '/videos',
         body,
       });
 
       return {
         success: true,
-        message: 'Image created successfully',
+        message: 'Video created successfully',
         response,
       };
     } catch (error: any) {
@@ -222,9 +176,7 @@ export const createImageAction = createAction({
             'Unauthorized: Invalid API key. Please verify your credentials.'
           );
         case 404:
-          throw new Error(
-            'Resource Not Found: Please check template UUID or layer config.'
-          );
+          throw new Error('Not Found: Template or resource was not found.');
         case 429:
           throw new Error('Rate limit exceeded. Please try again later.');
         case 500:
