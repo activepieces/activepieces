@@ -27,7 +27,9 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
         const item = subscription.items.data.find((item) => item.price.id === AI_CREDITS_PRICE_ID)
-        assertNotNullOrUndefined(item, 'No item found for ai credits')
+        if (isNil(item)) {
+            return
+        }
 
         await stripe.billing.meterEvents.create({
             event_name: 'ai_credits',
