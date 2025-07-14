@@ -61,6 +61,10 @@ const LICENSE_PROPS_MAP = {
     label: 'Single Sign On',
     description: 'Log in using your company account without separate passwords',
   },
+  customRolesEnabled: {
+    label: 'Custom Roles',
+    description: 'Create and manage custom roles for your team',
+  },
 };
 
 export const FeatureStatus = ({
