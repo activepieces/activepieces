@@ -23,8 +23,8 @@ import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
 import { z, ZodRawShape } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { telemetry } from '../../helper/telemetry.utils'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
@@ -100,9 +100,9 @@ async function addPieceToServer(
         toolSchema,
         async (params) => {
             const piecePackage = await getPiecePackageWithoutArchive(
-                logger, 
-                projectId, 
-                platformId, 
+                logger,
+                projectId,
+                platformId,
                 {
                     packageType: pieceMetadata.packageType,
                     pieceName: pieceMetadata.name,
@@ -331,7 +331,7 @@ async function initializeOpenAIModel({
 async function extractActionParametersFromUserInstructions({
     actionMetadata,
     toolPieceMetadata,
-    userInstructions,    
+    userInstructions,
     piecePackage,
     platformId,
     projectId,
@@ -373,7 +373,7 @@ async function extractActionParametersFromUserInstructions({
                 })
                 return { propertyName, ...result }
             }))).filter(({ schema }) => schema !== null)
-                        
+
             const schemaObject: ZodRawShape = Object.fromEntries(
                 propertySchemas
                     .map(({ propertyName, schema }) => [propertyName, schema!]),
@@ -394,7 +394,7 @@ async function extractActionParametersFromUserInstructions({
                 const extractedParameters = Object.fromEntries(
                     Object.entries(extractedValue).map(([key, value]) => [key, value[key]]),
                 )
-    
+
                 return {
                     ...accumulatedParameters,
                     ...extractedParameters,
@@ -405,7 +405,7 @@ async function extractActionParametersFromUserInstructions({
                 logger.error({ error }, 'FailedToExtractParametersFromAI')
                 throw error
             }
-        }, 
+        },
         Promise.resolve({ 'auth': connectionReference }),
     )
 
