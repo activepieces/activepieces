@@ -25,7 +25,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
 import {
   Permission,
@@ -35,6 +34,7 @@ import {
   ApErrorParams,
   ErrorCode,
 } from '@activepieces/shared';
+import { useEffect } from 'react';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -77,6 +77,12 @@ export function EditProjectDialog({
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(initialValues);
+    }
+  }, [open]);
 
   const mutation = useMutation<
     ProjectWithLimits,

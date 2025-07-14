@@ -443,7 +443,10 @@ export default function ProjectsPage() {
         />
         <EditProjectDialog
           open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
+          onClose={() => {
+            setEditDialogOpen(false);
+            refetch();
+          }}
           initialValues={editDialogInitialValues}
           projectId={editDialogProjectId}
         />
