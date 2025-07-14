@@ -4,6 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
 
 export const listMessages = createAction({
   auth: birdAuth,
@@ -33,15 +34,15 @@ export const listMessages = createAction({
     }),
     startAt: Property.DateTime({
       displayName: 'Start Date and Time',
-      description: 'The start date and time to filter messages',
+      description: 'The start date and time (in UTC) to filter messages',
       required: true,
-      defaultValue: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('.')[0] + 'Z',
+      defaultValue: dayjs().subtract(1, 'day').toISOString().split('.')[0] + 'Z',
     }),
     endAt: Property.DateTime({
       displayName: 'End Date and Time',
-      description: 'The end date and time to filter messages, should not exceed 7 days from start date',
+      description: 'The end date and time (in UTC) to filter messages, should not exceed 7 days from start date',
       required: true,
-      defaultValue: new Date().toISOString().split('.')[0] + 'Z',
+      defaultValue: dayjs().toISOString().split('.')[0] + 'Z',
     }),
     pageToken: Property.ShortText({
       displayName: 'Next Page Token',
