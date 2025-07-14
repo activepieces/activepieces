@@ -9,6 +9,7 @@ import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { AI_CREDITS_PRICE_ID, stripeHelper } from './stripe-helper'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 
 export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_REPORT, async (data) => {
@@ -44,15 +45,15 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
     systemJobHandlers.registerJobHandler(SystemJobName.SEVEN_DAYS_IN_TRIAL, async (data) => {
         const log = app.log
-        const { platformId, customerEmail } = data
-        await handleEmailReminder(log, platformId, customerEmail, '7-days-in-trial')
+        const { platformId, firstName, email } = data
+        await handleEmailReminder(log, platformId, email, '7-days-in-trial')
     })
 
 
     systemJobHandlers.registerJobHandler(SystemJobName.ONE_DAY_LEFT_ON_TRIAL, async (data) => {
         const log = app.log
-        const { platformId, customerEmail } = data
-        await handleEmailReminder(log, platformId, customerEmail, '1-day-left-on-trial')
+        const { platformId, firstName, email } = data
+        await handleEmailReminder(log, platformId, email, '1-day-left-on-trial')
     })
 
     await app.register(platformPlanController, { prefix: '/v1/platform-billing' })
@@ -77,6 +78,13 @@ async function handleEmailReminder(log: FastifyBaseLogger, platformId: string, c
         return
     }
 
-    await emailService(log).sendTrialReminder(platformId, customerEmail, templateName)
+
+    const user = await userIdentityService(log).getIdentityByEmail(customerEmail)
+    await emailService(log).sendTrialReminder({
+        platformId,
+        firstName: user?.firstName,
+        customerEmail,
+        templateName,
+    })
     log.info(`Sent ${templateName} email for platfrom, ${platformId}`)
 }
