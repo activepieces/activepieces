@@ -1931,6 +1931,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "sparkybug",
+      "name": "Ukaegbu Osinachi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52334088?v=4",
+      "profile": "https://github.com/sparkybug",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
