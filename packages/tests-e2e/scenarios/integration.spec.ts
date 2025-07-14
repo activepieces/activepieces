@@ -5,7 +5,7 @@ import {
   BuilderPage, 
   AgentPage,
 } from '../pages';
-import { globalConfig } from '../config';
+import { configUtils } from '../helper/config';
 
 test.describe('Integration Scenarios', () => {
   let authenticationPage: AuthenticationPage;
@@ -25,12 +25,12 @@ test.describe('Integration Scenarios', () => {
 
     await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
     await page.setExtraHTTPHeaders({ 'ngrok-skip-browser-warning': 'true' });
-
+    const config = configUtils.getConfig();
     const channel = 'spam';
     
     await authenticationPage.actions.signIn(page, {
-      email: globalConfig.email,
-      password: globalConfig.password
+      email: config.email,
+      password: config.password
     });
 
     await agentPage.actions.waitFor(page);
@@ -74,12 +74,11 @@ test.describe('Integration Scenarios', () => {
     await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
     await page.setExtraHTTPHeaders({ 'ngrok-skip-browser-warning': 'true' });
 
-    const email = process.env.E2E_EMAIL ?? globalConfig.email;
-    const password = process.env.E2E_PASSWORD ?? globalConfig.password;
+    const config = configUtils.getConfig();
     
     await authenticationPage.actions.signIn(page, {
-      email: email,
-      password: password
+      email: config.email,
+      password: config.password
     });
 
     await agentPage.actions.waitFor(page);

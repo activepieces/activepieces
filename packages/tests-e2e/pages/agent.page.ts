@@ -1,8 +1,9 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './base';
+import { configUtils } from '../helper/config';
 
 export class AgentPage extends BasePage {
-  url = `/agents`;
+  url = `${configUtils.getConfig().instanceUrl}/agents`;
 
   getters = {
     pageTitle: (page: Page) => page.locator('h1:has-text("Agents")'),

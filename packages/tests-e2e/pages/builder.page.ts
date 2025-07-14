@@ -1,9 +1,9 @@
 import { Page, expect } from '@playwright/test';
 import { BasePage } from './base';
-import { globalConfig } from '../config';
+import { configUtils } from '../helper/config';
 
 export class BuilderPage extends BasePage {
-  url = `${globalConfig.instanceUrl}/builder`;
+  url = `${configUtils.getConfig().instanceUrl}/builder`;
 
   getters = {
     searchPlaceholder: (page: Page) => page.getByRole('textbox', { name: 'Search' }),

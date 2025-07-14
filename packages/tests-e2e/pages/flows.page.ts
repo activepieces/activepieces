@@ -1,8 +1,9 @@
 import { Page } from '@playwright/test';
 import { BasePage } from './base';
+import { configUtils } from '../helper/config';
 
 export class FlowsPage extends BasePage {
-  url = `/flows`;
+  url = `${configUtils.getConfig().instanceUrl}/flows`;
 
   getters = {
     createFlowButton: (page: Page) => page.getByRole('button', { name: 'Create Flow' }),

@@ -1,10 +1,10 @@
-import { Page, Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
 import { BasePage } from './base';
-import { globalConfig } from '../config';
+import { configUtils } from '../helper/config';
 
 export class AuthenticationPage extends BasePage {
-  url = `${globalConfig.instanceUrl}/sign-in`;
-  signUpUrl = `${globalConfig.instanceUrl}/sign-up`;
+  url = `${configUtils.getConfig().instanceUrl}/sign-in`;
+  signUpUrl = `${configUtils.getConfig().instanceUrl}/sign-up`;
 
   getters = {
     emailField: (page: Page) => page.getByPlaceholder('email@example.com'),
