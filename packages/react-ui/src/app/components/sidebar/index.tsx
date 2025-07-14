@@ -9,6 +9,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { ProjectLockedAlert } from '@/components/custom/project-locked-alert';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -179,6 +180,7 @@ export function SidebarComponent({
   const { platform } = platformHooks.useCurrentPlatform();
   const isCloudPlatform = platformHooks.useIsCloudPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const location = useLocation();
   const { checkAccess } = useAuthorization();
 
@@ -261,6 +263,7 @@ export function SidebarComponent({
             'pb-0': removeBottomPadding,
           })}
         >
+          <ProjectLockedAlert />
           {children}
         </div>
       </div>
@@ -323,22 +326,25 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items.map((link, index) => (
-                    <SidebarMenuSubItem key={link.label}>
-                      <SidebarMenuButton asChild>
-                        <CustomTooltipLink
-                          to={link.to}
-                          label={link.label}
-                          Icon={link.icon}
-                          key={index}
-                          notification={link.notification}
-                          locked={link.locked}
-                          isActive={link.isActive}
-                          isSubItem={link.isSubItem}
-                        />
-                      </SidebarMenuButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  {item.items.map(
+                    (link, index) =>
+                      link.show && (
+                        <SidebarMenuSubItem key={link.label}>
+                          <SidebarMenuButton asChild>
+                            <CustomTooltipLink
+                              to={link.to}
+                              label={link.label}
+                              Icon={link.icon}
+                              key={index}
+                              notification={link.notification}
+                              locked={link.locked}
+                              isActive={link.isActive}
+                              isSubItem={link.isSubItem}
+                            />
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      ),
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

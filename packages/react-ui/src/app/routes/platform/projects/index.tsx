@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -28,7 +28,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
 
@@ -41,7 +41,14 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.displayName}</div>;
+      const locked = row.original?.plan?.locked;
+
+      return (
+        <div className="text-left flex items-center justify-start ">
+          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
+          {row.original.displayName}
+        </div>
+      );
     },
   },
   // {
@@ -117,14 +124,17 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
-
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('External ID')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.externalId}</div>;
+      const displayValue =
+        isNil(row.original.externalId) || row.original.externalId?.length === 0
+          ? '-'
+          : row.original.externalId;
+      return <div className="text-left">{displayValue}</div>;
     },
   },
 ];

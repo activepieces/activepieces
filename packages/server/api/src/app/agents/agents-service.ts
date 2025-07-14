@@ -2,7 +2,7 @@ import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Curs
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-// import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+// import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
@@ -12,8 +12,9 @@ export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
-        // await checkQuotaOrThrow({
+        // await PlatformPlanHelper.checkQuotaOrThrow({
         //     platformId: params.platformId,
+        //     projectId: params.projectId,
         //     metric: PlatformUsageMetric.AGENTS,
         // })
         const mcp = await mcpService(log).create({
