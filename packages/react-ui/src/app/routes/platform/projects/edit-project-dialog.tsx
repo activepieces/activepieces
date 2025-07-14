@@ -39,6 +39,7 @@ import {
 interface EditProjectDialogProps {
   open: boolean;
   onClose: () => void;
+  projectId: string;
   initialValues?: {
     projectName?: string;
     tasks?: string;
@@ -57,6 +58,7 @@ type FormValues = {
 export function EditProjectDialog({
   open,
   onClose,
+  projectId,
   initialValues,
 }: EditProjectDialogProps) {
   const { checkAccess } = useAuthorization();
@@ -87,7 +89,7 @@ export function EditProjectDialog({
   >({
     mutationFn: (request) => {
       updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, {
+      return projectApi.update(projectId, {
         ...request,
         externalId:
           request.externalId?.trim() !== '' ? request.externalId : undefined,

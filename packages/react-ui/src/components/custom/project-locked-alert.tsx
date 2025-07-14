@@ -16,6 +16,7 @@ export const ProjectLockedAlert = () => {
   );
   const { checkAccess } = useAuthorization();
 
+  // CE doesn't have a plan
   if (!project.plan?.locked || !location.pathname.startsWith('/project')) {
     return null;
   }
