@@ -1,5 +1,11 @@
-import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+import { t } from 'i18next';
 
+import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
@@ -38,5 +44,31 @@ export const platformHooks = {
       staleTime: Infinity,
     });
     return query.data;
+  },
+  useUpdateLisenceKey: (queryClient: QueryClient) => {
+    const currentPlatformId = authenticationSession.getPlatformId();
+
+    return useMutation({
+      mutationFn: async (tempLicenseKey: string) => {
+        if (tempLicenseKey.trim() === '') return;
+        await platformApi.verifyLicenseKey(tempLicenseKey.trim());
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['platform', currentPlatformId],
+        });
+        toast({
+          title: t('Success'),
+          description: t('License activated successfully!'),
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: t('Error'),
+          description: t('Activation failed, invalid lisence key'),
+          variant: 'destructive',
+        });
+      },
+    });
   },
 };

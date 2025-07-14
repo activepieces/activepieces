@@ -109,13 +109,13 @@ export function PlatformAdminContainer({
           isSubItem: true,
           show: true,
         },
-        // {
-        //   type: 'link',
-        //   to: '/platform/setup/license-key',
-        //   label: t('License Key'),
-        //   isSubItem: true,
-        //   show: true,
-        // },
+        {
+          type: 'link',
+          to: '/platform/setup/billing',
+          label: t('Billing'),
+          isSubItem: true,
+          show: edition !== ApEdition.COMMUNITY && !showPlatformDemo,
+        },
       ],
     },
     // {
@@ -196,20 +196,6 @@ export function PlatformAdminContainer({
     items.pop();
   }
 
-  if (edition === ApEdition.CLOUD && !showPlatformDemo) {
-    const setupGroup = items.find(
-      (item) => item.type === 'group' && item.label === t('Setup'),
-    );
-    if (setupGroup && setupGroup.type === 'group') {
-      setupGroup.items.push({
-        type: 'link',
-        to: '/platform/setup/billing',
-        label: t('Billing'),
-        isSubItem: true,
-        show: true,
-      });
-    }
-  }
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       {showPlatformAdminDashboard ? (

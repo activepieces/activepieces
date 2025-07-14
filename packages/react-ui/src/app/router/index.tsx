@@ -50,7 +50,6 @@ import SettingsWorkersPage from '../routes/platform/infra/workers';
 // import { ProjectRolePage } from '../routes/platform/security/project-role';
 // import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-// import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 // import { ProjectReleasesPage } from '../routes/project-release';
@@ -598,16 +597,6 @@ const routes = [
   //     <PlatformAdminContainer>
   //       <PageTitle title="SSO">
   //         <SSOPage />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
-  // {
-  //   path: '/platform/setup/license-key',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="License Key">
-  //         <LicenseKeyPage />
   //       </PageTitle>
   //     </PlatformAdminContainer>
   //   ),
