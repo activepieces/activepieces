@@ -29,3 +29,4 @@ jobs:
         env:
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
