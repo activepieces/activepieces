@@ -24,7 +24,9 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(platformBilling, 'Plan is not set')
 
         const subscriptionId = platformBilling.stripeSubscriptionId
-        assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
+        if (isNil(subscriptionId)) {
+            return
+        }
 
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
