@@ -24,6 +24,10 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
             array: isPostgres(),
             nullable: false,
         },
+        locked: {
+            type: Boolean,
+            default: false,
+        },
         piecesFilterType: {
             type: String,
         },
@@ -31,7 +35,8 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
             type: Number,
             nullable: true,
         },
-        aiTokens: {
+
+        aiCredits: {
             type: Number,
             nullable: true,
         },

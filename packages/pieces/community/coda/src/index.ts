@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { getRowAction } from './lib/actions/get-row';
 import { listTablesAction } from './lib/actions/list-tables';
 import { getTableAction } from './lib/actions/get-table';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { CODA_BASE_URL } from './lib/common/types';
 
 export const codaAuth = PieceAuth.SecretText({
 	displayName: 'Coda API Key',
@@ -20,7 +22,7 @@ export const coda = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/coda.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	auth: codaAuth,
-	authors: ['onyedikachi-david', 'kishanprmr'],
+	authors: ['onyedikachi-david', 'kishanprmr','rimjhimyadav'],
 	actions: [
 		createRowAction,
 		updateRowAction,
@@ -29,6 +31,15 @@ export const coda = createPiece({
 		getRowAction,
 		listTablesAction,
 		getTableAction,
+		createCustomApiCallAction({
+			auth:codaAuth,
+			baseUrl:()=>CODA_BASE_URL,
+			authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+
+
+		})
 	],
 	triggers: [newRowCreatedTrigger],
 });

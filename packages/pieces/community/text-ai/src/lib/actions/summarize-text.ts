@@ -1,13 +1,15 @@
-import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { aiProps } from '@activepieces/pieces-common';
+import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { createAction, Property, Action } from '@activepieces/pieces-framework';
+import { LanguageModel, generateText } from 'ai';
 
-export const summarizeText = createAction({
+export const summarizeText: Action = createAction({
   name: 'summarizeText',
   displayName: 'Summarize Text',
   description: '',
   props: {
-    provider: aiProps('text').provider,
-    model: aiProps('text').model,
+    provider: aiProps({ modelType: 'language' }).provider,
+    model: aiProps({ modelType: 'language' }).model,
     text: Property.LongText({
       displayName: 'Text',
       required: true,
@@ -25,21 +27,37 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as LanguageModel;
 
-    const ai = AI({ provider, server: context.server });
+    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
+    if (!providerConfig) {
+      throw new Error(`Provider ${providerName} not found`);
+    }
 
-    const response = await ai.chat.text({
-      model: context.propsValue.model,
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const provider = createAIProvider({
+      providerName,
+      modelInstance,
+      apiKey: engineToken,
+      baseURL,
+    });
+
+    const response = await generateText({
+      model: provider,
       messages: [
         {
-          role: AIChatRole.USER,
+          role: 'user',
           content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`,
         },
       ],
       maxTokens: context.propsValue.maxTokens,
+      headers: {
+        'Authorization': `Bearer ${engineToken}`,
+      },
     });
 
-    return response.choices[0].content;
+    return response.text ?? '';
   },
 });

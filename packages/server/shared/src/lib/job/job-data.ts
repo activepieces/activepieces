@@ -71,6 +71,7 @@ export const OneTimeJobData = Type.Object({
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
+    executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
@@ -152,7 +153,7 @@ export const ExecutePropertyJobData = Type.Object({
     requestId: Type.String(),
     jobType: Type.Literal(UserInteractionJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
-    flowVersion: FlowVersion,
+    flowVersion: Type.Optional(FlowVersion),
     propertyName: Type.String(),
     piece: PiecePackage,
     actionOrTriggerName: Type.String(),

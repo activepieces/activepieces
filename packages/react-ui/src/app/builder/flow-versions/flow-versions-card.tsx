@@ -1,5 +1,4 @@
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
@@ -8,9 +7,10 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { AvatarLetter } from '@/components/ui/avatar-letter';
+import { CardListItem } from '@/components/custom/card-list';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { CardListItem } from '@/components/ui/card-list';
 import {
   Dialog,
   DialogClose,
@@ -27,25 +27,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
-  FlowOperationType,
-  FlowVersion,
   FlowVersionMetadata,
   FlowVersionState,
   Permission,
-  PopulatedFlow,
 } from '@activepieces/shared';
 
 type UseAsDraftOptionProps = {
@@ -125,17 +121,7 @@ const FlowVersionDetailsCard = React.memo(
         state.setReadOnly,
       ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
-    const { mutate, isPending } = useMutation<
-      FlowVersion,
-      Error,
-      FlowVersionMetadata
-    >({
-      mutationFn: async (flowVersion) => {
-        const result = await flowsApi.get(flowVersion.flowId, {
-          versionId: flowVersion.id,
-        });
-        return result.version;
-      },
+    const { mutate: viewVersion, isPending } = flowsHooks.useFetchFlowVersion({
       onSuccess: (populatedFlowVersion) => {
         setBuilderVersion(populatedFlowVersion);
         setReadonly(
@@ -143,42 +129,28 @@ const FlowVersionDetailsCard = React.memo(
             !userHasPermissionToWriteFlow,
         );
       },
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
-      },
     });
 
-    const { mutate: mutateVersionAsDraft, isPending: isDraftPending } =
-      useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
-        mutationFn: async (flowVersion) => {
-          const result = await flowsApi.update(flowVersion.flowId, {
-            type: FlowOperationType.USE_AS_DRAFT,
-            request: {
-              versionId: flowVersion.id,
-            },
-          });
-          return result;
-        },
+    const { mutate: overWriteDraftWithVersion, isPending: isDraftPending } =
+      flowsHooks.useOverWriteDraftWithVersion({
         onSuccess: (populatedFlowVersion) => {
           setBuilderVersion(populatedFlowVersion.version);
           setLeftSidebar(LeftSideBarType.NONE);
         },
-        onError: (error) => {
-          toast(INTERNAL_ERROR_TOAST);
-          console.error(error);
-        },
       });
 
-    const handleOverwriteDraft = () => {
-      mutateVersionAsDraft(flowVersion);
+    const handleOverwriteDraftWtihVersion = () => {
+      overWriteDraftWithVersion(flowVersion);
       setDropdownMenuOpen(false);
     };
 
+    const showAvatar = !useEmbedding().embedState.isEmbedded;
+
     return (
       <CardListItem interactive={false}>
-        {flowVersion.updatedByUser && (
-          <AvatarLetter
+        {showAvatar && flowVersion.updatedByUser && (
+          <UserAvatar
+            size={28}
             name={
               flowVersion.updatedByUser.firstName +
               ' ' +
@@ -232,17 +204,13 @@ const FlowVersionDetailsCard = React.memo(
                 disabled={isPending || isDraftPending}
                 size={'icon'}
               >
-                {(isPending || isDraftPending) && (
-                  <LoadingSpinner className="w-5 h-5" />
-                )}
-                {!isPending && !isDraftPending && (
-                  <DotsVerticalIcon className="w-5 h-5" />
-                )}
+                {(isPending || isDraftPending) && <LoadingSpinner />}
+                {!isPending && !isDraftPending && <DotsVerticalIcon />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
               <DropdownMenuItem
-                onClick={() => mutate(flowVersion)}
+                onClick={() => viewVersion(flowVersion)}
                 className="w-full"
               >
                 <Eye className="mr-2 h-4 w-4" />
@@ -251,7 +219,7 @@ const FlowVersionDetailsCard = React.memo(
               {flowVersion.state !== FlowVersionState.DRAFT && (
                 <UseAsDraftDropdownMenuOption
                   versionNumber={flowVersionNumber}
-                  onConfirm={handleOverwriteDraft}
+                  onConfirm={handleOverwriteDraftWtihVersion}
                 ></UseAsDraftDropdownMenuOption>
               )}
             </DropdownMenuContent>

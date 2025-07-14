@@ -57,7 +57,7 @@ export const replyMessage = createAction({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/reply`,
       headers: {
-        Authorization: `Bearer ${authToken.split(':')[1]}`,
+        Authorization: `Bearer ${authToken.includes(':') ? authToken.split(':')[1] : authToken}`,
       },
       body: {
         messageId: propsValue.messageId,
