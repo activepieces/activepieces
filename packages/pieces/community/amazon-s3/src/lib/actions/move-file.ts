@@ -1,5 +1,4 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { S3 } from '@aws-sdk/client-s3';
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 
@@ -25,10 +24,17 @@ export const moveFile = createAction({
     const { fileKey, folderKey } = context.propsValue;
     const s3 = createS3(context.auth);
 
+    const fileName = fileKey.split('/').pop();
+
+    const folderName = folderKey.endsWith('/') ? folderKey.slice(0, -1) :folderKey;
+
+    const newKey = `${folderName}/${fileName}`;
+
     const copyResponse = await s3.copyObject({
       Bucket: bucket,
-      Key: folderKey,
-      CopySource: `${bucket}/${fileKey}`,
+      Key: newKey,
+      // https://github.com/aws/aws-sdk-js-v3/issues/5475
+      CopySource: encodeURIComponent(`${bucket}/${fileKey}`),
     })
 
     const deleteResponse = await s3.deleteObject({
