@@ -23,6 +23,12 @@ export async function makeRequest(
 
         return response.body;
     } catch (error: any) {
+        if (error.status === 422 && error.body && error.body.detail) {
+            const details = error.body.detail
+                .map((d: any) => `[${d.loc.join('.')}] ${d.msg} (${d.type})`)
+                .join('; ');
+            throw new Error(`Validation Error: ${details}`);
+        }
         // Generic error handling
         throw new Error(`Request failed: ${error.error || 'Unknown error'}`);
     }

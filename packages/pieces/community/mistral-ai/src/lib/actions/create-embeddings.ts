@@ -10,10 +10,11 @@ export const createEmbeddings = createAction({
   displayName: 'Create Embeddings',
   description: 'Create text embeddings for semantic search, similarity matching, etc.',
   props: {
-    model: Property.ShortText({
-      displayName:'embed Model',
-      required:true,
-    }),
+    model: modelIdDropdown,
+    // model: Property.ShortText({
+    //   displayName: "Model",
+    //   required: true
+    // }),
     input: Property.Array({
       displayName: 'Input',
       description: 'The input text(s) to embed. Can be a string or array of strings.',

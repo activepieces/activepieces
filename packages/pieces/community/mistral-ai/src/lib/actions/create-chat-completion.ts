@@ -4,20 +4,49 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { modelIdDropdown } from '../common/props';
 
+const allowedRoles = ['user', 'assistant', 'system', 'tool'];
+
 export const createChatCompletion = createAction({
   auth: mistralAiAuth,
   name: 'createChatCompletion',
   displayName: 'Create Chat Completion',
   description: 'Generate conversational text using instructed context and user input.',
   props: {
-    model: Property.ShortText({
-      displayName: "Model",
-      required: true
-    }),
-    messages: Property.ShortText({
-      displayName: "Message",
-      description: 'The prompt(s) to generate completions for, encoded as a list of dict with role and content.',
-      required: true
+    model: modelIdDropdown,
+    // model: Property.ShortText({
+    //   displayName: "Model",
+    //   required: true
+    // }),
+    messages: Property.Array({
+      displayName: 'Messages',
+      required: true,
+      properties: {
+        role: Property.StaticDropdown({
+          displayName: 'Role',
+          required: true,
+          options: {
+            options: allowedRoles.map((r) => ({ label: r, value: r })),
+          },
+        }),
+        content: Property.LongText({ displayName: 'Content', required: true }),
+        tool_calls: Property.Json({
+          displayName: 'Tool Calls',
+          required: false,
+        }),
+        tool_call_id: Property.ShortText({
+          displayName: 'Tool Call ID',
+          required: false,
+        }),
+        name: Property.ShortText({
+          displayName: 'Name',
+          required: false,
+        }),
+        prefix: Property.Checkbox({
+          displayName: 'Prefix',
+          required: false,
+          defaultValue: false,
+        }),
+      },
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
@@ -139,6 +168,7 @@ export const createChatCompletion = createAction({
   async run({ auth, propsValue }) {
     const {
       model,
+      messages,
       temperature,
       stop,
       top_p,
@@ -153,12 +183,7 @@ export const createChatCompletion = createAction({
 
     const requestBody: any = {
       model,
-      messages: [
-        {
-          role: 'user',
-          content: 'Who is the best French painter? Answer in one short sentence.'
-        }
-      ],
+      messages
     };
 
     // Add optional parameters only if they are provided
