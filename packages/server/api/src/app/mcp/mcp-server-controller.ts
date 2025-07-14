@@ -2,7 +2,7 @@ import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullab
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -13,8 +13,9 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.post('/', CreateMcpRequest, async (req) => {
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: req.principal.platform.id,
+            projectId: req.principal.projectId,
             metric: PlatformUsageMetric.MCPS,
         })
         const projectId = req.body.projectId
