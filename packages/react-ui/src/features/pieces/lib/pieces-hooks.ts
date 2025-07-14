@@ -37,14 +37,12 @@ const {
   isFlowController,
 } = pieceSearchUtils;
 
-
 type UsePieceModelForStepSettings = {
   name: string;
   version: string | undefined;
   enabled?: boolean;
   getExactVersion: boolean;
 };
-
 
 type UsePieceProps = {
   name: string;
@@ -260,8 +258,6 @@ export const piecesHooks = {
   },
 };
 
-
-
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],
 ) => {
@@ -316,6 +312,9 @@ const getExploreTabContent = (
   const branchPiece = queryResult.find(
     (piece) => piece.type === ActionType.ROUTER,
   );
+  const loopPiece = queryResult.find(
+    (piece) => piece.type === ActionType.LOOP_ON_ITEMS,
+  );
 
   if (pinnedPieces.length > 0) {
     hightlightedPiecesCategory.metadata = [
@@ -334,6 +333,9 @@ const getExploreTabContent = (
 
   if (codePiece) {
     hightlightedPiecesCategory.metadata.splice(3, 0, codePiece);
+  }
+  if (loopPiece) {
+    hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
   }
 
   return [popularCategory, hightlightedPiecesCategory];
