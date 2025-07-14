@@ -10,13 +10,19 @@ import {
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ErrorCode,
+  ListAICreditsUsageRequest,
+} from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
+  aiCreditsUsage: (params: ListAICreditsUsageRequest) =>
+    ['platform-billing-ai-credits-usage', params] as const,
 };
 
 export const billingMutations = {
@@ -169,6 +175,12 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+    });
+  },
+  useAiCreditsUsage: (params: ListAICreditsUsageRequest) => {
+    return useQuery({
+      queryKey: billingKeys.aiCreditsUsage(params),
+      queryFn: () => platformBillingApi.listAiCreditsUsage(params),
     });
   },
 };

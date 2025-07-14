@@ -1,6 +1,7 @@
 import { apId } from '@activepieces/shared'
 import { gt } from 'semver'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 type OldMcpPieceToolData = {
     pieceName: string
@@ -24,12 +25,15 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
     name = 'SplitUpPieceMetadataIntoTools1752004202722'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        system.globalLogger().info({
+            name: this.name,
+        }, 'Starting migration')
         const mcpTools = await queryRunner.query(`
             SELECT * FROM "mcp_tool" WHERE "pieceMetadata" IS NOT NULL
         `)
 
         const allPieceVersions = await queryRunner.query('SELECT name, version, actions FROM piece_metadata')
-        
+
         const pieceNameToDisplayName = new Map<string, string>()
         const pieceNameToLatestVersion = new Map<string, string>()
         for (const piece of allPieceVersions) {
@@ -43,19 +47,19 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
             }
         }
 
-        for (const mcpTool of mcpTools) {   
+        for (const mcpTool of mcpTools) {
             const { pieceMetadata: pieceMetadataString, ...rest } = mcpTool
-            const pieceMetadata = typeof pieceMetadataString === 'string' 
+            const pieceMetadata = typeof pieceMetadataString === 'string'
                 ? JSON.parse(pieceMetadataString) as OldMcpPieceToolData
                 : pieceMetadataString as OldMcpPieceToolData
-                
+
             const { actionNames, ...restPieceMetadata } = pieceMetadata
-            
+
             for (const actionName of actionNames) {
                 const pieceNameWithActionName = `${pieceMetadata.pieceName}:${actionName}`
                 const actionDisplayName = pieceNameToDisplayName.get(pieceNameWithActionName) ?? actionName
-                const tool = { 
-                    ...rest, 
+                const tool = {
+                    ...rest,
                     pieceMetadata: {
                         ...restPieceMetadata,
                         actionName,
@@ -69,20 +73,14 @@ export class SplitUpPieceMetadataIntoTools1752004202722 implements MigrationInte
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                 `, [toolId, tool.mcpId, McpToolType.PIECE, JSON.stringify(tool.pieceMetadata), tool.flowId, tool.created, tool.updated])
 
-                const toolRuns = await queryRunner.query(`
-                    SELECT * FROM "mcp_run" WHERE "metadata"->>'pieceName' = $1 AND "metadata"->>'actionName' = $2
-                `, [tool.pieceMetadata.pieceName, actionName])
-
-                for (const toolRun of toolRuns) {
-                    await queryRunner.query(`
-                        UPDATE "mcp_run" SET "toolId" = $1 WHERE "id" = $2
-                    `, [toolId, toolRun.id])
-                }
             }
             await queryRunner.query(`
                 DELETE FROM "mcp_tool" WHERE "id" = $1
             `, [mcpTool.id])
         }
+        system.globalLogger().info({
+            name: this.name,
+        }, 'finished')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {

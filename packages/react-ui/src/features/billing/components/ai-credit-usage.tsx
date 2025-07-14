@@ -22,6 +22,8 @@ import {
 
 import { billingMutations } from '../lib/billing-hooks';
 
+import { AiCreditsUsageTable } from './ai-credits-usage-table';
+
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
 }
@@ -295,6 +297,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </div>
           </>
         )}
+
+        <Separator />
+        <AiCreditsUsageTable />
       </CardContent>
     </Card>
   );
