@@ -1,7 +1,7 @@
 version: '3.0'
 services:
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.64.2
+    image: ghcr.io/activepieces/activepieces:0.65.0
     container_name: activepieces
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
@@ -20,6 +20,7 @@ services:
     image: 'postgres:14.4'
     container_name: postgres
     restart: unless-stopped
+    env_file: .env
     environment:
       - 'POSTGRES_DB=${AP_POSTGRES_DATABASE}'
       - 'POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}'

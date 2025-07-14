@@ -47,7 +47,7 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
-    | QuotaExceededDowngradeParams
+    | ProjectLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -370,10 +370,10 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
-export type QuotaExceededDowngradeParams = BaseErrorParams<
-ErrorCode.QUOTA_EXCEEDED_DOWNGRADE,
+export type ProjectLockedParams = BaseErrorParams<
+ErrorCode.PROJECT_LOCKED,
 {
-    metrics: PlatformUsageMetric[]
+    message: string
 }
 >
 
@@ -517,7 +517,7 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-    QUOTA_EXCEEDED_DOWNGRADE = 'QUOTA_EXCEEDED_DOWNGRADEJJ',
+    PROJECT_LOCKED = 'PROJECT_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',

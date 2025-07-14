@@ -1,23 +1,29 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, ApEdition, ApEnvironment,  apId,  FlowStatus, PlatformUsage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, AIUsage, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
 import { agentRepo } from '../../agents/agents-service'
-import { aiUsageRepo } from '../../ai/ai-provider-service'
+import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
+import { repoFactory } from '../../core/db/repo-factory'
 import { getRedisConnection } from '../../database/redis-connection'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { mcpRepo } from '../../mcp/mcp-service'
-import { projectRepo, projectService } from '../../project/project-service'
+import { projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
+
+const aiUsageRepo = repoFactory<AIUsageSchema>(AIUsageEntity)
 
 const getDailyUsageRedisKey = (
     metric: 'tasks' | 'ai_credits',
@@ -35,7 +41,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
 
         const platformTasksUsage = await this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
-        const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }) 
+        const platformAICreditUsage = await this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
 
         const activeFlows = await getActiveFlows(platformId)
         const mcps = await getMCPsCount(platformId)
@@ -75,14 +81,14 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     async resetPlatformUsage(platformId: string): Promise<void> {
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        
+
         const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
         await redisConnection.del(platformTasksRedisKey)
 
         const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         await redisConnection.del(platformAiCreditRedisKey)
 
-        const projectIds = await getProjectIds(platformId)
+        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
         for (const projectId of projectIds) {
             const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
             await redisConnection.del(projectTasksRedisKey)
@@ -110,25 +116,25 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     },
 
     async increaseAiCreditUsage({ projectId, cost, platformId, provider, model }: IncreaseProjectAIUsageParams): Promise<{ projectAiCreditUsage: number, platformAiCreditUsage: number }> {
-        const incrementBy = cost * 1000
         const edition = system.getEdition()
 
-        if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
+        if (edition === ApEdition.COMMUNITY) {
             return { projectAiCreditUsage: 0, platformAiCreditUsage: 0 }
         }
 
+        const incrementBy = roundToDecimals(calculateCredits(cost), 3)
+
         const redisConnection = getRedisConnection()
         const today = dayjs()
-        const thirtyDays = 60 * 60 * 24 * 90
+        const ninetyDays = 60 * 60 * 24 * 90
 
         const projectRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
         const projectAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(projectRedisKey, incrementBy))
-
-        await redisConnection.expire(projectRedisKey, thirtyDays)
+        await redisConnection.expire(projectRedisKey, ninetyDays)
 
         const platformRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
         const platformAiCreditUsageIncremented = parseFloat(await redisConnection.incrbyfloat(platformRedisKey, incrementBy))
-        await redisConnection.expire(platformRedisKey, thirtyDays)
+        await redisConnection.expire(platformRedisKey, ninetyDays)
 
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
@@ -140,7 +146,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             model,
             cost,
         })
-        
+
         const shouldReportUsage = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
         const overage = Math.round(platformAiCreditUsageIncremented - platformPlan.includedAiCredits)
         const hasOverage = overage > 0
@@ -148,7 +154,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         if (!shouldReportUsage || !hasOverage) {
             return { projectAiCreditUsage: projectAiCreditUsageIncremented, platformAiCreditUsage: platformAiCreditUsageIncremented }
         }
-        
+
         await systemJobsSchedule(system.globalLogger()).upsertJob({
             job: {
                 name: SystemJobName.AI_USAGE_REPORT,
@@ -182,7 +188,48 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         return getUsage(projectId, startDate, endDate, metric, 'project')
     },
+
+    async listAICreditsUsage({
+        platformId,
+        cursor,
+        limit,
+    }: ListAICreditsUsageParams): Promise<SeekPage<AICreditsUsageListResponse>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator<AIUsageSchema>({
+            entity: AIUsageEntity,
+            query: {
+                limit,
+                order: Order.DESC,
+                orderBy: 'created',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
+        const query = aiUsageRepo().createQueryBuilder('ai_usage')
+            .select('ai_usage')
+            .addSelect('project.displayName')
+            .leftJoin('ai_usage.project', 'project')
+            .where({
+                platformId,
+            })
+
+        const { data, cursor: newCursor } = await paginator.paginate(query)
+        const result = data.map(row => {
+            const { cost, ...rowWithoutCost } = row
+            return {
+                ...rowWithoutCost,
+                credits: roundToDecimals(calculateCredits(cost), 3),
+                projectName: row.project.displayName,
+            }
+        })
+        return paginationHelper.createPage<AICreditsUsageListResponse>(result, newCursor)
+    },
 })
+
+function calculateCredits(cost: number): number {
+    return cost * 1000
+}
 
 async function getUsage(
     entityId: string,
@@ -222,7 +269,7 @@ async function getUsage(
 
 
 async function getActiveFlows(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const activeFlows = await flowRepo().count({
         where: {
             projectId: In(projectIds),
@@ -233,7 +280,7 @@ async function getActiveFlows(platformId: string): Promise<number> {
 }
 
 async function getTables(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const tables = await tableRepo().count({
         where: {
             projectId: In(projectIds),
@@ -243,12 +290,12 @@ async function getTables(platformId: string): Promise<number> {
 }
 
 async function getProjectsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     return projectIds.length
 }
 
 async function getMCPsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const mcpIds = await mcpRepo().count({
         where: {
             projectId: In(projectIds),
@@ -259,7 +306,7 @@ async function getMCPsCount(platformId: string): Promise<number> {
 }
 
 async function getAgentsCount(platformId: string): Promise<number> {
-    const projectIds = await getProjectIds(platformId)
+    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     const agents = await agentRepo().count({
         where: {
             projectId: In(projectIds),
@@ -278,20 +325,10 @@ async function getActiveUsers(platformId: string): Promise<number> {
     return activeUsers
 }
 
-async function getProjectIds(platformId: string): Promise<string[]> {
-    const projects = await projectRepo().find({
-        select: {
-            id: true,
-        },
-        where: {
-            platformId,
-            deleted: IsNull(),
-        },
-
-    })
-    return projects.map((project) => project.id)
+function roundToDecimals(value: number, decimals: number): number {
+    const factor = Math.pow(10, decimals)
+    return Math.round(value * factor) / factor
 }
-
 
 type IncreaseProjectAIUsageParams = {
     platformId: string
@@ -313,4 +350,15 @@ type GetPlatformUsageParams = {
     metric: 'tasks' | 'ai_credits'
     startDate: number
     endDate: number
+}
+
+type ListAICreditsUsageParams = {
+    platformId: string
+    cursor: Cursor | null
+    limit: number
+}
+
+type AICreditsUsageListResponse = Omit<AIUsage, 'cost'> & {
+    credits: number
+    projectName: string
 }

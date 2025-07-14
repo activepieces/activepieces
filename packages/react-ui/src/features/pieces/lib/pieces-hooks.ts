@@ -37,11 +37,14 @@ const {
   isFlowController,
 } = pieceSearchUtils;
 
-type UsePieceAndMostRecentPatchProps = {
+
+type UsePieceModelForStepSettings = {
   name: string;
   version: string | undefined;
   enabled?: boolean;
+  getExactVersion: boolean;
 };
+
 
 type UsePieceProps = {
   name: string;
@@ -81,16 +84,17 @@ export const piecesHooks = {
       refetch: query.refetch,
     };
   },
-  useMostRecentAndExactPieceVersion: ({
+  usePieceModelForStepSettings: ({
     name,
     version,
     enabled = true,
-  }: UsePieceAndMostRecentPatchProps) => {
+    getExactVersion,
+  }: UsePieceModelForStepSettings) => {
     const exactVersion = version
       ? flowPieceUtil.getExactVersion(version)
       : undefined;
     const latestPatchVersion = exactVersion
-      ? flowPieceUtil.getNextVersion(exactVersion)
+      ? flowPieceUtil.getMostRecentPatchVersion(exactVersion)
       : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
@@ -103,7 +107,9 @@ export const piecesHooks = {
       enabled,
     });
     return {
-      pieceModel: pieceQuery.pieceModel,
+      pieceModel: getExactVersion
+        ? pieceQuery.pieceModel
+        : latestPatchQuery.pieceModel,
       isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
       isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
       refetch: () => {
@@ -207,7 +213,7 @@ export const piecesHooks = {
     };
     const popularCategory = {
       title: t('Popular'),
-      metadata: [...pinnedPieces, ...popularPieces],
+      metadata: popularPieces,
     };
     const allCategory = {
       title: t('All'),
@@ -254,6 +260,8 @@ export const piecesHooks = {
   },
 };
 
+
+
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],
 ) => {
@@ -295,10 +303,6 @@ const getExploreTabContent = (
     platform.pinnedPieces ?? [],
   );
 
-  if (pinnedPieces.length > 0) {
-    popularCategory.metadata = [...popularCategory.metadata, ...pinnedPieces];
-  }
-
   if (popularPieces.length > 0) {
     popularCategory.metadata = [...popularCategory.metadata, ...popularPieces];
   }
@@ -309,9 +313,25 @@ const getExploreTabContent = (
   };
   const highlightedPieces = getHighlightedPieces(queryResult, type);
   const codePiece = queryResult.find((piece) => piece.type === ActionType.CODE);
+  const branchPiece = queryResult.find(
+    (piece) => piece.type === ActionType.ROUTER,
+  );
+
+  if (pinnedPieces.length > 0) {
+    hightlightedPiecesCategory.metadata = [
+      ...pinnedPieces,
+      ...hightlightedPiecesCategory.metadata,
+    ];
+  }
+
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
   }
+
+  if (branchPiece) {
+    hightlightedPiecesCategory.metadata.splice(0, 0, branchPiece);
+  }
+
   if (codePiece) {
     hightlightedPiecesCategory.metadata.splice(3, 0, codePiece);
   }
