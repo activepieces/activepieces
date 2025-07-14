@@ -4,10 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  StepMetadata,
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
-  PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
   PieceMetadataModel,
@@ -17,17 +15,55 @@ import {
   ActionType,
   flowPieceUtil,
   LocalesEnum,
-  PieceCategory,
   PlatformWithoutSensitiveData,
   TriggerType,
 } from '@activepieces/shared';
 
+import { pieceSearchUtils } from './piece-search-utils';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
 } from './piece-selector-tabs-provider';
 import { piecesApi } from './pieces-api';
 import { stepsHooks } from './steps-hooks';
+
+const {
+  getPinnedPieces,
+  getPopularPieces,
+  getAiAndAgentsPieces,
+  isUtilityPiece,
+  isAppPiece,
+  getHighlightedPieces,
+  isFlowController,
+} = pieceSearchUtils;
+
+type UsePieceModelForStepSettings = {
+  name: string;
+  version: string | undefined;
+  enabled?: boolean;
+  getExactVersion: boolean;
+};
+
+type UsePieceProps = {
+  name: string;
+  version?: string;
+  enabled?: boolean;
+};
+
+type UseMultiplePiecesProps = {
+  names: string[];
+};
+
+type UsePiecesProps = {
+  searchQuery?: string;
+  includeHidden?: boolean;
+  includeTags?: boolean;
+};
+type UsePiecesSearchProps = {
+  searchQuery: string;
+  enabled?: boolean;
+  type: 'action' | 'trigger';
+};
 
 export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
@@ -153,9 +189,6 @@ export const piecesHooks = {
     const utilityPieces =
       piecesMetadataWithoutEmptySuggestions.filter(isUtilityPiece);
 
-    const universalAiPieces =
-      piecesMetadataWithoutEmptySuggestions.filter(isUniversalAiPiece);
-
     const pieceMetadataWithoutPopularOrPinnedPieces =
       piecesMetadataWithoutEmptySuggestions.filter(
         (p) => !popularPieces.includes(p) && !pinnedPieces.includes(p),
@@ -164,9 +197,6 @@ export const piecesHooks = {
     const appPieces =
       pieceMetadataWithoutPopularOrPinnedPieces.filter(isAppPiece);
 
-    const categorizedStepsMetadata: CategorizedStepMetadataWithSuggestions[] =
-      [];
-
     const utilitiesCategory = {
       title: t('Utility'),
       metadata: utilityPieces,
@@ -174,10 +204,6 @@ export const piecesHooks = {
     const flowControllerCategory = {
       title: t('Flow Controller'),
       metadata: flowControllerPieces,
-    };
-    const universalAiCategory = {
-      title: t('AI and Agents'),
-      metadata: universalAiPieces,
     };
     const appsCategory = {
       title: t('Apps'),
@@ -199,6 +225,7 @@ export const piecesHooks = {
           data: getExploreTabContent(
             piecesMetadataWithoutEmptySuggestions,
             platform,
+            props.type,
           ),
         };
       case PieceSelectorTabType.UTILITY:
@@ -209,20 +236,16 @@ export const piecesHooks = {
       case PieceSelectorTabType.AI_AND_AGENTS:
         return {
           isLoading: false,
-          data: [universalAiCategory],
+          data: getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions),
         };
       case PieceSelectorTabType.APPS: {
-        const popularCategoryWithoutAgent = {
+        const popularAppsCategory = {
           ...popularCategory,
-          metadata: popularCategory.metadata.filter(
-            (piece) =>
-              piece.type !== ActionType.PIECE ||
-              piece.pieceName !== '@activepieces/piece-agent',
-          ),
+          metadata: popularCategory.metadata.filter(isAppPiece),
         };
         return {
           isLoading: false,
-          data: [popularCategoryWithoutAgent, appsCategory],
+          data: [popularAppsCategory, appsCategory],
         };
       }
 
@@ -232,40 +255,7 @@ export const piecesHooks = {
           data: allCategory.metadata.length > 0 ? [allCategory] : [],
         };
     }
-
-    return {
-      isLoading: false,
-      data: categorizedStepsMetadata,
-    };
   },
-};
-
-type UsePieceModelForStepSettings = {
-  name: string;
-  version: string | undefined;
-  enabled?: boolean;
-  getExactVersion: boolean;
-};
-
-type UsePieceProps = {
-  name: string;
-  version?: string;
-  enabled?: boolean;
-};
-
-type UseMultiplePiecesProps = {
-  names: string[];
-};
-
-type UsePiecesProps = {
-  searchQuery?: string;
-  includeHidden?: boolean;
-  includeTags?: boolean;
-};
-type UsePiecesSearchProps = {
-  searchQuery: string;
-  enabled?: boolean;
-  type: 'action' | 'trigger';
 };
 
 const filterOutPiecesWithNoSuggestions = (
@@ -290,90 +280,10 @@ const filterOutPiecesWithNoSuggestions = (
   });
 };
 
-const isFlowController = (stepMetadata: StepMetadata) => {
-  if (
-    stepMetadata.type === ActionType.PIECE ||
-    stepMetadata.type === TriggerType.PIECE
-  ) {
-    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
-  }
-  return (
-    stepMetadata.type === ActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === ActionType.ROUTER
-  );
-};
-
-const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
-  if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.some((category) =>
-      [PieceCategory.UNIVERSAL_AI].includes(category as PieceCategory),
-    );
-  }
-  return false;
-};
-
-const isUtilityPiece = (metadata: StepMetadata) =>
-  metadata.type !== TriggerType.PIECE && metadata.type !== ActionType.PIECE
-    ? !isFlowController(metadata)
-    : metadata.categories.includes(PieceCategory.CORE) &&
-      !isFlowController(metadata);
-
-const isAppPiece = (metadata: StepMetadata) => {
-  return (
-    !isUtilityPiece(metadata) &&
-    !isUniversalAiPiece(metadata) &&
-    !isFlowController(metadata)
-  );
-};
-
-const getPinnedPieces = (
-  queryResult: StepMetadataWithSuggestions[],
-  pinnedPiecesNames: string[],
-) => {
-  const pieces = filterResultByPieceType(queryResult);
-  const pinnedPieces = pieces.filter((piece) =>
-    pinnedPiecesNames.includes(piece.pieceName),
-  );
-  return sortByPieceNameOrder(pinnedPieces, pinnedPiecesNames);
-};
-
-const popularPiecesNames = [
-  '@activepieces/piece-google-sheets',
-  '@activepieces/piece-slack',
-  '@activepieces/piece-notion',
-  '@activepieces/piece-gmail',
-  '@activepieces/piece-hubspot',
-  '@activepieces/piece-openai',
-  '@activepieces/piece-google-forms',
-  '@activepieces/piece-google-drive',
-  '@activepieces/piece-google-docs',
-];
-const getPopularPieces = (
-  queryResult: StepMetadataWithSuggestions[],
-  pinnedPiecesNames: string[],
-) => {
-  const pieces = filterResultByPieceType(queryResult);
-  const popularPieces = pieces.filter(
-    (piece) =>
-      popularPiecesNames.includes(piece.pieceName) &&
-      !pinnedPiecesNames.includes(piece.pieceName),
-  );
-  return sortByPieceNameOrder(popularPieces, popularPiecesNames);
-};
-
-const highlightedPiecesNames = [
-  '@activepieces/piece-http',
-  '@activepieces/piece-schedule',
-  '@activepieces/piece-agent',
-  '@activepieces/piece-webhook',
-  '@activepieces/piece-tables',
-  '@activepieces/piece-forms',
-  '@activepieces/piece-todos',
-];
-
 const getExploreTabContent = (
   queryResult: StepMetadataWithSuggestions[],
   platform: PlatformWithoutSensitiveData,
+  type: 'action' | 'trigger',
 ) => {
   const popularCategory: CategorizedStepMetadataWithSuggestions = {
     title: t('Popular'),
@@ -394,13 +304,16 @@ const getExploreTabContent = (
   }
 
   const hightlightedPiecesCategory: CategorizedStepMetadataWithSuggestions = {
-    title: t('Highlighted'),
+    title: t('Highlight'),
     metadata: [],
   };
-  const highlightedPieces = getHighlightedPieces(queryResult);
+  const highlightedPieces = getHighlightedPieces(queryResult, type);
   const codePiece = queryResult.find((piece) => piece.type === ActionType.CODE);
   const branchPiece = queryResult.find(
     (piece) => piece.type === ActionType.ROUTER,
+  );
+  const loopPiece = queryResult.find(
+    (piece) => piece.type === ActionType.LOOP_ON_ITEMS,
   );
 
   if (pinnedPieces.length > 0) {
@@ -411,9 +324,7 @@ const getExploreTabContent = (
   }
 
   if (highlightedPieces.length > 0) {
-    hightlightedPiecesCategory.metadata.push(
-      ...sortByPieceNameOrder(highlightedPieces, highlightedPiecesNames),
-    );
+    hightlightedPiecesCategory.metadata.push(...highlightedPieces);
   }
 
   if (branchPiece) {
@@ -421,33 +332,11 @@ const getExploreTabContent = (
   }
 
   if (codePiece) {
-    hightlightedPiecesCategory.metadata.splice(4, 0, codePiece);
+    hightlightedPiecesCategory.metadata.splice(3, 0, codePiece);
+  }
+  if (loopPiece) {
+    hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
   }
 
   return [popularCategory, hightlightedPiecesCategory];
-};
-
-const filterResultByPieceType = (
-  queryResult: StepMetadataWithSuggestions[],
-) => {
-  return queryResult.filter(
-    (piece): piece is PieceStepMetadataWithSuggestions =>
-      piece.type === ActionType.PIECE || piece.type === TriggerType.PIECE,
-  );
-};
-const sortByPieceNameOrder = (
-  searchResult: StepMetadataWithSuggestions[],
-  orderNames: string[],
-): StepMetadataWithSuggestions[] => {
-  const pieces = filterResultByPieceType(searchResult);
-  return pieces.sort((a, b) => {
-    return orderNames.indexOf(a.pieceName) - orderNames.indexOf(b.pieceName);
-  });
-};
-
-const getHighlightedPieces = (queryResult: StepMetadataWithSuggestions[]) => {
-  const pieces = filterResultByPieceType(queryResult);
-  return pieces.filter((piece) =>
-    highlightedPiecesNames.includes(piece.pieceName),
-  );
 };

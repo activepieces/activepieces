@@ -53,7 +53,7 @@ const PieceSelector = ({
   const [searchQuery, setSearchQuery] = useState('');
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
-    operation.type === FlowOperationType.UPDATE_TRIGGER;
+    (operation.type === FlowOperationType.UPDATE_TRIGGER && !isForEmptyTrigger);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const isMobile = useIsMobile();
