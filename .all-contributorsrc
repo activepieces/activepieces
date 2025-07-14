@@ -1904,6 +1904,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ezhil56x",
+      "name": "Ezhil Shanmugham",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103899034?v=4",
+      "profile": "https://ezhil.dev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "sunorains",
+      "name": "Anderson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/211304820?v=4",
+      "profile": "https://github.com/sunorains",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "calladodan",
+      "name": "Daniel Callado",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7246416?v=4",
+      "profile": "https://github.com/calladodan",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "sparkybug",
+      "name": "Ukaegbu Osinachi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52334088?v=4",
+      "profile": "https://github.com/sparkybug",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

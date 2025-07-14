@@ -62,7 +62,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             createdAt,
         })
 
-        // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
@@ -89,7 +88,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        if (!platform.plan.alertsEnabled || platform.plan.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
 
@@ -196,17 +195,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendThreeDaysLeftOnTrialEmail(
-        platformId: string,
-        email: string,
-        firstName?: string,
-    ): Promise<void> {
-
+    async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
         await emailSender(log).send({
-            emails: [email],
+            emails: [customerEmail],
             platformId,
             templateData: {
-                name: '3-days-left-on-trial',
+                name: templateName,
                 vars: {
                     year: new Date().getFullYear().toString(),
                     firstName: firstName ?? 'Automator',
@@ -214,64 +208,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             },
         })
 
-    },
-
-    async sendOneDayLeftOnTrial(
-        platformId: string,
-        email: string,
-        firstName?: string,
-    ): Promise<void> {
-
-        await emailSender(log).send({
-            emails: [email],
-            platformId,
-            templateData: {
-                name: '1-day-left-on-trial',
-                vars: {
-                    year: new Date().getFullYear().toString(),
-                    firstName: firstName ?? 'Automator',
-                },
-            },
-        })
-
-    },
-
-    async sendWellcomeToTrialEmail(
-        platformId: string,
-        email: string,
-        firstName?: string,
-    ): Promise<void> {
-
-        await emailSender(log).send({
-            emails: [email],
-            platformId,
-            templateData: {
-                name: 'wellcome-to-trial',
-                vars: {
-                    year: new Date().getFullYear().toString(),
-                    firstName: firstName ?? 'Automator',
-                },
-            },
-        })
-    },
-
-    async sendSevenDaysInTrialEmail(
-        platformId: string,
-        email: string,
-        firstName?: string,
-    ): Promise<void> {
-
-        await emailSender(log).send({
-            emails: [email],
-            platformId,
-            templateData: {
-                name: '7-days-in-trial',
-                vars: {
-                    year: new Date().getFullYear().toString(),
-                    firstName: firstName ?? 'Automator',
-                },
-            },
-        })
     },
 
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
@@ -339,6 +275,13 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendTrialReminderArgs = {
+    platformId: string
+    firstName: string | undefined
+    customerEmail: string
+    templateName: '3-days-left-on-trial' | '7-days-in-trial' | '1-day-left-on-trial' | 'welcome-to-trial'
 }
 
 type IssueCreatedArgs = {

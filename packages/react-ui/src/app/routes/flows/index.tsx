@@ -106,7 +106,7 @@ const FlowsPage = () => {
           onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
           className="w-full"
         >
-          {!embedState.hideSideNav ? (
+          {!embedState.hideFlowsPageNavbar ? (
             <TabsList variant="outline">
               <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
                 <Workflow className="h-4 w-4 mr-2" />

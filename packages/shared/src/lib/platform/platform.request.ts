@@ -26,15 +26,6 @@ export const UpdatePlatformRequestBody = Type.Object({
 
 export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>
 
-export const AdminAddPlatformRequestBody = Type.Object({
-    userId: ApId,
-    projectId: ApId,
-    name: Type.String(),
-    domain: Type.String(),
-})
-
-export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
-
 export const AdminRetryRunsRequestBody = Type.Object({
     runIds: Type.Optional(Type.Array(ApId)),
     createdAfter: Type.String(),
@@ -43,3 +34,9 @@ export const AdminRetryRunsRequestBody = Type.Object({
 
 export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
 
+export const ApplyLicenseKeyByEmailRequestBody = Type.Object({
+    email: Type.String(),
+    licenseKey: Type.String(),
+})
+
+export type ApplyLicenseKeyByEmailRequestBody = Static<typeof ApplyLicenseKeyByEmailRequestBody>

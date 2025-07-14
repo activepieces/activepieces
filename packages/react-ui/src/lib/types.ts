@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import {
   ActionBase,
   ErrorHandlingOptionsParam,
@@ -106,30 +104,3 @@ export type PieceSelectorPieceItem =
 export type PieceSelectorItem = PieceSelectorPieceItem | PrimitiveStepMetadata;
 
 export type HandleSelectActionOrTrigger = (item: PieceSelectorItem) => void;
-
-export enum PieceTagType {
-  CORE = 'CORE',
-  AI_AND_AGENTS = 'AI_AND_AGENTS',
-  APPS = 'APPS',
-  ALL = 'ALL',
-}
-
-export type PieceTag = {
-  title: string;
-  logoUrl: string;
-  description: string;
-} & (
-  | {
-      type: PieceTagType.CORE | PieceTagType.AI_AND_AGENTS | PieceTagType.APPS;
-    }
-  | {
-      type: PieceTagType.ALL;
-      stepMetadata: StepMetadataWithSuggestions;
-    }
-);
-
-export const tagCategoryName = {
-  [PieceTagType.CORE]: t('Core'),
-  [PieceTagType.AI_AND_AGENTS]: t('AI and Agents'),
-  [PieceTagType.APPS]: t('Popular'),
-} as const;
