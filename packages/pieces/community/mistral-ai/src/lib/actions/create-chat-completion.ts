@@ -71,9 +71,16 @@ export const createChatCompletion = createAction({
         throw new Error('Message content must be a non-empty string');
       }
     }
+    const filteredMessages = (messages as Array<any>).map((msg) => {
+      if (msg.role === 'user') {
+        const { name, tool_call_id, ...rest } = msg;
+        return rest;
+      }
+      return msg;
+    });
     const body: any = {
       model,
-      messages,
+      messages: filteredMessages,
     };
     if (temperature !== undefined) body.temperature = temperature;
     if (top_p !== undefined) body.top_p = top_p;
