@@ -13,7 +13,6 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './scenarios',
-  testMatch: '**/*.spec.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -31,12 +30,6 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
-    /* Record video for debugging in headless mode */
-    video: 'retain-on-failure',
-    
-    /* Take screenshots on failure for debugging */
-    screenshot: 'only-on-failure',
     
     /* Run in headless mode for environments without display server */
     headless: true,

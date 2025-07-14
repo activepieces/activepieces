@@ -7,12 +7,12 @@ export class AuthenticationPage extends BasePage {
   signUpUrl = `${globalConfig.instanceUrl}/sign-up`;
 
   getters = {
-    emailField: (page: Page) => page.getByPlaceholder('Email'),
+    emailField: (page: Page) => page.getByPlaceholder('email@example.com'),
     passwordField: (page: Page) => page.getByPlaceholder('********'),
     firstNameField: (page: Page) => page.getByText('First Name').first(),
     lastNameField: (page: Page) => page.getByText('Last Name').first(),
     signUpButton: (page: Page) => page.getByRole('button', { name: 'Sign up' }),
-    signInButton: (page: Page) => page.getByRole('button', { name: 'Sign in' }),
+    signInButton: (page: Page) => page.getByRole('button', { name: 'Sign in', exact: true }),
   };
 
   actions = {
@@ -22,11 +22,12 @@ export class AuthenticationPage extends BasePage {
       const emailField = this.getters.emailField(page);
       await emailField.click();
       await emailField.fill(params.email);
-      await emailField.press('Tab');
-
+      
       const passwordField = this.getters.passwordField(page);
+      await passwordField.click();
       await passwordField.fill(params.password);
-      await passwordField.press('Enter');
+      
+      await this.getters.signInButton(page).click();
     },
 
     signUp: async (page: Page, params: { email: string; password: string }) => {
@@ -48,6 +49,7 @@ export class AuthenticationPage extends BasePage {
       await emailField.press('Tab');
 
       const passwordField = this.getters.passwordField(page);
+      await passwordField.click();
       await passwordField.fill(params.password);
 
       await this.getters.signUpButton(page).click();
