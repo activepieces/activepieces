@@ -91,7 +91,6 @@ const getPinnedPieces = (
 };
 
 const POPULAR_PIECES_NAMES = [
-  '@activepieces/piece-agent',
   '@activepieces/piece-google-sheets',
   '@activepieces/piece-slack',
   '@activepieces/piece-notion',
@@ -160,6 +159,7 @@ const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
 ];
 
 const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
+  '@activepieces/piece-agent',
   '@activepieces/piece-http',
   '@activepieces/piece-tables',
   '@activepieces/piece-todos',
