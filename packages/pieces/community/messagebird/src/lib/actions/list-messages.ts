@@ -36,13 +36,13 @@ export const listMessages = createAction({
       displayName: 'Start Date and Time',
       description: 'The start date and time (in UTC) to filter messages',
       required: true,
-      defaultValue: dayjs().subtract(1, 'day').toISOString().split('.')[0] + 'Z',
+      defaultValue: dayjs().subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ssZ'),
     }),
     endAt: Property.DateTime({
       displayName: 'End Date and Time',
       description: 'The end date and time (in UTC) to filter messages, should not exceed 7 days from start date',
       required: true,
-      defaultValue: dayjs().toISOString().split('.')[0] + 'Z',
+      defaultValue: dayjs().format('YYYY-MM-DDTHH:mm:ssZ'),
     }),
     pageToken: Property.ShortText({
       displayName: 'Next Page Token',
