@@ -20,8 +20,7 @@ export const formIdDropdown = Property.Dropdown({
     const forms = await makeRequest(
       accessToken,
       HttpMethod.GET,
-      '/form.json',
-      {}
+      '/form.json'
     );
     const options = forms.forms.map((field: { id: string; name: string }) => {
       return {
@@ -37,7 +36,7 @@ export const formIdDropdown = Property.Dropdown({
 });
 
 export const submissionIdDropdown = Property.Dropdown({
-  displayName: 'Submissions ',
+  displayName: 'Submission',
   required: true,
   refreshers: ['auth', 'form_id'],
   options: async ({ auth, form_id }) => {
@@ -58,21 +57,63 @@ export const submissionIdDropdown = Property.Dropdown({
     const authentication = auth as OAuth2PropertyValue;
     const accessToken = authentication['access_token'];
 
-    const forms = await makeRequest(
-      accessToken,
-      HttpMethod.GET,
-      `/form/${form_id}/submission.json`,
-      {}
-    );
-    const options = forms.submissions.map((field: { id: string }) => {
-      return {
-        label: field.id,
-        value: field.id,
-      };
-    });
+    try {
+      const response = await makeRequest(
+        accessToken,
+        HttpMethod.GET,
+        `/form/${form_id}/submission.json`
+      );
 
-    return {
-      options,
-    };
+      if (!response.submissions || response.submissions.length === 0) {
+        return {
+          disabled: true,
+          placeholder: 'No submissions found for this form',
+          options: [],
+        };
+      }
+
+      const options = response.submissions.map((submission: any) => {
+        let label = `ID: ${submission.id}`;
+        
+        if (submission.timestamp) {
+          const date = new Date(submission.timestamp).toLocaleDateString();
+          label += ` (${date})`;
+        }
+
+        if (submission.data && Array.isArray(submission.data) && submission.data.length > 0) {
+          const previewFields = submission.data
+            .slice(0, 2)
+            .map((field: any) => {
+              if (field.value && typeof field.value === 'string' && field.value.length > 0) {
+                const value = field.value.length > 20 
+                  ? field.value.substring(0, 20) + '...' 
+                  : field.value;
+                return value;
+              }
+              return null;
+            })
+            .filter(Boolean);
+
+          if (previewFields.length > 0) {
+            label += ` - ${previewFields.join(', ')}`;
+          }
+        }
+
+        return {
+          label,
+          value: submission.id,
+        };
+      });
+
+      return {
+        options,
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Error loading submissions',
+        options: [],
+      };
+    }
   },
 });
