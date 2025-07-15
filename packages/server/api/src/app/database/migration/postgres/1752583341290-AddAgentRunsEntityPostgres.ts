@@ -17,6 +17,7 @@ export class AddAgentRunsEntityPostgres1752583341290 implements MigrationInterfa
                 "message" character varying,
                 "startTime" TIMESTAMP WITH TIME ZONE NOT NULL,
                 "finishTime" TIMESTAMP WITH TIME ZONE,
+                "prompt" character varying NOT NULL,
                 CONSTRAINT "PK_ea8d80275b57b9913c709094f52" PRIMARY KEY ("id")
             )
         `)

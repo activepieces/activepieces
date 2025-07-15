@@ -241,6 +241,7 @@ async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Pr
     platformId: string
 }> {
     switch (queueName) {
+        case QueueName.AGENTS:
         case QueueName.ONE_TIME:
         case QueueName.WEBHOOK:
         case QueueName.SCHEDULED: {
