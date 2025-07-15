@@ -92,7 +92,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
   if (!data) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <LoadingSpinner size={50}></LoadingSpinner>
+        <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
   }

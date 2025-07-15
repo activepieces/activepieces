@@ -86,3 +86,10 @@ Change log format: DD/MM/YYYY (version)
 - Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method, it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes, here are the ones supported: **('en' | 'nl' | 'it' | 'de' | 'fr' | 'bg' | 'uk' | 'hu' | 'es' | 'ja' | 'id' | 'vi' | 'zh' | 'pt')**
 - Added `embedding.styling.mode` parameter to [configure](./embed-builder#configure-parameters) method **(value: 'light' | 'dark')**
 - **(Breaking Change)** Removed `embedding.builder.hideLogo` parameter from the [configure](./embed-builder#configure-parameters) method. 
+
+
+### 07/07/2025 (0.6.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.6.0.js
+- This version requires you to **upgrade Activepieces to 0.65.1 (we will link it here once we do so)**
+- Added `embedding.dashboard.hideFlowsPageNavbar` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- **(Breaking Change)** `embedding.dashboard.hideSidebar` used to hide the navbar above the flows table in the dashboard now it relies on `embedding.dashboard.hideFlowsPageNavbar`.

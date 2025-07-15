@@ -429,6 +429,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sunorains"><img src="https://avatars.githubusercontent.com/u/211304820?v=4?s=100" width="100px;" alt="Anderson"/><br /><sub><b>Anderson</b></sub></a><br /><a href="#plugin-sunorains" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/calladodan"><img src="https://avatars.githubusercontent.com/u/7246416?v=4?s=100" width="100px;" alt="Daniel Callado"/><br /><sub><b>Daniel Callado</b></sub></a><br /><a href="#plugin-calladodan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sparkybug"><img src="https://avatars.githubusercontent.com/u/52334088?v=4?s=100" width="100px;" alt="Ukaegbu Osinachi"/><br /><sub><b>Ukaegbu Osinachi</b></sub></a><br /><a href="#plugin-sparkybug" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

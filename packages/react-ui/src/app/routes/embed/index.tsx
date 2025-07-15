@@ -144,6 +144,8 @@ const EmbedPage = React.memo(() => {
                     event.data.data.emitHomeButtonClickedEvent ?? false,
                   homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
                   hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
+                  hideFlowsPageNavbar:
+                    event.data.data.hideFlowsPageNavbar ?? false,
                 });
               });
               memoryRouter.navigate(initialRoute);

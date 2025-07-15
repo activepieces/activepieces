@@ -12,6 +12,7 @@ import {
   PackageType,
   PieceType,
   TriggerType,
+  LATEST_SCHEMA_VERSION,
 } from '@activepieces/shared';
 
 const template = {
@@ -50,7 +51,7 @@ const template = {
           pieceType: PieceType.OFFICIAL,
           packageType: PackageType.REGISTRY,
           actionName: 'run_agent',
-          pieceVersion: '~0.1.7',
+          pieceVersion: '~0.2.0',
           input: {
             agentId: '{{AGENT_ID}}',
             prompt: "{{trigger['message']}}",
@@ -100,7 +101,7 @@ const template = {
     },
     valid: true,
     connectionIds: [],
-    schemaVersion: '2',
+    schemaVersion: LATEST_SCHEMA_VERSION,
   },
   blogUrl: '',
 };
