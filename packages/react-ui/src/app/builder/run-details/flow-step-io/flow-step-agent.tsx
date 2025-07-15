@@ -6,7 +6,7 @@ import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   AgentTaskStatus,
-  AgentTestResult,
+  AgentRun,
   isNil,
   parseToJsonIfPossible,
   PieceAction,
@@ -21,9 +21,9 @@ type FlowStepAgentProps = {
 const FlowStepAgent = (props: FlowStepAgentProps) => {
   const { stepDetails } = props;
   const agentId = stepUtils.getAgentId(props.selectedStep);
-  const output: AgentTestResult | null = parseToJsonIfPossible(
+  const output: AgentRun | null = parseToJsonIfPossible(
     stepDetails.output,
-  ) as AgentTestResult;
+  ) as AgentRun;
   const prompt =
     !isNil(stepDetails.input) &&
     'prompt' in (stepDetails.input as { prompt: string })

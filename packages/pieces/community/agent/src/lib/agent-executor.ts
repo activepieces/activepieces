@@ -1,4 +1,4 @@
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentRun, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
 import { APICallError, streamText } from "ai"
 import { agentCommon } from "./common"
 import { agentTools } from "./agent-tools"
@@ -37,7 +37,7 @@ export const agentExecutor = {
                 maxSteps: agent.maxSteps,
                 tools: await agentToolInstance.tools(),
             })
-            const agentResult: AgentTestResult = {
+            const agentResult: AgentRun = {
                 steps: [],
                 status: AgentTaskStatus.IN_PROGRESS,
                 output: undefined,

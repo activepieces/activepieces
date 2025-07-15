@@ -33,14 +33,19 @@ export enum AgentTaskStatus {
     IN_PROGRESS = 'IN_PROGRESS',
 }
 
-export const AgentTestResult = Type.Object({
+export const AgentRun = Type.Object({
+    ...BaseModelSchema,
+    agentId: Type.String(),
+    projectId: Type.String(),
     status: Type.Enum(AgentTaskStatus),
     output: Type.Unknown(),
     steps: Type.Array(AgentStepBlock),
     message: Type.String(),
+    startTime: Type.String(),
+    finishTime: Type.String(),
 })
 
-export type AgentTestResult = Static<typeof AgentTestResult>
+export type AgentRun = Static<typeof AgentRun>
 
 export const Agent = Type.Object({
     ...BaseModelSchema,
@@ -83,3 +88,11 @@ export const ListAgentsQueryParams = Type.Object({
 })
 
 export type ListAgentsQueryParams = Static<typeof ListAgentsQueryParams>
+
+export const ListAgentRunsQueryParams = Type.Object({
+    limit: Type.Optional(Type.Number()),
+    cursor: Type.Optional(Type.String()),
+    agentId: Type.String(),
+})
+
+export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
