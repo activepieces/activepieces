@@ -470,7 +470,8 @@
               "handbook/engineering/playbooks/bullboard",
               "handbook/engineering/playbooks/database-migration",
               "handbook/engineering/playbooks/product-announcement",
-              "handbook/engineering/playbooks/frontend-best-practices"
+              "handbook/engineering/playbooks/frontend-best-practices",
+              "handbook/engineering/playbooks/e2e-tests"
             ]
           },
           {

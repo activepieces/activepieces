@@ -320,7 +320,7 @@
     "@nx/web": "21.1.2",
     "@nx/webpack": "21.1.2",
     "@nx/workspace": "21.1.2",
-    "@playwright/test": "1.37.1",
+    "@playwright/test": "1.54.1",
     "@swc-node/register": "1.9.2",
     "@swc/cli": "0.6.0",
     "@swc/core": "1.5.7",
