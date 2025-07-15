@@ -6,6 +6,7 @@ import { migrateTablesPiece } from './migrate-v3-tables-piece'
 
 export type Migration = {
     name: string
+    targetSchemaVersion: string | undefined
     migrate: (flowVersion: FlowVersion) => FlowVersion
 }
 
@@ -17,7 +18,12 @@ const migrations: Migration[] = [
 ]
 
 const apply = (flowVersion: FlowVersion) => {
-    return migrations.reduce((acc, migration) => migration.migrate(acc), flowVersion)
+    return migrations.reduce((acc, migration) => {
+        if (acc.schemaVersion === migration.targetSchemaVersion) {
+            return migration.migrate(acc)
+        }
+        return acc
+    }, flowVersion)
 }
 
 export const flowMigrations = {

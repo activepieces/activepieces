@@ -7,6 +7,7 @@ import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
     name: 'migrate-v0-branch-to-router',
+    targetSchemaVersion: undefined,
     migrate: (flowVersion: FlowVersion) => {
         if (!isNil(flowVersion.schemaVersion)) {
             return flowVersion
