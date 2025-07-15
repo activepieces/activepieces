@@ -3,7 +3,7 @@ import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
 
 export const migrateTablesPiece: Migration = {
-    name: 'migrate-v3-tables-piece-to-3.0.0',
+    name: 'migrate-v3-tables-piece-to-0.2.0',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
         if (flowVersion.schemaVersion === '3') {
             const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
