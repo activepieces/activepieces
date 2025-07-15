@@ -4,10 +4,10 @@ import {
   FlowsPage, 
   BuilderPage, 
   AgentPage,
-} from '../pages';
-import { configUtils } from '../helper/config';
+} from '../../pages';
+import { configUtils } from '../../helper/config';
 
-test.describe('Integration Scenarios', () => {
+test.describe('Webhooks', () => {
   let authenticationPage: AuthenticationPage;
   let flowsPage: FlowsPage;
   let builderPage: BuilderPage;
@@ -20,53 +20,7 @@ test.describe('Integration Scenarios', () => {
     agentPage = new AgentPage();
   });
 
-  test('should send Slack message via flow', async ({ page }) => {
-    test.setTimeout(120000);
-
-    const config = configUtils.getConfig();
-    const channel = 'spam';
-    
-    await authenticationPage.actions.signIn(page, {
-      email: config.email,
-      password: config.password
-    });
-
-    await agentPage.actions.waitFor(page);
-
-    await flowsPage.actions.navigate(page);
-
-    await flowsPage.actions.cleanupExistingFlows(page);
-    
-    await flowsPage.actions.newFlowFromScratch(page);
-
-    await builderPage.actions.waitFor(page);
-
-    await builderPage.actions.selectInitialTrigger(page, {
-      piece: 'Schedule',
-      trigger: 'Every Hour'
-    });
-
-    await builderPage.actions.handleDismissButton(page);
-    await builderPage.actions.loadSampleData(page);
-
-    await builderPage.actions.addAction(page, {
-      piece: 'Slack',
-      action: 'Send Message To A Channel'
-    });
-
-    await builderPage.actions.selectSlackConnection(page);
-    await builderPage.actions.selectSlackChannel(page, channel);
-    await builderPage.actions.fillSlackMessage(page, 'Test From checkly');
-
-    await page.waitForTimeout(2000);
-    await builderPage.actions.testStep(page);
-
-    await builderPage.actions.testFlowAndWaitForSuccess(page);
-    
-    await builderPage.actions.exitRun(page);
-  });
-
-  test('should handle webhook with dynamic parameters', async ({ page }) => {
+  test('should handle webhook with return response', async ({ page }) => {
     test.setTimeout(120000);
 
     const config = configUtils.getConfig();
