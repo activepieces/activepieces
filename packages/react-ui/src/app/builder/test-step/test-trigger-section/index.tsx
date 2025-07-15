@@ -44,7 +44,6 @@ const TestTriggerSection = React.memo(
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
 
-
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -100,13 +99,11 @@ const TestTriggerSection = React.memo(
     if (isPieceLoading || isNil(trigger)) {
       return null;
     }
-    const testType: TestType = triggerEventUtils.getTestType(
-        {
-          triggerName: formValues.settings.triggerName,
-          pieceName: formValues.settings.pieceName,
-          trigger: trigger,
-        }
-      );
+    const testType: TestType = triggerEventUtils.getTestType({
+      triggerName: formValues.settings.triggerName,
+      pieceName: formValues.settings.pieceName,
+      trigger: trigger,
+    });
 
     const showSampleDataViewer =
       sampleDataSelected && !isSimulating && !isSavingMockdata;

@@ -1,7 +1,6 @@
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 
-
 export type TestType =
   | 'mcp-tool'
   | 'chat-trigger'
@@ -32,7 +31,10 @@ export const triggerEventUtils = {
       return 'webhook';
     }
 
-    if(trigger.type === TriggerStrategy.APP_WEBHOOK || trigger.type === TriggerStrategy.WEBHOOK) {
+    if (
+      trigger.type === TriggerStrategy.APP_WEBHOOK ||
+      trigger.type === TriggerStrategy.WEBHOOK
+    ) {
       return 'simulation';
     }
 
