@@ -59,6 +59,19 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
       .length || 0;
   const totalToolsCount = piecesCount + flowsCount;
   const hasTools = totalToolsCount > 0;
+  const pieceToToolMap = mcp?.tools?.reduce((acc, tool) => {
+    const key =
+      tool.type === McpToolType.PIECE
+        ? tool.pieceMetadata?.pieceName
+        : tool.flowId;
+
+    if (key) {
+      acc[key] = acc[key] || [];
+      acc[key].push(tool);
+    }
+
+    return acc;
+  }, {} as Record<string, McpTool[]>);
 
   return (
     <div>
@@ -85,24 +98,26 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
         {hasTools ? (
           <ScrollArea>
             <div className="space-y-2">
-              {mcp?.tools &&
-                mcp.tools.map((tool) => {
-                  if (tool.type === McpToolType.PIECE) {
+              {pieceToToolMap &&
+                Object.entries(pieceToToolMap).map(([toolKey, tools]) => {
+                  if (tools[0].type === McpToolType.PIECE) {
                     return (
                       <McpPieceTool
-                        key={tool.id}
+                        key={toolKey}
                         mcp={mcp}
-                        tool={tool}
+                        tools={tools}
                         pieces={pieces || []}
-                        removeTool={async () => removeTool(tool.id)}
+                        removeTool={async () =>
+                          removeTool(tools.map((tool) => tool.id))
+                        }
                       />
                     );
-                  } else if (tool.type === McpToolType.FLOW) {
+                  } else if (tools[0].type === McpToolType.FLOW) {
                     return (
                       <McpFlowTool
-                        key={tool.id}
-                        tool={tool}
-                        removeTool={async () => removeTool(tool.id)}
+                        key={toolKey}
+                        tool={tools[0]}
+                        removeTool={async () => removeTool([tools[0].id])}
                       />
                     );
                   }

@@ -304,7 +304,7 @@ const getExploreTabContent = (
   }
 
   const hightlightedPiecesCategory: CategorizedStepMetadataWithSuggestions = {
-    title: t('Highlight'),
+    title: t('Highlights'),
     metadata: [],
   };
   const highlightedPieces = getHighlightedPieces(queryResult, type);
