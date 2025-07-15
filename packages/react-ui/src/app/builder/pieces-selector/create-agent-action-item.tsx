@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { AgentBuilder } from '@/app/routes/agents/builder';
 import { ToastAction } from '@/components/ui/toast';
-import { PROJECT_LOCKED_MESSAGE, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -112,8 +112,6 @@ const CreateAgentActionItem = ({
                   onError: (err: Error) => {
                     if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
                       setShowUpgradeDialog(true);
-                    } else if (api.isApError(err, ErrorCode.PROJECT_LOCKED)) {
-                      toast(PROJECT_LOCKED_MESSAGE);
                     } else {
                       toast({
                         title: t('Error'),

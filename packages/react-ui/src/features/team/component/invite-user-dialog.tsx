@@ -34,7 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROJECT_LOCKED_MESSAGE, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
@@ -126,14 +126,12 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
       refetch();
       //TODO: navigate to platform admin users
     },
-    onError: (error) => {
-      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
+    onError: (err: Error) => {
+      if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
         setManagePlanDialogOpen(true);
         setIsOpen(false);
-      } else if (api.isApError(error, ErrorCode.PROJECT_LOCKED)) {
-        toast(PROJECT_LOCKED_MESSAGE);
       } else {
-        console.error(error);
+        console.error(err);
       }
     },
   });
