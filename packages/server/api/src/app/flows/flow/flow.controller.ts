@@ -32,7 +32,7 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { checkQuotaOrThrow } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
@@ -60,12 +60,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
 
-        if (request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED) {
-            await checkQuotaOrThrow({
-                platformId: request.principal.platform.id,
-                metric: PlatformUsageMetric.ACTIVE_FLOWS,
-            })
-        }
 
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
@@ -74,6 +68,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
+
+        const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
+        const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
+        if (turnOnFlow || publishDisabledFlow) {
+            await PlatformPlanHelper.checkQuotaOrThrow({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            })
+        }
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_UPDATED,
@@ -204,15 +208,15 @@ async function assertThatFlowIsNotBeingUsed(
     const currentTime = dayjs()
     if (
         !isNil(flow.version.updatedBy) &&
-    flow.version.updatedBy !== userId &&
-    currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+        flow.version.updatedBy !== userId &&
+        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
     ) {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_IN_USE,
             params: {
                 flowVersionId: flow.version.id,
                 message:
-          'Flow is being used by another user in the last minute. Please try again later.',
+                    'Flow is being used by another user in the last minute. Please try again later.',
             },
         })
     }

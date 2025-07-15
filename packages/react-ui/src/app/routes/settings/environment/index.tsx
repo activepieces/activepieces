@@ -106,7 +106,7 @@ const EnvironmentPage = () => {
             )}
             {isLoading && (
               <div className="flex flex-grow justify-center items-center">
-                <LoadingSpinner className="w-5 h-5"></LoadingSpinner>
+                <LoadingSpinner className="size-5"></LoadingSpinner>
               </div>
             )}
           </div>

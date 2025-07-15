@@ -1,4 +1,5 @@
 import {
+    Action,
     ActionType,
     ActivepiecesError,
     apId,
@@ -18,23 +19,23 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
+    Trigger,
     TriggerType,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowVersionEntity } from './flow-version-entity'
+import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
-
-export const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
@@ -101,6 +102,28 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 }]
                 break
             }
+            case FlowOperationType.SAVE_SAMPLE_DATA: {
+                const modifiedStep = await sampleDataService(log).modifyStep({
+                    projectId,
+                    flowVersionId: mutatedFlowVersion.id,
+                    stepName: userOperation.request.stepName,
+                    payload: userOperation.request.payload,
+                    type: userOperation.request.type,
+                })
+                if (flowStructureUtil.isAction(modifiedStep.type)) {
+                    operations = [{
+                        type: FlowOperationType.UPDATE_ACTION,
+                        request: modifiedStep as Action,
+                    }]
+                }
+                else {
+                    operations = [{
+                        type: FlowOperationType.UPDATE_TRIGGER,
+                        request: modifiedStep as Trigger,
+                    }]
+                }
+                break
+            }
             case FlowOperationType.LOCK_FLOW: {
                 mutatedFlowVersion = await this.lockPieceVersions({
                     projectId,
@@ -126,27 +149,42 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             )
         }
 
+        await flowVersionSideEffects(log).postApplyOperation({
+            flowVersion: mutatedFlowVersion,
+            operation: userOperation,
+        })
+
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
-        return flowVersionRepo(entityManager).save(
-            sanitizeObjectForPostgresql(mutatedFlowVersion),
-        )
+        return flowVersionRepoWrapper.save({
+            flowVersion: sanitizeObjectForPostgresql(mutatedFlowVersion),
+            entityManager,
+        })
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
         if (isNil(id)) {
             return null
         }
-        return flowVersionRepo().findOneBy({
-            id,
+        return flowVersionRepoWrapper.findOne({
+            where: {
+                id,
+            },
         })
     },
 
+    async exists(id: FlowVersionId): Promise<boolean> {
+        return flowVersionRepoWrapper.exists({
+            where: {
+                id,
+            },
+        })
+    },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
-        return flowVersionRepo().findOne({
+        return flowVersionRepoWrapper.findOne({
             where: {
                 flowId,
                 state,
@@ -158,7 +196,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
-        return flowVersionRepo().findOneOrFail({
+        return flowVersionRepoWrapper.findOneOrFail({
             where: {
                 flowId,
                 state: FlowVersionState.LOCKED,
@@ -199,7 +237,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder('flow_version')
+            flowVersionRepoWrapper.createQueryBuilder()
                 .where({
                     flowId,
                 }),
@@ -224,9 +262,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await flowVersionRepo(
-            entityManager,
-        ).findOne({
+        const flowVersion: FlowVersion | null = await flowVersionRepoWrapper.findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -235,7 +271,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             order: {
                 created: 'DESC',
             },
-        })
+        }, entityManager)
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -276,9 +312,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return flowVersionRepo().save(flowVersion)
+        return flowVersionRepoWrapper.save({ flowVersion })
     },
 })
+
+
 
 async function applySingleOperation(
     projectId: ProjectId,
@@ -292,8 +330,13 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
-    return flowOperations.apply(flowVersion, operation)
+    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
+    const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
+    await flowVersionSideEffects(log).postApplyOperation({
+        flowVersion: updatedFlowVersion,
+        operation: preparedOperation,
+    })
+    return updatedFlowVersion
 }
 
 async function removeSecretsFromFlow(

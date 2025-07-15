@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import {
   ExecutionType,
   PauseType,
+  CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 import { sendTodoApproval, createTodoProps } from '../utils/utils';
 
@@ -32,6 +33,7 @@ export const createTodoAndWait = createAction({
     } else {
       return {
         status: context.resumePayload.queryParams['status'],
+        message: context.resumePayload.queryParams['message'] ?? 'Sample message',
       };
     }
   },
@@ -46,9 +48,11 @@ export const createTodoAndWait = createAction({
       const response = await sendTodoApproval(context, false);
       return response.body;
     } else {
-      return {
+      const result: CreateAndWaitTodoResult = {
         status: context.resumePayload.queryParams['status'],
-      };
+        message: context.resumePayload.queryParams['message'],
+      }
+      return result;
     }
   },
 });

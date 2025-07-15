@@ -1,4 +1,4 @@
-import { applyFunctionToValues, isNil, isObject, isString } from '@activepieces/shared'
+import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -20,7 +20,6 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
             const { unresolvedInput, executionState } = params
             if (isNil(unresolvedInput)) {
                 return {
-                    //TODO: REMOVE THE AS T
                     resolvedInput: unresolvedInput as T,
                     censoredInput: unresolvedInput,
                 }
@@ -55,7 +54,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>)=>{
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>) => {
     const resolvedValues: Record<string, unknown> = {}
     let longestResultLength = 0
     for (const tokenPart of partsThatNeedResolving) {
@@ -69,7 +68,7 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
         }
     }
     const result = new Array(longestResultLength).fill(null).map((_, index) => {
-        return Object.entries(resolvedValues).reduce((acc, [tokenPart, value])=>{
+        return Object.entries(resolvedValues).reduce((acc, [tokenPart, value]) => {
             const valueToUse = (Array.isArray(value) ? value[index] : value) ?? ''
             acc = acc.replace(tokenPart, isString(valueToUse) ? valueToUse : JSON.stringify(valueToUse))
             return acc
@@ -94,7 +93,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
     }
-    
+
     if (inputContainsOnlyOneTokenToResolve) {
         const trimmedInput = input.trim()
         const variableName = trimmedInput.substring(2, trimmedInput.length - 2)
@@ -123,7 +122,7 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (isConnection) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, { ...currentState, flattenNestedKeys })
+    return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -140,7 +139,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
     }
-    return evalInScope(pathAfterConnectionName, { connection, flattenNestedKeys })
+    return evalInScope(pathAfterConnectionName, { connection }, { flattenNestedKeys })
 }
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
@@ -176,12 +175,15 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
     return null
 }
 
-async function evalInScope(js: string, contextAsScope: Record<string, unknown>): Promise<unknown> {
+// eslint-disable-next-line @typescript-eslint/ban-types
+async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
     try {
         const codeSandbox = await initCodeSandbox()
+
         const result = await codeSandbox.runScript({
             script: js,
             scriptContext: contextAsScope,
+            functions,
         })
         return result ?? ''
     }
@@ -192,8 +194,8 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>):
 }
 
 function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
-    if (isObject(data)) {
-        for (const [key, value] of Object.entries(data)) {
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+        for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
             if (key === pathToMatch[0]) {
                 return flattenNestedKeys(value, pathToMatch.slice(1))
             }
