@@ -284,7 +284,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return removeSecretsFromFlow(
+        return this.removeSecretsFromFlow(
             flowVersion,
             removeConnectionsName,
             removeSampleData,
@@ -314,6 +314,25 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         return flowVersionRepoWrapper.save({ flowVersion })
     },
+    removeSecretsFromFlow(
+        flowVersion: FlowVersion,
+        removeConnectionNames: boolean,
+        removeSampleData: boolean,
+    ): FlowVersion {
+        return flowStructureUtil.transferFlow(flowVersion, (step) => {
+            const clonedStep = JSON.parse(JSON.stringify(step))
+            if (removeConnectionNames) {
+                clonedStep.settings.input = replaceConnections(clonedStep.settings.input)
+            }
+            if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
+                clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
+                clonedStep.settings.inputUiInfo.sampleDataInputFileId = undefined
+                clonedStep.settings.inputUiInfo.currentSelectedData = undefined
+                clonedStep.settings.inputUiInfo.lastTestDate = undefined
+            }
+            return clonedStep
+        })
+    },
 })
 
 
@@ -337,26 +356,6 @@ async function applySingleOperation(
         operation: preparedOperation,
     })
     return updatedFlowVersion
-}
-
-async function removeSecretsFromFlow(
-    flowVersion: FlowVersion,
-    removeConnectionNames: boolean,
-    removeSampleData: boolean,
-): Promise<FlowVersion> {
-    return flowStructureUtil.transferFlow(flowVersion, (step) => {
-        const clonedStep = JSON.parse(JSON.stringify(step))
-        if (removeConnectionNames) {
-            clonedStep.settings.input = replaceConnections(clonedStep.settings.input)
-        }
-        if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
-            clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
-            clonedStep.settings.inputUiInfo.sampleDataInputFileId = undefined
-            clonedStep.settings.inputUiInfo.currentSelectedData = undefined
-            clonedStep.settings.inputUiInfo.lastTestDate = undefined
-        }
-        return clonedStep
-    })
 }
 
 function replaceConnections(
