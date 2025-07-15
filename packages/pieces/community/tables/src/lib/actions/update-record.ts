@@ -38,10 +38,10 @@ export const updateRecord = createAction({
 
     const cells: UpdateRecordRequest['cells'] = Object.entries(values)
       .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-      .map(([fieldId, value]) => ({
-        fieldId,
+      .map(([fieldExternalId, value]) => ({
+        fieldId: tableFields.find((field) => field.externalId === fieldExternalId)?.id!,
         value,
-      }));
+      })).filter((cell) => cell.fieldId !== undefined);
 
     const request: UpdateRecordRequest = {
       cells,
