@@ -772,6 +772,9 @@ export const wedofCommon = {
           label: 'Date de mise à jour',
           value: 'lastUpdate',
         },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
         {
           label: 'Date de Création',
           value: 'createdOn',
@@ -876,6 +879,9 @@ export const wedofCommon = {
         { 
           label: 'Dernièr changement d’état', 
           value: 'stateLastUpdate' },
+        { 
+          label: 'Dernière mise à jour', 
+          value: 'updatedOn' },
         { 
           label: 'Passage à À prendre en charge', 
           value: 'toTakeDate' },
