@@ -19,7 +19,7 @@ import {
 } from './lib/triggers';
 
 export const dimoAuth = PieceAuth.CustomAuth({
-	description: `You can obtain following credetials by creating Devloper licence at [Developer Console](https://console.dimo.org/).`,
+	description: `You can obtain following credentials by creating Developer License at [Developer Console](https://console.dimo.org/).`,
 	required: true,
 	props: {
 		clientId: Property.ShortText({
