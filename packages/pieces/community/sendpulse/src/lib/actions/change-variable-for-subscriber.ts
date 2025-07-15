@@ -40,11 +40,10 @@ export const changeVariableForSubscriber = createAction({
       }
       try {
         const data = await sendPulseApiCall({
-          method: HttpMethod.PUT,
-          resourceUri: `/addressbooks/${addressBookId}/emails/variable`,
+          method: HttpMethod.POST,
+          resourceUri: `/addressbooks/${addressBookId}/emails`,
           body: {
-            email,
-            variables: vars,
+            emails: [{ email, variables: vars }],
           },
           auth,
         });

@@ -47,7 +47,7 @@ export const updateSubscriber = createAction({
       }
       try {
         const data = await sendPulseApiCall({
-          method: HttpMethod.PUT,
+          method: HttpMethod.POST,
           resourceUri: `/addressbooks/${addressBookId}/emails`,
           body: {
             emails: [{ email, variables: vars }],
