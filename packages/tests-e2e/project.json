@@ -17,7 +17,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx playwright test packages/tests-e2e/tests/*.spec.ts"
+          "npx playwright test --config=packages/tests-e2e/playwright.config.ts"
         ]
       }
     },
