@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
+  hideFlowsPageNavbar: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
@@ -23,6 +24,7 @@ type EmbeddingState = {
 const defaultState: EmbeddingState = {
   isEmbedded: false,
   hideSideNav: false,
+  hideFlowsPageNavbar: false,
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
