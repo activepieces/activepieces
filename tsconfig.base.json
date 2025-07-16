@@ -781,6 +781,9 @@
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
       ],
+      "@activepieces/piece-smoove": [
+        "packages/pieces/community/smoove/src/index.ts"
+      ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
