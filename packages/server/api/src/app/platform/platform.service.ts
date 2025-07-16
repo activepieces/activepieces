@@ -32,7 +32,7 @@ const DEFAULT_PLAN = {
     customRolesEnabled: false,
     tasksLimit: undefined,
 
-    agentsEnabled: false,
+    agentsEnabled: true,
     mcpsEnabled: true,
     includedAiCredits: 0,
     aiCreditsOverageLimit: undefined,

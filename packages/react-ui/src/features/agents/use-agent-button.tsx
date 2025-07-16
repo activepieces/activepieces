@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { MousePointerClick } from 'lucide-react';
+import { Workflow } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -157,8 +157,8 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
       onClick={() => mutate()}
       disabled={isPending}
     >
-      <MousePointerClick className="h-4 w-4" />
-      {isPending ? t('Importing...') : t('Use Agent')}
+      <Workflow />
+      {isPending ? t('Importing...') : t('Use in Flow')}
     </Button>
   );
 };
