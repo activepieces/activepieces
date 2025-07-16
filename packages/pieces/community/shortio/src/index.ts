@@ -16,7 +16,7 @@ export const shortio = createPiece({
   auth: shortioAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/shortio.png",
-  authors: [],
+  authors: ['ezhil56x'],
   actions: [createShortLink, updateLink, deleteLink, expireLink, createCountryTargetingForALink, getLinkByPath, listLinks, domainStatistics, getLinkClicks],
   triggers: [newLinkCreated],
 });

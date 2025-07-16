@@ -47,7 +47,7 @@ export type ShortioApiDomain = {
   sslCertInstalledSuccess: boolean;
 }
 
-export type ShortioApiLink = {
+export type ShortioApiLinks = {
   count: number;
   links: Array<{
     id: string;
@@ -174,6 +174,11 @@ export async function shortioApiCall<T extends HttpMessageBody>({
     if (error.response?.status === 401) {
       throw new Error('Authentication failed. Please check your API key.');
     }
+
+		if (error.response?.status >= 400 && error.response?.status < 500) {
+			throw new Error(`Request failed: ${error.response?.body?.message || error.message}`);
+		}
+
     throw new Error(`API call failed: ${error.message}`);
   }
 }
@@ -241,7 +246,7 @@ export const shortioCommon = {
       }
 
       try {
-        const response = await shortioApiCall<ShortioApiLink>({
+        const response = await shortioApiCall<ShortioApiLinks>({
           apiKey: auth as string,
           method: HttpMethod.GET,
           resourceUri: '/api/links',
