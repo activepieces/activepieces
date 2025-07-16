@@ -18,19 +18,27 @@ export const batchCreateAction = createAction({
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,
-    records: Property.Array({
+    records: Property.Json({
       displayName: 'Records',
+      description: 'Array of objects to create. Each object should match the selected object type\'s fields.',
       required: true,
-      description: 'Array of records to create',
-      item: objectFields,
+      defaultValue: [
+        { /* example: field1: "value", field2: 123 */ }
+      ],
     }),
   },
   async run({ auth, propsValue }) {
     const client = new FireberryClient(auth as string);
     const { objectType, records } = propsValue;
+    if (!Array.isArray(records)) {
+      throw new Error('Records must be an array of objects');
+    }
     validateBatchSize(records, MAX_BATCH_SIZE);
     for (const rec of records) {
-      validateRequiredFields(rec, Object.keys(rec));
+      if (typeof rec !== 'object' || rec === null) {
+        throw new Error('Each record must be an object');
+      }
+      validateRequiredFields(rec as Record<string, any>, Object.keys(rec as object));
     }
     let resourceUri = '';
     let body: any = {};

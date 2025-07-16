@@ -13,7 +13,8 @@ export const objectTypeDropdown = Property.Dropdown({
         placeholder: 'Connect your Fireberry account',
       };
     }
-    const client = new FireberryClient(auth as string);
+    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
+    const client = new FireberryClient(authStr);
     const metadata = await client.getObjectsMetadata();
     const options = metadata.objects.map(obj => ({
       label: obj.label,
@@ -32,8 +33,10 @@ export const objectFields = Property.DynamicProperties({
   required: true,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
-    const client = new FireberryClient(auth as string);
-    const metadata = await client.getObjectFieldsMetadata(objectType);
+    const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
+    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
+    const client = new FireberryClient(authStr);
+    const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
     const props: Record<string, any> = {};
     for (const field of metadata.fields) {
       switch (field.type) {

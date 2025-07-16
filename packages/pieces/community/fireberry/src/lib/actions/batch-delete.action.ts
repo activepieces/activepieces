@@ -18,19 +18,22 @@ export const batchDeleteAction = createAction({
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,
-    ids: Property.Array({
-      displayName: 'Record IDs',
+    ids: Property.Json({
+      displayName: 'IDs',
+      description: 'Array of record IDs to delete.',
       required: true,
-      description: 'Array of record IDs to delete',
-      item: Property.ShortText({ displayName: 'ID', required: true }),
+      defaultValue: ["id1", "id2"],
     }),
   },
   async run({ auth, propsValue }) {
     const client = new FireberryClient(auth as string);
     const { objectType, ids } = propsValue;
+    if (!Array.isArray(ids)) {
+      throw new Error('IDs must be an array of strings');
+    }
     validateBatchSize(ids, MAX_BATCH_SIZE);
     for (const id of ids) {
-      if (!id) throw new Error('Each record must include a valid ID');
+      if (!id || typeof id !== 'string') throw new Error('Each record must include a valid ID');
     }
     let resourceUri = '';
     let body: any = {};
