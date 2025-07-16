@@ -44,6 +44,7 @@ export default function Billing() {
     status as ApSubscriptionStatus,
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
+  const isEnterpriseEdition = edition === ApEdition.ENTERPRISE;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     edition === ApEdition.ENTERPRISE;
@@ -111,8 +112,12 @@ export default function Billing() {
       {isBusinessPlan && (
         <BusinessUserSeats platformSubscription={platformPlanInfo} />
       )}
-      <AICreditUsage platformSubscription={platformPlanInfo} />
-      <TasksUsage platformSubscription={platformPlanInfo} />
+      {!isEnterpriseEdition && (
+        <>
+          <AICreditUsage platformSubscription={platformPlanInfo} />
+          <TasksUsage platformSubscription={platformPlanInfo} />
+        </>
+      )}
 
       {isEnterprise ? (
         <LicenseKey platform={platform} />

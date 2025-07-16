@@ -25,6 +25,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -33,7 +34,6 @@ import { platformUsageService } from '../platform/platform-usage-service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
-import { platformService } from '../../platform/platform.service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -62,13 +62,12 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             const project = await projectService.getOneOrThrow(projectId)
             const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
             if (platform.plan.manageProjectsEnabled) {
-                const newTasks = request.plan.tasks ?? undefined
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        tasks: newTasks,
-                        aiCredits: request.plan.aiCredits,
+                        tasks: request.plan.tasks ?? null,
+                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -190,7 +189,7 @@ async function enrichProject(
         status: FlowStatus.ENABLED,
     })
 
-    
+
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
 
     const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)

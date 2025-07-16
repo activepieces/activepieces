@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { FlagGuard } from '@/app/components/flag-guard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,7 +29,6 @@ import { projectApi } from '@/lib/project-api';
 import {
   Permission,
   PlatformRole,
-  ApFlagId,
   ProjectWithLimits,
   ApErrorParams,
   ErrorCode,
@@ -166,63 +164,65 @@ export function EditProjectDialog({
               )}
             />
 
-            <FlagGuard flag={ApFlagId.PROJECT_LIMITS_ENABLED}>
-              <FormField
-                name="tasks"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="tasks">{t('Tasks')}</Label>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type="number"
-                        id="tasks"
-                        placeholder={t('Tasks')}
-                        className="rounded-sm pr-16"
-                      />
-                      <Button
-                        variant="link"
-                        type="button"
-                        tabIndex={-1}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('tasks', '')}
-                      >
-                        {t('Clear')}
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {platform.plan.manageProjectsEnabled && (
+              <>
+                <FormField
+                  name="tasks"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="tasks">{t('Tasks')}</Label>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="number"
+                          id="tasks"
+                          placeholder={t('Tasks')}
+                          className="rounded-sm pr-16"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          tabIndex={-1}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                          onClick={() => form.setValue('tasks', '')}
+                        >
+                          {t('Clear')}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                name="aiCredits"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type="number"
-                        id="aiCredits"
-                        placeholder={t('AI Credits')}
-                        className="rounded-sm pr-16"
-                      />
-                      <Button
-                        variant="link"
-                        type="button"
-                        tabIndex={-1}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                        onClick={() => form.setValue('aiCredits', '')}
-                      >
-                        {t('Clear')}
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FlagGuard>
+                <FormField
+                  name="aiCredits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="number"
+                          id="aiCredits"
+                          placeholder={t('AI Credits')}
+                          className="rounded-sm pr-16"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          tabIndex={-1}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                          onClick={() => form.setValue('aiCredits', '')}
+                        >
+                          {t('Clear')}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             {platform.plan.embeddingEnabled &&
               platformRole === PlatformRole.ADMIN && (

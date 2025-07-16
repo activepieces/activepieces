@@ -12,6 +12,7 @@ import {
     PlatformUsageMetric,
     ProjectPlan,
     spreadIfDefined,
+    spreadIfNotUndefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -26,13 +27,13 @@ const edition = system.getEdition()
 
 export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async upsert(
-        planLimits: Partial<ProjectPlanLimits>,
+        planLimits: ProjectPlanLimits,
         projectId: string,
     ): Promise<ProjectPlan> {
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo().update(projectPlan.id, {
-            tasks: planLimits.tasks ?? projectPlan.tasks,
-            aiCredits: planLimits.aiCredits ?? projectPlan.aiCredits,
+            ...spreadIfNotUndefined('tasks', planLimits.tasks),
+            ...spreadIfNotUndefined('aiCredits', planLimits.aiCredits),
             ...spreadIfDefined('name', planLimits.nickname),
             ...spreadIfDefined('locked', planLimits.locked),
             ...spreadIfDefined('pieces', planLimits.pieces),
@@ -140,6 +141,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
 
 
+
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
     const { manageProjectsEnabled, projectPlan, projectUsage, usageType } = params
     if (!manageProjectsEnabled) {
@@ -177,6 +179,13 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 }
 
 function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
+    if (edition !== ApEdition.CLOUD) {
+        return {
+            aiCredits: projectPlan.aiCredits ?? undefined,
+            tasks: projectPlan.tasks ?? undefined,
+        }
+    }
+
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
 
     const aiCreditsLimit = (isOverageEnabled ? (platformPlan.aiCreditsOverageLimit ?? 0) : 0) + platformPlan.includedAiCredits

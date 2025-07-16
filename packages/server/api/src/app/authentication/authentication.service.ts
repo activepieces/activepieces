@@ -243,8 +243,6 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
     await authenticationUtils.saveNewsLetterSubscriber(user, platform.id, userIdentity, log)
 
-    const f = 'asd';
-    
     return authenticationUtils.getProjectAndToken({
         userId: user.id,
         platformId: platform.id,
