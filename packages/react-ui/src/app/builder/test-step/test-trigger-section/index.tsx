@@ -40,13 +40,10 @@ const TestTriggerSection = React.memo(
       version: formValues.settings.pieceVersion,
     });
 
+    const trigger = pieceModel?.triggers?.[formValues.settings.triggerName];
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
 
-    const testType: TestType = triggerEventUtils.getTestType(
-      formValues.settings.triggerName,
-      formValues.settings.pieceName,
-    );
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -99,16 +96,22 @@ const TestTriggerSection = React.memo(
     );
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
-    if (isPieceLoading) {
+    if (isPieceLoading || isNil(trigger)) {
       return null;
     }
+    const testType: TestType = triggerEventUtils.getTestType({
+      triggerName: formValues.settings.triggerName,
+      pieceName: formValues.settings.pieceName,
+      trigger: trigger,
+    });
+
     const showSampleDataViewer =
       sampleDataSelected && !isSimulating && !isSavingMockdata;
 
     const getSimulationNode = (testType: TestType) => {
       switch (testType) {
         case 'simulation':
-          return t('testPieceSimulationTriggerNote', {
+          return t('testPieceWebhookTriggerNote', {
             pieceName: pieceModel?.displayName,
             triggerName:
               pieceModel?.triggers[formValues.settings.triggerName].displayName,
