@@ -6,7 +6,7 @@ export const updateLink = createAction({
   auth: shortioAuth,
   name: 'update_link',
   displayName: 'Update Link',
-  description: 'Update an existing short link in Short.io',
+  description: 'Update an existing short link',
   props: {
     domain_id: shortioCommon.domain_id,
     link_id: shortioCommon.link_id,

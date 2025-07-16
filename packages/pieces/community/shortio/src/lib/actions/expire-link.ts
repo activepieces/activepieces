@@ -6,7 +6,7 @@ export const expireLink = createAction({
   auth: shortioAuth,
   name: 'expireLink',
   displayName: 'Expire Link',
-  description: 'Set an expiration by date or click limit',
+  description: 'Set an expiration by date or click limit.',
   props: {
     domain_id: shortioCommon.domain_id,
     link_id: shortioCommon.link_id,

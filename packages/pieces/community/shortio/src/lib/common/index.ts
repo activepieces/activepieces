@@ -9,6 +9,7 @@ export type ShortioApiCallParams = {
 	resourceUri: string;
   query?: Record<string, string | number | string[] | undefined>;
 	body?: any;
+  hostName?: string;
 };
 
 export type ShortioApiDomain = {
@@ -129,6 +130,7 @@ export async function shortioApiCall<T extends HttpMessageBody>({
   resourceUri,
   query,
   body,
+  hostName,
 }: ShortioApiCallParams): Promise<T> {
   const qs: QueryParams = {};
 
@@ -145,7 +147,7 @@ export async function shortioApiCall<T extends HttpMessageBody>({
   if (method === HttpMethod.DELETE) {
     request = {
       method,
-      url: BASE_URL + resourceUri,
+      url: hostName ? hostName + resourceUri : BASE_URL + resourceUri,
       headers: {
         accept: 'application/json',
         Authorization: apiKey,
@@ -154,7 +156,7 @@ export async function shortioApiCall<T extends HttpMessageBody>({
   } else {
     request = {
       method,
-      url: BASE_URL + resourceUri,
+      url: hostName ? hostName + resourceUri : BASE_URL + resourceUri,
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',

@@ -6,7 +6,7 @@ export const listLinks = createAction({
   auth: shortioAuth,
   name: 'list_links',
   displayName: 'List Links',
-  description: 'Retrieve all links on a domain with pagination and date-range filters',
+  description: 'Retrieve all links on a domain with pagination and date-range filters.',
   props: {
     domain_id: shortioCommon.domain_id,
     limit: Property.Number({

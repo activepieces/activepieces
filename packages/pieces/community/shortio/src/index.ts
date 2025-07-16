@@ -8,6 +8,7 @@ import { expireLink } from "./lib/actions/expire-link"
 import { createCountryTargetingForALink } from "./lib/actions/create-country-targeting-for-a-link"
 import { getLinkByPath } from "./lib/actions/get-link-by-path"
 import { listLinks } from "./lib/actions/list-links"
+import { domainStatistics } from "./lib/actions/domain-statistics"
 
 export const shortio = createPiece({
   displayName: "Shortio",
@@ -15,6 +16,6 @@ export const shortio = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/shortio.png",
   authors: [],
-  actions: [createShortLink, updateLink, deleteLink, expireLink, createCountryTargetingForALink, getLinkByPath, listLinks],
+  actions: [createShortLink, updateLink, deleteLink, expireLink, createCountryTargetingForALink, getLinkByPath, listLinks, domainStatistics],
   triggers: [newLinkCreated],
 });

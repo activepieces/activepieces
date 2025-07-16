@@ -6,7 +6,7 @@ export const deleteLink = createAction({
   auth: shortioAuth,
   name: 'delete_link',
   displayName: 'Delete Link',
-  description: 'Permanently delete a short link from Short.io',
+  description: 'Permanently delete a short link.',
   props: {
     domain_id: shortioCommon.domain_id,
     link_id: shortioCommon.link_id,

@@ -6,7 +6,7 @@ export const createShortLink = createAction({
   auth: shortioAuth,
   name: 'create_link',
   displayName: 'Create Link',
-  description: 'Create a new short link with Short.io',
+  description: 'Create a new short link.',
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',
