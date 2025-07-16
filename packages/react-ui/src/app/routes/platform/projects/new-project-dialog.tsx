@@ -17,7 +17,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
 
@@ -42,8 +41,6 @@ export const NewProjectDialog = ({
     ),
   });
 
-  const { toast } = useToast();
-
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-project'],
     mutationFn: () => projectApi.create(form.getValues()),
@@ -52,7 +49,6 @@ export const NewProjectDialog = ({
       setOpen(false);
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
       setOpen(false);
     },
   });

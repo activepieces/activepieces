@@ -47,7 +47,7 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
-    | ProjectLockedParams
+    | ResourceLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -366,16 +366,14 @@ export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
     metric: PlatformUsageMetric
-    quota?: number
 }
 >
 
-export type ProjectLockedParams = BaseErrorParams<
-ErrorCode.PROJECT_LOCKED,
+export type ResourceLockedParams = BaseErrorParams<
+ErrorCode.RESOURCE_LOCKED,
 {
     message: string
-}
->
+}>
 
 export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
 ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
@@ -413,22 +411,19 @@ export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
     message: string
-}
->
+}>
 
 export type InvalidSAMLResponseParams = BaseErrorParams<
 ErrorCode.INVALID_SAML_RESPONSE,
 {
     message: string
-}
->
+}>
 
 export type ExistingAlertChannelErrorParams = BaseErrorParams<
 ErrorCode.EXISTING_ALERT_CHANNEL,
 {
     email: string
-}
->
+}>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
@@ -459,8 +454,6 @@ export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED,
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
-
-
 
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
@@ -517,7 +510,7 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-    PROJECT_LOCKED = 'PROJECT_LOCKED',
+    RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',

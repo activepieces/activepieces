@@ -3,7 +3,7 @@ import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
@@ -51,9 +51,6 @@ export const alertMutations = {
                 message: t('The email is already added.'),
               });
               break;
-
-            default:
-              toast(INTERNAL_ERROR_TOAST);
           }
         }
         setOpen(true);
@@ -62,7 +59,6 @@ export const alertMutations = {
   },
   useDeleteAlert: () => {
     const queryClient = useQueryClient();
-
     return useMutation<void, Error, Alert>({
       mutationFn: (alert) => alertsApi.delete(alert.id),
       onSuccess: () => {
@@ -72,10 +68,6 @@ export const alertMutations = {
           description: t('Your changes have been saved.'),
           duration: 3000,
         });
-      },
-      onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.log(error);
       },
     });
   },

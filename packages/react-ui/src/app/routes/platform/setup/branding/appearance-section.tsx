@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -65,9 +65,6 @@ export const AppearanceSection = () => {
         duration: 3000,
       });
       form.reset(form.getValues());
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
   console.log(form.formState.isValid, form.getValues());
