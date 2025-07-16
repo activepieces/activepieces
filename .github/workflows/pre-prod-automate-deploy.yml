@@ -45,7 +45,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.pre-prod
+            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}.${{ github.sha }}.pre-prod
 
       - name: Configure SSH
         run: |
@@ -66,5 +66,5 @@ jobs:
           
       - name: Deploy with Docker Compose
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker-compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker-compose up -d --force-recreate activepieces; exit"' 
+          ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.pre-prod docker compose up -d --force-recreate activepieces; exit"' 
           
