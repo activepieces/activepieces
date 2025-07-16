@@ -41,8 +41,9 @@ export const AgentRun = Type.Object({
     output: Type.Unknown(),
     steps: Type.Array(AgentStepBlock),
     message: Type.String(),
+    prompt: Type.String(),
     startTime: Type.String(),
-    finishTime: Type.String(),
+    finishTime: Type.Optional(Type.String()),
 })
 
 export type AgentRun = Static<typeof AgentRun>
@@ -96,3 +97,16 @@ export const ListAgentRunsQueryParams = Type.Object({
 })
 
 export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
+
+export const CreateAgentRunRequestBody = Type.Object({
+    agentId: Type.String(),
+    projectId: Type.String(),
+    prompt: Type.String(),
+    status: Type.Enum(AgentTaskStatus),
+    startTime: Type.String(),
+    steps: Type.Array(Type.Optional(AgentStepBlock)),
+    message: Type.Optional(Type.String()),
+    output: Type.Optional(Type.Unknown()),
+})
+
+export type CreateAgentRunRequestBody = Static<typeof CreateAgentRunRequestBody>

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AgentRun, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, AgentRun, AgentTaskStatus, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -55,6 +55,22 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
         }
         return agentRun
     },
+    async create(params: CreateParams): Promise<AgentRun> {
+        return agentRunsRepo().save({
+            agentId: params.agentId,
+            projectId: params.projectId,
+            prompt: params.prompt,
+            status: params.status,
+            startTime: params.startTime,
+        })
+    },
+    async update(params: UpdateParams): Promise<AgentRun> {
+        const agentRunToUpdate = await this.getOneOrThrow({ id: params.id, projectId: params.projectId })
+        return agentRunsRepo().save({
+            ...agentRunToUpdate,
+            ...params.agentRun,
+        })
+    },
 })
 
 type ListParams = {
@@ -67,4 +83,18 @@ type ListParams = {
 type GetOneParams = {
     id: string
     projectId: string
+}
+
+type CreateParams = {
+    agentId: string
+    projectId: string
+    prompt: string
+    status: AgentTaskStatus
+    startTime: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    agentRun: Partial<AgentRun>
 }

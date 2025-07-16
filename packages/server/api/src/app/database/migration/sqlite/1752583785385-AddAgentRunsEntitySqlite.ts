@@ -16,7 +16,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                 "steps" text NOT NULL,
                 "message" varchar,
                 "startTime" datetime NOT NULL,
-                "finishTime" datetime
+                "finishTime" datetime,
+                "prompt" varchar NOT NULL
             )
         `)
         await queryRunner.query(`
@@ -32,6 +33,7 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                 "message" varchar,
                 "startTime" datetime NOT NULL,
                 "finishTime" datetime,
+                "prompt" varchar NOT NULL,
                 CONSTRAINT "FK_fd5968f224bbef0787a26563dd5" FOREIGN KEY ("agentId") REFERENCES "agent" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_a2642efaec1c09ebf098411314f" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
@@ -60,7 +62,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                 "steps",
                 "message",
                 "startTime",
-                "finishTime"
+                "finishTime",
+                "prompt"
             FROM "agent_run"
         `)
         await queryRunner.query(`
@@ -89,7 +92,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                 "steps" text NOT NULL,
                 "message" varchar,
                 "startTime" datetime NOT NULL,
-                "finishTime" datetime
+                "finishTime" datetime,
+                "prompt" varchar NOT NULL
             )
         `)
         await queryRunner.query(`
@@ -104,7 +108,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                     "steps",
                     "message",
                     "startTime",
-                    "finishTime"
+                    "finishTime",
+                    "prompt"
                 )
             SELECT "id",
                 "created",
@@ -116,7 +121,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                 "steps",
                 "message",
                 "startTime",
-                "finishTime"
+                "finishTime",
+                "prompt"
             FROM "temporary_agent_run"
         `)
         await queryRunner.query(`

@@ -35,6 +35,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
             FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.FLOW_WORKER_CONCURRENCY),
             SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY),
+            AGENTS_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY),
             LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
             LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
             ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),

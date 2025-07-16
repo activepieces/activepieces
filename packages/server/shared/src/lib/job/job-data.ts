@@ -77,6 +77,15 @@ export const OneTimeJobData = Type.Object({
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 
+export const AgentJobData = Type.Object({
+    agentId: Type.String(),
+    projectId: Type.String(),
+    runId: Type.String(),
+    prompt: Type.String(),
+})
+
+export type AgentJobData = Static<typeof AgentJobData>
+
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
     schemaVersion: Type.Number(),
@@ -199,5 +208,6 @@ export const JobData = Type.Union([
     OneTimeJobData,
     WebhookJobData,
     UserInteractionJobData,
+    AgentJobData,
 ])
 export type JobData = Static<typeof JobData>

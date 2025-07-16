@@ -37,6 +37,7 @@ export const workerMachine = {
                 ...spreadIfDefined('FILE_STORAGE_LOCATION', settings?.FILE_STORAGE_LOCATION),
                 ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', settings?.FLOW_WORKER_CONCURRENCY?.toString()),
                 ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', settings?.SCHEDULED_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('AGENTS_WORKER_CONCURRENCY', settings?.AGENTS_WORKER_CONCURRENCY?.toString()),
                 ...spreadIfDefined('TRIGGER_TIMEOUT_SECONDS', settings?.TRIGGER_TIMEOUT_SECONDS?.toString()),
                 ...spreadIfDefined('PAUSED_FLOW_TIMEOUT_DAYS', settings?.PAUSED_FLOW_TIMEOUT_DAYS?.toString()),
                 ...spreadIfDefined('FLOW_TIMEOUT_SECONDS', settings?.FLOW_TIMEOUT_SECONDS?.toString()),
@@ -58,6 +59,7 @@ export const workerMachine = {
             ..._settings,
             ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
             ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('AGENTS_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.AGENTS_WORKER_CONCURRENCY)),
         }
 
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)

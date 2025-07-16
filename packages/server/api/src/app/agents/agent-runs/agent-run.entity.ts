@@ -40,6 +40,10 @@ export const AgentRunEntity = new EntitySchema<AgentRunSchema>({
             type: String,
             nullable: true,
         },
+        prompt: {
+            type: String,
+            nullable: false,
+        },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
