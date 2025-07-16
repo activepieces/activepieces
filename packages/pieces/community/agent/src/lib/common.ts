@@ -1,6 +1,7 @@
 import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, createAIProvider, SeekPage } from "@activepieces/shared"
+import { Agent, createAIProvider, SeekPage, AgentRun, AgentTaskStatus } from "@activepieces/shared"
 import { openai } from "@ai-sdk/openai";
+import { StatusCodes } from "http-status-codes";
 
 
 export const agentCommon = {
@@ -34,6 +35,49 @@ export const agentCommon = {
       },
     })
     return response.body
+  },
+  async pollAgentRunStatus(params: PollAgentRunParams): Promise<AgentRun> {
+    // 20 * 30 = 600 seconds (default timeout)
+    const { publicUrl, token, agentRunId, update, intervalSeconds = 20, maxAttempts = 30 } = params;
+    
+    let lastAgentRun: AgentRun;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const response = await httpClient.sendRequest<AgentRun>({
+        method: HttpMethod.GET,
+        url: `${publicUrl}v1/agent-runs/${agentRunId}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: token,
+        },
+      });
+
+      if (response.status !== StatusCodes.OK) {
+        throw new Error(response.body.message);
+      }
+
+      lastAgentRun = response.body;
+
+      await update({
+        steps: response.body.steps,
+        status: response.body.status,
+        output: response.body.output,
+        message: response.body.message
+      })
+
+      // Check if the agent run is completed
+      if (lastAgentRun.status === AgentTaskStatus.COMPLETED || lastAgentRun.status === AgentTaskStatus.FAILED) {
+        return lastAgentRun;
+      }
+
+      // If not the last attempt, wait before polling again
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
+      }
+    }
+
+    // Return the last fetched agent run
+    return lastAgentRun!
   }
 }
 
@@ -53,3 +97,12 @@ type InitOpenAI = {
   token: string
 
 }
+
+type PollAgentRunParams = {
+  publicUrl: string;
+  token: string;
+  agentRunId: string;
+  update: (data: Record<string, unknown>) => Promise<void>;
+  intervalSeconds?: number;
+  maxAttempts?: number;
+};

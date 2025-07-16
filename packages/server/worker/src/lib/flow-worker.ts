@@ -140,7 +140,7 @@ async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted
             break
         }
         case QueueName.AGENTS: {
-            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, workerToken)
+            await agentJobExecutor(log).executeAgent(jobData as AgentJobData, engineToken, workerToken)
             break
         }
     }

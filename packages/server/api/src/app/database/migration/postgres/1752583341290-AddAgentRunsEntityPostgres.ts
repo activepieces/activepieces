@@ -13,7 +13,7 @@ export class AddAgentRunsEntityPostgres1752583341290 implements MigrationInterfa
                 "projectId" character varying(21) NOT NULL,
                 "status" character varying NOT NULL,
                 "output" jsonb,
-                "steps" character varying array NOT NULL,
+                "steps" jsonb NOT NULL,
                 "message" character varying,
                 "startTime" TIMESTAMP WITH TIME ZONE NOT NULL,
                 "finishTime" TIMESTAMP WITH TIME ZONE,

@@ -50,7 +50,8 @@ export class AddAgentRunsEntitySqlite1752583785385 implements MigrationInterface
                     "steps",
                     "message",
                     "startTime",
-                    "finishTime"
+                    "finishTime",
+                    "prompt"
                 )
             SELECT "id",
                 "created",

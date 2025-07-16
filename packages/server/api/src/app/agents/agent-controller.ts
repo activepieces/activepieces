@@ -1,4 +1,4 @@
-import { Agent,  CreateAgentRequest,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent,  CreateAgentRequest,  ListAgentsQueryParams,  PrincipalType, SeekPage, UpdateAgentRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { agentsService } from './agents-service'
@@ -33,7 +33,7 @@ export const agentController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.post('/:id', UpdateAgentRequestParams, async (request) => {
+    app.post('/:id', UpdateAgentRequest, async (request) => {
         const { id } = request.params
         const { displayName, systemPrompt, description, testPrompt, outputType, outputFields } = request.body
         return agentsService(request.log).update({
@@ -94,16 +94,16 @@ const GetAgentRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.WORKER],
     },
 }
 
-const UpdateAgentRequestParams = {
+const UpdateAgentRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
         }),
-        body: UpdateAgentRequest,
+        body: UpdateAgentRequestBody,
         response: {
             [StatusCodes.OK]: Agent,
         },

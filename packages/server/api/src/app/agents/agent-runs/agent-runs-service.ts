@@ -1,9 +1,11 @@
-import { ActivepiecesError, AgentRun, AgentTaskStatus, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { JobType } from '@activepieces/server-shared'
+import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { jobQueue } from '../../workers/queue'
 import { AgentRunEntity } from './agent-run.entity'
 
 const agentRunsRepo = repoFactory(AgentRunEntity)
@@ -55,21 +57,47 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
         }
         return agentRun
     },
-    async create(params: CreateParams): Promise<AgentRun> {
-        return agentRunsRepo().save({
+    async run(params: RunParams): Promise<AgentRun> {
+        const agentRun = await agentRunsRepo().save({
+            id: apId(),
             agentId: params.agentId,
             projectId: params.projectId,
             prompt: params.prompt,
-            status: params.status,
-            startTime: params.startTime,
+            status: AgentTaskStatus.IN_PROGRESS,
+            steps: [],
+            // TODO: remove startTime and update migration
+            startTime: new Date().toISOString(),
         })
+
+        // Send job to agents queue
+        await jobQueue(_log).add({
+            id: agentRun.id,
+            type: JobType.AGENTS,
+            priority: 'high',
+            data: {
+                agentId: agentRun.agentId,
+                projectId: agentRun.projectId,
+                runId: agentRun.id,
+                prompt: agentRun.prompt,
+            },
+        })
+
+        return agentRun
     },
     async update(params: UpdateParams): Promise<AgentRun> {
-        const agentRunToUpdate = await this.getOneOrThrow({ id: params.id, projectId: params.projectId })
-        return agentRunsRepo().save({
-            ...agentRunToUpdate,
-            ...params.agentRun,
+        await this.getOneOrThrow({ id: params.id, projectId: params.projectId })
+        await agentRunsRepo().update({
+            id: params.id,
+        }, {
+            ...spreadIfDefined('status', params.agentRun.status),
+            ...spreadIfDefined('steps', params.agentRun.steps),
+            ...spreadIfDefined('message', params.agentRun.message),
+            ...spreadIfDefined('output', params.agentRun.output),
+            ...spreadIfDefined('startTime', params.agentRun.startTime),
+            ...spreadIfDefined('finishTime', params.agentRun.finishTime),
         })
+
+        return this.getOneOrThrow({ id: params.id, projectId: params.projectId })
     },
 })
 
@@ -85,16 +113,14 @@ type GetOneParams = {
     projectId: string
 }
 
-type CreateParams = {
+type RunParams = {
     agentId: string
     projectId: string
     prompt: string
-    status: AgentTaskStatus
-    startTime: string
 }
 
 type UpdateParams = {
     id: string
     projectId: string
-    agentRun: Partial<AgentRun>
+    agentRun: UpdateAgentRunRequestBody
 }

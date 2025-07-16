@@ -1,7 +1,7 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, CreateAgentRunRequestBody, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, McpWithTools, PlatformUsageMetric, PopulatedFlow, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, Agent, AgentRun, ErrorCode, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, McpWithTools, PlatformUsageMetric, PopulatedFlow, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
@@ -207,11 +207,11 @@ export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) =
         async getAgentRun(agentRunId: string): Promise<AgentRun> {
             return client.get<AgentRun>(`/v1/agent-runs/${agentRunId}`, {})
         },
-        async createAgentRun(agentRun: CreateAgentRunRequestBody): Promise<AgentRun> {
+        async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
             return client.post<AgentRun>('/v1/agent-runs', agentRun)
         },
-        async updateAgentRun(agentRunId: string, projectId: string, agentRun: Partial<AgentRun>): Promise<AgentRun> {
-            return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update?projectId=${projectId}`, agentRun)
+        async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
+            return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
         },
     }
 }

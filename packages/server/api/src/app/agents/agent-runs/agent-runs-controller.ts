@@ -1,6 +1,5 @@
-import { AgentRun, CreateAgentRunRequestBody, ListAgentRunsQueryParams, PrincipalType, SeekPage } from '@activepieces/shared'
+import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
 import { agentRunsService } from './agent-runs-service'
 
 const DEFAULT_LIMIT = 10
@@ -24,16 +23,19 @@ export const agentRunsController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.post('/', CreateAgentRunRequest, async (request) => {
-        return agentRunsService(request.log).create(request.body)
+    app.post('/', RunAgentRequest, async (request) => {
+        return agentRunsService(request.log).run({
+            agentId: request.body.agentId,
+            projectId: request.principal.projectId,
+            prompt: request.body.prompt,
+        })
     })
 
     app.post('/:id/update', UpdateAgentRunRequest, async (request) => {
         const { id } = request.params
-        const { projectId } = request.query
         return agentRunsService(request.log).update({
             id,
-            projectId,
+            projectId: request.body.projectId,
             agentRun: request.body,
         })
     })
@@ -42,12 +44,9 @@ export const agentRunsController: FastifyPluginAsyncTypebox = async (app) => {
 const ListAgentRunsRequest = {
     schema: {
         querystring: ListAgentRunsQueryParams,
-        response: {
-            [StatusCodes.OK]: SeekPage(AgentRun),
-        },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.USER],
     },
 }
 
@@ -56,24 +55,18 @@ const GetAgentRunRequest = {
         params: Type.Object({
             id: Type.String(),
         }),
-        response: {
-            [StatusCodes.OK]: AgentRun,
-        },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
     },
 }
 
-const CreateAgentRunRequest = {
+const RunAgentRequest = {
     schema: {
-        body: CreateAgentRunRequestBody,
-        response: {
-            [StatusCodes.OK]: AgentRun,
-        },
+        body: RunAgentRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE],
     },
 }
 
@@ -82,13 +75,7 @@ const UpdateAgentRunRequest = {
         params: Type.Object({
             id: Type.String(),
         }),
-        querystring: Type.Object({
-            projectId: Type.String(),
-        }),
-        body: AgentRun,
-    },
-    response: {
-        [StatusCodes.OK]: AgentRun,
+        body: UpdateAgentRunRequestBody,
     },
     config: {
         allowedPrincipals: [PrincipalType.WORKER],

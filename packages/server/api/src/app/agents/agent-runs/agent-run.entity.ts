@@ -6,9 +6,7 @@ import {
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
     JSONB_COLUMN_TYPE,
     TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
@@ -33,8 +31,8 @@ export const AgentRunEntity = new EntitySchema<AgentRunSchema>({
             nullable: true,
         },
         steps: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
         },
         message: {
             type: String,
@@ -46,6 +44,7 @@ export const AgentRunEntity = new EntitySchema<AgentRunSchema>({
         },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
+            nullable: true,
         },
         finishTime: {
             nullable: true,

@@ -72,7 +72,7 @@ export const CreateAgentRequest = Type.Object({
 
 export type CreateAgentRequest = Static<typeof CreateAgentRequest>
 
-export const UpdateAgentRequest = Type.Object({
+export const UpdateAgentRequestBody = Type.Object({
     systemPrompt: Type.Optional(Type.String()),
     displayName: Type.Optional(Type.String()),  
     description: Type.Optional(Type.String()),
@@ -81,7 +81,7 @@ export const UpdateAgentRequest = Type.Object({
     outputFields: Type.Optional(Type.Array(AgentOutputField)),
 })
 
-export type UpdateAgentRequest = Static<typeof UpdateAgentRequest>
+export type UpdateAgentRequestBody = Static<typeof UpdateAgentRequestBody>
 
 export const ListAgentsQueryParams = Type.Object({
     limit: Type.Optional(Type.Number()),
@@ -98,15 +98,21 @@ export const ListAgentRunsQueryParams = Type.Object({
 
 export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
 
-export const CreateAgentRunRequestBody = Type.Object({
+export const RunAgentRequestBody = Type.Object({
     agentId: Type.String(),
-    projectId: Type.String(),
     prompt: Type.String(),
-    status: Type.Enum(AgentTaskStatus),
-    startTime: Type.String(),
-    steps: Type.Array(Type.Optional(AgentStepBlock)),
-    message: Type.Optional(Type.String()),
-    output: Type.Optional(Type.Unknown()),
 })
 
-export type CreateAgentRunRequestBody = Static<typeof CreateAgentRunRequestBody>
+export type RunAgentRequestBody = Static<typeof RunAgentRequestBody>
+
+export const UpdateAgentRunRequestBody = Type.Object({
+    projectId: Type.String(),
+    status: Type.Optional(Type.Enum(AgentTaskStatus)),
+    startTime: Type.Optional(Type.String()),
+    steps: Type.Array(AgentStepBlock),
+    message: Type.Optional(Type.String()),
+    output: Type.Optional(Type.Unknown()),
+    finishTime: Type.Optional(Type.String()),
+})
+
+export type UpdateAgentRunRequestBody = Static<typeof UpdateAgentRunRequestBody>

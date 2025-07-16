@@ -1,5 +1,5 @@
 import { AgentJobData } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, CreateAgentRunRequestBody, createAIProvider, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, createAIProvider, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,14 +9,24 @@ import { workerMachine } from '../utils/machine'
 
 let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
-    async executeAgent(jobData: AgentJobData, workerToken: string): Promise<void> {
+    async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
         try {
+            const agentResult: UpdateAgentRunRequestBody = {
+                projectId: jobData.projectId,
+                startTime: new Date().toISOString(),
+                steps: [],
+                message: '',
+                status: AgentTaskStatus.IN_PROGRESS,
+                output: undefined,
+            }
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+
             const agent = await agentsApiService(workerToken, log).getAgent(jobData.agentId)
             const mcp = await agentsApiService(workerToken, log).getMcp(agent.mcpId)
             agentToolInstance = await agentTools({
                 agent,
                 publicUrl: workerMachine.getPublicApiUrl(),
-                token: workerToken,
+                token: engineToken,
                 mcp,
             })
 
@@ -24,7 +34,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             const model = createAIProvider({
                 providerName: 'openai',
                 modelInstance: openai('gpt-4o-mini'),
-                apiKey: workerToken,
+                apiKey: engineToken,
                 baseURL,
             })
             const { fullStream } = streamText({
@@ -34,16 +44,6 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 maxSteps: agent.maxSteps,
                 tools: await agentToolInstance.tools(),
             })
-            const agentResult: CreateAgentRunRequestBody = {
-                agentId: jobData.agentId,
-                projectId: jobData.projectId,
-                prompt: jobData.prompt,
-                startTime: new Date().toISOString(),
-                steps: [],
-                status: AgentTaskStatus.IN_PROGRESS,
-                output: undefined,
-                message: '',
-            }
             let currentText = ''
     
             for await (const chunk of fullStream) {
@@ -83,13 +83,14 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 else if (chunk.type === 'error') {
                     agentResult.status = AgentTaskStatus.FAILED
                     if (APICallError.isInstance(chunk.error)) {
-                        const errorResponse = (chunk.error as any)?.data as AIErrorResponse
+                        const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
                         agentResult.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
                     }
                     else {
                         agentResult.message = concatMarkdown(agentResult.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
                     }
-                    await agentsApiService(workerToken, log).updateAgentRun(jobData.agentId, jobData.projectId, agentResult)
+                    agentResult.finishTime = new Date().toISOString()
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
                     return
                 }
             }
@@ -99,13 +100,14 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                     markdown: currentText,
                 })
             }
-    
-            const markAsComplete = agentResult.steps?.find(isMarkAsComplete) as ToolCallContentBlock | undefined
+
+            const markAsComplete = agentResult.steps.find(isMarkAsComplete) as ToolCallContentBlock | undefined
             agentResult.output = markAsComplete?.input
             agentResult.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
-            agentResult.message = concatMarkdown(agentResult.steps ?? [])
-    
-            await agentsApiService(workerToken, log).updateAgentRun(jobData.agentId, jobData.projectId, agentResult)
+            agentResult.message = concatMarkdown(agentResult.steps)
+            agentResult.finishTime = new Date().toISOString()
+
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
         }
         catch (error) {
             log.error(error, 'Error executing agent job')

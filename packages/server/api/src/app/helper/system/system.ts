@@ -54,7 +54,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
-    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: '20',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.LOG_LEVEL]: 'info',
