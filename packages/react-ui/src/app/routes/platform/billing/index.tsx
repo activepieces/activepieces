@@ -143,7 +143,6 @@ export default function Billing() {
           </CardContent>
         </Card>
       )}
-      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
       <ActivateLicenseDialog
         isOpen={isActivateLicenseKeyDialogOpen}
         onOpenChange={setIsActivateLicenseKeyDialogOpen}
