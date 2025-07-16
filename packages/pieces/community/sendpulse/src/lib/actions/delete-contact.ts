@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
+import { mailingListDropdown } from '../common/props';
 
 export const deleteContactAction = createAction({
   auth: sendpulseAuth,
@@ -10,11 +11,7 @@ export const deleteContactAction = createAction({
   description:
     'Permanently delete one or more contacts from a specific mailing list (removes variables, phone, and history in that list only).',
   props: {
-    mailingListId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'The ID of the SendPulse mailing list',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
     emails: Property.Array({
       displayName: 'Emails',
       description:

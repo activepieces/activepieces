@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
+import { mailingListDropdown } from '../common/props';
 
 export const updateSubscriberAction = createAction({
   auth: sendpulseAuth,
@@ -9,11 +10,7 @@ export const updateSubscriberAction = createAction({
   displayName: 'Update Subscriber',
   description: 'Update the phone number and email of an existing subscriber in a mailing list.',
   props: {
-    mailingListId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'The ID of the SendPulse address book (mailing list)',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address of the subscriber to update',

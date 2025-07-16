@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
+import { mailingListDropdown } from '../common/props';
 
 export const addSubscriberAction = createAction({
   auth: sendpulseAuth,
@@ -9,11 +10,7 @@ export const addSubscriberAction = createAction({
   displayName: 'Add Emails to Mailing List',
   description: 'Adds one or more emails to a mailing list (single-opt-in).',
   props: {
-    mailingListId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'ID of the SendPulse address book (mailing list)',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
     email: Property.Array({
       displayName: 'Email Addresses',
       description: 'List of email addresses (e.g., user@example.com)',

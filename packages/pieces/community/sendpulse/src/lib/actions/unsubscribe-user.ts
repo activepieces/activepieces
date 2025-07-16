@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendpulseApiCall } from '../common/client';
 import { sendpulseAuth } from '../common/auth';
+import { mailingListDropdown } from '../common/props';
 
 export const unsubscribeUserAction = createAction({
   auth: sendpulseAuth,
@@ -9,11 +10,7 @@ export const unsubscribeUserAction = createAction({
   displayName: 'Unsubscribe User',
   description: 'Unsubscribes one or more users by email from a specific mailing list.',
   props: {
-    mailingListId: Property.Number({
-      displayName: 'Mailing List ID',
-      description: 'The ID of the SendPulse mailing list (address book)',
-      required: true,
-    }),
+    mailingListId: mailingListDropdown,
     emails: Property.Array({
       displayName: 'Emails',
       description: 'One or more email addresses to unsubscribe (max 100)',
