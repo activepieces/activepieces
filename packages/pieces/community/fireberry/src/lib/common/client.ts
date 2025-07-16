@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from '@activepieces/pieces-common';
 
-const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com/api';
+const FIREBERRY_API_BASE_URL = 'https://api.fireberry.com';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -69,6 +69,7 @@ export class FireberryClient {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.apiKey,
       },
+      timeout: 10000, // 10 seconds
     };
     let lastError: any = null;
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -101,14 +102,14 @@ export class FireberryClient {
   async getObjectsMetadata(): Promise<{ objects: Array<{ name: string; label: string }> }> {
     return this.request<{ objects: Array<{ name: string; label: string }> }>({
       method: HttpMethod.GET,
-      resourceUri: '/metadata/objects/',
+      resourceUri: '/metadata/records',
     });
   }
 
   async getObjectFieldsMetadata(object: string): Promise<{ fields: Array<{ name: string; label: string; type: string; required: boolean }> }> {
     return this.request<{ fields: Array<{ name: string; label: string; type: string; required: boolean }> }>({
       method: HttpMethod.GET,
-      resourceUri: `/metadata/objects/${object}/fields/`,
+      resourceUri: `/metadata/records/${object}/fields`,
     });
   }
 
