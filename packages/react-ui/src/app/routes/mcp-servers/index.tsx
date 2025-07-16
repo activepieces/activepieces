@@ -70,8 +70,6 @@ const McpServersPage = () => {
       onError: (err: Error) => {
         if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
           setUpgradeDialogOpen(true);
-        } else {
-          toast(INTERNAL_ERROR_TOAST);
         }
       },
     });

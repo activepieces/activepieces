@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
@@ -66,8 +65,6 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
     onError: (err: Error) => {
       if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
         setUpgradeDialogOpen(true);
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
       }
     },
   });

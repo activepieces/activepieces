@@ -9,10 +9,11 @@ const TOAST_LIMIT = 3;
 const TOAST_REMOVE_DELAY = 5000;
 
 export const INTERNAL_ERROR_MESSAGE =
-  'Something went wrong, please try again later.';
+  'An unexpected error occurred. Please try again in a moment.';
+
 export const INTERNAL_ERROR_TOAST: ToasterToast = {
   id: 'internal-error',
-  title: 'Error',
+  title: 'Something went wrong',
   description: INTERNAL_ERROR_MESSAGE,
   variant: 'destructive',
   duration: 3000,

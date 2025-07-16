@@ -16,7 +16,11 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { RESOURCE_LOCKED_MESSAGE, toast } from '@/components/ui/use-toast';
+import {
+  INTERNAL_ERROR_TOAST,
+  RESOURCE_LOCKED_MESSAGE,
+  toast,
+} from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { ErrorCode, ResourceLockedParams } from '@activepieces/shared';
 
@@ -31,6 +35,8 @@ const queryClient = new QueryClient({
       if (api.isApError(err, ErrorCode.RESOURCE_LOCKED)) {
         const error = err.response?.data as ResourceLockedParams;
         toast(RESOURCE_LOCKED_MESSAGE(error.params.message));
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
       }
     },
   }),

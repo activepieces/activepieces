@@ -21,7 +21,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
@@ -175,15 +174,6 @@ export function McpPieceDialog({
     onSuccess: () => {
       onSuccess?.();
       handleClose();
-    },
-    onError: (error) => {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to update tool'),
-        duration: 5000,
-      });
     },
   });
 
