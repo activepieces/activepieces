@@ -4,6 +4,7 @@ import { newLinkCreated } from "./lib/triggers/new-link-created"
 import { createShortLink } from "./lib/actions/create-link"
 import { updateLink } from "./lib/actions/update-link"
 import { deleteLink } from "./lib/actions/delete-link"
+import { expireLink } from "./lib/actions/expire-link"
 
 export const shortio = createPiece({
   displayName: "Shortio",
@@ -11,6 +12,6 @@ export const shortio = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/shortio.png",
   authors: [],
-  actions: [createShortLink, updateLink, deleteLink],
+  actions: [createShortLink, updateLink, deleteLink, expireLink],
   triggers: [newLinkCreated],
 });
