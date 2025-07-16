@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework"
 import { shortioAuth } from "./lib/common"
 import { newLinkCreated } from "./lib/triggers/new-link-created"
+import { createShortLink } from "./lib/actions/create-short-link"
 
 export const shortio = createPiece({
   displayName: "Shortio",
@@ -8,6 +9,6 @@ export const shortio = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/shortio.png",
   authors: [],
-  actions: [],
+  actions: [createShortLink],
   triggers: [newLinkCreated],
 });
