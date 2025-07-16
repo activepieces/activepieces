@@ -1,4 +1,4 @@
-import { ProjectPlanLimits } from '@activepieces/ee-shared'
+import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -9,6 +9,7 @@ import {
     isNil,
     PiecesFilterType,
     PlatformPlan,
+    PlatformUsageMetric,
     ProjectPlan,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -126,9 +127,9 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         if (projectPlan.locked) {
             throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_LOCKED,
+                code: ErrorCode.RESOURCE_LOCKED,
                 params: {
-                    message: 'Project is locked',
+                    message: RESOURCE_TO_MESSAGE_MAPPING[PlatformUsageMetric.PROJECTS],
                 },
             })
         }
