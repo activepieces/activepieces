@@ -763,6 +763,9 @@
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
       ],
+      "@activepieces/piece-shortio": [
+        "packages/pieces/community/shortio/src/index.ts"
+      ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
       ],
