@@ -43,10 +43,11 @@ FROM base AS build
 
 # Set up backend
 WORKDIR /usr/src/app
-COPY . .
 
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
+
+COPY . .
 
 RUN npx nx run-many --target=build --projects=server-api --configuration production
 RUN npx nx run-many --target=build --projects=react-ui

@@ -42,11 +42,12 @@ import { newUserTrigger } from './lib/triggers/new-user';
 import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
 import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
+import { listUsers } from './lib/actions/list-users';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
   authUrl:
-    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read',
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
@@ -73,8 +74,10 @@ export const slackAuth = PieceAuth.OAuth2({
     'chat:write.customize',
     'links:read',
     'links:write',
-		'emoji:read',
-		'users.profile:read'
+    'emoji:read',
+    'users.profile:read',
+    'channels:write.invites',
+    'groups:write.invites'
   ],
 });
 
@@ -136,6 +139,7 @@ export const slack = createPiece({
     findUserByEmailAction,
     findUserByHandleAction,
     findUserByIdAction,
+    listUsers,
     updateMessage,
     createChannelAction,
     updateProfileAction,

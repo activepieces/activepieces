@@ -58,14 +58,15 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
-
 export enum PlatformUsageMetric {
     TASKS = 'tasks',
-    AI_TOKENS = 'ai-tokens',
+    AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
+    AGENTS = 'agents',
     TABLES = 'tables',
+    MCPS = 'mcps',
 }
 
 
@@ -74,25 +75,36 @@ export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
-    mcp: Type.Number(),
+    mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
+    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
+export enum AiOverageState {
+    NOT_ALLOWED = 'not_allowed',
+    ALLOWED_BUT_OFF = 'allowed_but_off',
+    ALLOWED_AND_ON = 'allowed_an_on',
+}
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    includedTasks: Type.Number(),
-    includedAiCredits: Type.Number(),
     tasksLimit: Type.Optional(Type.Number()),
-    aiCreditsLimit: Type.Optional(Type.Number()),
+    includedAiCredits: Type.Number(),
+    aiCreditsOverageLimit: Type.Optional(Type.Number()),
+    aiCreditsOverageState: Type.Optional(Type.String()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    agentsEnabled: Type.Boolean(),
+    mcpsEnabled: Type.Boolean(),
+    tablesEnabled: Type.Boolean(),
+    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
@@ -104,20 +116,17 @@ export const PlatformPlan = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
-
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
-
-    alertsEnabled: Type.Boolean(),
+    eligibleForTrial: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
-    
     licenseKey: Type.Optional(Type.String()),
     licenseExpiresAt: Type.Optional(Type.String()),
-
     stripeCustomerId: Type.Optional(Type.String()),
     stripeSubscriptionId: Type.Optional(Type.String()),
     stripeSubscriptionStatus: Type.Optional(Type.String()),
-
+    stripeSubscriptionStartDate: Type.Optional(Type.Number()),
+    stripeSubscriptionEndDate: Type.Optional(Type.Number()),
+    stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
+    stripePaymentMethod: Type.Optional(Type.String()),
     userSeatsLimit: Type.Optional(Type.Number()),
     projectsLimit: Type.Optional(Type.Number()),
     tablesLimit: Type.Optional(Type.Number()),
@@ -159,12 +168,12 @@ export const Platform = Type.Object({
 
 export type Platform = Static<typeof Platform>
 
-
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
+    usage: Type.Optional(PlatformUsage)
 }), Type.Pick(Platform, [
     'id',
     'created',
@@ -187,12 +196,12 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
 
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>
 
-
 export const PlatformBillingInformation = Type.Object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: Type.String(),
+    nextBillingDate: Type.Number(),
+    nextBillingAmount: Type.Number(),
+    cancelAt: Type.Optional(Type.Number()),
 })
 
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
-

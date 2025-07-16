@@ -10,7 +10,7 @@ import { appConnectionsQueries } from '@/features/connections/lib/app-connection
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
@@ -31,7 +31,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { pieces } = piecesHooks.usePieces({});
 
   const { data, isLoading, refetch } = useQuery({
@@ -123,8 +122,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
-    isDropdownOpen,
-    setIsDropdownOpen,
     refresh,
     setSelectedRows,
     setRefresh,
@@ -132,7 +129,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   });
 
   return (
-    <div className="flex flex-row gap-4">
+    <div className="flex flex-row gap-8">
       {!embedState.hideFolders && (
         <FolderFilterList key="folder-filter" refresh={refresh} />
       )}

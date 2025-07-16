@@ -5,6 +5,7 @@ import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -17,29 +18,25 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
+import { FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const { data: maxTables } = flagsHooks.useFlag(
-    ApFlagId.MAX_TABLES_PER_PROJECT,
-  );
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
+  const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -84,22 +81,6 @@ const ApTablesPage = () => {
         `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );
     },
-    onError: (err: Error) => {
-      if (
-        api.isError(err) &&
-        err.response?.status === api.httpStatus.Conflict
-      ) {
-        toast({
-          title: t('Max tables reached'),
-          description: t(`You can't create more than {maxTables} tables`, {
-            maxTables,
-          }),
-          variant: 'destructive',
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
   });
 
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
@@ -112,6 +93,7 @@ const ApTablesPage = () => {
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
           }
+          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -132,6 +114,7 @@ const ApTablesPage = () => {
         );
         return (
           <Checkbox
+            variant="secondary"
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
@@ -203,9 +186,6 @@ const ApTablesPage = () => {
     onSuccess: () => {
       refetch();
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   const bulkActions: BulkAction<Table>[] = useMemo(
@@ -268,57 +248,64 @@ const ApTablesPage = () => {
   }
 
   return (
-    <div className="flex-col w-full gap-4">
-      <div className="flex justify-between items-center">
-        <TableTitle
-          description={t(
-            'Create and manage your tables to store your automation data',
-          )}
-        >
-          {t('Tables')}
-        </TableTitle>
-        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <Button
-            size="sm"
-            onClick={() => createTable({ name: t('New Table') })}
-            className="flex items-center gap-2"
-            disabled={!userHasTableWritePermission}
+    <LockedFeatureGuard
+      featureKey="TABLES"
+      locked={!platform.plan.tablesEnabled}
+      lockTitle={t('Tables')}
+      lockDescription={t(
+        'Create and manage your tables to store your automation data',
+      )}
+    >
+      <div className="flex-col w-full gap-4">
+        <div className="flex justify-between items-center">
+          <TableTitle
+            description={t(
+              'Create and manage your tables to store your automation data',
+            )}
           >
-            <Plus className="h-4 w-4" />
-            {t('New Table')}
-          </Button>
-        </PermissionNeededTooltip>
+            {t('Tables')}
+          </TableTitle>
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        </div>
+        <DataTable
+          filters={[
+            {
+              accessorKey: 'name',
+              type: 'input',
+              title: t('Name'),
+              icon: CheckIcon,
+              options: [],
+            },
+          ]}
+          emptyStateIcon={<Table2 className="size-14" />}
+          emptyStateTextTitle={t('No tables have been created yet')}
+          emptyStateTextDescription={t(
+            'Create a table to get started and start managing your automation data',
+          )}
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          onRowClick={(row, newWindow) => {
+            const path = `/projects/${project.id}/tables/${row.id}`;
+            if (newWindow) {
+              openNewWindow(path);
+            } else {
+              navigate(path);
+            }
+          }}
+          bulkActions={bulkActions}
+        />
       </div>
-
-      <DataTable
-        filters={[
-          {
-            accessorKey: 'name',
-            type: 'input',
-            title: t('Name'),
-            icon: CheckIcon,
-            options: [],
-          },
-        ]}
-        emptyStateIcon={<Table2 className="size-14" />}
-        emptyStateTextTitle={t('No tables have been created yet')}
-        emptyStateTextDescription={t(
-          'Create a table to get started and start managing your automation data',
-        )}
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        onRowClick={(row, newWindow) => {
-          const path = `/projects/${project.id}/tables/${row.id}`;
-          if (newWindow) {
-            openNewWindow(path);
-          } else {
-            navigate(path);
-          }
-        }}
-        bulkActions={bulkActions}
-      />
-    </div>
+    </LockedFeatureGuard>
   );
 };
 

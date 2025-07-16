@@ -31,7 +31,7 @@ const AlertOption = React.memo(
           {
             'hover:bg-accent hover:text-accent-foreground  cursor-pointer ':
               !disabled,
-            'bg-secondary text-secondary-foreground': isActive && !disabled,
+            'bg-accent text-accent-foreground': isActive && !disabled,
             'opacity-50 cursor-not-allowed ': disabled,
           },
         )}

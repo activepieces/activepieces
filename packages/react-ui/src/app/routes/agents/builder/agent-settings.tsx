@@ -1,194 +1,244 @@
-import { Wand, Info, Activity } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { t } from 'i18next';
+import { CheckIcon, Wand } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
+import { Form, FormControl, FormField } from '@/components/ui/form';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Separator } from '@/components/ui/separator';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Agent, AgentOutputField, AgentOutputType } from '@activepieces/shared';
+  Agent,
+  AgentOutputField,
+  AgentOutputType,
+  debounce,
+  isNil,
+} from '@activepieces/shared';
 
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
+import { UseAgentButton } from '../../../../features/agents/use-agent-button';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
-import { AgentTestRunButton } from './agent-test-run-button';
 
 interface AgentSettingsProps {
   agent?: Agent;
   refetch: () => void;
+  onChange?: (agent: Agent) => void;
+  hideUseAgentButton?: boolean;
 }
 
 interface AgentFormValues {
   systemPrompt: string;
+  displayName: string;
+  description: string;
+  outputType: AgentOutputType | undefined;
+  outputFields: AgentOutputField[] | undefined;
 }
 
-export const AgentSettings = ({ agent, refetch }: AgentSettingsProps) => {
-  const [displayName, setDisplayName] = useState(agent?.displayName || '');
-  const [description, setDescription] = useState(agent?.description || '');
-  const { register, watch, setValue } = useForm<AgentFormValues>({
+export const AgentSettings = ({
+  agent,
+  refetch,
+  onChange,
+  hideUseAgentButton,
+}: AgentSettingsProps) => {
+  const form = useForm<AgentFormValues>({
     defaultValues: {
       systemPrompt: '',
+      displayName: '',
+      description: '',
+      outputType: undefined,
+      outputFields: undefined,
     },
+    mode: 'all',
+    reValidateMode: 'onChange',
   });
 
-  const systemPrompt = watch('systemPrompt');
-  const debounceTimeout = useRef<NodeJS.Timeout>();
+  const { setValue, getValues } = form;
+  const updateAgentMutation = agentHooks.useUpdate();
+  const [isSaving, setIsSaving] = useState(false);
+  const hasSavedRef = useRef(false);
+  const debouncedUpdate = useMemo(() => {
+    return debounce((formData: AgentFormValues) => {
+      if (isNil(agent)) return;
+      updateAgentMutation.mutate(
+        {
+          id: agent.id,
+          request: formData,
+        },
+        {
+          onSuccess: () => {
+            refetch();
+            onChange?.(agent);
+            setIsSaving(false);
+          },
+        },
+      );
+    }, 500);
+  }, [refetch, updateAgentMutation, onChange]);
+
+  const handleChange = () => {
+    hasSavedRef.current = true;
+    setIsSaving(true);
+    debouncedUpdate(getValues());
+  };
 
   useEffect(() => {
     if (agent) {
-      setValue('systemPrompt', agent.systemPrompt || '');
-      setDisplayName(agent.displayName || '');
-      setDescription(agent.description || '');
-    } else {
-      setValue('systemPrompt', '');
-      setDisplayName('');
-      setDescription('');
+      setValue('systemPrompt', agent.systemPrompt);
+      setValue('displayName', agent.displayName);
+      setValue('description', agent.description);
+      setValue('outputType', agent.outputType);
+      setValue('outputFields', agent.outputFields);
     }
-  }, [agent, setValue]);
-
-  const updateAgentMutation = agentHooks.useUpdate();
-
-  // Auto-save system prompt with debounce
-  useEffect(() => {
-    if (!agent?.id) return;
-
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
-
-    debounceTimeout.current = setTimeout(() => {
-      if (systemPrompt !== agent.systemPrompt) {
-        updateAgentMutation.mutate(
-          { id: agent.id, request: { systemPrompt } },
-          { onSuccess: () => refetch() },
-        );
-      }
-    }, 1000);
-
-    return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-    };
-  }, [systemPrompt, agent?.id, agent?.systemPrompt]);
-
-  const handleNameChange = async (value: string) => {
-    setDisplayName(value);
-    await updateAgentMutation.mutateAsync(
-      { id: agent!.id, request: { displayName: value } },
-      { onSuccess: () => refetch() },
-    );
-  };
-
-  const handleDescriptionChange = async (value: string) => {
-    setDescription(value);
-    await updateAgentMutation.mutateAsync(
-      { id: agent!.id, request: { description: value } },
-      { onSuccess: () => refetch() },
-    );
-  };
+  }, [agent?.id, setValue]);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
-  const handleOutputChange = (
-    outputType: AgentOutputType,
-    outputFields: AgentOutputField[],
-  ) => {
-    if (!agent?.id) return;
-    updateAgentMutation.mutate(
-      { id: agent.id, request: { outputType, outputFields } },
-      { onSuccess: () => refetch() },
-    );
-  };
-
   return (
-    <div className="flex flex-1 h-full">
-      <div className="w-full px-6 pb-6 space-y-6">
-        <div className="flex flex-col md:flex-row items-start gap-6">
-          <div className="flex-shrink-0">
-            <img
-              src={
-                agent?.profilePictureUrl ||
-                'https://cdn.activepieces.com/quicknew/agents/robots/robot_7000.png'
-              }
-              alt="Agent avatar"
-              className="w-20 h-20 rounded-xl object-cover border"
-            />
-          </div>
-          <div className="flex flex-col flex-1">
-            <div className="flex items-center gap-2 justify-between">
-              <EditableTextWithPen
-                value={displayName}
-                className="text-2xl font-semibold"
-                readonly={false}
-                onValueChange={handleNameChange}
-                isEditing={isEditingName}
-                setIsEditing={setIsEditingName}
+    <Form {...form}>
+      <div className="flex flex-1 h-full">
+        <div className="w-full px-6 pb-6">
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="flex-shrink-0">
+              <ImageWithFallback
+                src={agent?.profilePictureUrl}
+                alt="Agent avatar"
+                className="w-20 h-20 rounded-xl object-cover"
               />
-              <div>{agent && <AgentTestRunButton agentId={agent.id} />}</div>
             </div>
-            <EditableTextWithPen
-              value={description}
-              className="text-sm text-muted-foreground mt-1"
-              readonly={false}
-              onValueChange={handleDescriptionChange}
-              isEditing={isEditingDescription}
-              setIsEditing={setIsEditingDescription}
-            />
-            <div className="flex items-center gap-2 mt-2">
-              <Activity className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium">
-                Task Completed: {agent?.taskCompleted}
-              </span>
+            <div className="flex justify-between w-full">
+              <div className="flex flex-col flex-1">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormControl>
+                      <EditableTextWithPen
+                        value={field.value}
+                        className="text-2xl font-semibold"
+                        readonly={isNil(agent)}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleChange();
+                        }}
+                        isEditing={isEditingName}
+                        setIsEditing={setIsEditingName}
+                      />
+                    </FormControl>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormControl>
+                      <EditableTextWithPen
+                        value={field.value}
+                        className="text-sm text-muted-foreground mt-1 max-w-[400px]"
+                        readonly={isNil(agent)}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleChange();
+                        }}
+                        isEditing={isEditingDescription}
+                        setIsEditing={setIsEditingDescription}
+                      />
+                    </FormControl>
+                  )}
+                />
+              </div>
+              <div className="flex items-center justify-center flex-col gap-2">
+                {!isNil(agent) && !hideUseAgentButton && (
+                  <UseAgentButton agentId={agent.id} />
+                )}
+                <SavingIndicator
+                  isSaving={isSaving}
+                  hasSaved={hasSavedRef.current}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          <Separator className="my-2" />
+          <Separator className="my-4" />
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <div className="flex items-center gap-2 text-lg">
                 <Wand className="w-4 h-4" />
-                <span>Instructions</span>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-4 h-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Define how your agent should behave and respond to
-                        tasks.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <span>{t('Instructions')}</span>
               </div>
+              <p className="text-sm text-muted-foreground">
+                {t('Define how your agent should behave and respond to tasks.')}
+              </p>
             </div>
           </div>
-          <Textarea
-            id="system-prompt"
-            {...register('systemPrompt')}
-            placeholder="You are a helpful assistant that specializes in scheduling meetings."
-            className="min-h-[100px] resize-none w-full"
+          <FormField
+            control={form.control}
+            name="systemPrompt"
+            render={({ field }) => (
+              <FormControl>
+                <Textarea
+                  id="system-prompt"
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    handleChange();
+                  }}
+                  placeholder="You are a helpful assistant that specializes in scheduling meetings."
+                  className="min-h-[100px] resize-none w-full mt-4"
+                  disabled={isNil(agent)}
+                  maxRows={10}
+                  minRows={5}
+                />
+              </FormControl>
+            )}
           />
-        </div>
 
-        {agent?.mcpId && (
-          <div className="space-y-6">
-            <McpToolsSection mcpId={agent.mcpId} />
-            <AgentSettingsOutput onChange={handleOutputChange} agent={agent} />
-          </div>
-        )}
+          {!isNil(agent) && !isNil(agent.mcpId) && (
+            <div className="mt-6">
+              <McpToolsSection mcpId={agent.mcpId} />
+              <AgentSettingsOutput
+                onChange={(outputType, outputFields) => {
+                  setValue('outputType', outputType);
+                  setValue('outputFields', outputFields);
+                  handleChange();
+                }}
+                agent={agent}
+              />
+            </div>
+          )}
+        </div>
       </div>
+    </Form>
+  );
+};
+
+const SavingIndicator = ({
+  isSaving,
+  hasSaved,
+}: {
+  isSaving: boolean;
+  hasSaved: boolean;
+}) => {
+  if (!hasSaved) {
+    return <div className="size-4"></div>;
+  }
+
+  if (isSaving) {
+    return (
+      <div className="flex px-2 gap-2 text-sm w-full animate-fade">
+        <LoadingSpinner className="size-4"></LoadingSpinner>
+        <span>{t('Saving') + '...'}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex px-2 w-full items-center gap-2 text-sm  animate-fade">
+      <CheckIcon className="size-4"></CheckIcon>
+      <span>{t('Saved')}</span>
     </div>
   );
 };

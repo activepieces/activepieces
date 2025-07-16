@@ -18,7 +18,7 @@ import {
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
-import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
+import { piecesHooks } from '../../../features/pieces/lib/pieces-hooks';
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
 const extractIdFromQueryParams = () => {
@@ -137,10 +137,7 @@ const EmbeddedConnectionDialogContent = ({
       >
         {isLoadingPiece && (
           <div className="flex justify-center items-center">
-            <LoadingSpinner
-              size={50}
-              className="stroke-background"
-            ></LoadingSpinner>
+            <LoadingSpinner className="stroke-background size-[50px]"></LoadingSpinner>
           </div>
         )}
 

@@ -1,7 +1,8 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PlatformUsageMetric, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { mcpService } from './mcp-service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -12,6 +13,11 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.post('/', CreateMcpRequest, async (req) => {
+        await PlatformPlanHelper.checkQuotaOrThrow({
+            platformId: req.principal.platform.id,
+            projectId: req.principal.projectId,
+            metric: PlatformUsageMetric.MCPS,
+        })
         const projectId = req.body.projectId
         return mcpService(req.log).create({
             projectId,
@@ -36,13 +42,14 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
         const mcpId = req.params.id
         return mcpService(req.log).getOrThrow({
             mcpId,
+            projectId: req.principal.projectId,
         })
     })
 
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
         const { name, tools } = req.body
-
+        await PlatformPlanHelper.checkResourceLocked({ platformId: req.principal.platform.id, resource: PlatformUsageMetric.MCPS })
         return mcpService(req.log).update({
             mcpId,
             name,
@@ -139,7 +146,7 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
         permissions: [Permission.READ_MCP],
     },
     schema: {

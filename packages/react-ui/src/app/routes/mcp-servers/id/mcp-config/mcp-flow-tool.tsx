@@ -12,11 +12,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { McpTool, Permission } from '@activepieces/shared';
+import {
+  McpFlowTool as McpFlowToolType,
+  Permission,
+} from '@activepieces/shared';
 
 type McpFlowToolProps = {
-  tool: McpTool;
-  removeTool: (toolId: string) => Promise<void>;
+  tool: McpFlowToolType;
+  removeTool: (toolIds: string[]) => Promise<void>;
 };
 
 export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
@@ -63,7 +66,7 @@ export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
                 <ConfirmationDeleteDialog
                   title={`${t('Delete')} ${tool.flow?.version?.displayName}`}
                   message={t('Are you sure you want to delete this tool?')}
-                  mutationFn={() => removeTool(tool.id)}
+                  mutationFn={async () => await removeTool([tool.id])}
                   entityName={t('Tool')}
                 >
                   <DropdownMenuItem
