@@ -31,12 +31,12 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     ): Promise<ProjectPlan> {
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo().update(projectPlan.id, {
-            ...spreadIfDefined('tasks', planLimits.tasks),
+            tasks: planLimits.tasks ?? projectPlan.tasks,
+            aiCredits: planLimits.aiCredits ?? projectPlan.aiCredits,
             ...spreadIfDefined('name', planLimits.nickname),
+            ...spreadIfDefined('locked', planLimits.locked),
             ...spreadIfDefined('pieces', planLimits.pieces),
             ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
-            ...spreadIfDefined('aiCredits', planLimits.aiCredits),
-            ...spreadIfDefined('locked', planLimits.locked),
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
     },
@@ -160,7 +160,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 
     const { platformPlan, platformUsage, usageType } = params
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
-    
+
     const platformLimit = usageType === 'tasks'
         ? platformPlan.tasksLimit
         : platformPlan.includedAiCredits
@@ -179,7 +179,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
 
-    const aiCreditsLimit = ( isOverageEnabled ? (platformPlan.aiCreditsOverageLimit ?? 0) : 0) + platformPlan.includedAiCredits
+    const aiCreditsLimit = (isOverageEnabled ? (platformPlan.aiCreditsOverageLimit ?? 0) : 0) + platformPlan.includedAiCredits
 
     if (!platformPlan.manageProjectsEnabled) {
         return {
@@ -205,7 +205,7 @@ type LimitReachedFromProjectPlanParams = {
 
 type LimitReachedFromPlatformBillingParams = {
     platformPlan: PlatformPlan
-    usageType: 'tasks' | 'ai_credits' 
+    usageType: 'tasks' | 'ai_credits'
     log: FastifyBaseLogger
     platformUsage: number
 }

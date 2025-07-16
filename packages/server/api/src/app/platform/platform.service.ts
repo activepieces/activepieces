@@ -9,6 +9,7 @@ import {
     Platform,
     PlatformId,
     PlatformPlanLimits,
+    PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
@@ -171,7 +172,7 @@ export const platformService = {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
-            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },
@@ -182,6 +183,14 @@ export const platformService = {
     },
 }
 
+
+async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+}
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
