@@ -1,7 +1,7 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
-import { ExecutionMode, FlowVersionState, RunEnvironment } from '@activepieces/shared'
+import { cryptoUtils, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
@@ -46,11 +46,10 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     async processCodeStep({
         artifact,
         codesFolderPath,
-        runEnvironment,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
         const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
-        const codePath = path.join(flowVersionPath, name, runEnvironment.toString())
+        const codePath = path.join(flowVersionPath, name)
         log.debug({
             message: 'CodeBuilder#processCodeStep',
             sourceCode,
@@ -58,24 +57,23 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}-${runEnvironment}`)
+        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
         try {
             const cache = cacheState(codePath)
-            const fState = await cache.cacheCheckState(codePath)
-            if (fState === CacheState.READY && artifact.flowVersionState === FlowVersionState.LOCKED) {
+            const cachedHash = await cache.cacheCheckState(codePath)
+            const currentHash = await cryptoUtils.hashObject(sourceCode)
+            if (cachedHash === currentHash) {
                 return
             }
             const { code, packageJson } = sourceCode
 
-            const codeNeedCleanUp = fState === CacheState.PENDING && await fileExists(codePath)
+            const codeNeedCleanUp = await fileExists(codePath)
             if (codeNeedCleanUp) {
                 await rmdir(codePath, { recursive: true })
             }
 
             await threadSafeMkdir(codePath)
 
-
-            await cache.setCache(codePath, CacheState.PENDING)
 
             const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
 
@@ -91,14 +89,14 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 log,
             })
 
-            await cache.setCache(codePath, CacheState.READY)
+            await cache.setCache(codePath, currentHash)
         }
         catch (error: unknown) {
             log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
 
             await handleCompilationError({
                 codePath,
-                error: error as Record<string, string | undefined>,
+                error,
             })
         }
         finally {
@@ -106,6 +104,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
 
 const installDependencies = async ({
     path,
@@ -153,7 +152,10 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
+    const errorHasStdout = typeof error === 'object' && error && 'stdout' in error
+    const stdoutError = errorHasStdout ? error.stdout : undefined
+    const genericError = `${error ?? 'error compiling'}`
+    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
 
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
@@ -168,7 +170,6 @@ type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
     log: FastifyBaseLogger
-    runEnvironment: RunEnvironment
 }
 
 type InstallDependenciesParams = {
@@ -185,5 +186,5 @@ type CompileCodeParams = {
 
 type HandleCompilationErrorParams = {
     codePath: string
-    error: Record<string, string | undefined>
+    error: unknown
 }

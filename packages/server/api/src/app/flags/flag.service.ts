@@ -27,7 +27,6 @@ export const flagService = {
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 ApFlagId.CLOUD_AUTH_ENABLED,
-                ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.IS_CLOUD_PLATFORM,
@@ -53,11 +52,9 @@ export const flagService = {
                 ApFlagId.WEBHOOK_URL_PREFIX,
                 ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
                 ApFlagId.MAX_FIELDS_PER_TABLE,
-                ApFlagId.MAX_TABLES_PER_PROJECT,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
                 ApFlagId.SHOW_CHANGELOG,
-                ApFlagId.MAX_MCPS_PER_PROJECT,
             ]),
         })
         const now = new Date().toISOString()
@@ -73,8 +70,14 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.AGENTS_ENABLED,
+                id: ApFlagId.AGENTS_CONFIGURED,
                 value: await aiProviderService.isAgentConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+                value: true,
                 created,
                 updated,
             },
@@ -105,12 +108,6 @@ export const flagService = {
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.PROJECT_LIMITS_ENABLED,
-                value: false,
                 created,
                 updated,
             },
@@ -249,12 +246,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.MAX_TABLES_PER_PROJECT,
-                value: system.getNumber(AppSystemProp.MAX_TABLES_PER_PROJECT),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.MAX_FIELDS_PER_TABLE,
                 value: system.getNumber(AppSystemProp.MAX_FIELDS_PER_TABLE),
                 created,
@@ -263,12 +254,6 @@ export const flagService = {
             {
                 id: ApFlagId.MAX_FILE_SIZE_MB,
                 value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.MAX_MCPS_PER_PROJECT,
-                value: system.getNumber(AppSystemProp.MAX_MCPS_PER_PROJECT),
                 created,
                 updated,
             },

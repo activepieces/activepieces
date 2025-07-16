@@ -10,6 +10,7 @@ const ScrollArea = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
     viewPortClassName?: string;
     orientation?: 'vertical' | 'horizontal';
+    viewPortRef?: React.RefObject<HTMLDivElement>;
   }
 >(
   (
@@ -17,6 +18,7 @@ const ScrollArea = React.forwardRef<
       className,
       children,
       viewPortClassName,
+      viewPortRef,
       orientation = 'vertical',
       ...props
     },
@@ -32,6 +34,7 @@ const ScrollArea = React.forwardRef<
           'size-full rounded-[inherit] [&>div]:!block',
           viewPortClassName,
         )}
+        ref={viewPortRef}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>

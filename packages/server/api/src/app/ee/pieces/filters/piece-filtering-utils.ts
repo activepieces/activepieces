@@ -48,16 +48,6 @@ type FilterParams = {
     projectId?: string
 }
 
-// TODO(agents): after we enable agents for everyone.
-async function filterAgentsPieceIfPlatformHasLimit(platformWithPlan: PlatformWithoutSensitiveData, pieces: PieceMetadataSchema[]): Promise<PieceMetadataSchema[]> {
-    return pieces.filter((piece) => {
-        if (piece.name === '@activepieces/agent') {
-            return platformWithPlan.plan.agentsLimit && platformWithPlan.plan.agentsLimit > 0
-        }
-        return true
-    })
-}
-
 async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
@@ -97,5 +87,5 @@ async function filterPiecesBasedPlatform(
 
     const predicate = filterPredicate[platformWithPlan.filteredPieceBehavior]
     const filteredPieces = pieces.slice().filter(predicate)
-    return filterAgentsPieceIfPlatformHasLimit(platformWithPlan, filteredPieces)
+    return filteredPieces
 }

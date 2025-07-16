@@ -57,6 +57,13 @@ export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
         })
     }
 
+    setDuration(duration: number): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
+            ...this,
+            duration,
+        })
+    }
+
     static create<T extends ActionType | TriggerType, OUTPUT>({
         input,
         type,

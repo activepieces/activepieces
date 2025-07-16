@@ -2,6 +2,7 @@ import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shar
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -34,6 +35,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
+import { handshakeHandler } from '../../webhooks/handshake-handler'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { triggerHooks } from '../trigger'
@@ -372,16 +374,27 @@ export const flowService = (log: FastifyBaseLogger) => ({
             entityManager,
         })
 
+        const publishedFlowVersionId = flowToUpdate.publishedVersionId
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions, webhookHandshakeConfiguration } = await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                newStatus,
+            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: flowToUpdate.id,
+                versionId: publishedFlowVersionId,
                 entityManager,
+            })
+
+            const webhookHandshakeConfiguration = await handshakeHandler.getWebhookHandshakeConfiguration(publishedFlowVersion, projectId, log)
+            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
+            await flowRepo(entityManager).save(flowToUpdate)
+
+            const { scheduleOptions } = await flowSideEffects(log).preUpdateStatus({
+                flowToUpdate,
+                publishedFlowVersion,
+                newStatus,
             })
 
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
-            flowToUpdate.handshakeConfiguration = webhookHandshakeConfiguration
             await flowRepo(entityManager).save(flowToUpdate)
         }
 
@@ -589,6 +602,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().save(flow)
     },
 })
+
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,

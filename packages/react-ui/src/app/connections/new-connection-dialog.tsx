@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 

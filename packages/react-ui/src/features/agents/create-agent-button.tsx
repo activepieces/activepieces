@@ -12,12 +12,12 @@ import { agentHooks } from './lib/agent-hooks';
 
 interface CreateAgentButtonProps {
   onAgentCreated: (agent: Agent) => void;
-  isAgentsEnabled: boolean;
+  isAgentsConfigured: boolean;
 }
 
 export const CreateAgentButton = ({
+  isAgentsConfigured,
   onAgentCreated,
-  isAgentsEnabled,
 }: CreateAgentButtonProps) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -45,15 +45,14 @@ export const CreateAgentButton = ({
     navigate('/platform/setup/ai');
   };
 
-  if (isAgentsEnabled) {
+  if (isAgentsConfigured) {
     return (
       <Button
         onClick={handleButtonClick}
-        size={'sm'}
         disabled={createAgentMutation.isPending}
       >
-        <Plus className="h-4 w-4 mr-2" />
-        {createAgentMutation.isPending ? t('Creating...') : t('Create Agent')}
+        <Plus className="h-4 w-4 " />
+        {t('New Agent')}
       </Button>
     );
   }
@@ -61,23 +60,24 @@ export const CreateAgentButton = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button onClick={() => setOpen(true)} size={'sm'}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('Create Agent')}
+        <Button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          {t('New Agent')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 mr-4">
         <div className="space-y-4">
-          <h4 className="font-medium leading-none">
-            {t('Connect an OpenAI Provider')}
-          </h4>
+          <h4 className="font-medium leading-none">{t('Connect to OpenAI')}</h4>
           <p className="text-sm text-muted-foreground">
             {t(
-              "To create an agent, you'll first need to connect an OpenAI in platform settings.",
+              "To create an agent, you'll first need to connect to OpenAI in platform settings.",
             )}
           </p>
           <Button
-            variant="secondary"
+            variant="accent"
             className="w-full"
             onClick={handleConfigureClick}
           >

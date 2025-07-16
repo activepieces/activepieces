@@ -1,5 +1,5 @@
 import { ApQueueJob, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -57,6 +57,13 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             })
             await removeScheduledJob(job.data as ScheduledJobData, request.log)
             return null
+        }
+        if (queueName === QueueName.ONE_TIME) {
+            const { runId } = job.data as OneTimeJobData
+            flowRunService(request.log).updateRunStatusAsync({
+                flowRunId: runId,
+                status: FlowRunStatus.RUNNING,
+            })
         }
         return enrichEngineToken(token, queueName, job)
     })

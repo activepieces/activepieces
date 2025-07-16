@@ -3,16 +3,18 @@ import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { PieceStepMetadataWithSuggestions } from '@/features/pieces/lib/types';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { isNil } from '@activepieces/shared';
 
 import { ConnectionDropdown } from './connection-dropdown';
 
+import { ActionInfo } from '.';
+
 interface McpPieceActionsDialogProps {
   piece: PieceStepMetadataWithSuggestions;
-  selectedActions: string[];
-  onSelectAction: (actionName: string) => void;
+  selectedActions: ActionInfo[];
+  onSelectAction: (action: ActionInfo) => void;
   onSelectAll: (checked: boolean) => void;
   selectedConnectionExternalId: string | null;
   setSelectedConnectionExternalId: (
@@ -36,7 +38,9 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
   const allSelected =
     piece.suggestedActions &&
     piece.suggestedActions.length > 0 &&
-    piece.suggestedActions.every((a) => selectedActions.includes(a.name));
+    piece.suggestedActions.every((a) =>
+      selectedActions.some((action) => action.actionName === a.name),
+    );
   const someSelected = selectedActions.length > 0 && !allSelected;
 
   const pieceHasAuth = selectedPiece && !isNil(selectedPiece.auth);
@@ -75,11 +79,24 @@ export const McpPieceActionsDialog: React.FC<McpPieceActionsDialogProps> = ({
               <div
                 key={action.name}
                 className="flex items-start gap-4 rounded-md px-3 py-2 hover:bg-accent cursor-pointer"
-                onClick={() => onSelectAction(action.name)}
+                onClick={() =>
+                  onSelectAction({
+                    actionName: action.name,
+                    actionDisplayName: action.displayName,
+                  })
+                }
               >
                 <Checkbox
-                  checked={selectedActions.includes(action.name)}
-                  onCheckedChange={() => onSelectAction(action.name)}
+                  checked={selectedActions.some(
+                    (selectedAction) =>
+                      selectedAction.actionName === action.name,
+                  )}
+                  onCheckedChange={() =>
+                    onSelectAction({
+                      actionName: action.name,
+                      actionDisplayName: action.displayName,
+                    })
+                  }
                   className="mt-1"
                   onClick={(e) => e.stopPropagation()}
                 />
