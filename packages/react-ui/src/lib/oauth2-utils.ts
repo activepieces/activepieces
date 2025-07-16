@@ -102,7 +102,9 @@ async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
   }
   const url = new URL(params.authUrl);
   Object.entries(queryParams).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
+    if (value !== '') {
+      url.searchParams.append(key, value);
+    }
   });
   return url.toString();
 }
