@@ -1,26 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortioAuth, shortioApiCall } from '../common';
+import { shortioAuth, shortioCommon, shortioApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const createShortLink = createAction({
+export const updateLink = createAction({
   auth: shortioAuth,
-  name: 'create_link',
-  displayName: 'Create Link',
-  description: 'Create a new short link with Short.io',
+  name: 'update_link',
+  displayName: 'Update Link',
+  description: 'Update an existing short link in Short.io',
   props: {
-    domain: Property.ShortText({
-      displayName: 'Domain',
-      description: 'Domain hostname (e.g., example.short.gy)',
-      required: true,
-    }),
+    domain_id: shortioCommon.domain_id,
+    link_id: shortioCommon.link_id,
     originalURL: Property.ShortText({
       displayName: 'Original URL',
       description: 'The URL to be shortened',
-      required: true,
+      required: false,
     }),
     path: Property.ShortText({
       displayName: 'Custom Path',
-      description: 'Custom path for the short link (optional)',
+      description: 'Custom path for the short link',
       required: false,
     }),
     title: Property.ShortText({
@@ -37,7 +34,6 @@ export const createShortLink = createAction({
       displayName: 'Enable Cloaking',
       description: 'Hide the destination URL in the browser',
       required: false,
-      defaultValue: false,
     }),
     password: Property.ShortText({
       displayName: 'Password',
@@ -117,38 +113,54 @@ export const createShortLink = createAction({
       description: 'Set utm_content parameter',
       required: false,
     }),
+    ttl: Property.ShortText({
+      displayName: 'TTL (Time to Live)',
+      description: 'Time to live in milliseconds or ISO string',
+      required: false,
+    }),
     skipQS: Property.Checkbox({
       displayName: 'Skip Query String Merging',
       description: 'Skip query string merging',
       required: false,
-      defaultValue: false,
     }),
     archived: Property.Checkbox({
       displayName: 'Archived',
       description: 'Mark link as archived',
       required: false,
-      defaultValue: false,
     }),
-    allowDuplicates: Property.Checkbox({
-      displayName: 'Allow Duplicates',
-      description: 'Allow creating duplicate links',
+    passwordContact: Property.Checkbox({
+      displayName: 'Password Contact',
+      description: 'Provide your email to users to get a password',
       required: false,
-      defaultValue: false,
+    }),
+    integrationAdroll: Property.ShortText({
+      displayName: 'Adroll Integration',
+      description: 'Adroll integration',
+      required: false,
+    }),
+    integrationFB: Property.ShortText({
+      displayName: 'Facebook Integration',
+      description: 'Facebook integration',
+      required: false,
+    }),
+    integrationGA: Property.ShortText({
+      displayName: 'Google Analytics Integration',
+      description: 'Google Analytics integration',
+      required: false,
+    }),
+    integrationGTM: Property.ShortText({
+      displayName: 'Google Tag Manager Integration',
+      description: 'Google Tag Manager integration',
+      required: false,
     }),
   },
   async run({ auth, propsValue }) {
     const props = propsValue;
     
-    const requestBody: Record<string, any> = {
-      domain: props.domain,
-      originalURL: props.originalURL,
-    };
-
-    if (props.allowDuplicates === true) {
-      requestBody['allowDuplicates'] = props.allowDuplicates;
-    }
+    const requestBody: Record<string, any> = {};      
 
     const optionalFields = {
+      originalURL: props.originalURL,
       path: props.path,
       title: props.title,
       tags: props.tags?.length ? props.tags : undefined,
@@ -167,8 +179,14 @@ export const createShortLink = createAction({
       utmCampaign: props.utmCampaign,
       utmTerm: props.utmTerm,
       utmContent: props.utmContent,
+      ttl: props.ttl,
       skipQS: props.skipQS === true ? props.skipQS : undefined,
       archived: props.archived === true ? props.archived : undefined,
+      passwordContact: props.passwordContact === true ? props.passwordContact : undefined,
+      integrationAdroll: props.integrationAdroll,
+      integrationFB: props.integrationFB,
+      integrationGA: props.integrationGA,
+      integrationGTM: props.integrationGTM,
     };
 
     Object.entries(optionalFields).forEach(([key, value]) => {
@@ -180,7 +198,10 @@ export const createShortLink = createAction({
     const response = await shortioApiCall({
       apiKey: auth,
       method: HttpMethod.POST,
-      resourceUri: '/links',
+      resourceUri: `/links/${props.link_id}`,
+      query: {
+        domain_id: props.domain_id,
+      },
       body: requestBody,
     });
 

@@ -201,5 +201,56 @@ export const shortioCommon = {
         };
       }
     }
+  }),
+  
+  link_id: Property.Dropdown({
+    displayName: 'Link',
+    description: 'Select the link to update',
+    required: true,
+    refreshers: ['domain_id'],
+    options: async ({ auth, domain_id }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Connect your Short.io account first',
+        };
+      }
+
+      if (!domain_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Select a domain first',
+        };
+      }
+
+      try {
+        const response = await shortioApiCall<ShortioApiLink>({
+          apiKey: auth as string,
+          method: HttpMethod.GET,
+          resourceUri: '/api/links',
+          query: {
+            domain_id: domain_id as string,
+            limit: 100,
+          },
+        });
+
+        return {
+          disabled: false,
+          options: response.links.map((link) => ({
+            label: `${link.path} (${link.originalURL})`,
+            value: link.idString,
+          })),
+          placeholder: response.links.length === 0 ? 'No links available' : 'Select a link',
+        };
+      } catch (error: any) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: `Error loading links: ${error.message}`,
+        };
+      }
+    }
   })
 };
