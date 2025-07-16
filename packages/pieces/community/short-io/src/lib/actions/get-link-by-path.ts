@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
 
-export const getShortLinkInfoByPathAction = createAction({
+export const getLinkByPathAction = createAction({
   auth: shortIoAuth,
   name: 'get-short-link-info-by-path',
   displayName: 'Get Short Link Info by Path',

@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
 
-export const getDomainStatisticsAction = createAction({
+export const domainStatisticsAction = createAction({
   auth: shortIoAuth,
   name: 'get-domain-statistics',
   displayName: 'Get Domain Statistics',

@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
 
-export const listShortLinksAction = createAction({
+export const listLinksAction = createAction({
   auth: shortIoAuth,
   name: 'list-short-links',
   displayName: 'List Short Links',
