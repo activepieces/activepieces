@@ -12,7 +12,7 @@ export type Migration = {
 const migrations: Migration[] = [
     migrateBranchToRouter,
     migrateConnectionIds,
-    migrateAgentPiece
+    migrateAgentPiece,
 ]
 
 const apply = (flowVersion: FlowVersion) => {
