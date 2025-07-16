@@ -173,7 +173,7 @@ export const createShortLink = createAction({
 
     Object.entries(optionalFields).forEach(([key, value]) => {
       if (value !== undefined) {
-      requestBody[key] = value;
+        requestBody[key] = value;
       }
     });
 

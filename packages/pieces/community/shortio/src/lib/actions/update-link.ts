@@ -191,7 +191,7 @@ export const updateLink = createAction({
 
     Object.entries(optionalFields).forEach(([key, value]) => {
       if (value !== undefined) {
-      requestBody[key] = value;
+        requestBody[key] = value;
       }
     });
 

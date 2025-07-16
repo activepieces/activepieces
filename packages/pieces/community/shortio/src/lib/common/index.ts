@@ -140,16 +140,29 @@ export async function shortioApiCall<T extends HttpMessageBody>({
 		}
 	}
 
-  const request: HttpRequest = {
-    method,
-    url: BASE_URL + resourceUri,
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      Authorization: apiKey,
-    },
-    queryParams: qs,
-    body
+  let request: HttpRequest
+
+  if (method === HttpMethod.DELETE) {
+    request = {
+      method,
+      url: BASE_URL + resourceUri,
+      headers: {
+        accept: 'application/json',
+        Authorization: apiKey,
+      },
+    }
+  } else {
+    request = {
+      method,
+      url: BASE_URL + resourceUri,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        Authorization: apiKey,
+      },
+      queryParams: qs,
+      body
+    }
   }
 
   try {
