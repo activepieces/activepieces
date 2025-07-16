@@ -1,14 +1,14 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ClipboardCheck, Sparkles, Clock, Rocket } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -61,7 +61,7 @@ const getTrialProgress = (trialStartDate: number, trialEndDate: number) => {
 };
 
 const UsageLimitsButton = React.memo(() => {
-  const [managePlanOpen, setManagePlanOpen] = useState(false);
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const { project, isPending } = projectHooks.useCurrentProject();
 
@@ -143,7 +143,7 @@ const UsageLimitsButton = React.memo(() => {
                   variant="default"
                   size="sm"
                   className="w-full"
-                  onClick={() => setManagePlanOpen(true)}
+                  onClick={() => openDialog()}
                 >
                   <Rocket className="w-4 h-4 mr-2" />
                   {t('Upgrade Plan')}
@@ -168,7 +168,6 @@ const UsageLimitsButton = React.memo(() => {
         )}
       </div>
       <Separator className="my-1.5" />
-      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
     </div>
   );
 });

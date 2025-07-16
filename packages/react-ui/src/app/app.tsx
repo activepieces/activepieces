@@ -21,8 +21,13 @@ import {
   RESOURCE_LOCKED_MESSAGE,
   toast,
 } from '@/components/ui/use-toast';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { api } from '@/lib/api';
-import { ErrorCode, ResourceLockedParams } from '@activepieces/shared';
+import {
+  ErrorCode,
+  QuotaExceededParams,
+  ResourceLockedParams,
+} from '@activepieces/shared';
 
 import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
@@ -35,6 +40,10 @@ const queryClient = new QueryClient({
       if (api.isApError(err, ErrorCode.RESOURCE_LOCKED)) {
         const error = err.response?.data as ResourceLockedParams;
         toast(RESOURCE_LOCKED_MESSAGE(error.params.message));
+      } else if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
+        const error = err.response?.data as QuotaExceededParams;
+        const { openDialog } = useManagePlanDialogStore.getState();
+        openDialog({ metric: error.params.metric });
       } else {
         toast(INTERNAL_ERROR_TOAST);
       }

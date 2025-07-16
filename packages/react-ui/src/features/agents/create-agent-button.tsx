@@ -6,9 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
-import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
-import { api } from '@/lib/api';
-import { Agent, ErrorCode } from '@activepieces/shared';
+import { Agent } from '@activepieces/shared';
 
 import { agentHooks } from './lib/agent-hooks';
 
@@ -22,7 +20,6 @@ export const CreateAgentButton = ({
   onAgentCreated,
 }: CreateAgentButtonProps) => {
   const [open, setOpen] = useState(false);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const navigate = useNavigate();
 
   const createAgentMutation = agentHooks.useCreate();
@@ -39,11 +36,6 @@ export const CreateAgentButton = ({
           onAgentCreated(newAgent);
           setOpen(false);
         },
-        onError: (err: Error) => {
-          if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-            setShowUpgradeDialog(true);
-          }
-        },
       },
     );
   };
@@ -55,20 +47,13 @@ export const CreateAgentButton = ({
 
   if (isAgentsConfigured) {
     return (
-      <>
-        <Button
-          onClick={handleButtonClick}
-          disabled={createAgentMutation.isPending}
-        >
-          <Plus className="h-4 w-4 " />
-          {t('New Agent')}
-        </Button>
-        <UpgradeHookDialog
-          metric="agents"
-          open={showUpgradeDialog}
-          setOpen={setShowUpgradeDialog}
-        />
-      </>
+      <Button
+        onClick={handleButtonClick}
+        disabled={createAgentMutation.isPending}
+      >
+        <Plus className="h-4 w-4 " />
+        {t('New Agent')}
+      </Button>
     );
   }
 
