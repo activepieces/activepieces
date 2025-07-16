@@ -216,7 +216,8 @@
                   "endpoints/projects/schema",
                   "endpoints/projects/create",
                   "endpoints/projects/update",
-                  "endpoints/projects/list"
+                  "endpoints/projects/list",
+                  "endpoints/projects/delete"
                 ]
               },
               {
