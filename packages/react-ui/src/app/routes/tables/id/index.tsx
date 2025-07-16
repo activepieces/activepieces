@@ -18,9 +18,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApFlagId, Permission } from '@activepieces/shared';
-
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
+import { AutomateData } from '@/features/tables/components/automate-data';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
@@ -96,11 +96,15 @@ const ApTableEditorPage = () => {
       open={true}
       onOpenChange={handleBack}
       dismissible={false}
+      closeOnEsc={false}
       direction="right"
     >
       <DrawerContent fullscreen className="w-full overflow-auto">
         <DrawerHeader>
-          <ApTableHeader onBack={handleBack} />
+          <div className="flex items-center justify-between w-full pr-4">
+            <ApTableHeader onBack={handleBack} />
+            <AutomateData />
+          </div>
         </DrawerHeader>
 
         <div className="flex flex-col flex-1 h-full">

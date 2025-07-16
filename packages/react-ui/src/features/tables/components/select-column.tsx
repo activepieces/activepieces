@@ -22,6 +22,7 @@ function SelectHeaderCell() {
     >
       <Checkbox
         aria-label="Select all rows"
+        variant="secondary"
         checked={Boolean(isRowSelected)}
         onCheckedChange={(checked) => {
           onRowSelectionChange({ checked: Boolean(checked) });
@@ -31,33 +32,52 @@ function SelectHeaderCell() {
   );
 }
 
-function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
+function SelectCell({ row, rowIndex, locked }: { row: Row; rowIndex: number; locked?: boolean }) {
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
-    <div className="flex items-center justify-start h-full pl-4 group">
-      <div
-        className={cn('group-hover:block hidden', isRowSelected && '!block')}
-      >
-        <Checkbox
-          aria-label="Select row"
-          checked={Boolean(isRowSelected)}
-          onCheckedChange={(checked) => {
-            onRowSelectionChange({
-              row,
-              checked: Boolean(checked),
-              isShiftClick: false,
-            });
-          }}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
+    <div
+      className={cn(
+        'flex items-center justify-start h-full pl-4 group',
+        locked && 'locked-row'
+      )}
+    >
+      {!locked && (
+        <div
+          className={cn('group-hover:block hidden', isRowSelected && '!block')}
+        >
+          <Checkbox
+            aria-label="Select row"
+            variant="secondary"
+            checked={Boolean(isRowSelected)}
+            onCheckedChange={(checked) => {
+              onRowSelectionChange({
+                row,
+                checked: Boolean(checked),
+                isShiftClick: false,
+              });
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
       <div
         className={cn(
-          'group-hover:hidden block select-none',
-          isRowSelected && '!hidden',
+          locked
+            ? 'block select-none'
+            : 'group-hover:hidden block select-none',
+          isRowSelected && !locked && '!hidden',
         )}
       >
-        {rowIndex}
+        {locked ? (
+          <img
+            src="https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png"
+            alt="Locked"
+            className="w-6 h-6 rounded-full object-cover"
+            style={{ display: 'inline-block' }}
+          />
+        ) : (
+          rowIndex
+        )}
       </div>
     </div>
   );
@@ -74,6 +94,6 @@ export const SelectColumn: Column<Row, { id: string }> = {
   frozen: true,
   renderHeaderCell: () => <SelectHeaderCell />,
   renderCell: (props) => (
-    <SelectCell row={props.row} rowIndex={props.rowIdx + 1} />
+    <SelectCell row={props.row} rowIndex={props.rowIdx + 1}  />
   ),
 };

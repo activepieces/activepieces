@@ -79,6 +79,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
           column={column}
           rowIdx={rowIdx}
           disabled={!userHasTableWritePermission}
+          locked={false}
           onRowChange={(newRow) => {
             updateRecord(rowIdx, {
               values: fields.map((field, fIndex) => ({
