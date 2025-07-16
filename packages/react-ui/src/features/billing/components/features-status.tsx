@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
@@ -101,7 +101,7 @@ export const FeatureStatus = ({
                   variant="success"
                 />
               ) : (
-                <StatusIconWithText icon={X} text="Disabled" variant="error" />
+                <StatusIconWithText icon={Lock} text="Upgrade" variant="default" />
               )}
             </div>
           );
