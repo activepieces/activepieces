@@ -47,8 +47,9 @@ export async function fireberryApiCall<T extends HttpMessageBody>({
     method,
     url: `${baseUrl}${resourceUri}`,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      tokenid: apiKey,
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
     queryParams,
     body,

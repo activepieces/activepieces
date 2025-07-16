@@ -3,10 +3,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { fireberryApiCall } from '../common/client';
 import { fireberryAuth } from '../common/auth';
 
-export const getRecordByIdAction = createAction({
+export const findRecordAction = createAction({
   auth: fireberryAuth,
-  name: 'get-record-by-id',
-  displayName: 'Get Record by ID',
+  name: 'find-record',
+  displayName: 'Find Record by ID',
   description: 'Retrieve a specific record from a Fireberry object using its object code and record ID.',
   props: {
     objectCode: Property.Number({

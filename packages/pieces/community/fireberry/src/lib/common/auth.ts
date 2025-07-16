@@ -15,7 +15,7 @@ export const fireberryAuth = PieceAuth.CustomAuth({
       await fireberryApiCall({
         method: HttpMethod.GET,
         auth,
-        resourceUri: '/users/me',
+        resourceUri: '/record/account',
       });
       return { valid: true };
     } catch (e) {

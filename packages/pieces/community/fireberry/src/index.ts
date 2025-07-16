@@ -3,13 +3,12 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { fireberryAuth } from './lib/common/auth';
 import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
-import { getRecordByIdAction } from './lib/actions/get-record-by-id';
+import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record-trigger';
 
-
 export const fireberry = createPiece({
-  displayName: 'fireberry (Fireberry)',
+  displayName: 'Fireberry',
   auth: fireberryAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: ' https://cdn.activepieces.com/pieces/fireberry.png',
@@ -17,7 +16,7 @@ export const fireberry = createPiece({
   actions: [
     createRecordAction,
     deleteRecordAction,
-    getRecordByIdAction,
+    findRecordAction,
     updateRecordAction,
     createCustomApiCallAction({
       auth: fireberryAuth,
@@ -25,7 +24,7 @@ export const fireberry = createPiece({
       authMapping: async (auth) => {
         const { apiKey } = auth as { apiKey: string };
         return {
-          Authorization: `Bearer ${apiKey}`,
+          tokenid: apiKey,
         };
       },
     }),
