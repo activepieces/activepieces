@@ -178,7 +178,6 @@ export function SidebarComponent({
   removeBottomPadding = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const isCloudPlatform = platformHooks.useIsCloudPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const location = useLocation();
@@ -214,13 +213,11 @@ export function SidebarComponent({
                   <SidebarGroup>
                     <SidebarGroupLabel>{t('Misc')}</SidebarGroupLabel>
                     <SidebarMenu>
-                      {isCloudPlatform && (
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild>
-                            <SidebarPlatformAdminButton />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )}
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <SidebarPlatformAdminButton />
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                       {showConnectionsLink && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
@@ -242,8 +239,8 @@ export function SidebarComponent({
               <SidebarFooter className="pb-4">
                 {/* <SidebarMenu>
                   <SidebarInviteUserButton />
-                </SidebarMenu>
-                <SidebarMenu>
+                </SidebarMenu> */}
+                {/* <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
                 {showProjectUsage && (

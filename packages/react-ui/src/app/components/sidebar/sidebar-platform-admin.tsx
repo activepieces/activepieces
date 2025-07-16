@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { PlatformRole } from '@activepieces/shared';
 
 import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
@@ -18,8 +19,13 @@ export function SidebarPlatformAdminButton() {
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
   const messages = notificationHooks.useNotifications();
   const platformRole = userHooks.getCurrentUserPlatformRole();
+  const isCloudPlatform = platformHooks.useIsCloudPlatform();
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {
+    return null;
+  }
+
+  if (!isCloudPlatform) {
     return null;
   }
 
