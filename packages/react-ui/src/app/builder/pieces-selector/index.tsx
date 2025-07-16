@@ -1,23 +1,25 @@
-import { ArrowLeft } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
+import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
+import {
+  PieceSelectorTabsProvider,
+  PieceSelectorTabType,
+} from '@/features/pieces/lib/piece-selector-tabs-provider';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PieceTagType, PieceSelectorOperation } from '@/lib/types';
+import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, TriggerType } from '@activepieces/shared';
 
-import { SearchInput } from '../../../components/ui/search-input';
-
-import PieceSelectorIntro from './piece-selector-intro';
+import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
 type PieceSelectorProps = {
@@ -48,21 +50,15 @@ const PieceSelector = ({
     state.flowVersion.trigger.type === TriggerType.EMPTY && id === 'trigger',
     state.deselectStep,
   ]);
+  const [searchQuery, setSearchQuery] = useState('');
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
-    operation.type === FlowOperationType.UPDATE_TRIGGER;
-  const [searchQuery, setSearchQuery] = useState('');
+    (operation.type === FlowOperationType.UPDATE_TRIGGER && !isForEmptyTrigger);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const initiallySelectedPieceGroupType =
-    isForReplace && !isForEmptyTrigger ? PieceTagType.ALL : null;
-  const [selectedPieceGroupType, setSelectedPieceGroupType] =
-    useState<PieceTagType | null>(initiallySelectedPieceGroupType);
   const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const showPiecesList =
-    selectedPieceGroupType || searchQuery.length > 0 || isMobile;
   const listHeight = Math.min(listHeightRef.current, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -72,11 +68,10 @@ const PieceSelector = ({
       });
     }
   }, [isOpen]);
-  const showBackButton = selectedPieceGroupType !== null && !isMobile;
+
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
-    setSelectedPieceGroupType(null);
   };
   return (
     <Popover
@@ -85,7 +80,6 @@ const PieceSelector = ({
       onOpenChange={(open) => {
         if (!open) {
           clearSearch();
-          setSelectedPieceGroupType(initiallySelectedPieceGroupType);
           setOpenedPieceSelectorStepNameOrAddButtonId(null);
           if (isForEmptyTrigger) {
             deselectStep();
@@ -104,75 +98,62 @@ const PieceSelector = ({
       >
         {children}
       </PopoverTrigger>
-      <PopoverContent
-        onContextMenu={(e) => {
-          e.stopPropagation();
-        }}
-        className="w-[340px] md:w-[600px] p-0 shadow-lg"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        }}
+
+      <PieceSelectorTabsProvider
+        initiallySelectedTab={
+          isForReplace || isMobile
+            ? PieceSelectorTabType.NONE
+            : PieceSelectorTabType.EXPLORE
+        }
+        onTabChange={clearSearch}
+        key={isOpen ? 'open' : 'closed'}
       >
-        <>
-          <div>
-            <div className="p-2 flex  items-center ">
-              {showBackButton && (
-                <Button variant="ghost" size="icon" onClick={clearSearch}>
-                  <ArrowLeft className="size-4 shrink-0"></ArrowLeft>
-                </Button>
-              )}
-              <SearchInput
-                placeholder="Search"
-                value={searchQuery}
-                showDeselect={false}
-                showBackButton={selectedPieceGroupType !== null}
-                ref={searchInputRef}
-                onChange={(e) => {
+        <PopoverContent
+          onContextMenu={(e) => {
+            e.stopPropagation();
+          }}
+          className="w-[340px] md:w-[600px] p-0 shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <>
+            <div>
+              <PiecesSearchInput
+                searchQuery={searchQuery}
+                searchInputRef={searchInputRef}
+                onSearchChange={(e) => {
                   setSearchQuery(e);
                   setSelectedPieceMetadataInPieceSelector(null);
                   if (e === '') {
                     clearSearch();
-                  } else {
-                    setSelectedPieceGroupType(PieceTagType.ALL);
                   }
                 }}
               />
+              {!isMobile && <PieceSelectorTabs />}
+              <Separator orientation="horizontal" className="mt-1" />
             </div>
-
-            <Separator orientation="horizontal" />
-          </div>
-          <div
-            className=" flex flex-row max-h-[300px] h-[300px] "
-            style={{
-              height: listHeight + 'px',
-            }}
-          >
-            {!showPiecesList && (
-              <PieceSelectorIntro
-                isForTrigger={
-                  operation.type === FlowOperationType.UPDATE_TRIGGER
-                }
-                setSelectedPieceGroupType={setSelectedPieceGroupType}
-              />
-            )}
-
-            {showPiecesList && (
+            <div
+              className=" flex flex-row max-h-[300px] h-[300px] "
+              style={{
+                height: listHeight + 'px',
+              }}
+            >
+              <ExploreTabContent operation={operation} />
               <PiecesCardList
                 listHeight={listHeight}
-                //need to add the id to the key to force a re-render the virtualized list
-                key={`${debouncedQuery}-${id}`}
-                searchQuery={debouncedQuery}
+                //this is done to avoid debounced results when user clears search
+                searchQuery={searchQuery === '' ? '' : debouncedQuery}
                 operation={operation}
-                selectedPieceGroupType={selectedPieceGroupType}
                 stepToReplacePieceDisplayName={
                   isMobile ? undefined : stepToReplacePieceDisplayName
                 }
               />
-            )}
-          </div>
-        </>
-      </PopoverContent>
+            </div>
+          </>
+        </PopoverContent>
+      </PieceSelectorTabsProvider>
     </Popover>
   );
 };

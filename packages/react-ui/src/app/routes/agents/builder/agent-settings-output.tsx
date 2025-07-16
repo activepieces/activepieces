@@ -1,16 +1,11 @@
-import { Database, Info, X } from 'lucide-react';
+import { t } from 'i18next';
+import { Database, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   Agent,
   AgentOutputField,
@@ -77,22 +72,16 @@ export const AgentSettingsOutput = ({
   };
 
   return (
-    <div className="space-y-6">
-      <Separator className="my-2" />
+    <div className="mt-6">
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <div className="flex items-center gap-2 text-base">
+          <div className="flex items-center gap-2 text-lg">
             <Database className="w-4 h-4" />
-            <span>Structured Output</span>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Configure how your agent should structure its output.</p>
-              </TooltipContent>
-            </Tooltip>
+            <span>{t('Structured Output')}</span>
           </div>
+          <p className="text-sm text-muted-foreground">
+            {t('Configure how your agent should structure its output.')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Switch
@@ -104,14 +93,16 @@ export const AgentSettingsOutput = ({
       </div>
 
       {outputType === AgentOutputType.STRUCTURED_OUTPUT && (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 mt-4">
           {outputFields.length > 0 && (
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-col gap-3">
-                  {outputFields.map((field) => (
+                  {outputFields.map((field, idx) => (
                     <div
-                      key={field.displayName}
+                      key={
+                        field.displayName + field.type + field.description + idx
+                      }
                       className="flex items-center justify-between"
                     >
                       <div className="grid grid-cols-12 gap-2 w-full items-center">

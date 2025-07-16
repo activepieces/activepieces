@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
@@ -35,9 +34,6 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
     },
     onSuccess: (data) => {
       navigate(`/flows/${data.id}`);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -92,7 +88,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
   if (!data) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <LoadingSpinner size={50}></LoadingSpinner>
+        <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
   }

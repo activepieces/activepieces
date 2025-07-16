@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
@@ -19,13 +20,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
 import {
   Permission,
@@ -39,6 +39,7 @@ import {
 interface EditProjectDialogProps {
   open: boolean;
   onClose: () => void;
+  projectId: string;
   initialValues?: {
     projectName?: string;
     tasks?: string;
@@ -57,6 +58,7 @@ type FormValues = {
 export function EditProjectDialog({
   open,
   onClose,
+  projectId,
   initialValues,
 }: EditProjectDialogProps) {
   const { checkAccess } = useAuthorization();
@@ -76,6 +78,12 @@ export function EditProjectDialog({
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
+  useEffect(() => {
+    if (open) {
+      form.reset(initialValues);
+    }
+  }, [open]);
+
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
@@ -87,7 +95,7 @@ export function EditProjectDialog({
   >({
     mutationFn: (request) => {
       updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, {
+      return projectApi.update(projectId, {
         ...request,
         externalId:
           request.externalId?.trim() !== '' ? request.externalId : undefined,
@@ -112,11 +120,6 @@ export function EditProjectDialog({
             form.setError('root.serverError', {
               message: t('The external ID is already taken.'),
             });
-            break;
-          }
-          default: {
-            console.log(error);
-            toast(INTERNAL_ERROR_TOAST);
             break;
           }
         }

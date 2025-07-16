@@ -27,7 +27,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -161,8 +161,6 @@ const ImportFlowDialog = (
       ) {
         setErrorMessage(t('Template file is invalid'));
         console.log(err);
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
       }
     },
   });
@@ -280,7 +278,7 @@ const ImportFlowDialog = (
               </span>
               {isLoading ? (
                 <div className="flex justify-center items-center w-full">
-                  <LoadingSpinner className="h-5 w-5" />
+                  <LoadingSpinner />
                 </div>
               ) : (
                 <Select

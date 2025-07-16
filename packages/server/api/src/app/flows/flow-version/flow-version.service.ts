@@ -26,7 +26,6 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
@@ -34,10 +33,9 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowVersionEntity } from './flow-version-entity'
+import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
-
-export const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
@@ -161,29 +159,32 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             mutatedFlowVersion.updatedBy = userId
         }
         mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
-        return flowVersionRepo(entityManager).save(
-            sanitizeObjectForPostgresql(mutatedFlowVersion),
-        )
+        return flowVersionRepoWrapper.save({
+            flowVersion: sanitizeObjectForPostgresql(mutatedFlowVersion),
+            entityManager,
+        })
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
         if (isNil(id)) {
             return null
         }
-        return flowVersionRepo().findOneBy({
-            id,
+        return flowVersionRepoWrapper.findOne({
+            where: {
+                id,
+            },
         })
     },
 
     async exists(id: FlowVersionId): Promise<boolean> {
-        return flowVersionRepo().exists({
+        return flowVersionRepoWrapper.exists({
             where: {
                 id,
             },
         })
     },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
-        return flowVersionRepo().findOne({
+        return flowVersionRepoWrapper.findOne({
             where: {
                 flowId,
                 state,
@@ -195,7 +196,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
     },
 
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
-        return flowVersionRepo().findOneOrFail({
+        return flowVersionRepoWrapper.findOneOrFail({
             where: {
                 flowId,
                 state: FlowVersionState.LOCKED,
@@ -236,7 +237,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder('flow_version')
+            flowVersionRepoWrapper.createQueryBuilder()
                 .where({
                     flowId,
                 }),
@@ -261,9 +262,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await flowVersionRepo(
-            entityManager,
-        ).findOne({
+        const flowVersion: FlowVersion | null = await flowVersionRepoWrapper.findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -272,7 +271,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             order: {
                 created: 'DESC',
             },
-        })
+        }, entityManager)
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -313,7 +312,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return flowVersionRepo().save(flowVersion)
+        return flowVersionRepoWrapper.save({ flowVersion })
     },
 })
 

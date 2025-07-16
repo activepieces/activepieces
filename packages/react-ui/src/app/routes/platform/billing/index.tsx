@@ -1,48 +1,54 @@
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CalendarDays } from 'lucide-react';
+import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
 
 import { TableTitle } from '@/components/custom/table-title';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { FeatureStatus } from '@/features/billing/components/features-status';
+import { LicenseKey } from '@/features/billing/components/lisence-key';
+import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
 import { TasksUsage } from '@/features/billing/components/tasks-usage';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
   billingMutations,
   billingQueries,
 } from '@/features/billing/lib/billing-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 export default function Billing() {
+  const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
+    useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const [managePlanOpen, setManagePlanOpen] = useState(false);
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const {
-    data: platformSubscription,
+    data: platformPlanInfo,
     isLoading: isPlatformSubscriptionLoading,
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
 
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
 
-  const status = platformSubscription?.plan?.stripeSubscriptionStatus;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const status = platformPlanInfo?.plan?.stripeSubscriptionStatus;
   const isSubscriptionActive = [ApSubscriptionStatus.ACTIVE].includes(
     status as ApSubscriptionStatus,
   );
+  const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
+  const isEnterprise =
+    !isNil(platformPlanInfo?.plan.licenseKey) ||
+    edition === ApEdition.ENTERPRISE;
 
-  const isBusinessPlan = platformSubscription?.plan.plan === PlanName.BUSINESS;
-  const isTrial =
-    platformSubscription?.plan.stripeSubscriptionStatus ===
-    ApSubscriptionStatus.TRIALING;
-
-  if (isPlatformSubscriptionLoading || isNil(platformSubscription)) {
+  if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
       <article className="flex flex-col w-full gap-8">
         <TableTitle>Billing</TableTitle>
@@ -66,80 +72,82 @@ export default function Billing() {
     <article className="flex flex-col w-full gap-8">
       <div className="flex justify-between items-center">
         <div>
-          <TableTitle>Billing</TableTitle>
+          <TableTitle>{t('Billing')}</TableTitle>
           <p className="text-sm text-muted-foreground">
-            Manage billing, usage and limits
+            {t('Manage billing, usage and limits')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isSubscriptionActive && (
-            <Button variant="outline" onClick={() => redirectToPortalSession()}>
-              {t('Access Billing Portal')}
-            </Button>
-          )}
-
-          <Button variant="default" onClick={() => setManagePlanOpen(true)}>
-            {t('Upgrade Plan')}
+        {isEnterprise ? (
+          <Button
+            variant="default"
+            onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+          >
+            <Zap className="w-4 h-4" />
+            {platform.plan.licenseKey
+              ? t('Update License')
+              : t('Activate License')}
           </Button>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <Badge variant="accent" className="rounded-sm text-sm">
-          {isNil(platformSubscription.plan.plan)
-            ? t('Free')
-            : platformSubscription?.plan.plan.charAt(0).toUpperCase() +
-              platformSubscription?.plan.plan.slice(1)}
-          {isTrial && t(' ( trial )')}
-        </Badge>
-        <div className="flex items-baseline gap-2">
-          <div className="text-5xl font-semibold">
-            ${platformSubscription.nextBillingAmount || Number(0).toFixed(2)}
-          </div>
-          <div className="text-xl text-muted-foreground">/month</div>
-        </div>
-
-        {platformSubscription?.nextBillingDate &&
-          isNil(platformSubscription.cancelAt) && (
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              <span>
-                {isTrial ? t('Trial will end') : t('Next billing date')}{' '}
-                <span className="font-semibold">
-                  {dayjs(
-                    dayjs
-                      .unix(platformSubscription.nextBillingDate)
-                      .toISOString(),
-                  ).format('MMM D, YYYY')}
-                </span>
-              </span>
-            </div>
-          )}
-
-        {platformSubscription?.cancelAt && (
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
-            <CalendarDays className="w-4 h-4" />
-            <span>
-              {t('Subscription will end')}{' '}
-              <span className="font-semibold">
-                {dayjs(
-                  dayjs.unix(platformSubscription.cancelAt).toISOString(),
-                ).format('MMM D, YYYY')}
-              </span>
-            </span>
+        ) : (
+          <div className="flex items-center gap-2">
+            {isSubscriptionActive && (
+              <Button
+                variant="outline"
+                onClick={() => redirectToPortalSession()}
+              >
+                {t('Access Billing Portal')}
+              </Button>
+            )}
+            <Button variant="default" onClick={() => openDialog()}>
+              {t('Upgrade Plan')}
+            </Button>
           </div>
         )}
       </div>
 
-      <UsageCards platformSubscription={platformSubscription} />
-      {isBusinessPlan && (
-        <BusinessUserSeats platformSubscription={platformSubscription} />
-      )}
-      <AICreditUsage platformSubscription={platformSubscription} />
-      <TasksUsage platformSubscription={platformSubscription} />
+      {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
+      <UsageCards platformSubscription={platformPlanInfo} />
+      {isBusinessPlan && (
+        <BusinessUserSeats platformSubscription={platformPlanInfo} />
+      )}
+      <AICreditUsage platformSubscription={platformPlanInfo} />
+      <TasksUsage platformSubscription={platformPlanInfo} />
+
+      {isEnterprise ? (
+        <LicenseKey platform={platform} />
+      ) : (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
+                  <Wand className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {t('Enabled Features')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      'The following features are currently enabled as part of your platform plan.',
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6 p-6">
+            <FeatureStatus platform={platform} />
+          </CardContent>
+        </Card>
+      )}
       <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
+      <ActivateLicenseDialog
+        isOpen={isActivateLicenseKeyDialogOpen}
+        onOpenChange={setIsActivateLicenseKeyDialogOpen}
+      />
     </article>
   );
 }

@@ -18,16 +18,14 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ErrorCode, McpWithTools, Permission } from '@activepieces/shared';
+import { McpWithTools, Permission } from '@activepieces/shared';
 
 import { McpToolsIcon } from './mcp-tools-icon';
 
@@ -42,8 +40,6 @@ const McpServersPage = () => {
   );
   const { pieces: allPiecesMetadata, isLoading: isLoadingPiecesMetadata } =
     piecesHooks.usePieces({});
-
-  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   const pieceMetadataMap = allPiecesMetadata
     ? new Map(allPiecesMetadata.map((p) => [p.name, p]))
@@ -66,13 +62,6 @@ const McpServersPage = () => {
         navigate(
           `/projects/${project.id}/mcps/${newMcpServer.id}?${NEW_MCP_QUERY_PARAM}=true`,
         );
-      },
-      onError: (err: Error) => {
-        if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-          setUpgradeDialogOpen(true);
-        } else {
-          toast(INTERNAL_ERROR_TOAST);
-        }
       },
     });
   };
@@ -238,12 +227,6 @@ const McpServersPage = () => {
             </Button>
           </PermissionNeededTooltip>
         </div>
-        <UpgradeHookDialog
-          metric="mcp"
-          open={upgradeDialogOpen}
-          setOpen={setUpgradeDialogOpen}
-        />
-
         <DataTable
           filters={[]}
           emptyStateIcon={<Table2 className="size-14" />}
