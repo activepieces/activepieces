@@ -7,7 +7,7 @@ cloudinary.config({
 });
 
 // Replace with the public_id of the resource you want to transform
-const publicId = 'sample_bdgcod';
+const publicId = 'sample_gkoqxl';
 
 // Example transformation: resize to width 400, height 300, crop fill
 const transformation = [

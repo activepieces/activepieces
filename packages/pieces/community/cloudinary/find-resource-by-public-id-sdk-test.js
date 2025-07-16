@@ -7,7 +7,7 @@ cloudinary.config({
 });
 
 // Use the public_id of the most recently uploaded resource
-const publicId = 'sample_bdgcod';
+const publicId = 'sample_gkoqxl';
 
 cloudinary.api.resource(publicId, { resource_type: 'image' }, function(error, result) {
   if (error) {

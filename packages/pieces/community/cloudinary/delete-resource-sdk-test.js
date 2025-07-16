@@ -7,7 +7,7 @@ cloudinary.config({
 });
 
 // Replace with the public_id of the resource you want to delete
-const publicId = 'sample_bdgcod';
+const publicId = 'sample_gkoqxl';
 
 cloudinary.uploader.destroy(publicId, { resource_type: 'image' }, function(error, result) {
   if (error) {
