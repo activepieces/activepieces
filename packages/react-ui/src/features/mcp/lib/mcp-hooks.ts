@@ -71,11 +71,11 @@ export const mcpHooks = {
   },
   useRemoveTool: (mcpId: string, onSuccess?: () => void) => {
     return useMutation({
-      mutationFn: async (toolId: string) => {
+      mutationFn: async (toolIds: string[]) => {
         const mcp = await mcpApi.get(mcpId);
         const updatedTools =
           mcp?.tools
-            ?.filter((tool) => tool.id !== toolId)
+            ?.filter((tool) => !toolIds.includes(tool.id))
             .map((tool) => {
               switch (tool.type) {
                 case McpToolType.PIECE: {

@@ -1,4 +1,5 @@
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 
 export type TestType =
   | 'mcp-tool'
@@ -8,7 +9,15 @@ export type TestType =
   | 'polling';
 
 export const triggerEventUtils = {
-  getTestType: (triggerName: string, pieceName: string): TestType => {
+  getTestType: ({
+    triggerName,
+    pieceName,
+    trigger,
+  }: {
+    triggerName: string;
+    pieceName: string;
+    trigger: TriggerBase;
+  }): TestType => {
     if (pieceSelectorUtils.isMcpToolTrigger(pieceName, triggerName)) {
       return 'mcp-tool';
     }
@@ -21,6 +30,14 @@ export const triggerEventUtils = {
     ) {
       return 'webhook';
     }
+
+    if (
+      trigger.type === TriggerStrategy.APP_WEBHOOK ||
+      trigger.type === TriggerStrategy.WEBHOOK
+    ) {
+      return 'simulation';
+    }
+
     return 'polling';
   },
 };
