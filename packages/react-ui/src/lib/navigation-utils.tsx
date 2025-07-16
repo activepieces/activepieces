@@ -31,7 +31,8 @@ export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
 export const useDefaultRedirectPath = () => {
   const { embedState } = useEmbedding();
-  return !isNil(embedState) && embedState.isEmbedded ? '/flows' : '/agents';
+  // return !isNil(embedState) && embedState.isEmbedded ? '/flows' : '/agents';
+  return '/flows';
 };
 
 export const useRedirectAfterLogin = () => {
