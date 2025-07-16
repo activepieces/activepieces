@@ -1,25 +1,70 @@
 import { t } from 'i18next';
+import { Check, X } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   PlatformPlanLimits,
   PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
 
 const LICENSE_PROPS_MAP = {
-  agentsEnabled: 'Agents Enabled',
-  environmentEnabled: 'Team Collaboration via Git',
-  analyticsEnabled: 'Analytics',
-  auditLogEnabled: 'Audit Log',
-  embeddingEnabled: 'Embedding',
-  managePiecesEnabled: 'Manage Pieces',
-  manageTemplatesEnabled: 'Manage Templates',
-  customAppearanceEnabled: 'Brand Activepieces',
-  manageProjectsEnabled: 'Manage Projects',
-  projectRolesEnabled: 'Project Roles',
-  customDomainsEnabled: 'Custom Domains',
-  apiKeysEnabled: 'API Keys',
-  ssoEnabled: 'Single Sign On',
+  agentsEnabled: {
+    label: 'Agents',
+    description: 'AI assistants that can help automate tasks and workflows',
+  },
+  environmentEnabled: {
+    label: 'Team Collaboration via Git',
+    description:
+      'Work together on projects with version control and team features',
+  },
+  analyticsEnabled: {
+    label: 'Analytics',
+    description: 'View reports and insights about your workflow performance',
+  },
+  auditLogEnabled: {
+    label: 'Audit Log',
+    description: 'Track all changes and activities in your workspace',
+  },
+  embeddingEnabled: {
+    label: 'Embedding',
+    description: 'Add workflows directly into your website or application',
+  },
+  managePiecesEnabled: {
+    label: 'Manage Pieces',
+    description: 'Create and organize custom building blocks for workflows',
+  },
+  manageTemplatesEnabled: {
+    label: 'Manage Templates',
+    description: 'Save and share workflow templates across your team',
+  },
+  customAppearanceEnabled: {
+    label: 'Brand Activepieces',
+    description: 'Customize the look and feel with your company branding',
+  },
+  manageProjectsEnabled: {
+    label: 'Manage Projects',
+    description: 'Organize workflows into separate projects and workspaces',
+  },
+  projectRolesEnabled: {
+    label: 'Project Roles',
+    description: 'Control who can view, edit, or manage different projects',
+  },
+  customDomainsEnabled: {
+    label: 'Custom Domains',
+    description: 'Use your own web address instead of the default domain',
+  },
+  apiKeysEnabled: {
+    label: 'API Keys',
+    description: 'Connect external services and applications to your workflows',
+  },
+  ssoEnabled: {
+    label: 'Single Sign On',
+    description: 'Log in using your company account without separate passwords',
+  },
+  customRolesEnabled: {
+    label: 'Custom Roles',
+    description: 'Create and manage custom roles for your team',
+  },
 };
 
 export const FeatureStatus = ({
@@ -35,19 +80,28 @@ export const FeatureStatus = ({
           const bEnabled = platform?.plan?.[bKey as keyof PlatformPlanLimits];
           return (aEnabled ? 0 : 1) - (bEnabled ? 0 : 1);
         })
-        .map(([key, label]) => {
+        .map(([key, value]) => {
           const featureEnabled =
             platform?.plan?.[key as keyof PlatformPlanLimits];
           return (
             <div
               key={key}
-              className="flex items-center justify-between p-3 rounded-lg border bg-card/50"
+              className="flex items-center justify-between p-3 rounded-lg bg-accent/50"
             >
-              <span className="text-sm font-medium">{t(label)}</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{t(value.label)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t(value.description)}
+                </span>
+              </div>
               {featureEnabled ? (
-                <Badge variant="success">{t('Enabled')}</Badge>
+                <StatusIconWithText
+                  icon={Check}
+                  text="Enabled"
+                  variant="success"
+                />
               ) : (
-                <Badge variant="destructive">{t('Disabled')}</Badge>
+                <StatusIconWithText icon={X} text="Disabled" variant="error" />
               )}
             </div>
           );

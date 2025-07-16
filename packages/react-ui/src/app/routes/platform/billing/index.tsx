@@ -1,10 +1,12 @@
 import { t } from 'i18next';
-import { Wand } from 'lucide-react';
+import { Wand, Zap } from 'lucide-react';
+import { useState } from 'react';
 
 import { TableTitle } from '@/components/custom/table-title';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { FeatureStatus } from '@/features/billing/components/features-status';
@@ -23,6 +25,8 @@ import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 export default function Billing() {
+  const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
+    useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
@@ -74,7 +78,17 @@ export default function Billing() {
           </p>
         </div>
 
-        {!isEnterprise && (
+        {isEnterprise ? (
+          <Button
+            variant="default"
+            onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+          >
+            <Zap className="w-4 h-4" />
+            {platform.plan.licenseKey
+              ? t('Update License')
+              : t('Activate License')}
+          </Button>
+        ) : (
           <div className="flex items-center gap-2">
             {isSubscriptionActive && (
               <Button
@@ -129,6 +143,11 @@ export default function Billing() {
           </CardContent>
         </Card>
       )}
+      <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
+      <ActivateLicenseDialog
+        isOpen={isActivateLicenseKeyDialogOpen}
+        onOpenChange={setIsActivateLicenseKeyDialogOpen}
+      />
     </article>
   );
 }

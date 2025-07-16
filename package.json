@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.65.0",
-  "rcVersion": "0.64.0-rc.0",
+  "version": "0.66.1",
+  "rcVersion": "0.67.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -320,7 +320,7 @@
     "@nx/web": "21.1.2",
     "@nx/webpack": "21.1.2",
     "@nx/workspace": "21.1.2",
-    "@playwright/test": "1.37.1",
+    "@playwright/test": "1.54.1",
     "@swc-node/register": "1.9.2",
     "@swc/cli": "0.6.0",
     "@swc/core": "1.5.7",
