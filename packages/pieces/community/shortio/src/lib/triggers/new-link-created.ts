@@ -2,7 +2,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, StaticPropsValue  } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { shortioAuth, shortioApiCall, shortioCommon, ShortioApiLink } from '../common';
+import { shortioAuth, shortioApiCall, shortioCommon, ShortioApiLinks } from '../common';
 
 type Props = {
   domain_id: string;
@@ -15,7 +15,7 @@ const polling: Polling<
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const domain_id = propsValue.domain_id;
-    const response = await shortioApiCall<ShortioApiLink>({
+    const response = await shortioApiCall<ShortioApiLinks>({
         apiKey: auth,
         method: HttpMethod.GET,
         resourceUri: '/api/links',
