@@ -287,6 +287,9 @@
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
+      "@activepieces/piece-eden-ai": [
+        "packages/pieces/community/eden-ai/src/index.ts"
+      ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
@@ -756,6 +759,9 @@
       ],
       "@activepieces/piece-shopify": [
         "packages/pieces/community/shopify/src/index.ts"
+      ],
+      "@activepieces/piece-short-io": [
+        "packages/pieces/community/short-io/src/index.ts"
       ],
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
