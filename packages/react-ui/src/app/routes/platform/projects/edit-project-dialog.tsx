@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -120,11 +120,6 @@ export function EditProjectDialog({
             form.setError('root.serverError', {
               message: t('The external ID is already taken.'),
             });
-            break;
-          }
-          default: {
-            console.log(error);
-            toast(INTERNAL_ERROR_TOAST);
             break;
           }
         }

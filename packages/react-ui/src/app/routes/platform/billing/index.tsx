@@ -11,9 +11,9 @@ import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { BusinessUserSeats } from '@/features/billing/components/business-user-seats';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
 import { TasksUsage } from '@/features/billing/components/tasks-usage';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
   billingMutations,
@@ -28,7 +28,7 @@ export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const [managePlanOpen, setManagePlanOpen] = useState(false);
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const {
     data: platformPlanInfo,
@@ -98,7 +98,7 @@ export default function Billing() {
                 {t('Access Billing Portal')}
               </Button>
             )}
-            <Button variant="default" onClick={() => setManagePlanOpen(true)}>
+            <Button variant="default" onClick={() => openDialog()}>
               {t('Upgrade Plan')}
             </Button>
           </div>
@@ -143,7 +143,6 @@ export default function Billing() {
           </CardContent>
         </Card>
       )}
-
       <ManagePlanDialog open={managePlanOpen} setOpen={setManagePlanOpen} />
       <ActivateLicenseDialog
         isOpen={isActivateLicenseKeyDialogOpen}
