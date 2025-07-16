@@ -1,6 +1,7 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
@@ -26,9 +27,9 @@ export const flagService = {
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 ApFlagId.CLOUD_AUTH_ENABLED,
-                ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -51,7 +52,6 @@ export const flagService = {
                 ApFlagId.WEBHOOK_URL_PREFIX,
                 ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
                 ApFlagId.MAX_FIELDS_PER_TABLE,
-                ApFlagId.MAX_TABLES_PER_PROJECT,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
                 ApFlagId.SHOW_CHANGELOG,
@@ -70,6 +70,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.AGENTS_CONFIGURED,
+                value: await aiProviderService.isAgentConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,
@@ -78,6 +90,12 @@ export const flagService = {
             {
                 id: ApFlagId.PIECES_SYNC_MODE,
                 value: system.get(AppSystemProp.PIECES_SYNC_MODE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.ENABLE_FLOW_ON_PUBLISH,
+                value: system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true,
                 created,
                 updated,
             },
@@ -94,14 +112,14 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.PROJECT_LIMITS_ENABLED,
-                value: false,
+                id: ApFlagId.EDITION,
+                value: system.getEdition(),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.EDITION,
-                value: system.getEdition(),
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
                 created,
                 updated,
             },
@@ -228,12 +246,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.MAX_TABLES_PER_PROJECT,
-                value: system.getNumber(AppSystemProp.MAX_TABLES_PER_PROJECT),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.MAX_FIELDS_PER_TABLE,
                 value: system.getNumber(AppSystemProp.MAX_FIELDS_PER_TABLE),
                 created,
@@ -273,6 +285,7 @@ export const flagService = {
         if (!cloudPlatformId || !platformId) {
             return false
         }
+
         return platformId === cloudPlatformId
     },
 }

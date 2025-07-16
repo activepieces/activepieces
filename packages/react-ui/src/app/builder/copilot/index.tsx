@@ -5,10 +5,11 @@ import { nanoid } from 'nanoid';
 import { useState, useRef, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 
+import { CardList } from '@/components/custom/card-list';
 import { useSocket } from '@/components/socket-provider';
-import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
+import { CORE_STEP_METADATA } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
   CodeAction,
@@ -22,10 +23,8 @@ import {
 } from '@activepieces/shared';
 
 import { Textarea } from '../../../components/ui/textarea';
-import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
+import { pieceSelectorUtils } from '../../../features/pieces/lib/piece-selector-utils';
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
-import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
 import { SidebarHeader } from '../sidebar-header';
 
 import { ChatMessage, CopilotMessage } from './chat-message';
@@ -155,8 +154,6 @@ export const CopilotSidebar = () => {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
-      console.log('no ask ai button props');
-      toast(INTERNAL_ERROR_TOAST);
       return;
     }
     if (message.messageType !== 'code') {
@@ -167,18 +164,18 @@ export const CopilotSidebar = () => {
         askAiButtonProps.type === FlowOperationType.UPDATE_ACTION
           ? askAiButtonProps.stepName
           : flowStructureUtil.findUnusedName(flowVersion.trigger);
-      const codeAction = pieceSelectorUtils.getDefaultStep({
+      const codeAction = pieceSelectorUtils.getDefaultStepValues({
         stepName,
-        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
-        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
-      }) as CodeAction;
-      codeAction.settings = {
-        input: message.content.inputs,
-        sourceCode: {
-          code: message.content.code,
-          packageJson: JSON.stringify(message.content.packages, null, 2),
+        pieceSelectorItem: CORE_STEP_METADATA[ActionType.CODE],
+        overrideDefaultSettings: {
+          input: message.content.inputs,
+          sourceCode: {
+            code: message.content.code,
+            packageJson: JSON.stringify(message.content.packages, null, 2),
+          },
         },
-      };
+      }) as CodeAction;
+
       codeAction.displayName = message.content.title;
       codeAction.customLogoUrl = message.content.icon;
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
@@ -200,6 +197,11 @@ export const CopilotSidebar = () => {
           flowVersion.trigger,
         );
         if (step) {
+          const errorHandlingOptions =
+            step.type === ActionType.CODE || step.type === ActionType.PIECE
+              ? step.settings.errorHandlingOptions
+              : codeAction.settings.errorHandlingOptions;
+
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: {
@@ -209,11 +211,7 @@ export const CopilotSidebar = () => {
               settings: {
                 ...codeAction.settings,
                 input: message.content.inputs,
-                errorHandlingOptions:
-                  step.type === ActionType.CODE ||
-                  step.type === ActionType.PIECE
-                    ? step.settings.errorHandlingOptions
-                    : codeAction.settings.errorHandlingOptions,
+                errorHandlingOptions,
               },
               type: ActionType.CODE,
               valid: true,
@@ -237,7 +235,7 @@ export const CopilotSidebar = () => {
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
-          <CardList className="pb-3">
+          <CardList className="pb-3" listClassName="gap-4">
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}

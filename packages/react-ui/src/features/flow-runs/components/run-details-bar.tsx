@@ -28,7 +28,6 @@ function getStatusText(
   memoryLimit: number,
 ) {
   switch (status) {
-    case FlowRunStatus.STOPPED:
     case FlowRunStatus.SUCCEEDED:
       return t('Run Succeeded');
     case FlowRunStatus.FAILED:
@@ -44,6 +43,8 @@ function getStatusText(
           memoryLimit: Math.floor(memoryLimit / 1024),
         },
       );
+    case FlowRunStatus.QUEUED:
+      return t('Queued');
     case FlowRunStatus.RUNNING:
       return t('Running');
     case FlowRunStatus.TIMEOUT:

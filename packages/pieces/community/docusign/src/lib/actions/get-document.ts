@@ -34,8 +34,10 @@ export const getDocument = createAction({
   async run({ auth, propsValue, files }) {
     const apiClient = await createApiClient(auth as DocusignAuthType);
     const envelopeApiClient = new EnvelopesApi(apiClient);
+    const filename =
+      propsValue.documentId === 'archive' ? 'archive.zip' : 'document.pdf';
     return await files.write({
-      fileName: 'archive.zip',
+      fileName: filename,
       data: Buffer.from(
         await envelopeApiClient.getDocument(
           propsValue.accountId,
