@@ -4,7 +4,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const BASE_URL = `https://a.klaviyo.com/api`;
 
 export async function makeRequest(
-    api_key: string,
+    accessToken: string,
     method: HttpMethod,
     path: string,
     body?: unknown
@@ -14,7 +14,7 @@ export async function makeRequest(
             method,
             url: `${BASE_URL}${path}`,
             headers: {
-                'Authorization': `Klaviyo-API-Key ${api_key}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'accept': 'application/vnd.api+json',
                 'revision': '2025-04-15',
             },
@@ -24,7 +24,7 @@ export async function makeRequest(
         
     } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
-            throw new Error('Authentication failed. Please check your API key.');
+            throw new Error('Authentication failed. Please check your OAuth connection.');
         }
 
         if (error.response?.status === 429) {
