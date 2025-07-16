@@ -179,7 +179,7 @@ export async function shortioApiCall<T extends HttpMessageBody>({
 			throw new Error(`Request failed: ${error.response?.body?.message || error.message}`);
 		}
 
-    throw new Error(`API call failed: ${error.message}`);
+    throw error
   }
 }
 
