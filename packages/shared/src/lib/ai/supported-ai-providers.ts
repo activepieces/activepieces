@@ -253,7 +253,7 @@ It is strongly recommended that you add your credit card information to your Ope
             },
             {
                 displayName: 'Claude 3.5 Haiku',
-                instance: anthropic('claude-3-5-haiku-latest'),
+                instance: anthropic('claude-3-5-haiku-20241022'),
                 functionCalling: true,
                 pricing: {
                     input: 0.80,
