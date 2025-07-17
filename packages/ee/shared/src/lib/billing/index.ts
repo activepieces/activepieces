@@ -4,12 +4,12 @@ export * from './plan-limits'
 import Stripe from 'stripe'
 
 export type ProjectPlanLimits = {
-    nickname: string
-    tasks: number | null
-    locked: boolean
-    pieces: string[]
-    aiCredits: number | null
-    piecesFilterType: PiecesFilterType
+    nickname?: string
+    tasks?: number | null
+    locked?: boolean
+    pieces?: string[]
+    aiCredits?: number | null
+    piecesFilterType?: PiecesFilterType
 }
 
 export enum ApSubscriptionStatus {

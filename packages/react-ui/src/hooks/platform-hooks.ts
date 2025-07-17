@@ -80,6 +80,9 @@ export const platformHooks = {
 
     const plan = platform.plan;
     const usage = platform.usage;
+    if (isNil(usage)) {
+      return false;
+    }
 
     const limitKey = METRIC_TO_LIMIT_MAPPING[resource];
     const usageKey = METRIC_TO_USAGE_MAPPING[resource];

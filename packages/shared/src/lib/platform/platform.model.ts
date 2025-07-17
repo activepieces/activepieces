@@ -173,7 +173,7 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
-    usage: PlatformUsage
+    usage: Type.Optional(PlatformUsage)
 }), Type.Pick(Platform, [
     'id',
     'created',

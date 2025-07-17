@@ -159,6 +159,12 @@ export const httpSendRequestAction = createAction({
         return fields;
       },
     }),
+    response_is_binary: Property.Checkbox({
+      displayName: 'Response is Binary',
+      description: 'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      required: false,
+      defaultValue: false,
+    }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
@@ -226,6 +232,7 @@ export const httpSendRequestAction = createAction({
       queryParams,
       body,
       body_type,
+      response_is_binary,
       timeout,
       failureMode,
       use_proxy,
@@ -264,6 +271,11 @@ export const httpSendRequestAction = createAction({
         break;
     }
 
+    // Set response type to arraybuffer if binary response is expected
+    if (response_is_binary) {
+      request.responseType = 'arraybuffer';
+    }
+
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
@@ -298,9 +310,20 @@ export const httpSendRequestAction = createAction({
         });
 
         const proxied_response = await httpClient.sendRequest(request, axiosClient);
-        return proxied_response.body;
+        return handleBinaryResponse(
+          proxied_response.body,
+          proxied_response.status,
+          proxied_response.headers as HttpHeaders,
+          response_is_binary
+        );
       }
-      return await httpClient.sendRequest(request);
+      const response = await httpClient.sendRequest(request);
+      return handleBinaryResponse(
+        response.body,
+        response.status,
+        response.headers,
+        response_is_binary,
+      );
     } catch (error) {
       switch (failureMode) {
         case 'all': {
@@ -318,3 +341,24 @@ export const httpSendRequestAction = createAction({
     }
   },
 });
+
+const handleBinaryResponse = (
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    body = Buffer.from(bodyContent).toString('base64');
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};

@@ -4,14 +4,12 @@ import { Migration } from '.'
 
 export const migrateConnectionIds: Migration = {
     name: 'migrate-v1-connection-ids',
+    targetSchemaVersion: '1',
     migrate: (flowVersion: FlowVersion): FlowVersion => {
-        if (flowVersion.schemaVersion === '1') {
-            return {
-                ...flowVersion,
-                schemaVersion: '2',
-                connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
-            }
+        return {
+            ...flowVersion,
+            schemaVersion: '2',
+            connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
         }
-        return flowVersion
     },
 } 

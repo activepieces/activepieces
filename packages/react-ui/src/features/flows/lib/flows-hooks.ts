@@ -184,7 +184,12 @@ export const flowsHooks = {
     return useQuery({
       queryKey: ['flow', flowId],
       queryFn: async () => {
-        return await flowsApi.get(flowId);
+        try {
+          return await flowsApi.get(flowId);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
       },
       staleTime: 0,
     });

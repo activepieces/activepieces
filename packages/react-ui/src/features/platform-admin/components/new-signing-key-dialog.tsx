@@ -46,9 +46,6 @@ export const NewSigningKeyDialog = ({
       setSigningKey(key);
       onCreate();
     },
-    onError: () => {
-      setOpen(false);
-    },
   });
 
   return (
