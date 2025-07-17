@@ -41,13 +41,10 @@ jobs:
       - name: Notify Discord on failure
         if: failure()
         run: |
-          SUMMARY=""
           if [ -f checkly-github-report.md ]; then
             SUMMARY=$(node tools/scripts/format-checkly-report.js checkly-github-report.md)
-          else
-            SUMMARY=$(node -e "console.log(JSON.stringify('❌ **Checkly E2E tests are failing in the workflow!**'))")
+            curl -H "Content-Type: application/json" \
+              -X POST \
+              -d "{\"content\": $SUMMARY}" \
+              https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
           fi
-          curl -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"content\": $SUMMARY}" \
-            https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
