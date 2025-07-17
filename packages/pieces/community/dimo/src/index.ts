@@ -5,6 +5,7 @@ import {
 	identityApiActions,
 	telemetryApiActions,
 	tokenExchangeApiActions,
+    vehicleEventsApiActions,
 } from './lib/actions';
 import {
 	batteryChargingTrigger,
@@ -51,6 +52,7 @@ export const dimo = createPiece({
 		...tokenExchangeApiActions,
 		...identityApiActions,
 		...telemetryApiActions,
+		...vehicleEventsApiActions,
 	],
 	triggers: [
 		batteryChargingTrigger,
