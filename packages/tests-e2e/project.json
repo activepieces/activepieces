@@ -33,7 +33,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx checkly deploy --force"
+          "npx checkly deploy"
         ]
       }
     },

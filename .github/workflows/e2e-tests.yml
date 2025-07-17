@@ -19,16 +19,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Debug E2E_INSTANCE_URL
-        run: |
-          if [ -z "$E2E_INSTANCE_URL" ]; then
-            echo "E2E_INSTANCE_URL is not set"
-          else
-            echo "E2E_INSTANCE_URL is set"
-          fi
-        env:
-          E2E_INSTANCE_URL: ${{ secrets.E2E_INSTANCE_URL }}
-
       - name: Run Checkly tests
         id: checkly-tests
         run: npx checkly test --config=packages/tests-e2e/checkly.config.ts --reporter=github --record
