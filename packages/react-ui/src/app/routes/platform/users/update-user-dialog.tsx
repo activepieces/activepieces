@@ -102,6 +102,8 @@ export const UpdateUserDialog = ({
                           <SelectItem value={role} key={role}>
                             {role === PlatformRole.ADMIN
                               ? t('Admin')
+                              : role === PlatformRole.OPERATOR
+                              ? t('Operator')
                               : t('Member')}
                           </SelectItem>
                         ))}
