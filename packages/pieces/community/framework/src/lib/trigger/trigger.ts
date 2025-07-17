@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox';
 import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
-import { InputPropertyMap } from '../property';
+import { InputPropertyMap, OAuth2Property } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
 
@@ -40,6 +40,7 @@ export interface WebhookResponse {
   headers?: Record<string, string>
 }
 
+
 type BaseTriggerParams<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
@@ -49,7 +50,7 @@ type BaseTriggerParams<
   displayName: string
   description: string
   requireAuth?: boolean
-  auth?: PieceAuth
+  auth?: PieceAuth | PieceAuth[]
   props: TriggerProps
   type: TS
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>

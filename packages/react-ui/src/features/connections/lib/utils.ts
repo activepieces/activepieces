@@ -5,6 +5,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   CustomAuthProps,
   OAuth2Props,
+  PieceAuthProperty,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
@@ -89,23 +90,29 @@ export const newConnectionUtils = {
     };
   },
 
-  createDefaultValues(
-    piece: PieceMetadataModelSummary | PieceMetadataModel,
-    suggestedExternalId: string,
-    suggestedDisplayName: string,
-  ): Partial<UpsertAppConnectionRequestBody> {
+  createDefaultValues({
+    auth,
+    suggestedExternalId,
+    suggestedDisplayName,
+    pieceName,
+  }: {
+    auth: PieceAuthProperty;
+    suggestedExternalId: string;
+    suggestedDisplayName: string;
+    pieceName: string;
+  }): Partial<UpsertAppConnectionRequestBody> {
     const projectId = authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
-    if (!piece.auth) {
-      throw new Error(`Unsupported property type: ${piece.auth}`);
+    if (!auth) {
+      throw new Error(`Unsupported property type: ${auth}`);
     }
 
-    switch (piece.auth.type) {
+    switch (auth.type) {
       case PropertyType.SECRET_TEXT:
         return {
           externalId: suggestedExternalId,
           displayName: suggestedDisplayName,
-          pieceName: piece.name,
+          pieceName: pieceName,
           projectId,
           type: AppConnectionType.SECRET_TEXT,
           value: {
@@ -117,7 +124,7 @@ export const newConnectionUtils = {
         return {
           externalId: suggestedExternalId,
           displayName: suggestedDisplayName,
-          pieceName: piece.name,
+          pieceName: pieceName,
           projectId,
           type: AppConnectionType.BASIC_AUTH,
           value: {
@@ -130,14 +137,12 @@ export const newConnectionUtils = {
         return {
           externalId: suggestedExternalId,
           displayName: suggestedDisplayName,
-          pieceName: piece.name,
+          pieceName: pieceName,
           projectId,
           type: AppConnectionType.CUSTOM_AUTH,
           value: {
             type: AppConnectionType.CUSTOM_AUTH,
-            props: newConnectionUtils.extractDefaultPropsValues(
-              piece.auth.props,
-            ),
+            props: newConnectionUtils.extractDefaultPropsValues(auth.props),
           },
         };
       }
@@ -145,22 +150,18 @@ export const newConnectionUtils = {
         return {
           externalId: suggestedExternalId,
           displayName: suggestedDisplayName,
-          pieceName: piece.name,
+          pieceName: pieceName,
           projectId,
           type: AppConnectionType.CLOUD_OAUTH2,
           value: {
             type: AppConnectionType.CLOUD_OAUTH2,
-            scope: piece.auth.scope.join(' '),
-            authorization_method: piece.auth?.authorizationMethod,
+            scope: auth.scope.join(' '),
+            authorization_method: auth.authorizationMethod,
             client_id: '',
-            props: newConnectionUtils.extractDefaultPropsValues(
-              piece.auth.props,
-            ),
+            props: newConnectionUtils.extractDefaultPropsValues(auth.props),
             code: '',
           },
         };
-      default:
-        throw new Error(`Unsupported property type: ${piece.auth}`);
     }
   },
 

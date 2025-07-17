@@ -74,6 +74,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
 
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  const selectedAuth = Array.isArray(params.piece.auth)
+    ? params.piece.auth[0]
+    : params.piece.auth;
   return (
     <FormField
       control={form.control}
@@ -101,7 +104,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
           )}
           {!isLoadingConnections && (
             <AutoFormFieldWrapper
-              property={params.piece.auth!}
+              property={selectedAuth!}
               propertyName="auth"
               field={field as unknown as ControllerRenderProps}
               disabled={params.disabled}

@@ -19,7 +19,6 @@ import {
   deepMergeAndCast,
   BranchExecutionType,
   RouterExecutionType,
-  spreadIfDefined,
   isNil,
   flowStructureUtil,
   StepSettings,
@@ -122,10 +121,7 @@ const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
     return {};
   }
   return formUtils.getDefaultValueForStep(
-    {
-      ...spreadIfDefined('auth', pieceSelectorItem.pieceMetadata.auth),
-      ...pieceSelectorItem.actionOrTrigger.props,
-    },
+    pieceSelectorItem.actionOrTrigger.props,
     {},
   );
 };

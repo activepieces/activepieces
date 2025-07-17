@@ -3,12 +3,10 @@ import { t } from 'i18next';
 
 import {
   CONNECTION_REGEX,
-  CustomAuthProperty,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadata,
   PieceMetadataModel,
-  PieceMetadataModelSummary,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
@@ -41,7 +39,7 @@ import {
 
 function addAuthToPieceProps(
   props: PiecePropertyMap,
-  auth: PieceAuthProperty | undefined,
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
   requireAuth: boolean,
 ): PiecePropertyMap {
   if (!requireAuth || isNil(auth)) {
@@ -52,6 +50,12 @@ function addAuthToPieceProps(
       return acc;
     }, {} as PiecePropertyMap);
     return newProps;
+  }
+  if (Array.isArray(auth)) {
+    return {
+      ...props,
+      ...spreadIfDefined('auth', auth[0]),
+    };
   }
   return {
     ...props,
@@ -102,10 +106,7 @@ function buildInputSchemaForStep(
   }
 }
 
-function buildConnectionSchema(
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-) {
-  const auth = piece.auth;
+function buildConnectionSchema(auth: PieceAuthProperty | undefined) {
   if (isNil(auth)) {
     return Type.Object({
       request: Type.Composite([
@@ -147,9 +148,7 @@ function buildConnectionSchema(
           connectionSchema,
           Type.Object({
             value: Type.Object({
-              props: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              ),
+              props: formUtils.buildSchema(auth.props),
             }),
           }),
         ]),

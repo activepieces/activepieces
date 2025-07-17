@@ -26,10 +26,14 @@ export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
             projectId,
             platformId,
         })
-        if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
+        if (isNil(auth)) {
+            throw new Error(`Auth is required to claim a platform oauth2 connection piece ${pieceName},platformId: ${platformId},projectId: ${projectId}`)
+        }
+        const oauth2Auth = Array.isArray(auth) ? auth.find(auth => auth.type === PropertyType.OAUTH2) : auth
+        if (isNil(oauth2Auth) || oauth2Auth.type !== PropertyType.OAUTH2) {
             throw new Error(
                 'Cannot claim auth for non oauth2 property ' +
-                auth?.type +
+                oauth2Auth?.type +
                 ' ' +
                 pieceName,
             )

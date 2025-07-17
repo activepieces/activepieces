@@ -17,7 +17,7 @@ export const PieceBase = Type.Object({
   authors: Type.Array(Type.String()),
   platformId: Type.Optional(Type.String()),
   directoryPath: Type.Optional(Type.String()),
-  auth: Type.Optional(PieceAuthProperty),
+  auth: Type.Optional(Type.Union([PieceAuthProperty, Type.Array(PieceAuthProperty)])),
   version: Type.String(),
   categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
   minimumSupportedRelease: Type.Optional(Type.String()),
@@ -35,7 +35,7 @@ export type PieceBase = {
   platformId?: string;
   authors: string[],
   directoryPath?: string;
-  auth?: PieceAuthProperty;
+  auth?: PieceAuthProperty | PieceAuthProperty[];
   version: string;
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;

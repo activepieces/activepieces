@@ -20,7 +20,6 @@ import {
   OAuth2Props,
   PieceMetadataModel,
   PieceMetadataModelSummary,
-  PropertyType,
 } from '@activepieces/pieces-framework';
 import {
   resolveValueFromProps,
@@ -150,15 +149,6 @@ const OAuth2ConnectionSettingsImplementation = ({
         )
       }
     />
-  );
-};
-
-const doesPieceAllowSwitchingGrantType = (
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-) => {
-  return (
-    piece.auth?.type === PropertyType.OAUTH2 &&
-    piece.auth.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
   );
 };
 
@@ -296,6 +286,8 @@ const OAuth2ConnectionSettingsForm = ({
     setRefresh(refresh + 1);
   };
 
+  const doesPieceAllowSwitchingGrantType =
+    authProperty.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
   return (
     <div className="flex flex-col gap-4">
       {currentOAuth2Type === AppConnectionType.OAUTH2 &&
@@ -427,7 +419,7 @@ const OAuth2ConnectionSettingsForm = ({
             </Button>
           </div>
         )}
-      {doesPieceAllowSwitchingGrantType(piece) && (
+      {doesPieceAllowSwitchingGrantType && (
         <>
           {currentGrantType == OAuth2GrantType.AUTHORIZATION_CODE && (
             <div>

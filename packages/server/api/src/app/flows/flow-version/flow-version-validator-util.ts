@@ -160,8 +160,8 @@ async function validateAction(
     }
 
     const props = action.props
-    if (!isNil(piece.auth) && action.requireAuth !== false) {
-        props.auth = piece.auth
+    if (isNil(settings.input?.auth) && !isNil(piece.auth) && action.requireAuth !== false) {
+        return { valid: false }
     }
     return validateProps(props, settings.input)
 }
@@ -195,9 +195,9 @@ async function validateTrigger(
         return { valid: false }
     }
     const props = trigger.props
-    if (!isNil(piece.auth) && trigger.requireAuth !== false) {
-        props.auth = piece.auth
-    }
+    if (isNil(settings.input?.auth) && !isNil(piece.auth) && trigger.requireAuth !== false) {
+        return { valid: false }
+    }   
     return validateProps(props, settings.input)
 }
 

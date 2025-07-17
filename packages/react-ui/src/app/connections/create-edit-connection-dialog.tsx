@@ -83,8 +83,9 @@ const CreateOrEditConnectionDialogContent = React.memo(
     externalIdComingFromSdk,
     setOpen,
   }: CreateOrEditConnectionDialogContentProps) => {
-    const { auth } = piece;
-    const formSchema = formUtils.buildConnectionSchema(piece);
+    const auth = piece.auth;
+    const selectedAuth = Array.isArray(auth) ? auth[0] : auth;
+    const formSchema = formUtils.buildConnectionSchema(selectedAuth);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
@@ -97,11 +98,12 @@ const CreateOrEditConnectionDialogContent = React.memo(
     }>({
       defaultValues: {
         request: {
-          ...newConnectionUtils.createDefaultValues(
-            piece,
-            externalId,
-            displayName,
-          ),
+          ...newConnectionUtils.createDefaultValues({
+            auth: selectedAuth!,
+            suggestedExternalId: externalId,
+            suggestedDisplayName: displayName,
+            pieceName: piece.name,
+          }),
           projectIds: reconnectConnection?.projectIds ?? [],
         },
       },
@@ -150,8 +152,8 @@ const CreateOrEditConnectionDialogContent = React.memo(
               viewPortClassName="max-h-[calc(70vh-180px)] px-4"
             >
               {' '}
-              <ApMarkdown markdown={auth?.description}></ApMarkdown>
-              {auth?.description && <Separator className="my-4" />}
+              <ApMarkdown markdown={selectedAuth?.description}></ApMarkdown>
+              {selectedAuth?.description && <Separator className="my-4" />}
               {(isNil(externalIdComingFromSdk) ||
                 externalIdComingFromSdk === '') && (
                 <FormField
@@ -198,28 +200,28 @@ const CreateOrEditConnectionDialogContent = React.memo(
                   )}
                 </div>
               )}
-              {auth?.type === PropertyType.SECRET_TEXT && (
+              {selectedAuth?.type === PropertyType.SECRET_TEXT && (
                 <div className="mt-3.5">
                   <SecretTextConnectionSettings
                     authProperty={piece.auth as SecretTextProperty<boolean>}
                   />
                 </div>
               )}
-              {auth?.type === PropertyType.BASIC_AUTH && (
+              {selectedAuth?.type === PropertyType.BASIC_AUTH && (
                 <div className="mt-3.5">
                   <BasicAuthConnectionSettings
                     authProperty={piece.auth as BasicAuthProperty}
                   />
                 </div>
               )}
-              {auth?.type === PropertyType.CUSTOM_AUTH && (
+              {selectedAuth?.type === PropertyType.CUSTOM_AUTH && (
                 <div className="mt-3.5">
                   <CustomAuthConnectionSettings
                     authProperty={piece.auth as CustomAuthProperty<any>}
                   />
                 </div>
               )}
-              {auth?.type === PropertyType.OAUTH2 && (
+              {selectedAuth?.type === PropertyType.OAUTH2 && (
                 <div className="mt-3.5">
                   <OAuth2ConnectionSettings
                     authProperty={piece.auth as OAuth2Property<OAuth2Props>}
