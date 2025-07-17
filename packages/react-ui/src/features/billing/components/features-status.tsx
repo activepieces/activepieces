@@ -101,7 +101,11 @@ export const FeatureStatus = ({
                   variant="success"
                 />
               ) : (
-                <StatusIconWithText icon={Lock} text="Upgrade" variant="default" />
+                <StatusIconWithText
+                  icon={Lock}
+                  text="Upgrade"
+                  variant="default"
+                />
               )}
             </div>
           );

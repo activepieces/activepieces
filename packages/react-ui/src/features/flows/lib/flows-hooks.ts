@@ -186,9 +186,7 @@ export const flowsHooks = {
       queryFn: async () => {
         try {
           return await flowsApi.get(flowId);
-        }
-        catch(err)
-        {
+        } catch (err) {
           console.error(err);
           return null;
         }
