@@ -44,7 +44,7 @@ export type ApplyLicenseKeyByEmailRequestBody = Static<typeof ApplyLicenseKeyByE
 export const GiftTrialByEmailRequestBody = Type.Object({
     gifts: Type.Array(Type.Object({
         email: Type.String(),
-        trialPeriod: Type.Number()
-    }))
+        trialPeriod: Type.Number(),
+    })),
 })
 export type GiftTrialByEmailRequestBody = Static<typeof GiftTrialByEmailRequestBody>
