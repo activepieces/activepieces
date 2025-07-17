@@ -159,7 +159,7 @@ const TestTriggerSection = React.memo(
             testType={testType}
             isTesting={isPollingTesting || isSimulating || isTestingDialogOpen}
             mockData={mockData}
-            isSavingMockdata={isSavingMockdata}
+            isSaving={isSaving || isSavingMockdata}
             onSimulateTrigger={() => {
               if (testType === 'chat-trigger') {
                 setChatDrawerOpenSource(ChatDrawerSource.TEST_STEP);

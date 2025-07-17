@@ -1,4 +1,4 @@
-import { ApQueueJob, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
+import { ApQueueJob, DelayedJobData, JobData, JobStatus, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, RepeatableJobType, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowRunStatus, FlowStatus, isNil, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -176,7 +176,7 @@ async function isRunDeleted(
     const skipDeletionCheckForFirstAttemptExecutionSpeed = job.attempsStarted === 0
     if (skipDeletionCheckForFirstAttemptExecutionSpeed) {
         return false
-    }   
+    }
 
     const { runId } = job.data as OneTimeJobData
 
@@ -188,11 +188,12 @@ async function isStaleFlow(job: JobData, queueName: QueueName, log: FastifyBaseL
     if (queueName !== QueueName.SCHEDULED) {
         return false
     }
-    const scheduledJob = job as ScheduledJobData
-    if (scheduledJob.jobType === RepeatableJobType.DELAYED_FLOW) {
-        return false
+    const scheduledJob = job as ScheduledJobData | DelayedJobData
+    const flowVersion = await flowVersionService(log).getOne(scheduledJob.flowVersionId)
+    if (isNil(flowVersion)) {
+        return true
     }
-    const flow = await flowService(log).getOneById(scheduledJob.flowId)
+    const flow = await flowService(log).getOneById(flowVersion.flowId)
     if (isNil(flow)) {
         return true
     }
