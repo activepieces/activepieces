@@ -49,7 +49,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
         const { name, tools } = req.body
-        await PlatformPlanHelper.checkResourceLocked({ platformId: req.principal.platform.id, resource: PlatformUsageMetric.MCPS })
+        // await PlatformPlanHelper.checkResourceLocked({ platformId: req.principal.platform.id, resource: PlatformUsageMetric.MCPS })
         return mcpService(req.log).update({
             mcpId,
             name,

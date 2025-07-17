@@ -45,7 +45,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     },
     async update(params: UpdateParams): Promise<Agent> {
         const platformId = await projectService.getPlatformId(params.projectId)
-        await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
+        // await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
 
         await agentRepo().update({
             id: params.id,

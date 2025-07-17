@@ -7,10 +7,10 @@ import { t } from 'i18next';
 
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  METRIC_TO_LIMIT_MAPPING,
-  METRIC_TO_USAGE_MAPPING,
-} from '@activepieces/ee-shared';
+// import {
+//   METRIC_TO_LIMIT_MAPPING,
+//   METRIC_TO_USAGE_MAPPING,
+// } from '@activepieces/ee-shared';
 import {
   isNil,
   PlatformUsageMetric,
@@ -92,17 +92,18 @@ export const platformHooks = {
     if (isNil(usage)) {
       return false;
     }
-
-    const limitKey = METRIC_TO_LIMIT_MAPPING[resource];
-    const usageKey = METRIC_TO_USAGE_MAPPING[resource];
-
-    const limit = plan[limitKey];
-    const currentUsage = usage[usageKey];
-
-    if (!isNil(limit) && currentUsage > limit) {
-      return true;
-    }
-
     return false;
+
+    // const limitKey = METRIC_TO_LIMIT_MAPPING[resource];
+    // const usageKey = METRIC_TO_USAGE_MAPPING[resource];
+
+    // const limit = plan[limitKey];
+    // const currentUsage = usage[usageKey];
+
+    // if (!isNil(limit) && currentUsage > limit) {
+    //   return true;
+    // }
+
+    // return false;
   },
 };

@@ -18,7 +18,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+// import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -27,7 +27,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        await PlatformPlanHelper.checkResourceLocked({ resource: PlatformUsageMetric.TABLES, platformId: request.principal.platform.id })
+        // await PlatformPlanHelper.checkResourceLocked({ resource: PlatformUsageMetric.TABLES, platformId: request.principal.platform.id })
         const records = await recordService.create({
             request: request.body,
             projectId: request.principal.projectId,
