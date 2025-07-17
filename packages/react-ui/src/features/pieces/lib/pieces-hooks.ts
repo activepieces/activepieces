@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -10,11 +10,14 @@ import {
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  PropertyType,
+  ExecutePropsResult,
 } from '@activepieces/pieces-framework';
 import {
   ActionType,
   flowPieceUtil,
   LocalesEnum,
+  PieceOptionRequest,
   PlatformWithoutSensitiveData,
   TriggerType,
 } from '@activepieces/shared';
@@ -255,6 +258,35 @@ export const piecesHooks = {
           data: allCategory.metadata.length > 0 ? [allCategory] : [],
         };
     }
+  },
+  usePieceOptions: <
+    T extends
+      | PropertyType.DYNAMIC
+      | PropertyType.DROPDOWN
+      | PropertyType.MULTI_SELECT_DROPDOWN,
+  >({
+    onSuccess,
+    onError,
+    onMutate,
+  }: {
+    onSuccess: (data: ExecutePropsResult<T>) => void;
+    onError: (error: Error) => void;
+    onMutate: () => void;
+  }) => {
+    return useMutation<
+      ExecutePropsResult<T>,
+      Error,
+      { request: PieceOptionRequest; propertyType: T }
+    >({
+      mutationFn: async ({ request, propertyType }) => {
+        onMutate();
+        return piecesApi.options(request, propertyType);
+      },
+      onSuccess,
+      onError,
+      retry: 1,
+      retryDelay: 1000,
+    });
   },
 };
 
