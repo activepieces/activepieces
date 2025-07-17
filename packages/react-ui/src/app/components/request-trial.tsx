@@ -1,8 +1,7 @@
 import { t } from 'i18next';
-import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
@@ -41,7 +40,7 @@ export const RequestTrial = ({
   featureKey,
   buttonVariant = 'default',
 }: RequestTrialProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
@@ -68,14 +67,11 @@ export const RequestTrial = ({
           '_blank',
           'noopener noreferrer',
         )
-      : setIsOpen(true);
+      : openDialog();
 
   return (
-    <>
-      <Button variant={buttonVariant} onClick={handleClick}>
-        {selfHosted ? t('Contact Sales') : t('Upgrade Now')}
-      </Button>
-      <ManagePlanDialog open={isOpen} setOpen={setIsOpen} />
-    </>
+    <Button variant={buttonVariant} onClick={handleClick}>
+      {selfHosted ? t('Contact Sales') : t('Upgrade Now')}
+    </Button>
   );
 };

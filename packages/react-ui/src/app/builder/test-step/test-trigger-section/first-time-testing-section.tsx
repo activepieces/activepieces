@@ -52,7 +52,7 @@ export const FirstTimeTestingSection = ({
           </Button>
         </TestButtonTooltip>
 
-        {!isNil(mockData) && (
+        {!isNil(mockData) && JSON.stringify(mockData) !== '{}' && (
           <>
             {t('Or')}
             <Button

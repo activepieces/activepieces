@@ -1,4 +1,4 @@
-import { ProjectPlanLimits } from '@activepieces/ee-shared'
+import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -9,8 +9,10 @@ import {
     isNil,
     PiecesFilterType,
     PlatformPlan,
+    PlatformUsageMetric,
     ProjectPlan,
     spreadIfDefined,
+    spreadIfNotUndefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -25,17 +27,17 @@ const edition = system.getEdition()
 
 export const projectLimitsService = (log: FastifyBaseLogger) => ({
     async upsert(
-        planLimits: Partial<ProjectPlanLimits>,
+        planLimits: ProjectPlanLimits,
         projectId: string,
     ): Promise<ProjectPlan> {
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo().update(projectPlan.id, {
-            ...spreadIfDefined('tasks', planLimits.tasks),
+            ...spreadIfNotUndefined('tasks', planLimits.tasks),
+            ...spreadIfNotUndefined('aiCredits', planLimits.aiCredits),
             ...spreadIfDefined('name', planLimits.nickname),
+            ...spreadIfDefined('locked', planLimits.locked),
             ...spreadIfDefined('pieces', planLimits.pieces),
             ...spreadIfDefined('piecesFilterType', planLimits.piecesFilterType),
-            ...spreadIfDefined('aiCredits', planLimits.aiCredits),
-            ...spreadIfDefined('locked', planLimits.locked),
         })
         return projectPlanRepo().findOneByOrFail({ projectId })
     },
@@ -126,9 +128,9 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         if (projectPlan.locked) {
             throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_LOCKED,
+                code: ErrorCode.RESOURCE_LOCKED,
                 params: {
-                    message: 'Project is locked',
+                    message: RESOURCE_TO_MESSAGE_MAPPING[PlatformUsageMetric.PROJECTS],
                 },
             })
         }
@@ -136,6 +138,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         return projectPlan
     },
 })
+
 
 
 
@@ -159,7 +162,7 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 
     const { platformPlan, platformUsage, usageType } = params
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
-    
+
     const platformLimit = usageType === 'tasks'
         ? platformPlan.tasksLimit
         : platformPlan.includedAiCredits
@@ -176,9 +179,16 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
 }
 
 function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
+    if (edition !== ApEdition.CLOUD) {
+        return {
+            aiCredits: projectPlan.aiCredits ?? undefined,
+            tasks: projectPlan.tasks ?? undefined,
+        }
+    }
+
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
 
-    const aiCreditsLimit = ( isOverageEnabled ? (platformPlan.aiCreditsOverageLimit ?? 0) : 0) + platformPlan.includedAiCredits
+    const aiCreditsLimit = (isOverageEnabled ? (platformPlan.aiCreditsOverageLimit ?? 0) : 0) + platformPlan.includedAiCredits
 
     if (!platformPlan.manageProjectsEnabled) {
         return {
@@ -204,7 +214,7 @@ type LimitReachedFromProjectPlanParams = {
 
 type LimitReachedFromPlatformBillingParams = {
     platformPlan: PlatformPlan
-    usageType: 'tasks' | 'ai_credits' 
+    usageType: 'tasks' | 'ai_credits'
     log: FastifyBaseLogger
     platformUsage: number
 }
