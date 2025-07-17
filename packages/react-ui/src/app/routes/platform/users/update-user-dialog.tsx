@@ -61,9 +61,6 @@ export const UpdateUserDialog = ({
         onUpdate(user.platformRole);
         setOpen(false);
       },
-      onError: () => {
-        setOpen(false);
-      },
     },
   );
 
