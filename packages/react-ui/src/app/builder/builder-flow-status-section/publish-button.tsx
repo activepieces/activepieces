@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
@@ -41,46 +39,37 @@ const PublishButton = () => {
     flowVersion.id === flow.publishedVersionId;
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const isPublishedVersion = flowVersion.id === flow.publishedVersionId;
-  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const { mutate: publish } = flowsHooks.usePublishFlow({
     flowId: flow.id,
     setFlow,
     setVersion,
     setIsPublishing,
-    showUpgradeDialog: () => setUpgradeDialogOpen(true),
   });
   if (!permissionToEditFlow || !isViewingDraft || (readonly && !isPublishing)) {
     return null;
   }
   return (
-    <>
-      <UpgradeHookDialog
-        metric="activeFlows"
-        open={upgradeDialogOpen}
-        setOpen={setUpgradeDialogOpen}
-      />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild className="disabled:pointer-events-auto">
-            <Button
-              size={'sm'}
-              loading={isSaving || isPublishing}
-              disabled={isPublishedVersion || !flowVersion.valid}
-              onClick={() => publish()}
-            >
-              {t('Publish')}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {isPublishedVersion
-              ? t('Latest version is published')
-              : !flowVersion.valid
-              ? t('Your flow has incomplete steps')
-              : t('Publish')}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild className="disabled:pointer-events-auto">
+          <Button
+            size={'sm'}
+            loading={isSaving || isPublishing}
+            disabled={isPublishedVersion || !flowVersion.valid}
+            onClick={() => publish()}
+          >
+            {t('Publish')}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {isPublishedVersion
+            ? t('Latest version is published')
+            : !flowVersion.valid
+            ? t('Your flow has incomplete steps')
+            : t('Publish')}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 

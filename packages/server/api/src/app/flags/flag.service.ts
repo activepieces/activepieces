@@ -28,7 +28,6 @@ export const flagService = {
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 ApFlagId.CLOUD_AUTH_ENABLED,
-                ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.IS_CLOUD_PLATFORM,
@@ -110,12 +109,6 @@ export const flagService = {
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.PROJECT_LIMITS_ENABLED,
-                value: false,
                 created,
                 updated,
             },

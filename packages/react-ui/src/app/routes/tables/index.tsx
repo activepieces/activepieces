@@ -18,12 +18,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import {
-  INTERNAL_ERROR_TOAST,
-  PROJECT_LOCKED_MESSAGE,
-  toast,
-} from '@/components/ui/use-toast';
-import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 // import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
@@ -32,16 +26,14 @@ import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { ErrorCode, FieldType, Permission, Table } from '@activepieces/shared';
+import { FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -88,15 +80,6 @@ const ApTablesPage = () => {
       navigate(
         `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );
-    },
-    onError: (err: Error) => {
-      if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-        setShowUpgradeDialog(true);
-      } else if (api.isApError(err, ErrorCode.PROJECT_LOCKED)) {
-        toast(PROJECT_LOCKED_MESSAGE);
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
     },
   });
 
@@ -203,9 +186,6 @@ const ApTablesPage = () => {
     onSuccess: () => {
       refetch();
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   const bulkActions: BulkAction<Table>[] = useMemo(
@@ -296,11 +276,6 @@ const ApTablesPage = () => {
             </Button>
           </PermissionNeededTooltip>
         </div>
-        <UpgradeHookDialog
-          metric="tables"
-          open={showUpgradeDialog}
-          setOpen={setShowUpgradeDialog}
-        />
         <DataTable
           filters={[
             {
