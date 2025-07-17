@@ -62,13 +62,12 @@ export const findPaymentAction = createAction({
 	async run(context) {
 		const { customerId } = context.propsValue;
 		const companyId = context.auth.props?.['companyId'];
-		const environment = context.auth.props?.['environment'];
 
 		if (!companyId) {
 			throw new Error('Realm ID not found in authentication data. Please reconnect.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId);
 		const query = `SELECT * FROM Payment WHERE CustomerRef = '${customerId}'`;
 
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksPayment>>({

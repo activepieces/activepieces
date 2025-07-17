@@ -2,8 +2,8 @@ const QUICKBOOKS_API_URL_SANDBOX = 'https://sandbox-quickbooks.api.intuit.com/v3
 const QUICKBOOKS_API_URL_PRODUCTION = 'https://quickbooks.api.intuit.com/v3/company';
 
 export const quickbooksCommon = {
-    getApiUrl: (environment: string | undefined, realmId: string) => {
-        const baseUrl = environment === 'sandbox' ? QUICKBOOKS_API_URL_SANDBOX : QUICKBOOKS_API_URL_PRODUCTION;
+    getApiUrl: (realmId: string) => {
+        const baseUrl = QUICKBOOKS_API_URL_PRODUCTION;
         return `${baseUrl}/${realmId}`;
     },
 };

@@ -27,9 +27,8 @@ export const createExpenseAction = createAction({
 				const { access_token, props } = auth as OAuth2PropertyValue;
 
 				const companyId = props?.['companyId'];
-				const environment = props?.['environment'];
 
-				const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, Name, AccountType FROM Account STARTPOSITION 1 MAXRESULTS 1000`;
 				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksAccount>>({
 					method: HttpMethod.GET,
@@ -83,8 +82,7 @@ export const createExpenseAction = createAction({
 				const { access_token, props } = auth as OAuth2PropertyValue;
 
 				const companyId = props?.['companyId'];
-				const environment = props?.['environment'];
-				const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, DisplayName FROM Vendor STARTPOSITION 1 MAXRESULTS 1000`;
 				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
 					method: HttpMethod.GET,
@@ -165,9 +163,8 @@ export const createExpenseAction = createAction({
 	async run(context) {
 		const { access_token } = context.auth;
 		const companyId = context.auth.props?.['companyId'];
-		const environment = context.auth.props?.['environment'];
 
-		const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId);
 		const props = context.propsValue;
 
 		const lines = (props['lineItems'] as any[]).map((line) => {

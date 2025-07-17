@@ -120,13 +120,12 @@ export const findInvoiceAction = createAction({
 	async run(context) {
 		const { invoice_number } = context.propsValue;
 		const companyId = context.auth.props?.['companyId'];
-		const environment = context.auth.props?.['environment'];
 
 		if (!companyId) {
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId);
 		const query = `SELECT * FROM Invoice WHERE DocNumber = '${invoice_number.replace(
 			/'/g,
 			"\\'",

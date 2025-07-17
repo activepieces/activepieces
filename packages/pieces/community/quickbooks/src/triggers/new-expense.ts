@@ -23,9 +23,8 @@ const polling: Polling<
   async items({ auth, lastFetchEpochMS }) {
     const { access_token } = auth;
     const companyId = auth.props?.['companyId'];
-    const environment = auth.props?.['environment'];
 
-    const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+    const apiUrl = quickbooksCommon.getApiUrl(companyId);
 
     const query =
       lastFetchEpochMS === 0

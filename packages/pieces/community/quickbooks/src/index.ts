@@ -19,24 +19,7 @@ export const quickbooksAuth = PieceAuth.OAuth2({
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
 			required: true,
-		}),
-		environment: Property.StaticDropdown({
-			displayName: 'Environment',
-			required: true,
-			options: {
-				options: [
-					{
-						label: 'Sandbox',
-						value: 'sandbox',
-					},
-					{
-						label: 'Production',
-						value: 'production',
-					},
-				],
-			},
-		}),
-	},
+		})	},
 	authUrl: 'https://appcenter.intuit.com/connect/oauth2',
 	tokenUrl: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
 	scope: ['com.intuit.quickbooks.accounting'],
@@ -61,9 +44,8 @@ export const quickbooks = createPiece({
 		baseUrl:(auth)=>{
 			const authValue = auth as PiecePropValueSchema<typeof quickbooksAuth>;
 			 const companyId = authValue.props?.['companyId'];
-				const environment = authValue.props?.['environment'];
 			
-				const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				return apiUrl
 
 		},

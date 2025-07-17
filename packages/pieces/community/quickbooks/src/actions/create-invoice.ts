@@ -29,8 +29,7 @@ export const createInvoiceAction = createAction({
 				const { access_token, props } = auth as OAuth2PropertyValue;
 
 				const companyId = props?.['companyId'];
-				const environment = props?.['environment'];
-				const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 
 				const query = `SELECT Id, DisplayName FROM Customer STARTPOSITION 1 MAXRESULTS 1000`;
 
@@ -155,9 +154,8 @@ export const createInvoiceAction = createAction({
 	async run(context) {
 		const { access_token } = context.auth;
 		const companyId = context.auth.props?.['companyId'];
-		const environment = context.auth.props?.['environment'];
 
-		const apiUrl = quickbooksCommon.getApiUrl(environment, companyId);
+		const apiUrl = quickbooksCommon.getApiUrl(companyId);
 		const props = context.propsValue;
 
 		if (props['emailStatus'] === 'NeedToSend' && !props['billEmail']) {
