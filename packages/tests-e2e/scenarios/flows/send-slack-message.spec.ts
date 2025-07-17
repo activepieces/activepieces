@@ -26,10 +26,10 @@ test.describe('Slack Integration', () => {
     const config = configUtils.getConfig();
     const channel = 'spam';
     
-    await authenticationPage.actions.signIn(page, {
-      email: config.email,
-      password: config.password
-    });
+    // await authenticationPage.actions.signIn(page, {
+    //   email: config.email,
+    //   password: config.password
+    // });
 
     // COMMENT FOR TESTING FAILURE
     // await agentPage.actions.waitFor(page);
