@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { domainIdDropdown } from '../common/props';
 
 export const domainStatisticsAction = createAction({
   auth: shortIoAuth,
@@ -9,11 +10,7 @@ export const domainStatisticsAction = createAction({
   displayName: 'Get Domain Statistics',
   description: 'Retrieve usage stats (clicks, conversions) for a domain within a selected time period.',
   props: {
-    domainId: Property.Number({
-      displayName: 'Domain ID',
-      description: 'The ID of the domain whose statistics you want to retrieve.',
-      required: true,
-    }),
+    domainId: domainIdDropdown,
     period: Property.StaticDropdown({
       displayName: 'Period',
       description: 'Predefined time interval or "custom" to set start/end dates.',
@@ -54,7 +51,13 @@ export const domainStatisticsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { domainId, period, startDate, endDate, tz, clicksChartInterval } = propsValue;
+    const { domainId: domainString, period, startDate, endDate, tz, clicksChartInterval } = propsValue;
+
+    if (!domainString) {
+      throw new Error('Domain is a required field.');
+    }
+
+    const domainObject = JSON.parse(domainString as string);
 
     const query: Record<string, string> = {
       period,
@@ -75,7 +78,7 @@ export const domainStatisticsAction = createAction({
       const response = await shortIoApiCall({
         method: HttpMethod.GET,
         auth,
-        resourceUri: `/statistics/domain/${domainId}`,
+        url: `https://statistics.short.io/statistics/domain/${domainObject.id}`,
         query,
       });
 

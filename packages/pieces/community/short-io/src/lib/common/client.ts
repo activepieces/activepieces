@@ -6,31 +6,29 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 
-export type ShortIoAuthProps = {
+export type ShortioAuthProps = {
   apiKey: string;
 };
 
-export type ShortIoApiCallParams = {
+export type ShortioApiCallParams = {
   method: HttpMethod;
-  resourceUri: string;
+  resourceUri?: string;
+  url?: string;
   query?: Record<string, string | number | string[] | undefined>;
-  body?: any;
-  auth: ShortIoAuthProps;
+  body?: unknown;
+  auth: ShortioAuthProps;
 };
 
 export async function shortIoApiCall<T extends HttpMessageBody>({
   method,
   resourceUri,
+  url,
   query,
   body,
   auth,
-}: ShortIoApiCallParams): Promise<T> {
-  const { apiKey } = auth;
-
-  if (!apiKey) {
-    throw new Error('Short.io API key is required for authentication');
-  }
-
+}: ShortioApiCallParams): Promise<T> {
+  const finalUrl = url ?? `https://api.short.io${resourceUri ?? ''}`;
+  
   const queryParams: QueryParams = {};
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -42,10 +40,11 @@ export async function shortIoApiCall<T extends HttpMessageBody>({
 
   const request: HttpRequest = {
     method,
-    url: `https://api.short.io${resourceUri}`,
+    url: finalUrl,
     headers: {
-      Authorization: apiKey,
+      authorization: auth.apiKey,
       'Content-Type': 'application/json',
+      accept: 'application/json',
     },
     queryParams,
     body,
@@ -55,10 +54,13 @@ export async function shortIoApiCall<T extends HttpMessageBody>({
     const response = await httpClient.sendRequest<T>(request);
     return response.body;
   } catch (error: any) {
-    const statusCode = error.response?.status;
-    const errorData = error.response?.data;
-
-    const errorMessage = errorData?.message || error.message || 'Unknown error occurred';
-    throw new Error(`Short.io API Error (${statusCode || 'Unknown'}): ${errorMessage}`);
+    const status = error.response?.status;
+    const message =
+      error.response?.body?.message ||
+      error.message ||
+      'Unknown Short.io API error';
+    throw new Error(
+      `Short.io API Error (${status || 'No Status'}): ${message}`
+    );
   }
 }

@@ -15,7 +15,7 @@ export const shortIoAuth = PieceAuth.CustomAuth({
       await shortIoApiCall({
         method: HttpMethod.GET,
         auth,
-        resourceUri: '/users/me',
+        resourceUri: '/api/domains',
       });
       return { valid: true };
     } catch (e) {

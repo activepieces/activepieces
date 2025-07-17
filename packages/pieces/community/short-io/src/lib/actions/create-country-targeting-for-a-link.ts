@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { domainIdDropdown, linkIdDropdown } from '../common/props';
 
 export const createCountryTargetingRuleAction = createAction({
   auth: shortIoAuth,
@@ -9,11 +10,8 @@ export const createCountryTargetingRuleAction = createAction({
   displayName: 'Create Country Targeting Rule',
   description: 'Add a new country-based redirect rule to an existing short link using the country ISO code.',
   props: {
-    linkId: Property.ShortText({
-      displayName: 'Link ID',
-      description: 'The ID of the short link you want to add country targeting to.',
-      required: true,
-    }),
+    domain: domainIdDropdown,
+    linkId: linkIdDropdown,
     country: Property.ShortText({
       displayName: 'Country ISO Code (e.g., US)',
       description: 'Use ISO 3166-1 alpha-2 country code (e.g., US for United States, IN for India).',

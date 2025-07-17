@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { domainIdDropdown } from '../common/props';
 
 export const getLinkClicksAction = createAction({
   auth: shortIoAuth,
@@ -9,11 +10,7 @@ export const getLinkClicksAction = createAction({
   displayName: 'Get Link Clicks',
   description: 'Retrieve click statistics for specific short links by link ID.',
   props: {
-    domainId: Property.Number({
-      displayName: 'Domain ID',
-      description: 'The ID of the domain the links belong to.',
-      required: true,
-    }),
+    domainId: domainIdDropdown,
     ids: Property.Array({
       displayName: 'Link ID List',
       description: 'Comma-separated list of link IDs to fetch click stats for.',
@@ -31,14 +28,20 @@ export const getLinkClicksAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { domainId, ids, startDate, endDate } = propsValue;
+    const { domainId: domainString, ids, startDate, endDate } = propsValue;
 
     if ((startDate && !endDate) || (!startDate && endDate)) {
       throw new Error('Both startDate and endDate must be provided if using a custom date range.');
     }
+    
+    if (!domainString) {
+        throw new Error('Domain is a required field.');
+    }
+
+    const domainObject = JSON.parse(domainString as string);
 
     const query: Record<string, string> = {
-      ids: ids.join(','),
+      ids: (ids as string[]).join(','),
     };
 
     if (startDate && endDate) {
@@ -50,7 +53,7 @@ export const getLinkClicksAction = createAction({
       const response = await shortIoApiCall({
         method: HttpMethod.GET,
         auth,
-        resourceUri: `/statistics/domain/${domainId}/link_clicks`,
+        url: `https://statistics.short.io/statistics/domain/${domainObject.id}/link_clicks`,
         query,
       });
 

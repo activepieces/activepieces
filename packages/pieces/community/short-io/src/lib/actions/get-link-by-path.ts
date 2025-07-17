@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { domainIdDropdown } from '../common/props';
 
 export const getLinkByPathAction = createAction({
   auth: shortIoAuth,
@@ -9,11 +10,7 @@ export const getLinkByPathAction = createAction({
   displayName: 'Get Short Link Info by Path',
   description: 'Retrieve details of a short link using its domain and path.',
   props: {
-    domain: Property.ShortText({
-      displayName: 'Domain',
-      description: 'The Short.io domain associated with the short link (e.g., yourdomain.short.gy)',
-      required: true,
-    }),
+    domain: domainIdDropdown,
     path: Property.ShortText({
       displayName: 'Path',
       description: 'The custom or auto-generated path/slug for the short link (e.g., abc123)',
@@ -21,10 +18,16 @@ export const getLinkByPathAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { domain, path } = propsValue;
+    const { domain: domainString, path } = propsValue;
+
+    if (!domainString) {
+      throw new Error('Domain is a required field.');
+    }
+
+    const domainObject = JSON.parse(domainString as string);
 
     const query = {
-      domain,
+      domain: domainObject.hostname,
       path,
     };
 
