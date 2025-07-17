@@ -4,7 +4,6 @@ import { fireberryAuth } from '../../index';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
-// Multi-record selection dropdown for batch deletion
 const recordsToDeleteDropdown = Property.MultiSelectDropdown({
   displayName: 'Records to Delete',
   required: true,
@@ -23,7 +22,6 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
       const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
       const client = new FireberryClient(authStr);
       
-      // Get records from the selected object type
       const response = await client.request<{ 
         success: boolean; 
         data: { 
@@ -45,12 +43,10 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
         };
       }
       
-      // Map records to dropdown options
       const primaryField = response.data.PrimaryField;
       const primaryKey = response.data.PrimaryKey;
       
       const options = response.data.Records.map((record: any) => {
-        // Use the primary field for display, with fallbacks
         const displayName = record[primaryField] || 
                            record.name || record.title || record.subject || 
                            record.firstname || record.lastname || record.email ||
@@ -65,7 +61,7 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
       
       return {
         disabled: false,
-        options: options.slice(0, 100), // Allow more options for delete selection
+        options: options.slice(0, 100),
       };
     } catch (error) {
       return {
@@ -107,7 +103,6 @@ export const deleteRecordAction = createAction({
       throw new Error('Maximum 20 records can be deleted at once');
     }
     
-    // Call the batch delete API
     const result = await client.batchDelete(objectType, recordIds);
     
     return {

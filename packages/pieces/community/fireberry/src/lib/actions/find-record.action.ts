@@ -4,7 +4,6 @@ import { fireberryAuth } from '../../index';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
-// Field selection for query results
 const fieldsToReturn = Property.DynamicProperties({
   displayName: 'Fields to Return',
   refreshers: ['objectType'],
@@ -20,15 +19,13 @@ const fieldsToReturn = Property.DynamicProperties({
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
       const props: Record<string, any> = {};
       
-      // Create checkboxes for each field to include in results
       for (const field of metadata.data) {
-        // Skip system fields that aren't useful for search results
         const systemFields = ['createdby', 'modifiedby', 'deletedby'];
         if (field.fieldName.endsWith('id') && !field.label) {
-          continue; // Skip unnamed ID fields
+          continue;
         }
         if (systemFields.includes(field.fieldName.toLowerCase())) {
-          continue; // Skip less useful system fields
+          continue;
         }
         
         props[field.fieldName] = Property.Checkbox({
@@ -93,7 +90,6 @@ export const findRecordAction = createAction({
     const client = new FireberryClient(auth as string);
     const { objectType, searchQuery, fieldsToReturn, sortBy, sortOrder, pageSize, pageNumber } = propsValue;
     
-    // Get selected fields to return
     const selectedFields: string[] = [];
     if (fieldsToReturn && typeof fieldsToReturn === 'object') {
       for (const [fieldName, isSelected] of Object.entries(fieldsToReturn)) {
@@ -103,8 +99,6 @@ export const findRecordAction = createAction({
       }
     }
     
-    // Get object number from system name
-    
     const objectsMetadata = await client.getObjectsMetadata();
     const targetObject = objectsMetadata.data.find(obj => obj.systemName === objectType);
     
@@ -112,36 +106,30 @@ export const findRecordAction = createAction({
       throw new Error(`Object type '${objectType}' not found`);
     }
     
-    // Prepare query body with integer object type
     const queryBody: Record<string, any> = {
       objecttype: parseInt(targetObject.objectType),
     };
     
-    // Add fields if any are selected
     if (selectedFields.length > 0) {
       queryBody['fields'] = selectedFields.join(',');
     }
     
-    // Add search query if provided
     if (searchQuery && searchQuery.trim()) {
       queryBody['query'] = searchQuery.trim();
     }
     
-    // Add sorting if provided
     if (sortBy && sortBy.trim()) {
       queryBody['sort_by'] = sortBy.trim();
       queryBody['sort_type'] = sortOrder || 'desc';
     }
     
-    // Add pagination
     if (pageSize) {
-      queryBody['page_size'] = Math.min(Math.max(1, pageSize), 50); // Clamp between 1-50
+      queryBody['page_size'] = Math.min(Math.max(1, pageSize), 50);
     }
     if (pageNumber) {
-      queryBody['page_number'] = Math.min(Math.max(1, pageNumber), 10); // Clamp between 1-10
+      queryBody['page_number'] = Math.min(Math.max(1, pageNumber), 10);
     }
     
-    // Execute the query
     const response = await client.request<{
       success: boolean;
       data: {

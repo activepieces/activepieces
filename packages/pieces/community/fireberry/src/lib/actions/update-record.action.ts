@@ -4,7 +4,6 @@ import { fireberryAuth } from '../../index';
 import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
-// Record selection dropdown
 const recordDropdown = Property.Dropdown({
   displayName: 'Record',
   required: true,
@@ -23,7 +22,6 @@ const recordDropdown = Property.Dropdown({
       const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
       const client = new FireberryClient(authStr);
       
-      // Get records from the selected object type
       const response = await client.request<{ 
         success: boolean; 
         data: { 
@@ -45,12 +43,10 @@ const recordDropdown = Property.Dropdown({
         };
       }
       
-      // Map records to dropdown options
       const primaryField = response.data.PrimaryField;
       const primaryKey = response.data.PrimaryKey;
       
       const options = response.data.Records.map((record: any) => {
-        // Use the primary field for display, with fallbacks
         const displayName = record[primaryField] || 
                            record.name || record.title || record.subject || 
                            record.firstname || record.lastname || record.email ||
@@ -65,7 +61,7 @@ const recordDropdown = Property.Dropdown({
       
       return {
         disabled: false,
-        options: options.slice(0, 50), // Limit to 50 for better UX
+        options: options.slice(0, 50),
       };
     } catch (error) {
       return {
@@ -77,7 +73,6 @@ const recordDropdown = Property.Dropdown({
   },
 });
 
-// Update-specific dynamic fields (same pattern as create but for updates)
 const updateFields = Property.DynamicProperties({
   displayName: 'Fields to Update',
   refreshers: ['objectType'],
@@ -93,17 +88,15 @@ const updateFields = Property.DynamicProperties({
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
       const props: Record<string, any> = {};
       
-      // Map Fireberry field type IDs to field types
       const fieldTypeMap: Record<string, string> = {
-        'a1e7ed6f-5083-477b-b44c-9943a6181359': 'text',      // Text fields
-        'ce972d02-5013-46d4-9d1d-f09df1ac346a': 'datetime',   // Date/DateTime fields  
-        '6a34bfe3-fece-4da1-9136-a7b1e5ae3319': 'number',     // Number fields
-        'a8fcdf65-91bc-46fd-82f6-1234758345a1': 'lookup',     // Lookup/Object fields
-        'b4919f2e-2996-48e4-a03c-ba39fb64386c': 'picklist',   // Picklist fields
-        '80108f9d-1e75-40fa-9fa9-02be4ddc1da1': 'longtext',   // Long text/Description fields
+        'a1e7ed6f-5083-477b-b44c-9943a6181359': 'text',
+        'ce972d02-5013-46d4-9d1d-f09df1ac346a': 'datetime',
+        '6a34bfe3-fece-4da1-9136-a7b1e5ae3319': 'number',
+        'a8fcdf65-91bc-46fd-82f6-1234758345a1': 'lookup',
+        'b4919f2e-2996-48e4-a03c-ba39fb64386c': 'picklist',
+        '80108f9d-1e75-40fa-9fa9-02be4ddc1da1': 'longtext',
       };
       
-      // Pre-fetch all picklist data to avoid async issues in property creation
       const picklistCache: Record<string, any> = {};
       const picklistFields = metadata.data.filter(field => 
         fieldTypeMap[field.systemFieldTypeId] === 'picklist'
@@ -123,19 +116,17 @@ const updateFields = Property.DynamicProperties({
         }
       }
       
-      // Create properties synchronously using cached data
       for (const field of metadata.data) {
-        // Skip system fields that users shouldn't edit
         const systemFields = ['createdby', 'modifiedby', 'deletedby', 'createdon', 'modifiedon', 'deletedon'];
         if (field.fieldName.endsWith('id') && !field.label) {
-          continue; // Skip unnamed ID fields
+          continue;
         }
         if (systemFields.includes(field.fieldName.toLowerCase())) {
-          continue; // Skip system-managed fields
+          continue;
         }
         
         const fieldType = fieldTypeMap[field.systemFieldTypeId] || 'text';
-        const isRequired = false; // For updates, fields are optional by default
+        const isRequired = false;
         
         switch (fieldType) {
           case 'text':
@@ -259,7 +250,6 @@ export const updateRecordAction = createAction({
       throw new Error('Fields must be an object');
     }
     
-    // Filter out empty fields (keep current values)
     const updateData: Record<string, any> = {};
     for (const [key, value] of Object.entries(fieldsObj)) {
       if (value !== '' && value !== null && value !== undefined) {
@@ -267,7 +257,6 @@ export const updateRecordAction = createAction({
       }
     }
     
-    // Include the record ID in the update data (required by API)
     const recordToUpdate = { id: recordId, record: updateData };
     
     return await client.batchUpdate(objectType, [recordToUpdate]);

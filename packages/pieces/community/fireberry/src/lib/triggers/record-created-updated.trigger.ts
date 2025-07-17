@@ -48,7 +48,6 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     }
     
     try {
-      // Get object number from system name
       const objectsMetadata = await client.getObjectsMetadata();
       const targetObject = objectsMetadata.data.find(obj => obj.systemName === objectType);
       
@@ -58,7 +57,6 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       
       const objectNumber = parseInt(targetObject.objectType);
       
-      // Fetch recent records for sample data (last 7 days)
       const sevenDaysAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
       
       const response = await client.request<{
@@ -84,7 +82,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
           query: `modifiedon >= '${sevenDaysAgo}'`,
           sort_by: 'modifiedon',
           sort_type: 'desc',
-          page_size: 3, // Get top 3 recent records for sample
+          page_size: 3,
         },
       });
       
@@ -95,7 +93,6 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       const records = response.data.Data || [];
       
       if (records.length === 0) {
-        // If no recent records, fetch any records for sample
         const fallbackResponse = await client.request<{
           success: boolean;
           data: {
@@ -121,7 +118,6 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       
     } catch (error: any) {
       console.error('Failed to generate sample data:', error);
-      // Return static sample data if API fails
       return [{
         [objectType === 'Contact' ? 'firstname' : 'accountname']: 'Sample Record',
         createdon: new Date().toISOString(),
@@ -130,7 +126,6 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     }
   },
   async onEnable({ store }) {
-    // Store the current timestamp as the starting point
     await store.put('lastPollTime', new Date().toISOString());
   },
   async onDisable({ store }) {
@@ -140,17 +135,14 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     const client = new FireberryClient(auth as string);
     const { objectType, triggerType, lookbackMinutes } = propsValue;
     
-    // Get the last poll time or calculate initial lookback
     let lastPollTime = await store.get<string>('lastPollTime');
     
     if (!lastPollTime) {
-      // First run - look back specified minutes
       const lookback = lookbackMinutes || 60;
       const cutoffTime = new Date(Date.now() - (lookback * 60 * 1000));
       lastPollTime = cutoffTime.toISOString();
     }
     
-    // Get object number from system name
     const objectsMetadata = await client.getObjectsMetadata();
     const targetObject = objectsMetadata.data.find(obj => obj.systemName === objectType);
     
@@ -160,21 +152,18 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
     
     const objectNumber = parseInt(targetObject.objectType);
     
-    // Build query based on trigger type
     let query = '';
-    const cutoffDate = new Date(lastPollTime).toISOString().split('T')[0]; // YYYY-MM-DD format
+    const cutoffDate = new Date(lastPollTime).toISOString().split('T')[0];
     
     if (triggerType === 'created') {
       query = `createdon >= '${cutoffDate}'`;
     } else if (triggerType === 'updated') {
       query = `modifiedon >= '${cutoffDate}'`;
     } else {
-      // both created and updated - use modifiedon since it captures both cases
       query = `modifiedon >= '${cutoffDate}'`;
     }
     
     try {
-      // Query for records created/updated since last poll
       const response = await client.request<{
         success: boolean;
         data: {
@@ -198,7 +187,7 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
           query: query,
           sort_by: 'modifiedon',
           sort_type: 'desc',
-          page_size: 50, // Maximum allowed by API
+          page_size: 50,
         },
       });
       
@@ -208,14 +197,11 @@ export const recordCreatedOrUpdatedTrigger = createTrigger({
       
       const records = response.data.Data || [];
       
-      // Update the last poll time to now for next run
       await store.put('lastPollTime', new Date().toISOString());
       
-      // Return records in reverse order so oldest changes are processed first
       return records.reverse();
       
     } catch (error: any) {
-      // Handle specific error types
       if (error.message?.includes('429')) {
         throw new Error('Rate limit exceeded. Please try again later.');
       }

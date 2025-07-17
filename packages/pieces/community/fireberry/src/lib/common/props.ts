@@ -39,17 +39,15 @@ export const objectFields = Property.DynamicProperties({
     const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
     const props: Record<string, any> = {};
     
-    // Map Fireberry field type IDs to field types
     const fieldTypeMap: Record<string, string> = {
-      'a1e7ed6f-5083-477b-b44c-9943a6181359': 'text',      // Text fields
-      'ce972d02-5013-46d4-9d1d-f09df1ac346a': 'datetime',   // Date/DateTime fields  
-      '6a34bfe3-fece-4da1-9136-a7b1e5ae3319': 'number',     // Number fields
-      'a8fcdf65-91bc-46fd-82f6-1234758345a1': 'lookup',     // Lookup/Object fields
-      'b4919f2e-2996-48e4-a03c-ba39fb64386c': 'picklist',   // Picklist fields
-      '80108f9d-1e75-40fa-9fa9-02be4ddc1da1': 'longtext',   // Long text/Description fields
+      'a1e7ed6f-5083-477b-b44c-9943a6181359': 'text',
+      'ce972d02-5013-46d4-9d1d-f09df1ac346a': 'datetime',
+      '6a34bfe3-fece-4da1-9136-a7b1e5ae3319': 'number',
+      'a8fcdf65-91bc-46fd-82f6-1234758345a1': 'lookup',
+      'b4919f2e-2996-48e4-a03c-ba39fb64386c': 'picklist',
+      '80108f9d-1e75-40fa-9fa9-02be4ddc1da1': 'longtext',
     };
     
-    // Pre-fetch all picklist data to avoid async issues in property creation
     const picklistCache: Record<string, any> = {};
     const picklistFields = metadata.data.filter(field => 
       fieldTypeMap[field.systemFieldTypeId] === 'picklist'
@@ -64,25 +62,22 @@ export const objectFields = Property.DynamicProperties({
             picklistCache[field.fieldName] = picklistData.data.values;
           }
         } catch (error) {
-          // Cache empty array for failed requests
           picklistCache[field.fieldName] = [];
         }
       }
     }
     
-    // Now create properties synchronously using cached data
     for (const field of metadata.data) {
-      // Skip system fields that users shouldn't edit
       const systemFields = ['createdby', 'modifiedby', 'deletedby', 'createdon', 'modifiedon', 'deletedon'];
       if (field.fieldName.endsWith('id') && !field.label) {
-        continue; // Skip unnamed ID fields
+        continue;
       }
       if (systemFields.includes(field.fieldName.toLowerCase())) {
-        continue; // Skip system-managed fields
+        continue;
       }
       
       const fieldType = fieldTypeMap[field.systemFieldTypeId] || 'text';
-      const isRequired = false; // Fireberry doesn't provide required info in this endpoint
+      const isRequired = false;
       
       switch (fieldType) {
         case 'text':
@@ -115,7 +110,6 @@ export const objectFields = Property.DynamicProperties({
           } else {
             const values = picklistCache[field.fieldName] || [];
             if (values.length > 0 && values.length <= 20) {
-              // Create StaticDropdown for manageable picklists
               const options = values.map((option: any) => ({
                 label: option.name || option.value,
                 value: option.value,
@@ -130,7 +124,6 @@ export const objectFields = Property.DynamicProperties({
                 },
               });
             } else {
-              // Fallback to text input for large lists or failed requests
               props[field.fieldName] = Property.ShortText({
                 displayName: field.label || field.fieldName,
                 required: isRequired,
@@ -149,7 +142,6 @@ export const objectFields = Property.DynamicProperties({
           });
           break;
         case 'lookup':
-          // Create more specific descriptions for common lookup fields
           let description = 'Record ID (GUID)';
           if (field.fieldName.includes('account')) description = 'Account record ID';
           else if (field.fieldName.includes('contact')) description = 'Contact record ID';

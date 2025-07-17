@@ -17,7 +17,7 @@ export const fireberry = createPiece({
   auth: fireberryAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/fireberry.png",
-  authors: ["sparkybug"],
+  authors: ["sparkybug", "onyedikachi-david"],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     createRecordAction,
