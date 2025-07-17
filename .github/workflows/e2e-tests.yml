@@ -45,11 +45,12 @@ jobs:
         run: |
           SUMMARY=""
           if [ -f checkly-github-report.md ]; then
-            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow! Please check the logs.\n\n" + open("checkly-github-report.md").read()))')
+            CONTENT=$(cat checkly-github-report.md)
+            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow!\n\n```\\n" + open("checkly-github-report.md").read() + "\n```"))')
           else
-            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow! Please check the logs."))')
+            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow!"))')
           fi
           curl -H "Content-Type: application/json" \
             -X POST \
             -d "{\"content\": $SUMMARY}" \
-            https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
+            https://discord.com/api/webhooks/1346795060116586567/e-1-MwQEykv6fYGC28mqqVU-2VzFif9NgGFtuNmCW7IL_MUTgBwXJY-4YYkZo8BEv00m
