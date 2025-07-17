@@ -4,7 +4,7 @@ import { BaseColumnSchemaPart } from '../database/database-common'
 
 type UserInvitationSchema = UserInvitation & {
     project?: Project
-    // projectRole?: ProjectRole
+    projectRole?: ProjectRole
 }
 export const UserInvitationEntity = new EntitySchema<UserInvitationSchema>({
     name: 'user_invitation',
@@ -33,10 +33,10 @@ export const UserInvitationEntity = new EntitySchema<UserInvitationSchema>({
             type: String,
             nullable: false,
         },
-        // projectRoleId: {
-        //     type: String,
-        //     nullable: true,
-        // },
+        projectRoleId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -56,16 +56,16 @@ export const UserInvitationEntity = new EntitySchema<UserInvitationSchema>({
                 foreignKeyConstraintName: 'fk_user_invitation_project_id',
             },
         },
-        // projectRole: {
-        //     type: 'many-to-one',
-        //     target: 'project_role',
-        //     cascade: true,
-        //     onDelete: 'CASCADE',
-        //     joinColumn: {
-        //         name: 'projectRoleId',
-        //         referencedColumnName: 'id',
-        //         foreignKeyConstraintName: 'fk_user_invitation_project_role_id',
-        //     },
-        // },
+        projectRole: {
+            type: 'many-to-one',
+            target: 'project_role',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectRoleId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_user_invitation_project_role_id',
+            },
+        },
     },
 })

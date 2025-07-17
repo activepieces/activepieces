@@ -27,6 +27,7 @@ import { StatusCodes } from 'http-status-codes'
 // import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 // import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
+import { projectRoleService } from '../project-role/project-role.service'
 import { userInvitationsService } from './user-invitation.service'
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -119,14 +120,12 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     if (type === InvitationType.PLATFORM) {
         return null
     }
-    // const projectRoleName = request.projectRole
-
-    // const projectRole = await projectRoleService.getOneOrThrow({
-    //     name: projectRoleName,
-    //     platformId,
-    // })
-    // return projectRole
-    return null
+    const projectRoleName = request.projectRole
+    const projectRole = await projectRoleService.getByNameAndPlatformOrThrow({
+        name: projectRoleName,
+        platformId,
+    })
+    return projectRole
 }
 
 const getProjectIdAndAssertPermission = async (app: FastifyInstance, request: FastifyRequest, reply: FastifyReply, requestQuery: ListUserInvitationsRequest): Promise<string | null> => {

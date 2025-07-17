@@ -58,6 +58,9 @@ import { RevertTodoActivties1751217652277 } from './migration/postgres/175121765
 import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
 import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
 import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+import { ProjectRole1752736911931 } from './migration/postgres/1752736911931-project-role'
+import { DefaultProjectRole1752744019509 } from './migration/postgres/1752744019509-default-project-role'
+import { AddProjectRoleInvitation1752746415961 } from './migration/postgres/1752746415961-add-project-role-invitation'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -72,6 +75,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddProjectRoleInvitation1752746415961,
+        DefaultProjectRole1752744019509,
+        ProjectRole1752736911931,
         AddIndexForSchemaVersionInFlowVersion1752151941009,
         AddFlowVersionToIssue1751927222122,
         AddPlatformIdToAiUsage1750526457504,

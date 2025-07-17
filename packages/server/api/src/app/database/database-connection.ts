@@ -50,6 +50,7 @@ import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
+import { ProjectRoleEntity } from '../project-role/project-role.entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { FieldEntity } from '../tables/field/field.entity'
 import { CellEntity } from '../tables/record/cell.entity'
@@ -112,6 +113,7 @@ function getEntities(): EntitySchema<unknown>[] {
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
+        ProjectRoleEntity,
     ]
 
     switch (edition) {

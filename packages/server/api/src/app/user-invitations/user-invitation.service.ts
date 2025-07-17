@@ -14,6 +14,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
+import { projectRoleService } from '../project-role/project-role.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
@@ -155,7 +156,9 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 // projectRole: !isNil(invitation.projectRoleId) ? await projectRoleService.getOneOrThrowById({
                 //     id: invitation.projectRoleId,
                 // }) : null,
-                projectRole: null,
+                projectRole: invitation.projectRoleId ? await projectRoleService.getById({
+                    id: invitation.projectRoleId,
+                }) : null,
                 ...invitation,
             }
         }))

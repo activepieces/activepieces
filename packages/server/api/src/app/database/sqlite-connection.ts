@@ -51,6 +51,8 @@ import { AddPlatformIdToAIUsageSqlite1751475726665 } from './migration/sqlite/17
 import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1751727630516-RemoveTerminationReasonSqlite'
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
+import { ProjectRole1752743014852 } from './migration/sqlite/1752743014852-project-role'
+import { AddProjectRoleInvitation1752746475364 } from './migration/sqlite/1752746475364-add-project-role-invitation'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -73,6 +75,8 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddProjectRoleInvitation1752746475364,
+        ProjectRole1752743014852,
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
         AddFlowVersionToIssueSqlite1751927149586,
         RevertTodoActivtiesSqlite1751217307674,
