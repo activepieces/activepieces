@@ -9,9 +9,8 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
-import NotFoundPage from '../404-page';
 
-import { FlowChat } from './flow-chat';
+import { ChatNotFound, FlowChat } from './flow-chat';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -32,17 +31,13 @@ export function ChatPage() {
   };
 
   if (!flowId) {
-    return (
-      <NotFoundPage
-        title="Hmm... this chat isn't here"
-        description="The chat you're looking for isn't here or maybe hasn't been published by the owner yet"
-      />
-    );
+    return <ChatNotFound />;
   }
-  if (isLoading || !flow) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
-  const isDraft = hasDraftSearchParam || isNil(flow.publishedVersionId);
+
+  const isDraft = hasDraftSearchParam || (flow && isNil(flow.publishedVersionId));
   return (
     <FlowChat
       flowId={flowId}
