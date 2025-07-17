@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -203,6 +204,7 @@ export function PlatformAdminContainer({
       ) : (
         <Navigate to="/" />
       )}
+      <UpgradeDialog />
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

@@ -34,8 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROJECT_LOCKED_MESSAGE, toast } from '@/components/ui/use-toast';
-import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
+import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
@@ -43,10 +42,9 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { api, HttpError } from '@/lib/api';
+import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
-  ErrorCode,
   InvitationType,
   isNil,
   Permission,
@@ -90,8 +88,6 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
     Permission.WRITE_INVITATION,
   );
 
-  const [managePlanDialogOpen, setManagePlanDialogOpen] = useState(false);
-
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
     HttpError,
@@ -125,16 +121,6 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
       }
       refetch();
       //TODO: navigate to platform admin users
-    },
-    onError: (error) => {
-      if (api.isApError(error, ErrorCode.QUOTA_EXCEEDED)) {
-        setManagePlanDialogOpen(true);
-        setIsOpen(false);
-      } else if (api.isApError(error, ErrorCode.PROJECT_LOCKED)) {
-        toast(PROJECT_LOCKED_MESSAGE);
-      } else {
-        console.error(error);
-      }
     },
   });
 
@@ -180,11 +166,6 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
 
   return (
     <>
-      <ManagePlanDialog
-        metric="userSeats"
-        open={managePlanDialogOpen}
-        setOpen={setManagePlanDialogOpen}
-      />
       {userHasPermissionToInviteUser && (
         <Dialog
           open={isOpen}

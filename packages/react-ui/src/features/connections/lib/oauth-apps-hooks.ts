@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
 import { ApEdition, AppConnectionType } from '@activepieces/shared';
 
@@ -34,10 +34,6 @@ export const oauthAppsMutations = {
         });
         setOpen(false);
       },
-      onError: (error) => {
-        console.error(error);
-        toast(INTERNAL_ERROR_TOAST);
-      },
     }),
 
   useUpsertOAuthApp: (
@@ -58,10 +54,6 @@ export const oauthAppsMutations = {
         });
         onConfigurationDone();
         setOpen(false);
-      },
-      onError: (error) => {
-        console.error(error);
-        toast(INTERNAL_ERROR_TOAST);
       },
     }),
 };

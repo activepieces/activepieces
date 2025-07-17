@@ -287,6 +287,7 @@ const OAuth2ConnectionSettingsForm = ({
       redirectUrl,
       scope,
       pkce: authProperty.pkce ?? false,
+      pkceMethod: authProperty.pkceMethod ?? 'plain',
       extraParams: authProperty.extra ?? {},
     });
     form.setValue('request.value.code', code, { shouldValidate: true });

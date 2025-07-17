@@ -3,6 +3,7 @@ import {
     DeleteRecordsRequest,
     ListRecordsRequest,
     Permission,
+    PlatformUsageMetric,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
@@ -17,6 +18,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+// import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -25,6 +27,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
+        // await PlatformPlanHelper.checkResourceLocked({ resource: PlatformUsageMetric.TABLES, platformId: request.principal.platform.id })
         const records = await recordService.create({
             request: request.body,
             projectId: request.principal.projectId,
@@ -170,7 +173,6 @@ const ListRequest = {
         },
     },
 }
-
 
 const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
     const promises =  records.map((record)=>{

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 
@@ -17,10 +17,6 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
             ? t('Verification email resent, if previous one expired.')
             : t('Password reset link resent, if previous one expired.'),
       });
-    },
-    onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.error(error);
     },
   });
   return (

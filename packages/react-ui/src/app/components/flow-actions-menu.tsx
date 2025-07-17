@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   ImportFlowDialog,
   ImportFlowDialogProps,
@@ -122,7 +121,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       openNewWindow(`/flows/${data.id}`);
       onDuplicate();
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   const { mutate: exportFlow, isPending: isExportPending } =
