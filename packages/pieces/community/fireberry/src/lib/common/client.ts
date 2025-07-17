@@ -60,15 +60,11 @@ export class FireberryClient {
       method,
       url: `${FIREBERRY_API_BASE_URL}${resourceUri}`,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        'tokenid': this.apiKey,
         'Content-Type': 'application/json',
       },
       body,
       queryParams: normalizeQueryParams(queryParams),
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: this.apiKey,
-      },
       timeout: 10000, // 10 seconds
     };
     let lastError: any = null;
@@ -99,41 +95,48 @@ export class FireberryClient {
     throw new Error(`Fireberry API error: ${this.parseError(lastError)}`);
   }
 
-  async getObjectsMetadata(): Promise<{ objects: Array<{ name: string; label: string }> }> {
-    return this.request<{ objects: Array<{ name: string; label: string }> }>({
+  async getObjectsMetadata(): Promise<{ success: boolean; data: Array<{ name: string; systemName: string; objectType: string }> }> {
+    return this.request<{ success: boolean; data: Array<{ name: string; systemName: string; objectType: string }> }>({
       method: HttpMethod.GET,
       resourceUri: '/metadata/records',
     });
   }
 
-  async getObjectFieldsMetadata(object: string): Promise<{ fields: Array<{ name: string; label: string; type: string; required: boolean }> }> {
-    return this.request<{ fields: Array<{ name: string; label: string; type: string; required: boolean }> }>({
+  async getObjectFieldsMetadata(object: string): Promise<{ success: boolean; data: Array<{ label: string; fieldName: string; systemFieldTypeId: string; systemName: string }> }> {
+    return this.request<{ success: boolean; data: Array<{ label: string; fieldName: string; systemFieldTypeId: string; systemName: string }> }>({
       method: HttpMethod.GET,
       resourceUri: `/metadata/records/${object}/fields`,
+    });
+  }
+
+  async getPicklistValues(object: string, fieldName: string): Promise<{ success: boolean; data: { values: Array<{ name: string; value: string }> } }> {
+    return this.request<{ success: boolean; data: { values: Array<{ name: string; value: string }> } }>({
+      method: HttpMethod.GET,
+      resourceUri: `/metadata/records/${object}/fields/${fieldName}/values`,
     });
   }
 
   async batchCreate(object: string, records: any[]): Promise<any> {
     return this.request({
       method: HttpMethod.POST,
-      resourceUri: `/batch/${object}/`,
-      body: { records },
+      resourceUri: `/api/v3/record/${object}/batch/create`,
+      body: { data: records },
     });
   }
 
   async batchUpdate(object: string, records: any[]): Promise<any> {
     return this.request({
-      method: HttpMethod.PUT,
-      resourceUri: `/batch/${object}/`,
-      body: { records },
+      method: HttpMethod.POST,
+      resourceUri: `/api/v3/record/${object}/batch/update`,
+      body: { data: records },
     });
   }
 
   async batchDelete(object: string, ids: string[]): Promise<any> {
     return this.request({
-      method: HttpMethod.DELETE,
-      resourceUri: `/batch/${object}/`,
-      body: { ids },
+      method: HttpMethod.POST,
+      resourceUri: `/api/v3/record/${object}/batch/delete`,
+      body: { data: ids },
     });
   }
 } 
