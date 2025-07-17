@@ -22,9 +22,12 @@ const config = defineConfig({
     /** The Checkly Runtime identifier, determining npm packages and the Node.js version available at runtime.
      * See https://www.checklyhq.com/docs/cli/npm-packages/
      */
+
     runtimeId: '2024.09',
     /* Failed check runs will be retried before triggering alerts */
     retryStrategy: RetryStrategyBuilder.fixedStrategy({ baseBackoffSeconds: 60, maxRetries: 4, sameRegion: true }),
+    /* A glob pattern that matches the Checks inside your repo, see https://www.checklyhq.com/docs/cli/using-check-test-match/ */
+    checkMatch: '**/scenarios/**/*.check.ts',
     /* All checks will have this alert escalation policy defined */
     alertEscalationPolicy: AlertEscalationBuilder.runBasedEscalation(1),
     /* Global configuration option for Playwright-powered checks. See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration */

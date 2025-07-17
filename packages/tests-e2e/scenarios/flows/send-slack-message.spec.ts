@@ -1,3 +1,5 @@
+// checkly:test {"frequency": 10, "locations": ["us-east-1", "eu-west-1"]}
+
 import { test } from '@playwright/test';
 import { 
   AuthenticationPage, 
