@@ -2,7 +2,7 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
@@ -125,8 +125,10 @@ export const billingMutations = {
               variant: 'default',
               duration: 5000,
             });
+            return;
           }
         }
+        toast(INTERNAL_ERROR_TOAST);
       },
     });
   },

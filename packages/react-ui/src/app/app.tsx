@@ -16,11 +16,16 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { RESOURCE_LOCKED_MESSAGE, toast } from '@/components/ui/use-toast';
+import {
+  INTERNAL_ERROR_TOAST,
+  RESOURCE_LOCKED_MESSAGE,
+  toast,
+} from '@/components/ui/use-toast';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { api } from '@/lib/api';
 import {
   ErrorCode,
+  isNil,
   QuotaExceededParams,
   ResourceLockedParams,
 } from '@activepieces/shared';
@@ -32,7 +37,8 @@ import { ApRouter } from './router';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
-    onError: (err: Error) => {
+    onError: (err: Error, _, __, mutation) => {
+      console.error(err);
       if (api.isApError(err, ErrorCode.RESOURCE_LOCKED)) {
         const error = err.response?.data as ResourceLockedParams;
         toast(RESOURCE_LOCKED_MESSAGE(error.params.message));
@@ -40,6 +46,8 @@ const queryClient = new QueryClient({
         const error = err.response?.data as QuotaExceededParams;
         const { openDialog } = useManagePlanDialogStore.getState();
         openDialog({ metric: error.params.metric });
+      } else if (isNil(mutation.options.onError)) {
+        toast(INTERNAL_ERROR_TOAST);
       }
     },
   }),
