@@ -9,7 +9,6 @@ function main() {
   const mdPath = process.argv[2];
   const content = fs.readFileSync(mdPath, 'utf8');
 
-  const header = '❌ **Checkly E2E tests are failing in the workflow!**\n\n';
   const lines = content.split('\n');
   const bulletPoints = [];
   const summaryLines = [];
@@ -46,8 +45,7 @@ function main() {
     }
   }
 
-  // Compose message
-  let message = header;
+  let message = '';
   for (const l of summaryLines) {
     if (l.trim()) {
       message += l + '\n';
@@ -58,7 +56,6 @@ function main() {
     message += bulletPoints.join('\n');
   }
 
-  // Output as JSON string for workflow usage
   console.log(JSON.stringify(message));
 }
 
