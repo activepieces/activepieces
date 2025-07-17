@@ -11,7 +11,7 @@ let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
     async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
         try {
-            const agentResult: UpdateAgentRunRequestBody = {
+            const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
                 projectId: jobData.projectId,
                 startTime: new Date().toISOString(),
                 steps: [],
@@ -92,6 +92,10 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                     agentResult.finishTime = new Date().toISOString()
                     await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
                     return
+                }
+
+                if (agentResult.steps.length > 0) {
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
                 }
             }
             if (currentText.length > 0) {

@@ -37,8 +37,8 @@ export const agentCommon = {
     return response.body
   },
   async pollAgentRunStatus(params: PollAgentRunParams): Promise<AgentRun> {
-    // 20 * 30 = 600 seconds (default timeout)
-    const { publicUrl, token, agentRunId, update, intervalSeconds = 20, maxAttempts = 30 } = params;
+    // 2 * 300 = 600 seconds (default timeout)
+    const { publicUrl, token, agentRunId, update, intervalSeconds = 2, maxAttempts = 300 } = params;
     
     let lastAgentRun: AgentRun;
 
@@ -59,10 +59,10 @@ export const agentCommon = {
       lastAgentRun = response.body;
 
       await update({
-        steps: response.body.steps,
-        status: response.body.status,
-        output: response.body.output,
-        message: response.body.message
+        steps: lastAgentRun.steps,
+        status: lastAgentRun.status,
+        output: lastAgentRun.output,
+        message: lastAgentRun.message
       })
 
       // Check if the agent run is completed

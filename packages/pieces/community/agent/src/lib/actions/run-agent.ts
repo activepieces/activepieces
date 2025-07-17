@@ -69,7 +69,6 @@ export const runAgent = createAction({
       throw new Error(response.body.message)
     }
 
-    // TODO: interval and attempts based on props
     const agentRun = await agentCommon.pollAgentRunStatus({
       publicUrl: context.server.publicUrl,
       token: serverToken,
@@ -79,8 +78,6 @@ export const runAgent = createAction({
           data,
         })
       },
-      intervalSeconds: 2,
-      maxAttempts: 30
     });
 
     return {

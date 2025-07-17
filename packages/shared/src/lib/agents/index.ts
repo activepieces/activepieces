@@ -109,7 +109,7 @@ export const UpdateAgentRunRequestBody = Type.Object({
     projectId: Type.String(),
     status: Type.Optional(Type.Enum(AgentTaskStatus)),
     startTime: Type.Optional(Type.String()),
-    steps: Type.Array(AgentStepBlock),
+    steps: Type.Optional(Type.Array(AgentStepBlock)),
     message: Type.Optional(Type.String()),
     output: Type.Optional(Type.Unknown()),
     finishTime: Type.Optional(Type.String()),
