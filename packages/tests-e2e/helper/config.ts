@@ -18,7 +18,6 @@ const prodConfig: Config = {
 
 export const configUtils = {
     getConfig: (): Config => {
-        console.log('HAHAHAHAH E2E_INSTANCE_URL', process.env.E2E_INSTANCE_URL);
         return process.env.E2E_INSTANCE_URL ? prodConfig : localConfig;
     },
 }
