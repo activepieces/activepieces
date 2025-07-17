@@ -1,9 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
-// Make sure to import the property for selecting a domain
-import { domainIdDropdown, linkIdDropdown } from '../common/props';
 
 export const deleteShortLinkAction = createAction({
   auth: shortIoAuth,
@@ -11,10 +9,14 @@ export const deleteShortLinkAction = createAction({
   displayName: 'Delete Short Link',
   description: 'Delete a short link by its unique link ID.',
   props: {
-    domain: domainIdDropdown,
+    linkId: Property.ShortText({
+      displayName: 'Link ID',
+      description: 'The ID of the short link you want to delete (e.g., lnk_61Mb_0dnRUg3vvtmAPZh3dhQh6)',
+      required: true,
+    }),
   },
   async run({ propsValue, auth }) {
-    const linkId = 'lnk_61Mb_0dnRUg3vvtmAPZh3dhQh6';
+    const linkId = propsValue.linkId;
 
     try {
       await shortIoApiCall({
