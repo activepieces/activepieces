@@ -45,10 +45,9 @@ jobs:
         run: |
           SUMMARY=""
           if [ -f checkly-github-report.md ]; then
-            CONTENT=$(cat checkly-github-report.md)
-            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow!\n\n```\\n" + open("checkly-github-report.md").read() + "\n```"))')
+            SUMMARY=$(node tools/scripts/format-checkly-report.js checkly-github-report.md)
           else
-            SUMMARY=$(python3 -c 'import json; print(json.dumps("❌ Checkly E2E tests are failing in the workflow!"))')
+            SUMMARY=$(node -e "console.log(JSON.stringify('❌ **Checkly E2E tests are failing in the workflow!**'))")
           fi
           curl -H "Content-Type: application/json" \
             -X POST \
