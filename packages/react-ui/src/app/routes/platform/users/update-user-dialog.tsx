@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/lib/platform-user-api';
 import {
   PlatformRole,
@@ -54,7 +53,6 @@ export const UpdateUserDialog = ({
     },
     resolver: typeboxResolver(UpdateUserRequestBody),
   });
-  const { toast } = useToast();
   const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
     {
       mutationKey: ['update-user'],
@@ -64,7 +62,6 @@ export const UpdateUserDialog = ({
         setOpen(false);
       },
       onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
         setOpen(false);
       },
     },
@@ -105,6 +102,8 @@ export const UpdateUserDialog = ({
                           <SelectItem value={role} key={role}>
                             {role === PlatformRole.ADMIN
                               ? t('Admin')
+                              : role === PlatformRole.OPERATOR
+                              ? t('Operator')
                               : t('Member')}
                           </SelectItem>
                         ))}

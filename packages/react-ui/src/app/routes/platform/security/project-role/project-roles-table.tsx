@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -46,9 +46,6 @@ export const ProjectRolesTable = ({
         description: t('Project Role entry deleted successfully'),
         duration: 3000,
       });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

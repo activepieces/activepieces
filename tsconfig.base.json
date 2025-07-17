@@ -333,6 +333,9 @@
       "@activepieces/piece-forms": [
         "packages/pieces/community/forms/src/index.ts"
       ],
+      "@activepieces/piece-formstack": [
+        "packages/pieces/community/formstack/src/index.ts"
+      ],
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
       ],
@@ -571,6 +574,9 @@
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-mistral-ai": [
+        "packages/pieces/community/mistral-ai/src/index.ts"
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"

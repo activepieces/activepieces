@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
@@ -29,7 +28,6 @@ export const ApplyButton = ({
   defaultName,
   ...props
 }: ApplyButtonProps) => {
-  const { toast } = useToast();
   const projectId = authenticationSession.getProjectId()!;
   const { gitSync } = gitSyncHooks.useGitSync(projectId, !isNil(projectId));
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
@@ -54,7 +52,6 @@ export const ApplyButton = ({
       setLoadingRequestId(null);
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
       setLoadingRequestId(null);
     },
   });
