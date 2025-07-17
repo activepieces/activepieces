@@ -29,10 +29,6 @@ export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 
 export const platformService = {
-    async hasAnyPlatforms(): Promise<boolean> {
-        const count = await platformRepo().count()
-        return count > 0
-    },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
 
