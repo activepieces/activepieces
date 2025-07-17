@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { ApForm } from '@/features/forms/components/ap-form';
 import { humanInputApi } from '@/features/forms/lib/human-input-api';
 import {
@@ -12,6 +11,7 @@ import {
 } from '@activepieces/shared';
 
 import NotFoundPage from '../404-page';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export const FormPage = () => {
   const { flowId } = useParams();
@@ -31,11 +31,7 @@ export const FormPage = () => {
 
   return (
     <>
-      {isLoading && (
-        <div className="bg-background flex h-screen w-screen items-center justify-center ">
-          <LoadingSpinner></LoadingSpinner>
-        </div>
-      )}
+      {isLoading && <LoadingScreen />}
       {isError && (
         <NotFoundPage
           title="Hmm... this form isn't here"
