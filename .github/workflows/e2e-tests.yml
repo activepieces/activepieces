@@ -39,3 +39,12 @@ jobs:
       - name: Create summary
         run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
         if: always()
+
+      - name: Notify Discord on failure
+        if: steps.checkly-tests.outcome != 'success'
+        run: |
+          SUMMARY=$(cat checkly-github-report.md | sed 's/"/\\"/g')
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"❌ Checkly E2E tests are failing in the workflow! Please check the logs.\n\n$SUMMARY\"}" \
+            https://discordapp.com/api/webhooks/1395411907413807184/yfzZsR0wDYvk3fgDXeyVz0yAheja9peyxqTlOl6uI8KfOjlzCGR-Thdso9L5fHrZiTmO
