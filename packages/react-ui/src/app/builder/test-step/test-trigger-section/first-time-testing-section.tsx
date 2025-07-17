@@ -41,15 +41,15 @@ export const FirstTimeTestingSection = ({
   ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
             onClick={onSimulateTrigger}
             keyboardShortcut="G"
             onKeyboardShortcut={onSimulateTrigger}
-            disabled={!isValid}
-            loading={isSaving || isLoadingDynamicProperties}
+            disabled={!isValid || isLoadingDynamicProperties}
+            loading={isSaving}
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Trigger')}
@@ -63,7 +63,7 @@ export const FirstTimeTestingSection = ({
               variant="outline"
               size="sm"
               onClick={() => onSaveMockAsSampleData(mockData)}
-              loading={isSaving || isLoadingDynamicProperties}
+              loading={isSaving}
             >
               {t('Use Mock Data')}
             </Button>
@@ -76,15 +76,15 @@ export const FirstTimeTestingSection = ({
   if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
             onClick={onMcpToolTesting}
             keyboardShortcut="G"
             onKeyboardShortcut={onMcpToolTesting}
-            loading={isTesting || isLoadingDynamicProperties}
-            disabled={!isValid}
+            loading={isTesting}
+            disabled={!isValid || isLoadingDynamicProperties}
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Tool')}
@@ -95,15 +95,15 @@ export const FirstTimeTestingSection = ({
   }
   return (
     <div className="flex justify-center">
-      <TestButtonTooltip disabled={!isValid}>
+      <TestButtonTooltip invalid={!isValid}>
         <Button
           variant="outline"
           size="sm"
           onClick={onPollTrigger}
           keyboardShortcut="G"
           onKeyboardShortcut={onPollTrigger}
-          loading={isTesting || isLoadingDynamicProperties}
-          disabled={!isValid}
+          loading={isTesting}
+          disabled={!isValid || isLoadingDynamicProperties}
         >
           <Dot animation={true} variant={'primary'}></Dot>
           {t('Load Sample Data')}

@@ -168,7 +168,7 @@ const TestStepSectionImplementation = React.memo(
       <>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!currentStep.valid}>
+            <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
@@ -183,8 +183,8 @@ const TestStepSectionImplementation = React.memo(
                     testAction(undefined);
                   }
                 }}
-                loading={isTesting || isSaving || isLoadingDynamicProperties}
-                disabled={!currentStep.valid}
+                loading={isTesting || isSaving}
+                disabled={!currentStep.valid || isLoadingDynamicProperties}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
