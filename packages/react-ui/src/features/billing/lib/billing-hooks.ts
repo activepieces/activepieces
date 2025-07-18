@@ -2,7 +2,7 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   CreateSubscriptionParams,
@@ -10,13 +10,19 @@ import {
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ErrorCode,
+  ListAICreditsUsageRequest,
+} from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
+  aiCreditsUsage: (params: ListAICreditsUsageRequest) =>
+    ['platform-billing-ai-credits-usage', params] as const,
 };
 
 export const billingMutations = {
@@ -26,7 +32,6 @@ export const billingMutations = {
         const portalLink = await platformBillingApi.getPortalLink();
         window.open(portalLink, '_blank');
       },
-      onError: () => toast(INTERNAL_ERROR_TOAST),
     });
   },
   useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
@@ -42,25 +47,8 @@ export const billingMutations = {
           description: t('Plan updated successfully'),
         });
       },
-      onError: (error) => {
+      onError: () => {
         navigate(`/platform/setup/billing/error`);
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.QUOTA_EXCEEDED_DOWNGRADE) {
-            toast({
-              title: t('Plan Change Not Possible'),
-              description: t(
-                `Cannot downgrade because you exceed the limits for: ${apError.params.metrics.join(
-                  ', ',
-                )}`,
-              ),
-              variant: 'default',
-              duration: 5000,
-            });
-            return;
-          }
-        }
-        toast(INTERNAL_ERROR_TOAST);
       },
     });
   },
@@ -79,8 +67,13 @@ export const billingMutations = {
           description: t('Plan created successfully'),
         });
       },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
+      onError: (error) => {
+        toast({
+          title: t('Creating Subscription failed'),
+          description: t(error.message),
+          variant: 'default',
+          duration: 5000,
+        });
       },
     });
   },
@@ -181,6 +174,12 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
+    });
+  },
+  useAiCreditsUsage: (params: ListAICreditsUsageRequest) => {
+    return useQuery({
+      queryKey: billingKeys.aiCreditsUsage(params),
+      queryFn: () => platformBillingApi.listAiCreditsUsage(params),
     });
   },
 };

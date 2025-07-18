@@ -95,9 +95,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         apiKeysEnabled: {
             type: Boolean,
         },
-        alertsEnabled: {
-            type: Boolean,
-        },
         ssoEnabled: {
             type: Boolean,
         },
@@ -149,6 +146,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         activeFlowsLimit: {
             type: Number,
             nullable: true,
+        },
+        mcpsEnabled: {
+            type: Boolean,
         },
     },
     indices: [

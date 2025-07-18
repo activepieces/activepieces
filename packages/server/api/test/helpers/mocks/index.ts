@@ -16,6 +16,7 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
+    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -57,6 +58,7 @@ import {
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
@@ -143,6 +145,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
         aiCredits: plan?.aiCredits ?? 0,
+        locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         tasks: plan?.tasks ?? 0,
@@ -205,6 +208,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
+        mcpsEnabled: platformPlan?.mcpsEnabled ?? false,
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
@@ -228,7 +232,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         todosEnabled: platformPlan?.todosEnabled ?? false,
-        alertsEnabled: platformPlan?.alertsEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
     }
@@ -631,6 +634,25 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
         description: projectRelease?.description ?? faker.lorem.sentence(),
         type: projectRelease?.type ?? faker.helpers.enumValue(ProjectReleaseType),
     }
+}
+
+export const createMockAIProvider = (aiProvider?: Partial<AIProvider>): Omit<AIProviderSchema, 'platform'> => {
+    return {
+        id: aiProvider?.id ?? apId(),
+        created: aiProvider?.created ?? faker.date.recent().toISOString(),
+        updated: aiProvider?.updated ?? faker.date.recent().toISOString(),
+        platformId: aiProvider?.platformId ?? apId(),
+        provider: aiProvider?.provider ?? 'openai',
+        config: encryptUtils.encryptObject({
+            apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+        }),
+    }
+}
+
+export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+    const mockAIProvider = createMockAIProvider(params)
+    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    return mockAIProvider
 }
 
 

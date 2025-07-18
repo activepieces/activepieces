@@ -16,7 +16,7 @@ import {
 import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { checkQuotaOrThrow } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -36,8 +36,9 @@ export const tableService = {
     }: CreateParams): Promise<Table> {
 
         const platformId = await projectService.getPlatformId(projectId)
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId,
+            projectId,
             metric: PlatformUsageMetric.TABLES,
         })
 

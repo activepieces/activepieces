@@ -6,7 +6,6 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, TriggerType } from '@activepieces/shared';
@@ -45,10 +44,6 @@ const TestFlowWidget = () => {
           setRun(run, flowVersion);
         },
       ),
-    onError: (error) => {
-      console.log(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   if (!flowVersion.valid) {

@@ -1,7 +1,7 @@
-import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, PrincipalType } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, GiftTrialByEmailRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { system } from '../../../helper/system/system'
+import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -11,28 +11,31 @@ export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
 const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        app.post('/', AdminAddPlatformRequest, async (req, res) => {
-            const newPlatform = await adminPlatformService(req.log).add(req.body)
-            return res.status(StatusCodes.CREATED).send(newPlatform)
-        })
-    }
+
     app.post('/runs/retry', AdminRetryRunsRequest, async (req, res) => {
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
-}
 
-const AdminAddPlatformRequest = {
-    schema: {
-        body: AdminAddPlatformRequestBody,
-    },
-    config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-}
+    app.post('/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
+        await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
+        return res.status(StatusCodes.OK).send()
+    })
 
+    app.post('/gift-trials', GiftTrialByEmailRequest, async (req, res) => {
+        const { gifts } = req.body
+        const results = await Promise.all(
+            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer(gift.email, gift.trialPeriod)),
+        )
+        
+        const errors = results.filter(result => !isNil(result))
+        if (errors.length === 0) {
+            return res.status(StatusCodes.OK).send({ message: 'All gifts processed successfully' })
+        }
+
+        return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
+    })
+}
 
 const AdminRetryRunsRequest = {
     schema: {
@@ -43,3 +46,20 @@ const AdminRetryRunsRequest = {
     },
 }
 
+const ApplyLicenseKeyByEmailRequest = {
+    schema: {
+        body: ApplyLicenseKeyByEmailRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SUPER_USER],
+    },
+}
+
+const GiftTrialByEmailRequest = {
+    schema: {
+        body: GiftTrialByEmailRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE],
+    },
+}

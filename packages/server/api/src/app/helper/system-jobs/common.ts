@@ -32,12 +32,14 @@ type AiUsageReportSystemJobData = {
 
 type SevenDaysInTrialEmailSystemJobData = {
     platformId: PlatformId
-    customerEmail: string
+    email: string
+    firstName?: string
 }
 
 type OneDayLeftOnTrialEmailSystemJobData = {
     platformId: PlatformId
-    customerEmail: string
+    email: string
+    firstName?: string
 }
 
 type SystemJobDataMap = {
