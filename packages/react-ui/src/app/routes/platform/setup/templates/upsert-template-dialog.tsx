@@ -82,9 +82,6 @@ export const UpsertTemplateDialog = ({
       onDone();
       setOpen(false);
     },
-    onError: () => {
-      setOpen(false);
-    },
   });
 
   const onSubmit = () => {

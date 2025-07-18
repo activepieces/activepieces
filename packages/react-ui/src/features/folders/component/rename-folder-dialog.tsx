@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';
 
@@ -64,6 +64,8 @@ const RenameFolderDialog = ({
         form.setError('displayName', {
           message: t('Folder name already used'),
         });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
       }
     },
   });
