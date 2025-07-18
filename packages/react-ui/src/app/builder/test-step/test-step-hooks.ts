@@ -311,7 +311,6 @@ export const testStepHooks = {
         if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
           return;
         }
-        console.error(error);
         toast(INTERNAL_ERROR_TOAST);
       },
     });

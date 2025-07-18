@@ -249,6 +249,9 @@ export const extractStructuredData = createAction({
 				},
 				toolChoice: 'required',
 				messages,
+				headers: {
+					'Authorization': `Bearer ${engineToken}`,
+				},
 			});
 
 			// Extract the tool call result
