@@ -70,12 +70,12 @@ async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<Cus
       token: developerJwt,
     },
   });
-  if (
-    method === HttpMethod.DELETE ||
-    (method === HttpMethod.POST && op.bodyType === VehicleEventsBodyType.None)
-  ) {
-    return { success: true };
+
+  if(response.status > 299)
+  {
+    throw new Error(`Error calling Vehicle Events API: ${response.body?.message || response.status}`);
   }
+
   return response.body;
 }
 
