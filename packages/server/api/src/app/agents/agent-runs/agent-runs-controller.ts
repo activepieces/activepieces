@@ -1,6 +1,7 @@
-import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { ListAgentRunsQueryParams, PrincipalType, RunAgentRequestBody, UpdateAgentRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { agentRunsService } from './agent-runs-service'
+import { AgentJobSource } from '@activepieces/server-shared'
 
 const DEFAULT_LIMIT = 10
 
@@ -28,16 +29,19 @@ export const agentRunsController: FastifyPluginAsyncTypebox = async (app) => {
             agentId: request.body.agentId,
             projectId: request.principal.projectId,
             prompt: request.body.prompt,
+            source: AgentJobSource.DIRECT,
         })
     })
 
     app.post('/:id/update', UpdateAgentRunRequest, async (request) => {
         const { id } = request.params
-        return agentRunsService(request.log).update({
+        const agentRun = await agentRunsService(request.log).update({
             id,
             projectId: request.body.projectId,
             agentRun: request.body,
         })
+        app.io.to(agentRun.projectId).emit(WebsocketClientEvent.AGENT_RUN_PROGRESS, agentRun)
+        return agentRun
     })
 }
 

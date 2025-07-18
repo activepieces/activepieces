@@ -5,6 +5,7 @@ import {
   UpdateAgentRequestBody,
   ListAgentsQueryParams,
   SeekPage,
+  AgentRun,
 } from '@activepieces/shared';
 
 export const agentsApi = {
@@ -31,5 +32,11 @@ export const agentsApi = {
 
   async delete(id: string): Promise<void> {
     return await api.delete(`/v1/agents/${id}`);
+  },
+};
+
+export const agentRunsApi = {
+  async get(id: string): Promise<AgentRun> {
+    return await api.get<AgentRun>(`/v1/agent-runs/${id}`);
   },
 };

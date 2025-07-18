@@ -3,7 +3,7 @@ import { Column, RenderCellProps } from 'react-data-grid';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
@@ -12,12 +12,13 @@ import { ApFieldHeader } from './ap-field-header';
 import { useTableState } from './ap-table-state-provider';
 import { EditableCell } from './editable-cell';
 import { NewFieldPopup } from './new-field-popup';
-import { SelectColumn } from './select-column';
+import { SelectCell, SelectHeaderCell } from './select-column';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [fields, updateRecord] = useTableState((state) => [
+  const [fields, updateRecord, setSelectedAgentRunId] = useTableState((state) => [
     state.fields,
     state.updateRecord,
+    state.setSelectedAgentRunId,
   ]);
 
   const { data: maxFields } = flagsHooks.useFlag<number>(
@@ -46,9 +47,26 @@ export function useTableColumns(createEmptyRecord: () => void) {
     renderCell: () => <div className="empty-cell"></div>,
   };
 
+
   const columns: Column<Row, { id: string }>[] = [
     {
-      ...SelectColumn,
+      key: 'select-row',
+      name: 'Select',
+      width: 66,
+      minWidth: 66,
+      maxWidth: 66,
+      resizable: false,
+      sortable: false,
+      frozen: true,
+      renderHeaderCell: () => <SelectHeaderCell />,
+      renderCell: (props) => (
+        <SelectCell row={props.row} rowIndex={props.rowIdx + 1} onClick={() => {
+          if (props.row.locked && props.row.agentRunId) {
+            setSelectedAgentRunId(props.row.agentRunId);
+          }
+        }} />
+      ),
+
       renderSummaryCell: () => (
         <div
           className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
@@ -79,7 +97,12 @@ export function useTableColumns(createEmptyRecord: () => void) {
           column={column}
           rowIdx={rowIdx}
           disabled={!userHasTableWritePermission}
-          locked={false}
+          locked={row.locked}
+          onClick={() => {
+            if (row.locked && row.agentRunId) {
+              setSelectedAgentRunId(row.agentRunId);
+            }
+          }}
           onRowChange={(newRow) => {
             updateRecord(rowIdx, {
               values: fields.map((field, fIndex) => ({
@@ -112,7 +135,7 @@ export function mapRecordsToRows(
 ): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
-    const row: Row = { id: record.uuid };
+    const row: Row = { id: record.uuid, agentRunId: record.agentRunId ?? null, locked: !isNil(record.agentRunId) };
     record.values.forEach((cell) => {
       const field = fields[cell.fieldIndex];
       if (field) {

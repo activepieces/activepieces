@@ -1,5 +1,6 @@
 import {
     ActivepiecesError,
+    Agent,
     apId,
     CreateTableRequest,
     CreateTableWebhookRequest,
@@ -8,7 +9,9 @@ import {
     isNil,
     PlatformUsageMetric,
     SeekPage,
+    spreadIfDefined,
     Table,
+    TableAutomationTrigger,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
@@ -24,6 +27,8 @@ import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
+import { system } from '../../helper/system/system'
+import { agentsService } from '../../agents/agents-service'
 
 export const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
@@ -46,6 +51,7 @@ export const tableService = {
             id: apId(),
             externalId: request.externalId ?? apId(),
             name: request.name,
+            trigger: TableAutomationTrigger.ON_DEMAND,
             projectId,
         })
         return table
@@ -80,10 +86,11 @@ export const tableService = {
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
+        await ensureAgentExists({ tableId: id, projectId })
         const table = await tableRepo().findOne({
             where: { projectId, id },
+            relations: ['agent'],
         })
-
         if (isNil(table)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -93,7 +100,6 @@ export const tableService = {
                 },
             })
         }
-
         return table
     },
 
@@ -178,11 +184,9 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-        await tableRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
+        await tableRepo().update({ id, projectId }, { 
+            ...spreadIfDefined('name', request.name),
+            ...spreadIfDefined('trigger', request.trigger),
         })
         return this.getById({ projectId, id })
     },
@@ -191,7 +195,30 @@ export const tableService = {
             where: { projectId },
         })
     },
-  
+
+}
+
+async function ensureAgentExists({ tableId, projectId }: EnsureAgentExistsParams): Promise<void> {
+    const table = await tableRepo().findOneBy({
+        id: tableId,
+        projectId,
+    })
+    if (isNil(table) || !isNil(table.agentId)) {
+        return
+    }
+    const platformId = await projectService.getPlatformId(projectId)
+    const agent = await agentsService(system.globalLogger()).create({
+        projectId,
+        displayName: `${table.name} Agent`,
+        description: '',
+        platformId,
+    })
+    await tableRepo().update({ id: tableId, projectId }, { agentId: agent.id })
+}
+
+type EnsureAgentExistsParams = {
+    tableId: string
+    projectId: string
 }
 
 type CreateParams = {

@@ -44,6 +44,10 @@ export const AgentRun = Type.Object({
     prompt: Type.String(),
     startTime: Type.String(),
     finishTime: Type.Optional(Type.String()),
+    metadata: Type.Optional(Type.Object({
+        recordId: Type.Optional(Type.String()),
+        tableId: Type.Optional(Type.String())
+    }))
 })
 
 export type AgentRun = Static<typeof AgentRun>

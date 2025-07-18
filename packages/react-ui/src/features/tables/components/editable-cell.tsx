@@ -19,6 +19,7 @@ type EditableCellProps = {
   field: ClientField;
   value: string;
   row: Row;
+  onClick?: () => void;
   column: CalculatedColumn<Row, { id: string }>;
   onRowChange: (row: Row, commitChanges: boolean) => void;
   rowIdx: number;
@@ -121,6 +122,7 @@ export function EditableCell({
   column,
   onRowChange,
   rowIdx,
+  onClick,
   disabled = false,
   locked = false,
 }: EditableCellProps) {
@@ -166,6 +168,7 @@ export function EditableCell({
       tabIndex={0}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
+        onClick?.();
         setSelectedCell({ rowIdx, columnIdx: column.idx });
         if (!disabled && field.type === FieldType.STATIC_DROPDOWN) {
           setIsEditing(true);

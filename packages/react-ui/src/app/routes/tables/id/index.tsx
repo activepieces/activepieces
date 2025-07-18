@@ -17,15 +17,19 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { AgentRun, AgentTaskStatus, ApFlagId, Permission, WebsocketClientEvent } from '@activepieces/shared';
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
 import { AutomateData } from '@/features/tables/components/automate-data';
+import { useSocket } from '@/components/socket-provider';
+import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
 
 const ApTableEditorPage = () => {
   const navigate = useNavigate();
   const projectId = authenticationSession.getProjectId();
   const [
+    table,
+    setAgentRunId,
     selectedRecords,
     setSelectedRecords,
     selectedCell,
@@ -33,7 +37,11 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
+    selectedAgentRunId,
+    setSelectedAgentRunId,
   ] = useTableState((state) => [
+    state.table,
+    state.setAgentRunId,
     state.selectedRecords,
     state.setSelectedRecords,
     state.selectedCell,
@@ -41,6 +49,8 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
+    state.selectedAgentRunId,
+    state.setSelectedAgentRunId,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -48,7 +58,7 @@ const ApTableEditorPage = () => {
   const { data: maxRecords } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_RECORDS_PER_TABLE,
   );
-
+  const socket = useSocket();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -58,6 +68,7 @@ const ApTableEditorPage = () => {
   const createEmptyRecord = () => {
     createRecord({
       uuid: nanoid(),
+      agentRunId: null,
       values: [],
     });
     requestAnimationFrame(() => {
@@ -83,6 +94,17 @@ const ApTableEditorPage = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [selectedCell]);
+
+  useEffect(() => {
+    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, (agentRun: AgentRun) => {
+      if (agentRun.metadata?.tableId === table.id) {
+        setAgentRunId(agentRun.metadata?.recordId!, agentRun.status === AgentTaskStatus.IN_PROGRESS ? agentRun.id : null);
+      }
+    });
+    return () => {
+      socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
+    };
+  }, [table.id, setAgentRunId, socket]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);
@@ -140,6 +162,16 @@ const ApTableEditorPage = () => {
           </div>
         </div>
       </DrawerContent>
+      
+      <AgentRunDialog
+        agentRunId={selectedAgentRunId}
+        open={!!selectedAgentRunId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedAgentRunId(null);
+          }
+        }}
+      />
     </Drawer>
   );
 };

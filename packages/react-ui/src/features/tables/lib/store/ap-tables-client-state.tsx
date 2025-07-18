@@ -12,6 +12,7 @@ export type ClientCellData = {
 
 export type ClientRecordData = {
   uuid: string;
+  agentRunId: string | null;
   values: ClientCellData[];
 };
 
@@ -35,6 +36,7 @@ const mapRecorddToClientRecordsData = (
 ): ClientRecordData[] => {
   return records.map((record) => ({
     uuid: nanoid(),
+    agentRunId: null,
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
@@ -56,6 +58,8 @@ export type TableState = {
   setSelectedCell: (
     selectedCell: { rowIdx: number; columnIdx: number } | null,
   ) => void;
+  selectedAgentRunId: string | null;
+  setSelectedAgentRunId: (agentRunId: string | null) => void;
   createRecord: (recordData: ClientRecordData) => void;
   updateRecord: (
     recordIndex: number,
@@ -67,6 +71,7 @@ export type TableState = {
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
   setRecords: (records: PopulatedRecord[]) => void;
+  setAgentRunId: (recordId: string, agentRunId: string | null) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
 };
@@ -91,6 +96,8 @@ export const createApTableStore = (
       setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
         set({ selectedRecords }),
       selectedCell: null,
+      selectedAgentRunId: null,
+      setSelectedAgentRunId: (agentRunId: string | null) => set({ selectedAgentRunId: agentRunId }),
       renameTable: (newName: string) =>
         set((state) => {
           return {
@@ -198,6 +205,14 @@ export const createApTableStore = (
             records: mapRecorddToClientRecordsData(records, serverState.fields),
           };
         });
+      },
+      setAgentRunId: (recordId: string, agentRunId: string | null) => {
+        const recordIndex = serverState.records.findIndex((record) => record.id === recordId);
+        set((state) => ({
+          records: state.records.map((record, index) =>
+            index === recordIndex ? { ...record, agentRunId } : record
+          ),
+        }));
       },
       serverFields: serverState.fields,
       serverRecords: serverState.records,

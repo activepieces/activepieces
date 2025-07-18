@@ -1,4 +1,4 @@
-import { JobType } from '@activepieces/server-shared'
+import { AgentJobData, AgentJobSource, JobType } from '@activepieces/server-shared'
 import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
@@ -63,22 +63,21 @@ export const agentRunsService = (_log: FastifyBaseLogger) => ({
             agentId: params.agentId,
             projectId: params.projectId,
             prompt: params.prompt,
-            status: AgentTaskStatus.IN_PROGRESS,
             steps: [],
-            // TODO: remove startTime and update migration
-            startTime: new Date().toISOString(),
+            status: AgentTaskStatus.IN_PROGRESS,
+            metadata: params.source === AgentJobSource.TABLE ? {
+                recordId: params.recordId,
+                tableId: params.tableId,
+            } : undefined,
         })
 
-        // Send job to agents queue
         await jobQueue(_log).add({
             id: agentRun.id,
             type: JobType.AGENTS,
             priority: 'high',
             data: {
-                agentId: agentRun.agentId,
-                projectId: agentRun.projectId,
-                runId: agentRun.id,
-                prompt: agentRun.prompt,
+                ...params,
+                agentRunId: agentRun.id,
             },
         })
 
@@ -117,6 +116,14 @@ type RunParams = {
     agentId: string
     projectId: string
     prompt: string
+    source: AgentJobSource.DIRECT
+} | {
+    agentId: string
+    projectId: string
+    prompt: string
+    source: AgentJobSource.TABLE
+    recordId: string
+    tableId: string
 }
 
 type UpdateParams = {

@@ -4,9 +4,11 @@ import {
   ListAgentsQueryParams,
   CreateAgentRequest,
   UpdateAgentRequestBody,
+  AgentRun,
 } from '@activepieces/shared';
 
 import { agentsApi } from './agents-api';
+import { agentRunsApi } from './agents-api';
 
 export const agentHooks = {
   useList: (params?: ListAgentsQueryParams) => {
@@ -45,6 +47,17 @@ export const agentHooks = {
   useDelete: () => {
     return useMutation({
       mutationFn: (id: string) => agentsApi.delete(id),
+    });
+  },
+};
+
+export const agentRunHooks = {
+  useGet: (id: string | null) => {
+    return useQuery<AgentRun>({
+      queryKey: ['agent-run', id],
+      queryFn: () => agentRunsApi.get(id!),
+      enabled: !!id,
+      refetchInterval: 2000,
     });
   },
 };
