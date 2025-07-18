@@ -1,6 +1,8 @@
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { emailService } from '../../helper/email/email-service'
@@ -8,8 +10,6 @@ import { platformPlanController } from './platform-plan.controller'
 import { platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { AI_CREDITS_PRICE_ID, stripeHelper } from './stripe-helper'
-import { FastifyBaseLogger } from 'fastify'
-import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 
 export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_REPORT, async (data) => {
@@ -47,14 +47,14 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
     systemJobHandlers.registerJobHandler(SystemJobName.SEVEN_DAYS_IN_TRIAL, async (data) => {
         const log = app.log
-        const { platformId, firstName, email } = data
+        const { platformId,  email } = data
         await handleEmailReminder(log, platformId, email, '7-days-in-trial')
     })
 
 
     systemJobHandlers.registerJobHandler(SystemJobName.ONE_DAY_LEFT_ON_TRIAL, async (data) => {
         const log = app.log
-        const { platformId, firstName, email } = data
+        const { platformId,  email } = data
         await handleEmailReminder(log, platformId, email, '1-day-left-on-trial')
     })
 

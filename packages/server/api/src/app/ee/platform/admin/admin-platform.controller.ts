@@ -1,6 +1,7 @@
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, PrincipalType } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, GiftTrialByEmailRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -20,9 +21,21 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
     })
+
+    app.post('/gift-trials', GiftTrialByEmailRequest, async (req, res) => {
+        const { gifts } = req.body
+        const results = await Promise.all(
+            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer(gift.email, gift.trialPeriod)),
+        )
+        
+        const errors = results.filter(result => !isNil(result))
+        if (errors.length === 0) {
+            return res.status(StatusCodes.OK).send({ message: 'All gifts processed successfully' })
+        }
+
+        return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
+    })
 }
-
-
 
 const AdminRetryRunsRequest = {
     schema: {
@@ -42,3 +55,11 @@ const ApplyLicenseKeyByEmailRequest = {
     },
 }
 
+const GiftTrialByEmailRequest = {
+    schema: {
+        body: GiftTrialByEmailRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE],
+    },
+}

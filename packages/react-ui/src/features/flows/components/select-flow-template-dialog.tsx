@@ -28,7 +28,6 @@ import {
   TooltipTrigger,
   Tooltip,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -73,9 +72,6 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
     },
     onSuccess: (flow) => {
       navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
   return (

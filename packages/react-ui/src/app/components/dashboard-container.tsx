@@ -8,6 +8,7 @@ import mcpLight from '@/assets/img/custom/mcp-light.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -169,6 +170,7 @@ export function DashboardContainer({
           {children}
         </SidebarComponent>
         {showBilling && <WelcomeTrialDialog />}
+        <UpgradeDialog />
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );
