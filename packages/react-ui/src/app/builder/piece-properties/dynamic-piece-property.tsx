@@ -1,24 +1,20 @@
-import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import {
-  PiecePropertyMap,
-  PropertyType,
-  ExecutePropsResult,
-} from '@activepieces/pieces-framework';
+import { formUtils } from '@/features/pieces/lib/form-utils';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
+import { DynamicPropertiesContext } from './dynamic-properties-context';
 type DynamicPropertiesProps = {
   refreshers: string[];
   propertyName: string;
@@ -35,40 +31,30 @@ const DynamicPropertiesImplementation = React.memo(
     const { updateFormSchema } = useStepSettingsContext();
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
-
+    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
+      DynamicPropertiesContext,
+    );
     const [propertyMap, setPropertyMap] = useState<
       PiecePropertyMap | undefined
     >(undefined);
     const newRefreshers = [...props.refreshers, 'auth'];
 
-    const { mutate, isPending } = useMutation<
-      ExecutePropsResult<PropertyType.DYNAMIC>,
-      Error,
-      { input: Record<string, unknown> }
-    >({
-      mutationFn: async ({ input }) => {
-        const { settings } = form.getValues();
-        const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-        const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options<PropertyType.DYNAMIC>(
-          {
-            pieceName,
-            pieceVersion,
-            pieceType,
-            packageType,
-            propertyName: props.propertyName,
-            actionOrTriggerName,
-            input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
-          },
-          PropertyType.DYNAMIC,
-        );
-      },
-      onError: (error) => {
-        console.error(error);
-      },
-    });
+    const { mutate, isPending, error } =
+      piecesHooks.usePieceOptions<PropertyType.DYNAMIC>({
+        onMutate: () => {
+          propertyLoadingStarted(props.propertyName);
+        },
+        onError: (error) => {
+          console.error(error);
+          propertyLoadingFinished(props.propertyName);
+        },
+        onSuccess: () => {
+          propertyLoadingFinished(props.propertyName);
+        },
+      });
+    if (error) {
+      throw error;
+    }
     /* eslint-disable react-hooks/rules-of-hooks */
     const refresherValues = newRefreshers.map((refresher) =>
       useWatch({
@@ -107,9 +93,24 @@ const DynamicPropertiesImplementation = React.memo(
 
       previousValues.current = refresherValues;
       isFirstRender.current = false;
-
+      const { settings } = form.getValues();
+      const actionOrTriggerName = settings.actionName ?? settings.triggerName;
+      const { pieceName, pieceVersion, pieceType, packageType } = settings;
       mutate(
-        { input },
+        {
+          request: {
+            pieceName,
+            pieceVersion,
+            pieceType,
+            packageType,
+            propertyName: props.propertyName,
+            actionOrTriggerName: actionOrTriggerName,
+            input,
+            flowVersionId: flowVersion.id,
+            flowId: flowVersion.flowId,
+          },
+          propertyType: PropertyType.DYNAMIC,
+        },
         {
           onSuccess: (response) => {
             const currentValue = form.getValues(

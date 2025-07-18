@@ -4,11 +4,14 @@ import {
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,
+  ListUsersRequestBody,
 } from '@activepieces/shared';
 
 export const platformUserApi = {
-  list() {
-    return api.get<SeekPage<UserWithMetaInformation>>('/v1/users');
+  list(request: ListUsersRequestBody) {
+    return api.get<SeekPage<UserWithMetaInformation>>('/v1/users', {
+      params: request,
+    });
   },
   delete(id: string) {
     return api.delete(`/v1/users/${id}`);

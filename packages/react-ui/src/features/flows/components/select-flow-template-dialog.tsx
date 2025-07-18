@@ -5,6 +5,7 @@ import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { InputWithIcon } from '@/components/ui/Input-with-icon';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
@@ -28,7 +28,6 @@ import {
   TooltipTrigger,
   Tooltip,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -73,9 +72,6 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
     },
     onSuccess: (flow) => {
       navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
   return (

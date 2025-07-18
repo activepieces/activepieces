@@ -11,7 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
@@ -23,9 +23,9 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
+import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
-import { formUtils } from '../piece-properties/form-utils';
+import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -34,6 +34,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
+import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -82,7 +83,7 @@ const StepSettingsContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
@@ -143,16 +144,14 @@ const StepSettingsContainer = () => {
     },
   });
 
-  const actionOrTriggerDisplayName = selectedStep.settings.actionName
-    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
-    : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
-
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
+  const showActionErrorHandlingForm =
+    [ActionType.CODE, ActionType.PIECE].includes(
+      modifiedStep.type as ActionType,
+    ) && !isNil(stepMetadata);
   return (
     <Form {...form}>
       <form
@@ -194,84 +193,78 @@ const StepSettingsContainer = () => {
             ></EditableStepName>
           </SidebarHeader>
         </div>
+        <DynamicPropertiesProvider
+          key={`${selectedStep.name}-${selectedStep.type}`}
+        >
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={55}>
+              <ScrollArea className="h-full">
+                <div className="flex flex-col gap-4 px-4 pb-6">
+                  <StepCard step={modifiedStep}></StepCard>
 
-        <ResizablePanelGroup direction="vertical">
-          <ResizablePanel defaultSize={55}>
-            <ScrollArea className="h-full">
-              <div className="flex flex-col gap-4 px-4 pb-6">
-                {stepMetadata && (
-                  <PieceCardInfo
-                    piece={stepMetadata}
-                    customizedInputs={
-                      selectedStep.settings?.inputUiInfo?.customizedInputs
-                    }
-                    actionOrTriggerDisplayName={actionOrTriggerDisplayName}
-                  ></PieceCardInfo>
-                )}
-                {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
-                  <LoopsSettings readonly={readonly}></LoopsSettings>
-                )}
-                {modifiedStep.type === ActionType.CODE && (
-                  <CodeSettings readonly={readonly}></CodeSettings>
-                )}
-                {modifiedStep.type === ActionType.PIECE && modifiedStep && (
-                  <PieceSettings
-                    step={modifiedStep}
-                    flowId={flowVersion.flowId}
-                    readonly={readonly}
-                  ></PieceSettings>
-                )}
-                {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
-                  <RouterSettings readonly={readonly}></RouterSettings>
-                )}
-                {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
-                  <PieceSettings
-                    step={modifiedStep}
-                    flowId={flowVersion.flowId}
-                    readonly={readonly}
-                  ></PieceSettings>
-                )}
-                {[ActionType.CODE, ActionType.PIECE].includes(
-                  modifiedStep.type as ActionType,
-                ) && (
-                  <ActionErrorHandlingForm
-                    hideContinueOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
-                            ?.hide
-                        : false
-                    }
-                    disabled={readonly}
-                    hideRetryOnFailure={
-                      stepMetadata?.type === ActionType.PIECE
-                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
-                            ?.hide
-                        : false
-                    }
-                  ></ActionErrorHandlingForm>
-                )}
-              </div>
-            </ScrollArea>
-          </ResizablePanel>
-          {!readonly && (
-            <>
-              <ResizableHandle withHandle={true} />
-              <ResizablePanel defaultSize={45}>
-                <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
-                  {modifiedStep.type && (
-                    <TestStepContainer
-                      type={modifiedStep.type}
-                      flowId={flowVersion.flowId}
-                      flowVersionId={flowVersion.id}
-                      projectId={project?.id}
-                      isSaving={saving}
-                    ></TestStepContainer>
+                  {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
+                    <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
-                </ScrollArea>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
+                  {modifiedStep.type === ActionType.CODE && (
+                    <CodeSettings readonly={readonly}></CodeSettings>
+                  )}
+                  {modifiedStep.type === ActionType.PIECE && modifiedStep && (
+                    <PieceSettings
+                      step={modifiedStep}
+                      flowId={flowVersion.flowId}
+                      readonly={readonly}
+                    ></PieceSettings>
+                  )}
+                  {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
+                    <RouterSettings readonly={readonly}></RouterSettings>
+                  )}
+                  {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
+                    <PieceSettings
+                      step={modifiedStep}
+                      flowId={flowVersion.flowId}
+                      readonly={readonly}
+                    ></PieceSettings>
+                  )}
+                  {showActionErrorHandlingForm && (
+                    <ActionErrorHandlingForm
+                      hideContinueOnFailure={
+                        stepMetadata.type === ActionType.PIECE
+                          ? stepMetadata.errorHandlingOptions?.continueOnFailure
+                              ?.hide
+                          : false
+                      }
+                      disabled={readonly}
+                      hideRetryOnFailure={
+                        stepMetadata.type === ActionType.PIECE
+                          ? stepMetadata.errorHandlingOptions?.retryOnFailure
+                              ?.hide
+                          : false
+                      }
+                    ></ActionErrorHandlingForm>
+                  )}
+                </div>
+              </ScrollArea>
+            </ResizablePanel>
+            {!readonly && (
+              <>
+                <ResizableHandle withHandle={true} />
+                <ResizablePanel defaultSize={45}>
+                  <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
+                    {modifiedStep.type && (
+                      <TestStepContainer
+                        type={modifiedStep.type}
+                        flowId={flowVersion.flowId}
+                        flowVersionId={flowVersion.id}
+                        projectId={project?.id}
+                        isSaving={saving}
+                      ></TestStepContainer>
+                    )}
+                  </ScrollArea>
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </DynamicPropertiesProvider>
       </form>
     </Form>
   );

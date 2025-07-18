@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -42,24 +43,27 @@ export function PlatformAdminContainer({
       type: 'link',
       to: '/platform/analytics',
       label: t('Overview'),
-      icon: LineChart,
+      icon: <LineChart />,
       locked: isLocked(!platform.plan.analyticsEnabled),
       isSubItem: false,
+      show: true,
     },
     {
       type: 'link',
       to: '/platform/projects',
       label: t('Projects'),
-      icon: LayoutGrid,
+      icon: <LayoutGrid />,
       locked: isLocked(!platform.plan.manageProjectsEnabled),
       isSubItem: false,
+      show: true,
     },
     {
       type: 'link',
       to: '/platform/users',
       label: t('Users'),
-      icon: Users,
+      icon: <Users />,
       isSubItem: false,
+      show: true,
     },
     {
       type: 'group',
@@ -75,36 +79,42 @@ export function PlatformAdminContainer({
           to: '/platform/setup/ai',
           label: t('AI'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/setup/branding',
           label: t('Branding'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/setup/connections',
           label: t('Global Connections'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/setup/pieces',
           label: t('Pieces'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/setup/templates',
           label: t('Templates'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
-          to: '/platform/setup/license-key',
-          label: t('License Key'),
+          to: '/platform/setup/billing',
+          label: t('Billing'),
           isSubItem: true,
+          show: edition !== ApEdition.COMMUNITY && !showPlatformDemo,
         },
       ],
     },
@@ -122,30 +132,35 @@ export function PlatformAdminContainer({
           to: '/platform/security/audit-logs',
           label: t('Audit Logs'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/security/sso',
           label: t('Single Sign On'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/security/signing-keys',
           label: t('Signing Keys'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/security/api-keys',
           label: t('API Keys'),
           isSubItem: true,
+          show: true,
         },
       ],
     },
@@ -163,29 +178,18 @@ export function PlatformAdminContainer({
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
           isSubItem: true,
+          show: true,
         },
         {
           type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
           isSubItem: true,
+          show: true,
         },
       ],
     },
   ];
-  if (edition === ApEdition.CLOUD && !showPlatformDemo) {
-    const setupGroup = items.find(
-      (item) => item.type === 'group' && item.label === t('Setup'),
-    );
-    if (setupGroup && setupGroup.type === 'group') {
-      setupGroup.items.push({
-        type: 'link',
-        to: '/platform/setup/billing',
-        label: t('Billing'),
-        isSubItem: true,
-      });
-    }
-  }
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       {showPlatformAdminDashboard ? (
@@ -193,6 +197,7 @@ export function PlatformAdminContainer({
       ) : (
         <Navigate to="/" />
       )}
+      <UpgradeDialog />
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

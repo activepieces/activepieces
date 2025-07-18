@@ -20,14 +20,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { FlowTemplate } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/ui/table-title';
+import { TableTitle } from '../../../../../components/custom/table-title';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
 
@@ -58,9 +58,6 @@ export default function TemplatesPage() {
         description: t('Templates deleted successfully'),
         duration: 3000,
       });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

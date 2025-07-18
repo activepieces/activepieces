@@ -21,7 +21,7 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -30,12 +30,9 @@ import {
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,
   PushTablesGitRepoRequest,
-  PushConnectionsGitRepoRequest,
 } from '@activepieces/ee-shared';
 import {
   assertNotNullOrUndefined,
-  ErrorCode,
-  AppConnectionWithoutSensitiveData,
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';
@@ -53,11 +50,6 @@ type PushToGitDialogProps =
       type: 'table';
       tables: Table[];
       children?: React.ReactNode;
-    }
-  | {
-      type: 'connection';
-      connections: AppConnectionWithoutSensitiveData[];
-      children?: React.ReactNode;
     };
 
 const PushToGitDialog = (props: PushToGitDialogProps) => {
@@ -73,24 +65,16 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       type:
         props.type === 'flow'
           ? GitPushOperationType.PUSH_FLOW
-          : props.type === 'table'
-          ? GitPushOperationType.PUSH_TABLE
-          : GitPushOperationType.PUSH_CONNECTION,
+          : GitPushOperationType.PUSH_TABLE,
       commitMessage: '',
       flowIds: props.type === 'flow' ? props.flows.map((item) => item.id) : [],
       tableIds:
         props.type === 'table' ? props.tables.map((item) => item.id) : [],
-      connectionExternalIds:
-        props.type === 'connection'
-          ? props.connections.map((item) => item.externalId)
-          : [],
     },
     resolver: typeboxResolver(
       props.type === 'flow'
         ? PushFlowsGitRepoRequest
-        : props.type === 'table'
-        ? PushTablesGitRepoRequest
-        : PushConnectionsGitRepoRequest,
+        : PushTablesGitRepoRequest,
     ),
   });
 
@@ -112,15 +96,6 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
             tableIds: props.tables.map((item) => item.id),
           });
           break;
-        case 'connection':
-          await gitSyncApi.push(gitSync.id, {
-            type: GitPushOperationType.PUSH_CONNECTION,
-            commitMessage: request.commitMessage,
-            connectionExternalIds: props.connections.map(
-              (item) => item.externalId,
-            ),
-          });
-          break;
       }
     },
     onSuccess: () => {
@@ -130,17 +105,6 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
         duration: 3000,
       });
       setOpen(false);
-    },
-    onError: (error: any) => {
-      if (error.response.data.code === ErrorCode.FLOW_OPERATION_INVALID) {
-        toast({
-          title: t('Invalid Operation'),
-          description: error.response.data.params.message,
-          duration: 3000,
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
     },
   });
 

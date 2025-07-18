@@ -63,9 +63,11 @@ export const createServerState = (
             })),
           ],
         });
+
         if (createdRecords.length > 0) {
           clonedRecords.push(...createdRecords);
         }
+
         updateSavingStatus(queue.size() === 1);
       });
     },
@@ -118,5 +120,6 @@ export const createServerState = (
       clonedRecords = JSON.parse(JSON.stringify(records));
     },
     fields: clonedFields,
+    records: clonedRecords,
   };
 };

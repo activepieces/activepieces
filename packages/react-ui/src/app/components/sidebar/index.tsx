@@ -9,6 +9,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { ProjectLockedAlert } from '@/components/custom/project-locked-alert';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Dot } from '@/components/ui/dot';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +57,7 @@ type Link = {
 type CustomTooltipLinkProps = {
   to: string;
   label: string;
-  Icon?: React.ElementType;
+  Icon?: React.ReactNode;
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
@@ -87,7 +87,7 @@ export const CustomTooltipLink = ({
     >
       <div
         className={cn(
-          'relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
+          'relative flex items-center gap-1 justify-between hover:bg-sidebar-accent rounded-sm transition-colors',
           extraClasses,
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
@@ -99,12 +99,17 @@ export const CustomTooltipLink = ({
         >
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">
-              {Icon && <Icon className={`size-4`} />}
-              <span className={`text-sm`}>{label}</span>
+              {Icon && React.isValidElement(Icon)
+                ? React.cloneElement(
+                    Icon as React.ReactElement<{ className?: string }>,
+                    {
+                      className: cn(Icon.props.className, 'size-4'),
+                    },
+                  )
+                : null}
+              <span className="text-sm">{label}</span>
             </div>
-            {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
-              <BetaBadge showTooltip={false} />
-            )}
+            {label === 'Agents' && <BetaBadge showTooltip={false} />}
           </div>
           {locked && (
             <LockKeyhole className="size-4 stroke-[2px]" color="grey" />
@@ -140,12 +145,12 @@ export type SidebarLink = {
   to: string;
   label: string;
   name?: string;
-  icon?: React.ElementType;
+  icon?: React.ReactNode;
   type: 'link';
+  show: boolean;
   notification?: boolean;
   locked?: boolean;
   hasPermission?: boolean;
-  showInEmbed?: boolean;
   isSubItem: boolean;
   isActive?: (pathname: string) => boolean;
   separatorBefore?: boolean;
@@ -174,6 +179,7 @@ export function SidebarComponent({
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
   const location = useLocation();
   const { checkAccess } = useAuthorization();
 
@@ -190,7 +196,6 @@ export function SidebarComponent({
           <Sidebar>
             <SidebarContent>
               <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
-              <SidebarSeparator />
               <SidebarContent className="gap-0">
                 <ScrollArea className="h-[calc(100vh-100px)]">
                   {items.map((item, index) => (
@@ -219,7 +224,7 @@ export function SidebarComponent({
                                 '/connections',
                               )}
                               label={t('Connections')}
-                              Icon={Link2}
+                              Icon={<Link2 className="size-4" />}
                               isSubItem={false}
                             />
                           </SidebarMenuButton>
@@ -236,25 +241,24 @@ export function SidebarComponent({
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
-                {showProjectUsage && <Separator />}
                 {showProjectUsage && (
                   <SidebarMenu>
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
-                {showProjectUsage && <Separator />}
                 <SidebarUser />
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 px-10 py-6', {
+          className={cn('px-10 py-6 w-full', {
             'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,
           })}
         >
+          <ProjectLockedAlert />
           {children}
         </div>
       </div>
@@ -307,7 +311,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="py-0 gap-2  rounded-lg">
+                <SidebarMenuButton>
                   {item.icon && <item.icon className="size-4" />}
                   <span>{item.label}</span>
                   <SidebarMenuAction asChild>
@@ -317,22 +321,25 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items.map((link, index) => (
-                    <SidebarMenuSubItem key={link.label}>
-                      <SidebarMenuButton asChild>
-                        <CustomTooltipLink
-                          to={link.to}
-                          label={link.label}
-                          Icon={link.icon}
-                          key={index}
-                          notification={link.notification}
-                          locked={link.locked}
-                          isActive={link.isActive}
-                          isSubItem={link.isSubItem}
-                        />
-                      </SidebarMenuButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  {item.items.map(
+                    (link, index) =>
+                      link.show && (
+                        <SidebarMenuSubItem key={link.label}>
+                          <SidebarMenuButton asChild>
+                            <CustomTooltipLink
+                              to={link.to}
+                              label={link.label}
+                              Icon={link.icon}
+                              key={index}
+                              notification={link.notification}
+                              locked={link.locked}
+                              isActive={link.isActive}
+                              isSubItem={link.isSubItem}
+                            />
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      ),
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

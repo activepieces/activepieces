@@ -15,17 +15,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { LocalesEnum } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),
   logoUrl: Type.String(),
   iconUrl: Type.String(),
   faviconUrl: Type.String(),
-  language: Type.String(),
   color: Type.String(),
 });
 
@@ -39,7 +37,6 @@ export const AppearanceSection = () => {
       logoUrl: platform?.fullLogoUrl,
       iconUrl: platform?.logoIconUrl,
       faviconUrl: platform?.favIconUrl,
-      language: platform?.defaultLocale ?? LocalesEnum.ENGLISH,
       color: platform?.primaryColor,
     },
     resolver: typeboxResolver(FromSchema),
@@ -55,7 +52,6 @@ export const AppearanceSection = () => {
           fullLogoUrl: form.getValues().logoUrl,
           logoIconUrl: form.getValues().iconUrl,
           favIconUrl: form.getValues().faviconUrl,
-          defaultLocale: form.getValues().language as LocalesEnum,
           primaryColor: form.getValues().color,
         },
         platform.id,
@@ -70,11 +66,8 @@ export const AppearanceSection = () => {
       });
       form.reset(form.getValues());
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
-
+  console.log(form.formState.isValid, form.getValues());
   return (
     <>
       <Separator className="my-2" />

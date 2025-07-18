@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
-import { ArrayInput } from '@/components/ui/array-input';
+import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,13 @@ type NewFieldFormData =
       type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
       data: null;
     };
+
+const FIELD_TYPE_FRIENDLY_NAME: Record<FieldType, string> = {
+  [FieldType.TEXT]: 'Text',
+  [FieldType.NUMBER]: 'Number',
+  [FieldType.DATE]: 'Date',
+  [FieldType.STATIC_DROPDOWN]: 'Dropdown',
+};
 
 export function NewFieldPopup({ children }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
@@ -173,7 +180,9 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                               )}
                             >
                               {tablesUtils.getColumnIcon(type)}
-                              {t(type)}
+                              {FIELD_TYPE_FRIENDLY_NAME[type]
+                                ? t(FIELD_TYPE_FRIENDLY_NAME[type])
+                                : t(type)}
                             </Label>
                           </div>
                         ))}

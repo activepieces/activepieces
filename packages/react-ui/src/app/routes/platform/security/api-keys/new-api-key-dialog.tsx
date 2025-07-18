@@ -5,7 +5,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { CopyToClipboardInput } from '@/components/custom/copy-to-clipboard';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,8 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
 
 type NewApiKeyDialogProps = {
@@ -52,17 +51,11 @@ export const NewApiKeyDialog = ({
     resolver: typeboxResolver(FormSchema),
   });
 
-  const { toast } = useToast();
-
   const { mutate, isPending } = useMutation({
     mutationFn: () => apiKeyApi.create(form.getValues()),
     onSuccess: (apiKey) => {
       setApiKey(apiKey);
       onCreate();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
     },
   });
 
@@ -98,12 +91,13 @@ export const NewApiKeyDialog = ({
                 <CopyToClipboardInput
                   useInput={true}
                   textToCopy={apiKey.value}
+                  fileName={`${apiKey.displayName}`}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button
-                variant={'secondary'}
+                variant={'accent'}
                 onClick={() => {
                   setApiKey(undefined);
                   setOpen(false);
