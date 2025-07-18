@@ -5,6 +5,7 @@ import {
 	identityApiActions,
 	telemetryApiActions,
 	tokenExchangeApiActions,
+    vehicleEventsApiActions,
 } from './lib/actions';
 import {
 	batteryChargingTrigger,
@@ -40,7 +41,7 @@ export const dimoAuth = PieceAuth.CustomAuth({
 export const dimo = createPiece({
 	displayName: 'DIMO',
 	description:
-		'The DIMO Network enables vehicles to be part of a protocol where users have digital ownership over their vehicle data (as an asset) and have the ability to earn rewards when sharing that data with a service provider.',
+		'DIMO is an open protocol using blockchain to establish universal digital vehicle identity, permissions, data transmission, vehicle control, and payments. Developers use DIMO to build apps based on connected vehicles around the world while the vehicle owners benefit from monetizing their vehicle data.',
 	auth: dimoAuth,
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/dimo.png',
@@ -51,6 +52,7 @@ export const dimo = createPiece({
 		...tokenExchangeApiActions,
 		...identityApiActions,
 		...telemetryApiActions,
+		...vehicleEventsApiActions,
 	],
 	triggers: [
 		batteryChargingTrigger,

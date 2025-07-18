@@ -128,7 +128,7 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
             displayName: 'Mark as Complete',
         }
     }
-    const tool = mcp.tools.find((tool) => tool.id === mcpToolNaming.extractToolId(toolName))
+    const tool = mcp.tools.find((tool) => tool.toolName === toolName)
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
     }
@@ -136,14 +136,12 @@ function getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCal
         case McpToolType.PIECE: {
             const pieceMetadata = tool.pieceMetadata
             assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
-            const actionMetadataEntry = Object.values(pieceMetadata.actionNames).find((action) => mcpToolNaming.fixTool(action, mcpToolNaming.extractToolId(toolName), McpToolType.PIECE) === toolName)
-            assertNotNullOrUndefined(actionMetadataEntry, 'Action metadata entry not found')
             return {
                 ...baseTool,
                 toolCallType: ToolCallType.PIECE,
                 pieceName: pieceMetadata.pieceName,
                 pieceVersion: pieceMetadata.pieceVersion,
-                actionName: actionMetadataEntry,
+                actionName: tool.pieceMetadata.actionName,
             }
         }
         case McpToolType.FLOW: {

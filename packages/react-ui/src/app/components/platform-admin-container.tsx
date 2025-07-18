@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -110,10 +111,10 @@ export function PlatformAdminContainer({
         },
         {
           type: 'link',
-          to: '/platform/setup/license-key',
-          label: t('License Key'),
+          to: '/platform/setup/billing',
+          label: t('Billing'),
           isSubItem: true,
-          show: true,
+          show: edition !== ApEdition.COMMUNITY && !showPlatformDemo,
         },
       ],
     },
@@ -189,20 +190,6 @@ export function PlatformAdminContainer({
       ],
     },
   ];
-  if (edition === ApEdition.CLOUD && !showPlatformDemo) {
-    const setupGroup = items.find(
-      (item) => item.type === 'group' && item.label === t('Setup'),
-    );
-    if (setupGroup && setupGroup.type === 'group') {
-      setupGroup.items.push({
-        type: 'link',
-        to: '/platform/setup/billing',
-        label: t('Billing'),
-        isSubItem: true,
-        show: true,
-      });
-    }
-  }
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       {showPlatformAdminDashboard ? (
@@ -210,6 +197,7 @@ export function PlatformAdminContainer({
       ) : (
         <Navigate to="/" />
       )}
+      <UpgradeDialog />
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

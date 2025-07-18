@@ -2,18 +2,20 @@ import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Curs
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { mcpService } from '../mcp/mcp-service'
+import { projectService } from '../project/project-service'
 import { AgentEntity } from './agent-entity'
 
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentsService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Agent> {
-        await checkQuotaOrThrow({
+        await PlatformPlanHelper.checkQuotaOrThrow({
             platformId: params.platformId,
+            projectId: params.projectId,
             metric: PlatformUsageMetric.AGENTS,
         })
         const mcp = await mcpService(log).create({
@@ -42,6 +44,9 @@ export const agentsService = (log: FastifyBaseLogger) => ({
         return agent
     },
     async update(params: UpdateParams): Promise<Agent> {
+        const platformId = await projectService.getPlatformId(params.projectId)
+        await PlatformPlanHelper.checkResourceLocked({ platformId, resource: PlatformUsageMetric.AGENTS })
+
         await agentRepo().update({
             id: params.id,
             projectId: params.projectId,
@@ -101,7 +106,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-
         return paginationHelper.createPage<Agent>(
             data,
             cursor,
@@ -112,9 +116,6 @@ export const agentsService = (log: FastifyBaseLogger) => ({
 function getAgentProfilePictureUrl(): string {
     return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
 }
-
-
-
 
 type ListParams = {
     projectId: string

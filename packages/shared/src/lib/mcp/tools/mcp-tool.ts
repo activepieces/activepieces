@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../common'
+import { BaseModelSchema, DiscriminatedUnion } from '../../common'
 import { ApId } from '../../common/id-generator'
 import { PopulatedFlow } from '../../flows'
 
@@ -11,19 +11,35 @@ export enum McpToolType {
 export const McpPieceToolData = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
-    actionNames: Type.Array(Type.String()),
+    actionName: Type.String(),
+    actionDisplayName: Type.String(),
     logoUrl: Type.String(),
     connectionExternalId: Type.Optional(Type.String()),
 })
 export type McpPieceToolData = Static<typeof McpPieceToolData>
 
-export const McpTool = Type.Object({
+const McpToolBase = {
     ...BaseModelSchema,
-    type: Type.Enum(McpToolType),
+    toolName: Type.Optional(Type.String()),
     mcpId: ApId,
-    pieceMetadata: Type.Optional(McpPieceToolData),
-    flowId: Type.Optional(ApId),
-    flow: Type.Optional(PopulatedFlow),
+}
+export const McpPieceTool = Type.Object({
+    type: Type.Literal(McpToolType.PIECE),
+    ...McpToolBase,
+    pieceMetadata: McpPieceToolData,
 })
+export type McpPieceTool = Static<typeof McpPieceTool>
+export const McpFlowTool = Type.Object({
+    type: Type.Literal(McpToolType.FLOW),
+    ...McpToolBase,
+    flowId: ApId,
+    flow: PopulatedFlow,
+})
+export type McpFlowTool = Static<typeof McpFlowTool>
+
+export const McpTool = DiscriminatedUnion('type', [
+    McpPieceTool,
+    McpFlowTool,
+])
 
 export type McpTool = Static<typeof McpTool>

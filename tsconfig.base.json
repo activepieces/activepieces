@@ -169,6 +169,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-checkout": [
+        "packages/pieces/community/checkout/src/index.ts"
+      ],
       "@activepieces/piece-circle": [
         "packages/pieces/community/circle/src/index.ts"
       ],
@@ -180,6 +183,9 @@
       ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
+      ],
+      "@activepieces/piece-clicksend": [
+        "packages/pieces/community/clicksend/src/index.ts"
       ],
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
@@ -199,11 +205,11 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
-      "@activepieces/piece-comfyicu": [
-        "packages/pieces/community/comfyicu/src/index.ts"
-      ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
+      "@activepieces/piece-comfyicu": [
+        "packages/pieces/community/comfyicu/src/index.ts"
       ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
@@ -306,6 +312,9 @@
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
       ],
+      "@activepieces/piece-fireberry": [
+        "packages/pieces/community/fireberry/src/index.ts"
+      ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
       ],
@@ -329,6 +338,9 @@
       ],
       "@activepieces/piece-forms": [
         "packages/pieces/community/forms/src/index.ts"
+      ],
+      "@activepieces/piece-formstack": [
+        "packages/pieces/community/formstack/src/index.ts"
       ],
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
@@ -554,11 +566,11 @@
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
       ],
-       "@activepieces/piece-microsoft-power-bi": [
-        "packages/pieces/community/microsoft-power-bi/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-outlook-calendar": [
         "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-power-bi": [
+        "packages/pieces/community/microsoft-power-bi/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -568,6 +580,9 @@
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-mistral-ai": [
+        "packages/pieces/community/mistral-ai/src/index.ts"
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
@@ -613,6 +628,9 @@
       ],
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
+      ],
+      "@activepieces/piece-pandadoc": [
+        "packages/pieces/community/pandadoc/src/index.ts"
       ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
@@ -924,6 +942,9 @@
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-wufoo": [
+        "packages/pieces/community/wufoo/src/index.ts"
       ],
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
