@@ -1,9 +1,11 @@
 import { t } from 'i18next';
+import { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { isNil } from '@activepieces/shared';
 
+import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
 import { TestButtonTooltip } from '../test-step-tooltip';
 
 import { TestType } from './trigger-event-utils';
@@ -13,7 +15,7 @@ type FirstTimeTestingSectionProps = {
   testType: TestType;
   isTesting: boolean;
   mockData: unknown;
-  isSavingMockdata: boolean;
+  isSaving: boolean;
   onSimulateTrigger: () => void;
   onPollTrigger: () => void;
   onMcpToolTesting: () => void;
@@ -24,13 +26,14 @@ export const FirstTimeTestingSection = ({
   isValid,
   testType,
   mockData,
-  isSavingMockdata,
+  isSaving,
   isTesting,
   onSimulateTrigger,
   onPollTrigger,
   onMcpToolTesting,
   onSaveMockAsSampleData,
 }: FirstTimeTestingSectionProps) => {
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   if (
     testType === 'simulation' ||
     testType === 'webhook' ||
@@ -38,14 +41,15 @@ export const FirstTimeTestingSection = ({
   ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
             onClick={onSimulateTrigger}
             keyboardShortcut="G"
             onKeyboardShortcut={onSimulateTrigger}
-            disabled={!isValid}
+            disabled={!isValid || isLoadingDynamicProperties}
+            loading={isSaving}
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Trigger')}
@@ -59,7 +63,7 @@ export const FirstTimeTestingSection = ({
               variant="outline"
               size="sm"
               onClick={() => onSaveMockAsSampleData(mockData)}
-              loading={isSavingMockdata}
+              loading={isSaving}
             >
               {t('Use Mock Data')}
             </Button>
@@ -72,7 +76,7 @@ export const FirstTimeTestingSection = ({
   if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
@@ -80,7 +84,7 @@ export const FirstTimeTestingSection = ({
             keyboardShortcut="G"
             onKeyboardShortcut={onMcpToolTesting}
             loading={isTesting}
-            disabled={!isValid}
+            disabled={!isValid || isLoadingDynamicProperties}
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Tool')}
@@ -89,10 +93,9 @@ export const FirstTimeTestingSection = ({
       </div>
     );
   }
-
   return (
     <div className="flex justify-center">
-      <TestButtonTooltip disabled={!isValid}>
+      <TestButtonTooltip invalid={!isValid}>
         <Button
           variant="outline"
           size="sm"
@@ -100,7 +103,7 @@ export const FirstTimeTestingSection = ({
           keyboardShortcut="G"
           onKeyboardShortcut={onPollTrigger}
           loading={isTesting}
-          disabled={!isValid}
+          disabled={!isValid || isLoadingDynamicProperties}
         >
           <Dot animation={true} variant={'primary'}></Dot>
           {t('Load Sample Data')}

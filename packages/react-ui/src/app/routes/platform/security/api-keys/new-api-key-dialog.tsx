@@ -57,9 +57,6 @@ export const NewApiKeyDialog = ({
       setApiKey(apiKey);
       onCreate();
     },
-    onError: () => {
-      setOpen(false);
-    },
   });
 
   return (

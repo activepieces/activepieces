@@ -48,9 +48,6 @@ export const NewProjectDialog = ({
       onCreate();
       setOpen(false);
     },
-    onError: () => {
-      setOpen(false);
-    },
   });
 
   return (

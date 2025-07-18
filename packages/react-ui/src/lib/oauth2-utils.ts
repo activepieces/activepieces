@@ -74,7 +74,7 @@ async function generateCodeChallenge(codeVerifier: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(codeVerifier);
   const digest = await window.crypto.subtle.digest('SHA-256', data);
-  
+
   const base64String = btoa(String.fromCharCode(...new Uint8Array(digest)));
   return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
@@ -93,9 +93,11 @@ async function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
   if (params.pkce) {
     const method = params.pkceMethod || 'plain';
     queryParams['code_challenge_method'] = method;
-    
+
     if (method === 'S256') {
-      queryParams['code_challenge'] = await generateCodeChallenge(pckeChallenge);
+      queryParams['code_challenge'] = await generateCodeChallenge(
+        pckeChallenge,
+      );
     } else {
       queryParams['code_challenge'] = pckeChallenge;
     }

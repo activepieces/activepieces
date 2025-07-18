@@ -205,6 +205,8 @@ export const appConnectionsMutations = {
           renameConnectionForm.setError('displayName', {
             message: error.message,
           });
+        } else {
+          toast(INTERNAL_ERROR_TOAST);
         }
       },
     });

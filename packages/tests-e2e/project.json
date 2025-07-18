@@ -21,6 +21,22 @@
         ]
       }
     },
+    "test-checkly": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx checkly test --config=packages/tests-e2e/checkly.config.ts --reporter=github --record"
+        ]
+      }
+    },
+    "deploy-checkly": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx checkly deploy"
+        ]
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
