@@ -7,11 +7,11 @@ function isValidEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
-export const clicksendSearchContactByEmail = createAction({
+export const clicksendFindContactByEmailAction = createAction({
   auth: clicksendAuth,
-  name: 'search_contact_by_email',
-  description: 'Search for a contact by email address',
-  displayName: 'Search Contact by Email',
+  name: 'find_contact_by_email',
+  description: 'Finds contact by email address.',
+  displayName: 'Find Contact by Email',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,
     email: clicksendCommon.email,
@@ -23,14 +23,42 @@ export const clicksendSearchContactByEmail = createAction({
     }
     const username = context.auth.username;
     const password = context.auth.password;
-    const result = await callClickSendApi(
-      HttpMethod.GET,
-      `lists/${contact_list_id}/contacts?q=${encodeURIComponent(email)}`,
-      { username, password }
-    );
-    if (!(result?.body && (result.body as any).data && (result.body as any).data.length > 0)) {
-      throw new Error('No contact found with this email.');
-    }
-    return result;
+
+    let currentPage = 1;
+    let hasNext = true;
+
+    do {
+      const response = await callClickSendApi<{
+        data: {
+          next_page_url?: string;
+          data: { email: string }[];
+        };
+      }>({
+        method: HttpMethod.GET,
+        username,
+        password,
+        path: `/lists/${contact_list_id}/contacts`,
+        query: { page: currentPage.toString(), limit: '100' },
+      });
+
+      const items = response.body.data?.data ?? [];
+
+      const matched = items.find((item) => item.email === email);
+
+      if (matched) {
+        return {
+          found: true,
+          data: matched,
+        };
+      }
+
+      currentPage++;
+      hasNext = !!response.body.data?.next_page_url;
+    } while (hasNext);
+
+    return {
+      found: false,
+      data: {},
+    };
   },
-}); 
+});

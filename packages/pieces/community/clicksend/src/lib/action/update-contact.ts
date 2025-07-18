@@ -10,12 +10,13 @@ function isValidEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
-export const clicksendUpdateContact = createAction({
+export const clicksendUpdateContactAction = createAction({
   auth: clicksendAuth,
   name: 'update_contact',
-  description: 'Update an existing contact in a contact list',
+  description: 'Updates an existing contact in a contact list.',
   displayName: 'Update Contact',
   props: {
+    contact_list_id: clicksendCommon.contact_list_id,
     contact_id: clicksendCommon.contact_id,
     phone_number: Property.ShortText({
       description: 'The phone number of the contact',
@@ -86,7 +87,8 @@ export const clicksendUpdateContact = createAction({
       city,
       state,
       postal_code,
-      country
+      contact_list_id,
+      country,
     } = context.propsValue;
     if (phone_number && !isValidPhone(phone_number)) {
       throw new Error('Invalid phone number.');
@@ -110,12 +112,15 @@ export const clicksendUpdateContact = createAction({
       ...(country && { country }),
     };
     try {
-      return await callClickSendApi(
-        HttpMethod.PUT,
-        `contacts/${contact_id}`,
-        { username, password },
-        contactData
-      );
+      const response= await callClickSendApi({
+        method: HttpMethod.PUT,
+        path: `/lists/${contact_list_id}/contacts/${contact_id}`,
+        username,
+        password,
+        body: contactData,
+      });
+
+      return response.body;
     } catch (error: any) {
       if (error?.response?.status === 404) {
         throw new Error('Contact not found.');
@@ -126,4 +131,4 @@ export const clicksendUpdateContact = createAction({
       throw error;
     }
   },
-}); 
+});

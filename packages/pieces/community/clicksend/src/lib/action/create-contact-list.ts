@@ -3,14 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi } from '../common';
 import { clicksendAuth } from '../..';
 
-export const clicksendCreateContactList = createAction({
+export const clicksendCreateContactListAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact_list',
-  description: 'Create a new contact list',
+  description: 'Creates a new contact list.',
   displayName: 'Create Contact List',
   props: {
     list_name: Property.ShortText({
-      description: 'The name of the contact list',
       displayName: 'List Name',
       required: true,
     }),
@@ -26,12 +25,14 @@ export const clicksendCreateContactList = createAction({
       list_name: list_name,
     };
     try {
-      return await callClickSendApi(
-        HttpMethod.POST,
-        'lists',
-        { username, password },
-        listData
-      );
+      const response = await callClickSendApi({
+        method: HttpMethod.POST,
+        path: '/lists',
+        username,
+        password,
+        body: listData,
+      });
+      return response.body;
     } catch (error: any) {
       if (error?.response?.body?.response_code === 'ALREADY_EXISTS') {
         throw new Error('A contact list with this name already exists.');
@@ -39,4 +40,4 @@ export const clicksendCreateContactList = createAction({
       throw error;
     }
   },
-}); 
+});

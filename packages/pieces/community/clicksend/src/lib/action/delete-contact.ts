@@ -3,24 +3,26 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi, clicksendCommon } from '../common';
 import { clicksendAuth } from '../..';
 
-export const clicksendDeleteContact = createAction({
+export const clicksendDeleteContactAction = createAction({
   auth: clicksendAuth,
   name: 'delete_contact',
-  description: 'Delete a contact from a contact list',
+  description: 'Deletes a contact from a contact list.',
   displayName: 'Delete Contact',
   props: {
+    contact_list_id: clicksendCommon.contact_list_id,
     contact_id: clicksendCommon.contact_id,
   },
   async run(context) {
-    const { contact_id } = context.propsValue;
+    const { contact_id,contact_list_id } = context.propsValue;
     const username = context.auth.username;
     const password = context.auth.password;
     try {
-      await callClickSendApi(
-        HttpMethod.DELETE,
-        `contacts/${contact_id}`,
-        { username, password }
-      );
+      await callClickSendApi({
+        method: HttpMethod.DELETE,
+        path: `/lists/${contact_list_id}/contacts/${contact_id}`,
+        username,
+        password,
+      });
       return { success: true, message: 'Contact deleted.' };
     } catch (error: any) {
       if (error?.response?.status === 404) {
@@ -32,4 +34,4 @@ export const clicksendDeleteContact = createAction({
       throw error;
     }
   },
-}); 
+});

@@ -10,10 +10,10 @@ function isValidEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
 
-export const clicksendCreateContact = createAction({
+export const clicksendCreateContactAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact',
-  description: 'Create a new contact in a contact list',
+  description: 'Creates a new contact in a contact list.',
   displayName: 'Create Contact',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,
@@ -86,7 +86,7 @@ export const clicksendCreateContact = createAction({
       city,
       state,
       postal_code,
-      country
+      country,
     } = context.propsValue;
     if (!phone_number || !isValidPhone(phone_number)) {
       throw new Error('A valid phone number is required.');
@@ -110,12 +110,14 @@ export const clicksendCreateContact = createAction({
       ...(country && { country }),
     };
     try {
-      return await callClickSendApi(
-        HttpMethod.POST,
-        `lists/${contact_list_id}/contacts`,
-        { username, password },
-        contactData
-      );
+      const response =  await callClickSendApi({
+        method: HttpMethod.POST,
+        path: `/lists/${contact_list_id}/contacts`,
+        username,
+        password,
+        body: contactData,
+      });
+      return response.body;
     } catch (error: any) {
       if (error?.response?.body?.response_code === 'ALREADY_EXISTS') {
         throw new Error('Contact already exists in this list.');
@@ -123,4 +125,4 @@ export const clicksendCreateContact = createAction({
       throw error;
     }
   },
-}); 
+});
