@@ -73,7 +73,7 @@ export const generateTextAction = createAction({
     }
     const body: Record<string, any> = {
       providers: provider,
-      prompt,
+      instruction: prompt,
       fallback_providers: fallback_providers || [],
     };
     if (temperature !== undefined) body['temperature'] = temperature;

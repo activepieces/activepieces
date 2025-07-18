@@ -5,9 +5,14 @@ import {
   createStaticDropdown,
   TEXT_TO_SPEECH_STATIC_PROVIDERS,
   TEXT_TO_SPEECH_STATIC_LANGUAGES,
-  TEXT_TO_SPEECH_STATIC_VOICES,
+  getTextToSpeechVoices,
   normalizeTextToSpeech,
 } from '../common/providers';
+
+const GENERIC_GENDER_VOICES = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
 
 export const textToSpeechAction = createAction({
   name: 'text_to_speech',
@@ -35,10 +40,15 @@ export const textToSpeechAction = createAction({
     }),
     voice: Property.Dropdown({
       displayName: 'Voice Option',
-      description: 'Voice option (optional, e.g., male, female, specific voice name).',
+      description: 'Voice option or ID (see docs for valid values).',
       required: false,
       refreshers: ['provider', 'language'],
-      options: createStaticDropdown(TEXT_TO_SPEECH_STATIC_VOICES),
+      options: async ({ provider }) => ({
+        options: [
+          ...GENERIC_GENDER_VOICES,
+          ...getTextToSpeechVoices(typeof provider === 'string' ? provider : ''),
+        ],
+      }),
     }),
     fallback_providers: Property.Array({
       displayName: 'Fallback Providers',
@@ -64,7 +74,11 @@ export const textToSpeechAction = createAction({
       fallback_providers: fallback_providers || [],
     };
     if (language) body['language'] = language;
-    if (voice) body['option_voice'] = voice;
+    if (voice === 'male' || voice === 'female') {
+      body['option'] = voice.toUpperCase();
+    } else if (voice) {
+      body['voice_id'] = voice;
+    }
     try {
       const response = await edenAiApiCall({
         apiKey: auth as string,

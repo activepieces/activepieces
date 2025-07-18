@@ -25,12 +25,13 @@
         }
         try {
           const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: 'https://api.edenai.run/v2/user/tokens',
+            method: HttpMethod.POST,
+            url: 'https://api.edenai.run/v2/translation/language_detection',
             headers: {
               'Authorization': `Bearer ${auth}`,
               'Content-Type': 'application/json',
             },
+            body: { providers: 'google', text: 'hello' },
             timeout: 10000,
           });
           if (response.status >= 200 && response.status < 300) {

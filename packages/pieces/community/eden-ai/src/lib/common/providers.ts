@@ -253,16 +253,33 @@ export const TEXT_TO_SPEECH_STATIC_LANGUAGES: Option[] = [
   { label: 'Auto detection', value: 'auto-detect' },
 ];
 
-export const TEXT_TO_SPEECH_STATIC_VOICES: Option[] = [
-  { label: 'Default', value: '' },
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
+export const TEXT_TO_SPEECH_STATIC_VOICES_GOOGLE: Option[] = [
+  { label: 'en-GB-Standard-A (Female)', value: 'en-GB-Standard-A' },
+  { label: 'en-GB-Standard-B (Male)', value: 'en-GB-Standard-B' },
+  { label: 'en-GB-Standard-C (Female)', value: 'en-GB-Standard-C' },
+  { label: 'en-GB-Standard-D (Male)', value: 'en-GB-Standard-D' },
+  { label: 'en-US-Standard-B (Male)', value: 'en-US-Standard-B' },
+  { label: 'en-US-Standard-C (Female)', value: 'en-US-Standard-C' },
+  { label: 'en-US-Standard-D (Male)', value: 'en-US-Standard-D' },
+  { label: 'en-US-Standard-E (Female)', value: 'en-US-Standard-E' },
 ];
+export const TEXT_TO_SPEECH_STATIC_VOICES_MICROSOFT: Option[] = [
+  { label: 'en-GB-RyanNeural (Male)', value: 'en-GB-RyanNeural' },
+  { label: 'en-GB-SoniaNeural (Female)', value: 'en-GB-SoniaNeural' },
+  { label: 'en-US-GuyNeural (Male)', value: 'en-US-GuyNeural' },
+  { label: 'en-US-JennyNeural (Female)', value: 'en-US-JennyNeural' },
+];
+export const TEXT_TO_SPEECH_STATIC_VOICES_DEFAULT: Option[] = [
+  { label: 'Default', value: '' },
+];
+export function getTextToSpeechVoices(provider: string): Option[] {
+  if (provider === 'google') return TEXT_TO_SPEECH_STATIC_VOICES_GOOGLE;
+  if (provider === 'microsoft') return TEXT_TO_SPEECH_STATIC_VOICES_MICROSOFT;
+  return TEXT_TO_SPEECH_STATIC_VOICES_DEFAULT;
+}
 
 export async function getTextToSpeechProviders() { return TEXT_TO_SPEECH_STATIC_PROVIDERS; }
 export async function getTextToSpeechLanguages() { return TEXT_TO_SPEECH_STATIC_LANGUAGES; }
-export async function getTextToSpeechVoices() { return TEXT_TO_SPEECH_STATIC_VOICES; }
-
 export function normalizeTextToSpeech(provider: string, response: any) {
   return normalizeProviderItems(provider, response, (item, provider) => ({
     audio_url: item.audio_url || item.url,
