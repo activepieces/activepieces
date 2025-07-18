@@ -19,7 +19,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 status: AgentTaskStatus.IN_PROGRESS,
                 output: undefined,
             }
-            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
 
             const agent = await agentsApiService(workerToken, log).getAgent(jobData.agentId)
             const mcp = await agentsApiService(workerToken, log).getMcp(agent.mcpId)
@@ -90,12 +90,12 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                         agentResult.message = concatMarkdown(agentResult.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
                     }
                     agentResult.finishTime = new Date().toISOString()
-                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
                     return
                 }
 
                 if (agentResult.steps.length > 0) {
-                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
                 }
             }
             if (currentText.length > 0) {
@@ -111,7 +111,7 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
             agentResult.message = concatMarkdown(agentResult.steps)
             agentResult.finishTime = new Date().toISOString()
 
-            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.agentRunId, agentResult)
         }
         catch (error) {
             log.error(error, 'Error executing agent job')

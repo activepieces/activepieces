@@ -79,7 +79,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
           column={column}
           rowIdx={rowIdx}
           disabled={!userHasTableWritePermission}
-          locked={false}
+          locked={row.locked}
           onRowChange={(newRow) => {
             updateRecord(rowIdx, {
               values: fields.map((field, fIndex) => ({
@@ -112,7 +112,7 @@ export function mapRecordsToRows(
 ): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
-    const row: Row = { id: record.uuid };
+    const row: Row = { id: record.uuid, locked: record.locked };
     record.values.forEach((cell) => {
       const field = fields[cell.fieldIndex];
       if (field) {

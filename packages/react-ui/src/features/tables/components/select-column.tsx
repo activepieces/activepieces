@@ -32,7 +32,8 @@ function SelectHeaderCell() {
   );
 }
 
-function SelectCell({ row, rowIndex, locked }: { row: Row; rowIndex: number; locked?: boolean }) {
+function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
+  const locked = row.locked;
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
     <div

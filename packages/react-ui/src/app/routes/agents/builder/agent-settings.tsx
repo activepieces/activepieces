@@ -25,6 +25,7 @@ import { UseAgentButton } from '../../../../features/agents/use-agent-button';
 import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
 
 import { AgentSettingsOutput } from './agent-settings-output';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 interface AgentSettingsProps {
   agent?: Agent;
@@ -127,6 +128,9 @@ export const AgentSettings = ({
     );
   };
 
+  const { data: mcp, isLoading } = mcpHooks.useMcp(agent?.mcpId);
+  const { mutate: updateTools } = mcpHooks.updateTools(agent?.mcpId!);
+
   return (
     <div className="flex flex-1 h-full">
       <div className="w-full px-6 pb-6 space-y-6">
@@ -196,7 +200,7 @@ export const AgentSettings = ({
 
         {!isNil(agent) && !isNil(agent.mcpId) && (
           <div className="space-y-6">
-            <McpToolsSection mcpId={agent.mcpId} />
+            <McpToolsSection mcp={mcp} isLoading={isLoading} onToolsUpdate={(tools) => updateTools(tools)} />
             <AgentSettingsOutput onChange={handleOutputChange} agent={agent} />
           </div>
         )}

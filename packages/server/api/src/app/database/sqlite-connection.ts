@@ -130,6 +130,7 @@ import { RemoveTerminationReasonSqlite1751727630516 } from './migration/sqlite/1
 import { AddFlowVersionToIssueSqlite1751927149586 } from './migration/sqlite/1751927149586-AddFlowVersionToIssueSqlite'
 import { AddIndexForSchemaVersionInFlowVersionSqlite1752152069517 } from './migration/sqlite/1752152069517-AddIndexForSchemaVersionInFlowVersionSqlite'
 import { AddAgentRunsEntitySqlite1752583785385 } from './migration/sqlite/1752583785385-AddAgentRunsEntitySqlite'
+import { AddTableAgentsSqlite1752851142438 } from './migration/1752851142438-AddTableAgentsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -276,6 +277,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SplitUpPieceMetadataIntoTools1752004202722,
         AddIndexForSchemaVersionInFlowVersionSqlite1752152069517,
         AddAgentRunsEntitySqlite1752583785385,
+        AddTableAgentsSqlite1752851142438
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

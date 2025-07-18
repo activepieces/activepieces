@@ -1,5 +1,6 @@
 export type Row = {
   id: string;
+  locked: boolean;
   [key: string]: any;
 };
 

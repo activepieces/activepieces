@@ -7,17 +7,16 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { recordService } from './record.service'
+import { recordSideEffects } from './record-side-effects'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -31,14 +30,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             logger: request.log,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        await sendRecordsWebhooks({
+        await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.body.tableId,
             projectId: request.principal.projectId,
             records,
             logger: request.log,
             authorization: request.headers.authorization as string,
-            eventType: TableWebhookEventType.RECORD_CREATED,
-        })
+        }, 'created')
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
@@ -55,14 +53,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.OK).send(record)
-        await recordService.triggerWebhooks({
-            projectId: request.principal.projectId,
+        await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.body.tableId,
-            eventType: TableWebhookEventType.RECORD_UPDATED,
-            data: { record },
+            projectId: request.principal.projectId,
+            records: [record],
             logger: request.log,
             authorization: request.headers.authorization as string,
-        })
+        }, 'updated')
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
@@ -71,14 +68,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-        await sendRecordsWebhooks({
-            tableId: deletedRecords[0].tableId,
+        await recordSideEffects(fastify.log).handleRecordsEvent({
+            tableId: deletedRecords[0]?.tableId,
             projectId: request.principal.projectId,
             records: deletedRecords,
             logger: request.log,
             authorization: request.headers.authorization as string,
-            eventType: TableWebhookEventType.RECORD_DELETED,
-        })
+        }, 'deleted')
     })
 
     fastify.get('/', ListRequest, async (request) => {
@@ -171,17 +167,3 @@ const ListRequest = {
     },
 }
 
-
-const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
-    const promises =  records.map((record)=>{
-        return recordService.triggerWebhooks({
-            projectId,
-            tableId,
-            eventType,
-            data: { record },
-            logger,
-            authorization,
-        })
-    })
-    await Promise.all(promises)
-}

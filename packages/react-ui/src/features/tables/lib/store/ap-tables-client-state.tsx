@@ -12,6 +12,7 @@ export type ClientCellData = {
 
 export type ClientRecordData = {
   uuid: string;
+  locked: boolean;
   values: ClientCellData[];
 };
 
@@ -35,6 +36,7 @@ const mapRecorddToClientRecordsData = (
 ): ClientRecordData[] => {
   return records.map((record) => ({
     uuid: nanoid(),
+    locked: false,
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
@@ -67,6 +69,7 @@ export type TableState = {
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
   setRecords: (records: PopulatedRecord[]) => void;
+  setLock: (recordId: string, locked: boolean) => void;
   serverFields: Field[];
   serverRecords: PopulatedRecord[];
 };
@@ -198,6 +201,14 @@ export const createApTableStore = (
             records: mapRecorddToClientRecordsData(records, serverState.fields),
           };
         });
+      },
+      setLock: (recordId: string, locked: boolean) => {
+        const recordIndex = serverState.records.findIndex((record) => record.id === recordId);
+        set((state) => ({
+          records: state.records.map((record, index) =>
+            index === recordIndex ? { ...record, locked } : record
+          ),
+        }));
       },
       serverFields: serverState.fields,
       serverRecords: serverState.records,
