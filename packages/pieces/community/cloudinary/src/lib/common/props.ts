@@ -84,3 +84,37 @@ export const resourceAssetIdsDropdown = Property.MultiSelectDropdown({
         }
     },
 });
+
+
+export const folderDropdown=Property.Dropdown({
+    displayName: 'Folder ',
+    description: 'Select the Folder',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Please connect your account first',
+            };
+        }
+
+        try {
+            const resources = await makeRequest(auth, HttpMethod.GET, `/folders`);
+            return {
+                disabled: false,
+                options: resources.resources.map((resource: any) => ({
+                    label: resource.public_id,
+                    value: resource.asset_id,
+                })),
+            };
+        } catch (error) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Error loading teams',
+            };
+        }
+    },
+});

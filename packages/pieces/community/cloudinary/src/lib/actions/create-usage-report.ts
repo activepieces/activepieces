@@ -13,6 +13,6 @@ export const createUsageReport = createAction({
   async run({ auth }) {
 
     const path = `/usage`;
-    return await makeRequest(auth, HttpMethod.DELETE, path);
+    return await makeRequest(auth, HttpMethod.GET, path);
   },
 });
