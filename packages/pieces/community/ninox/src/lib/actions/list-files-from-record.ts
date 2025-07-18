@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { NinoxAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -21,7 +21,7 @@ export const listFilesFromRecord = createAction({
     const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${rid}/files`;
 
     try {
-      const response = await makeRequest(
+      const response = await makeRequest<any>(
         auth as string,
         HttpMethod.GET,
         path

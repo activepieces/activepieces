@@ -1,54 +1,49 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { NinoxAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { teamidDropdown, databaseIdDropdown, tableIdDropdown, createDynamicFields,  } from '../common/props';
+import {
+	teamidDropdown,
+	databaseIdDropdown,
+	tableIdDropdown,
+	tableFields,
+} from '../common/props';
 
 export const createRecord = createAction({
-  auth: NinoxAuth,
-  name: 'createRecord',
-  displayName: 'Create Record',
-  description: 'Insert a new record into a specified table (e.g., add a lead from another form).',
-  props: {
-    teamid: teamidDropdown,
-    dbid: databaseIdDropdown,
-    tid: tableIdDropdown,
-   fields: createDynamicFields,
-  },
-  async run({ auth, propsValue }) {
-    const { teamid, dbid, tid, fields } = propsValue;
+	auth: NinoxAuth,
+	name: 'createRecord',
+	displayName: 'Create Record',
+	description: 'Creates a new record into a specified table.',
+	props: {
+		teamid: teamidDropdown,
+		dbid: databaseIdDropdown,
+		tid: tableIdDropdown,
+		fields: tableFields,
+	},
+	async run({ auth, propsValue }) {
+		const { teamid, dbid, tid, fields } = propsValue;
 
-    const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`;
-    
-    // Filter out empty values and prepare the record data
-    const recordData: Record<string, any> = {};
-    Object.keys(fields).forEach(key => {
-      if (fields[key] !== undefined && fields[key] !== null && fields[key] !== '') {
-        recordData[key] = fields[key];
-      }
-    });
-    
-    const requestBody = {
-      _upsert: true,
-      fields: recordData
-    };
+		const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records`;
 
-    try {
-      const response = await makeRequest(
-        auth as string,
-        HttpMethod.POST,
-        path,
-        requestBody
-      );
+		// Filter out empty values and prepare the record data
+		const recordData: Record<string, any> = {};
+		Object.keys(fields).forEach((key) => {
+			if (fields[key] !== undefined && fields[key] !== null && fields[key] !== '') {
+				recordData[key] = fields[key];
+			}
+		});
 
-      return {
-        success: true,
-        message: 'Record created successfully',
-        response: response,
-        recordData: recordData
-      };
-    } catch (error) {
-      throw new Error(`Failed to create record: ${error}`);
-    }
-  },
+		const requestBody = {
+			_upsert: true,
+			fields: recordData,
+		};
+
+		try {
+			const response = await makeRequest(auth as string, HttpMethod.POST, path, requestBody);
+
+			return response;
+		} catch (error) {
+			throw new Error(`Failed to create record: ${error}`);
+		}
+	},
 });

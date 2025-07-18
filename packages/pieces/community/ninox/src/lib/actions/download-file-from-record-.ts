@@ -1,51 +1,58 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { NinoxAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { teamidDropdown, databaseIdDropdown, tableIdDropdown, recordIdDropdown, filenameDropdown } from '../common/props';
-
+import { BASE_URL, makeRequest } from '../common/client';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+	teamidDropdown,
+	databaseIdDropdown,
+	tableIdDropdown,
+	recordIdDropdown,
+	filenameDropdown,
+} from '../common/props';
 
 export const downloadFileFromRecord = createAction({
-  auth: NinoxAuth,
-  name: 'downloadFileFromRecord',
-  displayName: 'Download File from Record',
-  description: 'Download a file attached to a record for processing or storage.',
-  props: {
-    teamid: teamidDropdown,
-    dbid: databaseIdDropdown,
-    tid: tableIdDropdown,
-    rid: recordIdDropdown,
-    file: filenameDropdown,
-  },
-  async run({ auth, propsValue }) {
-      const { teamid, dbid, tid, rid, file  } = propsValue;
+	auth: NinoxAuth,
+	name: 'downloadFileFromRecord',
+	displayName: 'Download File from Record',
+	description: 'Downloads a file attached to a record.',
+	props: {
+		teamid: teamidDropdown,
+		dbid: databaseIdDropdown,
+		tid: tableIdDropdown,
+		rid: recordIdDropdown,
+		file: filenameDropdown,
+	},
+	async run({ auth, propsValue, files }) {
+		const { teamid, dbid, tid, rid, file } = propsValue;
 
-    const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${rid}/files/${file}`;
+		const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${rid}/files/${file}`;
 
-    try {
-      const response = await makeRequest(auth, HttpMethod.GET, path)
+		try {
+			const fileMetadata = await makeRequest<{ name: string }>(
+				auth,
+				HttpMethod.GET,
+				`${path}/metadata`,
+			);
 
+			const response = await httpClient.sendRequest({
+				method: HttpMethod.GET,
+				url: BASE_URL + path,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: auth,
+				},
+				responseType: 'arraybuffer',
+			});
 
-      // Safely extract headers with proper type handling
-      const contentType = response.headers?.['content-type'];
-      const contentLength = response.headers?.['content-length'];
-
-      const contentTypeValue = Array.isArray(contentType) ? contentType[0] : contentType;
-      const contentLengthValue = Array.isArray(contentLength) ? contentLength[0] : contentLength;
-
-      // Return the file data as a downloadable file
-      return {
-        success: true,
-        message: 'File downloaded successfully',
-        fileName: file,
-        fileData: response.body,
-        contentType: contentTypeValue || 'application/octet-stream',
-        size: contentLengthValue ? parseInt(contentLengthValue) : undefined,
-      };
-    } catch (error) {
-      throw new Error(`Failed to download file: ${error}`);
-    }
-  },
+			return {
+				...fileMetadata,
+				file: await files.write({
+					data: Buffer.from(response.body),
+					fileName: fileMetadata.name,
+				}),
+			};
+		} catch (error) {
+			throw new Error(`Failed to download file: ${error}`);
+		}
+	},
 });
-
-
