@@ -94,7 +94,7 @@ export const batteryChargingTrigger = createTrigger({
 			description: `Battery charging trigger: ${
 				chargingState === 'true' ? 'CHARGING' : 'NOT CHARGING'
 			}`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

@@ -255,7 +255,7 @@ export class DimoClient {
 				trigger: vehicleEventTriggerToText(input.params.trigger),
 				setup: input.params.setup,
 				description: input.params.description,
-				target_uri: input.params.targetUri,
+				target_uri: input.params.target_uri,
 				status: input.params.status,
 				verification_token: input.params.verification_token,
 			},

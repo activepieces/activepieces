@@ -84,7 +84,7 @@ export const speedTrigger = createTrigger({
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Speed trigger: ${operator} ${speedValue} km/h`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};

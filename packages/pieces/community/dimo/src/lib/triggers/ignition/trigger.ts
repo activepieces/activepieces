@@ -94,7 +94,7 @@ export const ignitionTrigger = createTrigger({
 			},
 			setup: triggerFrequency as 'Realtime' | 'Hourly',
 			description: `Ignition trigger: ${ignitionState.toUpperCase()}`,
-			targetUri: context.webhookUrl,
+			target_uri: context.webhookUrl,
 			status: 'Active',
 			verification_token: verificationToken,
 		};
