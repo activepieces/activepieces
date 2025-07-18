@@ -7,51 +7,56 @@ import { domainIdDropdown, folderIdDropdown } from '../common/props';
 export const listLinksAction = createAction({
   auth: shortIoAuth,
   name: 'list-short-links',
-  displayName: 'List Short Links',
+  displayName: 'List Links',
   description:
-    'Retrieve a list of short links for a specific domain, with optional filters like pagination, date range, folder, and sorting.',
+    'Retrieve all links on a domain, with pagination and date-range filters.',
   props: {
-    domain: domainIdDropdown,
+    domain: {
+      ...domainIdDropdown,
+      required: true,
+      description: 'Select the domain to retrieve links from',
+    },
     folderId: folderIdDropdown,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Number of results to return (max: 150).',
+      description: 'Number of results to return (1-150). Default is 50.',
       required: false,
     }),
     idString: Property.ShortText({
-      displayName: 'ID String',
-      description: 'Optional link ID filter.',
+      displayName: 'Link ID Filter',
+      description: 'Filter by specific link ID (optional).',
       required: false,
     }),
     createdAt: Property.ShortText({
-      displayName: 'Created At',
-      description: 'Exact creation time (ISO format or timestamp).',
+      displayName: 'Exact Creation Time',
+      description: 'Filter by exact creation time (ISO format or timestamp).',
       required: false,
     }),
-    beforeDate: Property.ShortText({
+    beforeDate: Property.DateTime({
       displayName: 'Before Date',
-      description: 'Return links created before this date (ISO format).',
+      description: 'Return links created before this date and time.',
       required: false,
     }),
-    afterDate: Property.ShortText({
+    afterDate: Property.DateTime({
       displayName: 'After Date',
-      description: 'Return links created after this date (ISO format).',
+      description: 'Return links created after this date and time.',
       required: false,
     }),
     dateSortOrder: Property.StaticDropdown({
       displayName: 'Date Sort Order',
+      description: 'Order links by creation date.',
       required: false,
       options: {
         disabled: false,
         options: [
-          { label: 'Ascending', value: 'asc' },
-          { label: 'Descending', value: 'desc' },
+          { label: 'Ascending (Oldest First)', value: 'asc' },
+          { label: 'Descending (Newest First)', value: 'desc' },
         ],
       },
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token for paginated results.',
+      description: 'Token for paginated results (get this from previous response).',
       required: false,
     }),
   },
@@ -68,19 +73,26 @@ export const listLinksAction = createAction({
       folderId,
     } = propsValue;
 
+    if (!domainString) {
+      throw new Error('Domain is required. Please select a domain.');
+    }
+
+    if (limit && (limit < 1 || limit > 150)) {
+      throw new Error('Limit must be between 1 and 150.');
+    }
+
     const query: Record<string, string> = {};
 
-    if (domainString) {
-      const domainObject = JSON.parse(domainString as string);
-      query['domain_id'] = String(domainObject.id);
-    }
+    const domainObject = JSON.parse(domainString as string);
+    query['domain_id'] = String(domainObject.id);
+
     if (limit) query['limit'] = String(limit);
-    if (idString) query['idString'] = String(idString);
-    if (createdAt) query['createdAt'] = String(createdAt);
-    if (beforeDate) query['beforeDate'] = String(beforeDate);
-    if (afterDate) query['afterDate'] = String(afterDate);
+    if (idString && idString.trim() !== '') query['idString'] = String(idString);
+    if (createdAt && createdAt.trim() !== '') query['createdAt'] = String(createdAt);
+    if (beforeDate) query['beforeDate'] = beforeDate;
+    if (afterDate) query['afterDate'] = afterDate;
     if (dateSortOrder) query['dateSortOrder'] = String(dateSortOrder);
-    if (pageToken) query['pageToken'] = String(pageToken);
+    if (pageToken && pageToken.trim() !== '') query['pageToken'] = String(pageToken);
     if (folderId) query['folderId'] = String(folderId);
 
     try {
@@ -91,12 +103,39 @@ export const listLinksAction = createAction({
         query,
       });
 
+      const linkCount = (response as any)['count'] || ((response as any)['links'] ? (response as any)['links'].length : 0);
+      const hasNextPage = (response as any)['nextPageToken'] ? ' (more pages available)' : '';
+
       return {
         success: true,
-        message: 'Links retrieved successfully.',
+        message: `Retrieved ${linkCount} links successfully${hasNextPage}`,
         data: response,
       };
     } catch (error: any) {
+      if (error.message.includes('400')) {
+        throw new Error(
+          'Invalid request parameters. Please check your filter values and try again.'
+        );
+      }
+      
+      if (error.message.includes('401') || error.message.includes('403')) {
+        throw new Error(
+          'Authentication failed or insufficient permissions. Please check your API key and domain access.'
+        );
+      }
+      
+      if (error.message.includes('404')) {
+        throw new Error(
+          'Domain not found. Please verify the domain exists and you have access to it.'
+        );
+      }
+      
+      if (error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
+        );
+      }
+
       throw new Error(`Failed to retrieve links: ${error.message}`);
     }
   },

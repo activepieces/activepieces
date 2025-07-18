@@ -56,6 +56,7 @@ export const createShortLinkAction = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
+      description: 'Array of tags for the link',
       required: false,
     }),
     utmSource: Property.ShortText({
@@ -81,7 +82,7 @@ export const createShortLinkAction = createAction({
     ttl: Property.Number({
       displayName: 'Time to Live (in seconds)',
       description:
-        'Link will be PERMANENTLY DELETED after this many seconds. Use with caution.',
+        '⚠️ CAUTION: Link will be PERMANENTLY DELETED after this many seconds. This action cannot be undone. Use with extreme caution.',
       required: false,
     }),
     androidURL: Property.ShortText({
@@ -99,6 +100,7 @@ export const createShortLinkAction = createAction({
     }),
     clicksLimit: Property.Number({
       displayName: 'Clicks Limit',
+      description: 'Disable link after specified number of clicks (minimum: 1)',
       required: false,
     }),
     passwordContact: Property.Checkbox({
@@ -119,6 +121,7 @@ export const createShortLinkAction = createAction({
     }),
     splitPercent: Property.Number({
       displayName: 'Split Percent',
+      description: 'Split URL percentage (1-100)',
       required: false,
     }),
     integrationAdroll: Property.ShortText({
@@ -182,6 +185,19 @@ export const createShortLinkAction = createAction({
       folderId,
     } = propsValue;
 
+    // Input validation
+    if (clicksLimit && clicksLimit < 1) {
+      throw new Error('Clicks limit must be at least 1');
+    }
+    
+    if (splitPercent && (splitPercent < 1 || splitPercent > 100)) {
+      throw new Error('Split percent must be between 1 and 100');
+    }
+
+    if (redirectType && !['301', '302', '303', '307', '308'].includes(redirectType)) {
+      throw new Error('Invalid redirect type. Must be one of: 301, 302, 303, 307, 308');
+    }
+
     const domainObject = JSON.parse(domainString as string);
 
     const body: Record<string, unknown> = {
@@ -244,6 +260,24 @@ export const createShortLinkAction = createAction({
       if (error.message.includes('409')) {
         throw new Error(
           'A short link with this path already exists but points to a different original URL.'
+        );
+      }
+      
+      if (error.message.includes('400')) {
+        throw new Error(
+          'Invalid request parameters. Please check your input values and try again.'
+        );
+      }
+      
+      if (error.message.includes('401') || error.message.includes('403')) {
+        throw new Error(
+          'Authentication failed. Please check your API key and permissions.'
+        );
+      }
+      
+      if (error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
         );
       }
 

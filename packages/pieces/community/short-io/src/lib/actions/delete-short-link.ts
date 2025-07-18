@@ -7,7 +7,7 @@ export const deleteShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'delete-short-link',
   displayName: 'Delete Short Link',
-  description: 'Delete a short link by its unique link ID.',
+  description: 'Permanently delete a short link by its unique link ID.',
   props: {
     linkId: Property.ShortText({
       displayName: 'Link ID',
@@ -16,10 +16,14 @@ export const deleteShortLinkAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const linkId = propsValue.linkId;
+    const { linkId } = propsValue;
+
+    if (!linkId || linkId.trim() === '') {
+      throw new Error('Link ID is required and cannot be empty');
+    }
 
     try {
-      await shortIoApiCall({
+      const response = await shortIoApiCall({
         method: HttpMethod.DELETE,
         auth,
         resourceUri: `/links/${linkId}`,
@@ -27,10 +31,35 @@ export const deleteShortLinkAction = createAction({
 
       return {
         success: true,
-        message: `Short link with ID ${linkId} deleted successfully.`,
+        message: `Short link with ID ${linkId} deleted successfully`,
+        data: response,
       };
     } catch (error: any) {
-      throw new Error(`Failed to delete short link: ${linkId} ${error.message} `);
+      if (error.message.includes('400')) {
+        throw new Error(
+          'Invalid request. Please check the link ID format and try again.'
+        );
+      }
+      
+      if (error.message.includes('401') || error.message.includes('403')) {
+        throw new Error(
+          'Authentication failed. Please check your API key and permissions.'
+        );
+      }
+      
+      if (error.message.includes('404')) {
+        throw new Error(
+          `Short link with ID ${linkId} not found. It may have already been deleted.`
+        );
+      }
+      
+      if (error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
+        );
+      }
+
+      throw new Error(`Failed to delete short link: ${error.message}`);
     }
   },
 });

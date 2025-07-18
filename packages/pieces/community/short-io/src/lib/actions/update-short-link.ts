@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
-import { domainIdDropdown, linkIdDropdown } from '../common/props';
+import { domainIdDropdown, linkIdDropdown, folderIdDropdown } from '../common/props';
 
 export const updateShortLinkAction = createAction({
   auth: shortIoAuth,
@@ -25,6 +25,7 @@ export const updateShortLinkAction = createAction({
       displayName: 'Title',
       required: false,
     }),
+    folderId: folderIdDropdown,
     cloaking: Property.Checkbox({
       displayName: 'Enable Cloaking',
       required: false,
@@ -49,8 +50,9 @@ export const updateShortLinkAction = createAction({
         ],
       },
     }),
-    expiresAt: Property.ShortText({
-      displayName: 'Expiration Date (ISO or timestamp)',
+    expiresAt: Property.DateTime({
+      displayName: 'Expiration Date',
+      description: 'The date and time when the link will become inactive.',
       required: false,
     }),
     expiredURL: Property.ShortText({
@@ -59,6 +61,7 @@ export const updateShortLinkAction = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
+      description: 'Array of tags for the link',
       required: false,
     }),
     utmSource: Property.ShortText({
@@ -81,8 +84,10 @@ export const updateShortLinkAction = createAction({
       displayName: 'UTM Content',
       required: false,
     }),
-    ttl: Property.DateTime({
-      displayName: 'Time to Live (ISO or ms)',
+    ttl: Property.Number({
+      displayName: 'Time to Live (in seconds)',
+      description:
+        '⚠️ CAUTION: Link will be PERMANENTLY DELETED after this many seconds. This action cannot be undone. Use with extreme caution.',
       required: false,
     }),
     androidURL: Property.ShortText({
@@ -93,12 +98,14 @@ export const updateShortLinkAction = createAction({
       displayName: 'iPhone URL',
       required: false,
     }),
-    createdAt: Property.ShortText({
-      displayName: 'Created At (ISO or ms)',
+    createdAt: Property.DateTime({
+      displayName: 'Creation Time',
+      description: 'Overrides the creation time of the link.',
       required: false,
     }),
     clicksLimit: Property.Number({
       displayName: 'Clicks Limit',
+      description: 'Disable link after specified number of clicks (minimum: 1)',
       required: false,
     }),
     passwordContact: Property.Checkbox({
@@ -118,33 +125,116 @@ export const updateShortLinkAction = createAction({
       required: false,
     }),
     splitPercent: Property.Number({
-      displayName: 'Split Percent (1-100)',
+      displayName: 'Split Percent',
+      description: 'Split URL percentage (1-100)',
       required: false,
     }),
     integrationAdroll: Property.ShortText({
-      displayName: 'Adroll Integration',
+      displayName: 'Adroll Integration ID',
       required: false,
     }),
     integrationFB: Property.ShortText({
-      displayName: 'Facebook Integration',
+      displayName: 'Facebook Integration ID',
       required: false,
     }),
     integrationGA: Property.ShortText({
-      displayName: 'Google Analytics Integration',
+      displayName: 'Google Analytics ID',
       required: false,
     }),
     integrationGTM: Property.ShortText({
-      displayName: 'Google Tag Manager Integration',
+      displayName: 'Google Tag Manager ID',
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const { linkId, domain, ...bodyParams } = propsValue;
+    const { 
+      linkId, 
+      domain: domainString,
+      originalURL,
+      path,
+      title,
+      folderId,
+      cloaking,
+      password,
+      redirectType,
+      expiresAt,
+      expiredURL,
+      tags,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      ttl,
+      androidURL,
+      iphoneURL,
+      createdAt,
+      clicksLimit,
+      passwordContact,
+      skipQS,
+      archived,
+      splitURL,
+      splitPercent,
+      integrationAdroll,
+      integrationFB,
+      integrationGA,
+      integrationGTM,
+    } = propsValue;
 
-    const filteredBody: Record<string, any> = {};
-    for (const [key, value] of Object.entries(bodyParams)) {
-      if (value !== null && value !== undefined) {
-        filteredBody[key] = value;
+    if (clicksLimit && clicksLimit < 1) {
+      throw new Error('Clicks limit must be at least 1');
+    }
+    
+    if (splitPercent && (splitPercent < 1 || splitPercent > 100)) {
+      throw new Error('Split percent must be between 1 and 100');
+    }
+
+    if (redirectType && !['301', '302', '303', '307', '308'].includes(redirectType)) {
+      throw new Error('Invalid redirect type. Must be one of: 301, 302, 303, 307, 308');
+    }
+
+    const query: Record<string, string> = {};
+    if (domainString) {
+      const domainObject = JSON.parse(domainString as string);
+      query['domain_id'] = String(domainObject.id);
+    }
+
+    const optionalParams = {
+      originalURL,
+      path,
+      title,
+      folderId,
+      cloaking,
+      password,
+      redirectType,
+      expiresAt,
+      expiredURL,
+      tags,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      ttl: ttl ? ttl * 1000 : undefined,
+      androidURL,
+      iphoneURL,
+      createdAt,
+      clicksLimit,
+      passwordContact,
+      skipQS,
+      archived,
+      splitURL,
+      splitPercent,
+      integrationAdroll,
+      integrationFB,
+      integrationGA,
+      integrationGTM,
+    };
+
+    const body: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(optionalParams)) {
+      if (value !== null && value !== undefined && value !== '') {
+        body[key] = value;
       }
     }
 
@@ -153,7 +243,8 @@ export const updateShortLinkAction = createAction({
         method: HttpMethod.POST,
         auth,
         resourceUri: `/links/${linkId}`,
-        body: filteredBody,
+        query,
+        body,
       });
 
       return {
@@ -162,6 +253,30 @@ export const updateShortLinkAction = createAction({
         data: response,
       };
     } catch (error: any) {
+      if (error.message.includes('400')) {
+        throw new Error(
+          'Invalid request parameters. Please check your input values and try again.'
+        );
+      }
+      
+      if (error.message.includes('401') || error.message.includes('403')) {
+        throw new Error(
+          'Authentication failed. Please check your API key and permissions.'
+        );
+      }
+      
+      if (error.message.includes('404')) {
+        throw new Error(
+          'Short link not found. Please check the link ID and try again.'
+        );
+      }
+      
+      if (error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
+        );
+      }
+
       throw new Error(`Failed to update short link: ${error.message}`);
     }
   },

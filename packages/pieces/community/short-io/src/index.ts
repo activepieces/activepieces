@@ -6,6 +6,7 @@ import { shortIoAuth } from './lib/common/auth';
 import { createCountryTargetingRuleAction } from './lib/actions/create-country-targeting-for-a-link';
 import { createShortLinkAction } from './lib/actions/create-short-link';
 import { deleteShortLinkAction } from './lib/actions/delete-short-link';
+import { expireShortLinkAction } from './lib/actions/expire-short-link';
 import { domainStatisticsAction } from './lib/actions/domain-statistics';
 import { getLinkByPathAction } from './lib/actions/get-link-by-path';
 import { getLinkClicksAction } from './lib/actions/get-link-clicks';
@@ -23,6 +24,7 @@ export const shortIo = createPiece({
     createCountryTargetingRuleAction,
     createShortLinkAction,
     deleteShortLinkAction,
+    expireShortLinkAction,
     domainStatisticsAction,
     getLinkByPathAction,
     getLinkClicksAction,
