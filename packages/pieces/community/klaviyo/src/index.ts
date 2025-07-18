@@ -19,7 +19,7 @@ export const klaviyo = createPiece({
   displayName: "Klaviyo",
   auth: klaviyoAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/klaviyo.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/Klaviyo.png",
   authors: ['Sanket6652'],
   actions: [
     createProfile,
