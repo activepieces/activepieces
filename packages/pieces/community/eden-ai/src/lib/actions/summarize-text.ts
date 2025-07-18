@@ -7,7 +7,8 @@ export const summarizeTextAction = createAction({
   name: 'edenai-summarize-text',
   auth: edenAuth,
   displayName: 'Summarize Text',
-  description: 'Extract key sentences from long passages using various AI providers via Eden AI.',
+  description:
+    'Extract key sentences from long passages using various AI providers via Eden AI.',
   props: {
     text: Property.LongText({
       displayName: 'Text',
@@ -33,7 +34,8 @@ export const summarizeTextAction = createAction({
     }),
     language: Property.ShortText({
       displayName: 'Language',
-      description: 'Language code for the input text (e.g., en, fr). Leave blank for auto-detection.',
+      description:
+        'Language code for the input text (e.g., en, fr). Leave blank for auto-detection.',
       required: false,
     }),
     output_sentences: Property.Number({
@@ -57,7 +59,8 @@ export const summarizeTextAction = createAction({
     }),
     show_base_64: Property.Checkbox({
       displayName: 'Show Base64',
-      description: 'If enabled, base64-encoded data will be included in the response.',
+      description:
+        'If enabled, base64-encoded data will be included in the response.',
       defaultValue: true,
       required: false,
     }),
@@ -96,13 +99,44 @@ export const summarizeTextAction = createAction({
       show_original_response,
     };
 
-    const response = await edenApiCall<any>({
-      method: HttpMethod.POST,
-      auth: { apiKey: context.auth },
-      resourceUri: `/text/summarize/`,
-      body,
-    });
+    try {
+      const response = await edenApiCall<any>({
+        method: HttpMethod.POST,
+        auth: { apiKey: context.auth },
+        resourceUri: `/text/summarize/`,
+        body,
+      });
 
-    return response;
+      return {
+        success: true,
+        message: 'Text summarization completed successfully',
+        data: response,
+      };
+    } catch (error: any) {
+      if (error.message && error.message.includes('400')) {
+        throw new Error(
+          'Invalid request parameters. Please check your text and providers and try again.'
+        );
+      }
+      if (
+        error.message &&
+        (error.message.includes('401') || error.message.includes('403'))
+      ) {
+        throw new Error(
+          'Authentication failed. Please check your API key and permissions.'
+        );
+      }
+      if (error.message && error.message.includes('404')) {
+        throw new Error(
+          'Resource not found. Please check the providers and try again.'
+        );
+      }
+      if (error.message && error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
+        );
+      }
+      throw new Error(`Failed to summarize text: ${error.message}`);
+    }
   },
 });

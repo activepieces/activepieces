@@ -77,23 +77,43 @@ export const extractKeywordsAction = createAction({
       show_original_response,
     } = context.propsValue;
 
-    const response = await edenApiCall<any>({
-      method: HttpMethod.POST,
-      auth: { apiKey: context.auth },
-      resourceUri: `/text/keyword_extraction/`,
-      body: {
-        text,
-        providers,
-        fallback_providers,
-        settings,
-        language,
-        response_as_dict,
-        attributes_as_list,
-        show_base_64,
-        show_original_response,
-      },
-    });
+    try {
+      const response = await edenApiCall<any>({
+        method: HttpMethod.POST,
+        auth: { apiKey: context.auth },
+        resourceUri: `/text/keyword_extraction/`,
+        body: {
+          text,
+          providers,
+          fallback_providers,
+          settings,
+          language,
+          response_as_dict,
+          attributes_as_list,
+          show_base_64,
+          show_original_response,
+        },
+      });
 
-    return response;
+      return {
+        success: true,
+        message: 'Keyword extraction completed successfully',
+        data: response,
+      };
+    } catch (error: any) {
+      if (error.message && error.message.includes('400')) {
+        throw new Error('Invalid request parameters. Please check your text and providers and try again.');
+      }
+      if (error.message && (error.message.includes('401') || error.message.includes('403'))) {
+        throw new Error('Authentication failed. Please check your API key and permissions.');
+      }
+      if (error.message && error.message.includes('404')) {
+        throw new Error('Resource not found. Please check the providers and try again.');
+      }
+      if (error.message && error.message.includes('429')) {
+        throw new Error('Rate limit exceeded. Please wait a moment before trying again.');
+      }
+      throw new Error(`Failed to extract keywords: ${error.message}`);
+    }
   },
 });

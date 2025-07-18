@@ -12,7 +12,7 @@ export const edenAuth = PieceAuth.SecretText({
       await edenApiCall({
         method: HttpMethod.GET,
         auth: { apiKey: auth },
-        resourceUri: '/info',
+        resourceUri: '/aiproducts',
       });
       return { valid: true };
     } catch (e) {

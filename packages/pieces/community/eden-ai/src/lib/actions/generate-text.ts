@@ -2,21 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { edenApiCall } from '../common/client';
 import { edenAuth } from '../common/auth';
+import { projectIdDropdown } from '../common/props';
 
 export const generateAction = createAction({
   name: 'edenai-generate',
   auth: edenAuth,
-  displayName: 'Generate',
-  description: 'Interact with various LLM providers via Eden AI’s unified endpoint.',
+  displayName: 'Generate Text',
+  description:
+    'Interact with various LLM providers via Eden AI’s unified endpoint.',
   props: {
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'Your Eden AI project UUID.',
-      required: true,
-    }),
+    projectId: projectIdDropdown,
     model: Property.ShortText({
       displayName: 'Model',
-      description: 'The OpenAI-compatible model name, e.g., "gpt-4", "gpt-3.5-turbo".',
+      description:
+        'The OpenAI-compatible model name, e.g., "gpt-4", "gpt-3.5-turbo".',
       required: true,
     }),
     reasoning_effort: Property.StaticDropdown({
@@ -48,7 +47,8 @@ export const generateAction = createAction({
     }),
     logit_bias: Property.Json({
       displayName: 'Logit Bias',
-      description: 'Adjust token probabilities. Format: {"50256": -100, "15": 5}',
+      description:
+        'Adjust token probabilities. Format: {"50256": -100, "15": 5}',
       required: false,
     }),
     logprobs: Property.Checkbox({
@@ -74,17 +74,20 @@ export const generateAction = createAction({
     }),
     modalities: Property.Json({
       displayName: 'Modalities',
-      description: 'List of supported input/output modalities, e.g., ["text", "image"]',
+      description:
+        'List of supported input/output modalities, e.g., ["text", "image"]',
       required: false,
     }),
     prediction: Property.Json({
       displayName: 'Prediction Metadata',
-      description: 'Optional predictive metadata, e.g., {"confidence_score": 0.85}',
+      description:
+        'Optional predictive metadata, e.g., {"confidence_score": 0.85}',
       required: false,
     }),
     audio: Property.Json({
       displayName: 'Audio Metadata',
-      description: 'Optional audio-related metadata, e.g., {"language": "en-US"}',
+      description:
+        'Optional audio-related metadata, e.g., {"language": "en-US"}',
       required: false,
     }),
     presence_penalty: Property.Number({
@@ -94,7 +97,8 @@ export const generateAction = createAction({
     }),
     response_format: Property.Json({
       displayName: 'Response Format',
-      description: 'Format for the completion response, e.g., {"type": "json_object"}',
+      description:
+        'Format for the completion response, e.g., {"type": "json_object"}',
       required: false,
     }),
     seed: Property.Number({
@@ -126,7 +130,8 @@ export const generateAction = createAction({
     }),
     stream_options: Property.Json({
       displayName: 'Stream Options',
-      description: 'Extra config for streamed responses, e.g., {"include_usage": true}',
+      description:
+        'Extra config for streamed responses, e.g., {"include_usage": true}',
       required: false,
     }),
     temperature: Property.Number({
@@ -171,12 +176,14 @@ export const generateAction = createAction({
     }),
     thinking: Property.Json({
       displayName: 'Claude Thinking',
-      description: 'Extended thinking config for Claude, e.g., {"type":"enabled","budget_tokens": "1024"}',
+      description:
+        'Extended thinking config for Claude, e.g., {"type":"enabled","budget_tokens": "1024"}',
       required: false,
     }),
     filter_documents: Property.Json({
       displayName: 'Document Filter',
-      description: 'Metadata-based document filtering. Format: {"category": "support"}',
+      description:
+        'Metadata-based document filtering. Format: {"category": "support"}',
       required: false,
     }),
     min_score: Property.Number({
@@ -201,18 +208,46 @@ export const generateAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      projectId,
-      ...params
-    } = context.propsValue;
+    const { projectId, ...params } = context.propsValue;
 
-    const response = await edenApiCall<any>({
-      method: HttpMethod.POST,
-      auth: { apiKey: context.auth },
-      resourceUri: `/aiproducts/askyoda/v2/${projectId}/generate/`,
-      body: params,
-    });
+    try {
+      const response = await edenApiCall<any>({
+        method: HttpMethod.POST,
+        auth: { apiKey: context.auth },
+        resourceUri: `/aiproducts/askyoda/v2/${projectId}/generate/`,
+        body: params,
+      });
 
-    return response;
+      return {
+        success: true,
+        message: 'Text generation completed successfully',
+        data: response,
+      };
+    } catch (error: any) {
+      if (error.message && error.message.includes('400')) {
+        throw new Error(
+          'Invalid request parameters. Please check your project ID and parameters and try again.'
+        );
+      }
+      if (
+        error.message &&
+        (error.message.includes('401') || error.message.includes('403'))
+      ) {
+        throw new Error(
+          'Authentication failed. Please check your API key and permissions.'
+        );
+      }
+      if (error.message && error.message.includes('404')) {
+        throw new Error(
+          'Resource not found. Please check the project ID and model and try again.'
+        );
+      }
+      if (error.message && error.message.includes('429')) {
+        throw new Error(
+          'Rate limit exceeded. Please wait a moment before trying again.'
+        );
+      }
+      throw new Error(`Failed to generate text: ${error.message}`);
+    }
   },
 });
