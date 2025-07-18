@@ -184,6 +184,9 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clicksend": [
+        "packages/pieces/community/clicksend/src/index.ts"
+      ],
       "@activepieces/piece-clickup": [
         "packages/pieces/community/clickup/src/index.ts"
       ],
@@ -308,6 +311,9 @@
       ],
       "@activepieces/piece-fillout-forms": [
         "packages/pieces/community/fillout-forms/src/index.ts"
+      ],
+      "@activepieces/piece-fireberry": [
+        "packages/pieces/community/fireberry/src/index.ts"
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"

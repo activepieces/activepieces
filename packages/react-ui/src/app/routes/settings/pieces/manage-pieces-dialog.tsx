@@ -74,9 +74,6 @@ export const ManagePiecesDialog = React.memo(
         });
         setOpen(false);
       },
-      onError: () => {
-        setOpen(false);
-      },
     });
 
     return (

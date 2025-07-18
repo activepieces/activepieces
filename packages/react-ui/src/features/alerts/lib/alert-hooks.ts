@@ -3,7 +3,7 @@ import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
@@ -51,9 +51,12 @@ export const alertMutations = {
                 message: t('The email is already added.'),
               });
               break;
+            default: {
+              toast(INTERNAL_ERROR_TOAST);
+              break;
+            }
           }
         }
-        setOpen(true);
       },
     });
   },

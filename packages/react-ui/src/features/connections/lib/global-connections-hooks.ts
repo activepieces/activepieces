@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   AppConnectionWithoutSensitiveData,
   ListGlobalConnectionsRequestQuery,
@@ -111,6 +111,8 @@ export const globalConnectionsMutations = {
           editConnectionForm.setError('projectIds', {
             message: error.message,
           });
+        } else {
+          toast(INTERNAL_ERROR_TOAST);
         }
       },
     }),

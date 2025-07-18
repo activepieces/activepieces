@@ -176,7 +176,7 @@ const ProjectReleasesPage = () => {
         <div className="flex items-center gap-2">
           <PushEverythingDialog>
             <Button
-              className="h-9 w-full"
+              className="h-9"
               variant="outline"
               disabled={!doesUserHavePermissionToWriteRelease}
             >

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
@@ -21,6 +21,7 @@ import {
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
+import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
 import { AgentTestingDialog } from './custom-test-step/test-agent-dialog';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
@@ -161,12 +162,13 @@ const TestStepSectionImplementation = React.memo(
     };
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
+    const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
     const agentId = stepUtils.getAgentId(currentStep);
     return (
       <>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!currentStep.valid}>
+            <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
@@ -182,7 +184,7 @@ const TestStepSectionImplementation = React.memo(
                   }
                 }}
                 loading={isTesting || isSaving}
-                disabled={!currentStep.valid}
+                disabled={!currentStep.valid || isLoadingDynamicProperties}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
@@ -193,7 +195,7 @@ const TestStepSectionImplementation = React.memo(
         {sampleDataExists && (
           <TestSampleDataViewer
             isValid={currentStep.valid}
-            isTesting={isTesting}
+            isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}

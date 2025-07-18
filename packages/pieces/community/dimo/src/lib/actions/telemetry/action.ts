@@ -23,6 +23,8 @@ const telemetryApiDateInputProps = {
     }),
 }
 
+const { interval, ...telemetryApiDateInputPropsWithoutInterval } = telemetryApiDateInputProps;
+
 const telemetryApiCustomQueryAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-api-custom-query',
@@ -160,6 +162,7 @@ const signalsAction = createAction({
 	},
 });
 
+
 const getDailyAvgSpeedOfVehicleAction = createAction({
 	auth: dimoAuth,
 	name: 'telemetry-daily-avg-speed',
@@ -170,11 +173,11 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 			displayName: 'Vehicle Token ID',
 			required: true,
 		}),
-        ...telemetryApiDateInputProps,
+        ...telemetryApiDateInputPropsWithoutInterval,
 	},
 	async run(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
-		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
+		const { vehicleTokenId, startDate, endDate } = context.propsValue;
 
 		const dimo = new DimoClient({
 			clientId,
@@ -190,8 +193,7 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
 			const query = TelemetryQueries.getDailyAvgSpeedOfVehicle
 				.replace('<tokenId>', String(vehicleTokenId))
 				.replace('<startDate>', startDate)
-				.replace('<endDate>', endDate)
-				.replace('<interval>', interval);
+				.replace('<endDate>', endDate);
 
 			const response = await dimo.sendTelemetryGraphQLRequest({
 				vehiclejwt: vehicleJwt,
