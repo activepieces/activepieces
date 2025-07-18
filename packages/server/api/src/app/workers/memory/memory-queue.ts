@@ -1,5 +1,5 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { AgentJobData, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -16,6 +16,7 @@ export const memoryQueues = {
     [QueueName.SCHEDULED]: new ApMemoryQueue<ScheduledJobData>(),
     [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
     [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(),
+    [QueueName.AGENTS]: new ApMemoryQueue<AgentJobData>(),
 }
 
 export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
@@ -64,6 +65,13 @@ export const memoryQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.WEBHOOK: {
                 memoryQueues[QueueName.WEBHOOK].add({
+                    id: params.id,
+                    data,
+                })
+                break
+            }
+            case JobType.AGENTS: {
+                memoryQueues[QueueName.AGENTS].add({
                     id: params.id,
                     data,
                 })

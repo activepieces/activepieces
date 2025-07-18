@@ -1,4 +1,4 @@
-import { Agent,  agentbuiltInToolsNames,  AgentOutputFieldType,  AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
+import { Agent, agentbuiltInToolsNames, AgentOutputFieldType, AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
 import { experimental_createMCPClient, tool } from 'ai'
 import { z, ZodRawShape, ZodSchema } from 'zod'
 
@@ -42,7 +42,7 @@ async function getMcpClient(params: AgentToolsParams) {
         return null
     }
     const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
-    console.log("MCP SERVER URL", mcpServerUrl)
+    // console.log('MCP SERVER URL', mcpServerUrl)
     return experimental_createMCPClient({
         transport: {
             type: 'sse',

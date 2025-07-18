@@ -48,6 +48,7 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     FLOW_TIMEOUT_SECONDS: Type.Number(),
     FLOW_WORKER_CONCURRENCY: Type.Number(),
     SCHEDULED_WORKER_CONCURRENCY: Type.Number(),
+    AGENTS_WORKER_CONCURRENCY: Type.Number(),
     LOG_LEVEL: Type.String(),
     LOG_PRETTY: Type.String(),
     ENVIRONMENT: Type.String(),

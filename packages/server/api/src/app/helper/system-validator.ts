@@ -49,6 +49,7 @@ const systemPropValidators: {
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
@@ -138,6 +139,7 @@ const systemPropValidators: {
     // AppSystemProp
     [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: numberValidator,
 
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,

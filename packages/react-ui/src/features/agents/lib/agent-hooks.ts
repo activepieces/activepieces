@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   ListAgentsQueryParams,
   CreateAgentRequest,
-  UpdateAgentRequest,
+  UpdateAgentRequestBody,
 } from '@activepieces/shared';
 
 import { agentsApi } from './agents-api';
@@ -37,7 +37,7 @@ export const agentHooks = {
         request,
       }: {
         id: string;
-        request: UpdateAgentRequest;
+        request: UpdateAgentRequestBody;
       }) => agentsApi.update(id, request),
     });
   },

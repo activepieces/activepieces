@@ -23,6 +23,7 @@ type EditableCellProps = {
   onRowChange: (row: Row, commitChanges: boolean) => void;
   rowIdx: number;
   disabled?: boolean;
+  locked?: boolean;
 };
 
 const EditorSelector = ({
@@ -121,6 +122,7 @@ export function EditableCell({
   onRowChange,
   rowIdx,
   disabled = false,
+  locked = false,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -151,9 +153,10 @@ export function EditableCell({
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
       className={cn(
-        'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
+        'h-full flex items-center justify-between gap-2 pl-2 py-2 focus:outline-none',
         'group cursor-pointer border',
-        isSelected ? 'border-primary' : 'border-transparent',
+        isSelected && !locked ? 'border-primary' : 'border-transparent',
+        locked && 'locked-row',
       )}
       onMouseEnter={() => {
         if (!disabled) {
@@ -187,7 +190,7 @@ export function EditableCell({
           ? formatUtils.formatDateOnly(new Date(displayedValue))
           : displayedValue}
       </span>
-      {isHovered && (
+      {!locked && isHovered && (
         <Button
           variant="transparent"
           size="sm"

@@ -17,9 +17,13 @@ import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
   mcpId: string;
+  showEmptyState?: boolean;
 }
 
-export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
+export const McpToolsSection = ({
+  mcpId,
+  showEmptyState = true,
+}: McpToolsSectionProps) => {
   const { toast } = useToast();
   const { pieces } = piecesHooks.usePieces({});
   const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp(mcpId);
@@ -126,7 +130,7 @@ export const McpToolsSection = ({ mcpId }: McpToolsSectionProps) => {
             </div>
           </ScrollArea>
         ) : (
-          <EmptyTools />
+          showEmptyState ? <EmptyTools /> : null
         )}
       </div>
     </div>

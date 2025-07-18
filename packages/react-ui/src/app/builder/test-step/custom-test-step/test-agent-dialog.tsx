@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import {
-  AgentTestResult,
+  AgentRun,
   AgentStepBlock,
   StepRunResponse,
   AgentTaskStatus,
@@ -31,7 +31,7 @@ function AgentTestingDialog({
   agentProgress,
   agentId,
 }: AgentTestingDialogProps) {
-  const agentResult = agentProgress?.output as AgentTestResult | undefined;
+  const agentResult = agentProgress?.output as AgentRun | undefined;
   const agentSteps: AgentStepBlock[] = agentResult?.steps || [];
   const prompt =
     !isNil(agentProgress?.input) &&

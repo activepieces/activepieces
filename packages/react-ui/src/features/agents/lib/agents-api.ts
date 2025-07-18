@@ -2,7 +2,7 @@ import { api } from '@/lib/api';
 import {
   Agent,
   CreateAgentRequest,
-  UpdateAgentRequest,
+  UpdateAgentRequestBody,
   ListAgentsQueryParams,
   SeekPage,
 } from '@activepieces/shared';
@@ -25,7 +25,7 @@ export const agentsApi = {
     return await api.post<Agent>(`/v1/agents`, request);
   },
 
-  async update(id: string, request: UpdateAgentRequest): Promise<Agent> {
+  async update(id: string, request: UpdateAgentRequestBody): Promise<Agent> {
     return await api.post<Agent>(`/v1/agents/${id}`, request);
   },
 

@@ -1,50 +1,51 @@
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AgentTestResult, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolMetadata, mcpToolNaming, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType } from "@activepieces/shared"
-import { APICallError, streamText } from "ai"
-import { agentCommon } from "./common"
-import { agentTools } from "./agent-tools"
-import { agentMcp } from "./agent-mcp"
+import { AgentJobData } from '@activepieces/server-shared'
+import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, assertNotNullOrUndefined, ContentBlockType, createAIProvider, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { openai } from '@ai-sdk/openai'
+import { APICallError, streamText } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { agentsApiService } from '../api/server-api.service'
+import { agentTools } from '../utils/agent-tools'
+import { workerMachine } from '../utils/machine'
 
-export const agentExecutor = {
-    async execute(params: ExecuteAgent) {
-
-        const agent = await agentCommon.getAgent({
-            publicUrl: params.publicUrl,
-            token: params.serverToken,
-            id: params.agentId,
-        })
-
-        const mcp = await agentMcp.getMcp({
-            publicUrl: params.publicUrl,
-            token: params.serverToken,
-            mcpId: agent.mcpId,
-        })
-
-        const agentToolInstance = await agentTools({
-            agent,
-            publicUrl: params.publicUrl,
-            token: params.serverToken,
-            mcp,
-        })
+let agentToolInstance: Awaited<ReturnType<typeof agentTools>> | undefined
+export const agentJobExecutor = (log: FastifyBaseLogger) => ({
+    async executeAgent(jobData: AgentJobData, engineToken: string, workerToken: string): Promise<void> {
         try {
-            const model = await agentCommon.initializeOpenAIModel({
-                publicUrl: params.publicUrl,
-                token: params.serverToken,
+            const agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } = {
+                projectId: jobData.projectId,
+                startTime: new Date().toISOString(),
+                steps: [],
+                message: '',
+                status: AgentTaskStatus.IN_PROGRESS,
+                output: undefined,
+            }
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+
+            const agent = await agentsApiService(workerToken, log).getAgent(jobData.agentId)
+            const mcp = await agentsApiService(workerToken, log).getMcp(agent.mcpId)
+            agentToolInstance = await agentTools({
+                agent,
+                publicUrl: workerMachine.getPublicApiUrl(),
+                token: engineToken,
+                mcp,
+            })
+
+            const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`
+            const model = createAIProvider({
+                providerName: 'openai',
+                modelInstance: openai('gpt-4o-mini'),
+                apiKey: engineToken,
+                baseURL,
             })
             const { fullStream } = streamText({
                 model,
                 system: constructSystemPrompt(agent),
-                prompt: params.prompt,
+                prompt: jobData.prompt,
                 maxSteps: agent.maxSteps,
                 tools: await agentToolInstance.tools(),
             })
-            const agentResult: AgentTestResult = {
-                steps: [],
-                status: AgentTaskStatus.IN_PROGRESS,
-                output: undefined,
-                message: '',
-            }
             let currentText = ''
-
+    
             for await (const chunk of fullStream) {
                 if (chunk.type === 'text-delta') {
                     currentText += chunk.textDelta
@@ -67,7 +68,8 @@ export const agentExecutor = {
                         startTime: new Date().toISOString(),
                     })
                     agentResult.steps.push(metadata)
-                } else if (chunk.type === 'tool-result') {
+                }
+                else if (chunk.type === 'tool-result') {
                     const lastBlockIndex = agentResult.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
                     const lastBlock = agentResult.steps[lastBlockIndex] as ToolCallContentBlock
                     assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
@@ -77,19 +79,24 @@ export const agentExecutor = {
                         endTime: new Date().toISOString(),
                         output: chunk.result,
                     }
-                } else if (chunk.type === 'error') {
+                }
+                else if (chunk.type === 'error') {
                     agentResult.status = AgentTaskStatus.FAILED
                     if (APICallError.isInstance(chunk.error)) {
-                        const errorResponse = (chunk.error as any)?.data as AIErrorResponse
+                        const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
                         agentResult.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
                     }
                     else {
-                        agentResult.message = concatMarkdown(agentResult.steps) + '\n' + JSON.stringify(chunk.error, null, 2)
+                        agentResult.message = concatMarkdown(agentResult.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
                     }
-                    await params.update(agentResult)
-                    return agentResult
+                    agentResult.finishTime = new Date().toISOString()
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+                    return
                 }
-                await params.update(agentResult)
+
+                if (agentResult.steps.length > 0) {
+                    await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+                }
             }
             if (currentText.length > 0) {
                 agentResult.steps.push({
@@ -102,17 +109,19 @@ export const agentExecutor = {
             agentResult.output = markAsComplete?.input
             agentResult.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
             agentResult.message = concatMarkdown(agentResult.steps)
+            agentResult.finishTime = new Date().toISOString()
 
-            await params.update(agentResult)
-
-            return agentResult
+            await agentsApiService(workerToken, log).updateAgentRun(jobData.runId, agentResult)
+        }
+        catch (error) {
+            log.error(error, 'Error executing agent job')
+            throw error
         }
         finally {
-            await agentToolInstance.close()
+            await agentToolInstance?.close()
         }
-    }
-
-}
+    },
+})
 
 
 function isMarkAsComplete(block: AgentStepBlock): boolean {
@@ -172,14 +181,4 @@ function constructSystemPrompt(agent: Agent) {
 
 function concatMarkdown(blocks: AgentStepBlock[]): string {
     return blocks.filter((block) => block.type === ContentBlockType.MARKDOWN).map((block) => block.markdown).join('\n')
-}
-
-type ExecuteAgent = {
-    agentId: string
-    prompt: string
-    update: (data: Record<string, unknown>) => Promise<void>
-    serverToken: string
-    publicUrl: string
-    flowId: string
-    runId: string
 }
