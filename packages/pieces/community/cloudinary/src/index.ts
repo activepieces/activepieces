@@ -6,6 +6,8 @@ import { deleteResource } from "./lib/actions/delete-resource";
 import { createUsageReport } from "./lib/actions/create-usage-report";
 import { findResourceByPublicId } from "./lib/actions/find-resource-by-public-id";
 import { transformResource } from "./lib/actions/transform-resource";
+import { newResourceInFolder } from "./lib/triggers/new-resource";
+import { newTagAddedToAsset } from "./lib/triggers/new-tag-added-to-asset";
 
 export const cloudinary = createPiece({
   displayName: "Cloudinary ",
@@ -14,5 +16,5 @@ export const cloudinary = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/cloudinary.png",
   authors: ['Sanket6652'],
   actions: [uploadResource, deleteResource, createUsageReport, findResourceByPublicId, transformResource],
-  triggers: [],
+  triggers: [newResourceInFolder, newTagAddedToAsset],
 });

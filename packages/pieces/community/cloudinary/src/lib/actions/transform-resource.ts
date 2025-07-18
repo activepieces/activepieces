@@ -7,6 +7,6 @@ export const transformResource = createAction({
   description: 'Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.',
   props: {},
   async run() {
-    // Action logic here
+    // Action logic he  re
   },
 });
