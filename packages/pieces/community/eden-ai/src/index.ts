@@ -13,17 +13,33 @@
     import { ocrImageAction } from './lib/actions/ocr-image';
     import { imageGenerationAction } from './lib/actions/image-generation';
     import { textToSpeechAction } from './lib/actions/text-to-speech';
+    import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
     export const edenAiAuth = PieceAuth.SecretText({
       displayName: 'Eden AI API Key',
       description: `You can obtain your API key from your [Eden AI dashboard](https://app.edenai.run/admin/account/developer).`,
       required: true,
       validate: async ({ auth }) => {
-        // TODO: Implement real validation by calling Eden AI API
         if (!auth || typeof auth !== 'string' || auth.length < 10) {
           return { valid: false, error: 'Invalid API key format.' };
         }
-        return { valid: true };
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://api.edenai.run/v2/user/tokens',
+            headers: {
+              'Authorization': `Bearer ${auth}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 10000,
+          });
+          if (response.status >= 200 && response.status < 300) {
+            return { valid: true };
+          }
+          return { valid: false, error: 'Invalid Eden AI API key.' };
+        } catch (e: any) {
+          return { valid: false, error: 'Invalid Eden AI API key or network error.' };
+        }
       },
     });
 
