@@ -44,13 +44,14 @@ export async function edenAiApiCall<T = any>({
   maxRetries?: number;
 }): Promise<T> {
   if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
-    throw new Error('Missing or invalid Eden AI API key.');
+    throw new Error('Missing or invalid Eden AI API key. Please check your credentials.');
   }
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
     ...customHeaders,
   };
+
   const url = `${BASE_URL}${resourceUri}`;
   let lastError;
   const stringQueryParams = query
@@ -71,17 +72,24 @@ export async function edenAiApiCall<T = any>({
         (err as any).response = response;
         throw err;
       }
+
       return response.body;
     } catch (err: any) {
       lastError = err;
       logEdenAiError(err, { url, method, body, query, attempt });
+
       const status = err?.response?.status;
       if (status === 429 || (status && status >= 500 && status < 600)) {
-        await new Promise(res => setTimeout(res, RETRY_BACKOFF * (attempt + 1)));
-        continue;
+        if (attempt < maxRetries - 1) {
+          const delay = RETRY_BACKOFF * Math.pow(2, attempt);
+          await new Promise(res => setTimeout(res, delay));
+          continue;
+        }
       }
+      
       break;
     }
   }
+
   throw new Error(parseEdenAiError(lastError));
 } 
