@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot } from 'lucide-react';
+import { Bot, BotOff, Code, Lightbulb, LightbulbOff } from 'lucide-react';
+import { Settings2 } from 'lucide-react'; // gear icon from lucide-dev
 import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { useMutation } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import { McpToolRequest, TableAutomationTrigger } from '@activepieces/shared';
 import { tablesApi } from '../lib/tables-api';
 import { useTableState } from './ap-table-state-provider';
 import { agentsApi } from '@/features/agents/lib/agents-api';
+import { Switch } from '@/components/ui/switch';
 
 interface ConfigureTableAgentFormValues {
   trigger: TableAutomationTrigger;
@@ -75,12 +77,35 @@ const ConfigureTableAgent = () => {
     mutation.mutate(values);
   });
 
+  const [isAgentEnabled, setIsAgentEnabled] = useState(false);
   return (
     <>
-      <Button variant="secondary" onClick={() => setDialogOpen(true)}>
-        <Bot className="w-5 h-5" />
-        Configure Agent
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setDialogOpen(true)}
+          aria-label="Configure Data Agent"
+     
+        >
+          <img
+            src="https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png"
+            alt="Locked"
+            className="w-7 h-7 rounded-full object-cover"
+            style={{ display: isAgentEnabled ? 'inline-block' : 'none' }}
+          />
+        </Button>
+        <Switch
+          checkedIcon={<Bot className="h-4 w-4 " />}
+          uncheckedIcon={<BotOff className="h-4 w-4 " />} 
+          checked={isAgentEnabled}
+          onCheckedChange={setIsAgentEnabled}
+          size="lg"
+          color="secondary"
+          variant="square"
+          aria-label="Enable Data Agent"
+        />
+      </div>
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {

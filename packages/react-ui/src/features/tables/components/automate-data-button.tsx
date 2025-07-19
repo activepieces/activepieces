@@ -47,10 +47,10 @@ const AutomateDataButton = () => {
       onClick={handleAutomate}
       disabled={automateMutation.isPending}
     >
-      <Bot className="mr-2 w-4" />
+      <Bot className="w-4" />
       {automateMutation.isPending
         ? 'Starting...'
-        : `Automate (${selectedRecords.size})`}
+        : `Run (${selectedRecords.size})`}
     </Button>
   );
 };
