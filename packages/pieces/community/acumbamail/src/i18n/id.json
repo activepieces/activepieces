@@ -30,6 +30,6 @@
   "Origin Template": "Origin Template",
   "Subscriber Email": "Subscriber Email",
   "Updates the merge fields over the existent ones if the subscriber exists on the subscriber list.": "Updates the merge fields over the existent ones if the subscriber exists on the subscriber list.",
-  "Activates the send of a confirmation email when the subscriber is added.": "Activates the send of a confirmation email when the subscriber is added.",
+  "Activates the send of a confirmation email when the subscriber is added.": "Mengaktifkan pengiriman email konfirmasi saat pelanggan ditambahkan.",
   "Sender e-mail shown to the subscribers of the list when e-mail marketing campaigns are sent to them.": "Sender e-mail shown to the subscribers of the list when e-mail marketing campaigns are sent to them."
 }
