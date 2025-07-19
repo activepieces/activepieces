@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { Null, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../federated-authn'
@@ -127,12 +127,13 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
     stripePaymentMethod: Type.Optional(Type.String()),
-    userSeatsLimit: Type.Optional(Type.Number()),
-    projectsLimit: Type.Optional(Type.Number()),
-    tablesLimit: Type.Optional(Type.Number()),
-    mcpLimit: Type.Optional(Type.Number()),
-    activeFlowsLimit: Type.Optional(Type.Number()),
-    agentsLimit: Type.Optional(Type.Number()),
+
+    userSeatsLimit: Nullable(Type.Number()),
+    projectsLimit: Nullable(Type.Number()),
+    tablesLimit: Nullable(Type.Number()),
+    mcpLimit: Nullable(Type.Number()),
+    activeFlowsLimit: Nullable(Type.Number()),
+    agentsLimit: Nullable(Type.Number()),
 })
   
 export type PlatformPlan = Static<typeof PlatformPlan>
