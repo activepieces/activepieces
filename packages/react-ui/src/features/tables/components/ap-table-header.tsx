@@ -24,6 +24,8 @@ import { Permission } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
+import { AutomateDataButton } from './automate-data-button';
+import { ConfigureTableAgent } from './configure-table-agent';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -112,39 +114,42 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               <span className="text-sm">{t('Saving...')}</span>
             </div>
           )}
+          {selectedRecords.size > 0 && <AutomateDataButton />}
           {selectedRecords.size > 0 && (
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <ConfirmationDeleteDialog
-                title={t('Delete Records')}
-                message={t(
-                  'Are you sure you want to delete the selected records? This action cannot be undone.',
-                )}
-                entityName={
-                  selectedRecords.size === 1 ? t('record') : t('records')
-                }
-                mutationFn={async () => {
-                  const indices = Array.from(selectedRecords).map((row) =>
-                    records.findIndex((r) => r.uuid === row),
-                  );
-                  deleteRecords(indices.map((index) => index.toString()));
-                  setSelectedRecords(new Set());
-                }}
+            <>
+              <PermissionNeededTooltip
+                hasPermission={userHasTableWritePermission}
               >
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="flex gap-2 items-center"
-                  disabled={!userHasTableWritePermission}
+                <ConfirmationDeleteDialog
+                  title={t('Delete Records')}
+                  message={t(
+                    'Are you sure you want to delete the selected records? This action cannot be undone.',
+                  )}
+                  entityName={
+                    selectedRecords.size === 1 ? t('record') : t('records')
+                  }
+                  mutationFn={async () => {
+                    const indices = Array.from(selectedRecords).map((row) =>
+                      records.findIndex((r) => r.uuid === row),
+                    );
+                    deleteRecords(indices.map((index) => index.toString()));
+                    setSelectedRecords(new Set());
+                  }}
                 >
-                  <Trash2 className="size-4" />
-                  {t('Delete Records')}{' '}
-                  {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                </Button>
-              </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
+                  <Button
+                    variant="destructive"
+                    className="flex gap-2 items-center"
+                    disabled={!userHasTableWritePermission}
+                  >
+                    <Trash2 className="size-4" />
+                    {t('Delete Records')}{' '}
+                    {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
+                  </Button>
+                </ConfirmationDeleteDialog>
+              </PermissionNeededTooltip>
+            </>
           )}
+          {selectedRecords.size === 0 && <ConfigureTableAgent />}
         </div>
       </div>
       <div className="hidden">

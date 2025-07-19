@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { AgentRun, AgentTaskStatus, ApFlagId, Permission, WebsocketClientEvent } from '@activepieces/shared';
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { AutomateData } from '@/features/tables/components/automate-data';
+import { ConfigureTableAgent } from '@/features/tables/components/configure-table-agent';
 import { useSocket } from '@/components/socket-provider';
 import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
 
@@ -125,7 +125,7 @@ const ApTableEditorPage = () => {
         <DrawerHeader>
           <div className="flex items-center justify-between w-full pr-4">
             <ApTableHeader onBack={handleBack} />
-            <AutomateData />
+           
           </div>
         </DrawerHeader>
 

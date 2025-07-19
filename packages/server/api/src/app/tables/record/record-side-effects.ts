@@ -42,7 +42,7 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
     eventKey: keyof typeof EVENT_TYPE_MAP
   ) {
     const { projectId, tableId, records, logger, authorization } = params;
-    const { eventType, automationTrigger } = EVENT_TYPE_MAP[eventKey];
+    const { eventType } = EVENT_TYPE_MAP[eventKey];
 
     await Promise.all(
       records.map(async (record) => {
@@ -54,15 +54,7 @@ export const recordSideEffects = (log: FastifyBaseLogger) => ({
           logger,
           authorization,
         });
-        if (automationTrigger) {
-          const table = await tableService.getById({ projectId, id: tableId })
-          await tableAutomationService(log).run({
-            table,
-            record,
-            projectId,
-            trigger: automationTrigger,
-          });
-        }
+        // Todo(Amr) add automation trigger
       })
     );
   }

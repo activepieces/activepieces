@@ -82,7 +82,7 @@ export const tableService = {
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
-    async getById({
+    async getOneOrThrow({
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
@@ -117,7 +117,7 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        const table = await this.getById({ projectId, id })
+        const table = await this.getOneOrThrow({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
@@ -188,7 +188,7 @@ export const tableService = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
         })
-        return this.getById({ projectId, id })
+        return this.getOneOrThrow({ projectId, id })
     },
     async count({ projectId }: CountParams): Promise<number> {
         return tableRepo().count({

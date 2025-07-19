@@ -47,6 +47,7 @@ const ApTableFooter = ({
           {t('fieldsCount', { fieldsCount })} ({fieldsPercentage.toFixed(2)}%)
         </div>
       </div>
+
     </div>
   );
 };
