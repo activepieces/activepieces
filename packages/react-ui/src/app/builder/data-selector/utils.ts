@@ -4,7 +4,7 @@ import {
   isNil,
   Trigger,
   isObject,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   DataSelectorTreeNode,

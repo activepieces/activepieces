@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { ProjectCreateRequest, ProjectCreateResponse } from '../common/models';
 import { posthogAuth } from '../..';
 

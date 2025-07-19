@@ -1,14 +1,14 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 import { findRowAction } from './lib/actions/find-row';
 import { createRowAction } from './lib/actions/create-row';
 import { upsertRowAction } from './lib/actions/upsert-row';
 import { updateRowAction } from './lib/actions/update-row';
 import { newRowCreatedTrigger } from './lib/triggers/new-row-created';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { getRowAction } from './lib/actions/get-row';
 import { listTablesAction } from './lib/actions/list-tables';
 import { getTableAction } from './lib/actions/get-table';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { CODA_BASE_URL } from './lib/common/types';
 
 export const codaAuth = PieceAuth.SecretText({
@@ -19,7 +19,7 @@ export const codaAuth = PieceAuth.SecretText({
 
 export const coda = createPiece({
 	displayName: 'Coda',
-	logoUrl: 'https://cdn.activepieces.com/pieces/coda.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/coda.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	auth: codaAuth,
 	authors: ['onyedikachi-david', 'kishanprmr','rimjhimyadav'],

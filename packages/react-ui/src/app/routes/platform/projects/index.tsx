@@ -28,7 +28,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { isNil, ProjectWithLimits } from '@activepieces/shared';
+import { isNil, ProjectWithLimits } from '@ensemble/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
 
@@ -406,7 +406,7 @@ export default function ProjectsPage() {
       lockDescription={t(
         'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
+      lockVideoUrl="https://cdn.ensemble.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">

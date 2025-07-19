@@ -1,5 +1,5 @@
 import { motionAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   BASE_URL,
   projectId,
@@ -11,7 +11,7 @@ import {
   httpClient,
   HttpMethod,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const findTask = createAction({
   auth: motionAuth,

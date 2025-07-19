@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../../..';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 
 export const addTagToContactAction = createAction({

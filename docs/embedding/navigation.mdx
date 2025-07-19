@@ -4,11 +4,11 @@ description: ""
 icon: "signs-post"
 ---
 
-By default, navigating within your embedded instance of Activepieces doesn't affect the client's browser history or viewed URL. Activepieces only provide a **handler**, that trigger on every route change in the **iframe**.
+By default, navigating within your embedded instance of Ensemble doesn't affect the client's browser history or viewed URL. Ensemble only provide a **handler**, that trigger on every route change in the **iframe**.
 
 ## Automatically Sync URL 
 
-You can use the following snippet when configuring the SDK, which will implement a handler that syncs the Activepieces iframe with your browser:
+You can use the following snippet when configuring the SDK, which will implement a handler that syncs the Ensemble iframe with your browser:
 
 <Tip>
 The following snippet listens when the user clicks backward, so it syncs the route back to the iframe using `activepieces.navigate` and in the handler, it updates the URL of the browser.
@@ -43,7 +43,7 @@ activepieces.configure({
 });
 
 window.addEventListener("popstate", () => {
-  const route = activepieces.extractActivepiecesRouteFromUrl({ vendorUrl: window.location.href });
+  const route = activepieces.extractEnsembleRouteFromUrl({ vendorUrl: window.location.href });
   activepieces.navigate({ route });
 });
 ```

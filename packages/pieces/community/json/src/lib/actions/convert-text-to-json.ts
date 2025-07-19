@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 
 export const convertTextToJson = createAction({
   name: 'convert_text_to_json',

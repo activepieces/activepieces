@@ -5,7 +5,7 @@ import {
   UpdateAgentRequest,
   ListAgentsQueryParams,
   SeekPage,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const agentsApi = {
   async list(params?: ListAgentsQueryParams): Promise<SeekPage<Agent>> {

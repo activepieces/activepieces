@@ -8,11 +8,11 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode, isNil } from '@ensemble/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
-    ? 'https://cloud.activepieces.com'
+    ? 'https://cloud.ensemble.com'
     : window.location.origin;
 export const API_URL = `${API_BASE_URL}/api`;
 

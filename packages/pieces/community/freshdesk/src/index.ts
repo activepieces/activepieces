@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
 import { getTickets } from './lib/actions/get-tickets';
@@ -32,7 +32,7 @@ export const freshdesk = createPiece({
   displayName: 'Freshdesk',
   description: 'Customer support software',
 
-  logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/freshdesk.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
   auth: freshdeskAuth,

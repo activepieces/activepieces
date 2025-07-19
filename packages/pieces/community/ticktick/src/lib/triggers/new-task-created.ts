@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { ticktickAuth } from '../../index';
 import { tickTickApiCall } from '../common/client';
 import { TICKTICK_TASK_STATUS_INCOMPLETE } from '../common/constants';

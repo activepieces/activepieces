@@ -3,8 +3,8 @@ import {
     DynamicPropsValue,
     PieceMetadata,
     PropertyType,
-} from '@activepieces/pieces-framework'
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
+} from '@ensemble/pieces-framework'
+import { EnsembleError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@ensemble/shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -111,13 +111,13 @@ export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
         })
 
         if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.EXECUTION_TIMEOUT,
                 params: {},
             })
         }
         if (sandboxResponse.verdict === EngineResponseStatus.MEMORY_ISSUE) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.MEMORY_ISSUE,
                 params: {},
             })

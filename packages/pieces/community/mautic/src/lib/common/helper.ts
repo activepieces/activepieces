@@ -1,12 +1,12 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 // Function Section
-export const mapMauticToActivepiecesProperty = (
+export const mapMauticToEnsembleProperty = (
   type: string,
   fieldMetadata: {
     displayName: string;
@@ -94,7 +94,7 @@ export const fetchDynamicFieldsFromMetadata = async (
           required: false,
         };
         if (!type) return {};
-        const f = mapMauticToActivepiecesProperty(
+        const f = mapMauticToEnsembleProperty(
           type,
           fieldMetadata,
           properties

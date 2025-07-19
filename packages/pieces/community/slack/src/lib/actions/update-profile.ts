@@ -1,5 +1,5 @@
 import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { WebClient } from '@slack/web-api';
 
 export const updateProfileAction = createAction({

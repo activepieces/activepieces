@@ -1,15 +1,15 @@
 import {
   createAction,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';

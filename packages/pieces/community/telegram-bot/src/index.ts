@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
 import { telegramSendMediaAction } from './lib/action/send-media.action';
@@ -29,7 +29,7 @@ export const telegramBot = createPiece({
   displayName: 'Telegram Bot',
   description: 'Build chatbots for Telegram',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/telegram_bot.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: telegramBotAuth,
   actions: [

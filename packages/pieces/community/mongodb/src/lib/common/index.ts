@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
 import { MongoClient, Db, ServerApiVersion } from 'mongodb';
 import { mongodbAuth } from '../..';
 

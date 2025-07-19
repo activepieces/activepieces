@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
+import { FlowOperationType, FlowTemplate } from '@ensemble/shared';
 
 import { LoadingSpinner } from '../../../components/ui/spinner';
 import { PieceIconList } from '../../pieces/components/piece-icon-list';

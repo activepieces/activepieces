@@ -1,12 +1,12 @@
 import {
     ApplicationEventName,
-} from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+} from '@ensemble/ee-shared'
+import { AppSystemProp, networkUtils } from '@ensemble/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

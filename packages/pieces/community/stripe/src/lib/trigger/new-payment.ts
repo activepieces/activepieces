@@ -1,5 +1,5 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger } from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 
@@ -33,7 +33,7 @@ export const stripeNewPayment = createTrigger({
       name: 'Test user',
       phone: null,
     },
-    calculated_statement_descriptor: 'WWW.ACTIVEPIECES.COM',
+    calculated_statement_descriptor: 'WWW.ENSEMBLE.COM',
     captured: true,
     created: 1675180355,
     currency: 'usd',

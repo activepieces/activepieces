@@ -7,7 +7,7 @@ import {
     EngineSocketEvent,
     EngineStderr,
     EngineStdout,
-    isNil } from '@activepieces/shared'
+    isNil } from '@ensemble/shared'
 import WebSocket from 'ws'
 import { execute } from './lib/operations'
 

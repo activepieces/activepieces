@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@ensemble/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 import { sendMedia } from './lib/actions/send-media';
 import { sendTemplateMessageAction } from './lib/actions/send-from-template';
@@ -39,7 +39,7 @@ export const whatsapp = createPiece({
 	description: 'Manage your WhatsApp business account',
 	auth: whatsappAuth,
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/whatsapp.png',
 	authors: ['LevwTech', 'kishanprmr'],
 	actions: [sendMessage, sendMedia, sendTemplateMessageAction],
 	triggers: [],

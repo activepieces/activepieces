@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { addLeads } from './lib/actions/add-leads';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { campaignCompleted } from './lib/triggers/campaign-completed';
 import { emailBounced } from './lib/triggers/email-bounced';
 import { emailOpened } from './lib/triggers/email-opened';
@@ -19,7 +19,7 @@ import { removeEmail } from './lib/actions/remove-email';
 import { setSchedule } from './lib/actions/set-schedule';
 import { startCampaign } from './lib/actions/start-campaign';
 import { updateLead } from './lib/actions/update-lead';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 /**
  * Define the API Key authentication using PieceAuth.SecretText
@@ -48,7 +48,7 @@ export const reachinbox = createPiece({
   displayName: 'Reachinbox',
   auth: ReachinboxAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/reachinbox.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/reachinbox.png',
   categories: [PieceCategory.MARKETING],
   authors: ['support@reachinbox.ai', 'ManojKumard', 'Mitrajit'],
   actions: [

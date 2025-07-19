@@ -1,8 +1,8 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger } from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import { pipedriveCommon } from '../common';
 import { pipedriveAuth } from '../..';
-import { httpClient, HttpMethod,AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod,AuthenticationType } from '@ensemble/pieces-common';
 import { ListActivitiesResponse } from '../common/types';
 
 export const newActivity = createTrigger({

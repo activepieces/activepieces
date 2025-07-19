@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@ensemble/shared'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { memoryQueues } from './memory-queue'
 

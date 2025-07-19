@@ -8,14 +8,14 @@ import {
   HttpRequest,
   HttpResponse,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
   createAction,
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 import FormData from 'form-data';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';

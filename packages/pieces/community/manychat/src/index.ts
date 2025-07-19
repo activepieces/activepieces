@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { findUserByCustomFieldAction } from './lib/actions/find-user-by-custom-field';
 import { createSubscriberAction } from './lib/actions/create-subscriber';
 import { sendContentToUserAction } from './lib/actions/send-content-to-user';
@@ -6,8 +6,8 @@ import { setCustomFieldAction } from './lib/actions/set-custom-fields';
 import { removeTagFromUserAction } from './lib/actions/remove-tag-from-user';
 import { addTagToUserAction } from './lib/actions/add-tag-to-user';
 import { findUserByNameAction } from './lib/actions/find-user-by-name';
-import { PieceCategory } from '@activepieces/shared';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { BASE_URL } from './lib/common/props';
 
 export const manychatAuth = PieceAuth.SecretText({
@@ -42,7 +42,7 @@ export const manychat = createPiece({
 	categories: [PieceCategory.MARKETING],
 	auth: manychatAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/manychat.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/manychat.png',
 	authors: ['neo773', 'kishanprmr'],
 	actions: [
 		addTagToUserAction,

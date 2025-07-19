@@ -1,6 +1,6 @@
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { CreateFlowTemplateRequest } from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     ErrorCode,
     flowPieceUtil,
@@ -11,7 +11,7 @@ import {
     sanitizeObjectForPostgresql,
     SeekPage,
     TemplateType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -88,7 +88,7 @@ export const flowTemplateService = {
             id,
         })
         if (isNil(template)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: `Flow template ${id} is not found`,

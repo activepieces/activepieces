@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@ensemble/pieces-framework';
 import { checkoutComAuth } from './lib/common/auth';
 import { createCustomerAction } from './lib/actions/create-customer';
 import { updateCustomerAction } from './lib/actions/update-customer';
@@ -14,7 +14,7 @@ export const checkout = createPiece({
   displayName: 'Checkout.com',
   auth: checkoutComAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/checkout.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/checkout.png',
   authors: ['sparkybug','onyedikachi-david'],
   actions: [
     createCustomerAction,

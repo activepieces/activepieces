@@ -1,4 +1,4 @@
-import { Flow, Project, Table, TableWebhook } from '@activepieces/shared'
+import { Flow, Project, Table, TableWebhook } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 

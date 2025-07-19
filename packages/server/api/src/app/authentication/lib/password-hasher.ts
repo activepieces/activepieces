@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { assertNotNullOrUndefined } from '@ensemble/shared'
 import bcrypt from 'bcrypt'
 import { FirebaseScrypt } from 'firebase-scrypt'
 import { system } from '../../helper/system/system'

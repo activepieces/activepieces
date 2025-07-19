@@ -1,5 +1,5 @@
-import { ApiKey } from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
+import { ApiKey } from '@ensemble/ee-shared'
+import { Platform } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

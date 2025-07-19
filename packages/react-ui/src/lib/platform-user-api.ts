@@ -4,7 +4,7 @@ import {
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const platformUserApi = {
   list() {

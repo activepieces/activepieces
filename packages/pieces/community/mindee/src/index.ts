@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
 
 export const mindeeAuth = PieceAuth.SecretText({
@@ -19,7 +19,7 @@ export const mindee = createPiece({
   description: 'Document automation API',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mindee.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mindeeAuth,

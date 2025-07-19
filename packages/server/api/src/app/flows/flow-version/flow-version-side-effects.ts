@@ -1,6 +1,6 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     FileType,
     FlowId,
@@ -11,7 +11,7 @@ import {
     isNil,
     ProjectId,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { mcpService } from '../../mcp/mcp-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
@@ -43,7 +43,7 @@ const deleteWebhookSimulation = async (
     }
     catch (e: unknown) {
         const notWebhookSimulationNotFoundError = !(
-            e instanceof ActivepiecesError &&
+            e instanceof EnsembleError &&
             e.error.code === ErrorCode.ENTITY_NOT_FOUND
         )
         if (notWebhookSimulationNotFoundError) {
@@ -85,7 +85,7 @@ type PostApplyOperation = {
 }
 function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
     return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+           flowVersion.trigger.settings.pieceName === '@ensemble/piece-mcp'
 }
 
 async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {

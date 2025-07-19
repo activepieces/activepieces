@@ -7,7 +7,7 @@ import { t } from 'i18next';
 
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { PlatformWithoutSensitiveData } from '@ensemble/shared';
 
 import { platformApi } from '../lib/platforms-api';
 

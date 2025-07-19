@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, system } from '../system/system'
 import { memoryStore } from './memory-store'

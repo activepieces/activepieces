@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 

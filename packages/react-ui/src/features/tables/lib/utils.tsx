@@ -3,7 +3,7 @@ import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
-import { ExportTableResponse, FieldType } from '@activepieces/shared';
+import { ExportTableResponse, FieldType } from '@ensemble/shared';
 
 import { ClientField, ClientRecordData } from './store/ap-tables-client-state';
 

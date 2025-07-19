@@ -1,4 +1,4 @@
-import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, OAuth2PropertyValue, PieceAuth } from '@ensemble/pieces-framework';
 import { createTask } from './lib/actions/create-task';
 import { createTaskListAction } from './lib/actions/create-task-list';
 import { updateTaskAction } from './lib/actions/update-task';
@@ -6,8 +6,8 @@ import { findTaskListByNameAction } from './lib/actions/find-task-list-by-name';
 import { findTaskByTitleAction } from './lib/actions/find-task-by-title';
 import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
 import { newOrUpdatedTaskTrigger } from './lib/triggers/task-updated';
-import { PieceCategory } from '@activepieces/shared';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 export const microsoftToDoAuth = PieceAuth.OAuth2({
 	description:
@@ -24,7 +24,7 @@ export const microsoftTodo = createPiece({
 	categories: [PieceCategory.PRODUCTIVITY],
 	auth: microsoftToDoAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-todo.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/microsoft-todo.png',
 	authors: ['onyedikachi-david'],
 	actions: [
 		createTask,

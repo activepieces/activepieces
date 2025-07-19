@@ -1,5 +1,5 @@
 import { clarifaiAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import {
   CommonClarifaiProps,
   callClarifaiWorkflow,

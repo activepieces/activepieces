@@ -12,11 +12,11 @@ export const BrandingPage = () => {
     <LockedFeatureGuard
       featureKey="BRANDING"
       locked={!platform.plan.customAppearanceEnabled}
-      lockTitle={t('Brand Activepieces')}
+      lockTitle={t('Brand Ensemble')}
       lockDescription={t(
         'Give your users an experience that looks like you by customizing the color, logo and more',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/appearance.mp4"
+      lockVideoUrl="https://cdn.ensemble.com/videos/showcase/appearance.mp4"
     >
       <div className="w-full flex flex-col gap-4">
         <div className="flex flex-col gap-2">

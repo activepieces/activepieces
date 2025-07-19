@@ -29,8 +29,8 @@ import type {
   McpPieceTool,
   McpToolRequest,
   McpWithTools,
-} from '@activepieces/shared';
-import { isNil, McpToolType } from '@activepieces/shared';
+} from '@ensemble/shared';
+import { isNil, McpToolType } from '@ensemble/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
 import { McpPiecesContent } from './mcp-pieces-content';

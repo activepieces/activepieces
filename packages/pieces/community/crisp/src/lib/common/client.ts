@@ -6,8 +6,8 @@ import {
 	HttpMethod,
 	HttpRequest,
 	QueryParams,
-} from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { PiecePropValueSchema } from '@ensemble/pieces-framework';
 import { crispAuth } from './auth';
 
 

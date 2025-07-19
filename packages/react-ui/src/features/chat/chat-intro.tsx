@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ChatUIResponse } from '@activepieces/shared';
+import { ChatUIResponse } from '@ensemble/shared';
 
 interface ChatIntroProps {
   chatUI: ChatUIResponse | null | undefined;

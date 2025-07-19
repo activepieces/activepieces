@@ -2,7 +2,7 @@ import {
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { motionAuth } from '../../index';
 import {
   DedupeStrategy,
@@ -11,7 +11,7 @@ import {
   Polling,
   pollingHelper,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { BASE_URL, workspaceId } from '../common/props';
 import dayjs from 'dayjs';
 

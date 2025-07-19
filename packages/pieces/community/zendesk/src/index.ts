@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
 
 const markdownProperty = `
@@ -42,7 +42,7 @@ export const zendesk = createPiece({
   description: 'Customer service software and support ticket system',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/zendesk.png',
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,

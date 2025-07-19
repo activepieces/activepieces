@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({

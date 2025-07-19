@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { EnsembleError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { Like } from 'typeorm'
@@ -30,7 +30,7 @@ export const todoService = (log: FastifyBaseLogger) => ({
     async getOnePopulatedOrThrow(params: GetParams): Promise<PopulatedTodo> {
         const todo = await this.getOne(params)
         if (!todo) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
             })
@@ -65,13 +65,13 @@ export const todoService = (log: FastifyBaseLogger) => ({
         const todo = await this.getOnePopulatedOrThrow({ id: params.id })
         const status = todo.statusOptions.find((option) => option.name === params.status)
         if (isNil(status)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Status not found' },
             })
         }
         if (status.continueFlow === false) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `Todo cannot be resolved because the continueFlow is set to false for the status: ${status.name}` },
             })

@@ -1,10 +1,10 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import {
   createTrigger,
   Property,
   Trigger,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { sessionAuth } from '../..';
 
 export const baseUrl = 'https://api.app.sessions.us/api';

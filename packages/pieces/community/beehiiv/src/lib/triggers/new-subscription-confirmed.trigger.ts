@@ -1,9 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { beehiivApiCall, WebhookPayload } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 const TRIGGER_KEY = 'new-subscription-confirmed-trigger';
 

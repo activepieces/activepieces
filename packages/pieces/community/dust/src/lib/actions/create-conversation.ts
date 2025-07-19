@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   assistantProp,
   usernameProp,
@@ -12,7 +12,7 @@ import mime from 'mime-types';
 import { PublicPostConversationsRequestBody } from '@dust-tt/client';
 
 export const createConversation = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'createConversation',
   displayName: 'Create conversation',
   description: 'Create a new conversation with a specific Dust assistant',

@@ -1,4 +1,4 @@
-import { FlowVersion, isNil, spreadIfDefined } from '@activepieces/shared'
+import { FlowVersion, isNil, spreadIfDefined } from '@ensemble/shared'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from './flow-version-entity'

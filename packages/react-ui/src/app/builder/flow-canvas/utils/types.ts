@@ -4,7 +4,7 @@ import {
   Action,
   StepLocationRelativeToParent,
   Trigger,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export enum ApNodeType {
   STEP = 'STEP',

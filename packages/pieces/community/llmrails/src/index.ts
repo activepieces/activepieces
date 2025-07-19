@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { datastoreSearch } from './lib/actions/datastore-search';
 
 const markdownDescription = `
@@ -33,7 +33,7 @@ export const llmrails = createPiece({
   description: 'LLM Rails Platform',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/llmrails.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/llmrails.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["w95","kishanprmr","MoShizzle","abuaboud"],
   auth: llmrailsAuth,

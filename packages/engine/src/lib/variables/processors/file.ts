@@ -1,5 +1,5 @@
-import { ApFile } from '@activepieces/pieces-framework'
-import { isNil, isString } from '@activepieces/shared'
+import { ApFile } from '@ensemble/pieces-framework'
+import { isNil, isString } from '@ensemble/shared'
 import axios from 'axios'
 import isBase64 from 'is-base64'
 import mime from 'mime-types'

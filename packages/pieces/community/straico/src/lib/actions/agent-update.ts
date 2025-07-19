@@ -1,10 +1,10 @@
 import { straicoAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 // Interface for agent update request body

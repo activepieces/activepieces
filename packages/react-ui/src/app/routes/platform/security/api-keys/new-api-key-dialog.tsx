@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
-import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
+import { ApiKeyResponseWithValue } from '@ensemble/ee-shared';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;

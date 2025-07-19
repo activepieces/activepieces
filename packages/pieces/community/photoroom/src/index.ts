@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { removeBackground } from './lib/actions/remove-background';
 
 export const photoroomAuth = PieceAuth.CustomAuth({
@@ -15,7 +15,7 @@ export const photoroom = createPiece({
   displayName: 'Photoroom',
   auth: photoroomAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/photoroom.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/photoroom.png',
   authors: ['AdamSelene', 'Charles-Go'],
   actions: [removeBackground],
   triggers: [],

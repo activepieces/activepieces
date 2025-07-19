@@ -1,6 +1,6 @@
 import {
   PieceAuth,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 export const ensCommon = {
   auth: PieceAuth.SecretText({

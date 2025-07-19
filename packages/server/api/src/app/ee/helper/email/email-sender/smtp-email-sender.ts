@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { EnsembleError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -28,7 +28,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 await smtpClient.verify()
             }
             catch (e) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.INVALID_SMTP_CREDENTIALS,
                     params: {
                         message: JSON.stringify(e),
@@ -102,7 +102,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
             }
         },
         footerContent() {
-            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
+            return edition === ApEdition.CLOUD ? `   Ensemble, Inc. 398 11th Street,
                     2nd floor, San Francisco, CA 94103` : `${platform?.name} Team.`
         },
     },
@@ -131,10 +131,10 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         '3-days-left-on-trial': 'Your trial ends in 3 days – 10 free templates to boost your productivity 🌟',
         '1-day-left-on-trial': 'Last call! Keep your automation running smoothly',
         '7-days-in-trial': '7 Days in – Here\'s how to level up your automation',
-        'welcome-to-trial': 'Welcome aboard! 🚀 Here\'s how to maximize your Activepieces experience',
-        'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
-        'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
-        'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
+        'welcome-to-trial': 'Welcome aboard! 🚀 Here\'s how to maximize your Ensemble experience',
+        'quota-50': '[ACTION REQUIRED] 50% of your Ensemble tasks are consumed',
+        'quota-90': '[URGENT] 90% of your Ensemble tasks are consumed',
+        'quota-100': '[URGENT] 100% of your Ensemble tasks are consumed',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,

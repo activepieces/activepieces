@@ -1,6 +1,6 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createComment } from './lib/actions/create-comment';
 import { createNewFeatureRequest } from './lib/actions/create-feature-request';
 import { createBeamerPost } from './lib/actions/create-posts';
@@ -36,7 +36,7 @@ export const beamerAuth = PieceAuth.SecretText({
 export const beamer = createPiece({
   displayName: 'Beamer',
   description: 'Engage users with targeted announcements',
-  logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/beamer.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: beamerAuth,
   authors: ["i-nithin","kishanprmr","MoShizzle","abuaboud"],

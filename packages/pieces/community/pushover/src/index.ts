@@ -1,5 +1,5 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { sendNotification } from './lib/actions/send-notification';
 
 export const pushoverAuth = PieceAuth.CustomAuth({
@@ -35,7 +35,7 @@ export const pushover = createPiece({
   displayName: 'Pushover',
   description: 'Simple push notification service',
 
-  logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/pushover.png',
   categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.30.0',
   authors: ["MyWay","Vitalini","kishanprmr","khaledmashaly","abuaboud"],

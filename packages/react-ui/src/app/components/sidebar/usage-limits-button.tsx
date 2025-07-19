@@ -13,8 +13,8 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ApSubscriptionStatus } from '@ensemble/ee-shared';
+import { ApEdition, ApFlagId, isNil } from '@ensemble/shared';
 
 import { FlagGuard } from '../flag-guard';
 

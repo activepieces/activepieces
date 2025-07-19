@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@ensemble/pieces-framework';
 import { Operator } from './constants';
 
 export const operatorStaticDropdown = Property.StaticDropdown({

@@ -11,7 +11,7 @@ import {
   PieceMetadataModelSummary,
   PiecePropertyMap,
   PropertyType,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   Action,
   ActionType,
@@ -37,7 +37,7 @@ import {
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 function addAuthToPieceProps(
   props: PiecePropertyMap,

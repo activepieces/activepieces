@@ -1,4 +1,4 @@
-import { Agent, Platform, Project } from '@activepieces/shared'
+import { Agent, Platform, Project } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 

@@ -1,7 +1,7 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { customerIOAuth } from '../../index';
 import { customerIOCommon } from '../common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const createEvent = createAction({
   auth: customerIOAuth,

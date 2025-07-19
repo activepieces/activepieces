@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import { QueueMode, system } from '../../helper/system/system'
 import { memoryQueue } from '../memory/memory-queue'
 import { redisQueue } from '../redis/redis-queue'

@@ -1,8 +1,8 @@
 import {
     ApiKeyResponseWithValue,
     UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared'
-import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

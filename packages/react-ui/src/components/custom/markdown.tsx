@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 
 import { cn } from '@/lib/utils';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';

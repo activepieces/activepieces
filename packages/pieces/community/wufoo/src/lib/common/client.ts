@@ -4,7 +4,7 @@ import {
   HttpRequest,
   HttpMessageBody,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export type WufooAuthProps = {
   apiKey: string;

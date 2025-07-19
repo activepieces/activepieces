@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@ensemble/shared';
 
 export const ProjectLockedAlert = () => {
   const location = useLocation();

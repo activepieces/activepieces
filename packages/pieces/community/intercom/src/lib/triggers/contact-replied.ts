@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { intercomAuth } from '../..';
 import { intercomClient, TriggerPayload } from '../common';
 

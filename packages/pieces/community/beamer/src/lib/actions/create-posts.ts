@@ -1,9 +1,9 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { beamerAuth } from '../../index';
 import { beamerCommon } from '../common';
 

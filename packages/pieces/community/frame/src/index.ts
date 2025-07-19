@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
@@ -26,7 +26,7 @@ export const frame = createPiece({
 
   auth: frameAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/frameio.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kanarelo","kishanprmr","MoShizzle","abuaboud"],
   actions: [

@@ -1,9 +1,9 @@
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
+import { ActionBase, TriggerBase } from '@ensemble/pieces-framework'
 
 import {
     PieceCategory,
     SuggestionType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import Fuse from 'fuse.js'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 

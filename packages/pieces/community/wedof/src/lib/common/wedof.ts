@@ -1,5 +1,5 @@
-import { Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 
 export const wedofCommon = {
   baseUrl: 'https://www.wedof.fr/api',

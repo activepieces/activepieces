@@ -3,12 +3,12 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import dayjs from 'dayjs';
 import { surrealdbAuth } from '../..';
 import client from '../common';

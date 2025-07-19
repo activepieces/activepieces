@@ -14,8 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
+import { AppConnectionWithoutSensitiveData, isNil } from '@ensemble/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 

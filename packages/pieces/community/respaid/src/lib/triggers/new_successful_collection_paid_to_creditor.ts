@@ -1,5 +1,5 @@
 
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { respaidAuth } from '../../index';
 import { respaidTriggersCommon } from '../common';
 

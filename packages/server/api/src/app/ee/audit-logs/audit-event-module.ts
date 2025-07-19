@@ -1,8 +1,8 @@
-import { ListAuditEventsRequest } from '@activepieces/ee-shared'
+import { ListAuditEventsRequest } from '@ensemble/ee-shared'
 import {
     EndpointScope,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'

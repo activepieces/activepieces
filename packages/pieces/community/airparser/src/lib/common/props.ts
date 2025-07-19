@@ -1,6 +1,6 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 import { airparserApiCall } from './index';
 
 export const inboxIdDropdown = Property.Dropdown({

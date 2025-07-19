@@ -2,7 +2,7 @@ import {
     ActionType,
     GenericStepOutput,
     StepOutputStatus,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { loggingUtils } from '../../src/lib/helper/logging-utils'
 
 describe('Logging Utils', () => {

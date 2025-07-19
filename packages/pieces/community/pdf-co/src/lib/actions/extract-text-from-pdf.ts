@@ -1,5 +1,5 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
+import { Property, createAction } from "@ensemble/pieces-framework";
+import { httpClient, HttpMethod, HttpError } from "@ensemble/pieces-common";
 import { pdfCoAuth } from "../../index";
 import { BASE_URL, commonProps } from "../common/props";
 

@@ -1,6 +1,6 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { qdrantAuth } from '../..';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 
 export const collectionList = createAction({
   auth: qdrantAuth,

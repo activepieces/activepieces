@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 import {
   CAPTAIN_DATA_BASE_URL,
@@ -9,7 +9,7 @@ import {
 import { workflowProp } from '../common';
 
 export const getJobResults = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'getJobResults',
   displayName: 'Get job results',
   description: 'Get all results for a specific job',

@@ -2,7 +2,7 @@ import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export type SetWebhookRequest = {
   ip_address: string;

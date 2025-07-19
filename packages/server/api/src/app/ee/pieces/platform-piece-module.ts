@@ -1,12 +1,12 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     AddPieceRequestBody,
     EndpointScope,
     ErrorCode,
     PieceScope,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     FastifyPluginCallbackTypebox,
@@ -65,7 +65,7 @@ function assertOneOfTheseScope(
     allowedScopes: PieceScope[],
 ): void {
     if (!allowedScopes.includes(scope)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'Only project scope is allowed for cloud platform',

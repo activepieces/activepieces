@@ -14,16 +14,16 @@
       "@/*": [
         "./src/*"
       ],
-      "@activepieces/shared": [
+      "@ensemble/shared": [
         "../../packages/shared/src"
       ],
-      "@activepieces/ee-shared": [
+      "@ensemble/ee-shared": [
         "../../packages/ee/shared/src"  
       ],
-      "@activepieces/pieces-framework": [
+      "@ensemble/pieces-framework": [
         "../../packages/pieces/community/framework/src" 
       ],
-      "@activepieces/pieces-common": [
+      "@ensemble/pieces-common": [
         "../../packages/pieces/community/common/src" 
       ],
       "ee-embed-sdk": [

@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { platformApi } from '@/lib/platforms-api';
-import { isNil, CopilotProviderType } from '@activepieces/shared';
+import { isNil, CopilotProviderType } from '@ensemble/shared';
 
 import { ConfigureProviderDialog } from './configure-provider-dialog';
 
@@ -43,7 +43,7 @@ const CopilotSetup = () => {
       return {
         type: CopilotProviderType.OPENAI,
         name: 'OpenAI',
-        icon: 'https://cdn.activepieces.com/pieces/openai.png',
+        icon: 'https://cdn.ensemble.com/pieces/openai.png',
       };
     }
 
@@ -51,7 +51,7 @@ const CopilotSetup = () => {
       return {
         type: CopilotProviderType.AZURE_OPENAI,
         name: 'Azure OpenAI',
-        icon: 'https://cdn.activepieces.com/pieces/azure.png',
+        icon: 'https://cdn.ensemble.com/pieces/azure.png',
       };
     }
 
@@ -72,14 +72,14 @@ const CopilotSetup = () => {
             <Bot className="size-8" />
           </div>
           <div className="flex flex-grow flex-col">
-            <div className="text-lg">{t('Activepieces Copilot')}</div>
+            <div className="text-lg">{t('Ensemble Copilot')}</div>
             <div className="text-sm text-muted-foreground">
               {configuredProvider
                 ? t(
                     'Copilot is configured and ready to help your users build flows faster using AI.',
                   )
                 : t(
-                    'Configure Activepieces Copilot to help your users build flows faster using AI.',
+                    'Configure Ensemble Copilot to help your users build flows faster using AI.',
                   )}
             </div>
           </div>

@@ -2,7 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   FilesService,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../../';
 import { google } from 'googleapis';

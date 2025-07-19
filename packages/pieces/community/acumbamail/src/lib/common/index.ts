@@ -2,8 +2,8 @@ import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { SubscriberListFieldType } from './constants';
 import {
   GetListsResponse,

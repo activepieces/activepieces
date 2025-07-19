@@ -4,7 +4,7 @@ import {
   flowStructureUtil,
   FlowVersion,
   SampleDataFileType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { sampleDataApi } from './sample-data-api';
 

@@ -20,7 +20,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { Permission, isNil } from '@activepieces/shared';
+import { Permission, isNil } from '@ensemble/shared';
 
 import { AppearanceSettings } from './appearance-settings';
 

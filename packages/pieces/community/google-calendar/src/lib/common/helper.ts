@@ -1,10 +1,10 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { randomUUID } from 'crypto';
 import { googleCalendarCommon } from '.';
 import {

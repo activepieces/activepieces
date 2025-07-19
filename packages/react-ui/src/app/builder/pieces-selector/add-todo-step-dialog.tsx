@@ -2,8 +2,8 @@ import { t } from 'i18next';
 import { InfoIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import ActivepiecesCreateTodoGuide from '@/assets/img/custom/ActivepiecesCreateTodoGuide.png';
-import ActivepiecesTodo from '@/assets/img/custom/ActivepiecesTodo.png';
+import EnsembleCreateTodoGuide from '@/assets/img/custom/EnsembleCreateTodoGuide.png';
+import EnsembleTodo from '@/assets/img/custom/EnsembleTodo.png';
 import ExternalChannelTodo from '@/assets/img/custom/External_Channel_Todo.png';
 import { CardListItem } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import {
 import { useNewWindow } from '@/lib/navigation-utils';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { isNil, TodoType } from '@activepieces/shared';
+import { isNil, TodoType } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -152,13 +152,13 @@ export { AddTodoStepDialog as CreateTodoDialog };
 const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
   const image =
     todoType === TodoType.INTERNAL
-      ? ActivepiecesCreateTodoGuide
+      ? EnsembleCreateTodoGuide
       : ExternalChannelTodo;
   const alt =
     todoType === TodoType.INTERNAL ? 'Todos flow' : 'External channel flow';
   const title =
     todoType === TodoType.INTERNAL
-      ? t('Preview (Activepieces Todos)')
+      ? t('Preview (Ensemble Todos)')
       : t('Preview (External channel)');
   const description =
     todoType === TodoType.INTERNAL
@@ -242,7 +242,7 @@ const TodoTypeOption = ({
 
                   <div className="bg-muted rounded p-1">
                     <img
-                      src={ActivepiecesTodo}
+                      src={EnsembleTodo}
                       alt="Todo UI"
                       className="w-full h-auto rounded"
                     />

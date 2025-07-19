@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { upgradechatAuth } from '../..';
 import { upgradechatCommon } from '../common/common';
 

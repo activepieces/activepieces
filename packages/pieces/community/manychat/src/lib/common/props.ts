@@ -1,5 +1,5 @@
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
 
 export const BASE_URL = 'https://api.manychat.com/fb';
 

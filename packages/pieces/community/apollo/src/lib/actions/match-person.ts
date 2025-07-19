@@ -1,6 +1,6 @@
 import { apolloAuth } from '../../';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
+import { Property, StoreScope, createAction } from '@ensemble/pieces-framework';
 
 export const matchPerson = createAction({
   name: 'matchPerson',

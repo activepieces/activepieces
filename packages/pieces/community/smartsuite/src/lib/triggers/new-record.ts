@@ -1,5 +1,5 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, transformRecordFields } from '../common/props';
 import { SMARTSUITE_WEBHOOKS_API_URL, API_ENDPOINTS, WEBHOOK_EVENTS } from '../common/constants';

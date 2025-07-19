@@ -1,5 +1,5 @@
 import { nocodbAuth } from '../../';
-import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
 import { NocoDBClient } from './client';
 
 export function makeClient(auth: PiecePropValueSchema<typeof nocodbAuth>) {

@@ -5,7 +5,7 @@ import {
   PopulatedTodo,
   SeekPage,
   UpdateTodoRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const todosApi = {
   async get(id: string) {

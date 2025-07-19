@@ -1,6 +1,6 @@
 import { hubspotAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { MarkdownVariant } from '@ensemble/shared';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';

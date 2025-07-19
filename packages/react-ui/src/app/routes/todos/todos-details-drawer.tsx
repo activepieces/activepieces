@@ -1,6 +1,6 @@
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PopulatedTodo, Todo } from '@activepieces/shared';
+import { PopulatedTodo, Todo } from '@ensemble/shared';
 
 import { TodoDetails } from './todo-details';
 

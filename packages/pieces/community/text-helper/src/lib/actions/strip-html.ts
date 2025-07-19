@@ -1,5 +1,5 @@
 import { stripHtml } from 'string-strip-html';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 
 export const stripHtmlContent = createAction({
   name: 'stripHtml',

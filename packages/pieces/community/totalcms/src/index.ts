@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@ensemble/pieces-framework';
 import { cmsAuth } from './lib/auth';
 
 import { getBlogPostAction } from './lib/actions/get-blog-post';
@@ -15,8 +15,8 @@ import { saveTextAction } from './lib/actions/save-text';
 import { saveToggleAction } from './lib/actions/save-toggle';
 import { saveVideoAction } from './lib/actions/save-video';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { newBlogPost } from './lib/triggers/new-blog-post';
 
 export const totalcms = createPiece({
@@ -24,7 +24,7 @@ export const totalcms = createPiece({
   description: 'Content management system for modern websites',
   auth: cmsAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/totalcms.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/totalcms.png',
   categories: [PieceCategory.MARKETING],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [

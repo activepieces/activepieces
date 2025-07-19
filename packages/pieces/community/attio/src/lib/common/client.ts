@@ -5,7 +5,7 @@ import {
 	HttpMethod,
 	HttpRequest,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import crypto from 'crypto';
 
 export const BASE_URL = 'https://api.attio.com/v2';

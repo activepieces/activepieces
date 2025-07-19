@@ -1,10 +1,10 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import {
   HttpMethod,
   HttpResponse,
   httpClient,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { callTwilioApi, twilioCommon } from '../common';
 import { twilioAuth } from '../..';
 

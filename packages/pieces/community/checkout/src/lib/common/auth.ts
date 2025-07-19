@@ -1,5 +1,5 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { PieceAuth } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod, AuthenticationType } from '@ensemble/pieces-common';
 
 
 export function getEnvironmentFromApiKey(apiKey: string): { environment: 'sandbox' | 'production', baseUrl: string } {

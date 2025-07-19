@@ -2,12 +2,12 @@ import {
   OAuth2PropertyValue,
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { constantContactAuth } from '../../';
 
 export const createOrUpdateContact = createAction({

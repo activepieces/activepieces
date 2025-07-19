@@ -2,8 +2,8 @@ import {
   Polling,
   DedupeStrategy,
   pollingHelper,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { getAbandonedCheckouts } from '../common';
 import { shopifyAuth } from '../..';
 import { ShopifyAuth } from '../common/types';

@@ -1,4 +1,4 @@
-import { camelCase, startCase } from '@activepieces/shared';
+import { camelCase, startCase } from '@ensemble/shared';
 import { ContentFields } from 'contentful-management';
 
 export const getLinkHelperText = (

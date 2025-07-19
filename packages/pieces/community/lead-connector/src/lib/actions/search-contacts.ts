@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { getContacts } from '../common';
 import { leadConnectorAuth } from '../..';
 

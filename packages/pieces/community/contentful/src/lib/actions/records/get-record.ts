@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 
 export const ContentfulGetRecordAction = createAction({

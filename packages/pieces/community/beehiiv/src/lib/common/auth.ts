@@ -1,6 +1,6 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@ensemble/pieces-framework';
 import { beehiivApiCall } from './client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 
 export const beehiivAuth = PieceAuth.SecretText({
 	displayName: 'API Key',

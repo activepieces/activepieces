@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { instantVerifyAction } from './lib/actions/instant-verify';
 import { clearoutAuth } from './lib/auth';
 
@@ -9,7 +9,7 @@ export const clearout = createPiece({
   description: 'Bulk email validation and verification',
   auth: clearoutAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/clearout.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [

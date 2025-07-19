@@ -5,8 +5,8 @@ import { PermissionNeededTooltip } from '@/components/custom/permission-needed-t
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
+import { ProjectMemberWithUser } from '@ensemble/ee-shared';
+import { Permission } from '@ensemble/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Button } from '../../../components/ui/button';

@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-contentful",
+  "name": "@ensemble/piece-contentful",
   "version": "0.0.8",
   "dependencies": {
     "contentful-management": "11.48.1"

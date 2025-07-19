@@ -3,8 +3,8 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { PiecePropValueSchema } from '@ensemble/pieces-framework';
 import { CalendarObject, WeblingCalendarEvent, WeblingChanges } from './types';
 
 export async function callApi<Type>(

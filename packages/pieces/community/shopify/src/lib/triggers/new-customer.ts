@@ -7,7 +7,7 @@ export const newCustomer = createShopifyWebhookTrigger({
   displayName: 'New Customer',
   sampleData: {
     id: 6972943892790,
-    email: 'john@activepieces.com',
+    email: 'john@ensemble.com',
     accepts_marketing: false,
     created_at: '2023-03-24T18:13:56-04:00',
     updated_at: '2023-03-24T18:13:56-04:00',

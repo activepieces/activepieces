@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  activepieces:
+  ensemble:
     driver: bridge
 
 services:
@@ -16,7 +16,7 @@ services:
 
     # Connect the app to the same network as db and redis
     networks:
-      - activepieces
+      - ensemble
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -30,11 +30,11 @@ services:
   db:
     image: postgres:14.4
     environment:
-      POSTGRES_DB: activepieces
+      POSTGRES_DB: ensemble
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
     networks:
-      - activepieces
+      - ensemble
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -43,7 +43,7 @@ services:
   redis:
     image: redis:7.0.7
     networks:
-      - activepieces
+      - ensemble
     volumes:
       - redis_data:/data
     ports:

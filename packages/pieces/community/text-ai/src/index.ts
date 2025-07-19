@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { askAI } from './lib/actions/ask-ai';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { summarizeText } from './lib/actions/summarize-text';
 
 export const activepiecesAi = createPiece({
@@ -11,7 +11,7 @@ export const activepiecesAi = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,
   ],
-  logoUrl: 'https://cdn.activepieces.com/pieces/text-ai.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/text-ai.svg',
   authors: ['anasbarg', 'amrdb'],
   actions: [askAI, summarizeText],
   triggers: [],

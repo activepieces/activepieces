@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { deepgramAuth } from '../common/auth';
 import { BASE_URL, LANG_OPTIONS, MODEL_OPTIONS } from '../common/constants';
 import mime from 'mime-types';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const createSummaryAction = createAction({
   auth: deepgramAuth,

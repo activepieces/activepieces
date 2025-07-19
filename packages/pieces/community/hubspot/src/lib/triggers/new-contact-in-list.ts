@@ -1,4 +1,4 @@
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import { hubspotAuth } from '../../';
 import {
 	createTrigger,
@@ -6,9 +6,9 @@ import {
 	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import dayjs from 'dayjs';

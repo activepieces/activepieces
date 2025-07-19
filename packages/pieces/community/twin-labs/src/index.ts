@@ -1,5 +1,5 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { createPiece, PieceAuth } from "@ensemble/pieces-framework";
     import { startBrowsingTask } from "./lib/actions/start-browsing-task";
     
     export const twinLabsAuth = PieceAuth.SecretText({
@@ -12,7 +12,7 @@
       displayName: "Twin Web Agent",
       auth: twinLabsAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/twin-labs.png",
+      logoUrl: "https://cdn.ensemble.com/pieces/twin-labs.png",
       authors: [],
       actions: [startBrowsingTask],
       triggers: [],

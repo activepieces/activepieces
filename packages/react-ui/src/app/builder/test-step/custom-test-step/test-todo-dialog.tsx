@@ -10,7 +10,7 @@ import {
   Action,
   CreateTodoResult,
   CreateAndWaitTodoResult,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 

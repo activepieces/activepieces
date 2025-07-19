@@ -1,7 +1,7 @@
 import {
     CustomDomain,
     OtpType,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
     DefaultProjectRole,
     InvitationStatus,
@@ -13,7 +13,7 @@ import {
     ProjectRole,
     User,
     UserStatus,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'

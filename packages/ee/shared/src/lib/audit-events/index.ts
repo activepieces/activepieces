@@ -11,7 +11,7 @@ import {
     ProjectRelease,
     ProjectRole,
     User,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { SigningKey } from '../signing-key'
 export const ListAuditEventsRequest = Type.Object({

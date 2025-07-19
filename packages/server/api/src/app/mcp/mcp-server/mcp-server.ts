@@ -1,5 +1,5 @@
-import { ActionBase } from '@activepieces/pieces-framework'
-import { rejectedPromiseHandler, UserInteractionJobType } from '@activepieces/server-shared'
+import { ActionBase } from '@ensemble/pieces-framework'
+import { rejectedPromiseHandler, UserInteractionJobType } from '@ensemble/server-shared'
 import {
     assertNotNullOrUndefined,
     EngineResponseStatus,
@@ -14,7 +14,7 @@ import {
     McpTrigger,
     PiecePackage,
     TelemetryEventName,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { generateObject, LanguageModelV1 } from 'ai'
@@ -44,7 +44,7 @@ export async function createMcpServer({
     projectId,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
     const server = new McpServer({
-        name: 'Activepieces',
+        name: 'Ensemble',
         version: '1.0.0',
     })
 
@@ -173,7 +173,7 @@ async function addPieceToServer(
             }
             catch (error) {
                 const isOpenAIProviderNotConnected = error instanceof Error && (error.name === 'AI_RetryError' || error.name === 'AI_APICallError')
-                const errorMessage = isOpenAIProviderNotConnected ? 'Please check if you have connected your OpenAI provider to Activepieces.' : JSON.stringify(error, null, 2)
+                const errorMessage = isOpenAIProviderNotConnected ? 'Please check if you have connected your OpenAI provider to Ensemble.' : JSON.stringify(error, null, 2)
                 await mcpRunService(logger).create({
                     mcpId: mcpTool.mcpId,
                     toolId: mcpTool.id,

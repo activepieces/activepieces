@@ -6,13 +6,13 @@ import {
 	Polling,
 	pollingHelper,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { hubspotAuth } from '../../';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 type SubscriptionTimeLineResponse = {
 	hasMore: boolean;

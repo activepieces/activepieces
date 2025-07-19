@@ -1,5 +1,5 @@
 import { hubspotAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
     fromObjectTypeAssociationDropdown,
     associationTypeDropdown,

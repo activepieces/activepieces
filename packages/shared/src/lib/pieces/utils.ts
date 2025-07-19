@@ -1,7 +1,7 @@
 import semverMajor from 'semver/functions/major'
 import semverMinor from 'semver/functions/minor'
 import semverMinVersion from 'semver/ranges/min-version'
-import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
+import { EnsembleError, ErrorCode } from '../common/ensemble-error'
 import { PackageType, PiecePackage } from './piece'
 
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
@@ -42,7 +42,7 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
         }
     }
 
-    throw new ActivepiecesError({
+    throw new EnsembleError({
         code: ErrorCode.PIECE_NOT_FOUND,
         params: {
             pieceName,

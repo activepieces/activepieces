@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
 
@@ -40,7 +40,7 @@ export const xero = createPiece({
   description: 'Beautiful accounting software',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/xero.png',
   authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   categories: [PieceCategory.ACCOUNTING],
   auth: xeroAuth,

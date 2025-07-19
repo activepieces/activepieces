@@ -1,7 +1,7 @@
 import {
 	createTrigger,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { intercomAuth } from '../..';
 import { intercomClient } from '../common';
 import { tagIdProp } from '../common/props';

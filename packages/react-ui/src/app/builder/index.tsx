@@ -31,7 +31,7 @@ import {
   WebsocketClientEvent,
   flowStructureUtil,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
 

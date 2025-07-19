@@ -9,7 +9,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     TableWebhookEventType,
     UpdateRecordRequest,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

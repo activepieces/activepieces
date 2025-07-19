@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
     EndpointScope,
@@ -17,7 +17,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UserInvitation,
     UserInvitationWithLink,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
@@ -143,7 +143,7 @@ const getProjectIdAndAssertPermission = async (app: FastifyInstance, request: Fa
 async function assertPrincipalHasPermissionToProject(fastify: FastifyInstance, request: FastifyRequest, reply: FastifyReply, projectId: string, permission: Permission): Promise<void> {
     const project = await projectService.getOneOrThrow(projectId)
     if (isNil(project) || project.platformId !== request.principal.platform.id) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'user does not have access to the project',

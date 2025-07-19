@@ -1,7 +1,7 @@
 import {
     ApiKeyResponseWithValue,
     UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
     apId,
     FlowStatus,
@@ -11,7 +11,7 @@ import {
     PrincipalType,
     Project,
     User,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

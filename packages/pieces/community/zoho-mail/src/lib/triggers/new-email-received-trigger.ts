@@ -4,12 +4,12 @@ import {
 	Polling,
 	QueryParams,
 	pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { zohoMailApiCall } from '../common';
 import { zohoMailAuth } from '../common/auth';
 import { accountId, folderId } from '../common/props';

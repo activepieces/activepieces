@@ -1,11 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { discordAuth } from '../../index';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType, PauseType } from '@ensemble/shared';
 import { discordCommon } from '../common';
 
 export const discordSendApprovalMessage = createAction({

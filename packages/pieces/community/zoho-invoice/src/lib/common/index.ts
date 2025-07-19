@@ -1,5 +1,5 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
+import { OAuth2PropertyValue } from '@ensemble/pieces-framework';
 
 export const common = {
   baseUrl: (region: string) => {

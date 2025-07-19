@@ -1,6 +1,6 @@
 ---
 title: "AWS (Pulumi)"
-description: "Get Activepieces up & running on AWS with Pulumi for IaC"
+description: "Get Ensemble up & running on AWS with Pulumi for IaC"
 ---
 
 # Infrastructure-as-Code (IaC) with Pulumi
@@ -9,18 +9,18 @@ Pulumi is an IaC solution akin to Terraform or CloudFormation that lets you depl
 
 ## Deploy from Pulumi Cloud
 
-If you're already familiar with Pulumi Cloud and have [integrated their services with your AWS account](https://www.pulumi.com/docs/pulumi-cloud/deployments/oidc/aws/#configuring-openid-connect-for-aws), you can use the button below to deploy Activepieces in a few clicks. 
-The template will deploy the latest Activepieces image that's available on [Docker Hub](https://hub.docker.com/r/activepieces/activepieces).
+If you're already familiar with Pulumi Cloud and have [integrated their services with your AWS account](https://www.pulumi.com/docs/pulumi-cloud/deployments/oidc/aws/#configuring-openid-connect-for-aws), you can use the button below to deploy Ensemble in a few clicks. 
+The template will deploy the latest Ensemble image that's available on [Docker Hub](https://hub.docker.com/r/activepieces/activepieces).
 
-[![Deploy with Pulumi](https://get.pulumi.com/new/button.svg)](https://app.pulumi.com/new?template=https://github.com/activepieces/activepieces/tree/main/deploy/pulumi)
+[![Deploy with Pulumi](https://get.pulumi.com/new/button.svg)](https://app.pulumi.com/new?template=https://github.com/ensemble/ensemble/tree/main/deploy/pulumi)
 
 ## Deploy from a local environment
 
-Or, if you're currently using an S3 bucket to maintain your Pulumi state, you can scaffold and deploy Activepieces direct from Docker Hub using the template below in just few commands:
+Or, if you're currently using an S3 bucket to maintain your Pulumi state, you can scaffold and deploy Ensemble direct from Docker Hub using the template below in just few commands:
 
 ```bash
 $ mkdir deploy-activepieces && cd deploy-activepieces 
-$ pulumi new https://github.com/activepieces/activepieces/tree/main/deploy/pulumi
+$ pulumi new https://github.com/ensemble/ensemble/tree/main/deploy/pulumi
 $ pulumi up
 ```
 
@@ -32,20 +32,20 @@ The configuration options that are presented during stack configuration will all
 * PostgreSQL RDS instance. Opting out of this will use a local SQLite3 Db.
 * Single node Redis 7 cluster. Opting out of this will mean using an in-memory cache.
 * Fully qualified domain name with SSL. Note that the hosted zone must already be configured in Route 53. 
-Opting out of this will mean relying on using the application load balancer's url over standard HTTP to access your Activepieces deployment.
+Opting out of this will mean relying on using the application load balancer's url over standard HTTP to access your Ensemble deployment.
 
-For a full list of all the currently available configuration options, take a look at the [Activepieces Pulumi template file on GitHub](https://github.com/activepieces/activepieces/tree/main/deploy/pulumi/Pulumi.yaml).
+For a full list of all the currently available configuration options, take a look at the [Ensemble Pulumi template file on GitHub](https://github.com/ensemble/ensemble/tree/main/deploy/pulumi/Pulumi.yaml).
 
 ## Setting up Pulumi for the first time
 
-If you're new to Pulumi then read on to get your local dev environment setup to be able to deploy Activepieces.
+If you're new to Pulumi then read on to get your local dev environment setup to be able to deploy Ensemble.
 
 ### Prerequisites
 
 1. Make sure you have [Node](https://nodejs.org/en/download) and [Pulumi](https://www.pulumi.com/docs/install/) installed.
 2. [Install and configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).   
 3. [Install and configure Pulumi](https://www.pulumi.com/docs/clouds/aws/get-started/begin/).   
-4. Create an S3 bucket which we'll use to maintain the state of all the various service we'll provision for our Activepieces deployment:
+4. Create an S3 bucket which we'll use to maintain the state of all the various service we'll provision for our Ensemble deployment:
 
 ```bash
 aws s3api create-bucket --bucket pulumi-state --region us-east-1
@@ -61,11 +61,11 @@ aws s3api create-bucket --bucket pulumi-state --region us-east-1
 ```bash
 pulumi login s3://pulumi-state?region=us-east-1
 ```
-6. Next we're going to use the Activepieces Pulumi deploy template to create a new project, a stack in that project and then kick off the deploy:
+6. Next we're going to use the Ensemble Pulumi deploy template to create a new project, a stack in that project and then kick off the deploy:
 
 ```bash
 $ mkdir deploy-activepieces && cd deploy-activepieces 
-$ pulumi new https://github.com/activepieces/activepieces/tree/main/deploy/pulumi
+$ pulumi new https://github.com/ensemble/ensemble/tree/main/deploy/pulumi
 ```
 
 This step will prompt you to create you stack and to populate a series of config options, such as whether or not to provision a PostgreSQL RDS instance or use SQLite3.
@@ -92,20 +92,20 @@ pulumi up
        }
 ```
 
-The config value of interest here is the `activePiecesUrl` as that is the URL for our Activepieces deployment. 
+The config value of interest here is the `activePiecesUrl` as that is the URL for our Ensemble deployment. 
 If you chose to add a fully qualified domain during your stack configuration, that will be displayed here. 
 Otherwise you'll see the URL to the application load balancer. And that's it. 
 
-Congratulations! You have successfully deployed Activepieces to AWS.
+Congratulations! You have successfully deployed Ensemble to AWS.
 
-## Deploy a locally built Activepieces Docker image
+## Deploy a locally built Ensemble Docker image
 
 To deploy a locally built image instead of using the official Docker Hub image, read on.
 
-1. Clone the Activepieces repo locally:
+1. Clone the Ensemble repo locally:
 
 ```bash
-git clone https://github.com/activepieces/activepieces
+git clone https://github.com/ensemble/ensemble
 ```
 2. Move into the `deploy/pulumi` folder & install the necessary npm packages:
 
@@ -127,13 +127,13 @@ pulumi stack init activepieces-dev && pulumi up
 4. You should now see a preview in the terminal of all the services that will be provisioned, before you continue. 
 Once you choose `yes`, a new image will be built based on the `Dockerfile` in the root of the solution (make sure Docker Desktop is running) and then pushed up to a new ECR, along with provisioning all the other AWS services for the stack.
 
-Congratulations! You have successfully deployed Activepieces into AWS using a locally built Docker image.
+Congratulations! You have successfully deployed Ensemble into AWS using a locally built Docker image.
 
 ## Customising the deploy
 
 All of the current configuration options, as well as the low-level details associated with the provisioned services are fully customisable, as you would expect from any IaC. 
 For example, if you'd like to have three availability zones instead of two for the VPC, use an older version of Redis or add some additional security group rules for PostgreSQL, you can update all of these and more in the `index.ts` file inside the `deploy` folder.
 
-Or maybe you'd still like to deploy the official Activepieces Docker image instead of a local build, but would like to change some of the services. Simply set the `deployLocalBuild` config option in the stack file to `false` and make whatever changes you'd like to the `index.ts` file.   
+Or maybe you'd still like to deploy the official Ensemble Docker image instead of a local build, but would like to change some of the services. Simply set the `deployLocalBuild` config option in the stack file to `false` and make whatever changes you'd like to the `index.ts` file.   
 
 Checking out the [Pulumi docs](https://www.pulumi.com/docs/clouds/aws/) before doing so is highly encouraged.

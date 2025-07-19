@@ -25,7 +25,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { FlowTemplate } from '@activepieces/shared';
+import { FlowTemplate } from '@ensemble/shared';
 
 import { TableTitle } from '../../../../../components/custom/table-title';
 
@@ -203,7 +203,7 @@ export default function TemplatesPage() {
       lockDescription={t(
         'Convert the most common automations into reusable templates 1 click away from your users',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
+      lockVideoUrl="https://cdn.ensemble.com/videos/showcase/templates.mp4"
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">

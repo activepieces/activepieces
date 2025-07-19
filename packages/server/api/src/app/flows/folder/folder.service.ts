@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     CreateFolderRequest,
     Cursor,
@@ -9,7 +9,7 @@ import {
     FolderId,
     isNil, ProjectId,
     UpdateFolderRequest,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -36,7 +36,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
         })
         if (folderWithDisplayName && folderWithDisplayName.id !== folderId) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Folder displayName is used' },
             })
@@ -112,7 +112,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         const { projectId, folderId } = params
         const folder = await folderRepo().findOneBy({ projectId, id: folderId })
         if (!folder) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: `Folder ${folderId} is not found`,

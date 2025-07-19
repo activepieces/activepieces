@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth, PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth, PiecePropValueSchema } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { leadStatusChangedTrigger, newContactAddedTrigger, newLeadCreatedTrigger, newTaskCreatedTrigger } from "./lib/triggers";
 import { findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction, updateLeadAction } from "./lib/actions";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 const markdownDescription = `
 Please follow [Generate Long Live Token](https://developers.kommo.com/docs/long-lived-token) guide for generating token.
@@ -29,7 +29,7 @@ export const kommoAuth = PieceAuth.CustomAuth({
 export const kommo = createPiece({
   displayName: 'Kommo',
   auth: kommoAuth,
-  logoUrl: 'https://cdn.activepieces.com/pieces/kommo.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/kommo.png',
   categories: [PieceCategory.COMMUNICATION, PieceCategory.SALES_AND_CRM],
   authors: ['krushnarout', 'kishanprmr'],
   actions: [findLeadAction, updateContactAction, createLeadAction, updateLeadAction, createContactAction, findContactAction, findCompanyAction,

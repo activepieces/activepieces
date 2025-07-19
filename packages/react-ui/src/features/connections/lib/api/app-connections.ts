@@ -8,7 +8,7 @@ import {
   SeekPage,
   UpdateConnectionValueRequestBody,
   UpsertAppConnectionRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const appConnectionsApi = {
   list(

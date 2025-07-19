@@ -4,8 +4,8 @@ import {
   httpClient,
   HttpRequest,
   AuthenticationType,
-} from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
 
 export async function comfyIcuApiCall({
   apiKey,

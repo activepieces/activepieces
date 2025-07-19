@@ -1,6 +1,6 @@
 ---
 name: MCP Bounty
-about: Request a new Piece for Activepieces
+about: Request a new Piece for Ensemble
 title: '[Piece Request] <Your Product Name>'
 labels: ['pieces']
 assignees: ''
@@ -16,7 +16,7 @@ What does your product do? Who uses it?
 
 ## ⚙️ Actions  
 These are the things you want AI agents to be able to do with your product.  
-They’ll also be available for automations in Activepieces.
+They’ll also be available for automations in Ensemble.
 
 Examples:  
 - Create Contact  

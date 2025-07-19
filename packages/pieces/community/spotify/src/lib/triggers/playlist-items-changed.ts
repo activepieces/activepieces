@@ -2,7 +2,7 @@ import {
   createTrigger,
   StoreScope,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { spotifyCommon, makeClient } from '../common';
 import { createHash } from 'crypto';
 

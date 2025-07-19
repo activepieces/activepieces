@@ -1,4 +1,4 @@
-import { flowMigrations, FlowVersion } from '@activepieces/shared'
+import { flowMigrations, FlowVersion } from '@ensemble/shared'
 import { system } from '../../helper/system/system'
 import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
 

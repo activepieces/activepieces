@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { WebhookInformation, jotformCommon } from '../common';
 import { jotformAuth } from '../..';
 

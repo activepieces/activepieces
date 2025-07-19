@@ -5,7 +5,7 @@ import {
 	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
@@ -19,8 +19,8 @@ import {
 	StageWithPipelineInfo,
 	WebhookCreateResponse,
 } from '../common/types';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 
 export const updatedDealStageTrigger = createTrigger({
 	auth: pipedriveAuth,

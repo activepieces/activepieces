@@ -1,12 +1,12 @@
 import {
   TriggerStrategy, createTrigger
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpRequest,
   HttpMethod,
   AuthenticationType,
-} from "@activepieces/pieces-common";
+} from "@ensemble/pieces-common";
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
 import { clickupAuth } from "../../";

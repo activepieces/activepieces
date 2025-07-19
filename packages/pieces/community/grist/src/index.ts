@@ -3,16 +3,16 @@ import {
   PieceAuth,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { gristCreateRecordAction } from './lib/actions/create-record.action';
 import { gristUpdateRecordAction } from './lib/actions/update-record.action';
 import { gristUploadAttachmentsToDocumnetAction } from './lib/actions/upload-attachments-to-document.action';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
 import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
 import { gristSearchRecordAction } from './lib/actions/search-record.action';
 import { GristAPIClient } from './lib/common/helpers';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const gristAuth = PieceAuth.CustomAuth({
   required: true,
@@ -58,7 +58,7 @@ export const grist = createPiece({
   displayName: 'Grist',
   auth: gristAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/grist.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/grist.png',
   description: 'open source spreadsheet',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['kishanprmr'],

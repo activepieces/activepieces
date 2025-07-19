@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { discordAuth } from '../../index';
 import { discordCommon } from '../common';
 import { Channel } from '../common/models';

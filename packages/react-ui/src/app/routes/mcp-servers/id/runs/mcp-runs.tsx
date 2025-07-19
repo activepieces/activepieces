@@ -7,7 +7,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { DataTable } from '@/components/ui/data-table';
 import { mcpRunApi } from '@/features/mcp/lib/mcp-run-api';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { McpRun, McpRunStatus } from '@activepieces/shared';
+import { McpRun, McpRunStatus } from '@ensemble/shared';
 
 import McpRunDetails from './mcp-run-details';
 import { mcpRunColumns, mcpRunFilters } from './mcp-run-utils';

@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
+import { FlowOperationType, PopulatedFlow } from '@ensemble/shared';
 
 const RenameFlowSchema = Type.Object({
   displayName: Type.String(),

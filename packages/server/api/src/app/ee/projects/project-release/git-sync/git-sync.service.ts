@@ -4,9 +4,9 @@ import {
     GitPushOperationType,
     GitRepo,
     PushGitRepoRequest,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApEdition,
     apId,
     ErrorCode,
@@ -14,7 +14,7 @@ import {
     isNil,
     ProjectState,
     SeekPage,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../../core/db/repo-factory'
 import { flowService } from '../../../../flows/flow/flow.service'
@@ -51,7 +51,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
         const gitRepo = await repo().findOneBy({ projectId })
         if (isNil(gitRepo)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'git-repo',
@@ -63,7 +63,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     async getOrThrow({ id }: { id: string }): Promise<GitRepo> {
         const gitRepo = await repo().findOneByOrFail({ id })
         if (isNil(gitRepo)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: id,
@@ -116,7 +116,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 break
             }
             default:
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.VALIDATION,
                     params: {
                         message: `Only supported operations are ${GitPushOperationType.DELETE_FLOW} and ${GitPushOperationType.DELETE_TABLE}`,
@@ -214,7 +214,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo().findOneBy({ id, projectId })
         if (isNil(gitRepo)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: id,

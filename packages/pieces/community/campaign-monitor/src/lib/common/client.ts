@@ -2,7 +2,7 @@ import {
   HttpMethod,
   httpClient,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const BASE_URL = 'https://api.createsend.com/api/v3.3';
 

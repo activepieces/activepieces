@@ -5,7 +5,7 @@ import {
   SeekPage,
   UpdateGlobalConnectionValueRequestBody,
   UpsertGlobalConnectionRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const globalConnectionsApi = {
   list(

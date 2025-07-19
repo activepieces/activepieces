@@ -1,5 +1,5 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@ensemble/server-shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@ensemble/shared'
 import { In } from 'typeorm'
 import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -180,13 +180,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.PRIVACY_POLICY_URL,
-                value: 'https://www.activepieces.com/privacy',
+                value: 'https://www.ensemble.com/privacy',
                 created,
                 updated,
             },
             {
                 id: ApFlagId.TERMS_OF_SERVICE_URL,
-                value: 'https://www.activepieces.com/terms',
+                value: 'https://www.ensemble.com/terms',
                 created,
                 updated,
             },

@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 
 export const sendinblueAuth = PieceAuth.SecretText({
@@ -14,7 +14,7 @@ export const sendinblue = createPiece({
   description:
     'Formerly Sendinblue, is a SaaS solution for relationship marketing',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/brevo.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/brevo.png',
   authors: ["kanarelo","BLaidzX","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
   auth: sendinblueAuth,

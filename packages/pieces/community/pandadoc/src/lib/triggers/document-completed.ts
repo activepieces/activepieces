@@ -2,9 +2,9 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { WebhookHandshakeStrategy } from '@ensemble/shared';
 import { pandadocAuth, pandadocClient } from '../common';
 
 export const documentCompleted = createTrigger({
@@ -131,7 +131,7 @@ export const documentCompleted = createTrigger({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: `Activepieces Document Completed`,
+        name: `Ensemble Document Completed`,
         url: context.webhookUrl,
         active: true,
         triggers: ['document_state_changed', 'recipient_completed'],

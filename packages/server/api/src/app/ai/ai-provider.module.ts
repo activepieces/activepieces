@@ -1,6 +1,6 @@
 import { Writable } from 'stream'
-import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, AIErrorResponse, ErrorCode, isNil, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
+import { exceptionHandler } from '@ensemble/server-shared'
+import { EnsembleError, AIErrorResponse, ErrorCode, isNil, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@ensemble/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -104,7 +104,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request, reply) => {
             if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid route for principal type',
@@ -114,7 +114,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const provider = (request.params as { provider: string }).provider
             if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
                     params: {
                         message: 'Streaming is not supported for this provider',
@@ -124,7 +124,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const model = aiProviderService.extractModelId(provider, request)
             if (!model || !aiProviderService.isModelSupported(provider, model)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
                     params: {
                         provider,
@@ -176,7 +176,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
 function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProvider {
     const providerConfig = !isNil(provider) ? SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider) : undefined
     if (isNil(providerConfig)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
             params: {
                 provider: provider ?? 'unknown',

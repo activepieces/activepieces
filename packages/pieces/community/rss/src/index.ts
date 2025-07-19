@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 import { rssNewItemTrigger } from './lib/triggers/new-item-trigger';
 import { rssNewItemListTrigger } from './lib/triggers/new-item-list-triggers';
 
@@ -7,7 +7,7 @@ export const rssFeed = createPiece({
   description: 'Stay updated with RSS feeds',
   authors: ["Abdallah-Alwarawreh","kishanprmr","khaledmashaly","abuaboud", "Kevinyu-alan"],
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/rss.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/rss.png',
   categories: [],
   auth: PieceAuth.None(),
   actions: [],

@@ -1,9 +1,9 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     assertNotNullOrUndefined,
     ErrorCode,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
@@ -40,7 +40,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         const projectId = requestUtils.extractProjectId(request)
 
         if (projectId && projectId !== request.principal.projectId) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'invalid project id',

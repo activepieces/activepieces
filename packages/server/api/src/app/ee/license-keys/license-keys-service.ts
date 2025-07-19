@@ -1,5 +1,5 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@ensemble/server-shared'
+import { EnsembleError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@ensemble/shared'
 import { PlanName } from '@ee/shared/src/lib/billing'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,7 +9,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
-const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
+const secretManagerLicenseKeysRoute = 'https://secrets.ensemble.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
     log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
@@ -26,7 +26,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             body: JSON.stringify(request),
         })
         if (response.status === StatusCodes.CONFLICT) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY,
                 params: request,
             })
@@ -106,7 +106,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         })
 
         if (response.status === StatusCodes.NOT_FOUND) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: 'License key not found',

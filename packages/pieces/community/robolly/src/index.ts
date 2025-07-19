@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { generateImage } from './lib/actions/generate-image.action';
 
 const markdownDescription = `
@@ -28,7 +28,7 @@ export const robolly = createPiece({
 
   auth: robollyAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/robolly.png',
   categories: [PieceCategory.MARKETING],
   authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
   actions: [

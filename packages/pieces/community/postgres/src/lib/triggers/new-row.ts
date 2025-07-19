@@ -1,6 +1,6 @@
 
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import crypto from 'crypto';
 import { postgresAuth } from '../..';
 import { pgClient } from '../common';

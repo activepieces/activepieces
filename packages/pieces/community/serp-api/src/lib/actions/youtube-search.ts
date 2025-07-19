@@ -3,7 +3,7 @@
  * Provides comprehensive YouTube search functionality with quality and duration filters
  */
 
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { serpApiAuth } from '../../index';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';

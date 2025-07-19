@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { mixpanelAuth } from '../../index';
 
 const API_URL = 'https://api.mixpanel.com';

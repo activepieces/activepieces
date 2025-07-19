@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createMemAction } from './lib/actions/create-mem';
 import { createNoteAction } from './lib/actions/create-note';
 import { deleteNoteAction } from './lib/actions/delete-note';
@@ -15,7 +15,7 @@ export const mem = createPiece({
   displayName: 'Mem',
   description: 'Capture and organize your thoughts using Mem.ai',
   auth: memAuth,
-  logoUrl: 'https://cdn.activepieces.com/pieces/mem.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mem.png',
   authors: ['krushnarout', 'kishanprmr'],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [

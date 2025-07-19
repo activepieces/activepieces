@@ -1,9 +1,9 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { getUsersDropdown, issueIdOrKeyProp } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { jiraApiCall } from '../common';
-import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@ensemble/pieces-common';
 
 export const addWatcherToIssueAction = createAction({
 	auth: jiraCloudAuth,

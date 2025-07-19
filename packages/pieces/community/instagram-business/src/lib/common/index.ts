@@ -2,12 +2,12 @@ import {
   HttpMethod,
   httpClient,
   getAccessTokenOrThrow,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 const markdown = `
 To Obtain the following credentials:

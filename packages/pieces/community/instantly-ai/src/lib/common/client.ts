@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 
 export const BASE_URL = 'https://api.instantly.ai/api/v2';
 

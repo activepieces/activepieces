@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { Property, createAction } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 
 const markdown = `
 **Advanced Piece**

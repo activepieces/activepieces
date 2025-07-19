@@ -1,5 +1,5 @@
 import { scrapelessApiAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { googleTrendsDataTypeOptions } from '../constants';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 

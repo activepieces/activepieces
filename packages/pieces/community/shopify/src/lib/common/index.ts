@@ -4,7 +4,7 @@ import {
   HttpResponse,
   QueryParams,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   ShopifyAuth,
   ShopifyCheckout,

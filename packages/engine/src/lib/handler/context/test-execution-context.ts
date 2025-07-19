@@ -9,7 +9,7 @@ import {
     spreadIfDefined,
     StepOutputStatus,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { createPropsResolver } from '../../variables/props-resolver'
 import { FlowExecutorContext } from './flow-execution-context'
 

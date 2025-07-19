@@ -1,16 +1,16 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     isNil,
     PlatformRole,
     PlatformWithoutSensitiveData,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { onRequestAsyncHookHandler } from 'fastify'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
-const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
+const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new EnsembleError({
     code: ErrorCode.AUTHORIZATION,
     params: {},
 })
@@ -27,7 +27,7 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWitho
         const enabled = handler(platform)
 
         if (!enabled) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FEATURE_DISABLED,
                 params: {
                     message: 'Feature is disabled',

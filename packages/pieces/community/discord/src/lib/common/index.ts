@@ -1,6 +1,6 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 import { Channel, Guild } from '../common/models';
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@ensemble/pieces-framework';
 
 export interface Member {
   user: {

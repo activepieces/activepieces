@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { closeAuth } from '../../';
 import { customFields, leadId, statusId, userId } from '../common/props';
 import { closeApiCall } from '../common/client';

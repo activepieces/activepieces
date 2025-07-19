@@ -1,8 +1,8 @@
 import {
   createAction,
   Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { invoiceninjaAuth } from '../..';
 
 export const createClient = createAction({

@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-pdf",
+  "name": "@ensemble/piece-pdf",
   "version": "0.2.4",
   "dependencies": {
     "jimp": "^0.22.12",

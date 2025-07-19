@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { apId, isNil, SeekPage } from '@activepieces/shared';
+import { apId, isNil, SeekPage } from '@ensemble/shared';
 
 import { Button } from '../button';
 import {

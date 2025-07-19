@@ -4,8 +4,8 @@ import {
   HttpMethod,
   httpClient,
   HttpRequest,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { Property, createAction } from '@ensemble/pieces-framework';
 
 export const createEvent = createAction({
   auth: sessionAuth,

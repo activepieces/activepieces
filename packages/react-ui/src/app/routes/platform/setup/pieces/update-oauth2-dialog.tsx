@@ -26,7 +26,7 @@ import {
   oauthAppsMutations,
   oauthAppsQueries,
 } from '@/features/connections/lib/oauth-apps-hooks';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;

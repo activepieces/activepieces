@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 
 export const whatsableAuth = PieceAuth.SecretText({
@@ -12,7 +12,7 @@ export const whatsable = createPiece({
   description: 'Manage your WhatsApp business account',
   auth: whatsableAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/whatsable.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/whatsable.png',
   authors: ["abuaboud"],
   actions: [sendMessage],
   triggers: [],

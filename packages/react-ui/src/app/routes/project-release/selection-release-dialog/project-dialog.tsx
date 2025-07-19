@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import { DiffReleaseRequest, ProjectReleaseType } from '@ensemble/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 

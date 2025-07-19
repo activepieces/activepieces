@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { spaceIdDropdown, postIdDropdown, BASE_URL } from '../common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { circleAuth } from '../common/auth';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 interface CreateCommentPayload {
 	post_id: number;

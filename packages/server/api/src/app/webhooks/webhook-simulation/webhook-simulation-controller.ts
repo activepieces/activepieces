@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@ensemble/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,

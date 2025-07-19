@@ -4,7 +4,7 @@ import {
 	DropdownOption,
 	PiecePropValueSchema,
 	Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 export const uploadFileAction = createAction({

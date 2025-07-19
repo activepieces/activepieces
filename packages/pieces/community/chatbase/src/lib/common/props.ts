@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { DropdownOption, Property } from '@ensemble/pieces-framework';
 import { makeRequest } from './index';
 
 export const chatbotIdDropdown = Property.Dropdown({

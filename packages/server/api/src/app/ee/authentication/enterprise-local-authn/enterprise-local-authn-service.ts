@@ -2,8 +2,8 @@ import {
     OtpType,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
-} from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { EnsembleError, ErrorCode, UserId } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { otpService } from '../otp/otp-service'
@@ -52,7 +52,7 @@ const confirmOtp = async ({
     })
 
     if (!isOtpValid) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.INVALID_OTP,
             params: {},
         })

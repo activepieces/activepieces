@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { vtigerAuth } from '../..';
 import {
   Operation,
@@ -6,7 +6,7 @@ import {
   instanceLogin,
   prepareHttpRequest,
 } from '../common';
-import { httpClient } from '@activepieces/pieces-common';
+import { httpClient } from '@ensemble/pieces-common';
 
 //Docs: https://code.vtiger.com/vtiger/vtigercrm-manual/-/wikis/Webservice-Docs
 //Extra: https://help.vtiger.com/article/147111249-Rest-API-Manual

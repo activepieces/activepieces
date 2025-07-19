@@ -1,5 +1,5 @@
-import { AppSystemProp, networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { AppSystemProp, networkUtils, WorkerSystemProp } from '@ensemble/server-shared'
+import { ApEdition, isNil } from '@ensemble/shared'
 import { system } from '../../helper/system/system'
 import { customDomainService } from './custom-domain.service'
 

@@ -11,7 +11,7 @@ import {
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   DropdownMenu,

@@ -6,8 +6,8 @@ import {
     RepeatingJobData,
     UserInteractionJobData,
     WebhookJobData,
-} from '@activepieces/server-shared'
-import { ApId, isNil, ScheduleOptions } from '@activepieces/shared'
+} from '@ensemble/server-shared'
+import { ApId, isNil, ScheduleOptions } from '@ensemble/shared'
 
 export const JOB_PRIORITY = {
     high: 2,

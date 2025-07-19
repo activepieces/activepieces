@@ -23,7 +23,7 @@ import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@ensemble/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { DashboardContainer } from '../components/dashboard-container';

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { Product } from '../../common/Product';
 import { vtexAuth } from '../../..';
 

@@ -17,7 +17,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
+import { ProjectRole, RoleType, SeekPage } from '@ensemble/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 

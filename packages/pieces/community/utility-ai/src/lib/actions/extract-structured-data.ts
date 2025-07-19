@@ -1,6 +1,6 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { createAIProvider, MarkdownVariant } from '@activepieces/shared';
-import { aiProps } from '@activepieces/pieces-common';
+import { ApFile, createAction, Property } from '@ensemble/pieces-framework';
+import { createAIProvider, MarkdownVariant } from '@ensemble/shared';
+import { aiProps } from '@ensemble/pieces-common';
 import { generateText, tool, LanguageModel, jsonSchema, CoreMessage, CoreUserMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';

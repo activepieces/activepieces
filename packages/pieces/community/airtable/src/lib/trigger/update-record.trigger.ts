@@ -2,13 +2,13 @@ import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   Property,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import Airtable from 'airtable';
 import dayjs from 'dayjs';
 import { airtableAuth } from '../../';

@@ -1,6 +1,6 @@
 import { mailchimpCommon } from '../common';
 import mailchimp from '@mailchimp/mailchimp_marketing';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { mailchimpAuth } from '../..';
 
 export const updateSubscriberInList = createAction({

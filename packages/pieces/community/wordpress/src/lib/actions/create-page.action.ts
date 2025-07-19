@@ -1,11 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { wordpressCommon } from '../common';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { wordpressAuth } from '../..';
 
 export const createWordPressPage = createAction({

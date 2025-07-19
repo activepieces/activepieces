@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 import {
 	searchAndReplaceText,
 	addTextToPdf,
@@ -9,7 +9,7 @@ import {
 	extractTablesFromPdf,
 	addBarcodeToPdf,
 } from './lib/actions';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const pdfCoAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
@@ -21,7 +21,7 @@ export const pdfCo = createPiece({
 	displayName: 'PDF.co',
 	description: 'Automate PDF conversion, editing, extraction',
 	categories: [PieceCategory.PRODUCTIVITY, PieceCategory.CONTENT_AND_FILES],
-	logoUrl: 'https://cdn.activepieces.com/pieces/pdf-co.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/pdf-co.png',
 	auth: pdfCoAuth,
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [

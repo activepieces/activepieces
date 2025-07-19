@@ -36,14 +36,14 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { GitBranchType } from '@activepieces/ee-shared';
+import { GitBranchType } from '@ensemble/ee-shared';
 import {
   FlowOperationType,
   FlowVersion,
   FlowVersionState,
   Permission,
   PopulatedFlow,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';

@@ -1,10 +1,10 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property } from '@ensemble/pieces-framework';
 import { stripHtml } from 'string-strip-html';
 import { intercomAuth } from '../..';
 import { intercomClient } from '../common';
 
 export const noteAddedToConversation = createTrigger({
-	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+	// auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
 	name: 'noteAddedToConversation',
 	displayName: 'Note added to conversation',
 	description: 'Triggers when a note is added to a conversation',

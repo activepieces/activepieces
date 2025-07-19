@@ -1,4 +1,4 @@
-import { UserWithMetaInformationAndProject } from '@activepieces/shared';
+import { UserWithMetaInformationAndProject } from '@ensemble/shared';
 
 import { api } from './api';
 

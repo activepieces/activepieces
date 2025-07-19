@@ -1,13 +1,13 @@
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
   propsValidation,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { heartbeatAuth } from '../..';
 import { z } from 'zod';
 

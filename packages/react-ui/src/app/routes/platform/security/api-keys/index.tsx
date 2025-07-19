@@ -13,7 +13,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
+import { ApiKeyResponseWithoutValue } from '@ensemble/ee-shared';
 
 const ApiKeysPage = () => {
   const queryClient = useQueryClient();
@@ -66,9 +66,9 @@ const ApiKeysPage = () => {
       locked={!platform.plan.apiKeysEnabled}
       lockTitle={t('Enable API Keys')}
       lockDescription={t(
-        'Create and manage API keys to access Activepieces APIs.',
+        'Create and manage API keys to access Ensemble APIs.',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/api-keys.mp4"
+      lockVideoUrl="https://cdn.ensemble.com/videos/showcase/api-keys.mp4"
     >
       <div className="flex-col w-full">
         <div className="mb-4 flex">
@@ -92,7 +92,7 @@ const ApiKeysPage = () => {
         <DataTable
           emptyStateTextTitle={t('No API keys found')}
           emptyStateTextDescription={t(
-            'Start by creating an API key to communicate with Activepieces APIs',
+            'Start by creating an API key to communicate with Ensemble APIs',
           )}
           emptyStateIcon={<Key className="size-14" />}
           page={data}

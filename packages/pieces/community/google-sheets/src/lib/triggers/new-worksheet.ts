@@ -1,9 +1,9 @@
 import { googleSheetsAuth } from '../../index';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
 
 export const newWorksheetTrigger = createTrigger({

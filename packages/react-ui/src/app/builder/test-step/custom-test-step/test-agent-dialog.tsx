@@ -15,7 +15,7 @@ import {
   StepRunResponse,
   AgentTaskStatus,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type AgentTestingDialogProps = {
   open: boolean;

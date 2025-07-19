@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { pipedriveAuth } from '../../index';
 import {
 	pipedriveApiCall,
@@ -6,8 +6,8 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 
 export const findPersonAction = createAction({
@@ -34,7 +34,7 @@ export const findPersonAction = createAction({
 			method: HttpMethod.POST,
 			resourceUri: '/filters',
 			body: {
-				name: 'Activepieces Find Person Filter',
+				name: 'Ensemble Find Person Filter',
 				type: 'people',
 				conditions: {
 					glue: 'and',

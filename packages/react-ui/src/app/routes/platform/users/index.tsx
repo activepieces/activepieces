@@ -16,7 +16,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@ensemble/shared';
 
 import { TableTitle } from '../../../../components/custom/table-title';
 

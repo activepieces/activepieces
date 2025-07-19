@@ -2,7 +2,7 @@ import {
   type HttpResponse,
   type HttpRequest,
   httpClient
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const callSevenApi = async <T>(
   httpRequest: Omit<HttpRequest, 'url'>,
@@ -15,7 +15,7 @@ export const callSevenApi = async <T>(
       ...httpRequest.headers,
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      SentWith: 'Activepieces',
+      SentWith: 'Ensemble',
       'X-Api-Key': apiKey
     },
     url: `https://gateway.seven.io/api/${path}`

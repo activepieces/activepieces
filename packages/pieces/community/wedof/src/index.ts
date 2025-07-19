@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { wedofCommon } from './lib/common/wedof';
 import { newRegistrationFolderNotProcessed } from './lib/triggers/registration-folders/new-registration-folder-created';
 import { registrationFolderUpdated } from './lib/triggers/registration-folders/registration-folder-updated';
@@ -104,7 +104,7 @@ export const wedof = createPiece({
   description:
     'Automatisez la gestion de vos dossiers de formations (CPF, EDOF, Kairos, AIF, OPCO et autres)',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/wedof.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/wedof.svg',
   categories: [
     PieceCategory.SALES_AND_CRM,
     PieceCategory.CONTENT_AND_FILES,

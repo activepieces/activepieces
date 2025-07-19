@@ -1,5 +1,5 @@
 import { squareAuth } from '../../';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 
 const triggerData = [
   {

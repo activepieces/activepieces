@@ -3,14 +3,14 @@ import {
   DropdownOption,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export async function queryAccounts(
   auth: PiecePropValueSchema<typeof zuoraAuth>

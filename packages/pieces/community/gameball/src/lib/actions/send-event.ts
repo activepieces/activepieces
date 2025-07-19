@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { gameballAuth } from '../..';
 
 export const sendEvent = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'sendEvent',
   auth: gameballAuth,
   displayName: 'Send event',

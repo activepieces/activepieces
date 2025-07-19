@@ -1,9 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { formIdDropdown } from '../common/props';
 import { filloutFormsAuth } from '../../index';
 import { makeRequest } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 
 const TRIGGER_KEY = 'new-form-response-trigger';
 

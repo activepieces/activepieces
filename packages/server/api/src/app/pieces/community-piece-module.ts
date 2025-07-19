@@ -1,5 +1,5 @@
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
+import { PieceMetadataModel } from '@ensemble/pieces-framework'
+import { AddPieceRequestBody, PrincipalType } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { pieceService } from './piece-service'

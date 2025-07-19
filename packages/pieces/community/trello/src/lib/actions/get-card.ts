@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpRequest,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { trelloCommon } from '../common';
 import { TrelloCard } from '../common/props/card';
 import { trelloAuth } from '../..';

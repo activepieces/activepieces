@@ -37,12 +37,12 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
   SecretTextProperty,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AppConnectionWithoutSensitiveData,
   isNil,
   UpsertAppConnectionRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { newConnectionUtils } from '../../features/connections/lib/utils';
 import { formUtils } from '../../features/pieces/lib/form-utils';

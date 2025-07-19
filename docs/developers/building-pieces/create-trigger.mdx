@@ -59,7 +59,7 @@ const polling: Polling<
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: 'https://cloud.activepieces.com/api/v1/webhooks/aHlEaNLc6vcF1nY2XJ2ed/sync',
+      url: 'https://cloud.ensemble.com/api/v1/webhooks/aHlEaNLc6vcF1nY2XJ2ed/sync',
       headers: {
         authorization: auth,
       },
@@ -105,7 +105,7 @@ The way polling triggers usually work is as follows:
 
 ## Expose The Definition
 
-To make the trigger readable by Activepieces, add it to the array of triggers in the piece definition.
+To make the trigger readable by Ensemble, add it to the array of triggers in the piece definition.
 
 ```typescript
 import { createPiece } from '@activepieces/pieces-framework';
@@ -115,7 +115,7 @@ import { newFlavorCreated } from './lib/triggers/new-flavor-created';
 
 export const gelato = createPiece({
   displayName: 'Gelato Tutorial',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/gelato.png',
   authors: [],
   auth: gelatoAuth,
   actions: [getIcecreamFlavor],
@@ -132,6 +132,6 @@ For more details, check out the [Piece Development](../development-setup/getting
 
 Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
-To test the trigger, use the load sample data from flow builder in Activepieces. It should function as shown in the screenshot.
+To test the trigger, use the load sample data from flow builder in Ensemble. It should function as shown in the screenshot.
 
 ![Gelato Action](/resources/screenshots/gelato-trigger.png)

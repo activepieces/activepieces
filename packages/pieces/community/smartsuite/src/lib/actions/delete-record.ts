@@ -1,5 +1,5 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod} from '@activepieces/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
+import { HttpMethod} from '@ensemble/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon } from '../common/props';
 import { smartSuiteApiCall } from '../common';

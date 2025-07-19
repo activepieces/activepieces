@@ -1,11 +1,11 @@
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema } from '@ensemble/pieces-framework';
 import {
 	httpClient,
 	HttpMethod,
 	AuthenticationType,
 	HttpRequest,
-} from '@activepieces/pieces-common';
-import { isNil, isString } from '@activepieces/shared';
+} from '@ensemble/pieces-common';
+import { isNil, isString } from '@ensemble/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';

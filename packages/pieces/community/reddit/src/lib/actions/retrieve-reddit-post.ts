@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { redditAuth } from '../../';
 
 export const retrieveRedditPost = createAction({
@@ -51,7 +51,7 @@ export const retrieveRedditPost = createAction({
       },
       headers: {
         'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
+        'User-Agent': 'Ensemble Reddit Client',
         'Content-Type': 'application/json',
       },
       timeout: 5000,

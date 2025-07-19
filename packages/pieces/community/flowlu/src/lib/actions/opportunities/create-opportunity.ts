@@ -2,7 +2,7 @@ import {
   PiecePropValueSchema,
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { flowluAuth } from '../../../';
 import { makeClient } from '../../common';
 import { flowluProps } from '../../common/props';

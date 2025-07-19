@@ -4,7 +4,7 @@ import {
   DynamicPropsValue,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { makeClient } from './client';
 import { ACTION_ENTITY_DROPDOWN_OPTIONS } from './constants';
 import { customersEntityProps } from './props/customers.entity';

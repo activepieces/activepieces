@@ -3,7 +3,7 @@ import {
   Store,
   StoreScope,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { constructQueueName, formatStorageError } from '../common';
 
 const notes = `**Note:**

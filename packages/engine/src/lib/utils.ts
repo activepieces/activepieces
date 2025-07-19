@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@ensemble/pieces-framework'
 import { createConnectionService } from './services/connections.service'
 
 export const utils = {

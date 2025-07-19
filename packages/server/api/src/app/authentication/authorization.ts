@@ -1,9 +1,9 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     isNil,
     isObject,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { preSerializationHookHandler } from 'fastify'
 
 export function extractResourceName(url: string): string | undefined {
@@ -47,7 +47,7 @@ Payload | null
         }
 
         if (verdict === 'DENY') {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'not owned by current project',

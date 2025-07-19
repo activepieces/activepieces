@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { exec } from '../utils/exec'
 import { readPackageJson, readProjectJson } from '../utils/files'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@ensemble/shared'
 import chalk from 'chalk'
 import path from 'node:path'
 

@@ -1,11 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { common } from './lib/common';
 import { newInvoice } from './lib/triggers/new-invoice';
 
@@ -53,7 +53,7 @@ export const zohoInvoice = createPiece({
 
   auth: zohoAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/zoho-invoice.png',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [

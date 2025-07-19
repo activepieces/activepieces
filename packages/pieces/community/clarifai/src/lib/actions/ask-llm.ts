@@ -1,10 +1,10 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { clarifaiAuth } from '../..';
 import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const clarifaiAskLLM = createAction({
   name: 'ask-llm',

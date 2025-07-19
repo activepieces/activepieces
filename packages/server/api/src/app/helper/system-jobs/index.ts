@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { QueueMode, system } from '../system/system'
 import { SystemJobSchedule } from './common'

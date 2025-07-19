@@ -2,13 +2,13 @@ import {
   DropdownOption,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { wordpressAuth } from '../..';
 export type WordPressMedia = { id: string; title: { rendered: string } };
 

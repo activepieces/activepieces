@@ -31,7 +31,7 @@ import {
   ProjectReleaseType,
   ProjectSyncPlan,
   TableOperationType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { OperationChange } from './operation-change';
 

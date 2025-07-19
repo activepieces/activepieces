@@ -6,14 +6,14 @@ import {
 	Polling,
 	pollingHelper,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { hubspotAuth } from '../../';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 
 type Props = {

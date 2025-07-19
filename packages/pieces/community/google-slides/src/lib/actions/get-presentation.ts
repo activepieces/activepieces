@@ -1,5 +1,5 @@
 import { googleSlidesAuth } from '../../index';
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@ensemble/pieces-framework";
 import { getSlide } from "../commons/common";
 
 export const getPresentation = createAction({

@@ -1,5 +1,5 @@
-import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { ActivepiecesError,
+import { OAuth2AuthorizationMethod } from '@ensemble/pieces-framework'
+import { EnsembleError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
@@ -7,7 +7,7 @@ import { ActivepiecesError,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
     resolveValueFromProps,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import axios, { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
@@ -96,7 +96,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 log.error('Unknown Error:')
                 log.error(e)
             }
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_CLAIM,
                 params: {
                     clientId: request.clientId,

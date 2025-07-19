@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@ensemble/shared';
 
 import { ConfigDisplay } from './config-display';
 import { ExposeMcpNote } from './expose-mcp-note';

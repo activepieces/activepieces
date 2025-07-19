@@ -2,12 +2,12 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { getQuestion } from './lib/actions/get-question';
 import { getQuestionPngPreview } from './lib/actions/get-png-rendering';
 import { getDashboardQuestions } from './lib/actions/get-dashboard';
 import { queryMetabaseApi } from './lib/common';
-import { HttpMethod, is_chromium_installed } from '@activepieces/pieces-common';
+import { HttpMethod, is_chromium_installed } from '@ensemble/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
 import { embedQuestion } from './lib/actions/embed-question';
 
@@ -68,7 +68,7 @@ export const metabase = createPiece({
 
   auth: metabaseAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/metabase.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/metabase.png',
   authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon', 'Kevinyu-alan'],
   actions: [
     getQuestion,

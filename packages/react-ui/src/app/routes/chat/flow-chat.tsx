@@ -20,7 +20,7 @@ import {
   ErrorCode,
   isNil,
   HumanInputFormResultTypes,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 interface FlowChatProps {
   flowId: string;
@@ -94,7 +94,7 @@ export function FlowChat({
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const botName =
-    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
+    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Ensemble'} Bot`;
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({

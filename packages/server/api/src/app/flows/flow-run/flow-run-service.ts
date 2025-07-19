@@ -1,6 +1,6 @@
-import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     assertNotNullOrUndefined,
     Cursor,
@@ -25,7 +25,7 @@ import {
     SampleDataFileType,
     SeekPage,
     spreadIfDefined,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { In, Not } from 'typeorm'
@@ -168,7 +168,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         if (isNil(flowRunToResume)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
                     id: flowRunId,
@@ -317,7 +317,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         if (isNil(flowRun)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
                     id: params.id,

@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, PieceAuth, Property } from '@ensemble/pieces-framework';
 import { createGraphQLSubscription, deleteGraphQLSubscription } from './helpers';
 import { graphqlCommon } from '../common/common';
 

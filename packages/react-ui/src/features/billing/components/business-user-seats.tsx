@@ -11,7 +11,7 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@ensemble/shared';
 
 import { ExtraSeatsDialog } from './extra-user-seats-dialog';
 

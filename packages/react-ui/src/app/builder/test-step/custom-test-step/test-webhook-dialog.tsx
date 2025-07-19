@@ -22,8 +22,8 @@ import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { wait } from '@/lib/utils';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { Action, ApFlagId, apId, Trigger } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';

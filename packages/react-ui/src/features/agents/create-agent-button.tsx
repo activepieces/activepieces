@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/use-toast';
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { api } from '@/lib/api';
-import { Agent, ErrorCode } from '@activepieces/shared';
+import { Agent, ErrorCode } from '@ensemble/shared';
 
 import { agentHooks } from './lib/agent-hooks';
 

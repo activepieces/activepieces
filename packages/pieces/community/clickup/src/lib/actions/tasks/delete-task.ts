@@ -1,5 +1,5 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow } from '@ensemble/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
 import { clickupAuth } from '../../../';

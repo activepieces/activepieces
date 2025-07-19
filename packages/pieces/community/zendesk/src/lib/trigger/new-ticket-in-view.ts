@@ -2,7 +2,7 @@ import {
   TriggerStrategy,
   createTrigger,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   DedupeStrategy,
@@ -10,7 +10,7 @@ import {
   HttpMethod,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { zendeskAuth } from '../..';
 
 export const newTicketInView = createTrigger({

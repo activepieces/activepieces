@@ -2,14 +2,14 @@ import {
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { instantlyAiAuth } from '../../index';
 import {
   DedupeStrategy,
   HttpMethod,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
 const polling: Polling<

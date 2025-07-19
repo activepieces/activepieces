@@ -3,8 +3,8 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';

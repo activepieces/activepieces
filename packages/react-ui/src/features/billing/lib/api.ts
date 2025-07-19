@@ -4,13 +4,13 @@ import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
-} from '@activepieces/ee-shared';
+} from '@ensemble/ee-shared';
 import {
   PlatformPlan,
   PlatformBillingInformation,
   ListAICreditsUsageRequest,
   ListAICreditsUsageResponse,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {

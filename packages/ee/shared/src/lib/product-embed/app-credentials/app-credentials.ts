@@ -1,4 +1,4 @@
-import { BaseModel, OAuth2GrantType, ProjectId } from '@activepieces/shared'
+import { BaseModel, OAuth2GrantType, ProjectId } from '@ensemble/shared'
 
 export type AppCredentialId = string
 

@@ -10,10 +10,10 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const AP_TITLE = isDev ? 'Activepieces' : '${AP_APP_TITLE}';
+  const AP_TITLE = isDev ? 'Ensemble' : '${AP_APP_TITLE}';
 
   const AP_FAVICON = isDev
-    ? 'https://activepieces.com/favicon.ico'
+    ? 'https://ensemble.com/favicon.ico'
     : '${AP_FAVICON_URL}';
 
   return {
@@ -44,7 +44,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@activepieces/shared': path.resolve(
+        '@ensemble/shared': path.resolve(
           __dirname,
           '../../packages/shared/src',
         ),
@@ -52,11 +52,11 @@ export default defineConfig(({ command, mode }) => {
           __dirname,
           '../../packages/ee/ui/embed-sdk/src',
         ),
-        '@activepieces/ee-shared': path.resolve(
+        '@ensemble/ee-shared': path.resolve(
           __dirname,
           '../../packages/ee/shared/src',
         ),
-        '@activepieces/pieces-framework': path.resolve(
+        '@ensemble/pieces-framework': path.resolve(
           __dirname,
           '../../packages/pieces/community/framework/src',
         ),

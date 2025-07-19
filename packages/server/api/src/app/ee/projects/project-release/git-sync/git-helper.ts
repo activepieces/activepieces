@@ -1,8 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { ConfigureRepoRequest, GitRepo } from '@ensemble/ee-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { EnsembleError, ApEnvironment, ErrorCode } from '@ensemble/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userIdentityService } from '../../../../authentication/user-identity/user-identity-service'
@@ -125,7 +125,7 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         await initGitRepo(keyPath, remoteUrl, tmpFolder, branch)
     }
     catch (error) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.INVALID_GIT_CREDENTIALS,
             params: {
                 message: (error as Error).message,

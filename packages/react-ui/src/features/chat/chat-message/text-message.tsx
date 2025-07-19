@@ -13,7 +13,7 @@ import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { FileResponseInterface } from '@activepieces/shared';
+import { FileResponseInterface } from '@ensemble/shared';
 
 interface TextMessageProps {
   content: string;

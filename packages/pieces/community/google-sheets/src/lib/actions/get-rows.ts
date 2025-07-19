@@ -4,16 +4,16 @@ import {
   Store,
   StoreScope,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { googleSheetsAuth } from '../..';
 import {
   areSheetIdsValid,
   googleSheetsCommon,
 } from '../common/common';
-import { isNil } from '@activepieces/shared';
-import { HttpError } from '@activepieces/pieces-common';
+import { isNil } from '@ensemble/shared';
+import { HttpError } from '@ensemble/pieces-common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
 import { commonProps } from '../common/props';
 

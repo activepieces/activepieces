@@ -1,6 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     Cell,
     chunk,
@@ -15,7 +15,7 @@ import {
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -145,7 +145,7 @@ export const recordService = {
         })
 
         if (isNil(record)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'Record',
@@ -170,7 +170,7 @@ export const recordService = {
             })
 
             if (isNil(record)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
                         entityType: 'Record',
@@ -219,7 +219,7 @@ export const recordService = {
                 })
 
             if (isNil(updatedRecord)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
                         entityType: 'Record',
@@ -242,7 +242,7 @@ export const recordService = {
             select: ['tableId'],
         })
         if (isNil(firstRecord)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'Record', entityId: ids[0] },
             })
@@ -311,7 +311,7 @@ export const recordService = {
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
         const countRes = await this.count(params)
         if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,

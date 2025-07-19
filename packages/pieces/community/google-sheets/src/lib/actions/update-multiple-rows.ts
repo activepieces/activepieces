@@ -4,10 +4,10 @@ import {
 	DynamicPropsValue,
 	OAuth2PropertyValue,
 	Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { areSheetIdsValid, Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { isNil, isString, MarkdownVariant } from '@activepieces/shared';
+import { getAccessTokenOrThrow } from '@ensemble/pieces-common';
+import { isNil, isString, MarkdownVariant } from '@ensemble/shared';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';

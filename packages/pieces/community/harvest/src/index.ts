@@ -1,6 +1,6 @@
 
-    import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-    import { OAuth2GrantType, PieceCategory } from '@activepieces/shared';
+    import { createPiece, PieceAuth, OAuth2PropertyValue } from "@ensemble/pieces-framework";
+    import { OAuth2GrantType, PieceCategory } from '@ensemble/shared';
     import { getInvoices } from './lib/actions/get-invoices';
     import { getProjects } from './lib/actions/get-projects';
     import { getTasks } from './lib/actions/get-tasks';
@@ -11,7 +11,7 @@
     import { getRoles } from './lib/actions/get-roles';
     import { getUsers } from './lib/actions/get-users';
     import { reportsUninvoiced } from './lib/actions/reports-uninvoiced';
-    import { createCustomApiCallAction } from '@activepieces/pieces-common';
+    import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
     export const harvestAuth = PieceAuth.OAuth2({
       required: true,
@@ -25,7 +25,7 @@
       displayName: "Harvest",
       auth: harvestAuth,
       minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
+      logoUrl: "https://cdn.ensemble.com/pieces/harvest.png",
       categories:[PieceCategory.PRODUCTIVITY],
       description:'Time Tracking Software with Invoicing',
       authors: ["D-Rowe-FS"],

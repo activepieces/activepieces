@@ -1,4 +1,4 @@
-import { Alert } from '@activepieces/ee-shared'
+import { Alert } from '@ensemble/ee-shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

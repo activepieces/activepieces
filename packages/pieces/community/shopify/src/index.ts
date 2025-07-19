@@ -1,13 +1,13 @@
 import {
   HttpMethod,
   createCustomApiCallAction,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -94,7 +94,7 @@ export const shopifyAuth = PieceAuth.CustomAuth({
 export const shopify = createPiece({
   displayName: 'Shopify',
   description: 'Ecommerce platform for online stores',
-  logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/shopify.png',
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
   categories: [PieceCategory.COMMERCE],
   minimumSupportedRelease: '0.30.0',

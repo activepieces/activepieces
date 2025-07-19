@@ -2,7 +2,7 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { askGpt } from './lib/actions/ask-gpt';
 
 export const azureOpenaiAuth = PieceAuth.CustomAuth({
@@ -33,7 +33,7 @@ export const azureOpenai = createPiece({
   description: 'Powerful AI tools from Microsoft',
   auth: azureOpenaiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/azure-openai.png',
   authors: ["MoShizzle","abuaboud"],
   actions: [askGpt],
   triggers: [],

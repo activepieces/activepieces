@@ -1,4 +1,4 @@
-import { ApId, SignUpRequest } from '@activepieces/shared'
+import { ApId, SignUpRequest } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const VerifyEmailRequestBody = Type.Object({

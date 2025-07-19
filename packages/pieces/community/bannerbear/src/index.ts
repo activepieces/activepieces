@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { bannerbearCreateImageAction } from './lib/actions/create-image';
 
 export const bannerbearAuth = PieceAuth.SecretText({
@@ -14,7 +14,7 @@ export const bannerbear = createPiece({
   description: 'Automate image generation',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/bannerbear.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: bannerbearAuth,

@@ -1,7 +1,7 @@
 import {
   PiecePropValueSchema, Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { flowluAuth } from '../../../';
 import { flowluCommon, makeClient } from '../../common';

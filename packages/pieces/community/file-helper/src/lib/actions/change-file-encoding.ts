@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { encodings } from '../common/encodings';
 
 export const changeFileEncoding = createAction({

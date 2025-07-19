@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 export const ashbyAuth = PieceAuth.CustomAuth({
   required: true,
@@ -15,7 +15,7 @@ export const ashby = createPiece({
   displayName: 'Ashby',
   auth: ashbyAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/ashby.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/ashby.png',
   authors: ['AdamSelene'],
   actions: [
     createCustomApiCallAction({

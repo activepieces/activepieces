@@ -30,8 +30,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ErrorCode, McpWithTools, Permission } from '@activepieces/shared';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
+import { ErrorCode, McpWithTools, Permission } from '@ensemble/shared';
 
 import { McpToolsIcon } from './mcp-tools-icon';
 

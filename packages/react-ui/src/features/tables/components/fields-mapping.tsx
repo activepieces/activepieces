@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Input } from '@/components/ui/input';
-import { Field } from '@activepieces/shared';
+import { Field } from '@ensemble/shared';
 
 import { FieldsMapping } from '../lib/utils';
 

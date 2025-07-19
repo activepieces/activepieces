@@ -2,13 +2,13 @@ import {
   createAction,
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { LeverFieldMapping } from '../common';
 
 export const addFeedbackToOpportunity = createAction({

@@ -42,7 +42,7 @@ import {
   ApFlagId,
   PackageType,
   PieceScope,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { piecesApi } from '../lib/pieces-api';
 const FormSchema = Type.Object(
@@ -182,7 +182,7 @@ const InstallPieceDialog = ({
           <DialogDescription>
             <ApMarkdown
               markdown={
-                'Use this to install a [custom piece]("https://www.activepieces.com/docs/developers/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
+                'Use this to install a [custom piece]("https://www.ensemble.com/docs/developers/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Ensemble.'
               }
             />
           </DialogDescription>
@@ -251,7 +251,7 @@ const InstallPieceDialog = ({
                         value={field.value || ''}
                         id="pieceName"
                         type="text"
-                        placeholder="@activepieces/piece-name"
+                        placeholder="@ensemble/piece-name"
                         className="rounded-sm"
                       />
                       <FormMessage />

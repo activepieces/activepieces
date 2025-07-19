@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { McpConfigPage } from './mcp-config';
 import { McpConnectPage } from './mcp-connect';

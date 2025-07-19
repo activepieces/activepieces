@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { commonProps, intercomClient } from '../common';
 import { intercomAuth } from '../..';
 

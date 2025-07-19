@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
 

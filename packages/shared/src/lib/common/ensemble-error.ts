@@ -9,7 +9,7 @@ import { UserId } from '../user'
 import { ApId } from './id-generator'
 import { Permission } from './security'
 
-export class ActivepiecesError extends Error {
+export class EnsembleError extends Error {
     constructor(public error: ApErrorParams, message?: string) {
         super(error.code + (message ? `: ${message}` : ''))
     }

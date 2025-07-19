@@ -5,7 +5,7 @@ import {
     ProjectWithLimits,
     ProjectWithLimitsWithPlatform,
     SeekPage,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

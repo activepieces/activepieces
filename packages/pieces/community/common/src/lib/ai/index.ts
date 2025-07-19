@@ -1,5 +1,5 @@
-import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared';
-import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
+import { isNil, SeekPage, AIProviderWithoutSensitiveData, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@ensemble/shared';
+import { Property, InputPropertyMap } from "@ensemble/pieces-framework";
 import { httpClient, HttpMethod } from '../http';
 
 export const aiProps = <T extends 'language' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({

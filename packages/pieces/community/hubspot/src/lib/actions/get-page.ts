@@ -1,5 +1,5 @@
 import { hubspotAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { pageType } from '../common/props';
 

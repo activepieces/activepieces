@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trigger, TriggerEventWithPayload } from '@activepieces/shared';
+import { Trigger, TriggerEventWithPayload } from '@ensemble/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 

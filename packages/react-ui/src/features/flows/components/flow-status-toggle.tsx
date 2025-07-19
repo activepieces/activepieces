@@ -20,7 +20,7 @@ import {
   Permission,
   PopulatedFlow,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { Switch } from '../../../components/ui/switch';
 import {

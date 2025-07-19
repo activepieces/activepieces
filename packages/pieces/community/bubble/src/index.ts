@@ -2,9 +2,9 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { bubbleCreateThingAction } from './lib/actions/create-thing';
 import { bubbleDeleteThingAction } from './lib/actions/delete-thing';
 import { bubbleGetThingAction } from './lib/actions/get-thing';
@@ -50,7 +50,7 @@ export const bubble = createPiece({
 
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/bubble.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["TaskMagicKyle","kishanprmr","abuaboud"],
   actions: [

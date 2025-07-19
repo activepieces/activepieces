@@ -2,8 +2,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createRecord } from './lib/actions/create-record';
 import { deleteRecord } from './lib/actions/delete-record';
 import { getRecord } from './lib/actions/get-record';
@@ -104,7 +104,7 @@ export const vtiger = createPiece({
   description: 'CRM software for sales, marketing, and support teams',
   auth: vtigerAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/vtiger.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["kanarelo","kishanprmr","abuaboud"],
   actions: [

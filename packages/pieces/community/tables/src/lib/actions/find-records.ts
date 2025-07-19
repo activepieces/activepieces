@@ -1,7 +1,7 @@
-import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@ensemble/pieces-framework';
 import { tablesCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
+import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ensemble/pieces-common';
+import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@ensemble/shared';
 import { z } from 'zod';
 import qs from 'qs';
 type FieldInfo = {

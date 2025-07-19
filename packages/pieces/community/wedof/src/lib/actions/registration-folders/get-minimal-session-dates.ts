@@ -1,6 +1,6 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 import { wedofAuth } from '../../..';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
 export const getMinimalSessionDates = createAction({

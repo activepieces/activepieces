@@ -1,5 +1,5 @@
 {
-  "name": "activepieces",
+  "name": "ensemble",
   "version": "0.65.0",
   "rcVersion": "0.64.0-rc.0",
   "scripts": {
@@ -26,7 +26,7 @@
   },
   "private": true,
   "dependencies": {
-    "@activepieces/import-fresh-webpack": "3.3.0",
+    "@ensemble/import-fresh-webpack": "3.3.0",
     "@ai-sdk/anthropic": "1.2.12",
     "@ai-sdk/azure": "1.0.10",
     "@ai-sdk/google": "1.2.19",

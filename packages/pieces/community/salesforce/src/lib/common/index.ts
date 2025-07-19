@@ -4,8 +4,8 @@ import {
   HttpMethod,
   HttpResponse,
   httpClient,
-} from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
 
 export const salesforcesCommon = {
   object: Property.Dropdown<string>({

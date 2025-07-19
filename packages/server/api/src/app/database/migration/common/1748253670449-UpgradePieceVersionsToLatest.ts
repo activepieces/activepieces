@@ -17,7 +17,7 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
         }
         
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@ensemble/piece-tables%\'',
         )
         const allPieceVersions = await queryRunner.query('SELECT name, version FROM piece_metadata')
         

@@ -6,9 +6,9 @@ import {
   HttpRequest,
   HttpResponse,
   QueryParams,
-} from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+} from '@ensemble/pieces-common';
+import { Property, OAuth2PropertyValue } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',

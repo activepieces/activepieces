@@ -5,8 +5,8 @@ import { findPiece } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 import { exec } from '../utils/exec';
-import { pieceTranslation } from '@activepieces/pieces-framework';
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
+import { pieceTranslation } from '@ensemble/pieces-framework';
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@ensemble/shared';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);

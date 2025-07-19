@@ -1,5 +1,5 @@
-import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, QueryParams } from '@ensemble/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { clockifyAuth } from '../../index';
 import { clockifyApiCall } from '../common/client';
 import { projectId, taskId, workspaceId } from '../common/props';

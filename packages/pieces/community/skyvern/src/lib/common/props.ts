@@ -1,6 +1,6 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 import { skyvernApiCall } from './client';
 
 export interface ListWorkflowResponse {

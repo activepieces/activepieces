@@ -8,7 +8,7 @@ import {
   PropertyType,
   ExecutePropsResult,
   InputPropertyMap,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AddPieceRequestBody,
   GetPieceRequestParams,
@@ -16,7 +16,7 @@ import {
   ListPiecesRequestQuery,
   PackageType,
   PieceOptionRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {

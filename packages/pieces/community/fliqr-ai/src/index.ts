@@ -1,9 +1,9 @@
-import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { HttpMethod, createCustomApiCallAction, httpClient } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 import { getFliqrAccountDetails } from './lib/actions/get-account-details';
 import { fliqrConfig } from './lib/common/models';
 import { getFliqrAccountFlows } from './lib/actions/get-account-flows';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const fliqrAuth = PieceAuth.SecretText({
   displayName: 'Fliqr API Access Token',
@@ -44,7 +44,7 @@ export const fliqrAi = createPiece({
     'Omnichannel AI chatbot enhancing customer interactions across WhatsApp, Facebook, Instagram, Telegram, and 6 other platforms.',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/fliqr-ai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/fliqr-ai.png',
   authors: ["drona2938"],
   categories: [PieceCategory.COMMUNICATION,PieceCategory.CUSTOMER_SUPPORT,PieceCategory.MARKETING],
   auth: fliqrAuth,

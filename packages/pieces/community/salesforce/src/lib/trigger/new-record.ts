@@ -3,13 +3,13 @@ import {
   HttpMethod,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   Property,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { querySalesforceApi, salesforcesCommon } from '../common';
 
 import dayjs from 'dayjs';

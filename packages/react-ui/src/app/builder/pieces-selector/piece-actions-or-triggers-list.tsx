@@ -11,7 +11,7 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import { ActionType, isNil, TriggerType } from '@activepieces/shared';
+import { ActionType, isNil, TriggerType } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

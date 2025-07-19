@@ -1,15 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { getRecordAction } from './lib/actions/get-record';
 import { updateRecordAction } from './lib/actions/update-record';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const dynamicsCRMAuth = PieceAuth.OAuth2({
   props: {
@@ -51,7 +51,7 @@ export const microsoftDynamicsCrm = createPiece({
   description:
     'Customer relationship management software package developed by Microsoft.',
   minimumSupportedRelease: '0.27.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-crm.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/microsoft-dynamics-crm.png',
   authors: ['kishanprmr'],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [

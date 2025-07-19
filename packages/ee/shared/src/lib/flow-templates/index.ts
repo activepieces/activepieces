@@ -1,4 +1,4 @@
-import { FlowVersionTemplate, Metadata, Nullable, TemplateType } from '@activepieces/shared'
+import { FlowVersionTemplate, Metadata, Nullable, TemplateType } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const CreateFlowTemplateRequest = Type.Object({

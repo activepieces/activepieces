@@ -1,5 +1,5 @@
-import { propsValidation } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { propsValidation } from '@ensemble/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { z } from 'zod';
 import { tarventAuth } from '../..';
 import { makeClient } from '../common';

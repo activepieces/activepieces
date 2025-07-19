@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubUnlockIssueAction } from './lib/actions/unlock-issue';
 import { githubTriggers } from './lib/trigger';
@@ -29,7 +29,7 @@ export const github = createPiece({
     'Developer platform that allows developers to create, store, manage and share their code',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/github.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: githubAuth,
   actions: [

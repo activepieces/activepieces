@@ -16,7 +16,7 @@ import {
   ListFlowsRequest,
   PopulatedFlow,
   SeekPage,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const flowsApi = {
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {

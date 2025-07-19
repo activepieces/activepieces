@@ -11,7 +11,7 @@ import {
   isNil,
   Permission,
   PlatformRole,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);

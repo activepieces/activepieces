@@ -1,9 +1,9 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const outlookCalendarCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me',

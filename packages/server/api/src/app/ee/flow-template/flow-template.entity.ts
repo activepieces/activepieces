@@ -1,4 +1,4 @@
-import { FlowTemplate, Platform, Project, User } from '@activepieces/shared'
+import { FlowTemplate, Platform, Project, User } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,

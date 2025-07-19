@@ -2,11 +2,11 @@ import {
 	createTrigger,
 	TriggerStrategy,
 	PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@ensemble/pieces-common';
 import { confluenceAuth } from '../../index';
 import { confluenceApiCall, confluencePaginatedApiCall, PaginatedResponse } from '../common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { spaceIdProp } from '../common/props';
 
 interface ConfluencePage {

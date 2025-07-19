@@ -3,8 +3,8 @@ import {
   HttpMethod,
   AuthenticationType,
   HttpRequest,
-} from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { Property, OAuth2PropertyValue } from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';

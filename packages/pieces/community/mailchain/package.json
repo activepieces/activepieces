@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-mailchain",
+  "name": "@ensemble/piece-mailchain",
   "version": "0.0.1",
   "dependencies": {
     "@mailchain/sdk": "^0.31.0"

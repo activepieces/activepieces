@@ -11,8 +11,8 @@ import {
   DropdownState,
   PropertyType,
   ExecutePropsResult,
-} from '@activepieces/pieces-framework';
-import { Action, isNil, Trigger } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { Action, isNil, Trigger } from '@ensemble/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 

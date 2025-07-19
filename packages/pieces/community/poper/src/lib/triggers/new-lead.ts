@@ -2,7 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 const message = `
 1. Log in to your [Poper Account](https://app.poper.ai/).

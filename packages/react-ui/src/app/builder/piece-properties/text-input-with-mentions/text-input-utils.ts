@@ -7,7 +7,7 @@ import {
   Trigger,
   assertNotNullOrUndefined,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 const removeQuotes = (text: string) => {
   if (

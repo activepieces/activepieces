@@ -16,7 +16,7 @@ import {
   AgentOutputField,
   AgentOutputFieldType,
   AgentOutputType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { AddFieldPopover } from './add-field-popover';
 import { FieldTypeIcon } from './field-type-icon';

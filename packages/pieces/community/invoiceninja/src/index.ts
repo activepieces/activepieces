@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createTask } from './lib/actions/create-task';
 import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
@@ -38,7 +38,7 @@ export const invoiceninja = createPiece({
   description: 'Free open-source invoicing tool',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/invoiceninja.png',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: invoiceninjaAuth,

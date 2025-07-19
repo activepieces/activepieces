@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     CreateTableRequest,
     CreateTableWebhookRequest,
@@ -12,7 +12,7 @@ import {
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
@@ -85,7 +85,7 @@ export const tableService = {
         })
 
         if (isNil(table)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'Table',

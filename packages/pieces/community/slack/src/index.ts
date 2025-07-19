@@ -1,11 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import crypto from 'node:crypto';
 import { requestActionDirectMessageAction } from './lib/actions/request-action-direct-message';
 import { requestActionMessageAction } from './lib/actions/request-action-message';
@@ -85,7 +85,7 @@ export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
   events: {

@@ -8,7 +8,7 @@ import {
   useDefaultRedirectPath,
 } from '@/lib/navigation-utils';
 import { determineDefaultRoute } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { LoadingScreen } from '../../components/ui/loading-screen';
 import { authenticationSession } from '../../lib/authentication-session';

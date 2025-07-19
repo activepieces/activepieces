@@ -1,5 +1,5 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { createAction, Property, DynamicPropsValue } from '@ensemble/pieces-framework';
 import { getApiEndpoint } from '../common';
 import { returningAiAuth } from '../../index';
 

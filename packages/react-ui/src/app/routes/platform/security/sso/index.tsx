@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 

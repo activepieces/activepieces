@@ -5,7 +5,7 @@ import {
   Property,
   ShortTextProperty,
   StaticPropsValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { extension } from 'mime-types';
 
 async function getMimeType(

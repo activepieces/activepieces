@@ -1,4 +1,4 @@
-import { Agent, McpWithTools } from '@activepieces/shared'
+import { Agent, McpWithTools } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 

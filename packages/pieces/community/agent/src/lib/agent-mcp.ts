@@ -1,5 +1,5 @@
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common"
-import { McpWithTools } from "@activepieces/shared"
+import { AuthenticationType, httpClient, HttpMethod } from "@ensemble/pieces-common"
+import { McpWithTools } from "@ensemble/shared"
 
 
 export const agentMcp = {

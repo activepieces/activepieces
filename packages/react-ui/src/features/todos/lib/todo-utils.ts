@@ -2,7 +2,7 @@ import {
   isNil,
   PopulatedTodo,
   TodoActivityWithUser,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const todoUtils = {
   getAuthorName: (todo: PopulatedTodo | TodoActivityWithUser) => {

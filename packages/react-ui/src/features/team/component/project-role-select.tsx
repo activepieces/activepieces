@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { DefaultProjectRole } from '@activepieces/shared';
+import { DefaultProjectRole } from '@ensemble/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;

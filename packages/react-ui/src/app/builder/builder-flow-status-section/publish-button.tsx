@@ -11,7 +11,7 @@ import {
 import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowVersionState, Permission } from '@activepieces/shared';
+import { FlowVersionState, Permission } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

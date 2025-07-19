@@ -1,7 +1,7 @@
-import { ProjectPlanLimits } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { ProjectPlanLimits } from '@ensemble/ee-shared'
+import { exceptionHandler } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     AiOverageState,
     ApEdition,
     apId,
@@ -11,7 +11,7 @@ import {
     PlatformPlan,
     ProjectPlan,
     spreadIfDefined,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
@@ -125,7 +125,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         const projectPlan = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
 
         if (projectPlan.locked) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.PROJECT_LOCKED,
                 params: {
                     message: 'Project is locked',

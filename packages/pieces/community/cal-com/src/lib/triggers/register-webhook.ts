@@ -3,12 +3,12 @@ import {
   Trigger,
   TriggerStrategy,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpRequest,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { calcomAuth } from '../..';
 
 export const registerWebhooks = ({

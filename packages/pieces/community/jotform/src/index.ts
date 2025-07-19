@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { jotformCommon } from './lib/common';
 import { newSubmission } from './lib/triggers/new-submission';
 
@@ -52,7 +52,7 @@ export const jotform = createPiece({
   description: 'Create online forms and surveys',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/jotform.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/jotform.svg',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud", "PFernandez98"],
   auth: jotformAuth,

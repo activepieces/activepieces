@@ -1,5 +1,5 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece } from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 import { createDocumentFromTemplate } from './lib/actions/create-document-from-template';
 import { createAttachment } from './lib/actions/create-attachment';
@@ -14,13 +14,13 @@ import { documentStateChanged } from './lib/triggers/document-state-changed';
 import { documentUpdated } from './lib/triggers/document-updated';
 
 import { pandadocAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const pandadoc = createPiece({
   displayName: 'PandaDoc',
   auth: pandadocAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/pandadoc.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/pandadoc.png',
   categories:[PieceCategory.CONTENT_AND_FILES,PieceCategory.PRODUCTIVITY],
   authors: ['onyedikachi-david'],
   actions: [

@@ -1,5 +1,5 @@
-import { JobType, UserInteractionJobDataWithoutWatchingInformation } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { JobType, UserInteractionJobDataWithoutWatchingInformation } from '@ensemble/server-shared'
+import { apId } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'

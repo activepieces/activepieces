@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
 import { tickTickApiCall } from './client';
 
 interface DropdownParams {

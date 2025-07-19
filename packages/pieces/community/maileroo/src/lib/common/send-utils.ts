@@ -1,6 +1,6 @@
-import { Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { Property, StaticPropsValue } from '@ensemble/pieces-framework';
 import FormData from 'form-data';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const createCommonProps = () => {
   return {

@@ -1,7 +1,7 @@
 import {
     ListTriggerEventsRequest,
     TestPollingTriggerRequest,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from './trigger-event.service'

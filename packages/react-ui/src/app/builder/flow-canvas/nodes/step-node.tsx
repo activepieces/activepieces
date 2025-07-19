@@ -14,7 +14,7 @@ import {
   Step,
   TriggerType,
   flowStructureUtil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';

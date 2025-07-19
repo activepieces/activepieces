@@ -1,5 +1,5 @@
-import { createAction, Property, PropertyType } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { createAction, Property, PropertyType } from '@ensemble/pieces-framework';
+import { MarkdownVariant } from '@ensemble/shared';
 
 export const createApprovalLink = createAction({
   name: 'create_approval_links',

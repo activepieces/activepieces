@@ -6,7 +6,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   AppConnectionWithoutSensitiveData,
   ListGlobalConnectionsRequestQuery,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { globalConnectionsApi } from './api/global-connections';
 import {

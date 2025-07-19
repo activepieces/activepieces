@@ -2,14 +2,14 @@ import {
   httpClient,
   createCustomApiCallAction,
   HttpMethod,
-} from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { aiAnswerConfig } from './lib/common/models';
 import { gmailGetListOfAgents } from './lib/actions/gmail-get-list-of-agents';
 import { createPhoneCall } from './lib/actions/create-phone-call';
 import { getCallDetails } from './lib/actions/get-call-details';
 import { scheduleCallAgent } from './lib/actions/schedule-call-agent';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { getCallTranscript } from './lib/actions/get-call-transcript';
 
 export const aiAnswerAuth = PieceAuth.SecretText({
@@ -47,7 +47,7 @@ export const aianswer = createPiece({
   displayName: 'AI Answer',
   auth: aiAnswerAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/aianswer.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/aianswer.png',
   categories: [
     PieceCategory.COMMUNICATION,
     PieceCategory.CUSTOMER_SUPPORT,

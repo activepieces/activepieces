@@ -1,7 +1,7 @@
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { CreateFlowTemplateRequest } from '@ensemble/ee-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ALL_PRINCIPAL_TYPES,
     EndpointScope,
     ErrorCode,
@@ -10,7 +10,7 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     TemplateType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -60,7 +60,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
                 break
             case TemplateType.PROJECT:
                 if (template.projectId !== request.principal.projectId) {
-                    throw new ActivepiecesError({
+                    throw new EnsembleError({
                         code: ErrorCode.AUTHORIZATION,
                         params: {},
                     })

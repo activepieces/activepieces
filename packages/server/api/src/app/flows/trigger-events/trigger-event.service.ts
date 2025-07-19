@@ -1,6 +1,6 @@
-import { UserInteractionJobType } from '@activepieces/server-shared'
+import { UserInteractionJobType } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     Cursor,
     ErrorCode,
@@ -16,7 +16,7 @@ import {
     TriggerEventWithPayload,
     TriggerHookType,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -86,7 +86,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     flowId: flow.id,
                 })
                 if (!engineResponse.result.success) {
-                    throw new ActivepiecesError({
+                    throw new EnsembleError({
                         code: ErrorCode.TEST_TRIGGER_FAILED,
                         params: {
                             message: engineResponse.result.message!,

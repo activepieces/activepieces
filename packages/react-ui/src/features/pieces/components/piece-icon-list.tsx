@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { Trigger, flowStructureUtil } from '@activepieces/shared';
+import { Trigger, flowStructureUtil } from '@ensemble/shared';
 
 import {
   Tooltip,

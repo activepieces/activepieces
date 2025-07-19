@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlatLanguageModelPricing } from '@activepieces/shared'
+import { EnsembleError, ErrorCode, FlatLanguageModelPricing } from '@ensemble/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'
@@ -18,7 +18,7 @@ export const anthropicProvider: AIProviderStrategy = {
 
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
         if (!languageModelConfig) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
                 params: {
                     provider,

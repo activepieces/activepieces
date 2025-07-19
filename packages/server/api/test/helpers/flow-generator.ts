@@ -1,4 +1,4 @@
-import { Action, ActionType, apId, FlowStatus, FlowVersion, FlowVersionState, PackageType, PieceType, PopulatedFlow, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, apId, FlowStatus, FlowVersion, FlowVersionState, PackageType, PieceType, PopulatedFlow, Trigger, TriggerType } from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 
 
@@ -69,7 +69,7 @@ function generateAction(): Action {
         settings: {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
-            pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
+            pieceName: faker.helpers.arrayElement(['@ensemble/piece-schedule', '@ensemble/piece-webhook']),
             pieceVersion: faker.system.semver(),
             actionName: faker.hacker.noun(),
             input: {
@@ -91,7 +91,7 @@ function generateTrigger(): Trigger {
         settings: {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,
-            pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
+            pieceName: faker.helpers.arrayElement(['@ensemble/piece-schedule', '@ensemble/piece-webhook']),
             pieceVersion: faker.system.semver(),
             triggerName: faker.hacker.noun(),
             input: {

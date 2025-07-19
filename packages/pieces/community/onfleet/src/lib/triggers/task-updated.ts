@@ -1,10 +1,10 @@
 import {
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@ensemble/shared';
 
 export const taskUpdated = createTrigger({
   auth: onfleetAuth,

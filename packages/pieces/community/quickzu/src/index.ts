@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { updateBusinessTimeAction } from './lib/actions/business-settings/update-business-time';
 import { createCategoryAction } from './lib/actions/categories/create-category';
 import { deleteCategoryAction } from './lib/actions/categories/delete-category';
@@ -33,7 +33,7 @@ export const quickzu = createPiece({
 
   auth: quickzuAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/quickzu.png',
   authors: ["kishanprmr","abuaboud"],
   actions: [
     addProductAction,

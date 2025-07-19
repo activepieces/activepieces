@@ -2,8 +2,8 @@ import {
   createAction,
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 
 import { ghostAuth } from '../..';
 import { common } from '../common';

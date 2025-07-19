@@ -6,7 +6,7 @@ import {
   PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import { PiecePropertyMap, PropertyType } from '@ensemble/pieces-framework';
 import {
   Action,
   ActionType,
@@ -24,7 +24,7 @@ import {
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { formUtils } from './form-utils';
 const defaultCode = `export const code = async (inputs) => {
@@ -34,11 +34,11 @@ const defaultCode = `export const code = async (inputs) => {
 //can't remove this from search results, because it is used to add actions to the flow, check todo-dialog for more details
 const hiddenActions = [
   {
-    pieceName: '@activepieces/piece-todos',
+    pieceName: '@ensemble/piece-todos',
     actionName: 'wait_for_approval',
   },
   {
-    pieceName: '@activepieces/piece-todos',
+    pieceName: '@ensemble/piece-todos',
     actionName: 'createTodoAndWait',
   },
 ];
@@ -353,12 +353,12 @@ export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
 };
 
 const isMcpToolTrigger = (pieceName: string, triggerName: string) => {
-  return pieceName === '@activepieces/piece-mcp' && triggerName === 'mcp_tool';
+  return pieceName === '@ensemble/piece-mcp' && triggerName === 'mcp_tool';
 };
 
 const isChatTrigger = (pieceName: string, triggerName: string) => {
   return (
-    pieceName === '@activepieces/piece-forms' &&
+    pieceName === '@ensemble/piece-forms' &&
     triggerName === 'chat_submission'
   );
 };

@@ -1,5 +1,5 @@
 import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
-import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/shared"
+import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@ensemble/shared"
 import path from 'path';
 import fs from 'fs/promises';
 import pathsToValuesToTranslate from '../../translation-keys.json'

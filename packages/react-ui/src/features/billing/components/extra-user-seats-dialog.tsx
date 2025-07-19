@@ -11,8 +11,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { PlanName, PRICE_PER_EXTRA_USER } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlanName, PRICE_PER_EXTRA_USER } from '@ensemble/ee-shared';
+import { PlatformBillingInformation } from '@ensemble/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 

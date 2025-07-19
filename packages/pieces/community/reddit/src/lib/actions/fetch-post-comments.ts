@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { redditAuth } from '../../index';
 
 export const fetchPostComments = createAction({
@@ -47,7 +47,7 @@ export const fetchPostComments = createAction({
       url: `https://oauth.reddit.com/comments/${postId}`,
       headers: {
         'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
+        'User-Agent': 'Ensemble Reddit Client',
         'Content-Type': 'application/json',
       },
       queryParams: {

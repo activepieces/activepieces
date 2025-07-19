@@ -1,7 +1,7 @@
-import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AppSystemProp, UserInteractionJobType } from '@activepieces/server-shared'
+import { PieceMetadata, PieceMetadataModel } from '@ensemble/pieces-framework'
+import { AppSystemProp, UserInteractionJobType } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     AddPieceRequestBody,
     ApEdition,
     EngineResponseStatus,
@@ -18,7 +18,7 @@ import {
     PieceType,
     PlatformId,
     ProjectId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
 import { fileService } from '../../file/file.service'
@@ -63,10 +63,10 @@ export const pieceService = (log: FastifyBaseLogger) => ({
         catch (error) {
             log.error(error, '[PieceService#add]')
 
-            if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
+            if ((error as EnsembleError).error.code === ErrorCode.VALIDATION) {
                 throw error
             }
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {
                     message: JSON.stringify(error),
@@ -84,7 +84,7 @@ const assertInstallProjectEnabled = (scope: PieceScope): void => {
             sandboxMode === ExecutionMode.UNSANDBOXED &&
             [ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)
         ) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message:

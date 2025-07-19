@@ -4,7 +4,7 @@ import {
   PieceAuthProperty,
   PieceMetadataModelSummary,
   TriggerBase,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   ActionType,
   PackageType,
@@ -12,7 +12,7 @@ import {
   TriggerType,
   FlowOperationType,
   StepLocationRelativeToParent,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type BaseStepMetadata = {
   displayName: string;

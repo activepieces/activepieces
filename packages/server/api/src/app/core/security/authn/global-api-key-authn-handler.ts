@@ -1,11 +1,11 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     ErrorCode,
     isNil,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { BaseSecurityHandler } from '../security-handler'
@@ -26,7 +26,7 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
         const keyNotMatching = requestApiKey !== GlobalApiKeyAuthnHandler.API_KEY
 
         if (keyNotMatching || isNil(GlobalApiKeyAuthnHandler.API_KEY)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_API_KEY,
                 params: {},
             })

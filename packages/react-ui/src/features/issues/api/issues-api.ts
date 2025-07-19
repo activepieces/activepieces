@@ -5,7 +5,7 @@ import {
   PopulatedIssue,
   UpdateIssueRequestBody,
   SeekPage,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const issuesApi = {
   list(request: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {

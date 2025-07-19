@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, Property } from "@ensemble/pieces-framework";
 import { httpOauth2RequestAction } from "./lib/actions/send-oauth2-http-request";
 
 export const httpOauth2Auth = PieceAuth.OAuth2({
@@ -31,7 +31,7 @@ export const httpOauth2ClientCredentials = createPiece({
   displayName: "HTTP (OAuth2)",
   auth: httpOauth2Auth,
   minimumSupportedRelease: '0.56.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/http.png",
+  logoUrl: "https://cdn.ensemble.com/pieces/http.png",
   authors: [
     'mhshiba'
   ],

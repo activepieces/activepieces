@@ -5,7 +5,7 @@ import {
   SeekPage,
   TodoActivity,
   TodoActivityWithUser,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const todoActivityApi = {
   async list(request: ListTodoActivitiesQueryParams) {

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { PlanName } from '@activepieces/ee-shared';
+import { PlanName } from '@ensemble/ee-shared';
 
 export const planData = {
   tabs: [t('Monthly'), t('Annual')],

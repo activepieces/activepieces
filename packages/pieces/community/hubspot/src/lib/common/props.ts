@@ -4,13 +4,13 @@ import {
 	OAuth2PropertyValue,
 	PiecePropValueSchema,
 	Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
 	AuthenticationType,
 	httpClient,
 	HttpMethod,
 	HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { WorkflowResponse, HubspotProperty, HubspotFieldType, ListBlogsResponse } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,

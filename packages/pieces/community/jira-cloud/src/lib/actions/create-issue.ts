@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
 import {
 	getProjectIdDropdown,
@@ -9,8 +9,8 @@ import {
 } from '../common/props';
 import { jiraApiCall, jiraPaginatedApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 
 export const createIssueAction = createAction({
 	name: 'create_issue',

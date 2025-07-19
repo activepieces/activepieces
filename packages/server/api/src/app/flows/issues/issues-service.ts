@@ -1,5 +1,5 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { rejectedPromiseHandler } from '@ensemble/server-shared'
+import { EnsembleError, apId, ApId, assertNotNullOrUndefined, ErrorCode, FAILED_STATES, FlowRun, FlowRunStatus, flowStructureUtil, FlowVersion, isNil, Issue, IssueStatus, ListIssuesParams, PopulatedIssue, SeekPage, spreadIfDefined, TelemetryEventName } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThan } from 'typeorm'
@@ -94,7 +94,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             projectId,
         })
         if (isNil(flowIssue)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: 'issue not found',

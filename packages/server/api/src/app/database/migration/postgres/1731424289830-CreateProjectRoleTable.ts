@@ -1,4 +1,4 @@
-import { RoleType } from '@activepieces/shared'
+import { RoleType } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 

@@ -1,6 +1,6 @@
 import { cloutlyAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const sendReviewInvite = createAction({
   auth:cloutlyAuth,
@@ -73,7 +73,7 @@ export const sendReviewInvite = createAction({
       body: data,
       headers: {
         'Content-Type': 'application/json',
-        'x-app': 'activepieces',
+        'x-app': 'ensemble',
         'x-api-key': apiKey
       }
     })

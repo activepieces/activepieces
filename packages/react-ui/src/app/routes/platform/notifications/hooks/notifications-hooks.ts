@@ -6,7 +6,7 @@ import semver from 'semver';
 import { useSocket } from '@/components/socket-provider';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@ensemble/shared';
 
 export interface Message {
   title: string;

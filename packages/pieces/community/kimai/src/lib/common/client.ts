@@ -3,7 +3,7 @@ import {
   HttpMessageBody,
   httpClient,
   HttpResponse,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 type PingResponse = {
   message: string;

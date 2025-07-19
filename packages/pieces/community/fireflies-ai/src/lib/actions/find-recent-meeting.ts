@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { firefliesAiAuth } from '../../index';
 import { getTranscript } from '../common/queries';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { BASE_URL } from '../common';
 
 export const findRecentMeetingAction = createAction({

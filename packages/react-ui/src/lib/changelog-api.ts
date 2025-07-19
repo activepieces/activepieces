@@ -1,7 +1,7 @@
 import {
   DismissChangelogRequest,
   ListChangelogsResponse,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { api } from './api';
 

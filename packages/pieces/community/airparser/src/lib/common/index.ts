@@ -4,7 +4,7 @@ import {
 	HttpMethod,
 	HttpRequest,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const BASE_URL = 'https://api.airparser.com';
 

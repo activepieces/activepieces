@@ -1,8 +1,8 @@
 import { confluenceAuth } from "../../index";
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@ensemble/pieces-framework";
 import { folderIdProp, spaceIdProp, templateIdProp, templateVariablesProp } from "../common/props";
 import { confluenceApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from "@ensemble/pieces-common";
 
 export const createPageFromTemplateAction = createAction({
     auth:confluenceAuth,

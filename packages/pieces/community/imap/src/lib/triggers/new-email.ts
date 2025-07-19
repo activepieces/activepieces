@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { imapAuth } from '../..';
 import { convertAttachment, imapCommon } from '../common';
 import { ParsedMail } from 'mailparser';

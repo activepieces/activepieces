@@ -13,7 +13,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;

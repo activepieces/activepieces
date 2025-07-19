@@ -6,7 +6,7 @@ import React, { useId, useState } from 'react';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';

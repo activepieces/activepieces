@@ -6,7 +6,7 @@ import {
   SeekPage,
   Table,
   UpdateTableRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const tablesApi = {
   async list(request: ListTablesRequest): Promise<SeekPage<Table>> {

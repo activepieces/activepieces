@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { azureCommunicationServiceAuth } from '../..';
 import { EmailClient, EmailMessage } from '@azure/communication-email';
 

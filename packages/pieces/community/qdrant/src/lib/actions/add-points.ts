@@ -1,6 +1,6 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { qdrantAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { randomUUID } from 'crypto';
 import { collectionName, decodeEmbeddings } from '../common';
 

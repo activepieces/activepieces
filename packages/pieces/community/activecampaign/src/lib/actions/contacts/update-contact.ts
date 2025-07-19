@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 import { CreateContactRequest } from '../../common/types';
 

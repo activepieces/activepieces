@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@ensemble/shared';
 
 import { FeatureKey, RequestTrial } from './request-trial';
 

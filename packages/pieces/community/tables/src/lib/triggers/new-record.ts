@@ -1,6 +1,6 @@
-import { createTrigger, PieceAuth, PropertyType, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, PieceAuth, PropertyType, Property, TriggerStrategy } from '@ensemble/pieces-framework';
 import { tablesCommon } from '../common';
-import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
+import { PopulatedRecord, TableWebhookEventType } from '@ensemble/shared';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',

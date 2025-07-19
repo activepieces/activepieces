@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth } from "@ensemble/pieces-framework";
 import { createRecords } from "./lib/actions/create-records";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from "@ensemble/shared";
 import { deleteRecord } from "./lib/actions/delete-record";
 import { updateRecord } from "./lib/actions/update-record";
 import { getRecord } from "./lib/actions/get-record";
@@ -11,7 +11,7 @@ import { updatedRecordTrigger } from "./lib/triggers/updated-record";
 
 export const tables = createPiece({
   displayName: 'Tables',
-  logoUrl: 'https://cdn.activepieces.com/pieces/tables_piece.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/tables_piece.svg',
   categories: [PieceCategory.CORE],
   minimumSupportedRelease: '0.54.1',
   authors: ['amrdb'],

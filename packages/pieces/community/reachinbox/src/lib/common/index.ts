@@ -2,7 +2,7 @@ export const reachinboxCommon = {
   baseUrl: 'https://api.reachinbox.ai/api/v1/',
 };
 
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 
 export interface Campaign {
   id: number;

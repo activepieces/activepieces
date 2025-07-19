@@ -1,5 +1,5 @@
-import { SigningKeyId } from '@activepieces/ee-shared'
-import { apId, DefaultProjectRole, Principal, PrincipalType } from '@activepieces/shared'
+import { SigningKeyId } from '@ensemble/ee-shared'
+import { apId, DefaultProjectRole, Principal, PrincipalType } from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {
@@ -12,7 +12,7 @@ const generateToken = ({
     algorithm = 'HS256',
     key = 'secret',
     keyId = '1',
-    issuer = 'activepieces',
+    issuer = 'ensemble',
 }: GenerateTokenParams): string => {
     const options: SignOptions = {
         algorithm,
@@ -39,7 +39,7 @@ export const generateMockToken = async (
 
     return generateToken({
         payload: mockPrincipal,
-        issuer: 'activepieces',
+        issuer: 'ensemble',
     })
 }
 

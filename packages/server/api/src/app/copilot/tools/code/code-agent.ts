@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { EnsembleError, ErrorCode, isNil } from '@ensemble/shared'
 import { generateObject } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { modelService } from '../../services/model.service'
@@ -49,7 +49,7 @@ export async function generateCode(
     }
     catch (error) {
         log.error({ error, requirement, platformId }, '[generateCode] Failed to generate code')
-        if (error instanceof ActivepiecesError && error.message === ErrorCode.COPILOT_FAILED) {
+        if (error instanceof EnsembleError && error.message === ErrorCode.COPILOT_FAILED) {
             throw error
         }
         throw new Error(error instanceof Error ? error.message : 'Failed to generate code')

@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
 	httpClient,
 	HttpMethod,
 	AuthenticationType,
 	HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { excelAuth } from '../../index';
 import { excelCommon, objectToArray } from '../common/common';
 

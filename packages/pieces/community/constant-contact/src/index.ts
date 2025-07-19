@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 
 export const constantContactAuth = PieceAuth.OAuth2({
@@ -19,7 +19,7 @@ export const constantContact = createPiece({
   description: 'Email marketing for small businesses',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/constant-contact.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/constant-contact.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: constantContactAuth,

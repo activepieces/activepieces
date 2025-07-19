@@ -4,7 +4,7 @@ import {
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

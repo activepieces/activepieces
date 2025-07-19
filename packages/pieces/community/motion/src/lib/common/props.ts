@@ -1,9 +1,9 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const BASE_URL = 'https://api.usemotion.com/v1';
 

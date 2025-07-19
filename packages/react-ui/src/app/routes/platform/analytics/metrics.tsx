@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { AnalyticsReportResponse } from '@ensemble/shared';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
-import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
+import { FlowRunStatus, StepOutputStatus } from '@ensemble/shared';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;

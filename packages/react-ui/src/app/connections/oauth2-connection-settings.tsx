@@ -21,7 +21,7 @@ import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   resolveValueFromProps,
   ApEdition,
@@ -34,7 +34,7 @@ import {
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   oauthAppsQueries,
@@ -194,7 +194,7 @@ const OAuth2ConnectionSettingsForm = ({
   const [readyToConnect, setReadyToConnect] = useState(false);
   const redirectUrl =
     currentOAuth2Type === AppConnectionType.CLOUD_OAUTH2
-      ? 'https://secrets.activepieces.com/redirect'
+      ? 'https://secrets.ensemble.com/redirect'
       : thirdPartyUrl;
 
   const form = useFormContext<{

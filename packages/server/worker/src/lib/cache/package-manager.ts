@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@activepieces/server-shared'
-import { isEmpty } from '@activepieces/shared'
+import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@ensemble/server-shared'
+import { isEmpty } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {

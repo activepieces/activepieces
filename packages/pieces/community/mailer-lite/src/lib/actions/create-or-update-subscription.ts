@@ -1,5 +1,5 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { mailerLiteAuth } from '../..';
 import { mailerLiteCommon } from '../common';
 import dayjs from 'dayjs';

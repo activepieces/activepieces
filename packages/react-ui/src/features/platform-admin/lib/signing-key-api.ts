@@ -4,8 +4,8 @@ import {
   AddSigningKeyResponse,
   SigningKey,
   SigningKeyId,
-} from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+} from '@ensemble/ee-shared';
+import { SeekPage } from '@ensemble/shared';
 
 export const signingKeyApi = {
   list() {

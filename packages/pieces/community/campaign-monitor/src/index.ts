@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addSubscriberToListAction } from './lib/actions/add-subscriber-to-list';
 import { updateSubscriberDetailsAction } from './lib/actions/update-subscriber-details';
 import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscriber';
@@ -25,7 +25,7 @@ export const campaignMonitorAuth = PieceAuth.SecretText({
 export const campaignMonitor = createPiece({
     displayName: 'Campaign Monitor',
     description: 'Email marketing platform for delivering exceptional email campaigns.',
-    logoUrl: 'https://cdn.activepieces.com/pieces/campaign-monitor.png',
+    logoUrl: 'https://cdn.ensemble.com/pieces/campaign-monitor.png',
     authors: ['AnkitSharmaOnGithub','kishanprmr'],
     auth: campaignMonitorAuth,
     actions: [

@@ -2,7 +2,7 @@ import {
   DynamicPropsValue,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { snowflakeAuth } from '../..';
 import snowflake from 'snowflake-sdk';
 

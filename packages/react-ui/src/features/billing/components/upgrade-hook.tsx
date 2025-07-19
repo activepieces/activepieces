@@ -1,6 +1,6 @@
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@ensemble/shared';
 
 type UpgradeHookDialogProps = {
   metric: 'activeFlows' | 'mcp' | 'tables' | 'agents';

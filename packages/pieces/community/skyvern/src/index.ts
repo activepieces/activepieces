@@ -1,5 +1,5 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece } from '@ensemble/pieces-framework';
 import { cancelRunAction } from './lib/actions/cancel-run';
 import { findWorkflowAction } from './lib/actions/find-workflow';
 import { getRunAction } from './lib/actions/get-run';
@@ -12,7 +12,7 @@ export const skyvern = createPiece({
 	displayName: 'Skyvern',
 	auth: skyvernAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/skyvern.jpg',
+	logoUrl: 'https://cdn.ensemble.com/pieces/skyvern.jpg',
 	authors: ['rimjhimyadav','kishanprmr'],
 	actions: [
 		runAgentTaskAction,

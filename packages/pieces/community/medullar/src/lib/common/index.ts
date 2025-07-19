@@ -1,5 +1,5 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
 
 export const medullarCommon = {
   baseUrl: 'https://api.medullar.com',

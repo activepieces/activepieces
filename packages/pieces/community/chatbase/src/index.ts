@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createChatbotAction } from './lib/actions/create-chatbot';
 import { listChatbotsAction } from './lib/actions/list-all-chatbots';
 import { searchConversationsAction } from './lib/actions/search-conversations-by-query';
@@ -18,7 +18,7 @@ export const chatbase = createPiece({
 	displayName: 'Chatbase',
 	description: 'Build and manage AI chatbots with custom sources.',
 	auth: chatbaseAuth,
-	logoUrl: 'https://cdn.activepieces.com/pieces/chatbase.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/chatbase.png',
 	categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
 	authors: ['krushnarout'],
 	actions: [

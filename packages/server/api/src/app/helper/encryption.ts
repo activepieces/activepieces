@@ -2,11 +2,11 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
     assertNotNullOrUndefined,
     isNil,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { localFileStore } from './local-store'
 import { QueueMode, system } from './system/system'

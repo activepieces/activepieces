@@ -23,7 +23,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   ApEdition,
   ApFlagId,
@@ -31,7 +31,7 @@ import {
   isNil,
   OAuth2GrantType,
   PieceScope,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { TableTitle } from '../../../../../components/custom/table-title';
 const PlatformPiecesPage = () => {

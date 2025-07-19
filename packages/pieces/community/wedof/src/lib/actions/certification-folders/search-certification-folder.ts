@@ -1,10 +1,10 @@
-import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams, httpClient } from '@ensemble/pieces-common';
   import { wedofAuth } from '../../..';
   import {
     createAction,
     DynamicPropsValue,
     Property,
-  } from '@activepieces/pieces-framework';
+  } from '@ensemble/pieces-framework';
   import { wedofCommon } from '../../common/wedof';
   import dayjs from 'dayjs';
   

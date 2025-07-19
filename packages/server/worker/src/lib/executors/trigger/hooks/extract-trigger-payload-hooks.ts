@@ -1,13 +1,13 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     FlowVersion,
     isNil,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../../api/server-api.service'
 import { engineRunner } from '../../../runner'
@@ -51,7 +51,7 @@ export async function extractPayloads(
         }
     }
     catch (e) {
-        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+        const isTimeoutError = e instanceof EnsembleError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
         if (isTimeoutError) {
             log.error({
                 name: 'extractPayloads',

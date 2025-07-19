@@ -3,7 +3,7 @@ import { t } from 'i18next';
 
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { ListAICreditsUsageResponse } from '@activepieces/shared';
+import { ListAICreditsUsageResponse } from '@ensemble/shared';
 
 export const aiCreditUsageTableColumns: ColumnDef<ListAICreditsUsageResponse>[] =
   [

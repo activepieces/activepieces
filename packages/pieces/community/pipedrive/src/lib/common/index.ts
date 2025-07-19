@@ -6,9 +6,9 @@ import {
 	HttpMethod,
 	HttpRequest,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { GetField, PaginatedResponse, RequestParams } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const pipedriveCommon = {
 	subscribeWebhook: async (

@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { newActivity } from './lib/trigger/new-activity';
 import { newDeal } from './lib/trigger/new-deal';
 import { newPerson } from './lib/trigger/new-person';
@@ -64,7 +64,7 @@ export const pipedrive = createPiece({
 	description: 'Sales CRM and pipeline management software',
 
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/pipedrive.png',
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: pipedriveAuth,
 	actions: [

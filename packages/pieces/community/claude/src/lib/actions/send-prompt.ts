@@ -2,13 +2,13 @@ import {
   createAction,
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../..';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 import { billingIssueMessage, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE=1024;
 export const askClaude = createAction({

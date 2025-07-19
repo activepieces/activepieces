@@ -3,13 +3,13 @@ import {
 	PieceAuth,
 	PiecePropValueSchema,
 	OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
@@ -51,7 +51,7 @@ export const microsoftTeams = createPiece({
 	displayName: 'Microsoft Teams',
 	auth: microsoftTeamsAuth,
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/microsoft-teams.png',
 	categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
 	authors: ['kishanprmr'],
 	actions: [

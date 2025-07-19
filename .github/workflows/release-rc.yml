@@ -17,7 +17,7 @@ jobs:
         run: echo CLOUD_RELEASE=$(node --print "require('./package.json').rcVersion.replace(/-/g, '')") >> $GITHUB_ENV
 
       - name: Fail if tag already exists
-        run: '! docker manifest inspect activepieces/activepieces:${{ env.RELEASE }}'
+        run: '! docker manifest inspect ensemble/ensemble:${{ env.RELEASE }}'
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
@@ -47,5 +47,5 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}
-            ghcr.io/activepieces/activepieces-cloud:${{ env.CLOUD_RELEASE }}
+            ghcr.io/ensemble/ensemble:${{ env.RELEASE }}
+            ghcr.io/ensemble/ensemble-cloud:${{ env.CLOUD_RELEASE }}

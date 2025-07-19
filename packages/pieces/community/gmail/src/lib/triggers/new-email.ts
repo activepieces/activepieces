@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   FilesService,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';

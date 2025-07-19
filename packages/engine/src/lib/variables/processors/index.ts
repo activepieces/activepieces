@@ -1,4 +1,4 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+import { PropertyType } from '@ensemble/pieces-framework'
 import { dateTimeProcessor } from './date-time'
 import { fileProcessor } from './file'
 import { jsonProcessor } from './json'

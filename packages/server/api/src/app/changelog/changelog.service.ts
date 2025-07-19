@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, Changelog, ErrorCode, ListChangelogsResponse } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { EnsembleError, ApEdition, Changelog, ErrorCode, ListChangelogsResponse } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../helper/keyvalue'
@@ -41,7 +41,7 @@ async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsRe
             return await getChangelogFeaturebaseRequest()
         }
         else {
-            return await getChangelogActivepiecesRequest()
+            return await getChangelogEnsembleRequest()
         }
     }
     catch (error) {
@@ -74,7 +74,7 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
             headers,
         })
         if (!response.ok) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'Could not fetch changelog',
@@ -106,8 +106,8 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
     }
 }
 
-async function getChangelogActivepiecesRequest(): Promise<ListChangelogsResponse> {
-    const url = new URL('https://cloud.activepieces.com/api/v1/changelogs')
+async function getChangelogEnsembleRequest(): Promise<ListChangelogsResponse> {
+    const url = new URL('https://cloud.ensemble.com/api/v1/changelogs')
 
     const response = await fetch(url.toString(), {
         method: 'GET',
@@ -116,7 +116,7 @@ async function getChangelogActivepiecesRequest(): Promise<ListChangelogsResponse
         },
     })
     if (!response.ok) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.VALIDATION,
             params: {
                 message: 'Could not fetch changelog',

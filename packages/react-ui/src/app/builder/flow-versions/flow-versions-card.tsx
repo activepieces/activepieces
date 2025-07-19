@@ -42,7 +42,7 @@ import {
   FlowVersionMetadata,
   FlowVersionState,
   Permission,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type UseAsDraftOptionProps = {
   versionNumber: number;

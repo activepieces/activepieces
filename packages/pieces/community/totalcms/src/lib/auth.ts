@@ -1,6 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@ensemble/pieces-framework';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 import { saveContent } from './api';
 
 export type TotalCMSAuthType = { license: string; domain: string };

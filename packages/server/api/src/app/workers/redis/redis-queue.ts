@@ -1,5 +1,5 @@
-import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
+import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@ensemble/server-shared'
+import { EnsembleError, ApId, ErrorCode, isNil } from '@ensemble/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
@@ -92,7 +92,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
         const result = await queue.removeJobScheduler(flowVersionId)
         if (!result) {
-            exceptionHandler.handle(new ActivepiecesError({
+            exceptionHandler.handle(new EnsembleError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
                 params: {
                     flowVersionId,

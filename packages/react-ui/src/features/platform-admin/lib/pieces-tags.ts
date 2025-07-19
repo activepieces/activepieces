@@ -5,7 +5,7 @@ import {
   SeekPage,
   SetPieceTagsRequest,
   Tag,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const piecesTagsApi = {
   upsert(tag: UpsertTagRequest) {

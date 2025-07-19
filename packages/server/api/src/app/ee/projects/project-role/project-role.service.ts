@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { EnsembleError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@ensemble/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
@@ -13,7 +13,7 @@ export const projectRoleService = {
     async getOneOrThrowById({ id }: GetOneIdParams): Promise<ProjectRole> {
         const projectRole = await projectRoleRepo().findOneBy({ id })
         if (isNil(projectRole)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_role', entityId: id, message: 'Project Role by id not found' },
             })
@@ -30,7 +30,7 @@ export const projectRoleService = {
     async getOneOrThrow({ name, platformId }: GetOneByNameParams): Promise<ProjectRole> {
         const projectRole = await this.getOne({ name, platformId })
         if (isNil(projectRole)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_role', entityId: name, message: 'Project Role by name and platformId not found' },
             })
@@ -73,7 +73,7 @@ export const projectRoleService = {
             platformId,
         })
         if (projectRoleExists) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_role', entityId: params.name, message: 'Project Role name already exists' },
             })

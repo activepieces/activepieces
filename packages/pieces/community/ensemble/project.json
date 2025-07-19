@@ -1,7 +1,7 @@
 {
-  "name": "pieces-activepieces",
+  "name": "pieces-ensemble",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/activepieces/src",
+  "sourceRoot": "packages/pieces/community/ensemble/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,14 +10,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/activepieces",
-        "tsConfig": "packages/pieces/community/activepieces/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/activepieces/package.json",
-        "main": "packages/pieces/community/activepieces/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/ensemble",
+        "tsConfig": "packages/pieces/community/ensemble/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/ensemble/package.json",
+        "main": "packages/pieces/community/ensemble/src/index.ts",
         "assets": [
-          "packages/pieces/community/activepieces/*.md",
+          "packages/pieces/community/ensemble/*.md",
           {
-            "input": "packages/pieces/community/activepieces/src/i18n",
+            "input": "packages/pieces/community/ensemble/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -27,7 +27,7 @@
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-activepieces {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-ensemble {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]

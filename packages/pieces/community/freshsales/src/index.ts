@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
 
 const markdownDescription = `
@@ -38,7 +38,7 @@ export const freshsales = createPiece({
   description: 'Sales CRM software',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/freshsales.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: freshsalesAuth,

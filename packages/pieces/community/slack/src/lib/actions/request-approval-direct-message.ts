@@ -1,11 +1,11 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../..';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
   PauseType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 import { profilePicture, text, userId, username } from '../common/props';
 
 export const requestApprovalDirectMessageAction = createAction({

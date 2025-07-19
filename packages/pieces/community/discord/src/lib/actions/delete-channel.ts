@@ -2,8 +2,8 @@ import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
 import { discordAuth } from '../../index';
 import { discordCommon } from '../common';
 

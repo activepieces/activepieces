@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { runQuery } from './lib/actions/run-query';
 import { newRow } from './lib/triggers/new-row';
 import surrealClient from './lib/common';
@@ -61,7 +61,7 @@ export const surrealdb = createPiece({
   description: "Multi Model Database",
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  logoUrl: 'https://cdn.activepieces.com/pieces/surrealdb.jpg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/surrealdb.jpg',
   authors: ['maarteNNNN'],
   auth: surrealdbAuth,
   actions: [runQuery],

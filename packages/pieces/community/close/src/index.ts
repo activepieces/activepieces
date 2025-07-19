@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import {
   createCustomApiCallAction,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { createLead } from './lib/actions/create-lead';
 import { findLead } from './lib/actions/find-lead';
 import { newLeadAdded } from './lib/triggers/new-lead-added';
@@ -40,7 +40,7 @@ export const close = createPiece({
   description: 'Sales automation and CRM integration for Close',
   auth: closeAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/close.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/close.png',
   authors: ['Ani-4x', 'kishanprmr'],
   actions: [
     createLead,

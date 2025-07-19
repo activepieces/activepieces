@@ -7,7 +7,7 @@ import {
   StaticMultiSelectDropdownProperty,
   StaticPropsValue,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { soapAuth } from '../shared/auth';
 
 type DynamicProp =

@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { ApEdition, assertNotNullOrUndefined, isNil } from '@ensemble/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'

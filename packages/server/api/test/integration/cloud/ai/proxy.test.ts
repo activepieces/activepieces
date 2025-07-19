@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, PrincipalType, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, ErrorCode, FlatLanguageModelPricing, PrincipalType, TieredLanguageModelPricing } from '@ensemble/shared'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'

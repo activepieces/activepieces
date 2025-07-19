@@ -16,7 +16,7 @@ import {
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
+import { FlowRun, FlowRunStatus, SeekPage } from '@ensemble/shared';
 
 type SelectedRow = {
   id: string;

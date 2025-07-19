@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
@@ -24,7 +24,7 @@ export const gmailAuth = PieceAuth.OAuth2({
 
 export const gmail = createPiece({
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,
     PieceCategory.BUSINESS_INTELLIGENCE,

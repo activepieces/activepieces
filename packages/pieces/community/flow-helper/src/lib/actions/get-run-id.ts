@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 
 export const getRunId = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'getRunId',
   displayName: 'Get Run Info',
   description: '',

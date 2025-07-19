@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@ensemble/pieces-framework';
 import {
 	attestationApiActions,
 	deviceDefinitionApiActions,
@@ -43,7 +43,7 @@ export const dimo = createPiece({
 		'The DIMO Network enables vehicles to be part of a protocol where users have digital ownership over their vehicle data (as an asset) and have the ability to earn rewards when sharing that data with a service provider.',
 	auth: dimoAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/dimo.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/dimo.png',
 	authors: ['yusuf-cirak', 'kishanprmr'],
 	actions: [
 		...attestationApiActions,

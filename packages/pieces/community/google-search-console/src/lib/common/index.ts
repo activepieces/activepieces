@@ -1,5 +1,5 @@
 import { createAuthClient, googleSearchConsoleAuth } from '../../';
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
 
 export const commonProps = {
   siteUrl: Property.Dropdown({

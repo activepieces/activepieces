@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
   httpClient,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { sendgridCommon } from '../common';
 import { sendgridAuth } from '../..';
 

@@ -32,7 +32,7 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { Permission, PopulatedFlow } from '@activepieces/shared';
+import { Permission, PopulatedFlow } from '@ensemble/shared';
 
 import { TableTitle } from '../../../components/custom/table-title';
 

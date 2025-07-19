@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { sendEmail } from './lib/actions/send-email';
 
 export const resendAuth = PieceAuth.SecretText({
@@ -13,7 +13,7 @@ export const resend = createPiece({
   description: 'Email for developers',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/resend.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: resendAuth,

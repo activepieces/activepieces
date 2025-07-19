@@ -3,7 +3,7 @@ import {
   assertNotNullOrUndefined,
   ExecutionType,
   PauseType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const requestAction = async (conversationId: string, context: any) => {
   const { actions } = context.propsValue;

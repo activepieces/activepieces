@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { skyvernAuth } from '../common/auth';
 import { skyvernApiCall } from '../common/client';
 import { workflowId, workflowParams } from '../common/props';

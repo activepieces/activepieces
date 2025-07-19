@@ -3,7 +3,7 @@ import {
   Property,
   StoreScope,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { makeClient } from '../common';
 import { createHash } from 'crypto';
 import { pastefyAuth } from '../..';

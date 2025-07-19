@@ -7,12 +7,12 @@ import {
 	Polling,
 	pollingHelper,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { formDropdown } from '../common/props';
 
 type Props = {

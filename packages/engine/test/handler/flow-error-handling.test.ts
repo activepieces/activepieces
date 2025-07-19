@@ -34,11 +34,11 @@ describe('piece with error handling', () => {
         const result = await pieceExecutor.handle({
             action: buildPieceAction({
                 name: 'send_http',
-                pieceName: '@activepieces/piece-http',
+                pieceName: '@ensemble/piece-http',
                 actionName: 'send_request',
                 input: {
                     'method': 'POST',
-                    'url': 'https://cloud.activepieces.com/api/v1/flags',
+                    'url': 'https://cloud.ensemble.com/api/v1/flags',
                     'headers': {},
                     'queryParams': {},
                     'body_type': 'none',

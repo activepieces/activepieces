@@ -1,13 +1,13 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@ensemble/pieces-framework';
 import {
   HttpMethod,
   getAccessTokenOrThrow,
   propsValidation,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../../';
 import { z } from 'zod';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 
 export const getClickupChannelMessages = createAction({
   auth: clickupAuth,

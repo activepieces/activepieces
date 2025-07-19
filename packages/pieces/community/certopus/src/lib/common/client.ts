@@ -3,7 +3,7 @@ import {
   HttpMethod,
   QueryParams,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { Organisation } from './models/oranisation';
 import { Event } from './models/event';
 import { Category } from './models/category';

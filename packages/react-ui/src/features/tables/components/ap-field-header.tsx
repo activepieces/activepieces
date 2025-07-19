@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/popover';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@ensemble/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { FieldHeaderContext, tablesUtils } from '../lib/utils';

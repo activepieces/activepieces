@@ -1,4 +1,4 @@
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType } from '@ensemble/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'

@@ -1,7 +1,7 @@
 import { comfyIcuAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { comfyIcuApiCall, commonProps } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 
 export const submitWorkflowRunAction = createAction({
   auth: comfyIcuAuth,

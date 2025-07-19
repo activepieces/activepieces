@@ -1,4 +1,4 @@
-import { ListMcpRunRequest, McpRun, Permission, PrincipalType, SeekPage } from '@activepieces/shared'
+import { ListMcpRunRequest, McpRun, Permission, PrincipalType, SeekPage } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'

@@ -6,7 +6,7 @@ import { TableTitle } from '@/components/custom/table-title';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { Agent, ApFlagId } from '@activepieces/shared';
+import { Agent, ApFlagId } from '@ensemble/shared';
 
 import agentsGroupImage from '../../../assets/img/custom/agents-group.png';
 import { AgentCard } from '../../../features/agents/agent-card';

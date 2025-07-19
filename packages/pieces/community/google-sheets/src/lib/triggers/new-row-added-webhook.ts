@@ -5,7 +5,7 @@ import {
 	TriggerStrategy,
 	WebhookRenewStrategy,
 	createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 import {
 	createFileNotification,
@@ -21,7 +21,7 @@ import {
 
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { areSheetIdsValid } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({

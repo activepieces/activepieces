@@ -4,13 +4,13 @@ import {
   HttpRequest,
   createCustomApiCallAction,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createWordPressPage } from './lib/actions/create-page.action';
 import { createWordPressPost } from './lib/actions/create-post.action';
 import { getWordPressPost } from './lib/actions/get-post.action';
@@ -100,7 +100,7 @@ export const wordpress = createPiece({
   description: 'Open-source website creation software',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
   authors: [

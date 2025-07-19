@@ -16,7 +16,7 @@ import {
   McpToolType,
   Permission,
   McpWithTools,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { McpFlowDialog } from './mcp-flow-tool-dialog';
 import { McpPieceDialog } from './mcp-piece-tool-dialog';

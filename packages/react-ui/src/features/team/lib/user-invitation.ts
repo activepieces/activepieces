@@ -4,7 +4,7 @@ import {
   SendUserInvitationRequest,
   UserInvitation,
   UserInvitationWithLink,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { api } from '../../../lib/api';
 

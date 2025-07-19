@@ -1,4 +1,4 @@
-import { ApFile } from '@activepieces/pieces-framework';
+import { ApFile } from '@ensemble/pieces-framework';
 import { Block, WebClient } from '@slack/web-api';
 
 export const slackSendMessage = async ({

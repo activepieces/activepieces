@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 
-import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@ensemble/pieces-common';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
 import { crispApiCall } from '../common/client';

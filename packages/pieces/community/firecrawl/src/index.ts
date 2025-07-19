@@ -1,6 +1,6 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { scrape } from './lib/actions/scrape';
 import { startCrawl } from './lib/actions/start-crawl';
 import { crawlResults } from './lib/actions/crawl-results';
@@ -50,7 +50,7 @@ export const firecrawl = createPiece({
   displayName: 'Firecrawl',
   description: 'Extract structured data from websites using AI with natural language prompts',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["geekyme-fsmk", "geekyme"],
   auth: firecrawlAuth,

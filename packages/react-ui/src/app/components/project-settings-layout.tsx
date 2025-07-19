@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Navigate } from 'react-router-dom';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 

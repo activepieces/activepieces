@@ -1,7 +1,7 @@
 import {
   createAction,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 import { invoiceninjaAuth } from '../..';
 

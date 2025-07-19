@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 import { API_ENDPOINTS, BASE_URL } from './constants';
 
 async function fireHttpRequest({

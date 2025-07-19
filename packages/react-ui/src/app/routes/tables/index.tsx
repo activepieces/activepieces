@@ -35,7 +35,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { ErrorCode, FieldType, Permission, Table } from '@activepieces/shared';
+import { ErrorCode, FieldType, Permission, Table } from '@ensemble/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();

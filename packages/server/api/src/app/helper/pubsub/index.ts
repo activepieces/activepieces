@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { isNil } from '@ensemble/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, system } from '../system/system'
 import { memoryPubSub } from './memory-pubsub'

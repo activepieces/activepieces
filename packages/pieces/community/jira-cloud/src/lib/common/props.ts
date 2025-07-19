@@ -6,11 +6,11 @@ import {
 	jiraPaginatedApiCall,
 	sendJiraRequest,
 } from '.';
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, Property } from '@ensemble/pieces-framework';
 import { JiraAuth } from '../../auth';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { IssueFieldMetaData, IssueTypeMetadata } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import dayjs from 'dayjs';
 
 export function getProjectIdDropdown(data?: DropdownParams) {

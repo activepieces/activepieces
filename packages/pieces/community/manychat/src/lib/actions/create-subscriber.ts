@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { manychatAuth } from '../../index';
 import { BASE_URL } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const createSubscriberAction = createAction({
 	auth: manychatAuth,

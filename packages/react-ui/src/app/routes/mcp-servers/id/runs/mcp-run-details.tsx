@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import { StepMetadataWithSuggestions } from '@/lib/types';
 import { formatUtils } from '@/lib/utils';
-import { McpRun, McpRunStatus } from '@activepieces/shared';
+import { McpRun, McpRunStatus } from '@ensemble/shared';
 
 import { mcpRunUtils } from './mcp-run-utils';
 

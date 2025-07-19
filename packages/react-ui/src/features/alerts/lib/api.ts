@@ -3,8 +3,8 @@ import {
   Alert,
   CreateAlertParams,
   ListAlertsParams,
-} from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+} from '@ensemble/ee-shared';
+import { SeekPage } from '@ensemble/shared';
 
 export const alertsApi = {
   create(request: CreateAlertParams): Promise<Alert> {

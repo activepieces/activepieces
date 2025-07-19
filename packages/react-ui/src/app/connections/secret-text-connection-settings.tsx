@@ -9,8 +9,8 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { SecretTextProperty } from '@activepieces/pieces-framework';
-import { UpsertSecretTextRequest } from '@activepieces/shared';
+import { SecretTextProperty } from '@ensemble/pieces-framework';
+import { UpsertSecretTextRequest } from '@ensemble/shared';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;

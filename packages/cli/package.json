@@ -1,5 +1,5 @@
 {
-    "name": "@activepieces/cli",
+    "name": "@ensemble/cli",
     "version": "1.0.1",
     "bin": {
         "pieces-cli":"../../dist/cli/src/index.js"
@@ -9,8 +9,8 @@
         "build": "tsc"
     },
     "dependencies": {
-        "@activepieces/pieces-framework": "*",
-        "@activepieces/shared": "*"
+        "@ensemble/pieces-framework": "*",
+        "@ensemble/shared": "*"
     }
 }
   

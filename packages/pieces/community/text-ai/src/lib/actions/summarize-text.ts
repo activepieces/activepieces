@@ -1,6 +1,6 @@
-import { aiProps } from '@activepieces/pieces-common';
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
-import { createAction, Property, Action } from '@activepieces/pieces-framework';
+import { aiProps } from '@ensemble/pieces-common';
+import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@ensemble/shared';
+import { createAction, Property, Action } from '@ensemble/pieces-framework';
 import { LanguageModel, generateText } from 'ai';
 
 export const summarizeText: Action = createAction({

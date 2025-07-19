@@ -1,6 +1,6 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
 import { googleDriveAuth } from '../../index';
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@ensemble/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';

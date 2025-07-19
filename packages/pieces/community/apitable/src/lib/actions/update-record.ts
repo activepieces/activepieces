@@ -3,7 +3,7 @@ import {
 	PiecePropValueSchema,
 	Property,
 	createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
 import { APITableAuth } from '../../index';
 

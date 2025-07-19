@@ -1,4 +1,4 @@
-import { NotificationStatus } from '@activepieces/shared'
+import { NotificationStatus } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../database/redis-connection'

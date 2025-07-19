@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { ExecutionType, MarkdownVariant, PauseType } from '@ensemble/shared';
 
 export const waitForApprovalLink = createAction({
   name: 'wait_for_approval',

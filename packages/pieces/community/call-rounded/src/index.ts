@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from "@ensemble/pieces-framework";
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 export const callRoundedAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -11,7 +11,7 @@ export const callRounded = createPiece({
   displayName: "Call-rounded",
   auth: callRoundedAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/call-rounded.png",
+  logoUrl: "https://cdn.ensemble.com/pieces/call-rounded.png",
   authors: ["perrine-pullicino-alan"],
   actions: [
     createCustomApiCallAction({
@@ -20,7 +20,7 @@ export const callRounded = createPiece({
       },
       auth: callRoundedAuth,
       authMapping: async (auth) => ({
-        'x-app': 'activepieces',
+        'x-app': 'ensemble',
         'x-api-key': auth as string,
       }),
     })

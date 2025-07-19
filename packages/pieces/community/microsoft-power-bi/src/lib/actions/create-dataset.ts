@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { microsoftPowerBiAuth } from '../../index';
 
 type ColumnDefinition = {
@@ -24,7 +24,7 @@ export const createDatasetAction = createAction({
             displayName: 'Dataset Name',
             description: 'Name of the dataset to create',
             required: true,
-            defaultValue: 'ActivepiecesDataset'
+            defaultValue: 'EnsembleDataset'
         }),
         mode: Property.StaticDropdown({
             displayName: 'Dataset Mode',

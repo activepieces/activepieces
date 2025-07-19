@@ -1,9 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { verifyEmail } from './lib/actions/verify-email';
 import { verifySingleEmail } from './lib/common/send-util';
-import { HttpError } from '@activepieces/pieces-common';
+import { HttpError } from '@ensemble/pieces-common';
 import { bulkEmailVerification } from './lib/actions/bulk-email-verification';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { bulkVerificationResult } from './lib/actions/bulk-email-verification-status';
 
 const description = `
@@ -48,7 +48,7 @@ export const reoonEmailVerify = createPiece({
   auth: reoonEmailVerifyAuth,
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.MARKETING],
-  logoUrl: 'https://cdn.activepieces.com/pieces/reoon-verifier.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/reoon-verifier.png',
   description:
     'Email validation service that cleans invalid, temporary & unsafe email addresses.',
   authors: ['AnneMariel95'],

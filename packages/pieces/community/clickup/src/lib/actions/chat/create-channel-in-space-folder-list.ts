@@ -1,8 +1,8 @@
-import { Property } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { Property } from '@ensemble/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow } from '@ensemble/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
 import { clickupAuth } from '../../..';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 
 export const createClickupChannelInSpaceFolderOrList = createAction({
   auth: clickupAuth,

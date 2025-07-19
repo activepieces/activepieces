@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 

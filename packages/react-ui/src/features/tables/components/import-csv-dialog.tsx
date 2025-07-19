@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@ensemble/shared';
 
 import { recordsApi } from '../lib/records-api';
 import { FieldsMapping } from '../lib/utils';

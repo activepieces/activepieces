@@ -1,4 +1,4 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'

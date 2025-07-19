@@ -1,5 +1,5 @@
 import { taskadeAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { taskadeProps } from '../common/props';
 import { TaskadeAPIClient } from '../common/client';
 

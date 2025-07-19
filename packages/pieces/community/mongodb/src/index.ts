@@ -3,9 +3,9 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { propsValidation } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
+import { propsValidation } from '@ensemble/pieces-common';
 import { z } from 'zod';
 
 import actions from './lib/actions';
@@ -89,7 +89,7 @@ export const mongodb = createPiece({
   auth: mongodbAuth,
   minimumSupportedRelease: '0.36.1',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  logoUrl: 'https://cdn.activepieces.com/pieces/mongodb.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mongodb.png',
   authors: ['denieler'],
   actions,
   triggers: [],

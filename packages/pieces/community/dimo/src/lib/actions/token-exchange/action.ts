@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpError } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { HttpError } from '@ensemble/pieces-common';
 import { dimoAuth } from '../../../index';
 import { DimoClient } from '../../common/helpers';
 

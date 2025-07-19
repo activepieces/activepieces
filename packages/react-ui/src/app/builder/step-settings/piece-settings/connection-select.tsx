@@ -21,14 +21,14 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   PieceAction,
   PieceTrigger,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type ConnectionSelectProps = {
   disabled: boolean;

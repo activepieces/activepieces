@@ -1,5 +1,5 @@
 import { scrapelessApiAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 
 export const crawlCrawlApi = createAction({

@@ -1,5 +1,5 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { PieceAuth } from '@ensemble/pieces-framework';
 import { BASE_URL } from './constants';
 
 export const deepgramAuth = PieceAuth.SecretText({

@@ -5,7 +5,7 @@ import {
   HttpMethod,
   QueryParams,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { EntityAttributeType } from './constants';
 import {
   EntityAttributeOptionsResponse,

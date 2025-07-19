@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { ApSubscriptionStatus } from '@ensemble/ee-shared';
+import { isNil, PlatformBillingInformation } from '@ensemble/shared';
 
 type SubscriptionInfoProps = {
   info: PlatformBillingInformation;

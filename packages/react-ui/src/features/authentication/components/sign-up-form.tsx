@@ -28,7 +28,7 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@ensemble/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -36,7 +36,7 @@ import {
   ErrorCode,
   isNil,
   SignUpRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { passwordValidation } from '../lib/password-validation-utils';
 

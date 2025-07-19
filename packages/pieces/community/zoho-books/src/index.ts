@@ -1,11 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 
 export const zohoBooksAuth = PieceAuth.OAuth2({
   props: {
@@ -53,7 +53,7 @@ export const zohoBooksAuth = PieceAuth.OAuth2({
 export const zohoBooks = createPiece({
   displayName: "Zoho Books",
   description: 'Comprehensive online accounting software for small businesses.',
-  logoUrl: "https://cdn.activepieces.com/pieces/zoho-books.png",
+  logoUrl: "https://cdn.ensemble.com/pieces/zoho-books.png",
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["ikus060"],

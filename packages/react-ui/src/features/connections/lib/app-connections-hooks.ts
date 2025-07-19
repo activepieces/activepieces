@@ -16,7 +16,7 @@ import {
   ListAppConnectionsRequestQuery,
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { appConnectionsApi } from './api/app-connections';
 import { globalConnectionsApi } from './api/global-connections';

@@ -6,7 +6,7 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import { PieceCategory, TriggerType, ActionType } from '@activepieces/shared';
+import { PieceCategory, TriggerType, ActionType } from '@ensemble/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (
@@ -91,16 +91,16 @@ const getPinnedPieces = (
 };
 
 const POPULAR_PIECES_NAMES = [
-  '@activepieces/piece-agent',
-  '@activepieces/piece-google-sheets',
-  '@activepieces/piece-slack',
-  '@activepieces/piece-notion',
-  '@activepieces/piece-gmail',
-  '@activepieces/piece-hubspot',
-  '@activepieces/piece-openai',
-  '@activepieces/piece-google-forms',
-  '@activepieces/piece-google-drive',
-  '@activepieces/piece-google-docs',
+  '@ensemble/piece-agent',
+  '@ensemble/piece-google-sheets',
+  '@ensemble/piece-slack',
+  '@ensemble/piece-notion',
+  '@ensemble/piece-gmail',
+  '@ensemble/piece-hubspot',
+  '@ensemble/piece-openai',
+  '@ensemble/piece-google-forms',
+  '@ensemble/piece-google-drive',
+  '@ensemble/piece-google-docs',
 ];
 const getPopularPieces = (
   queryResult: StepMetadataWithSuggestions[],
@@ -153,20 +153,20 @@ const sortByPieceNameOrder = (
   });
 };
 const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
-  '@activepieces/piece-webhook',
-  '@activepieces/piece-schedule',
-  '@activepieces/piece-forms',
-  '@activepieces/piece-tables',
+  '@ensemble/piece-webhook',
+  '@ensemble/piece-schedule',
+  '@ensemble/piece-forms',
+  '@ensemble/piece-tables',
 ];
 
 const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
-  '@activepieces/piece-http',
-  '@activepieces/piece-tables',
-  '@activepieces/piece-todos',
-  '@activepieces/piece-forms',
-  '@activepieces/piece-webhook',
-  '@activepieces/piece-text-helper',
-  '@activepieces/piece-date-helper',
+  '@ensemble/piece-http',
+  '@ensemble/piece-tables',
+  '@ensemble/piece-todos',
+  '@ensemble/piece-forms',
+  '@ensemble/piece-webhook',
+  '@ensemble/piece-text-helper',
+  '@ensemble/piece-date-helper',
 ];
 
 export const pieceSearchUtils = {

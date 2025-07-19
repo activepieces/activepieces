@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApEdition,
     apId,
     Cursor,
@@ -13,7 +13,7 @@ import {
     User,
     UserId,
     UserStatus,
-    UserWithMetaInformation } from '@activepieces/shared'
+    UserWithMetaInformation } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -44,7 +44,7 @@ export const userService = {
         const user = await this.getOrThrow({ id })
         const platform = await platformService.getOneOrThrow(user.platformId!)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'Admin cannot be deactivated',
@@ -63,7 +63,7 @@ export const userService = {
         })
 
         if (updateResult.affected !== 1) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'user',
@@ -106,7 +106,7 @@ export const userService = {
     async getOrThrow({ id }: IdParams): Promise<User> {
         const user = await userRepo().findOneBy({ id })
         if (isNil(user)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'user', entityId: id },
             })

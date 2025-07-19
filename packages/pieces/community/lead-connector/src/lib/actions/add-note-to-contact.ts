@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
 import {
   addNoteToContact,
   getContacts,

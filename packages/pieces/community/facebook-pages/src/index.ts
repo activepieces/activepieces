@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import { createPhotoPost } from './lib/actions/create-photo-post';
 import { createPost } from './lib/actions/create-post';
 import { createVideoPost } from './lib/actions/create-video-post';
@@ -38,7 +38,7 @@ export const facebookPages = createPiece({
   description: 'Manage your Facebook pages to grow your business',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/facebook.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: facebookPagesAuth,

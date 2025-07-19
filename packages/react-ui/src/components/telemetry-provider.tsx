@@ -10,7 +10,7 @@ import {
   isNil,
   TelemetryEvent,
   UserWithMetaInformationAndProject,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;

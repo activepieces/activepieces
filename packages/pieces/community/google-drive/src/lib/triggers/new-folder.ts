@@ -1,13 +1,13 @@
 import {
   PiecePropValueSchema,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../..';

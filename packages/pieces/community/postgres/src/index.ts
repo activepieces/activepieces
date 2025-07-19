@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { runQuery } from './lib/actions/run-query';
 import { newRow } from './lib/triggers/new-row';
 import { pgClient } from './lib/common';
@@ -85,7 +85,7 @@ export const postgres = createPiece({
   description: "The world's most advanced open-source relational database",
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/postgres.png',
   authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],
   auth: postgresAuth,
   actions: [runQuery],

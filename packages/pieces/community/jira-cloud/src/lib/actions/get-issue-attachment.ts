@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@ensemble/pieces-framework";
 import { jiraCloudAuth } from "../../auth";
 import { jiraApiCall } from "../common";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, httpClient, HttpMethod } from "@ensemble/pieces-common";
 
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,

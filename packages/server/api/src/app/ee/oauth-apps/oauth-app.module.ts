@@ -2,8 +2,8 @@ import {
     ListOAuth2AppRequest,
     OAuthApp,
     UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { assertNotNullOrUndefined, SeekPage } from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,

@@ -3,12 +3,12 @@ import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   DynamicPropsValue,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { dynamicsCRMAuth, getBaseUrl } from '../../';
 import { DynamicsCRMClient } from './client';
 import { EntityAttributeType } from './constants';

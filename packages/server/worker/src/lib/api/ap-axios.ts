@@ -1,4 +1,4 @@
-import { spreadIfDefined } from '@activepieces/shared'
+import { spreadIfDefined } from '@ensemble/shared'
 import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios'
 import axiosRetry from 'axios-retry'
 import { StatusCodes } from 'http-status-codes'

@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-hubspot",
+  "name": "@ensemble/piece-hubspot",
   "version": "0.7.2",
   "dependencies": {
     "@hubspot/api-client": "12.0.1"

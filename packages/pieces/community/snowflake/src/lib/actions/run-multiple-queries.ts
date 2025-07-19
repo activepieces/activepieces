@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import snowflake, { Statement, SnowflakeError } from 'snowflake-sdk';
 import { snowflakeAuth } from '../../index';
 

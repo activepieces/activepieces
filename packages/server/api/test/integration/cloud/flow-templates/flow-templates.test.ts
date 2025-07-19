@@ -4,7 +4,7 @@ import {
     PlatformRole,
     PrincipalType,
     TemplateType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'

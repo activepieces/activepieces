@@ -1,10 +1,10 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { slackAuth } from '../..';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 export const getChannelHistory = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'getChannelHistory',
   auth: slackAuth,
   displayName: 'Get channel history',

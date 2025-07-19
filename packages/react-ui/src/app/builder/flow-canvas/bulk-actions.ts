@@ -9,7 +9,7 @@ import {
   FlowVersion,
   StepLocationRelativeToParent,
   PasteLocation,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { BuilderState } from '../builder-hooks';
 

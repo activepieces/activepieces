@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { readBackBlazeFileAction } from './lib/actions/read-file';
 import { backBlazes3UploadFileAction } from './lib/actions/upload-file';
 import { createBackBlazeS3 } from './lib/common';
@@ -188,7 +188,7 @@ export const backBlazeS3Auth = PieceAuth.CustomAuth({
 export const backblaze = createPiece({
   displayName: 'Backblaze',
   description: 'Scalable storage in the cloud',
-  logoUrl: 'https://cdn.activepieces.com/pieces/backblaze.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/backblaze.png',
   minimumSupportedRelease: '0.30.0',
   authors: ["nhnansari","kishanprmr"],
   categories: [PieceCategory.DEVELOPER_TOOLS],

@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth } from '@ensemble/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const microsoftOutlookAuth = PieceAuth.OAuth2({

@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { googleNewsSearch } from './lib/actions/google-news-search';
 import { googleSearch } from './lib/actions/google-search';
 import { googleTrendsSearch } from './lib/actions/google-trends-search';
@@ -69,7 +69,7 @@ export const serpApi = createPiece({
   description: 'Search Google, YouTube, News, and Trends with powerful filtering and analysis capabilities',
   auth: serpApiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/serp-api.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/serp-api.png',
   authors: ['AnkitSharmaOnGithub'],
   actions: [
     googleSearch,

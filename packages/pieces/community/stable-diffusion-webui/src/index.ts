@@ -2,7 +2,7 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { textToImage } from './lib/actions/text-to-image';
 
 export const stableDiffusionAuth = PieceAuth.CustomAuth({
@@ -25,7 +25,7 @@ export const stableDiffusion = createPiece({
 
   auth: stableDiffusionAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/stable-diffusion-webui.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/stable-diffusion-webui.png',
   authors: ['AdamSelene', 'abuaboud'],
   actions: [textToImage],
   triggers: [],

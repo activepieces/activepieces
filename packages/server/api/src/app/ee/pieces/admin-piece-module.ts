@@ -1,5 +1,5 @@
-import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { PackageType, PieceType } from '@activepieces/shared'
+import { PieceMetadata, PieceMetadataModel } from '@ensemble/pieces-framework'
+import { PackageType, PieceType } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { CreatePieceRequest } from './admin-piece-requests.ee'

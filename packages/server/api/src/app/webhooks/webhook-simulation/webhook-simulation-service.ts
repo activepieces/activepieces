@@ -1,6 +1,6 @@
-import { ApLock } from '@activepieces/server-shared'
+import { ApLock } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     ErrorCode,
     FlowId,
@@ -8,7 +8,7 @@ import {
     isNil,
     ProjectId,
     WebhookSimulation,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../helper/lock'
@@ -103,7 +103,7 @@ export const webhookSimulationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(webhookSimulation)) {
             log.debug('[WebhookSimulationService#getByFlowId] not found')
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: `entityType=webhookSimulation flowId=${flowId} projectId=${projectId}`,

@@ -3,14 +3,14 @@ import {
   PieceAuth,
   Property,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 const markdown = `
 - Create Line bot account from Developer Console
 - Go to the "Messaging API" section.
 - In the webhook settings, paste this URL: 
   \`{{webhookUrl}}\`
-- Publish Activepieces flow first then click "Verify" button
+- Publish Ensemble flow first then click "Verify" button
 `;
 
 export const newMessage = createTrigger({

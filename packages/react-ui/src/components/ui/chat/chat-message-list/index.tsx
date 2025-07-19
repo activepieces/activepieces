@@ -14,7 +14,7 @@ import {
   ChatUIResponse,
   FileResponseInterface,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { MultiMediaMessage } from '../chat-message';
 

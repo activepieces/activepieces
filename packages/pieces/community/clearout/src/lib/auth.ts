@@ -1,7 +1,7 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@ensemble/pieces-framework';
 import { getCredits } from './api';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export type ClearoutAuthType = { apiKey: string };
 

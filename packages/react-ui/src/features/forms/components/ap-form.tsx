@@ -33,7 +33,7 @@ import {
   HumanInputFormResultTypes,
   HumanInputFormResult,
   createKeyForFormInput,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
 import { humanInputApi } from '../lib/human-input-api';
@@ -46,7 +46,7 @@ type FormInputWithName = FormInput & {
   name: string;
 };
 
-/**We do this because it was the behaviour in previous versions of Activepieces.*/
+/**We do this because it was the behaviour in previous versions of Ensemble.*/
 const putBackQuotesForInputNames = (
   value: Record<string, unknown>,
   inputs: FormInputWithName[],

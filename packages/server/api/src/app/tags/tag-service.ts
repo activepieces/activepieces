@@ -1,4 +1,4 @@
-import { apId, ListTagsRequest, SeekPage, Tag } from '@activepieces/shared'
+import { apId, ListTagsRequest, SeekPage, Tag } from '@ensemble/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'

@@ -2,7 +2,7 @@ import {
     EngineOperationType,
     ProgressUpdateType,
     RunEnvironment,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { DelayedJobData, JobData } from './job-data'
 

@@ -2,10 +2,10 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
@@ -61,7 +61,7 @@ export const woocommerce = createPiece({
   displayName: 'WooCommerce',
   description: 'E-commerce platform built on WordPress',
 
-  logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/woocommerce.png',
   categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
   minimumSupportedRelease: '0.30.0',

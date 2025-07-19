@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { publishToTopic } from './lib/action/publish-to-topic';
 import { common } from './lib/common';
 import { newMessageInTopic } from './lib/trigger/new-message-in-topic';
@@ -54,7 +54,7 @@ export const gcloudPubsub = createPiece({
   description: "Google Cloud's event streaming service",
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/gcloud-pubsub.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: googlePubsubAuth,
   authors: ["DGurskij","kishanprmr","khaledmashaly","abuaboud"],

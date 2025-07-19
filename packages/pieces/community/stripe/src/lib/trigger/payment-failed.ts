@@ -1,5 +1,5 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger } from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 
@@ -32,7 +32,7 @@ export const stripePaymentFailed = createTrigger({
       name: null,
       phone: null,
     },
-    calculated_statement_descriptor: 'WWW.ACTIVEPIECES.COM',
+    calculated_statement_descriptor: 'WWW.ENSEMBLE.COM',
     captured: false,
     created: 1675181413,
     currency: 'usd',
@@ -146,7 +146,7 @@ export const stripePaymentFailed = createTrigger({
       usage: 'reusable',
     },
     source_transfer: null,
-    statement_descriptor: 'www.activepieces.com',
+    statement_descriptor: 'www.ensemble.com',
     statement_descriptor_suffix: null,
     status: 'failed',
     transfer_data: null,

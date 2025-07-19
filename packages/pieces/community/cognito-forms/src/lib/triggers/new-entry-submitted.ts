@@ -2,7 +2,7 @@ import {
   createTrigger,
   Property,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { cognitoFormsAuth } from '../../index';
 
 export const newEntryTrigger = createTrigger({

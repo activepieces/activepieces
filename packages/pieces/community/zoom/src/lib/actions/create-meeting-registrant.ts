@@ -1,10 +1,10 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   AuthenticationType,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { RegistrationResponse } from '../common/models';
 import { getRegistarantProps } from '../common/props';
 import { zoomAuth } from '../..';

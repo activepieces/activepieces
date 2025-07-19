@@ -394,7 +394,7 @@ Property.DynamicProperties({
 <Warning>
  This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
 </Warning>
-This is a property that lets you inject JS code into the frontend and manipulate the DOM of this content however you like, it is extremely useful in case you are [embedding](/embedding/overview) Activepieces and want to have a way to communicate with the SaaS embedding it.
+This is a property that lets you inject JS code into the frontend and manipulate the DOM of this content however you like, it is extremely useful in case you are [embedding](/embedding/overview) Ensemble and want to have a way to communicate with the SaaS embedding it.
 It has a `code` property which is a function that takes in an object parameter which will have the following schema:
 
 
@@ -403,7 +403,7 @@ It has a `code` property which is a function that takes in an object parameter w
 | onChange | `(value:unknown)=>void` | A callback you call to set the value of your input (only call this inside event handlers)|
 | value | `unknown` | Whatever the type of the value you pass to onChange|
 | containerId | `string` | The ID of an HTML element in which you can modify the DOM however you like |
-| isEmbedded | `boolean` | The flag that tells you if the code is running inside an [embedded instance](/embedding/overview) of Activepieces |
+| isEmbedded | `boolean` | The flag that tells you if the code is running inside an [embedded instance](/embedding/overview) of Ensemble |
 | projectId | `string` | The project ID of the flow the step that contains this property is in |
 | disabled | `boolean` | The flag that tells you whether or not the property is disabled |
 | property | `{ displayName:string, description?: string, required: boolean}` | The current property information|
@@ -443,4 +443,4 @@ Here is how to define such a property:
     })
   ```
 
-- If you would like to know more about how to setup communication between Activepieces and the SaaS that's embedding it, check the [window postMessage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
+- If you would like to know more about how to setup communication between Ensemble and the SaaS that's embedding it, check the [window postMessage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).

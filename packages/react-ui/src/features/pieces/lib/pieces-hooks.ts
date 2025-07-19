@@ -10,14 +10,14 @@ import {
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   ActionType,
   flowPieceUtil,
   LocalesEnum,
   PlatformWithoutSensitiveData,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { pieceSearchUtils } from './piece-search-utils';
 import {

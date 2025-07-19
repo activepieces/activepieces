@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FlowVersionState } from '@activepieces/shared';
+import { FlowVersionState } from '@ensemble/shared';
 
 type FlowVersionStateProps = {
   state: FlowVersionState;

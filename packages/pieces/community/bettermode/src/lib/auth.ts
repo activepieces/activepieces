@@ -1,9 +1,9 @@
 import {
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 import { getAuthToken } from './api';
 
 export type BettermodeAuthType = {

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 import { hubspotAuth } from '../../';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 

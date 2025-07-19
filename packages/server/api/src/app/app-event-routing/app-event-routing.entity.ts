@@ -1,4 +1,4 @@
-import { FlowId, ProjectId } from '@activepieces/shared'
+import { FlowId, ProjectId } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 

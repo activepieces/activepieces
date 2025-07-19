@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { common } from '../common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const countUniques = createAction({
   name: 'countUniques',

@@ -2,12 +2,12 @@ import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
@@ -57,7 +57,7 @@ export const newComment = createTrigger({
     ],
     display_name: {
       type: 'integration',
-      resolved_name: 'Activepieces',
+      resolved_name: 'Ensemble',
     },
   },
   type: TriggerStrategy.POLLING,

@@ -14,7 +14,7 @@ import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import {
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';

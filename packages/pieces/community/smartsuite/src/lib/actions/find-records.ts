@@ -3,8 +3,8 @@ import {
 	PiecePropValueSchema,
 	Property,
 	createAction,
-} from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { smartsuiteAuth } from '../auth';
 import { smartsuiteCommon, transformRecordFields } from '../common/props';
 import { smartSuiteApiCall, TableStucture } from '../common';

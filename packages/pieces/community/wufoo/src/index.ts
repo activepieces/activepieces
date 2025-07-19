@@ -1,8 +1,8 @@
 import {
   createCustomApiCallAction,
   HttpMethod,
-} from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { wufooApiCall } from './lib/common/client';
 import { createFormEntryAction } from './lib/actions/create-form-entry';
 import { findFormAction } from './lib/actions/find-form';
@@ -47,7 +47,7 @@ export const wufoo = createPiece({
   displayName: 'Wufoo',
   auth: wufooAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/wufoo.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/wufoo.png',
   authors: ['krushnarout','onyedikachi-david'],
   actions: [
     createFormEntryAction,

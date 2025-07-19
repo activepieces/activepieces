@@ -1,6 +1,6 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     apId,
     assertNotNullOrUndefined,
     CreateFlowRequest,
@@ -22,7 +22,7 @@ import {
     PopulatedFlow,
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
@@ -635,7 +635,7 @@ const assertFlowIsNotNull: <T extends Flow>(
     flow: T | null
 ) => asserts flow is T = <T>(flow: T | null) => {
     if (isNil(flow)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {},
         })

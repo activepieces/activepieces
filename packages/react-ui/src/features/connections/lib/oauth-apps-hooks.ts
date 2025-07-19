@@ -2,8 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
-import { ApEdition, AppConnectionType } from '@activepieces/shared';
+import { UpsertOAuth2AppRequest } from '@ensemble/ee-shared';
+import { ApEdition, AppConnectionType } from '@ensemble/shared';
 
 import { oauthAppsApi } from './api/oauth-apps';
 

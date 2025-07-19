@@ -5,7 +5,7 @@ import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
   PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   Action,
   ActionType,
@@ -15,7 +15,7 @@ import {
   Step,
   TriggerType,
   Trigger,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   PieceStepMetadata,
@@ -32,25 +32,25 @@ export const CORE_STEP_METADATA: Record<
 > = {
   [ActionType.CODE]: {
     displayName: t('Code'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+    logoUrl: 'https://cdn.ensemble.com/pieces/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
     type: ActionType.CODE as const,
   },
   [ActionType.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+    logoUrl: 'https://cdn.ensemble.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
     type: ActionType.LOOP_ON_ITEMS as const,
   },
   [ActionType.ROUTER]: {
     displayName: t('Router'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    logoUrl: 'https://cdn.ensemble.com/pieces/branch.svg',
     description: t('Split your flow into branches depending on condition(s)'),
     type: ActionType.ROUTER as const,
   },
   [TriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+    logoUrl: 'https://cdn.ensemble.com/pieces/empty-trigger.svg',
     description: t('Empty Trigger'),
     type: TriggerType.EMPTY as const,
   },
@@ -69,7 +69,7 @@ export const TODO_ACTIONS = {
 
 export const HIDDEN_ACTIONS = [
   {
-    pieceName: '@activepieces/piece-todos',
+    pieceName: '@ensemble/piece-todos',
     actions: [TODO_ACTIONS.createTodoAndWait, TODO_ACTIONS.waitForApproval],
   },
 ];
@@ -158,7 +158,7 @@ export const stepUtils = {
   isAgentPiece(action: Step) {
     return (
       action.type === ActionType.PIECE &&
-      action.settings.pieceName === '@activepieces/piece-agent'
+      action.settings.pieceName === '@ensemble/piece-agent'
     );
   },
   getAgentId(action: Step) {

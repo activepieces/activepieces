@@ -8,9 +8,9 @@ import {
     UpsertConnectionFromToken,
     UpsertOAuth2ConnectionFromToken,
     UpsertSigningKeyConnection,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
-    ActivepiecesError, apId,
+    EnsembleError, apId,
     AppConnectionScope,
     AppConnectionType,
     AppConnectionWithoutSensitiveData,
@@ -19,7 +19,7 @@ import {
     isNil,
     ProjectId,
     SeekPage,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import jsonwebtoken from 'jsonwebtoken'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -42,9 +42,9 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOneOrThrow(projectId)
 
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
-        const finalAppName = appName.replace('@activepieces/piece-', '')
+        const finalAppName = appName.replace('@ensemble/piece-', '')
         if (connectionName == null) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
                 params: {
                     token,
@@ -72,7 +72,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
             token: request.token,
         })
         if (connectionName == null) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
                 params: {
                     token: request.token,
@@ -81,7 +81,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
         }
 
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
-        const finalAppName = `@activepieces/piece-${appCredential.appName}`
+        const finalAppName = `@ensemble/piece-${appCredential.appName}`
         switch (appCredential.settings.type) {
             case AppCredentialType.API_KEY: {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken

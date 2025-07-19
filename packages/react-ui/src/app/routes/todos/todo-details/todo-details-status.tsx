@@ -7,7 +7,7 @@ import {
   UNRESOLVED_STATUS,
   STATUS_VARIANT,
   STATUS_COLORS,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type TodoDetailsStatusProps = {
   todo: Todo;

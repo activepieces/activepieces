@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addWorksheetAction } from './lib/actions/add-worksheet';
 import { appendRowAction } from './lib/actions/append-row';
 import { appendTableRowsAction } from './lib/actions/append-table-rows';
@@ -38,7 +38,7 @@ export const microsoftExcel = createPiece({
 
   auth: excelAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
   actions: [

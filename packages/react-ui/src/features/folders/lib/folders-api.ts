@@ -6,7 +6,7 @@ import {
   FolderDto,
   ListFolderRequest,
   UpdateFolderRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const foldersApi = {
   async list(): Promise<FolderDto[]> {

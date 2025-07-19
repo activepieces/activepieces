@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../..';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 import { WEBHOOK_SOURCES } from '../common/constants';
@@ -14,7 +14,7 @@ export const newDealAddedOrUpdatedTrigger = createTrigger({
 	async onEnable(context) {
 		const client = makeClient(context.auth);
 		const res = await client.subscribeWebhook({
-			name: `Activepieces New Deal Hook`,
+			name: `Ensemble New Deal Hook`,
 			url: context.webhookUrl,
 			events: ['deal_add', 'deal_update'],
 			sources: WEBHOOK_SOURCES,

@@ -20,8 +20,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import type { McpToolRequest, PopulatedFlow } from '@activepieces/shared';
-import { McpToolType, TriggerType, McpWithTools } from '@activepieces/shared';
+import type { McpToolRequest, PopulatedFlow } from '@ensemble/shared';
+import { McpToolType, TriggerType, McpWithTools } from '@ensemble/shared';
 
 import { McpFlowDialogContent } from './mcp-flow-dialog-content';
 
@@ -62,7 +62,7 @@ export function McpFlowDialog({
             (flow: PopulatedFlow) =>
               flow.version.trigger.type === TriggerType.PIECE &&
               flow.version.trigger.settings.pieceName ===
-                '@activepieces/piece-mcp',
+                '@ensemble/piece-mcp',
           );
         });
       return flows;

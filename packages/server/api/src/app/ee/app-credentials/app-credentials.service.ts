@@ -2,8 +2,8 @@ import {
     AppCredential,
     AppCredentialId,
     UpsertAppCredentialRequest,
-} from '@activepieces/ee-shared'
-import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { apId, Cursor, ProjectId, SeekPage } from '@ensemble/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'

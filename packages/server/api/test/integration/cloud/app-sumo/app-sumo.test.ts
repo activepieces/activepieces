@@ -47,7 +47,7 @@ describe('AppSumo API', () => {
 
             expect(responseBody?.message).toBe('success')
             expect(responseBody?.redirect_url).toBe(
-                `https://cloud.activepieces.com/sign-up?email=${mockEmail}`,
+                `https://cloud.ensemble.com/sign-up?email=${mockEmail}`,
             )
         })
     })

@@ -1,12 +1,12 @@
 import { zuoraAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { getAccessToken } from '../common';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const findAccountAction = createAction({
   auth: zuoraAuth,

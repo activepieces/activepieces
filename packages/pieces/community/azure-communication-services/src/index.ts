@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const azureCommunicationServiceAuth = PieceAuth.SecretText({
   displayName: 'Connection string',
@@ -13,7 +13,7 @@ export const azureCommunicationServices = createPiece({
   auth: azureCommunicationServiceAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl:
-    'https://cdn.activepieces.com/pieces/azure-communication-services.png',
+    'https://cdn.ensemble.com/pieces/azure-communication-services.png',
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   authors: ['matthieu-lombard'],
   actions: [sendEmail],

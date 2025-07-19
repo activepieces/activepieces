@@ -1,10 +1,10 @@
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow } from '@ensemble/pieces-common';
 import { IntercomClient } from 'intercom-client';
 import {
   OAuth2PropertyValue,
   OAuth2Props,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
   const client = new IntercomClient({

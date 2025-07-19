@@ -2,12 +2,12 @@ import {
     ApFile,
     Property,
     createAction,
-  } from '@activepieces/pieces-framework';
+  } from '@ensemble/pieces-framework';
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export const createReply = createAction({
     auth: twitterAuth,

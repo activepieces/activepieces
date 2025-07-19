@@ -16,7 +16,7 @@ The following webhook trigger event types (https://developers.convertkit.com/#we
 
 I have not implemented a debounce in any form fields. This means that calls to the ConvertKit API will be triggered on every keystroke for certain fields.
 
-I have raised an issue here: https://github.com/activepieces/activepieces/issues/3142
+I have raised an issue here: https://github.com/ensemble/ensemble/issues/3142
 
 # Building
 
@@ -24,6 +24,6 @@ Run `nx build pieces-convertkit` to build the library.
 
 # ToDo
 
-- Versioning of piece https://www.activepieces.com/docs/developers/piece-reference/piece-versioning
+- Versioning of piece https://www.ensemble.com/docs/developers/piece-reference/piece-versioning
 - Debounce on form fields
 - Add tests(?)

@@ -4,13 +4,13 @@ description: ""
 icon: "cube"
 ---
 
-This page focuses on describing the main components of Activepieces and focus mainly on workflow executions.
+This page focuses on describing the main components of Ensemble and focus mainly on workflow executions.
 
 ## Components
 
 ![Architecture](/resources/architecture.png)
 
-**Activepieces:**
+**Ensemble:**
 
 - **App**: The main application that organizes everything from APIs to scheduled jobs.
 - **Worker**: Polls for new jobs and executes the flows with the engine, ensuring proper sandboxing, and sends results back to the app through the API.
@@ -18,7 +18,7 @@ This page focuses on describing the main components of Activepieces and focus ma
 - **UI**: Frontend written in React.
 
 **Third Party**:
-- **Postgres**: The main database for Activepieces.
+- **Postgres**: The main database for Ensemble.
 - **Redis**: This is used to power the queue using [BullMQ](https://docs.bullmq.io/).
 
 ## Reliability & Scalability
@@ -28,7 +28,7 @@ Postgres and Redis availability is outside the scope of this documentation, as m
 </Tip>
 
 - **Webhooks**:  
-  All webhooks are sent to the Activepieces app, which performs basic validation and adds them to the queue. In case of a spike, webhooks will be added to the queue.
+  All webhooks are sent to the Ensemble app, which performs basic validation and adds them to the queue. In case of a spike, webhooks will be added to the queue.
 
 - **Polling Trigger**:  
   All recurring jobs are added to Redis. In case of a failure, the missed jobs will be executed again.
@@ -36,7 +36,7 @@ Postgres and Redis availability is outside the scope of this documentation, as m
 - **Flow Execution**:  
   Workers poll jobs from the queue. In the event of a spike, the flow execution will still work but may be delayed depending on the size of the spike.
 
-To scale Activepieces, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck.
+To scale Ensemble, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck.
 
 ## Repository Structure
 

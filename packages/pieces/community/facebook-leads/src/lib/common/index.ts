@@ -1,5 +1,5 @@
-import { DropdownOption, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { HttpRequest, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { DropdownOption, OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
+import { HttpRequest, HttpMethod, httpClient } from '@ensemble/pieces-common';
 import {
 	FacebookForm,
 	FacebookLead,

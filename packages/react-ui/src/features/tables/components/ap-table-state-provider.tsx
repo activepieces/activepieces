@@ -9,7 +9,7 @@ import {
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
-import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { Field, Table, PopulatedRecord } from '@ensemble/shared';
 
 import { fieldsApi } from '../lib/fields-api';
 import { recordsApi } from '../lib/records-api';

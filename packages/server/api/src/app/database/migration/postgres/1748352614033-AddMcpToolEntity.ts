@@ -1,5 +1,5 @@
-import { ActionBase } from '@activepieces/pieces-framework'
-import { apId } from '@activepieces/shared'
+import { ActionBase } from '@ensemble/pieces-framework'
+import { apId } from '@ensemble/shared'
 import { gt } from 'semver'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'

@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 
 import Onfleet from '@onfleet/node-onfleet';
 

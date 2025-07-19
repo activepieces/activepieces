@@ -1,9 +1,9 @@
-import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, PieceAuth, TriggerStrategy } from '@ensemble/pieces-framework';
 import { tablesCommon } from '../common';
-import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
+import { PopulatedRecord, TableWebhookEventType } from '@ensemble/shared';
 
 export const updatedRecordTrigger = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+    // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
     name: 'updatedRecord',
     displayName: 'Record Updated',
     description: 'Triggers when a record is updated in the selected table.',

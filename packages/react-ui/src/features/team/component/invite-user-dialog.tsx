@@ -52,7 +52,7 @@ import {
   Permission,
   PlatformRole,
   UserInvitationWithLink,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 

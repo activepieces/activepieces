@@ -4,7 +4,7 @@ import {
   Field,
   PopulatedRecord,
   Table,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { fieldsApi } from '../fields-api';
 import { recordsApi } from '../records-api';

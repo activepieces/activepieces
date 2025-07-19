@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { ApFlagId, supportUrl } from '@ensemble/shared';
 
 export const HelpAndFeedback = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +34,7 @@ export const HelpAndFeedback = () => {
       <DropdownMenuContent align="start" side="right" className="w-[220px]">
         <DropdownMenuItem asChild>
           <Link
-            to="https://activepieces.com/docs"
+            to="https://ensemble.com/docs"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between w-full"
@@ -48,7 +48,7 @@ export const HelpAndFeedback = () => {
 
         <DropdownMenuItem asChild>
           <Link
-            to="https://github.com/activepieces/activepieces/releases"
+            to="https://github.com/ensemble/ensemble/releases"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between w-full"

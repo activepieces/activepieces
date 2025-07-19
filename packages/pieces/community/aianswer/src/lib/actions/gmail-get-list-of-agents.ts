@@ -1,5 +1,5 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
 import { aiAnswerConfig } from '../common/models';
 import { aiAnswerAuth } from '../../index';
 

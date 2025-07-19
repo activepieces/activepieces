@@ -2,8 +2,8 @@ import {
     DynamicPropsValue,
     Property,
     createAction,
-  } from '@activepieces/pieces-framework';
-  import { ExecutionType, PauseType, StopResponse } from '@activepieces/shared';
+  } from '@ensemble/pieces-framework';
+  import { ExecutionType, PauseType, StopResponse } from '@ensemble/shared';
   import { StatusCodes } from 'http-status-codes';
   
   enum ResponseType {

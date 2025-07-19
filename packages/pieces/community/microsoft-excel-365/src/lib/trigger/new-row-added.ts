@@ -2,15 +2,15 @@ import {
   OAuth2PropertyValue,
   Property,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import { excelCommon } from '../common/common';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+} from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 import { excelAuth } from '../..';
 
 const polling: Polling<

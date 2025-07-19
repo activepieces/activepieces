@@ -1,7 +1,7 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
+import { ApplicationEventName } from '@ensemble/ee-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -9,7 +9,7 @@ import {
     isNil,
     PauseType,
     ProgressUpdateType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { eventsHooks } from '../../helper/application-events'
@@ -107,7 +107,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         const { pauseMetadata } = flowRun
 
         if (isNil(pauseMetadata)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: `pauseMetadata is undefined flowRunId=${flowRun.id}`,

@@ -14,7 +14,7 @@ import { DynamicProperties } from './dynamic-prop';
 import { FileProperty } from './file-property';
 import { JsonProperty } from './json-property';
 import { MarkDownProperty } from './markdown-property';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';

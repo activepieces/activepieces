@@ -11,7 +11,7 @@ import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 
 import { ReleaseCard } from './release-card';
 
@@ -60,7 +60,7 @@ const EnvironmentPage = () => {
               'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
             )}
             <a
-              href="https://www.activepieces.com/docs/operations/git-sync"
+              href="https://www.ensemble.com/docs/operations/git-sync"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"

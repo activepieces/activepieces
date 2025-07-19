@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { webflowCreateCollectionItemAction } from './lib/actions/create-collection-item';
 import { webflowDeleteCollectionItem } from './lib/actions/delete-collection-item';
 import { webflowFindCollectionItem } from './lib/actions/find-collection-item';
@@ -24,7 +24,7 @@ export const webflow = createPiece({
 	displayName: 'Webflow',
 	description: 'Design, build, and launch responsive websites visually',
 	minimumSupportedRelease: '0.5.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/webflow.png',
 	categories: [PieceCategory.MARKETING],
 	authors: [
 		'Ahmad-AbuOsbeh',

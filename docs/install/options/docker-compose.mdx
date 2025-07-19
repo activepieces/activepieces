@@ -4,20 +4,20 @@ description: ""
 icon: "book"
 ---
 
-To get up and running quickly with Activepieces, we will use the Activepieces Docker image. Follow these steps:
+To get up and running quickly with Ensemble, we will use the Ensemble Docker image. Follow these steps:
 
 ## Prerequisites
 
-You need to have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to set up Activepieces via Docker Compose.
+You need to have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to set up Ensemble via Docker Compose.
 
 ## Installing
 
-**1. Clone Activepieces repository.**
+**1. Clone Ensemble repository.**
 
-Use the command line to clone Activepieces repository:
+Use the command line to clone Ensemble repository:
 
 ```bash
-git clone https://github.com/activepieces/activepieces.git
+git clone https://github.com/ensemble/ensemble.git
 ```
 
 **2. Go to the repository folder.**
@@ -38,7 +38,7 @@ sh tools/deploy.sh
 If none of the above methods work, you can rename the .env.example file in the root directory to .env and fill in the necessary information within the file.
 </Tip>
 
-**4. Run Activepieces.**
+**4. Run Ensemble.**
 
 <Warning>
 Please note that "docker-compose" (with a dash) is an outdated version of Docker Compose and it will not work properly. We strongly recommend downloading and installing version 2 from the [here](https://docs.docker.com/compose/install/) to use Docker Compose.
@@ -50,7 +50,7 @@ docker compose -p activepieces up
 
 ## 4. Configure Webhook URL (Important for Triggers, Optional If you have public IP)
 
-**Note:** By default, Activepieces will try to use your public IP for webhooks. If you are self-hosting on a personal machine, you must configure the frontend URL so that the webhook is accessible from the internet.
+**Note:** By default, Ensemble will try to use your public IP for webhooks. If you are self-hosting on a personal machine, you must configure the frontend URL so that the webhook is accessible from the internet.
 
 **Optional:** The easiest way to expose your webhook URL on localhost is by using a service like ngrok. However, it is not suitable for production use.
 

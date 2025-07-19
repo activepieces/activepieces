@@ -3,8 +3,8 @@ import {
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-common';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import Airtable from 'airtable';
 import {
   AirtableBase,
@@ -15,7 +15,7 @@ import {
   AirtableTable,
   AirtableView,
 } from './models';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const airtableCommon = {
   base: Property.Dropdown({

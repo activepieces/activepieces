@@ -6,7 +6,7 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

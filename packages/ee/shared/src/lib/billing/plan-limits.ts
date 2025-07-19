@@ -1,4 +1,4 @@
-import { AiOverageState, PlatformPlanLimits } from '@activepieces/shared'
+import { AiOverageState, PlatformPlanLimits } from '@ensemble/shared'
 
 export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'>
 

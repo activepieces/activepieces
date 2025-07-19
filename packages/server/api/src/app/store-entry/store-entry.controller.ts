@@ -4,7 +4,7 @@ import {
     PrincipalType,
     PutStoreEntryRequest,
     STORE_VALUE_MAX_SIZE,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'

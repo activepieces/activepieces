@@ -1,5 +1,5 @@
-import { ApLock } from '@activepieces/server-shared'
-import { FileCompression, FileType } from '@activepieces/shared'
+import { ApLock } from '@ensemble/server-shared'
+import { FileCompression, FileType } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../../database/database-connection'
 import { distributedLock } from '../../helper/lock'

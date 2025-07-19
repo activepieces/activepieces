@@ -1,10 +1,10 @@
 import { straicoAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { baseUrlv0 } from '../common/common';
 
 const SUPPORTED_FILE_TYPES = [

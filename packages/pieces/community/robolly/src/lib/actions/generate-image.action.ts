@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property, createAction } from "@activepieces/pieces-framework";
+import { HttpMethod, httpClient } from "@ensemble/pieces-common";
+import { DynamicPropsValue, Property, createAction } from "@ensemble/pieces-framework";
 
 export  const generateImage = createAction({
     description: 'Generate an image using Robolly',

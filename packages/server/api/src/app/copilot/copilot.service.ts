@@ -1,4 +1,4 @@
-import { AskCopilotRequest, AskCopilotResponse } from '@activepieces/shared'
+import { AskCopilotRequest, AskCopilotResponse } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { codeGeneratorTool } from './tools/code/code-generate'
 

@@ -2,8 +2,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
@@ -61,7 +61,7 @@ export const sperse = createPiece({
     'Sperse CRM enables secure payment processing and affiliate marketing for online businesses',
   auth: sperseAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sperse.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/sperse.png',
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   authors: ['Trayshmhirk'],
   actions: [

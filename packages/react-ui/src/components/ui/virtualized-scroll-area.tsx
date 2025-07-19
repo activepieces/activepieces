@@ -3,7 +3,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { ScrollArea } from './scroll-area';
 

@@ -11,7 +11,7 @@ import {
   SUPPORTED_AI_PROVIDERS,
   PlatformRole,
   ApFlagId,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 

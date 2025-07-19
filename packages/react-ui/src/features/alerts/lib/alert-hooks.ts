@@ -6,7 +6,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
+import { Alert, AlertChannel } from '@ensemble/ee-shared';
 
 import { alertsApi } from './api';
 

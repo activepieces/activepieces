@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@ensemble/pieces-framework';
 
 export const trueLayerCommon = {
   baseUrl: 'https://api.truelayer.com',

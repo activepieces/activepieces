@@ -1,6 +1,6 @@
 import { claudeAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import Ajv from 'ajv';

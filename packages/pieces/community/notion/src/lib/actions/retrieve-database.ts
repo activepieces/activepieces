@@ -1,7 +1,7 @@
 import {
   createAction,
   OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
 import { notionCommon } from '../common';

@@ -1,4 +1,4 @@
-import { ApEdition, flowStructureUtil } from '@activepieces/shared'
+import { ApEdition, flowStructureUtil } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 

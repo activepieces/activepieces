@@ -9,7 +9,7 @@ import {
   FlowVersion,
   PopulatedFlow,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowsApi } from './flows-api';
 

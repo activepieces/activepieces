@@ -4,13 +4,13 @@ import {
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { googleTasksAuth } from '../..';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { getTasks, googleTasksCommon } from '../common';
 
 const props = {

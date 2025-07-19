@@ -3,15 +3,15 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { createRecordAction } from './lib/actions/create-record.action';
 import { getRecordAction } from './lib/actions/get-record.action';
 import { updateRecordAction } from './lib/actions/update-record.action';
 import { deleteRecordAction } from './lib/actions/delete-record.action';
 import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { searchRecordsAction } from './lib/actions/search-records.action';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const businessCentralAuth = PieceAuth.OAuth2({
   props: {
@@ -38,7 +38,7 @@ export const microsoftDynamics365BusinessCentral = createPiece({
   categories: [PieceCategory.SALES_AND_CRM],
   minimumSupportedRelease: '0.27.1',
   logoUrl:
-    'https://cdn.activepieces.com/pieces/microsoft-dynamics-365-business-central.png',
+    'https://cdn.ensemble.com/pieces/microsoft-dynamics-365-business-central.png',
   authors: ['kishanprmr'],
   actions: [
     createRecordAction,

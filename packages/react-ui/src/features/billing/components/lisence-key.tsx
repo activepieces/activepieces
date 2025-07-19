@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatUtils } from '@/lib/utils';
-import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { isNil, PlatformWithoutSensitiveData } from '@ensemble/shared';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 import { FeatureStatus } from './features-status';

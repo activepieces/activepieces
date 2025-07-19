@@ -1,5 +1,5 @@
 import { nocodbAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
 
 export const searchRecordsAction = createAction({

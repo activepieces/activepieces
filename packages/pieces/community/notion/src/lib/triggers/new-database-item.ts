@@ -2,17 +2,17 @@ import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,

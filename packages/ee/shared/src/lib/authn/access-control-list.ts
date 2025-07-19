@@ -1,4 +1,4 @@
-import { DefaultProjectRole, Permission } from '@activepieces/shared'
+import { DefaultProjectRole, Permission } from '@ensemble/shared'
 
 export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
     [DefaultProjectRole.ADMIN]: [

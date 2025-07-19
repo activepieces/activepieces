@@ -6,7 +6,7 @@ import {
   PopulatedRecord,
   SeekPage,
   UpdateRecordRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { FieldsMapping } from './utils';
 

@@ -2,11 +2,11 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   createCustomApiCallAction,
   HttpHeaders,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const DATO_BASE_URL = 'https://site-api.datocms.com';
 
@@ -35,7 +35,7 @@ export const datocms = createPiece({
   description: 'Dato is a modern headless CMS',
   auth: datoAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/datocms.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/datocms.png',
   authors: ['AdamSelene'],
   actions: [
     createCustomApiCallAction({

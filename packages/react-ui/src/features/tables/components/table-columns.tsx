@@ -3,7 +3,7 @@ import { Column, RenderCellProps } from 'react-data-grid';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@ensemble/shared';
 
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';

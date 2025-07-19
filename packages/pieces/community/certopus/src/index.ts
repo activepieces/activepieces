@@ -1,5 +1,5 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
 import { createCredential } from './lib/actions/create-credential';
 import { certopusCommon } from './lib/common';
 
@@ -13,7 +13,7 @@ export const certopus = createPiece({
   displayName: 'Certopus',
   description: 'Your certificates, made simple',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/certopus.png',
   categories: [],
   authors: ["VrajGohil","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: certopusAuth,

@@ -1,5 +1,5 @@
 import { hubspotAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
     getDefaultPropertiesForObject,
     standardObjectDynamicProperties,
@@ -7,7 +7,7 @@ import {
 
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 import { Client } from '@hubspot/api-client';
 
 export const updateProductAction = createAction({

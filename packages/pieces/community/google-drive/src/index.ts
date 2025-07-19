@@ -2,10 +2,10 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { addPermission } from './lib/action/add-permission.action';
 import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
 import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
@@ -34,7 +34,7 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',
-  logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/google-drive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
   description: 'Cloud storage and file backup',

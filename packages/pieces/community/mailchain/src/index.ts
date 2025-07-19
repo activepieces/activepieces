@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@ensemble/pieces-framework';
 import { mailchainCommon } from './lib/common/common';
 import { getAuthenticatedUser } from './lib/actions/get-authenticated-user';
 import { sendEmail } from './lib/actions/send-email';
@@ -11,7 +11,7 @@ export const mailchain = createPiece({
   minimumSupportedRelease: '0.20.0',
   categories: [],
   logoUrl:
-    'https://cdn.activepieces.com/pieces/mailchain.png',
+    'https://cdn.ensemble.com/pieces/mailchain.png',
   authors: ['ahmad-swanblocks'],
   actions: [getAuthenticatedUser, sendEmail],
   triggers: [],

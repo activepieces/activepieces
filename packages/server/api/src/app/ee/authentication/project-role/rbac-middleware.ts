@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApEdition,
     ApId,
     ErrorCode,
@@ -9,7 +9,7 @@ import {
     Principal,
     PrincipalType,
     ProjectRole,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
@@ -106,7 +106,7 @@ export const getPrincipalRoleOrThrow = async (principal: Principal, log: Fastify
     })
 
     if (isNil(projectRole)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'No role found for the user',
@@ -137,7 +137,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
 }
 
 const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {
-    throw new ActivepiecesError({
+    throw new EnsembleError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
             userId: principal.id,

@@ -9,7 +9,7 @@ import {
     TriggerHookType,
     TriggerPayload,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4

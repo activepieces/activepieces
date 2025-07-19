@@ -1,5 +1,5 @@
-import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, createAIProvider, SeekPage } from "@activepieces/shared"
+import { httpClient, AuthenticationType, HttpMethod } from "@ensemble/pieces-common";
+import { Agent, createAIProvider, SeekPage } from "@ensemble/shared"
 import { openai } from "@ai-sdk/openai";
 
 

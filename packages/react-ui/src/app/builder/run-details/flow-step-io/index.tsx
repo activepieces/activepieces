@@ -7,7 +7,7 @@ import {
   StepOutput,
   Action,
   ActionType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { FlowStepAgent } from './flow-step-agent';
 import { FlowStepInputOutput } from './flow-step-input-output';

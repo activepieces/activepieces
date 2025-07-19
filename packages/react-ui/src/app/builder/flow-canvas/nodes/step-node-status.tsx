@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowStructureUtil } from '@activepieces/shared';
+import { flowStructureUtil } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';

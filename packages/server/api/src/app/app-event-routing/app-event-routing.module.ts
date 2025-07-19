@@ -1,15 +1,15 @@
-import { facebookLeads } from '@activepieces/piece-facebook-leads'
-import { intercom } from '@activepieces/piece-intercom'
-import { slack } from '@activepieces/piece-slack'
-import { square } from '@activepieces/piece-square'
-import { Piece } from '@activepieces/pieces-framework'
+import { facebookLeads } from '@ensemble/piece-facebook-leads'
+import { intercom } from '@ensemble/piece-intercom'
+import { slack } from '@ensemble/piece-slack'
+import { square } from '@ensemble/piece-square'
+import { Piece } from '@ensemble/pieces-framework'
 import {
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     rejectedPromiseHandler,
-} from '@activepieces/server-shared'
+} from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ALL_PRINCIPAL_TYPES,
     apId,
     assertNotNullOrUndefined,
@@ -17,7 +17,7 @@ import {
     FlowStatus,
     isNil,
     RunEnvironment,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -35,10 +35,10 @@ const appWebhooks: Record<string, Piece> = {
     intercom,
 }
 const pieceNames: Record<string, string> = {
-    slack: '@activepieces/piece-slack',
-    square: '@activepieces/piece-square',
-    'facebook-leads': '@activepieces/piece-facebook-leads',
-    intercom: '@activepieces/piece-intercom',
+    slack: '@ensemble/piece-slack',
+    square: '@ensemble/piece-square',
+    'facebook-leads': '@ensemble/piece-facebook-leads',
+    intercom: '@ensemble/piece-intercom',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -75,7 +75,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             }
             const piece = appWebhooks[pieceUrl]
             if (isNil(piece)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
                         pieceName: pieceUrl,

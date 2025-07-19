@@ -37,8 +37,8 @@ import {
   GitPushOperationType,
   PushEverythingGitRepoRequest,
   PushGitRepoRequest,
-} from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+} from '@ensemble/ee-shared';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 
 type PushEverythingDialogProps = {
   children?: React.ReactNode;

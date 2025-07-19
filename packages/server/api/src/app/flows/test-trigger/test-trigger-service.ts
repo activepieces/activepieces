@@ -4,7 +4,7 @@ import {
     ProjectId,
     SeekPage,
     TriggerTestStrategy,
-    WebhookSimulation } from '@activepieces/shared'
+    WebhookSimulation } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowService } from '../flow/flow.service'

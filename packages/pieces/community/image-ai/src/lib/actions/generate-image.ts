@@ -1,6 +1,6 @@
-import { aiProps } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { createAIProvider, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { aiProps } from '@ensemble/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { createAIProvider, SUPPORTED_AI_PROVIDERS } from '@ensemble/shared';
 import { ImageModel } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
 

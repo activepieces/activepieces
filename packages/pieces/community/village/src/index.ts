@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { fetchPeoplePaths } from './lib/actions/fetch-people-paths';
 import { fetchCompaniesPaths } from './lib/actions/fetch-companies-paths';
 
@@ -14,7 +14,7 @@ export const village = createPiece({
   description: 'The Social Capital API',
   auth: villageAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/village.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/village.png',
   categories: [
     PieceCategory.PRODUCTIVITY,
     PieceCategory.SALES_AND_CRM,

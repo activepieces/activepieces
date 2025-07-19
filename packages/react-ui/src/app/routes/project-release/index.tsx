@@ -35,7 +35,7 @@ import {
   ProjectRelease,
   ProjectReleaseType,
   Permission,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { ApplyButton } from './apply-plan';
 import { PushEverythingDialog } from './push-everything-dialog';
@@ -160,7 +160,7 @@ const ProjectReleasesPage = () => {
                 'Track and manage your project version history and deployments. ',
               )}
               <a
-                href="https://www.activepieces.com/docs/operations/git-sync"
+                href="https://www.ensemble.com/docs/operations/git-sync"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"

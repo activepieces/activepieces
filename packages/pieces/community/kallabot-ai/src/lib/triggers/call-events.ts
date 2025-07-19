@@ -2,8 +2,8 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-} from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { MarkdownVariant } from '@ensemble/shared';
 
 const webhookInstructions = `**Setup Instructions:**
 1. Copy the webhook URL below.

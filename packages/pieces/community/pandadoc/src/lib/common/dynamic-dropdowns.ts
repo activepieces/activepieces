@@ -1,5 +1,5 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, DynamicPropsValue } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { pandadocClient } from './index';
 
 // Documents dropdown

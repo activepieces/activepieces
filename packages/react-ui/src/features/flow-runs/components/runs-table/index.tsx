@@ -40,7 +40,7 @@ import {
   FlowRunStatus,
   isFailedState,
   Permission,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { runsTableColumns } from './columns';
 

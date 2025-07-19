@@ -11,7 +11,7 @@ import {
   ToolCallContentBlock,
   ToolCallType,
   McpToolType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { mcpApi } from './mcp-api';
 

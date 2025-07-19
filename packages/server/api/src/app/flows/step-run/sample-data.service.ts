@@ -1,4 +1,4 @@
-import { UserInteractionJobType } from '@activepieces/server-shared'
+import { UserInteractionJobType } from '@ensemble/server-shared'
 import {
     Action,
     apId,
@@ -17,7 +17,7 @@ import {
     Step,
     StepRunResponse,
     Trigger,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperActionResult, EngineHelperResponse } from 'server-worker'

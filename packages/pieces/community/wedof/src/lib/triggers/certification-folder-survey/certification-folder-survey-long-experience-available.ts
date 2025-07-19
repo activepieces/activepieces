@@ -1,5 +1,5 @@
 import { wedofAuth } from '../../..';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
 export const certificationFolderSurveyLongTermExperienceAvailable =

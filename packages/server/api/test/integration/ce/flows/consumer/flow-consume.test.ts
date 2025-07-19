@@ -1,4 +1,4 @@
-import { fileCompressor } from '@activepieces/server-shared'
+import { fileCompressor } from '@ensemble/server-shared'
 import {
     ActionType,
     ExecutionType,
@@ -10,7 +10,7 @@ import {
     ProgressUpdateType,
     RunEnvironment,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor, flowWorker } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
@@ -65,7 +65,7 @@ describe('flow execution', () => {
             trigger: {
                 type: TriggerType.PIECE,
                 settings: {
-                    pieceName: '@activepieces/piece-schedule',
+                    pieceName: '@ensemble/piece-schedule',
                     pieceVersion: '0.1.5',
                     input: {
                         run_on_weekends: false,
@@ -102,7 +102,7 @@ describe('flow execution', () => {
                         type: ActionType.PIECE,
                         settings: {
                             inputUiInfo: {},
-                            pieceName: '@activepieces/piece-data-mapper',
+                            pieceName: '@ensemble/piece-data-mapper',
                             pieceVersion: '0.3.0',
                             packageType: 'REGISTRY',
                             pieceType: 'OFFICIAL',

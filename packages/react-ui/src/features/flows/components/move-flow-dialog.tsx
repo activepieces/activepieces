@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
+import { Flow, FlowOperationType, PopulatedFlow } from '@ensemble/shared';
 
 import { flowsApi } from '../lib/flows-api';
 

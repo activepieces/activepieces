@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
-import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomain } from '@ensemble/ee-shared';
 
 const FormSchema = Type.Object({
   domain: Type.String({

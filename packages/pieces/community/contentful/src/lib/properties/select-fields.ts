@@ -1,6 +1,6 @@
-import { DropdownState, Property } from '@activepieces/pieces-framework';
+import { DropdownState, Property } from '@ensemble/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@ensemble/shared';
 
 const SelectFields = Property.MultiSelectDropdown({
   displayName: 'Return Fields',

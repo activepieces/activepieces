@@ -1,10 +1,10 @@
 # Security
 
-Contact: security@activepieces.com
+Contact: security@ensemble.com
 
 Based on [https://supabase.com/.well-known/security.txt](https://supabase.com/.well-known/security.txt)
 
-At Activepieces.com, we consider the security of our systems a top priority. But no matter how much effort we put into system security, there can still be vulnerabilities present.
+At Ensemble.com, we consider the security of our systems a top priority. But no matter how much effort we put into system security, there can still be vulnerabilities present.
 
 If you discover a vulnerability, we would like to know about it so we can take steps to address it as quickly as possible. We would like to ask you to help us better protect our clients and our systems.
 
@@ -22,7 +22,7 @@ If you discover a vulnerability, we would like to know about it so we can take s
 
 ## Please do the following:
 
-- E-mail your findings to [security@activepieces.com](mailto:security@activepieces.com).
+- E-mail your findings to [security@ensemble.com](mailto:security@ensemble.com).
 - Do not run automated scanners on our infrastructure or dashboard. If you wish to do this, contact us and we will set up a sandbox for you.
 - Do not take advantage of the vulnerability or problem you have discovered, for example by downloading more data than necessary to demonstrate the vulnerability or deleting or modifying other people's data,
 - Do not reveal the problem to others until it has been resolved,

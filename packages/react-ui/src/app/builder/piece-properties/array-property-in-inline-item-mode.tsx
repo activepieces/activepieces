@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 
-import { ArraySubProps } from '@activepieces/pieces-framework';
+import { ArraySubProps } from '@ensemble/pieces-framework';
 
 import {
   useBuilderStateContext,

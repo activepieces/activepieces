@@ -1,7 +1,7 @@
 import {
     Action,
     ActionType,
-    ActivepiecesError,
+    EnsembleError,
     apId,
     Cursor,
     ErrorCode,
@@ -22,7 +22,7 @@ import {
     Trigger,
     TriggerType,
     UserId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
@@ -210,7 +210,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         const flowVersion = await flowVersionService(log).getOne(id)
 
         if (isNil(flowVersion)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: id,
@@ -274,7 +274,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }, entityManager)
 
         if (isNil(flowVersion)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: versionId,

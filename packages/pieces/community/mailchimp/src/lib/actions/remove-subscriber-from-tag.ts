@@ -4,9 +4,9 @@ import {
   HttpMethod,
   httpClient,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import crypto from 'crypto';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { mailchimpAuth } from '../..';
 
 export const removeSubscriberFromTag = createAction({

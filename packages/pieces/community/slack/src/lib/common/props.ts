@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property } from '@ensemble/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 
 const slackChannelBotInstruction = `

@@ -1,6 +1,6 @@
 import {wedofAuth} from '../../index';
-import {createAction} from '@activepieces/pieces-framework';
-import {HttpMethod, httpClient} from '@activepieces/pieces-common';
+import {createAction} from '@ensemble/pieces-framework';
+import {HttpMethod, httpClient} from '@ensemble/pieces-common';
 import {wedofCommon} from '../common/wedof';
 
 export const myOrganism = createAction({

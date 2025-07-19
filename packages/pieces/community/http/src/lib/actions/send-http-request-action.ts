@@ -5,13 +5,13 @@ import {
   HttpRequest,
   QueryParams,
   AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createAction,
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';

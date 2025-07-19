@@ -1,4 +1,4 @@
-import { CreateTrialLicenseKeyRequestBody } from '@activepieces/shared';
+import { CreateTrialLicenseKeyRequestBody } from '@ensemble/shared';
 
 import { api } from './api';
 import { flagsApi } from './flags-api';
@@ -10,7 +10,7 @@ export const requestTrialApi = {
   async contactSales(params: ContactSalesRequest): Promise<void> {
     const flags = await flagsApi.getAll();
     return api.post<void>(
-      `https://sales.activepieces.com/submit-inapp-contact-form`,
+      `https://sales.ensemble.com/submit-inapp-contact-form`,
       {
         ...params,
         flags: flags,

@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addSubtractDateAction } from './lib/actions/add-subtract-date';
 import { dateDifferenceAction } from './lib/actions/date-difference';
 import { extractDateParts } from './lib/actions/extract-date-parts';
@@ -15,7 +15,7 @@ export const utilityDate = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   categories: [PieceCategory.CORE],
-  logoUrl: 'https://cdn.activepieces.com/pieces/calendar_piece.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/calendar_piece.svg',
   authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     getCurrentDate,

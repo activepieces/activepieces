@@ -1,5 +1,5 @@
 import { slackAuth } from '../../index';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { singleSelectChannelInfo, slackChannel, userId } from '../common/props';
 import { WebClient } from '@slack/web-api';
 

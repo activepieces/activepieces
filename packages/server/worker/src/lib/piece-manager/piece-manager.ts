@@ -1,12 +1,12 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, systemConstants } from '@activepieces/server-shared'
+import { enrichErrorContext, systemConstants } from '@ensemble/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
     isEmpty,
     PackageType,
     PiecePackage,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PackageInfo, packageManager } from '../cache/package-manager'
 

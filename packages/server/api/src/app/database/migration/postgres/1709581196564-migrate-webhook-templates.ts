@@ -1,4 +1,4 @@
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
@@ -26,7 +26,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                     input: {},
                     'inputUiInfo': step.settings.inputUiInfo,
                     triggerName: 'catch_request',
-                    pieceName: '@activepieces/piece-webhook',
+                    pieceName: '@ensemble/piece-webhook',
                     pieceVersion: '~0.0.1',
                     'pieceType': 'OFFICIAL',
                     'packageType': 'REGISTRY',
@@ -59,7 +59,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
 
             const step = flowVersion.template.trigger
             if (step.type === 'PIECE_TRIGGER') {
-                if (step.settings.pieceName === '@activepieces/piece-webhook') {
+                if (step.settings.pieceName === '@ensemble/piece-webhook') {
                     step.type = 'WEBHOOK'
                     step.settings = {
                         'inputUiInfo': step.settings.inputUiInfo,

@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { askChatbotAction } from './lib/actions/ask-chatbot';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const afforaiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -18,7 +18,7 @@ export const afforai = createPiece({
     'Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.',
   auth: afforaiAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/afforai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["kishanprmr","abuaboud"],
   actions: [askChatbotAction],

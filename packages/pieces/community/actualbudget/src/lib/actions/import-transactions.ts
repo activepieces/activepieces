@@ -1,5 +1,5 @@
 import { actualBudgetAuth } from '../..';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import * as api from '@actual-app/api';
 import { initializeAndDownloadBudget } from '../common/common';
 

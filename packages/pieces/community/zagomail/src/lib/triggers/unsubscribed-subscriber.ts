@@ -1,9 +1,9 @@
 
 import { zagomailAuth } from '../../';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 const CACHE_KEY = 'zagomail_unsubscribed_subscriber_trigger_store';
 

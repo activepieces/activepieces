@@ -2,7 +2,7 @@ import { actualBudgetAuth } from '../..';
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { Transaction } from '../common/models';
 import * as api from '@actual-app/api';
 import { initializeAndDownloadBudget } from '../common/common';

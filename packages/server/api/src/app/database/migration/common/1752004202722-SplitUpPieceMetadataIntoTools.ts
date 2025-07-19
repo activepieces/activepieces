@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@ensemble/shared'
 import { gt } from 'semver'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'

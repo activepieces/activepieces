@@ -12,13 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
 import {
   McpTool,
   McpToolType,
   McpWithTools,
   Permission,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type McpPieceToolProps = {
   mcp: McpWithTools;

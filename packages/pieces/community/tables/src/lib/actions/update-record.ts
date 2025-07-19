@@ -1,7 +1,7 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@ensemble/pieces-framework';
 import { tablesCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/shared';
+import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ensemble/pieces-common';
+import { PopulatedRecord, UpdateRecordRequest } from '@ensemble/shared';
 
 export const updateRecord = createAction({
   name: 'tables-update-record',

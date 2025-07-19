@@ -1,4 +1,4 @@
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { intercomClient } from '.';
 import { intercomAuth } from '../../index';
 import {
@@ -6,7 +6,7 @@ import {
 	DynamicPropsValue,
 	PiecePropValueSchema,
 	Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 export const conversationIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({

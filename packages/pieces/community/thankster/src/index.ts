@@ -1,5 +1,5 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { createPiece, PieceAuth } from "@ensemble/pieces-framework";
     import { sendCards } from './lib/actions/send-cards';
 
     export const thanksterAuth = PieceAuth.SecretText({
@@ -12,7 +12,7 @@
       displayName: "Thankster",
       auth: thanksterAuth,
       minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/thankster.png",
+      logoUrl: "https://cdn.ensemble.com/pieces/thankster.png",
       authors: [],
       actions: [sendCards],
       triggers: [],

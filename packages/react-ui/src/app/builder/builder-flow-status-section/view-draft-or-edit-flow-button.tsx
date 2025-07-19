@@ -4,7 +4,7 @@ import { useLocation } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowVersionState, Permission } from '@activepieces/shared';
+import { FlowVersionState, Permission } from '@ensemble/shared';
 
 import { useBuilderStateContext, useSwitchToDraft } from '../builder-hooks';
 

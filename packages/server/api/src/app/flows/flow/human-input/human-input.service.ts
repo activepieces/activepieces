@@ -1,4 +1,4 @@
-import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import { EnsembleError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
@@ -6,7 +6,7 @@ import { projectService } from '../../../project/project-service'
 import { flowVersionService } from '../../flow-version/flow-version.service'
 import { flowRepo } from '../flow.repo'
 
-const FORMS_PIECE_NAME = '@activepieces/piece-forms'
+const FORMS_PIECE_NAME = '@ensemble/piece-forms'
 const FORM_TRIIGGER = 'form_submission'
 const FILE_TRIGGER = 'file_submission'
 const SIMPLE_FILE_PROPS = {
@@ -37,7 +37,7 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
     getFormByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<FormResponse> => {
         const flow = await getPopulatedFlowById(log, flowId, useDraft)
         if (!isFormTrigger(flow)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FLOW_FORM_NOT_FOUND,
                 params: {
                     flowId,
@@ -65,7 +65,7 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         if (!flow
             || flow.version.trigger.settings.triggerName !== 'chat_submission'
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FLOW_FORM_NOT_FOUND,
                 params: {
                     flowId,

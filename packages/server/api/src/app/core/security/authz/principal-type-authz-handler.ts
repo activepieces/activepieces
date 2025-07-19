@@ -1,9 +1,9 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     assertNotNullOrUndefined,
     ErrorCode,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
 
@@ -39,7 +39,7 @@ export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
         const principalTypeNotAllowed = !allowedPrincipals.includes(principalType)
 
         if (principalTypeNotAllowed) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'invalid route for principal type',

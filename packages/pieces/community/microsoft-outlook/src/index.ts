@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece, OAuth2PropertyValue } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { downloadAttachmentAction } from './lib/actions/download-email-attachment';
 import { sendEmailAction } from './lib/actions/send-email';
 import { microsoftOutlookAuth } from './lib/common/auth';
@@ -10,7 +10,7 @@ export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/outlook.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/outlook.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['lucaslimasouza', 'kishanprmr'],
 	actions: [

@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { GetSampleDataRequest } from '@activepieces/shared';
+import { GetSampleDataRequest } from '@ensemble/shared';
 
 export const sampleDataApi = {
   get(request: GetSampleDataRequest) {

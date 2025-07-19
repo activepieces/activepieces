@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { smartsheetAuth } from '../../index';
 import {
 	smartsheetCommon,
@@ -8,7 +8,7 @@ import {
 	verifyWebhookSignature,
 	unsubscribeWebhook,
 } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@ensemble/shared';
 
 const TRIGGER_KEY = 'smartsheet_updated_row_trigger';
 

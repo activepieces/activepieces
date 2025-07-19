@@ -8,7 +8,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@ensemble/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 

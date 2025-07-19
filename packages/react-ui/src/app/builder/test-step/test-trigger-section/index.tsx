@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { Trigger, isNil } from '@activepieces/shared';
+import { Trigger, isNil } from '@ensemble/shared';
 
 import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';

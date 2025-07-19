@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { beehiivAuth } from '../common/auth';
 import { automationId, customFields, publicationId } from '../common/props';
 import { beehiivApiCall } from '../common/client';

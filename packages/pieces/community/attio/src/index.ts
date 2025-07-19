@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 
 // Import actions
 import { createRecordAction } from './lib/actions/create-record';
@@ -14,7 +14,7 @@ import { recordCreatedTrigger } from './lib/triggers/record-created';
 import { recordUpdatedTrigger } from './lib/triggers/record-updated';
 import { listEntryCreatedTrigger } from './lib/triggers/list-entry-created';
 import { listEntryUpdatedTrigger } from './lib/triggers/list-entry-updated';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { BASE_URL } from './lib/common/client';
 
 const markdownDescription = `
@@ -38,7 +38,7 @@ export const attio = createPiece({
 	description: 'Modern, collaborative CRM platform built to be fully customizable and real-time.',
 	auth: attioAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/attio.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/attio.png',
 	categories: [PieceCategory.SALES_AND_CRM],
 	authors: ['AnkitSharmaOnGithub', 'kishanprmr'],
 	actions: [

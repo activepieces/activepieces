@@ -1,5 +1,5 @@
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@activepieces/shared'
+import { Alert, AlertChannel, ListAlertsParams } from '@ensemble/ee-shared'
+import { EnsembleError, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -41,7 +41,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         })
 
         if (existingAlert) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.EXISTING_ALERT_CHANNEL,
                 params: {
                     email: receiver,

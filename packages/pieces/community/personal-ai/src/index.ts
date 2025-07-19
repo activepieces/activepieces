@@ -1,6 +1,6 @@
 
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 
 import { createMemory } from './lib/actions/memory/create-memory';
 import { createMessage } from './lib/actions/messaging/create-message';
@@ -24,7 +24,7 @@ export const personalAiAuth = PieceAuth.SecretText({
 export const aiAssistant = createPiece({
   displayName: 'Personal AI',
   description: 'Manage memory storage, messaging, and documents through AI integration.',
-  logoUrl: 'https://cdn.activepieces.com/pieces/personal-ai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/personal-ai.png',
   auth: personalAiAuth,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.20.0',

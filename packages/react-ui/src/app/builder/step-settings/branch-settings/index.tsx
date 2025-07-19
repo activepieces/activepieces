@@ -3,7 +3,7 @@ import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
-import { emptyCondition } from '@activepieces/shared';
+import { emptyCondition } from '@ensemble/shared';
 
 type BranchSettingsProps = {
   readonly: boolean;

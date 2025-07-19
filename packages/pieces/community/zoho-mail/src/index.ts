@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
 	createPiece,
 	OAuth2PropertyValue,
 	PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { getEmailDetailsAction } from './lib/actions/get-email-details';
 import { markEmailAsReadAction } from './lib/actions/mark-email-as-read';
 import { markEmailAsUnreadAction } from './lib/actions/mark-email-as-unread';
@@ -15,7 +15,7 @@ import { newEmailReceivedTrigger } from './lib/triggers/new-email-received-trigg
 
 export const zohoMail = createPiece({
 	displayName: 'Zoho Mail',
-	logoUrl: 'https://cdn.activepieces.com/pieces/zoho-mail.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/zoho-mail.png',
 	auth: zohoMailAuth,
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	description:

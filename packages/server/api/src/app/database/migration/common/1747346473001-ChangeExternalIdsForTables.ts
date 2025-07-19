@@ -12,7 +12,7 @@ export class ChangeExternalIdsForTables1747346473001 implements MigrationInterfa
         `)
 
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@ensemble/piece-tables%\'',
         )
         log.info(
             'ChangeExternalIdsForTables1747346473001: found ' +
@@ -51,7 +51,7 @@ export class ChangeExternalIdsForTables1747346473001 implements MigrationInterfa
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const flowVersionIds = await queryRunner.query(
-            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
+            'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@ensemble/piece-tables%\'',
         )
         log.info(
             'ChangeExternalIdsForTables1747346473001 down: found ' +
@@ -135,7 +135,7 @@ const traverseAndUpdateSubFlow = (
 const updateVersionOfTablesStep = (
     step: Step,
 ): Step => {
-    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
+    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@ensemble/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.1.0'
     }
     return step
@@ -144,7 +144,7 @@ const updateVersionOfTablesStep = (
 const downgradeVersionOfTablesStep = (
     step: Step,
 ): Step => {
-    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@activepieces/piece-tables') {
+    if ((step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') && (step as PieceStep).settings.pieceName === '@ensemble/piece-tables') {
         (step as PieceStep).settings.pieceVersion = '0.0.6'
     }
     return step

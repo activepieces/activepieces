@@ -21,7 +21,7 @@ import {
   FlowRunStatus,
   isNil,
   RunEnvironment,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';

@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { PieceAuth } from '@ensemble/pieces-framework';
 import { airtopApiCall } from './client';
 
 export const airtopAuth = PieceAuth.SecretText({

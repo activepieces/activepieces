@@ -1,5 +1,5 @@
-import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { exceptionHandler, OneTimeJobData, pinoLogging } from '@ensemble/server-shared'
+import { EnsembleError, assertNotNullOrUndefined, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../runner'
@@ -160,7 +160,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
 
             if (result.status === FlowRunStatus.INTERNAL_ERROR) {
-                await handleInternalError(jobData, engineToken, new ActivepiecesError({
+                await handleInternalError(jobData, engineToken, new EnsembleError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
                         message: result.error?.message ?? 'internal error',
@@ -170,9 +170,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
         }
         catch (e) {
-            const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED
-            const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
-            const isMemoryIssueError = e instanceof ActivepiecesError && e.error.code === ErrorCode.MEMORY_ISSUE
+            const isQuotaExceededError = e instanceof EnsembleError && e.error.code === ErrorCode.QUOTA_EXCEEDED
+            const isTimeoutError = e instanceof EnsembleError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+            const isMemoryIssueError = e instanceof EnsembleError && e.error.code === ErrorCode.MEMORY_ISSUE
             if (isQuotaExceededError) {
                 await handleQuotaExceededError(jobData, engineToken, log)
             }

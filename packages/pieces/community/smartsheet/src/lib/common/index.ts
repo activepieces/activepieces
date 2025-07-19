@@ -1,5 +1,5 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpRequest, HttpMethod } from '@ensemble/pieces-common';
 import crypto from 'crypto';
 
 export const smartsheetCommon = {

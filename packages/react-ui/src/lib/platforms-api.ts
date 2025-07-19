@@ -1,7 +1,7 @@
 import {
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { api } from './api';
 import { authenticationSession } from './authentication-session';

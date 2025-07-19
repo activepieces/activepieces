@@ -1,8 +1,8 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
-import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@ensemble/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
 
 export const claudeAuth = PieceAuth.SecretText({
@@ -15,7 +15,7 @@ export const claude = createPiece({
   displayName: 'Anthropic Claude',
   auth: claudeAuth,
   minimumSupportedRelease: '0.63.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['dennisrongo','kishanprmr'],
   actions: [

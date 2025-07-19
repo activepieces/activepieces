@@ -1,10 +1,10 @@
 version: '3.0'
 services:
-  activepieces:
-    image: ghcr.io/activepieces/activepieces:0.65.0
-    container_name: activepieces
+  ensemble:
+    image: ghcr.io/ensemble/ensemble:0.65.0
+    container_name: ensemble
     restart: unless-stopped
-    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
+    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old ensemble, checking the breaking change documentation for more info.
     ## privileged: true
     ports:
       - '8080:80'
@@ -15,7 +15,7 @@ services:
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
-      - activepieces
+      - ensemble
   postgres:
     image: 'postgres:14.4'
     container_name: postgres
@@ -28,7 +28,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - activepieces
+      - ensemble
   redis:
     image: 'redis:7.0.7'
     container_name: redis
@@ -36,9 +36,9 @@ services:
     volumes:
       - 'redis_data:/data'
     networks:
-      - activepieces
+      - ensemble
 volumes:
   postgres_data:
   redis_data:
 networks:
-  activepieces:
+  ensemble:

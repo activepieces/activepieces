@@ -74,7 +74,7 @@ export const ConfigDisplay = ({
               e?.stopPropagation();
               const config = {
                 mcpServers: {
-                  Activepieces:
+                  Ensemble:
                     type === 'npx'
                       ? {
                           command: 'npx',
@@ -102,7 +102,7 @@ export const ConfigDisplay = ({
           hideCopyButton={true}
           data={{
             mcpServers: {
-              Activepieces:
+              Ensemble:
                 type === 'npx'
                   ? {
                       command: 'npx',

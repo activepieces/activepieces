@@ -1,11 +1,11 @@
 import { acumbamailAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import FormData from 'form-data';
 
 export const duplicateTemplateAction = createAction({

@@ -1,7 +1,7 @@
 
-import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { DEDUPE_KEY_PROPERTY } from '@ensemble/pieces-framework'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { isNil } from '@ensemble/shared'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { QueueMode, system } from '../../../helper/system/system'
 

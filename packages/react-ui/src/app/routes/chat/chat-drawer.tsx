@@ -17,7 +17,7 @@ import {
   FlowRun,
   RunEnvironment,
   WebsocketClientEvent,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { FlowChat } from './flow-chat';
 

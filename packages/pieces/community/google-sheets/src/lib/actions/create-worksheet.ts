@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { createGoogleSheetClient } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';

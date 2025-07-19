@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { EnsembleError, ErrorCode, isNil } from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { BaseSecurityHandler } from '../security-handler'
@@ -27,7 +27,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
         const accessToken = header?.substring(prefix.length)
 
         if (isNil(accessToken)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHENTICATION,
                 params: {
                     message: 'missing access token',

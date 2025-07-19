@@ -1,4 +1,4 @@
-import { PiecesSource } from '@activepieces/server-shared'
+import { PiecesSource } from '@ensemble/server-shared'
 import { LocalPieceManager } from './local-piece-manager'
 import { PieceManager } from './piece-manager'
 import { RegistryPieceManager } from './registry-piece-manager'

@@ -1,5 +1,5 @@
-import { PropertyType } from '@activepieces/pieces-framework'
-import { ActivepiecesError,
+import { PropertyType } from '@ensemble/pieces-framework'
+import { EnsembleError,
     AppConnection,
     AppConnectionType,
     assertNotNullOrUndefined,
@@ -9,7 +9,7 @@ import { ActivepiecesError,
     OAuth2GrantType,
     PlatformId,
     resolveValueFromProps,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
@@ -82,7 +82,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             case PropertyType.OAUTH2:
                 return resolveValueFromProps(props, auth.tokenUrl)
             default:
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
                     params: {
                         error: 'invalid auth type',

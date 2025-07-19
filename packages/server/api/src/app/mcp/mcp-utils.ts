@@ -1,7 +1,7 @@
-import { ActionBase, PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { ActionBase, PieceProperty, PiecePropertyMap, PropertyType } from '@ensemble/pieces-framework'
 
-import { UserInteractionJobType } from '@activepieces/server-shared'
-import { isNil, McpProperty, McpPropertyType, PiecePackage } from '@activepieces/shared'
+import { UserInteractionJobType } from '@ensemble/server-shared'
+import { isNil, McpProperty, McpPropertyType, PiecePackage } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { z } from 'zod' 

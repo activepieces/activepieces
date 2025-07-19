@@ -2,8 +2,8 @@ import { spawn } from 'child_process'
 import fs from 'fs/promises'
 import { Server } from 'http'
 import { resolve } from 'path'
-import { ApLock, CacheState, filePiecesUtils, GLOBAL_CACHE_COMMON_PATH, memoryLock, PiecesSource } from '@activepieces/server-shared'
-import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
+import { ApLock, CacheState, filePiecesUtils, GLOBAL_CACHE_COMMON_PATH, memoryLock, PiecesSource } from '@ensemble/server-shared'
+import { debounce, isNil, WebsocketClientEvent } from '@ensemble/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -62,9 +62,9 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
-        await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
-        await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
-        await cache.setCache('@activepieces/shared', CacheState.PENDING)
+        await cache.setCache('@ensemble/pieces-framework', CacheState.PENDING)
+        await cache.setCache('@ensemble/pieces-common', CacheState.PENDING)
+        await cache.setCache('@ensemble/shared', CacheState.PENDING)
         await cache.setCache(piecePackageName, CacheState.PENDING)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)

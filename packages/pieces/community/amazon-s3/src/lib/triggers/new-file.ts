@@ -1,12 +1,12 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { PiecePropValueSchema, Property, createTrigger } from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 
 import { amazonS3Auth } from '../..';
 import { createS3 } from '../common';
 import dayjs from 'dayjs';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 
 const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,

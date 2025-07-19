@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
-import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
+import { Permission, ProjectRole, RoleType } from '@ensemble/shared';
 
 const initialPermissions = [
   {

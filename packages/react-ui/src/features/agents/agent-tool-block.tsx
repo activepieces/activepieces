@@ -15,7 +15,7 @@ import {
   MarkdownVariant,
   ToolCallContentBlock,
   ToolCallStatus,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;

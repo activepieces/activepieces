@@ -1,4 +1,4 @@
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, isNil, PopulatedFlow, ProjectSyncError } from '@activepieces/shared'
+import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, isNil, PopulatedFlow, ProjectSyncError } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { flowService } from '../../../../flows/flow/flow.service'

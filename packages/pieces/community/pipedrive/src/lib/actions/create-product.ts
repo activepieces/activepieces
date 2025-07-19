@@ -1,5 +1,5 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { customFieldsProp, ownerIdProp, visibleToProp } from '../common/props';
 import {
 	pipedriveApiCall,
@@ -7,7 +7,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField, OrganizationCreateResponse } from '../common/types';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 
 export const createProductAction = createAction({
 	auth: pipedriveAuth,

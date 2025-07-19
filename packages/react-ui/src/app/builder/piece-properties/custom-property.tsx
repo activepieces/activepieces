@@ -2,7 +2,7 @@ import { useEffect, useId } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { projectHooks } from '@/hooks/project-hooks';
-import { CustomProperty as CustomPropertyType } from '@activepieces/pieces-framework';
+import { CustomProperty as CustomPropertyType } from '@ensemble/pieces-framework';
 const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
 
 type CustomPropertyParams = {

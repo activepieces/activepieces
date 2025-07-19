@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AgentOutputFieldType } from '@activepieces/shared';
+import { AgentOutputFieldType } from '@ensemble/shared';
 
 import { FieldTypeIcon } from './field-type-icon';
 

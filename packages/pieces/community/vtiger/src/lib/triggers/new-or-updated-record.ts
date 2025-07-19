@@ -3,13 +3,13 @@ import {
   Polling,
   httpClient,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createTrigger,
   PiecePropValueSchema,
   Property,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { vtigerAuth } from '../..';
 import {
   elementTypeProperty,

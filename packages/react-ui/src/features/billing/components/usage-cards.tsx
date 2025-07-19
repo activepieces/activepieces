@@ -7,8 +7,8 @@ import { useTheme } from '@/components/theme-provider';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { PlanName } from '@ensemble/ee-shared';
+import { isNil, PlatformBillingInformation } from '@ensemble/shared';
 
 export const UsageCards = ({
   platformSubscription,

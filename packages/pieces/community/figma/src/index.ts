@@ -1,9 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { getCommentsAction } from './lib/actions/get-comments-action';
 import { getFileAction } from './lib/actions/get-file-action';
 import { postCommentAction } from './lib/actions/post-comment-action';
@@ -21,7 +21,7 @@ export const figma = createPiece({
   displayName: 'Figma',
   description: 'Collaborative interface design tool',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/figma.png',
   categories: [],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: figmaAuth,

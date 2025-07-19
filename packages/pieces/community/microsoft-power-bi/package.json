@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-microsoft-power-bi",
+  "name": "@ensemble/piece-microsoft-power-bi",
   "version": "0.0.1",
   "icon": "https://raw.githubusercontent.com/microsoft/PowerBI-Icons/main/SVG/Power-BI.svg",
   "author": "calladodan"

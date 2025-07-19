@@ -7,7 +7,7 @@ import {
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from '@/components/ui/chat/chat-bubble';
-import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@ensemble/shared';
 
 const formatError = (
   projectId: string | undefined | null,

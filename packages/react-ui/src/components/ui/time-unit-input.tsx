@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { AutoComplete } from './autocomplete';
 import {

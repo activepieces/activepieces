@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { ConnectionDropdown } from './connection-dropdown';
 

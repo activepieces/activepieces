@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
@@ -52,7 +52,7 @@ function isNil(value: unknown): value is null | undefined {
 
 function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
     return flowVersion.trigger.type === TriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
+           flowVersion.trigger.settings.pieceName === '@ensemble/piece-mcp'
 }
 
 const log = system.globalLogger()

@@ -2,11 +2,11 @@ import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { pushRowsToDatasetTableAction } from './lib/actions/push-rows-to-table';
 import { createDatasetAction } from './lib/actions/create-dataset';
-import { PieceCategory } from '@activepieces/shared';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 export const microsoftPowerBiAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Power BI',
@@ -23,7 +23,7 @@ export const microsoftPowerBi = createPiece({
   displayName: 'Microsoft Power BI',
   description: 'Create and manage Power BI datasets and push data to them',
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-power-bi.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/microsoft-power-bi.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: microsoftPowerBiAuth,
   authors: ['calladodan'],

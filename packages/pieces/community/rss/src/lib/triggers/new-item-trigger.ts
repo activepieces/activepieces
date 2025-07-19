@@ -2,7 +2,7 @@ import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   PieceAuthProperty,
   PiecePropValueSchema,
@@ -10,11 +10,11 @@ import {
   StoreScope,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
 import axios from 'axios';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 import { sampleData } from '../common/sampleData';

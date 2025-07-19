@@ -1,5 +1,5 @@
-import { APPSUMO_PLAN, FREE_CLOUD_PLAN, PlatformPlanWithOnlyLimits } from '@activepieces/ee-shared'
-import { isNil, PlatformRole } from '@activepieces/shared'
+import { APPSUMO_PLAN, FREE_CLOUD_PLAN, PlatformPlanWithOnlyLimits } from '@ensemble/ee-shared'
+import { isNil, PlatformRole } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -12,33 +12,33 @@ const appsumoRepo = repoFactory(AppSumoEntity)
 
 
 const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
-    activepieces_tier1: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier1',
+    ensemble_tier1: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier1',
         tasksLimit: 10000,
         userSeatsLimit: 1,
     }),
-    activepieces_tier2: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier2',
+    ensemble_tier2: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier2',
         tasksLimit: 50000,
         userSeatsLimit: 1,
     }),
-    activepieces_tier3: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier3',
+    ensemble_tier3: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier3',
         tasksLimit: 200000,
         userSeatsLimit: 5,
     }),
-    activepieces_tier4: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier4',
+    ensemble_tier4: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier4',
         tasksLimit: 500000,
         userSeatsLimit: 5,
     }),
-    activepieces_tier5: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier5',
+    ensemble_tier5: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier5',
         tasksLimit: 1000000,
         userSeatsLimit: 5,
     }),
-    activepieces_tier6: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier6',
+    ensemble_tier6: APPSUMO_PLAN({
+        planName: 'appsumo_ensemble_tier6',
         tasksLimit: 10000000,
         userSeatsLimit: 5,
     }),

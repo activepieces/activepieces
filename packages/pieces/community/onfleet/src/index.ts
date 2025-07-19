@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 
 import { cloneTask } from './lib/actions/clone-task';
 import { completeTask } from './lib/actions/complete-task';
@@ -33,8 +33,8 @@ import { updateTask } from './lib/actions/update-task';
 import { updateTeam } from './lib/actions/update-team';
 import { updateWorker } from './lib/actions/update-worker';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { autoDispatchCompleted } from './lib/triggers/auto-dispatch-completed';
 import { smsRecipientOptOut } from './lib/triggers/sms-recipient-opt-out';
 import { smsRecipientResponseMissed } from './lib/triggers/sms-recipient-response-missed';
@@ -73,7 +73,7 @@ export const onfleet = createPiece({
 
   auth: onfleetAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/onfleet.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/onfleet.png',
   categories: [],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [

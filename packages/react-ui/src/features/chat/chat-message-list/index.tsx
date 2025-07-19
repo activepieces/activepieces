@@ -13,7 +13,7 @@ import {
   ApErrorParams,
   ChatUIResponse,
   FileResponseInterface,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { MultiMediaMessage } from '../chat-message';
 

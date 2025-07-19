@@ -5,7 +5,7 @@ icon: "chart-line"
 
 ## Performance
 
-On average, Activepieces (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.\
+On average, Ensemble (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.\
 It can scale up much more with increasing instance resources and/or adding more instances.\
 \
 The result of **5000** requests with concurrency of **25**
@@ -70,7 +70,7 @@ Percentage of the requests served within a certain time (ms)
 
 Here is how to reproduce the benchmark:
 
-1. Run Activepieces with PostgreSQL and Redis with the following environment variables:
+1. Run Ensemble with PostgreSQL and Redis with the following environment variables:
 
 ```env
 AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
@@ -103,5 +103,5 @@ Instance specs used to get the above results:
 - Ubuntu 24.04 LTS
 
 <Tip>
-  These benchmarks are based on running Activepieces in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
+  These benchmarks are based on running Ensemble in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Ensemble Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
 </Tip>

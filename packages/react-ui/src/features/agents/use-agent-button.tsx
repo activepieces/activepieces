@@ -13,7 +13,7 @@ import {
   PieceType,
   TriggerType,
   LATEST_SCHEMA_VERSION,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 const template = {
   created: '1751253117904',
@@ -21,7 +21,7 @@ const template = {
   name: 'Chat With Agent',
   description: '',
   tags: [],
-  pieces: ['@activepieces/piece-forms', '@activepieces/piece-agent'],
+  pieces: ['@ensemble/piece-forms', '@ensemble/piece-agent'],
   template: {
     displayName: 'Chat With Agent',
     trigger: {
@@ -30,7 +30,7 @@ const template = {
       displayName: 'Chat UI',
       type: TriggerType.PIECE,
       settings: {
-        pieceName: '@activepieces/piece-forms',
+        pieceName: '@ensemble/piece-forms',
         pieceVersion: '~0.4.3',
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
@@ -47,7 +47,7 @@ const template = {
         name: 'step_2',
         valid: true,
         settings: {
-          pieceName: '@activepieces/piece-agent',
+          pieceName: '@ensemble/piece-agent',
           pieceType: PieceType.OFFICIAL,
           packageType: PackageType.REGISTRY,
           actionName: 'run_agent',
@@ -75,7 +75,7 @@ const template = {
           valid: true,
           skip: false,
           settings: {
-            pieceName: '@activepieces/piece-forms',
+            pieceName: '@ensemble/piece-forms',
             pieceType: PieceType.OFFICIAL,
             packageType: PackageType.REGISTRY,
             actionName: 'return_response',
@@ -144,7 +144,7 @@ export const UseAgentButton = ({ agentId }: UseAgentButton) => {
     onError: () => {},
   });
 
-  const hasAgentPiece = template.pieces.includes('@activepieces/piece-agent');
+  const hasAgentPiece = template.pieces.includes('@ensemble/piece-agent');
 
   if (!hasAgentPiece) {
     return null;

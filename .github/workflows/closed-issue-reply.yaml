@@ -9,7 +9,7 @@ jobs:
       issues: write # to comment on issues (aws-actions/closed-issue-message)
 
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'activepieces'
+    if: github.repository_owner == 'ensemble'
     steps:
       - uses: aws-actions/closed-issue-message@v1
         with:
@@ -18,4 +18,4 @@ jobs:
           message: |
             ### ⚠️COMMENT VISIBILITY WARNING⚠️
             Comments on closed issues are hard for our team to see.
-            If this issue is continuing with the latest stable version of Activepieces, please open a new issue that references this one.
+            If this issue is continuing with the latest stable version of Ensemble, please open a new issue that references this one.

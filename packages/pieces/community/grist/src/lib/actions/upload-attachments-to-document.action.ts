@@ -1,12 +1,12 @@
 import { gristAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { commonProps } from '../common/props';
 import FormData from 'form-data';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { GristAPIClient } from '../common/helpers';
 
 export const gristUploadAttachmentsToDocumnetAction = createAction({

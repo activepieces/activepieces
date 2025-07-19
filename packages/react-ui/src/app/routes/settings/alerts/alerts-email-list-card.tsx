@@ -20,8 +20,8 @@ import {
   alertMutations,
 } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Alert } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
+import { Alert } from '@ensemble/ee-shared';
+import { Permission } from '@ensemble/shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 

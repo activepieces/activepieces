@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@ensemble/pieces-framework';
 
 const message = `**Getting Started with Mailchain:**
 

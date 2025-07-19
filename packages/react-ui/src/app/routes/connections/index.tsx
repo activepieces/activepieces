@@ -55,7 +55,7 @@ import {
   AppConnectionWithoutSensitiveData,
   Permission,
   PlatformRole,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();

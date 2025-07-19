@@ -1,8 +1,8 @@
-import { Property, DynamicPropsValue, PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, DynamicPropsValue, PiecePropValueSchema } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { smartSuiteApiCall, smartSuitePaginatedApiCall, TableStucture } from '.';
 import { smartsuiteAuth } from '../auth';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const smartsuiteCommon = {
 	solutionId: Property.Dropdown({

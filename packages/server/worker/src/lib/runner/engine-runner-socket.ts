@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'http'
-import { assertNotNullOrUndefined, EngineError, EngineResult, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineError, EngineResult, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { WebSocket, WebSocketServer } from 'ws'
 

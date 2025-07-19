@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import { EnsembleError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@ensemble/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
@@ -46,7 +46,7 @@ export const PlatformPlanHelper = {
         const usageKey = METRIC_TO_USAGE_MAPPING[metric]
 
         if (!limitKey || !usageKey) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: `Unknown metric: ${metric}`,
@@ -58,7 +58,7 @@ export const PlatformPlanHelper = {
         const currentUsage = platformUsage[usageKey]
 
         if (!isNil(limit) && currentUsage >= limit) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
                     metric,

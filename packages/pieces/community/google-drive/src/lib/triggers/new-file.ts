@@ -2,13 +2,13 @@ import {
   PiecePropValueSchema,
   Property,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../..';
@@ -91,7 +91,7 @@ export const newFile = createTrigger({
     mimeType: 'image/png',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     name: 'google-drive.png',
-    link: 'https://cdn.activepieces.com/pieces/google-drive.png'
+    link: 'https://cdn.ensemble.com/pieces/google-drive.png'
   },
 });
 

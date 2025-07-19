@@ -1,7 +1,7 @@
 import fs from 'fs'
 
-import { AppSystemProp } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { isNil } from '@ensemble/shared'
 import Redis, { RedisOptions } from 'ioredis'
 import { RedisType, system } from '../helper/system/system'
 

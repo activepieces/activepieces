@@ -11,7 +11,7 @@ import {
   parseToJsonIfPossible,
   PieceAction,
   StepOutput,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type FlowStepAgentProps = {
   stepDetails: StepOutput;

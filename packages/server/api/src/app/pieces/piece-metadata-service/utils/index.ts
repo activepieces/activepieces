@@ -1,4 +1,4 @@
-import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@activepieces/shared'
+import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@ensemble/shared'
 import { enterpriseFilteringUtils } from '../../../ee/pieces/filters/piece-filtering-utils'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'

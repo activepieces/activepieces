@@ -1,7 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@ensemble/pieces-framework";
 import { jiraCloudAuth } from "../../auth";
 import { jiraApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpMethod } from "@ensemble/pieces-common";
 
 export const findUserAction = createAction({
     auth:jiraCloudAuth,

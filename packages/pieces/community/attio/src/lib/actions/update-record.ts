@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { attioAuth } from '../../index';
 import { attioApiCall } from '../common/client';
 import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common/props';

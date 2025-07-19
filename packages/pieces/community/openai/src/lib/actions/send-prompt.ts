@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
   StoreScope,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../..';
 import {
@@ -12,7 +12,7 @@ import {
   reduceContextSize,
 } from '../common/common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export const askOpenAI = createAction({
   auth: openaiAuth,

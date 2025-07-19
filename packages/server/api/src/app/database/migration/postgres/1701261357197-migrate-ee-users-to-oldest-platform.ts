@@ -1,4 +1,4 @@
-import { ApEdition, isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
 

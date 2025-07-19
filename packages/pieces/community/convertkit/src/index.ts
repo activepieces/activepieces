@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import {
   createField,
   deleteField,
@@ -54,7 +54,7 @@ import {
   listPurchases,
 } from './lib/actions/purchases';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import {
   addTag,
   formSubscribed,
@@ -82,7 +82,7 @@ export const convertkit = createPiece({
 
   auth: convertkitAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/convertkit.png',
   categories: [PieceCategory.MARKETING],
   authors: ["Gunther-Schulz","kishanprmr","abuaboud"],
   actions: [

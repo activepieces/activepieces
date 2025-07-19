@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   PlatformPlanLimits,
   PlatformWithoutSensitiveData,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 const LICENSE_PROPS_MAP = {
   agentsEnabled: 'Agents Enabled',
@@ -14,7 +14,7 @@ const LICENSE_PROPS_MAP = {
   embeddingEnabled: 'Embedding',
   managePiecesEnabled: 'Manage Pieces',
   manageTemplatesEnabled: 'Manage Templates',
-  customAppearanceEnabled: 'Brand Activepieces',
+  customAppearanceEnabled: 'Brand Ensemble',
   manageProjectsEnabled: 'Manage Projects',
   projectRolesEnabled: 'Project Roles',
   customDomainsEnabled: 'Custom Domains',

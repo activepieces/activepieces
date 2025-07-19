@@ -381,7 +381,7 @@ const contributors = [
         "login": "creed983",
     },
     {
-        "name": "Activepieces Dev",
+        "name": "Ensemble Dev",
         "login": "ashrafsamhouri"
     },
     {

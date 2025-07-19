@@ -1,8 +1,8 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
 import { FieldTransformers } from './transformers';
 import { FieldType } from 'contentful-management';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@ensemble/shared';
 
 const DynamicFields = Property.DynamicProperties({
   displayName: 'Fields',

@@ -32,8 +32,8 @@ import {
   ConfigureRepoRequest,
   GitBranchType,
   GitRepo,
-} from '@activepieces/ee-shared';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+} from '@ensemble/ee-shared';
+import { ApErrorParams, ErrorCode } from '@ensemble/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';

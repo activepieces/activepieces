@@ -3,7 +3,7 @@ import {
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerPrincipal,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { repoFactory } from '../../core/db/repo-factory'
 import { WorkerMachineEntity } from './machine-entity'

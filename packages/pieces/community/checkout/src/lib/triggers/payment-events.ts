@@ -1,6 +1,6 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@ensemble/pieces-framework';
 import { checkoutComAuth, getEnvironmentFromApiKey } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const paymentEventsTrigger = createTrigger({
   name: 'payment_events',
@@ -117,7 +117,7 @@ export const paymentEventsTrigger = createTrigger({
           'Content-Type': 'application/json',
         },
         body: {
-          name: 'Activepieces Payment Events Workflow',
+          name: 'Ensemble Payment Events Workflow',
           active: true,
           conditions: [
             {

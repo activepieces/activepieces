@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PopulatedFlow } from '@activepieces/shared';
+import { PopulatedFlow } from '@ensemble/shared';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { mcpFlowDialogUtils } from './mcp-flow-dialog-utils';

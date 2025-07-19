@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
+import { EnsembleError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { licenseKeysService } from './license-keys-service'
@@ -18,7 +18,7 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
             license: licenseKey,
         })
         if (isNil(key)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_LICENSE_KEY,
                 params: {
                     key: licenseKey,

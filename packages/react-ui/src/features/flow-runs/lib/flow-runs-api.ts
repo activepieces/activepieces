@@ -13,7 +13,7 @@ import {
   StepRunResponse,
   BulkRetryFlowRequestBody,
   SeekPage,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {

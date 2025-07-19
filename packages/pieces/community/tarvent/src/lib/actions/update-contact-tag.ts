@@ -1,5 +1,5 @@
 import { tarventAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 
 export const updateContactTags = createAction({

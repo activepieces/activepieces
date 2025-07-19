@@ -7,7 +7,7 @@ You can use the CLI to sync custom pieces. There is no need to rebuild the Docke
 
 ### How It Works
 
-Use the CLI to sync items from `packages/pieces/custom/` to instances. In production, Activepieces acts as an npm registry, storing all piece versions.
+Use the CLI to sync items from `packages/pieces/custom/` to instances. In production, Ensemble acts as an npm registry, storing all piece versions.
 
 The CLI scans the directory for `package.json` files, checking the **name** and **version** of each piece. If a piece isn't uploaded, it packages and uploads it via the API.
 

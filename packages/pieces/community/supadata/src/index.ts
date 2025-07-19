@@ -1,7 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { getTranscriptAction } from './lib/actions/get-transcript';
-import { PieceCategory } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { supadataConfig } from './lib/config';
 
 const markdownDescription = `
@@ -37,7 +37,7 @@ export const supadata = createPiece({
   displayName: 'Supadata',
   auth: supadataAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/supadata.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/supadata.svg',
   authors: ['rafalzawadzki'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.DEVELOPER_TOOLS, PieceCategory.CONTENT_AND_FILES],
   description: 'YouTube Transcripts',

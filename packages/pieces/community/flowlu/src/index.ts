@@ -2,8 +2,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createContactAction } from './lib/actions/accounts/create-contact';
 import { createOrganizationAction } from './lib/actions/accounts/create-organization';
 import { deleteContactAction } from './lib/actions/accounts/delete-contact';
@@ -42,7 +42,7 @@ export const flowlu = createPiece({
   description: 'Business management software',
   auth: flowluAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/flowlu.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["kishanprmr","abuaboud"],
   actions: [

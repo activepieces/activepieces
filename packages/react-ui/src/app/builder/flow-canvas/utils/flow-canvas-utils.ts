@@ -14,7 +14,7 @@ import {
   StepLocationRelativeToParent,
   Trigger,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowUtilConsts } from './consts';
 import {

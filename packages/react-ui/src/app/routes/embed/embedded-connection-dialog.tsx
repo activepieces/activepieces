@@ -8,13 +8,13 @@ import {
   apId,
   AppConnectionWithoutSensitiveData,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 import {
-  ActivepiecesClientConnectionNameIsInvalid,
-  ActivepiecesClientConnectionPieceNotFound,
-  ActivepiecesClientEventName,
-  ActivepiecesClientShowConnectionIframe,
-  ActivepiecesNewConnectionDialogClosed,
+  EnsembleClientConnectionNameIsInvalid,
+  EnsembleClientConnectionPieceNotFound,
+  EnsembleClientEventName,
+  EnsembleClientShowConnectionIframe,
+  EnsembleNewConnectionDialogClosed,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
@@ -68,7 +68,7 @@ const EmbeddedConnectionDialogContent = ({
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => {
     postMessageToParent({
-      type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
+      type: EnsembleClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
       data: {
         connection: connection
           ? {
@@ -82,15 +82,15 @@ const EmbeddedConnectionDialogContent = ({
 
   const postMessageToParent = (
     event:
-      | ActivepiecesNewConnectionDialogClosed
-      | ActivepiecesClientConnectionNameIsInvalid
-      | ActivepiecesClientConnectionPieceNotFound,
+      | EnsembleNewConnectionDialogClosed
+      | EnsembleClientConnectionNameIsInvalid
+      | EnsembleClientConnectionPieceNotFound,
   ) => {
     parentWindow.postMessage(event, '*');
   };
   useEffect(() => {
-    const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe = {
-      type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
+    const showConnectionIframeEvent: EnsembleClientShowConnectionIframe = {
+      type: EnsembleClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
       data: {},
     };
     parentWindow.postMessage(showConnectionIframeEvent, '*');
@@ -100,7 +100,7 @@ const EmbeddedConnectionDialogContent = ({
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
       postMessageToParent({
-        type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND,
+        type: EnsembleClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND,
         data: {
           error: JSON.stringify({
             isValid: 'false',

@@ -1,4 +1,4 @@
-import { PieceOrderBy, PieceSortBy } from '@activepieces/shared'
+import { PieceOrderBy, PieceSortBy } from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 

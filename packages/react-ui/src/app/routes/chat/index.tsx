@@ -7,7 +7,7 @@ import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { Messages } from '@/components/ui/chat/chat-message-list';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@ensemble/shared';
 
 import NotFoundPage from '../404-page';
 

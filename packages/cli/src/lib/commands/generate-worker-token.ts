@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import jwtLibrary from 'jsonwebtoken';
 
 const KEY_ID = '1'
-const ISSUER = 'activepieces'
+const ISSUER = 'ensemble'
 const ALGORITHM = 'HS256'
 
 export const generateWorkerTokenCommand = new Command('token')

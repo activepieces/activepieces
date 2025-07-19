@@ -13,7 +13,7 @@ import {
     OtpType,
     ProjectMember,
     SigningKey,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
     AiOverageState,
     AIProvider,
@@ -54,7 +54,7 @@ import {
     UserIdentityProvider,
     UserInvitation,
     UserStatus,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'

@@ -4,11 +4,11 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   CustomAuthProps,
   StaticPropsValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 export async function queryMetabaseApi(
   params: {

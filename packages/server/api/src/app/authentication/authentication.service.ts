@@ -1,6 +1,6 @@
-import { OtpType } from '@activepieces/ee-shared'
-import { cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { OtpType } from '@ensemble/ee-shared'
+import { cryptoUtils } from '@ensemble/server-shared'
+import { EnsembleError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -60,7 +60,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
         if (isNil(platformId)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHENTICATION,
                 params: {
                     message: 'No platform found for identity',
@@ -161,7 +161,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
 async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
     if (isNil(platform)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'The user is not a member of the platform',
@@ -171,7 +171,7 @@ async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, p
     const samePlatform = currentPlatformId === platform.id
     const allowToSwitch = !platformUtils.isCustomerOnDedicatedDomain(platform) || samePlatform
     if (!allowToSwitch) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHENTICATION,
             params: {
                 message: 'The user is not a member of the platform',
@@ -186,7 +186,7 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
         platformId: platform.id,
     })
     if (isNil(user)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.AUTHORIZATION,
             params: {
                 message: 'User is not member of the platform',

@@ -4,7 +4,7 @@ import {
   QueryParams,
   AuthenticationType,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { AITableFieldType } from './constants';
 
 function emptyValueFilter(

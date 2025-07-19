@@ -20,7 +20,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];

@@ -1,14 +1,14 @@
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 import { hubspotAuth } from '../../';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
@@ -118,7 +118,7 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 			country: null,
 			createdate: '2024-12-20T10:08:20.243Z',
 			description: 'Automation',
-			domain: 'www.activepieces.com',
+			domain: 'www.ensemble.com',
 			founded_year: null,
 			hs_createdate: null,
 			hs_lastmodifieddate: '2024-12-25T10:04:47.382Z',
@@ -126,7 +126,7 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 			industry: 'COMPUTER_SOFTWARE',
 			is_public: null,
 			lifecyclestage: 'lead',
-			name: 'Activepieces',
+			name: 'Ensemble',
 			numberofemployees: '6',
 			owneremail: null,
 			ownername: null,
@@ -137,7 +137,7 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 			total_revenue: null,
 			type: 'OTHER',
 			web_technologies: null,
-			website: 'www.activepieces.com',
+			website: 'www.ensemble.com',
 			zip: null,
 		},
 		updatedAt: '2024-12-25T10:04:47.382Z',

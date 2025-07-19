@@ -2,8 +2,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 export const bambooHrAuth = PieceAuth.CustomAuth({
   required: true,
@@ -27,7 +27,7 @@ export const bambooHr = createPiece({
   displayName: 'BambooHR',
   auth: bambooHrAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/bamboohr.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/bamboohr.png',
   authors: ['AdamSelene'],
   actions: [
     createCustomApiCallAction({

@@ -29,7 +29,7 @@ import {
   PlatformRole,
   UpdateUserRequestBody,
   User,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { Input } from '../../../../components/ui/input';
 

@@ -1,5 +1,5 @@
 import { fork } from 'child_process'
-import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from '@activepieces/server-shared'
+import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from '@ensemble/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineProcess } from './engine-factory-types'
 

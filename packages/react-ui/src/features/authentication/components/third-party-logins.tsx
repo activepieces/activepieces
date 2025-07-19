@@ -7,7 +7,7 @@ import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '../../../assets/img/custom/auth/saml.svg';

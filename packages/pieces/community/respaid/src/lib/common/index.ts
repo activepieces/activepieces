@@ -1,5 +1,5 @@
-import { TriggerHookContext, TriggerStrategy, SecretTextProperty } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { TriggerHookContext, TriggerStrategy, SecretTextProperty } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from "@ensemble/pieces-common";
 
 interface ActionPayloadProps {
   unique_identifier?: string;

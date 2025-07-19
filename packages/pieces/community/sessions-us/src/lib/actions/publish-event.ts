@@ -1,7 +1,7 @@
 import { baseUrl, getEvents } from '../common';
 import { sessionAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
+import { Property, createAction } from '@ensemble/pieces-framework';
 
 export const publishEvent = createAction({
   auth: sessionAuth,

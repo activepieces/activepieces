@@ -17,7 +17,7 @@ import {
   flowStructureUtil,
   isNil,
   StepRunResponse,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -46,7 +46,7 @@ enum DialogType {
 const isTodoCreateTask = (step: Action) => {
   return (
     step.type === ActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-todos' &&
+    step.settings.pieceName === '@ensemble/piece-todos' &&
     step.settings.actionName === 'createTodoAndWait'
   );
 };
@@ -54,7 +54,7 @@ const isTodoCreateTask = (step: Action) => {
 const isRunAgent = (step: Action) => {
   return (
     step.type === ActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-agent' &&
+    step.settings.pieceName === '@ensemble/piece-agent' &&
     step.settings.actionName === 'run_agent'
   );
 };
@@ -62,7 +62,7 @@ const isRunAgent = (step: Action) => {
 const isReturnResponseAndWaitForWebhook = (step: Action) => {
   return (
     step.type === ActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-webhook' &&
+    step.settings.pieceName === '@ensemble/piece-webhook' &&
     step.settings.actionName === 'return_response_and_wait_for_next_webhook'
   );
 };

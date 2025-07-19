@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { TestButtonTooltip } from '../test-step-tooltip';
 

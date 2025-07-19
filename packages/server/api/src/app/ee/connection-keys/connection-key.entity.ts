@@ -1,5 +1,5 @@
-import { ConnectionKey } from '@activepieces/ee-shared'
-import { Project } from '@activepieces/shared'
+import { ConnectionKey } from '@ensemble/ee-shared'
+import { Project } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

@@ -6,7 +6,7 @@ import {
   createAction,
   StaticPropsValue,
   InputPropertyMap,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   HttpError,
   HttpHeaders,
@@ -15,7 +15,7 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 import fs from 'fs';
 import mime from 'mime-types';
 

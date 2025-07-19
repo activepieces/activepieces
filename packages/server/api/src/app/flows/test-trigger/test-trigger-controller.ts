@@ -1,4 +1,4 @@
-import { PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
+import { PrincipalType, TestTriggerRequestBody } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { testTriggerService } from './test-trigger-service'
 

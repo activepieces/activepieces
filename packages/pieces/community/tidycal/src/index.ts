@@ -1,9 +1,9 @@
 import {
   createCustomApiCallAction,
   HttpMethod,
-} from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { calltidycalapi } from './lib/common';
 import { tidycalbookingcancelled } from './lib/trigger/cancelled-booking';
 import { tidycalnewbooking } from './lib/trigger/new-booking';
@@ -38,7 +38,7 @@ export const tidycal = createPiece({
   description: 'Streamline your scheduling',
   auth: tidyCalAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/tidycal.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   actions: [

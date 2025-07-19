@@ -1,10 +1,10 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { baseUrlv1 } from './lib/common/common';
 import { promptCompletion } from './lib/actions/prompt-completion';
 import { imageGeneration } from './lib/actions/image-generation';
@@ -22,7 +22,7 @@ import { agentDelete } from './lib/actions/agent-delete';
 import { agentUpdate } from './lib/actions/agent-update';
 import { agentGet } from './lib/actions/agent-get';
 import { agentPromptCompletion } from './lib/actions/agent-prompt-completion';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 const markdownDescription = `
 Follow these instructions to get your Straico API Key:
@@ -63,7 +63,7 @@ export const straico = createPiece({
   displayName: 'Straico',
   auth: straicoAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/straico.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/straico.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   description: 'All-in-one generative AI platform',
   authors: ['dennisrongo'],

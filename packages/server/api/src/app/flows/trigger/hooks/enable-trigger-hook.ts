@@ -1,13 +1,13 @@
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
-} from '@activepieces/pieces-framework'
+} from '@ensemble/pieces-framework'
 import {
     AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
     RepeatableJobType,
-    UserInteractionJobType } from '@activepieces/server-shared'
+    UserInteractionJobType } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     EngineResponseStatus,
     ErrorCode,
     FlowVersion,
@@ -17,7 +17,7 @@ import {
     RunEnvironment,
     TriggerHookType,
     TriggerType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperResponse,
@@ -56,7 +56,7 @@ export const enablePieceTrigger = async (
     })
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.TRIGGER_ENABLE,
             params: {
                 flowVersionId: flowVersion.id,

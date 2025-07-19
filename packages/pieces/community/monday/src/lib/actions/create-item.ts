@@ -2,7 +2,7 @@ import {
   DynamicPropsValue,
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { mondayAuth } from '../..';
 import { makeClient, mondayCommon } from '../common';
 import {

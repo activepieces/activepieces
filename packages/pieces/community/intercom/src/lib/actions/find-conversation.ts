@@ -1,5 +1,5 @@
 import { intercomAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { intercomClient, Operator } from '../common';
 import dayjs from 'dayjs';
 

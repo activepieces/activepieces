@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { LoopOnItemsAction } from '@activepieces/shared';
+import { LoopOnItemsAction } from '@ensemble/shared';
 
 import { TextInputWithMentions } from '../piece-properties/text-input-with-mentions';
 

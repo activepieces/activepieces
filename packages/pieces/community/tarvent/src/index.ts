@@ -1,6 +1,6 @@
 
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { createPiece, PieceAuth, Property } from "@ensemble/pieces-framework";
+import { PieceCategory } from "@ensemble/shared";
 import { makeClient } from "./lib/common";
 import { campaignSendFinishedTrigger, contactAddedTrigger, contactBouncedTrigger, contactClickedTrigger, contactGroupUpdatedTrigger, contactNoteAddedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactUnsubscribedTrigger, contactUpdatedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, transactionCreatedTrigger, transactionSentTrigger } from "./lib/triggers";
 import { updateContactTags, sendCampaign, createAudienceGroup, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, generateCustomEvent, updateJourneyStatus, createSuppressionFilter, getAudiences, getAudienceGroups, getCampaigns, getContact, getCustomEvent, getJourney, createContact, createTransaction } from "./lib/actions";
@@ -46,7 +46,7 @@ export const tarvent = createPiece({
   description: "Tarvent is an email marketing, automation, and email API platform that allows to you to send campaigns, manage contacts, automate your marketing, and more.",
   auth: tarventAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/tarvent.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
   authors: ["derekjdev","206mph"],
   actions: [createContact, updateContactTags, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, createAudienceGroup, updateJourneyStatus, createTransaction, sendCampaign, generateCustomEvent, getAudiences, getAudienceGroups, createSuppressionFilter, getCampaigns, getContact, getCustomEvent, getJourney],

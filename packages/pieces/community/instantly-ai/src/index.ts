@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 
 import { createCampaignAction } from './lib/actions/create-campaign';
 import { createLeadListAction } from './lib/actions/create-lead-list';
@@ -8,7 +8,7 @@ import { searchCampaignsAction } from './lib/actions/search-campaigns';
 import { searchLeadsAction } from './lib/actions/search-leads';
 import { campaignStatusChangedTrigger } from './lib/triggers/campaign-status-changed';
 import { newLeadAddedTrigger } from './lib/triggers/new-lead-added';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { BASE_URL } from './lib/common/client';
 
 const markdownDescription = `
@@ -26,7 +26,7 @@ export const instantlyAi = createPiece({
   description: 'Powerful cold email outreach and lead engagement platform.',
   auth: instantlyAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/instantly-ai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/instantly-ai.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: [],
   actions: [

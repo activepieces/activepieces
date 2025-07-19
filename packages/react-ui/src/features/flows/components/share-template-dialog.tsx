@@ -20,7 +20,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { FlowTemplate, TemplateType } from '@activepieces/shared';
+import { FlowTemplate, TemplateType } from '@ensemble/shared';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),

@@ -17,7 +17,7 @@ import {
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
-import { FlowOperationType, TriggerType } from '@activepieces/shared';
+import { FlowOperationType, TriggerType } from '@ensemble/shared';
 
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';

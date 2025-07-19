@@ -24,7 +24,7 @@ import {
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {

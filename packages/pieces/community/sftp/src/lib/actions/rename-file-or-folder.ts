@@ -1,9 +1,9 @@
 import { endClient, sftpAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
 import { getClient, getProtocolBackwardCompatibility } from '../..';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@ensemble/shared';
 
 async function renameFTP(client: FTPClient, oldPath: string, newPath: string) {
   await client.rename(oldPath, newPath);

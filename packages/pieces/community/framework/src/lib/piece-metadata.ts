@@ -3,7 +3,7 @@ import { WebhookRenewConfiguration, TriggerStrategy } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
-import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@ensemble/shared";
 
 const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
 export type I18nForPiece = Static<typeof I18nForPiece>

@@ -4,9 +4,9 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { SMARTSUITE_API_URL } from './constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export type SmartSuiteApiCallParams = {
   apiKey: string;

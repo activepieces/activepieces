@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue } from '@ensemble/pieces-framework';
 import {
   GmailLabel,
   GmailMessage,
@@ -10,9 +10,9 @@ import {
   AuthenticationType,
   httpClient,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { Attachment, ParsedMail, simpleParser } from 'mailparser';
-import { FilesService } from '@activepieces/pieces-framework';
+import { FilesService } from '@ensemble/pieces-framework';
 
 interface SearchMailProps {
   access_token: string;

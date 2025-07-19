@@ -1,7 +1,7 @@
-import { PieceAuth, createPiece, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece, Property } from '@ensemble/pieces-framework';
 import { getVendor } from './lib/actions/get-vendor';
 import { getCustomer } from './lib/actions/get-customer';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const netsuiteAuth = PieceAuth.CustomAuth({
   required: true,
@@ -36,7 +36,7 @@ export const netsuiteAuth = PieceAuth.CustomAuth({
 
 export const netsuite = createPiece({
   displayName: 'NetSuite',
-  logoUrl: 'https://cdn.activepieces.com/pieces/netsuite.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/netsuite.png',
   categories:[PieceCategory.SALES_AND_CRM],
   auth: netsuiteAuth,
   authors: ["geekyme"],

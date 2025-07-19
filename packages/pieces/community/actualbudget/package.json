@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-actualbudget",
+  "name": "@ensemble/piece-actualbudget",
   "version": "0.0.4",
   "dependencies": {
     "@actual-app/api": "25.3.1"

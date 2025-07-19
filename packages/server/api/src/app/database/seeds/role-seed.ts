@@ -1,5 +1,5 @@
-import { rolePermissions } from '@activepieces/ee-shared'
-import { DefaultProjectRole, ProjectRole, RoleType } from '@activepieces/shared'
+import { rolePermissions } from '@ensemble/ee-shared'
+import { DefaultProjectRole, ProjectRole, RoleType } from '@ensemble/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
 import { system } from '../../helper/system/system'

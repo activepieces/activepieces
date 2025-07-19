@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@ensemble/shared';
 
 const WARNING_PERCENTAGE = 0.65;
 const DESTRUCTIVE_PERCENTAGE = 0.85;

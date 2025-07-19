@@ -32,7 +32,7 @@ import {
   isNil,
   Permission,
   PopulatedFlow,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type FlowRunCardProps = {
   run: FlowRun;

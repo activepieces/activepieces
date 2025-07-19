@@ -1,12 +1,12 @@
-# AssemblyAI piece for Activepieces
+# AssemblyAI piece for Ensemble
 
-Use the AssemblyAI piece for Activepieces to use AssemblyAI's models to
-[transcribe audio with Speech-to-Text models](https://www.assemblyai.com/products/speech-to-text?utm_source=activepieces), analyze audio with [audio intelligence models](https://www.assemblyai.com/products/speech-understanding?utm_source=activepieces), build generative AI features on top of audio with LLMs using [LeMUR](https://www.assemblyai.com/blog/lemur/?utm_source=activepieces).
+Use the AssemblyAI piece for Ensemble to use AssemblyAI's models to
+[transcribe audio with Speech-to-Text models](https://www.assemblyai.com/products/speech-to-text?utm_source=ensemble), analyze audio with [audio intelligence models](https://www.assemblyai.com/products/speech-understanding?utm_source=ensemble), build generative AI features on top of audio with LLMs using [LeMUR](https://www.assemblyai.com/blog/lemur/?utm_source=ensemble).
 
 Learn more about this piece:
 
-- [Activepieces Integrations](https://www.activepieces.com/pieces/assemblyai)
-- [AssemblyAI Documentation](https://www.assemblyai.com/docs/integrations/activepieces)
+- [Ensemble Integrations](https://www.ensemble.com/pieces/assemblyai)
+- [AssemblyAI Documentation](https://www.assemblyai.com/docs/integrations/ensemble)
 
 This library was built upon the [AssemblyAI JavaScript SDK](https://github.com/AssemblyAI/assemblyai-node-sdk).
 

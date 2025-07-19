@@ -4,8 +4,8 @@ import {
     AppCredentialType,
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
-} from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, SeekPage } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { ALL_PRINCIPAL_TYPES, SeekPage } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

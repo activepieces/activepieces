@@ -7,8 +7,8 @@ import { billingMutations } from '@/features/billing/lib/billing-hooks';
 import { planData } from '@/features/billing/lib/data';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { ApSubscriptionStatus, PlanName } from '@ensemble/ee-shared';
+import { isNil, PlatformBillingInformation } from '@ensemble/shared';
 
 type PlanCardProps = {
   plan: (typeof planData.plans)[0];
@@ -97,7 +97,7 @@ export const PlanCard = ({
         className="w-full font-semibold transition-all"
         onClick={() => {
           if (isEnterprisePlan) {
-            openNewWindow('https://activepieces.com/sales');
+            openNewWindow('https://ensemble.com/sales');
           } else if (!isSelected) {
             if (hasActiveSubscription) {
               updateSubscription({

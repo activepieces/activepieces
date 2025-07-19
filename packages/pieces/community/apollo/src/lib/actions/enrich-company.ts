@@ -1,9 +1,9 @@
 import { apolloAuth } from '../../';
-import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
+import { Property, StoreScope, createAction } from '@ensemble/pieces-framework';
 import {
   HttpMethod,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const enrichCompany = createAction({
   name: 'enrichCompany',

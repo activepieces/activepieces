@@ -1,6 +1,6 @@
-import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getUserPriceId, PlanName, StripePlanName } from '@activepieces/ee-shared'
-import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
+import {  ApSubscriptionStatus, CreateSubscriptionParams, getAiCreditsPriceId, getPlanPriceId, getUserPriceId, PlanName, StripePlanName } from '@ensemble/ee-shared'
+import { AppSystemProp, WorkerSystemProp } from '@ensemble/server-shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { apDayjs } from '../../../helper/dayjs-helper'
@@ -115,7 +115,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const platformBilling = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const session = await stripe.billingPortal.sessions.create({
             customer: platformBilling.stripeCustomerId!,
-            return_url: 'https://cloud.activepieces.com/platform/billing',
+            return_url: 'https://cloud.ensemble.com/platform/billing',
         })
 
         return session.url

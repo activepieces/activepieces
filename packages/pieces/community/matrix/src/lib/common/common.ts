@@ -3,7 +3,7 @@ import {
   HttpMethod,
   AuthenticationType,
   HttpResponse,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { marked } from 'marked';
 
 export async function getRoomId(

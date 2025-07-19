@@ -1,3 +1,3 @@
 ﻿# Getting Started
 
-See instruction on https://www.activepieces.com/docs/install/options/aws
+See instruction on https://www.ensemble.com/docs/install/options/aws

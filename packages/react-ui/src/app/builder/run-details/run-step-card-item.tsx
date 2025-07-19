@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/collapsible';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ActionType, flowStructureUtil } from '@activepieces/shared';
+import { ActionType, flowStructureUtil } from '@ensemble/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';

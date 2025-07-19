@@ -1,12 +1,12 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { dealCommonProps } from '../common/props';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { GetField, OrganizationCreateResponse } from '../common/types';
 import dayjs from 'dayjs';
 

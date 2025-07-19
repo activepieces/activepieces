@@ -1,5 +1,5 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { createPiece } from '@ensemble/pieces-framework';
 import { createSessionAction } from './lib/actions/create-session';
 import { terminateSessionAction } from './lib/actions/terminate-session';
 import { createNewBrowserWindowAction } from './lib/actions/create-new-browser-window';
@@ -18,7 +18,7 @@ export const airtop = createPiece({
 	displayName: 'Airtop',
 	auth: airtopAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/airtop.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/airtop.png',
 	authors: ['aryel780'],
 	actions: [
 		createSessionAction,

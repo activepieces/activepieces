@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import {
   extractWebpageContentAction,
   webSearchSummarizationAction,
@@ -23,7 +23,7 @@ export const jinaAi = createPiece({
   description: 'AI-powered web content extraction, search, and classification',
   auth: jinaAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/jinaai.jpeg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/jinaai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['denieler'],
   actions: [

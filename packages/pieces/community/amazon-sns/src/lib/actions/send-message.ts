@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { createSNS } from '../common';
 import { amazonSnsAuth } from '../..';
 import { ListTopicsCommand, PublishCommand } from "@aws-sdk/client-sns";

@@ -4,7 +4,7 @@ import {
 	HttpError,
 	HttpMethod,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { ethers } from 'ethers';
 import {
 	ATTESTATION_API,

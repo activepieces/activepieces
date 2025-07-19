@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { askLocalAI } from './lib/actions/send-prompt';
 
 export const localaiAuth = PieceAuth.CustomAuth({
@@ -27,7 +27,7 @@ export const openai = createPiece({
   description:
     'The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/localai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localaiAuth,
   actions: [

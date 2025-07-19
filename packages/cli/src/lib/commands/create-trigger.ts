@@ -15,8 +15,8 @@ function createTriggerTemplate(displayName: string, description: string, techniq
     let triggerTemplate = ''
     if (technique === 'polling') {
         triggerTemplate = `
-import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@ensemble/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import dayjs from 'dayjs';
 
 // replace auth with piece auth variable
@@ -33,7 +33,7 @@ const polling: Polling< PiecePropValueSchema<typeof auth>, Record<string, never>
 }
 
 export const ${camelCase} = createTrigger({
-// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+// auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
 name: '${camelCase}',
 displayName: '${displayName}',
 description: '${description}',
@@ -60,9 +60,9 @@ async run(context) {
     }
     else {
         triggerTemplate = `
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 export const ${camelCase} = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+    // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
     name: '${camelCase}',
     displayName: '${displayName}',
     description: '${description}',

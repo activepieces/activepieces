@@ -1,4 +1,4 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { assemblyaiAuth } from '../auth';
 
 export const customApiCall = createCustomApiCallAction({

@@ -1,5 +1,5 @@
-import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { firecrawlAuth } from '../../index';
 
 export const startCrawl = createAction({

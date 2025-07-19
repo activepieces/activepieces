@@ -1,7 +1,7 @@
-import { DynamicPropsValue, Property, StoreScope, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property, StoreScope, createAction } from '@ensemble/pieces-framework';
 import { callableFlowKey, CallableFlowResponse, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 
 export const response = createAction({
   name: 'returnResponse',

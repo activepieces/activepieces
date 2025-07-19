@@ -1,7 +1,7 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createOrUpdateSubscriber } from './lib/actions/create-or-update-subscription';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { triggers } from './triggers/triggers';
 import { addSubscriberToGroupAction } from './lib/actions/add-subscriber-to-group';
 import { removeSubscriberFromGroupAction } from './lib/actions/remove-subscriber-from-group';
@@ -27,7 +27,7 @@ export const mailerLite = createPiece({
   description: 'Email marketing software',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mailer-lite.png',
   categories: [PieceCategory.MARKETING],
   authors: ["Willianwg","kanarelo","kishanprmr","khaledmashaly","abuaboud"],
   auth: mailerLiteAuth,

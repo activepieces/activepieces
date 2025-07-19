@@ -1,6 +1,6 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { CreateRecordsRequest } from '@activepieces/shared';
+import { createAction, PieceAuth, Property } from '@ensemble/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ensemble/pieces-common';
+import { CreateRecordsRequest } from '@ensemble/shared';
 import { tablesCommon } from '../common';
 
 export const createRecords = createAction({

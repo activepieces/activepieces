@@ -1,7 +1,7 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@ensemble/pieces-framework';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { createDocument } from './lib/actions/create-document';
 import { createDocumentBasedOnTemplate } from './lib/actions/create-document-based-on-template.action';
 import { readDocument } from './lib/actions/read-document.action';
@@ -25,7 +25,7 @@ export const googleDocs = createPiece({
 	description: 'Create and edit documents online',
 
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/google-docs.png',
 	categories: [PieceCategory.CONTENT_AND_FILES],
 	authors: [
 		'pfernandez98',

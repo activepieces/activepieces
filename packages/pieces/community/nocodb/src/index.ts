@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@ensemble/pieces-framework';
 import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
@@ -42,7 +42,7 @@ export const nocodb = createPiece({
 	displayName: 'NocoDB',
 	auth: nocodbAuth,
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/nocodb.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/nocodb.png',
 	authors: ['kishanprmr'],
 	actions: [
 		createRecordAction,

@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { downloadFile } from './lib/actions/download-file';
 import { listFiles } from './lib/actions/list-files';
 import { listFolders } from './lib/actions/list-folders';
@@ -26,7 +26,7 @@ export const microsoftOneDrive = createPiece({
 
   auth: oneDriveAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/oneDrive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","ikus060"],
   actions: [

@@ -1,12 +1,12 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@ensemble/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { PackageInfo, packageManager } from '../cache/package-manager'

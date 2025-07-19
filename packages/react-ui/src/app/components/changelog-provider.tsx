@@ -10,7 +10,7 @@ import { SonnerToaster } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
-import { isNil, Changelog, ApFlagId } from '@activepieces/shared';
+import { isNil, Changelog, ApFlagId } from '@ensemble/shared';
 
 interface ChangelogToastProps {
   id: string | number;

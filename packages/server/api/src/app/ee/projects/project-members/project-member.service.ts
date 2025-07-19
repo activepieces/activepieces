@@ -2,7 +2,7 @@ import {
     ProjectMember,
     ProjectMemberId,
     ProjectMemberWithUser,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
     ApEdition,
     ApId,
@@ -16,7 +16,7 @@ import {
     ProjectRole,
     SeekPage,
     UserId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal } from 'typeorm'

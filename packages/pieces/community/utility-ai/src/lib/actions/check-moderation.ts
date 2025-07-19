@@ -1,6 +1,6 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AIProviderWithoutSensitiveData, isNil, SeekPage } from '@activepieces/shared';
+import { ApFile, createAction, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { AIProviderWithoutSensitiveData, isNil, SeekPage } from '@ensemble/shared';
 import OpenAI from 'openai';
 import { ModerationMultiModalInput } from 'openai/resources/moderations';
 

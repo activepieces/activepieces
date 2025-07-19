@@ -8,7 +8,7 @@ import {
   SuggestionType,
   Trigger,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   StepMetadataWithActionOrTriggerOrAgentDisplayName,

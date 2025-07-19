@@ -1,5 +1,5 @@
-import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
+import { Action, Piece, PiecePropertyMap, Trigger } from '@ensemble/pieces-framework'
+import { EnsembleError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@ensemble/shared'
 
 
 const loadPieceOrThrow = async (
@@ -20,7 +20,7 @@ const loadPieceOrThrow = async (
     })
 
     if (isNil(piece)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.PIECE_NOT_FOUND,
             params: {
                 pieceName,
@@ -67,7 +67,7 @@ const getPieceAndActionOrThrow = async (params: {
     const pieceAction = piece.getAction(actionName)
 
     if (isNil(pieceAction)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
                 pieceName,
@@ -91,7 +91,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
     const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
     if (isNil(actionOrTrigger)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
                 pieceName: piecePackage.pieceName,
@@ -104,7 +104,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
     const prop = (actionOrTrigger.props  as PiecePropertyMap)[propertyName]
 
     if (isNil(prop)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.CONFIG_NOT_FOUND,
             params: {
                 pieceName: piecePackage.pieceName,

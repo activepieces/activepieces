@@ -3,7 +3,7 @@ import { Pencil } from 'lucide-react';
 import React from 'react';
 
 import EditableText from '@/components/ui/editable-text';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 interface EditableStepNameProps {
   selectedBranchIndex: number | null;

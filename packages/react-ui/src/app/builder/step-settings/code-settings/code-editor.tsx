@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
+import { ApFlagId, SourceCode, deepMergeAndCast } from '@ensemble/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
 

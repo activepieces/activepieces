@@ -1,8 +1,8 @@
 import {
     AddDomainRequest,
     ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { assertNotNullOrUndefined } from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,

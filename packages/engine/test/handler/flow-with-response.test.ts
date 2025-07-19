@@ -1,4 +1,4 @@
-import { FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus } from '@ensemble/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
@@ -32,7 +32,7 @@ describe('flow with response', () => {
         const result = await flowExecutor.execute({
             action: buildPieceAction({
                 name: 'http',
-                pieceName: '@activepieces/piece-webhook',
+                pieceName: '@ensemble/piece-webhook',
                 actionName: 'return_response',
                 input,
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),

@@ -1,16 +1,16 @@
 import { microsoftTeamsAuth } from '../../index';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { microsoftTeamsCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 type Props = {
 	teamId: string;
 	channelId: string;
@@ -69,7 +69,7 @@ export const newChannelMessageTrigger = createTrigger({
 			user: {
 				'@odata.type': '#microsoft.graph.teamworkUserIdentity',
 				id: '90b3720d-f459-42c1-a02e-a1ecb068',
-				displayName: 'Activepieces',
+				displayName: 'Ensemble',
 				userIdentityType: 'aadUser',
 				tenantId: '9b37335a-d996-4a8d-9ae4-a3a04c94',
 			},

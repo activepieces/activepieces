@@ -1,13 +1,13 @@
 import { hubspotAuth } from '../../';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import {
 	createTrigger,
 	DynamicPropsValue,
 	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { MarkdownVariant } from '@ensemble/shared';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';

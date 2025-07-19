@@ -1,4 +1,4 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue } from '@ensemble/pieces-framework';
 import { CustomField } from '../types';
 import { fetchCustomFields } from '../service';
 

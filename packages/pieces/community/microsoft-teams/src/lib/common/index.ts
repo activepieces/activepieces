@@ -1,4 +1,4 @@
-import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
 
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Team, Channel, Chat, ConversationMember } from '@microsoft/microsoft-graph-types';

@@ -1,5 +1,5 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import crypto from 'crypto';
 import { triggers } from './lib/triggers';
 
@@ -28,7 +28,7 @@ export const square = createPiece({
   description: 'Payment solutions for every business',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/square.png',
   categories: [PieceCategory.COMMERCE],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: squareAuth,

@@ -1,4 +1,4 @@
-import { Flag } from '@activepieces/shared'
+import { Flag } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,

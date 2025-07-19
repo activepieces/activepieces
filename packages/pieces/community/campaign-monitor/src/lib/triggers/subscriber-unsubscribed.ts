@@ -2,10 +2,10 @@ import {
   createTrigger,
   Property,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { campaignMonitorAuth } from '../../index';
 import { clientId, listId } from '../common/props';
 

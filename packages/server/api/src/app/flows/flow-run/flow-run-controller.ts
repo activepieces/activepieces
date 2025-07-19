@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ALL_PRINCIPAL_TYPES,
     ApId,
     BulkRetryFlowRequestBody,
@@ -14,7 +14,7 @@ import {
     RetryFlowRequestBody,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -93,7 +93,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
 
         if (isNil(flowRun)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
                     id: req.params.id,

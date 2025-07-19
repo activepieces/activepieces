@@ -2,12 +2,12 @@ import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { getPages } from '../common';
 import { notionAuth } from '../..';

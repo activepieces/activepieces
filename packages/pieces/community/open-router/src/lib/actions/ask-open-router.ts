@@ -2,16 +2,16 @@ import { openRouterAuth } from '../../index';
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { openRouterModels, promptResponse } from '../common';
 import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export const askOpenRouterAction = createAction({
   name: 'ask-lmm',

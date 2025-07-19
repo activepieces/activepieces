@@ -15,7 +15,7 @@ import {
   WebsocketClientEvent,
   UNRESOLVED_STATUS,
   TodoActivityCreated,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
 import { TodoDetailsStatus } from './todo-details-status';

@@ -12,7 +12,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@ensemble/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 

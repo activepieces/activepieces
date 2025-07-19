@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { searchAction } from './lib/actions/search';
 import { extractAction } from './lib/actions/extract';
 
@@ -46,7 +46,7 @@ export const tavily = createPiece({
 	displayName: 'Tavily',
 	description: 'Search engine tailored for AI agents.',
 	minimumSupportedRelease: '0.30.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/tavily.jpg',
+	logoUrl: 'https://cdn.ensemble.com/pieces/tavily.jpg',
 	categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
 	authors: ['OsamaHaikal'],
 	auth: tavilyAuth,

@@ -1,4 +1,4 @@
-import { AiOverageState, isNil, PiecesFilterType } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 export * from './plan-limits'
 import Stripe from 'stripe'

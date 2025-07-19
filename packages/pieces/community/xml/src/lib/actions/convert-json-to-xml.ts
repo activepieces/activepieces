@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import js2xml from 'json2xml';
 
 export const convertJsonToXml = createAction({

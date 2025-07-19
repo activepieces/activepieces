@@ -1,8 +1,8 @@
 import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export const setUserStatusAction = createAction({
   auth: slackAuth,

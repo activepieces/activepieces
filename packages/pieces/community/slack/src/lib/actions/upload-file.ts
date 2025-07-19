@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { slackAuth } from '../../index';
 import { WebClient } from '@slack/web-api';
 import {

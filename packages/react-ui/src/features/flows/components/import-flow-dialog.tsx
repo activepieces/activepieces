@@ -36,7 +36,7 @@ import {
   FlowTemplate,
   PopulatedFlow,
   TelemetryEventName,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';

@@ -1,4 +1,4 @@
-import { Cell, Project, Record, Table } from '@activepieces/shared'
+import { Cell, Project, Record, Table } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 

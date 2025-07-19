@@ -15,7 +15,7 @@ import {
   AgentStepBlock,
   ContentBlockType,
   MarkdownVariant,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { AgentToolBlock } from './agent-tool-block';
 import { agentHooks } from './lib/agent-hooks';

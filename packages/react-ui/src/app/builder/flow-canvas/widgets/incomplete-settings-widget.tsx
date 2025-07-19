@@ -9,7 +9,7 @@ import {
   FlowVersion,
   Step,
   flowStructureUtil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 

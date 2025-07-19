@@ -26,7 +26,7 @@ import {
   ApFlagId,
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type ConfigureSamlDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -125,7 +125,7 @@ export const ConfigureSamlDialog = ({
               markdown={t(
                 `
 **Setup Instructions**:
-Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
+Please check the following documentation: [SAML SSO](https://ensemble.com/docs/security/sso)
 
 **Single sign-on URL**:
 \`\`\`text
@@ -133,7 +133,7 @@ Please check the following documentation: [SAML SSO](https://activepieces.com/do
 \`\`\`
 **Audience URI (SP Entity ID)**:
 \`\`\`text
-Activepieces
+Ensemble
 \`\`\`
 `,
                 { samlAcs: samlAcs ?? '' },

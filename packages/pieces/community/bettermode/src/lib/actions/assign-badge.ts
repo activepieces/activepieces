@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { assignBadgeToMember } from '../api';
 import { buildBadgesDropdown } from '../props';
 import { bettermodeAuth, BettermodeAuthType } from '../auth';

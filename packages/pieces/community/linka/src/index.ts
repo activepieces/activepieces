@@ -2,7 +2,7 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
@@ -12,7 +12,7 @@ import { getContactDetails } from './lib/actions/get-contact-details';
 import { newLead } from './lib/triggers/new-lead';
 import { newPayment } from './lib/triggers/new-payment';
 import { newSubscription } from './lib/triggers/new-subscription';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 const markdownDescription = `
   Follow these instructions to get your Linka API Key:
@@ -57,7 +57,7 @@ export const linka = createPiece({
     'Linka white-label B2B marketplace platform powers communities and digital storefronts',
   auth: linkaAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/linka.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/linka.png',
   authors: ['Trayshmhirk', 'OmarSayed'],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [

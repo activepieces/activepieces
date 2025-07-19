@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName } from '@ensemble/ee-shared'
 import {
     apId,
     ApId,
@@ -11,7 +11,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'

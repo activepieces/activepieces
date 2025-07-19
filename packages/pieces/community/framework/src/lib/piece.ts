@@ -4,7 +4,7 @@ import {
   EventPayload,
   ParseEventResponse,
   PieceCategory,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 

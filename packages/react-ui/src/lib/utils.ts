@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { LocalesEnum, Permission } from '@ensemble/shared';
 
 import { authenticationSession } from './authentication-session';
 

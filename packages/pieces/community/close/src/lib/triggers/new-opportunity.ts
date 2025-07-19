@@ -1,5 +1,5 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { closeAuth } from '../..';
 import { CloseCRMOpportunityWebhookPayload } from '../common/types';
 import { closeApiCall } from '../common/client';

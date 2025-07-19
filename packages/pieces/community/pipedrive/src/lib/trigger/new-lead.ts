@@ -1,13 +1,13 @@
 import { pipedriveAuth } from '../../';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,

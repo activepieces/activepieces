@@ -4,11 +4,11 @@ import {
   DropdownOption,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { commonProps } from '../common/props';
 import { GristAPIClient } from '../common/helpers';
 
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 
 export const gristSearchRecordAction = createAction({
   auth: gristAuth,

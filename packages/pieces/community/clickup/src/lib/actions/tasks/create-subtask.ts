@@ -2,9 +2,9 @@ import {
   OAuth2PropertyValue,
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { MarkdownVariant } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow } from '@ensemble/pieces-common';
+import { MarkdownVariant } from '@ensemble/shared';
 
 import {
   clickupCommon,

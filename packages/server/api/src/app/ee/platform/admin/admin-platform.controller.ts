@@ -1,4 +1,4 @@
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, PrincipalType } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, PrincipalType } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'

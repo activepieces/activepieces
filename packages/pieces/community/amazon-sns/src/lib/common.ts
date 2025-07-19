@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 import { SNSClient } from '@aws-sdk/client-sns';
 
 export function createSNS(auth: {

@@ -2,7 +2,7 @@ import {
     Property,
     StoreScope,
     createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { constructQueueName } from '../common';
 
 

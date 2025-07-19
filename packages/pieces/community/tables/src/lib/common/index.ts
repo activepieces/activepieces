@@ -1,6 +1,6 @@
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
+import { AuthenticationType, httpClient, HttpMethod } from "@ensemble/pieces-common";
+import { DynamicPropsValue, Property } from "@ensemble/pieces-framework";
+import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@ensemble/shared";
 import { z } from 'zod';
 import qs from 'qs';
 

@@ -4,7 +4,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowVersionState, Permission } from '@activepieces/shared';
+import { FlowVersionState, Permission } from '@ensemble/shared';
 
 import { PublishButton } from './publish-button';
 import { EditFlowOrViewDraftButton } from './view-draft-or-edit-flow-button';

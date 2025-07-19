@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { trackEvent } from './lib/actions/track-event';
 
 export const mixpanelAuth = PieceAuth.SecretText({
@@ -15,7 +15,7 @@ export const mixpanel = createPiece({
   displayName: 'Mixpanel',
   description: 'Simple and powerful product analytics that helps everyone make better decisions',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mixpanel.png',
   authors: ["yann120","kishanprmr","MoShizzle","abuaboud"],
   auth: mixpanelAuth,
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],

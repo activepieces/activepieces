@@ -1,11 +1,11 @@
-import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@ensemble/pieces-common';
 import {
 	createAction,
 	DynamicPropsValue,
 	InputPropertyMap,
 	Property,
 	PropertyContext,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { airtopAuth } from '../common/auth';
 import { airtopApiCall } from '../common/client';
 import { z } from 'zod';

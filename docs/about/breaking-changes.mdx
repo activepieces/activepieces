@@ -32,7 +32,7 @@ icon: "hammer"
 - No action is required for this change.
 - Your published flows will continue to work without interruption.
 - When editing existing flows that use the "Dynamic Value" toggle on "Array of Properties" inputs (such as the "files" parameter in the "Extract Structured Data" action of the "Utility AI" piece), the end user will need to remap the values again.
-- For details on the new UI implementation, refer to this [announcement](https://community.activepieces.com/t/inline-items/8964).
+- For details on the new UI implementation, refer to this [announcement](https://community.ensemble.com/t/inline-items/8964).
 
 ## 0.38.6
 
@@ -42,7 +42,7 @@ icon: "hammer"
 
 ### When is action necessary?
 
-- If `AP_CONTAINER_TYPE` is set to `WORKER` on the worker machine, and `AP_SCHEDULED_WORKER_CONCURRENCY` or `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To fix this, check the [Separate Worker from App](https://www.activepieces.com/docs/install/configuration/separate-workers) documentation and set the `AP_CONTAINER_TYPE` to fetch the necessary values from the app server. If no container type is set on the worker machine, this is not a breaking change.
+- If `AP_CONTAINER_TYPE` is set to `WORKER` on the worker machine, and `AP_SCHEDULED_WORKER_CONCURRENCY` or `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To fix this, check the [Separate Worker from App](https://www.ensemble.com/docs/install/configuration/separate-workers) documentation and set the `AP_CONTAINER_TYPE` to fetch the necessary values from the app server. If no container type is set on the worker machine, this is not a breaking change.
 
 ## 0.35.1
 

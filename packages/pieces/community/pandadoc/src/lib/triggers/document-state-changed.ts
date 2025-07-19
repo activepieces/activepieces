@@ -1,6 +1,6 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { createTrigger, TriggerStrategy, Property } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { WebhookHandshakeStrategy } from '@ensemble/shared';
 import { pandadocAuth } from '../common';
 
 export const documentStateChanged = createTrigger({
@@ -62,7 +62,7 @@ export const documentStateChanged = createTrigger({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: `Activepieces Document State Changed`,
+        name: `Ensemble Document State Changed`,
         url: context.webhookUrl,
         active: true,
         triggers: ['document_state_changed'],

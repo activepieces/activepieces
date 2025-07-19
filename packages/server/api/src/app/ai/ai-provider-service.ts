@@ -1,6 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     AIProvider,
     AIProviderWithoutSensitiveData,
     ApEdition,
@@ -12,7 +12,7 @@ import {
     SeekPage,
     SUPPORTED_AI_PROVIDERS,
     SupportedAIProvider,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
@@ -144,7 +144,7 @@ function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
     if (platformId === cloudPlatformId) {
         return
     }
-    throw new ActivepiecesError({
+    throw new EnsembleError({
         code: ErrorCode.AUTHORIZATION,
         params: {
             message: 'invalid route for principal type',

@@ -4,7 +4,7 @@ import {
   Property,
   StoreScope,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
 
 export const callableFlow = createTrigger({

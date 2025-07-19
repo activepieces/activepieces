@@ -1,5 +1,5 @@
 import slugify from 'slugify';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 
 export const slugifyAction = createAction({
   description: 'Slugifies strings.',

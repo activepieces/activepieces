@@ -1,6 +1,6 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApEdition,
     apId,
     ErrorCode,
@@ -13,7 +13,7 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
@@ -143,7 +143,7 @@ export const platformService = {
         })
 
         if (isNil(platform)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: id,

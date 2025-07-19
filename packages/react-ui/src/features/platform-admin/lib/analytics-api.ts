@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { AnalyticsReportResponse } from '@ensemble/shared';
 
 export const analyticsApi = {
   get(): Promise<AnalyticsReportResponse> {

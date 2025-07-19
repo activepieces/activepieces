@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { FieldType, StaticDropdownEmptyOption } from '@activepieces/shared';
+import { FieldType, StaticDropdownEmptyOption } from '@ensemble/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';

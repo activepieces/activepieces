@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fail if tag already exists
-        run: "! docker manifest inspect activepieces/ap-base:${{ inputs.tag }}"
+        run: "! docker manifest inspect ensemble/ap-base:${{ inputs.tag }}"
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
@@ -39,5 +39,5 @@ jobs:
             linux/arm/v7
           push: true
           tags: |
-            activepieces/ap-base:${{ inputs.tag }}
-            activepieces/ap-base:latest
+            ensemble/ap-base:${{ inputs.tag }}
+            ensemble/ap-base:latest

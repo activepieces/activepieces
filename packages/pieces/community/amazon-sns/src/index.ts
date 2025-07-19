@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, Property } from "@ensemble/pieces-framework";
 import { createSNS } from './lib/common';
 import { ListTopicsCommand } from '@aws-sdk/client-sns';
 import { sendMessageAction } from './lib/actions/send-message';
@@ -175,7 +175,7 @@ export const amazonSns = createPiece({
   displayName: "Amazon SNS",
   auth: amazonSnsAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/amazon-sns.png",
+  logoUrl: "https://cdn.ensemble.com/pieces/amazon-sns.png",
   authors: ["coat"],
   actions: [sendMessageAction],
   triggers: [],

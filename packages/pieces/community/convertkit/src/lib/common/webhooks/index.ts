@@ -1,4 +1,4 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue } from '@ensemble/pieces-framework';
 import { EventType, EventOption } from '../types';
 import { fetchTags, fetchForms, fetchSequences } from '../service';
 

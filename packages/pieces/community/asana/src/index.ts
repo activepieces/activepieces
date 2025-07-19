@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { asanaCreateTaskAction } from './lib/actions/create-task';
 
 export const asanaAuth = PieceAuth.OAuth2({
@@ -19,7 +19,7 @@ export const asana = createPiece({
   displayName: 'Asana',
   description: "Work management platform designed to help teams organize, track, and manage their work.",
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["ShayPunter","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: asanaAuth,

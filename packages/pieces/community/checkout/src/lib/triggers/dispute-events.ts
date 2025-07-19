@@ -1,6 +1,6 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@ensemble/pieces-framework';
 import { checkoutComAuth, getEnvironmentFromApiKey } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const disputeEventsTrigger = createTrigger({
   name: 'dispute_events',
@@ -111,7 +111,7 @@ export const disputeEventsTrigger = createTrigger({
           'Content-Type': 'application/json',
         },
         body: {
-          name: 'Activepieces Dispute Events Workflow',
+          name: 'Ensemble Dispute Events Workflow',
           active: true,
           conditions: [
             {

@@ -1,4 +1,4 @@
-import { CreateFieldRequest, Field, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import { CreateFieldRequest, Field, PrincipalType, UpdateFieldRequest } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fieldService } from './field.service'

@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { googleGeminiAuth } from '../../index';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 

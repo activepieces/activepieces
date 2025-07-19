@@ -24,7 +24,7 @@ import {
   Agent,
   FlowOperationType,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { cn } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -232,7 +232,7 @@ const getNumberOfExtraActions = (
 ) => {
   if (
     pieceMetadata.type === ActionType.PIECE &&
-    pieceMetadata.pieceName === '@activepieces/piece-agent'
+    pieceMetadata.pieceName === '@ensemble/piece-agent'
   ) {
     return agents?.length ?? 0;
   }

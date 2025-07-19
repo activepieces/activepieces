@@ -21,7 +21,7 @@ import {
   TriggerType,
   debounce,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';

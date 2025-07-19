@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addition } from './lib/actions/addition';
 import { division } from './lib/actions/division';
 import { generateRandom } from './lib/actions/generateRandom';
@@ -16,7 +16,7 @@ export const math = createPiece({
   description: markdownDescription,
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/math-helper.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/math-helper.svg',
   categories: [PieceCategory.CORE],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [

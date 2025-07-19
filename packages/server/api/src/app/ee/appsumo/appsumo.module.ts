@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { ALL_PRINCIPAL_TYPES } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifyRequest } from 'fastify'
@@ -101,7 +101,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                     case 'activate':
                         return reply.status(StatusCodes.CREATED).send({
                             redirect_url:
-                'https://cloud.activepieces.com/sign-up?email=' +
+                'https://cloud.ensemble.com/sign-up?email=' +
                 encodeURIComponent(activation_email),
                             message: 'success',
                         })

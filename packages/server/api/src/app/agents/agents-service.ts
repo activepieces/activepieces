@@ -1,4 +1,4 @@
-import { ActivepiecesError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { EnsembleError, Agent, AgentOutputField, AgentOutputType, apId, Cursor, ErrorCode, isNil, PlatformUsageMetric, SeekPage, spreadIfDefined } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -66,7 +66,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
     async getOneOrThrow(params: GetOneParams): Promise<Agent> {
         const agent = await this.getOne({ id: params.id, projectId: params.projectId })
         if (isNil(agent)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'agent',
@@ -111,7 +111,7 @@ export const agentsService = (log: FastifyBaseLogger) => ({
 })
 
 function getAgentProfilePictureUrl(): string {
-    return `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
+    return `https://cdn.ensemble.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000)}.png`
 }
 
 

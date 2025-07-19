@@ -1,5 +1,5 @@
-import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { exceptionHandler } from '@ensemble/server-shared'
+import { EnsembleError, ErrorCode } from '@ensemble/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 
@@ -9,7 +9,7 @@ export const errorHandler = async (
     request: FastifyRequest,
     reply: FastifyReply,
 ): Promise<void> => {
-    if (error instanceof ActivepiecesError) {
+    if (error instanceof EnsembleError) {
         const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
             [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,

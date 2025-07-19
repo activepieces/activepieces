@@ -1,5 +1,5 @@
 import { reoonEmailVerifyAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { verifyEmails } from '../common/send-util';
 
 export const bulkEmailVerification = createAction({

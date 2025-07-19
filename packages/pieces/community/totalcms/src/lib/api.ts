@@ -3,7 +3,7 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { TotalCMSAuthType } from './auth';
 import FormData from 'form-data';
 

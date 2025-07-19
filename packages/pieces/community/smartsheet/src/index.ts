@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
+import { HttpMethod, HttpRequest, httpClient } from '@ensemble/pieces-common';
 
 // Actions
 import { addRowToSheet } from './lib/actions/add-row-to-sheet';
@@ -24,7 +24,7 @@ To obtain your Smartsheet access token:
 3. Select **Personal Settings** from the dropdown menu.
 4. In the left panel, click **API Access**.
 5. Click **Generate new access token**.
-6. Enter a name for your token (e.g., "Activepieces Integration").
+6. Enter a name for your token (e.g., "Ensemble Integration").
 7. Click **OK** to generate the token..
 8. Copy the access token and paste it into the connection field.
 `;
@@ -67,7 +67,7 @@ export const smartsheet = createPiece({
 		'Dynamic work execution platform for teams to plan, capture, manage, automate, and report on work at scale.',
 	auth: smartsheetAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/smartsheet.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/smartsheet.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [

@@ -12,7 +12,7 @@ import {
   ArrayProperty,
   ArraySubProps,
   PropertyType,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';

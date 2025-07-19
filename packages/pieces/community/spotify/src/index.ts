@@ -1,8 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   createPiece,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import actions from './lib/actions';
 import { spotifyCommon } from './lib/common';
 import triggers from './lib/triggers';
@@ -13,7 +13,7 @@ export const spotify = createPiece({
 
   auth: spotifyCommon.authentication,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/spotify.png',
   categories: [],
   authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud","jerboa88"],
   actions: [

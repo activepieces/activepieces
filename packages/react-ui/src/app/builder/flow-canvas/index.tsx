@@ -19,7 +19,7 @@ import {
   FlowVersion,
   isNil,
   Step,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import {
   doesSelectionRectangleExist,

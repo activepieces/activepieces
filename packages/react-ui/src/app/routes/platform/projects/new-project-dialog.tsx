@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectApi } from '@/lib/project-api';
-import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { CreatePlatformProjectRequest } from '@ensemble/ee-shared';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;

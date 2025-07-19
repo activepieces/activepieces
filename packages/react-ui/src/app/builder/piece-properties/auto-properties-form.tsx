@@ -15,8 +15,8 @@ import {
   PiecePropertyMap,
   PropertyType,
   ArraySubProps,
-} from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 

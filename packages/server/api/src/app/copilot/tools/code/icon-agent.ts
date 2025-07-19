@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@ensemble/server-shared'
 import { generateObject, LanguageModel } from 'ai'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
@@ -105,7 +105,7 @@ export async function selectIcon(model: LanguageModel, requirement: string, conv
             return null
         }
 
-        return `https://cdn.activepieces.com/pieces/ai/code/${llmResponse.object.icon}.svg`
+        return `https://cdn.ensemble.com/pieces/ai/code/${llmResponse.object.icon}.svg`
     }
     catch (error) {
         exceptionHandler.handle(error, system.globalLogger())

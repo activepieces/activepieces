@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 // General Actions
 import { getDifficultyAdjustment } from './lib/actions/general/get-difficulty-adjustment';
@@ -48,7 +48,7 @@ import { postTransaction } from './lib/actions/transactions/post-transaction';
 export const mempoolSpace = createPiece({
   displayName: 'Mempool',
   description: 'The mempool.space website invented the concept of visualizing a Bitcoin node\'s mempool as projected blocks.',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mempool-space.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mempool-space.png',
   minimumSupportedRelease: '0.20.0',
   authors: ['reemayoush'],
   auth: PieceAuth.None(),

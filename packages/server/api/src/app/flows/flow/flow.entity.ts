@@ -7,7 +7,7 @@ import {
     Project,
     TableWebhook,
     TriggerEvent,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

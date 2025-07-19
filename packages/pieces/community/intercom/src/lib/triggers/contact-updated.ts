@@ -1,5 +1,5 @@
 import { intercomAuth } from '../../index';
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@ensemble/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
 
 export const contactUpdatedTrigger = createTrigger({

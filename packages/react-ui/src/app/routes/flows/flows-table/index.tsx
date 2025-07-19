@@ -14,7 +14,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@ensemble/shared';
 
 import { flowsTableColumns } from './columns';
 

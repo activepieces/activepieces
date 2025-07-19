@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-rabbitmq",
+  "name": "@ensemble/piece-rabbitmq",
   "version": "0.0.2",
   "dependencies": {
     "amqplib": "^0.10.4"

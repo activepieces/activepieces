@@ -1,4 +1,4 @@
-import { Action, BranchCondition, BranchOperator, RouterExecutionType } from '@activepieces/shared'
+import { Action, BranchCondition, BranchOperator, RouterExecutionType } from '@ensemble/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
@@ -19,7 +19,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -29,7 +29,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -61,7 +61,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -71,7 +71,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -103,7 +103,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -113,7 +113,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -158,7 +158,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -168,7 +168,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -178,7 +178,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'fallback_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -212,7 +212,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -222,7 +222,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -232,7 +232,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'fallback_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -266,7 +266,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -276,7 +276,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'fallback_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -303,7 +303,7 @@ describe('router with branching different conditions', () => {
         const result = await executeRouterActionWithOneCondition([
             buildPieceAction({
                 name: 'data_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -313,7 +313,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'data_mapper_1',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -323,7 +323,7 @@ describe('router with branching different conditions', () => {
             }),
             buildPieceAction({
                 name: 'fallback_mapper',
-                pieceName: '@activepieces/piece-data-mapper',
+                pieceName: '@ensemble/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
@@ -358,7 +358,7 @@ describe('router with branching different conditions', () => {
                 buildPieceAction({
                     name: 'data_mapper',
                     skip: true,
-                    pieceName: '@activepieces/piece-data-mapper',
+                    pieceName: '@ensemble/piece-data-mapper',
                     actionName: 'advanced_mapping',
                     input: {},
                 }),
@@ -380,7 +380,7 @@ describe('router with branching different conditions', () => {
                 buildPieceAction({
                     name: 'data_mapper',
                     skip: true,
-                    pieceName: '@activepieces/piece-data-mapper',
+                    pieceName: '@ensemble/piece-data-mapper',
                     actionName: 'advanced_mapping',
                     input: {},
                 }),

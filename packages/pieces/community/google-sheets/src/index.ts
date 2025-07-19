@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { clearSheetAction } from './lib/actions/clear-sheet';
 import { deleteRowAction } from './lib/actions/delete-row.action';
 import { findRowByNumAction } from './lib/actions/find-row-by-num';
@@ -42,7 +42,7 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 
 export const googleSheets = createPiece({
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/google-sheets.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [
     'ShayPunter',

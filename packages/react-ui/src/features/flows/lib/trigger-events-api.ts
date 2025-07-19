@@ -5,7 +5,7 @@ import {
   TestPollingTriggerRequest,
   TriggerEventWithPayload,
   WebhookSimulation,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const triggerEventsApi = {
   pollTrigger(request: TestPollingTriggerRequest) {

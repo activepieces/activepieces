@@ -1,5 +1,5 @@
-import { ProjectMember } from '@activepieces/ee-shared'
-import { Project, ProjectRole, User } from '@activepieces/shared'
+import { ProjectMember } from '@ensemble/ee-shared'
+import { Project, ProjectRole, User } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

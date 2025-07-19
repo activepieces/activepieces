@@ -1,5 +1,5 @@
-import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { pinoLogging } from '@ensemble/server-shared'
+import { EnsembleError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
@@ -38,7 +38,7 @@ export const webhookService = {
 
         const exceededLimit = await projectLimitsService(pinoLogger).checkTasksExceededLimit(flow.projectId)
         if (exceededLimit) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
                     metric: PlatformUsageMetric.TASKS,

@@ -4,7 +4,7 @@ import {
 	HttpMethod,
 	HttpRequest,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const BASE_URL = 'https://api.airtop.ai/api/v1';
 
@@ -69,7 +69,7 @@ export async function airtopApiCall<T extends HttpMessageBody>({
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'Content-Type': 'application/json',
-			'User-Agent': 'Activepieces-Airtop-Integration',
+			'User-Agent': 'Ensemble-Airtop-Integration',
 		},
 		queryParams: qs,
 		body,

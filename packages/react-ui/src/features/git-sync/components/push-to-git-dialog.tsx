@@ -30,12 +30,12 @@ import {
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,
   PushTablesGitRepoRequest,
-} from '@activepieces/ee-shared';
+} from '@ensemble/ee-shared';
 import {
   assertNotNullOrUndefined,
   PopulatedFlow,
   Table,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';

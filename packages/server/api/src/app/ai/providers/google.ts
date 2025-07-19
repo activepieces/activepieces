@@ -1,4 +1,4 @@
-import { CategorizedLanguageModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@activepieces/shared'
+import { CategorizedLanguageModelPricing, FlatLanguageModelPricing, TieredLanguageModelPricing } from '@ensemble/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, Usage } from './types'
 import { calculateTokensCost, getProviderConfig } from './utils'

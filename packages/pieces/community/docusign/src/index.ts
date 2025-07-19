@@ -4,8 +4,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 
 import { createApiClient } from './lib/common';
 import { listEnvelopes } from './lib/actions/list-envelopes';
@@ -113,7 +113,7 @@ export const docusign = createPiece({
   displayName: 'Docusign',
   auth: docusignAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/docusign.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/docusign.png',
   authors: ['AdamSelene'],
   actions: [
     listEnvelopes,

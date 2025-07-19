@@ -23,7 +23,7 @@ import { platformApi } from '@/lib/platforms-api';
 import {
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type NewOAuth2DialogProps = {
   providerName: 'google' | 'github';
@@ -122,7 +122,7 @@ export const NewOAuth2Dialog = ({
         <div className="mb-4">
           <ApMarkdown
             markdown={t(
-              'Read more information about how to configure {provider} SSO [here](https://www.activepieces.com/docs/security/sso).',
+              'Read more information about how to configure {provider} SSO [here](https://www.ensemble.com/docs/security/sso).',
               { provider: providerDisplayName },
             )}
           />

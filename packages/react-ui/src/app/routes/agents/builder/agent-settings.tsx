@@ -18,7 +18,7 @@ import {
   AgentOutputField,
   AgentOutputType,
   isNil,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { agentHooks } from '../../../../features/agents/lib/agent-hooks';
 import { UseAgentButton } from '../../../../features/agents/use-agent-button';

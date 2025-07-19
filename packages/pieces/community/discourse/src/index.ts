@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
 import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
 import { createPost } from './lib/actions/create-post.action';
@@ -41,7 +41,7 @@ export const discourse = createPiece({
   description: 'Modern open source forum software',
   auth: discourseAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/discourse.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
   actions: [

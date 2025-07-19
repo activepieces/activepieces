@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 export const defaultLLM = 'gemini-1.5-flash';
 
 export const allowedLLMs = [

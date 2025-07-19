@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { ExecutionType, PauseType } from '@ensemble/shared';
 import dayjs from 'dayjs';
 import { markdownDescription } from '../common';
 

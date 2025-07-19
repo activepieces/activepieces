@@ -1,13 +1,13 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const findProductsAction = createAction({
 	auth: pipedriveAuth,

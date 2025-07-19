@@ -1,7 +1,7 @@
 // add-or-update-contact.ts
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { chargekeepAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',

@@ -1,7 +1,7 @@
 
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+import { ApplicationEventName, GitPushOperationType } from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
@@ -22,7 +22,7 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     Trigger,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -211,7 +211,7 @@ async function assertThatFlowIsNotBeingUsed(
         flow.version.updatedBy !== userId &&
         currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
     ) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.FLOW_IN_USE,
             params: {
                 flowVersionId: flow.version.id,

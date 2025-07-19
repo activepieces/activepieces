@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
 import { convertAttachment, parseStream, zohoMailApiCall } from '../common';
 import { zohoMailAuth } from '../common/auth';
 import { accountId, folderId, messageId } from '../common/props';

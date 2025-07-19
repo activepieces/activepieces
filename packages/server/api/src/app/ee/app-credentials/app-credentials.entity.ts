@@ -1,5 +1,5 @@
-import { AppCredential } from '@activepieces/ee-shared'
-import { Project } from '@activepieces/shared'
+import { AppCredential } from '@ensemble/ee-shared'
+import { Project } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

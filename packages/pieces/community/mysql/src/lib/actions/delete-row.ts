@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
 import { mysqlAuth } from '../..';
 import sqlstring from 'sqlstring';

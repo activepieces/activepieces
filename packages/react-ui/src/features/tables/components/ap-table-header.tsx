@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@ensemble/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';

@@ -2,7 +2,7 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { userId } from '../common/props';
 import { slackAuth } from '../../';
 import { parseCommand } from '../common/utils';

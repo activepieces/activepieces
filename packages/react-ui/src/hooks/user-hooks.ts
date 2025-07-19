@@ -2,7 +2,7 @@ import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { UserWithMetaInformationAndProject } from '@activepieces/shared';
+import { UserWithMetaInformationAndProject } from '@ensemble/shared';
 
 export const userHooks = {
   useCurrentUser: () => {

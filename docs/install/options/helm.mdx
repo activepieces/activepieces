@@ -1,9 +1,9 @@
 ---
 title: 'Helm'
-description: 'Deploy Activepieces on Kubernetes using Helm'
+description: 'Deploy Ensemble on Kubernetes using Helm'
 ---
 
-This guide walks you through deploying Activepieces on Kubernetes using the official Helm chart.
+This guide walks you through deploying Ensemble on Kubernetes using the official Helm chart.
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/activepieces/activepieces.git
+git clone https://github.com/ensemble/ensemble.git
 cd activepieces
 ```
 
@@ -28,9 +28,9 @@ helm dependency update
 
 ### 3. Create a Values File
 
-Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/activepieces/activepieces/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
+Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/ensemble/ensemble/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
 
-### 4. Install Activepieces
+### 4. Install Ensemble
 
 ```bash
 helm install activepieces deploy/activepieces-helm -f my-values.yaml

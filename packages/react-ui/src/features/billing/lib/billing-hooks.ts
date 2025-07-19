@@ -9,12 +9,12 @@ import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
-} from '@activepieces/ee-shared';
+} from '@ensemble/ee-shared';
 import {
   ApErrorParams,
   ErrorCode,
   ListAICreditsUsageRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { platformBillingApi } from './api';
 

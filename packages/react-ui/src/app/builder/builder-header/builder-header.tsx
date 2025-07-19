@@ -35,7 +35,7 @@ import {
   FlowVersionState,
   Permission,
   supportUrl,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { BuilderFlowStatusSection } from '../builder-flow-status-section';

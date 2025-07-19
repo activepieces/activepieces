@@ -3,7 +3,7 @@ import {
   CreateFieldRequest,
   Field,
   UpdateFieldRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const fieldsApi = {
   list(tableId: string): Promise<Field[]> {

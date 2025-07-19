@@ -25,7 +25,7 @@ import {
   PopulatedFlow,
   Trigger,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
@@ -176,7 +176,7 @@ export const flowsHooks = {
           displayName: t('Untitled'),
         });
         const mcpPiece = await piecesApi.get({
-          name: '@activepieces/piece-mcp',
+          name: '@ensemble/piece-mcp',
         });
         const trigger = mcpPiece.triggers['mcp_tool'];
         if (!trigger) {

@@ -1,5 +1,5 @@
-import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ApSubscriptionStatus, CreateSubscriptionParamsSchema, DEFAULT_BUSINESS_SEATS, isUpgradeExperience, PlanName, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@ensemble/ee-shared'
+import { EnsembleError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -74,7 +74,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         ])
         
         if (platformPlan.plan === PlanName.FREE && state !== AiOverageState.NOT_ALLOWED) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'AI credit usage limits are only available for paid plans',
@@ -87,7 +87,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: `Cannot disable usage-based billing while you have ${overageCreditsUsed.toLocaleString()} overage credits used.`,
@@ -125,7 +125,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         ])
         
         if (platformPlan.aiCreditsOverageState !== AiOverageState.ALLOWED_AND_ON) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'Setting AI credits overage limit is not allowed while overage is not enabled',
@@ -138,7 +138,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
         
         if (overageCreditsUsed > limit) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: `Cannot set usage limit to ${limit.toLocaleString()} credits as you have already used ${overageCreditsUsed.toLocaleString()} overage credits this billing period.`,
@@ -191,7 +191,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const upgradeExperience = isUpgradeExperience(currentPlan, newPlan, platformPlan.userSeatsLimit, seats)
 
         if (newPlan !== PlanName.BUSINESS && !isNil(seats)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'Extra users are only available for business plan',
@@ -213,7 +213,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         
         if (!platformBilling.eligibleForTrial) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'Platform is not eligible for trial',

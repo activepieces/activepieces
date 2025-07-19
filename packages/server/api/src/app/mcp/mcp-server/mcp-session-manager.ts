@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/shared'
+import { apId, isNil } from '@ensemble/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'

@@ -1,11 +1,11 @@
 
-import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { OAuth2AuthorizationMethod } from '@ensemble/pieces-framework'
 import {
-    ActivepiecesError,
+    EnsembleError,
     AppConnectionType,
     CloudOAuth2ConnectionValue,
     ErrorCode,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import axios from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
@@ -29,7 +29,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             tokenUrl: connectionValue.token_url,
         }
         const response = (
-            await axios.post('https://secrets.activepieces.com/refresh', requestBody, {
+            await axios.post('https://secrets.ensemble.com/refresh', requestBody, {
                 timeout: 10000,
             })
         ).data
@@ -56,7 +56,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             }
             const value = (
                 await axios.post<CloudOAuth2ConnectionValue>(
-                    'https://secrets.activepieces.com/claim',
+                    'https://secrets.ensemble.com/claim',
                     cloudRequest,
                     {
                         timeout: 10000,
@@ -71,7 +71,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
         }
         catch (e: unknown) {
             log.error(e)
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,
                 params: {
                     pieceName,

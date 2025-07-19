@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { isStepFileUrl } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';

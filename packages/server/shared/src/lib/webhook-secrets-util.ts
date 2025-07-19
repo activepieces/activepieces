@@ -3,7 +3,7 @@ import {
     FlowVersion,
     isNil,
     parseToJsonIfPossible,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 
 let webhookSecrets:
 | Record<string, { webhookSecret: string | Record<string, string> }>

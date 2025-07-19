@@ -1,6 +1,6 @@
 ---
 title: "Provision Users"
-description: "Automatically authenticate your SaaS users to your Activepieces instance"
+description: "Automatically authenticate your SaaS users to your Ensemble instance"
 icon: 'user'
 ---
 
@@ -8,7 +8,7 @@ icon: 'user'
 
 ## Overview
 
-In Activepieces, there are **Projects** and **Users**. Each project is provisioned with their corresponding workspace, project, or team in your SaaS. The users are then mapped to the respective users in Activepieces.
+In Ensemble, there are **Projects** and **Users**. Each project is provisioned with their corresponding workspace, project, or team in your SaaS. The users are then mapped to the respective users in Ensemble.
 
 To achieve this, the backend will generate a signed token that contains all the necessary information to automatically create a user and project. If the user or project already exists, it will skip the creation and log in the user directly.
 
@@ -16,16 +16,16 @@ To achieve this, the backend will generate a signed token that contains all the 
   <Step title="Step 1: Obtain Signing Key">
     You can generate a signing key by going to **Platform Settings -> Signing Keys -> Generate Signing Key**.
 
-    This will generate a public and private key pair. The public key will be used by Activepieces to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
+    This will generate a public and private key pair. The public key will be used by Ensemble to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
 
     ![Create Signing Key](../resources/screenshots/create-signing-key.png)
     <Warning>
-      Please store your private key in a safe place, as it will not be stored in Activepieces.
+      Please store your private key in a safe place, as it will not be stored in Ensemble.
     </Warning>
   </Step>
 
   <Step title="Step 2: Generate a JWT">
-    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Activepieces Iframe as a query parameter to authenticate the user and exchange the token for a longer lived token.
+    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Ensemble Iframe as a query parameter to authenticate the user and exchange the token for a longer lived token.
 
     To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
 
@@ -64,7 +64,7 @@ To achieve this, the backend will generate a signed token that contains all the 
     | externalProjectId | Unique identification of the user's project in **your** software |
     | firstName         | First name of the user                           |
     | lastName          | Last name of the user                            |
-    | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
+    | role              | Role of the user in the Ensemble project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
     | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |

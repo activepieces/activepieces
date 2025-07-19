@@ -7,7 +7,7 @@ description: ''
 
 ### Piece Authentication
 
-Activepieces supports multiple forms of authentication, you can check those forms [here](../piece-reference/authentication)
+Ensemble supports multiple forms of authentication, you can check those forms [here](../piece-reference/authentication)
 
 Now, let's establish authentication for this piece, which necessitates the inclusion of an API Key in the headers.
 
@@ -24,7 +24,7 @@ export const gelatoAuth = PieceAuth.SecretText({
 
 export const gelato = createPiece({
   displayName: 'Gelato',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/gelato.png',
   auth: gelatoAuth,
   authors: [],
   actions: [],

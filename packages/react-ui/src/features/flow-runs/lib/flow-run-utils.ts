@@ -22,7 +22,7 @@ import {
   StepOutput,
   StepOutputStatus,
   Trigger,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const flowRunUtils = {
   findLastStepWithStatus,

@@ -5,12 +5,12 @@ import {
   Polling,
   httpClient,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import {
   createTrigger,
   Property,
   TriggerStrategy,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import dayjs from 'dayjs';
 import { discordAuth } from '../..';
 import { discordCommon } from '../common';

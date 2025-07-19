@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../..';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 import { WEBHOOK_SOURCES } from '../common/constants';
@@ -14,7 +14,7 @@ export const dealTaskCompletedTrigger = createTrigger({
 	async onEnable(context) {
 		const client = makeClient(context.auth);
 		const res = await client.subscribeWebhook({
-			name: `Activepieces Deal Task Completed Hook`,
+			name: `Ensemble Deal Task Completed Hook`,
 			url: context.webhookUrl,
 			events: ['deal_task_complete'],
 			sources: WEBHOOK_SOURCES,

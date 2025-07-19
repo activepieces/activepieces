@@ -6,8 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { McpTool } from '@activepieces/shared';
-import { isNil, McpToolType } from '@activepieces/shared';
+import type { McpTool } from '@ensemble/shared';
+import { isNil, McpToolType } from '@ensemble/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
 

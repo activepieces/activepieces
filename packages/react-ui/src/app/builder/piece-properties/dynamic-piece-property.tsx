@@ -12,8 +12,8 @@ import {
   PiecePropertyMap,
   PropertyType,
   ExecutePropsResult,
-} from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { Action, Trigger } from '@ensemble/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 

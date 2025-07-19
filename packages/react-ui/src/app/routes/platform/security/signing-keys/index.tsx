@@ -16,7 +16,7 @@ import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-si
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { SigningKey } from '@activepieces/ee-shared';
+import { SigningKey } from '@ensemble/ee-shared';
 
 const SigningKeysPage = () => {
   const { data, isLoading, refetch } = useQuery({
@@ -79,7 +79,7 @@ const SigningKeysPage = () => {
                     rel="noopener noreferrer"
                     target="_blank"
                     className="font-medium text-primary underline underline-offset-4"
-                    to="https://www.activepieces.com/docs/embedding/provision-users"
+                    to="https://www.ensemble.com/docs/embedding/provision-users"
                   >
                     JavaScript SDK
                   </Link>{' '}

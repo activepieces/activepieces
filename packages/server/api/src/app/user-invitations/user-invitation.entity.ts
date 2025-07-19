@@ -1,4 +1,4 @@
-import { Project, ProjectRole, UserInvitation } from '@activepieces/shared'
+import { Project, ProjectRole, UserInvitation } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
 

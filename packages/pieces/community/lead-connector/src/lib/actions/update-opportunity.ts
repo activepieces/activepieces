@@ -2,7 +2,7 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   getContacts,
   getOpportunities,
@@ -15,7 +15,7 @@ import {
 } from '../common';
 import { leadConnectorAuth } from '../..';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 export const updateOpportunityAction = createAction({
   auth: leadConnectorAuth,

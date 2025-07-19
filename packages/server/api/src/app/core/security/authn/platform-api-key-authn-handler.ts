@@ -1,6 +1,6 @@
-import { ApiKey } from '@activepieces/ee-shared'
+import { ApiKey } from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -10,7 +10,7 @@ import {
     PrincipalType,
     Project,
     ProjectId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
 import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
@@ -49,7 +49,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         const apiKeyValue = header?.substring(prefix.length)
 
         if (isNil(apiKeyValue)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHENTICATION,
                 params: {
                     message: 'missing api key',
@@ -88,7 +88,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             return principal
         }
         catch (e) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'invalid api key',
@@ -117,7 +117,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             
             const resourceName = extractResourceName(routerPath)
             const resourceId = (request.params as { id: string }).id
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     message: `${resourceId} not found`,
@@ -128,7 +128,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         }
         
         if (isNil(projectIdFromRequest)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'missing project id in request',
@@ -197,7 +197,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         apiKey: ApiKey,
     ): void {
         if (project.platformId !== apiKey.platformId) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
                     message: 'invalid project id and platform id',

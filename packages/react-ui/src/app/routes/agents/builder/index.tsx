@@ -9,7 +9,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { Agent } from '@activepieces/shared';
+import { Agent } from '@ensemble/shared';
 
 import { AgentSettings } from './agent-settings';
 

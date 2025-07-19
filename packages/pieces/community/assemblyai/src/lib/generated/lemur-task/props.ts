@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@ensemble/pieces-framework';
 export const props = {
   prompt: Property.ShortText({
     displayName: 'Prompt',

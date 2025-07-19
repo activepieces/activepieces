@@ -11,7 +11,7 @@ import {
   IssueStatus,
   PopulatedIssue,
   FlowRunStatus,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const issuesTableColumns: ColumnDef<
   RowDataWithActions<PopulatedIssue>

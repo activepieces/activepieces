@@ -26,7 +26,7 @@ import {
 import { alertMutations } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@ensemble/shared';
 
 const FormSchema = Type.Object({
   email: Type.String({

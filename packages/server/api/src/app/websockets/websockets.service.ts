@@ -1,5 +1,5 @@
-import { exceptionHandler } from '@activepieces/server-shared'
-import { Principal, WebsocketServerEvent } from '@activepieces/shared'
+import { exceptionHandler } from '@ensemble/server-shared'
+import { Principal, WebsocketServerEvent } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'

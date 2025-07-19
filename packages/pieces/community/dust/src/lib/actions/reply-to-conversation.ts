@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { dustAuth, DustAuthType } from '../..';
 import {
   assistantProp,
@@ -15,7 +15,7 @@ import {
 } from '../common';
 
 export const replyToConversation = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'replyToConversation',
   displayName: 'Reply to conversation',
   description: 'Send reply to existing conversation',

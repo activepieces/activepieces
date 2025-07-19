@@ -2,13 +2,13 @@ import {
   PiecePropValueSchema,
   Property,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 import { backBlazeS3Auth } from '../..';
 import { createBackBlazeS3 } from '../common';

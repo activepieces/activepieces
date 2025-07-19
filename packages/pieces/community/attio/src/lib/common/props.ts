@@ -1,8 +1,8 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@ensemble/pieces-framework';
 import { attioApiCall, attioPaginatedApiCall } from './client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { AttributeResponse, ListResponse, ObjectResponse, SelectOptionResponse } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 interface DropdownParams {
 	displayName: string;

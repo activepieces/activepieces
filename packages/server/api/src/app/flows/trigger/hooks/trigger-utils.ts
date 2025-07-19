@@ -1,11 +1,11 @@
-import { TriggerBase } from '@activepieces/pieces-framework'
+import { TriggerBase } from '@ensemble/pieces-framework'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     isNil,
     PieceTrigger,
     ProjectId,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
@@ -19,7 +19,7 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
 
         })
         if (isNil(pieceTrigger)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
                 params: {
                     pieceName: trigger.settings.pieceName,

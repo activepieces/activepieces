@@ -5,7 +5,7 @@ import {
     PieceType,
     PlatformRole,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
@@ -88,7 +88,7 @@ describe('Piece Metadata API', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange
             const mockPieceMetadata = createMockPieceMetadata({
-                name: '@activepieces/a',
+                name: '@ensemble/a',
                 pieceType: PieceType.OFFICIAL,
             })
             await databaseConnection()
@@ -111,7 +111,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@activepieces/a',
+                url: '/v1/pieces/@ensemble/a',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -127,7 +127,7 @@ describe('Piece Metadata API', () => {
         it('Should return metadata when not authenticated', async () => {
             // arrange
             const mockPieceMetadata = createMockPieceMetadata({
-                name: '@activepieces/a',
+                name: '@ensemble/a',
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'a',
             })
@@ -144,7 +144,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@activepieces/a',
+                url: '/v1/pieces/@ensemble/a',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

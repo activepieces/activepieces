@@ -3,14 +3,14 @@ import {
   PieceAuth,
   PiecePropValueSchema,
   Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import {
   AuthenticationType,
   httpClient,
   HttpMethod, createCustomApiCallAction 
 
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { createOrUpdateSubscriberAction } from './lib/actions/create-or-update-subscriber.action';
 import { getSubscriberAction } from './lib/actions/get-subscriber.action';
 
@@ -61,7 +61,7 @@ export const smaily = createPiece({
   displayName: 'Smaily',
   auth: smailyAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/smaily.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/smaily.png',
   categories: [PieceCategory.MARKETING],
   authors: ['kishanprmr'],
   actions: [createOrUpdateSubscriberAction, getSubscriberAction,

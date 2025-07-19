@@ -6,8 +6,8 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Label } from '@/components/ui/label';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
+import { isNil } from '@ensemble/shared';
 
 type ConnectionDropdownProps = {
   piece: PieceMetadataModelSummary;

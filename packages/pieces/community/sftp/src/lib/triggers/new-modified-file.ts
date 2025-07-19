@@ -1,5 +1,5 @@
-import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@ensemble/pieces-common';
 import { sftpAuth, getClient, getProtocolBackwardCompatibility, endClient } from '../..';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';

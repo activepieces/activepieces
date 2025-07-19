@@ -1,5 +1,5 @@
 
-import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { EnsembleError, ErrorCode, SAMLAuthnProviderConfig } from '@ensemble/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -42,7 +42,7 @@ class SamlClient {
 
         const atts = loginResult.extract.attributes
         if (!samlResponseValidator.Check(atts)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVALID_SAML_RESPONSE,
                 params: {
                     message: 'Invalid SAML response, It should contain these firstName, lastName, email fields.',
@@ -78,7 +78,7 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
 const createSp = async (platformId: string, privateKey: string): Promise<saml.ServiceProviderInstance> => {
     const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs', platformId })
     return saml.ServiceProvider({
-        entityID: 'Activepieces',
+        entityID: 'Ensemble',
         authnRequestsSigned: false,
         wantMessageSigned: true,
         wantLogoutResponseSigned: true,

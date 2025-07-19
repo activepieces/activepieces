@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { ApEnvironment, UserIdentityProvider } from '@ensemble/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'

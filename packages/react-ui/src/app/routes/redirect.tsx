@@ -13,7 +13,7 @@ import {
   PROVIDER_NAME_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
-import { ErrorCode } from '@activepieces/shared';
+import { ErrorCode } from '@ensemble/shared';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();

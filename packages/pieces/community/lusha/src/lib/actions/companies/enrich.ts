@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@ensemble/pieces-framework";
 
 export const enrichCompanies = createAction({
   name: 'enrich_companies',

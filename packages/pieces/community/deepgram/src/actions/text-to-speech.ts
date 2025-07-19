@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import { deepgramAuth } from '../common/auth';
 import { BASE_URL, TEXT_TO_SPEECH_MODELS } from '../common/constants';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
 
 export const textToSpeechAction = createAction({
   auth: deepgramAuth,

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { platformUserApi } from '@/lib/platform-user-api';
-import { SeekPage, UserWithMetaInformation } from '@activepieces/shared';
+import { SeekPage, UserWithMetaInformation } from '@ensemble/shared';
 
 export const platformUserHooks = {
   useUsers: () => {

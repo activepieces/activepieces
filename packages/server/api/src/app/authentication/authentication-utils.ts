@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { AppSystemProp } from '@ensemble/server-shared'
+import { EnsembleError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -20,7 +20,7 @@ export const authenticationUtils = {
             email,
         })
         if (!isInvited) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
                 params: {
                     message: 'User is not invited to the platform',
@@ -37,7 +37,7 @@ export const authenticationUtils = {
         })
         const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
                 params: {
                     message: 'No project found for user',
@@ -46,7 +46,7 @@ export const authenticationUtils = {
         }
         const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
         if (!identity.verified) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
                 params: {
                     email: identity.email,
@@ -54,7 +54,7 @@ export const authenticationUtils = {
             })
         }
         if (user.status === UserStatus.INACTIVE) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.USER_IS_INACTIVE,
                 params: {
                     email: identity.email,
@@ -101,7 +101,7 @@ export const authenticationUtils = {
             platform.allowedAuthDomains.includes(emailDomain)
 
         if (!isAllowedDomaiin) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.DOMAIN_NOT_ALLOWED,
                 params: {
                     domain: emailDomain,
@@ -126,7 +126,7 @@ export const authenticationUtils = {
             return
         }
         if (!platform.emailAuthEnabled) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.EMAIL_AUTH_DISABLED,
                 params: {},
             })
@@ -169,7 +169,7 @@ export const authenticationUtils = {
         }
         try {
             const response = await fetch(
-                'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
+                'https://us-central1-ensemble-b3803.cloudfunctions.net/addContact',
                 {
                     method: 'POST',
                     headers: {

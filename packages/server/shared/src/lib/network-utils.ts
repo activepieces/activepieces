@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
 import os from 'os'
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 
 const GOOGLE_DNS = '216.239.32.10'

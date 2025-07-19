@@ -1,12 +1,12 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { PieceAuth } from '@ensemble/pieces-framework';
 import { baseUrl } from './client';
 
 export const assemblyaiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description:
-    'You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).',
+    'You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=ensemble).',
   validate: async ({ auth }) => {
     if (!auth)
       return {

@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
 	HttpRequest,
 	HttpMethod,
 	httpClient,
 	AuthenticationType,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { webflowAuth } from '../..';
 import { webflowProps } from '../common/props';
 

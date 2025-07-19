@@ -5,7 +5,7 @@ import {
   UpdateMcpRequestBody,
   McpWithTools,
   CreateMcpRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 export const mcpApi = {
   async create(request: CreateMcpRequestBody): Promise<McpWithTools> {

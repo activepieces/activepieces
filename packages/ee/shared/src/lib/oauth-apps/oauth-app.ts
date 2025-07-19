@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '@activepieces/shared'
+import { BaseModelSchema } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const OAuthApp = Type.Object({

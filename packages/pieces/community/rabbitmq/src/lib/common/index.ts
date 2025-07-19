@@ -1,4 +1,4 @@
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema } from '@ensemble/pieces-framework';
 import { rabbitmqAuth } from '../..';
 import amqp, { Connection } from 'amqplib';
 

@@ -3,9 +3,9 @@ import {
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
-} from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+} from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@ensemble/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
@@ -48,7 +48,7 @@ export const openai = createPiece({
   displayName: 'OpenAI',
   description: 'Use the many tools ChatGPT has to offer.',
   minimumSupportedRelease: '0.63.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/openai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
   actions: [

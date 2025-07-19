@@ -2,8 +2,8 @@ import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
     PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
+} from '@ensemble/ee-shared'
+import { Permission, PrincipalType, SeekPage } from '@ensemble/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,

@@ -1,5 +1,5 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
+import { Property, createAction } from '@ensemble/pieces-framework';
 import FormData from 'form-data';
 import { zohoMailApiCall } from '../common';
 import { zohoMailAuth } from '../common/auth';

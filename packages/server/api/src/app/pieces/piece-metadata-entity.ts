@@ -1,9 +1,9 @@
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { PieceMetadataModel } from '@ensemble/pieces-framework'
 import {
     ApId,
     BaseModel,
     Project,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

@@ -36,7 +36,7 @@ import {
   UNRESOLVED_STATUS,
   StatusOption,
   MarkdownVariant,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 function TodoTestingPage() {
   const { todoId } = useParams();

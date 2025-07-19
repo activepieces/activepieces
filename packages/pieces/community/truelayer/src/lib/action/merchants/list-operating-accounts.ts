@@ -1,5 +1,5 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { createAction, OAuth2PropertyValue } from '@ensemble/pieces-framework';
 import { trueLayerCommon } from '../../common';
 
 export const listOperatingAccounts = createAction({

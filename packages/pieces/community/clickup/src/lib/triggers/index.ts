@@ -85,8 +85,8 @@ export const triggers = [
           source: null,
           user: {
             id: 55053258,
-            username: 'Activepieces Apps',
-            email: 'apps@activepieces.com',
+            username: 'Ensemble Apps',
+            email: 'apps@ensemble.com',
             color: '#aa2fff',
             initials: 'AA',
             profilePicture: null,
@@ -119,8 +119,8 @@ export const triggers = [
           source: null,
           user: {
             id: 55053258,
-            username: 'Activepieces Apps',
-            email: 'apps@activepieces.com',
+            username: 'Ensemble Apps',
+            email: 'apps@ensemble.com',
             color: '#aa2fff',
             initials: 'AA',
             profilePicture: null,
@@ -422,8 +422,8 @@ export const triggers = [
           source: null,
           user: {
             id: 55053258,
-            username: 'Activepieces Apps',
-            email: 'apps@activepieces.com',
+            username: 'Ensemble Apps',
+            email: 'apps@ensemble.com',
             color: '#aa2fff',
             initials: 'AA',
             profilePicture: null,
@@ -462,8 +462,8 @@ export const triggers = [
           source: null,
           user: {
             id: 55053258,
-            username: 'Activepieces Apps',
-            email: 'apps@activepieces.com',
+            username: 'Ensemble Apps',
+            email: 'apps@ensemble.com',
             color: '#aa2fff',
             initials: 'AA',
             profilePicture: null,

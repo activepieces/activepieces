@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import { Field, FieldType, PopulatedRecord, Table } from '@ensemble/shared';
 
 import { createServerState } from './ap-tables-server-state';
 

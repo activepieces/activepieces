@@ -22,7 +22,7 @@ import { platformApi } from '@/lib/platforms-api';
 import {
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;

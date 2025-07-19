@@ -20,7 +20,7 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
   AskCopilotTool,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { Textarea } from '../../../components/ui/textarea';
 import { pieceSelectorUtils } from '../../../features/pieces/lib/piece-selector-utils';

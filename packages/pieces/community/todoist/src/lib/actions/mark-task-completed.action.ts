@@ -1,6 +1,6 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@ensemble/shared';
 import { todoistAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { todoistRestClient } from '../common/client/rest-client';
 
 export const todoistMarkTaskCompletedAction = createAction({

@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
+import { FilteredPieceBehavior, Platform, User } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

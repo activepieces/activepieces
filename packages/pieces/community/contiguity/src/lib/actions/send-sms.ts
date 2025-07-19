@@ -3,12 +3,12 @@ import {
   httpClient,
   HttpRequest,
   propsValidation,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { contigAuth } from '../..';
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { z } from 'zod';
 
 export const sendSMS = createAction({

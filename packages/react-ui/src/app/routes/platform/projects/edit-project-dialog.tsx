@@ -34,7 +34,7 @@ import {
   ProjectWithLimits,
   ApErrorParams,
   ErrorCode,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 interface EditProjectDialogProps {
   open: boolean;

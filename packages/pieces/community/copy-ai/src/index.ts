@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 
 import { runWorkflowAction } from './lib/actions/run-workflow';
 import { getWorkflowRunStatusAction } from './lib/actions/get-workflow-run-status';
@@ -24,7 +24,7 @@ export const copyAiAuth = PieceAuth.SecretText({
 export const copyAi = createPiece({
 	displayName: 'Copy.ai',
 	description: 'AI-powered content generation and copywriting platform',
-	logoUrl: 'https://cdn.activepieces.com/pieces/copy-ai.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/copy-ai.png',
 	authors: ['AnkitSharmaOnGithub'],
 	auth: copyAiAuth,
 	actions: [runWorkflowAction, getWorkflowRunStatusAction, getWorkflowRunOutputsAction],

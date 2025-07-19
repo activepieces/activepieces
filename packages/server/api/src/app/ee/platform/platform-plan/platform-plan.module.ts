@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import Stripe from 'stripe'
 import {  SystemJobName } from '../../../helper/system-jobs/common'

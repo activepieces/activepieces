@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import actions from './lib/actions';
 
 const markdownDescription = `
@@ -39,7 +39,7 @@ export const pastebin = createPiece({
   description: 'Simple and secure text sharing',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/pastebin.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/pastebin.png',
   authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
   categories: [],
   auth: pastebinAuth,

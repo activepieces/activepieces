@@ -7,7 +7,7 @@ import {
     McpRun,
     McpRunStatus,
     SeekPage, 
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'

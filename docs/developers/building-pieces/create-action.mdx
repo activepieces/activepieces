@@ -51,7 +51,7 @@ export const getIcecreamFlavor = createAction({
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: 'https://cloud.activepieces.com/api/v1/webhooks/RGjv57ex3RAHOgs0YK6Ja/sync',
+      url: 'https://cloud.ensemble.com/api/v1/webhooks/RGjv57ex3RAHOgs0YK6Ja/sync',
       headers: {
         Authorization: context.auth, // Pass API key in headers
       },
@@ -73,7 +73,7 @@ The `run` function utilizes the httpClient.sendRequest function to make a GET re
 
 ## Expose The Definition
 
-To make the action readable by Activepieces, add it to the array of actions in the piece definition.
+To make the action readable by Ensemble, add it to the array of actions in the piece definition.
 
 ```typescript
 import { createPiece } from '@activepieces/pieces-framework';
@@ -82,7 +82,7 @@ import { getIcecreamFlavor } from './lib/actions/get-icecream-flavor';
 
 export const gelato = createPiece({
   displayName: 'Gelato',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/gelato.png',
   authors: [],
   auth: gelatoAuth,
   // Add the action here.
@@ -104,6 +104,6 @@ If the build fails, try debugging by running `npx nx run-many -t build --project
 It will display any errors in your code.
 </Tip>
 
-To test the action, use the flow builder in Activepieces. It should function as shown in the screenshot.
+To test the action, use the flow builder in Ensemble. It should function as shown in the screenshot.
 
 ![Gelato Action](/resources/screenshots/gelato-action.png)

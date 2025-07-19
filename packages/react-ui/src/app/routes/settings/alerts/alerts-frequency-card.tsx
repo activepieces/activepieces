@@ -19,7 +19,7 @@ import {
   NotificationStatus,
   Permission,
   ProjectWithLimits,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { AlertOption } from './alert-option';
 

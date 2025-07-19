@@ -24,7 +24,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn, localesMap } from '@/lib/utils';
-import { ApFlagId, LocalesEnum } from '@activepieces/shared';
+import { ApFlagId, LocalesEnum } from '@ensemble/shared';
 
 import { flagsHooks } from '../../hooks/flags-hooks';
 
@@ -111,9 +111,9 @@ export function LanguageSwitcher() {
             className=" text-primary text-sm text-muted-foreground"
             rel="noopener noreferrer"
             target="_blank"
-            to="https://www.activepieces.com/docs/about/i18n"
+            to="https://www.ensemble.com/docs/about/i18n"
           >
-            {t('Translate Activepieces')}
+            {t('Translate Ensemble')}
           </Link>
         </div>
       )}

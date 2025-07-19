@@ -4,7 +4,7 @@ import {
   ListAgentsQueryParams,
   CreateAgentRequest,
   UpdateAgentRequest,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { agentsApi } from './agents-api';
 

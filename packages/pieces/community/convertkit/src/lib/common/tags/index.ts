@@ -1,6 +1,6 @@
 import {
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import {
   fetchSubscriberByEmail,
   fetchSubscribedTags,

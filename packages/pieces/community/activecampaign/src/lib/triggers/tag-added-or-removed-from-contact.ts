@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../..';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import { makeClient } from '../common';
 import { CreateWebhookResponse } from '../common/types';
 import { WEBHOOK_SOURCES } from '../common/constants';
@@ -14,7 +14,7 @@ export const newtagAddedOrRemovedFromContactTrigger = createTrigger({
 	async onEnable(context) {
 		const client = makeClient(context.auth);
 		const res = await client.subscribeWebhook({
-			name: `Activepieces Contact Tag Hook`,
+			name: `Ensemble Contact Tag Hook`,
 			url: context.webhookUrl,
 			events: ['contact_tag_added', 'contact_tag_removed'],
 			sources: WEBHOOK_SOURCES,

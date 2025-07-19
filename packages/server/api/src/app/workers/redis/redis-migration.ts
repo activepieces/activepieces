@@ -1,5 +1,5 @@
-import { LATEST_JOB_DATA_SCHEMA_VERSION, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
-import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
+import { LATEST_JOB_DATA_SCHEMA_VERSION, QueueName, RepeatableJobType, ScheduledJobData } from '@ensemble/server-shared'
+import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@ensemble/shared'
 import { Job, RepeatableJob } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
@@ -85,7 +85,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
         )
 
         // Clean up legacy key mapping
-        await client.del(`activepieces:repeatJobKey:${flowVersionId}`)
+        await client.del(`ensemble:repeatJobKey:${flowVersionId}`)
         count++
     }
     log.info({

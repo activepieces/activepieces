@@ -1,11 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
 	OAuth2PropertyValue,
 	PieceAuth,
 	createPiece,
 	Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { sendMessageAction } from './lib/actions/send-message.action';
 import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
@@ -83,7 +83,7 @@ export const intercom = createPiece({
 	displayName: 'Intercom',
 	description: 'Customer messaging platform for sales, marketing, and support',
 	minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
-	logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/intercom.png',
 	categories: [PieceCategory.CUSTOMER_SUPPORT],
 	auth: intercomAuth,
 	authors: [

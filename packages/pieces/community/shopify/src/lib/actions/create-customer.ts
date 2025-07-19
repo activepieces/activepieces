@@ -1,7 +1,7 @@
 import {
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { shopifyAuth } from '../..';
 import { createCustomer } from '../common';
 

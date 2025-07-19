@@ -1,12 +1,12 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     ALL_PRINCIPAL_TYPES,
     apId,
     EndpointScope,
     ErrorCode,
     Principal,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
@@ -119,7 +119,7 @@ describe('API Security', () => {
             // assert
             return result.catch((e) => {
                 expect(e).toEqual(
-                    new ActivepiecesError({
+                    new EnsembleError({
                         code: ErrorCode.INVALID_API_KEY,
                         params: {},
                     }),
@@ -316,7 +316,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid project id',
@@ -348,7 +348,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.VALIDATION,
                     params: {
                         message: 'invalid project id',
@@ -384,7 +384,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid project id',
@@ -416,7 +416,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,
                     params: {
                         message: 'invalid access token',
@@ -448,7 +448,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid route for principal type',
@@ -494,7 +494,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.SESSION_EXPIRED,
                     params: {
                         message: 'The session has expired.',
@@ -579,7 +579,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid route for principal type',
@@ -623,7 +623,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid project id',
@@ -667,7 +667,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid project id',
@@ -727,7 +727,7 @@ describe('API Security', () => {
 
             // assert
             await expect(result).rejects.toEqual(
-                new ActivepiecesError({
+                new EnsembleError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
                         message: 'invalid route for principal type',

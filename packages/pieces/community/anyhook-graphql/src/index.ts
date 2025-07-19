@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@ensemble/pieces-framework';
 import { graphqlCommon } from './lib/common/common';
 import { graphqlSubscriptionTrigger } from './lib/triggers/graphql-subscription-trigger';
 
@@ -9,7 +9,7 @@ export const anyHookGraphql = createPiece({
   auth: graphqlCommon.auth,
   minimumSupportedRelease: '0.20.0',
   logoUrl:
-    'https://cdn.activepieces.com/pieces/anyhook-graphql.png',
+    'https://cdn.ensemble.com/pieces/anyhook-graphql.png',
   authors: ['ahmad-swanblocks'],
   actions: [],
   triggers: [

@@ -2,10 +2,10 @@ import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { newResponse } from './lib/triggers/new-response';
 
 export const smAuth = PieceAuth.OAuth2({
@@ -26,7 +26,7 @@ export const surveymonkey = createPiece({
   description: 'Receive survey responses from SurveyMonkey',
   auth: smAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/surveymonkey.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [

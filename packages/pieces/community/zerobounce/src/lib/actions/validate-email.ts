@@ -1,7 +1,7 @@
 import { zerobounceAuth } from '../..';
-import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { createAction, Property, StoreScope } from '@ensemble/pieces-framework';
+import { httpClient, HttpMethod } from '@ensemble/pieces-common';
+import { isNil } from '@ensemble/shared';
 
 export const validateEmail = createAction({
   name: 'validateEmail',

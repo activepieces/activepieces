@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ManagePlanDialog } from '@/features/billing/components/manage-plan-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@ensemble/shared';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -64,7 +64,7 @@ export const RequestTrial = ({
   const handleClick = () =>
     selfHosted
       ? window.open(
-          `https://www.activepieces.com/sales?${createQueryParams()}`,
+          `https://www.ensemble.com/sales?${createQueryParams()}`,
           '_blank',
           'noopener noreferrer',
         )

@@ -22,7 +22,7 @@ async function syncPieces(
 
 export const syncPieceCommand = new Command('sync')
     .description('Find new pieces versions and sync them with the database')
-    .requiredOption('-h, --apiUrl <url>', 'API URL ex: https://cloud.activepieces.com/api')
+    .requiredOption('-h, --apiUrl <url>', 'API URL ex: https://cloud.ensemble.com/api')
     .option('-p, --pieces <pieces...>', 'Specify one or more piece names to sync. ' +
       'If not provided, all custom pieces in the directory will be synced.')
     .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)

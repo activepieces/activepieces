@@ -1,10 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { createBrand } from './lib/actions/Brand/create-brand';
 import { deleteBrand } from './lib/actions/Brand/delete-brand';
 import { getBrandById } from './lib/actions/Brand/get-brand-by-id';
@@ -56,7 +56,7 @@ export const vtex = createPiece({
   displayName: 'VTEX',
   description: 'Unified commerce platform',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/vtex.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/vtex.png',
   categories: [PieceCategory.COMMERCE],
   authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: vtexAuth,

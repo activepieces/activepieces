@@ -8,7 +8,7 @@ import {
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
+import { FlowVersionMetadata, SeekPage } from '@ensemble/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 

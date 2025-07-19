@@ -35,7 +35,7 @@ import {
   PopulatedTodo,
   STATUS_COLORS,
   STATUS_VARIANT,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { ApAvatar } from '../../../components/custom/ap-avatar';
 

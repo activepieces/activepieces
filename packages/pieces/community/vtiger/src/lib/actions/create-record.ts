@@ -1,5 +1,5 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@ensemble/pieces-common';
+import { createAction } from '@ensemble/pieces-framework';
 import { vtigerAuth } from '../..';
 import { instanceLogin, recordProperty } from '../common';
 import { elementTypeProperty } from '../common';

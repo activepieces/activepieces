@@ -16,7 +16,7 @@ import { ProjectMemberCard } from '@/features/team/component/project-member-card
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ProjectMemberWithUser } from '@ensemble/ee-shared';
 
 export default function TeamPage() {
   const {

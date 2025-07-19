@@ -2,7 +2,7 @@ import {
   PieceAuth,
   Property,
   createAction,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
 export const generateRandom = createAction({
   name: 'generateRandom_math',

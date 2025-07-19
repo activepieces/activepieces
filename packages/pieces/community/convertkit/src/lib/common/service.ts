@@ -22,7 +22,7 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const fetchBroadcasts = async (auth: string, page: number) => {
   const url = BROADCASTS_API_ENDPOINT;

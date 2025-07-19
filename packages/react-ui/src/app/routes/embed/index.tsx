@@ -12,24 +12,24 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import { combinePaths, parentWindow } from '@/lib/utils';
 import {
-  ActivepiecesClientAuthenticationFailed,
-  ActivepiecesClientAuthenticationSuccess,
-  ActivepiecesClientConfigurationFinished,
-  ActivepiecesClientEventName,
-  ActivepiecesClientInit,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorInit,
-  ActivepiecesVendorRouteChanged,
+  EnsembleClientAuthenticationFailed,
+  EnsembleClientAuthenticationSuccess,
+  EnsembleClientConfigurationFinished,
+  EnsembleClientEventName,
+  EnsembleClientInit,
+  EnsembleVendorEventName,
+  EnsembleVendorInit,
+  EnsembleVendorRouteChanged,
 } from 'ee-embed-sdk';
 
 const notifyVendorPostAuthentication = () => {
-  const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
-    type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
+  const authenticationSuccessEvent: EnsembleClientAuthenticationSuccess = {
+    type: EnsembleClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
     data: {},
   };
   parentWindow.postMessage(authenticationSuccessEvent, '*');
-  const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
-    type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
+  const configurationFinishedEvent: EnsembleClientConfigurationFinished = {
+    type: EnsembleClientEventName.CLIENT_CONFIGURATION_FINISHED,
     data: {},
   };
   parentWindow.postMessage(configurationFinishedEvent, '*');
@@ -37,11 +37,11 @@ const notifyVendorPostAuthentication = () => {
 
 const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
   const handleVendorRouteChange = (
-    event: MessageEvent<ActivepiecesVendorRouteChanged>,
+    event: MessageEvent<EnsembleVendorRouteChanged>,
   ) => {
     if (
       event.source === parentWindow &&
-      event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
+      event.data.type === EnsembleVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
       const targetRouteRequiresProjectId =
@@ -71,7 +71,7 @@ const handleClientNavigation = () => {
     );
     parentWindow.postMessage(
       {
-        type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+        type: EnsembleClientEventName.CLIENT_ROUTE_CHANGED,
         data: {
           route: pathNameWithoutProjectOrProjectId + state.location.search,
         },
@@ -100,10 +100,10 @@ const EmbedPage = React.memo(() => {
   });
   const { setTheme } = useTheme();
   const { i18n } = useTranslation();
-  const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
+  const initState = (event: MessageEvent<EnsembleVendorInit>) => {
     if (
       event.source === parentWindow &&
-      event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
+      event.data.type === EnsembleVendorEventName.VENDOR_INIT
     ) {
       if (event.data.data.jwtToken) {
         if (event.data.data.mode) {
@@ -154,8 +154,8 @@ const EmbedPage = React.memo(() => {
               notifyVendorPostAuthentication();
             },
             onError: (error) => {
-              const errorEvent: ActivepiecesClientAuthenticationFailed = {
-                type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
+              const errorEvent: EnsembleClientAuthenticationFailed = {
+                type: EnsembleClientEventName.CLIENT_AUTHENTICATION_FAILED,
                 data: error,
               };
               parentWindow.postMessage(errorEvent, '*');
@@ -169,8 +169,8 @@ const EmbedPage = React.memo(() => {
   };
 
   useEffectOnce(() => {
-    const event: ActivepiecesClientInit = {
-      type: ActivepiecesClientEventName.CLIENT_INIT,
+    const event: EnsembleClientInit = {
+      type: EnsembleClientEventName.CLIENT_INIT,
       data: {},
     };
     parentWindow.postMessage(event, '*');

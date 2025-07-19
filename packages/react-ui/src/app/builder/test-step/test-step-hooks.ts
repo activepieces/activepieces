@@ -23,7 +23,7 @@ import {
   FlowOperationType,
   flowStructureUtil,
   SampleDataFileType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

@@ -18,7 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import { tablesUtils } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
-import { FieldType, isNil } from '@activepieces/shared';
+import { FieldType, isNil } from '@ensemble/shared';
 
 type NewFieldDialogProps = {
   children: React.ReactNode;

@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 import { useEmbedding } from '../components/embed-provider';
 

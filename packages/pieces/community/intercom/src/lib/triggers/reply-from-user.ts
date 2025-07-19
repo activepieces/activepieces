@@ -1,9 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@ensemble/pieces-framework';
 import { intercomAuth } from '../..';
 import { intercomClient } from '../common';
 
 export const replyFromUser = createTrigger({
-	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+	// auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
 	name: 'replyFromUser',
 	displayName: 'Reply from a user or lead',
 	description: 'Triggers when a reply is received from a user or lead (not an admin)',

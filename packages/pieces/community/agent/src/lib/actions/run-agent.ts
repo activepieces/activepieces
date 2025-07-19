@@ -1,4 +1,4 @@
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
+import { createAction, Property, PieceAuth } from '@ensemble/pieces-framework';
 import { agentCommon } from '../common';
 import { agentExecutor } from '../agent-executor';
 

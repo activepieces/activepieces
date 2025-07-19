@@ -1,4 +1,4 @@
-import { AIUsage, Project } from '@activepieces/shared'
+import { AIUsage, Project } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 

@@ -1,12 +1,12 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ErrorCode,
     isNil,
     spreadIfDefined,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import jwtLibrary, {
     DecodeOptions,
     SignOptions,
@@ -22,7 +22,7 @@ export enum JwtSignAlgorithm {
 
 const ONE_WEEK = 7 * 24 * 3600
 const KEY_ID = '1'
-const ISSUER = 'activepieces'
+const ISSUER = 'ensemble'
 const ALGORITHM = JwtSignAlgorithm.HS256
 
 let secret: string | null = null
@@ -43,7 +43,7 @@ const getSecret = async (): Promise<string> => {
         }
     }
     if (isNil(secret)) {
-        throw new ActivepiecesError(
+        throw new EnsembleError(
             {
                 code: ErrorCode.SYSTEM_PROP_INVALID,
                 params: {
@@ -90,7 +90,7 @@ export const jwtUtils = {
 
                 if (isNil(token)) {
                     return reject(
-                        new ActivepiecesError({
+                        new EnsembleError({
                             code: ErrorCode.INVALID_BEARER_TOKEN,
                             params: {},
                         }),

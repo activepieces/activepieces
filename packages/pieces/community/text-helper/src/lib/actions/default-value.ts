@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { isEmpty } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { isEmpty } from '@ensemble/shared';
 
 export const defaultValue = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'defaultValue',
   errorHandlingOptions: {
     continueOnFailure: {

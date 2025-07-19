@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import actions from './lib/actions';
 
 export const mysqlAuth = PieceAuth.CustomAuth({
@@ -43,7 +43,7 @@ export const mysql = createPiece({
   description: "The world's most popular open-source database",
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/mysql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
   auth: mysqlAuth,

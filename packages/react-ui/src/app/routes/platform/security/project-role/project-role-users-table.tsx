@@ -19,8 +19,8 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { Skeleton } from '@/components/ui/skeleton';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import { ProjectMemberWithUser } from '@ensemble/ee-shared';
+import { assertNotNullOrUndefined, isNil } from '@ensemble/shared';
 
 export const ProjectRoleUsersTable = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -114,7 +114,7 @@ export const ProjectRoleUsersTable = () => {
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
+      lockVideoUrl="https://cdn.ensemble.com/videos/showcase/roles.mp4"
     >
       <div className="flex-col w-full">
         <div className="mb-4 flex items-center justify-between">

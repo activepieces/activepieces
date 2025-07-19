@@ -1,15 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { dustAuth, DustAuthType } from '../..';
 import { DUST_BASE_URL } from '../common';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import mime from 'mime-types';
 
 export const addFragmentToConversation = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'addFragmentToConversation',
   displayName: 'Add fragment to conversation',
   description:

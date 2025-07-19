@@ -1,11 +1,11 @@
 import {
   createAction,
   Property,
-} from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { ExecutionType, PauseType } from '@ensemble/shared';
 import { markdownDescription } from '../common';
 import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@ensemble/pieces-common';
 
 enum TimeUnit {
   SECONDS = 'seconds',

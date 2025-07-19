@@ -1,9 +1,9 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { currentYear } from '../common';
 import { ClockodoClient } from '../common/client';
 import { clockodoAuth } from '../../';

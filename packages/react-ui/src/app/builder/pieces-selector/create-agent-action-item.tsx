@@ -10,7 +10,7 @@ import { UpgradeHookDialog } from '@/features/billing/components/upgrade-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { Agent, ApFlagId, ErrorCode } from '@activepieces/shared';
+import { Agent, ApFlagId, ErrorCode } from '@ensemble/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

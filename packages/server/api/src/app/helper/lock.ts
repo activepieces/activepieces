@@ -1,4 +1,4 @@
-import { ApLock, AppSystemProp, exceptionHandler, memoryLock } from '@activepieces/server-shared'
+import { ApLock, AppSystemProp, exceptionHandler, memoryLock } from '@ensemble/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'

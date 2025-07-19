@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission, Table } from '@activepieces/shared';
+import { Permission, Table } from '@ensemble/shared';
 
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';

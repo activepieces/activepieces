@@ -3,15 +3,15 @@ import {
   ListOAuth2AppRequest,
   OAuthApp,
   UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared';
-import { ApEdition, SeekPage } from '@activepieces/shared';
+} from '@ensemble/ee-shared';
+import { ApEdition, SeekPage } from '@ensemble/shared';
 
 export const oauthAppsApi = {
   listCloudOAuthApps(
     edition: ApEdition,
   ): Promise<Record<string, { clientId: string }>> {
     return api.get<Record<string, { clientId: string }>>(
-      'https://secrets.activepieces.com/apps',
+      'https://secrets.ensemble.com/apps',
       {
         edition,
       },

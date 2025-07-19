@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema } from '@activepieces/shared'
+import { ApId, BaseModelSchema } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export enum AlertChannel {

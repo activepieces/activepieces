@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@ensemble/pieces-framework';
 import { websocketCommon } from './lib/common/common';
 import { websocketSubscriptionTrigger } from './lib/triggers/websocket-subscription-trigger';
 
@@ -9,7 +9,7 @@ export const anyHookWebsocket = createPiece({
   auth: websocketCommon.auth,
   minimumSupportedRelease: '0.20.0',
   logoUrl:
-    'https://cdn.activepieces.com/pieces/anyhook-websocket.png',
+    'https://cdn.ensemble.com/pieces/anyhook-websocket.png',
   authors: ['Swanblocks/Ahmad Shawar'],
   actions: [],
   triggers: [

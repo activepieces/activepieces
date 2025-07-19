@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceAuth, createPiece } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
 
@@ -19,7 +19,7 @@ export const posthog = createPiece({
   description: 'Open-source product analytics',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/posthog.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: posthogAuth,
   actions: [

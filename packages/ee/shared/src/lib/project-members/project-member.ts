@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema, ProjectMetaData, ProjectRole, UserWithMetaInformation } from '@activepieces/shared'
+import { ApId, BaseModelSchema, ProjectMetaData, ProjectRole, UserWithMetaInformation } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export type ProjectMemberId = string

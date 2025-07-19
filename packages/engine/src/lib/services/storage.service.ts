@@ -1,6 +1,6 @@
 import { URL } from 'node:url'
-import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
+import { Store, StoreScope } from '@ensemble/pieces-framework'
+import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@ensemble/shared'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageLimitError } from '../helper/execution-errors'

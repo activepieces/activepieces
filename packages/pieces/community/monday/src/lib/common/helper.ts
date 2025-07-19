@@ -1,8 +1,8 @@
 import {
   DynamicPropsValue,
   Property,
-} from '@activepieces/pieces-framework';
-import { isEmpty } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { isEmpty } from '@ensemble/shared';
 import dayjs from 'dayjs';
 import { MondayColumnType } from './constants';
 import { ColumnValue, MondayColumn } from './models';
@@ -21,7 +21,7 @@ export function generateColumnIdTypeMap(
 }
 
 // creates activepiece prop type for monday column
-export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
+export const convertMondayColumnToEnsembleProp = (column: MondayColumn) => {
   switch (column.type) {
     case MondayColumnType.CHECKBOX:
       return Property.Checkbox({

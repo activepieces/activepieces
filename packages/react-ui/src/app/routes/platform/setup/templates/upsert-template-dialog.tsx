@@ -20,12 +20,12 @@ import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { templatesApi } from '@/features/templates/lib/templates-api';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { CreateFlowTemplateRequest } from '@ensemble/ee-shared';
 import {
   FlowTemplate,
   FlowVersionTemplate,
   TemplateType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 

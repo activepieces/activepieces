@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PopulatedFlow } from '@activepieces/shared';
+import { PopulatedFlow } from '@ensemble/shared';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();

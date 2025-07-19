@@ -1,4 +1,4 @@
-import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'

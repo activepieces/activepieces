@@ -17,7 +17,7 @@ import { issuesApi } from '@/features/issues/api/issues-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { IssueStatus, Permission } from '@activepieces/shared';
+import { IssueStatus, Permission } from '@ensemble/shared';
 
 import { issuesTableColumns } from './columns';
 

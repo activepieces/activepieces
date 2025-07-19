@@ -1,4 +1,4 @@
-import { ApQueueJob, QueueName, systemConstants } from '@activepieces/server-shared'
+import { ApQueueJob, QueueName, systemConstants } from '@ensemble/server-shared'
 import { Semaphore } from 'async-mutex'
 import { workerApiService } from './api/server-api.service'
 

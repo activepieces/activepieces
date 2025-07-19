@@ -1,15 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { DUST_BASE_URL } from '../common';
 import { dustAuth, DustAuthType } from '../..';
 import mimeTypes from 'mime-types';
 
 export const upsertDocument = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  // auth: check https://www.ensemble.com/docs/developers/piece-reference/authentication,
   name: 'addDocument',
   displayName: 'Add or update document',
   description:

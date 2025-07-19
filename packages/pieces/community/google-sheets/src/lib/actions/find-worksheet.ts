@@ -1,5 +1,5 @@
 import { googleSheetsAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';

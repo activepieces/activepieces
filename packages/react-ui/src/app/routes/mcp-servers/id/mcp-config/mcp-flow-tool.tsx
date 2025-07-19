@@ -15,7 +15,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   McpFlowTool as McpFlowToolType,
   Permission,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 type McpFlowToolProps = {
   tool: McpFlowToolType;

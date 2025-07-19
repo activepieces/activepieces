@@ -338,8 +338,8 @@ test('Duplicate Flow With Loops using Import', () => {
             settings: {
                 input: {
                     repository: {
-                        repo: 'activepieces',
-                        owner: 'activepieces',
+                        repo: 'ensemble',
+                        owner: 'ensemble',
                     },
                     authentication: '{{connections.github}}',
                 },

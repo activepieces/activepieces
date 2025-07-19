@@ -1,5 +1,5 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
-import { Platform } from '@activepieces/shared'
+import { ApplicationEvent } from '@ensemble/ee-shared'
+import { Platform } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 

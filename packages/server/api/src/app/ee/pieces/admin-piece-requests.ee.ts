@@ -2,14 +2,14 @@ import {
     ErrorHandlingOptionsParam,
     TriggerStrategy,
     WebhookRenewConfiguration,
-} from '@activepieces/pieces-framework'
+} from '@ensemble/pieces-framework'
 import {
     ExactVersionType,
     PieceCategory,
     PrincipalType,
     TriggerTestStrategy,
     WebhookHandshakeConfiguration,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { Type } from '@fastify/type-provider-typebox'
 
 const Action = Type.Object({

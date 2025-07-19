@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole } from '@activepieces/shared';
+import { PlatformRole } from '@ensemble/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 

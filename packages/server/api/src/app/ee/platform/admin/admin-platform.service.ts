@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError,
+    EnsembleError,
     AdminRetryRunsRequestBody,
     ApplyLicenseKeyByEmailRequestBody,
     ErrorCode,
@@ -10,7 +10,7 @@ import {
     PlatformRole,
     ProjectId,
     RunEnvironment,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
@@ -39,7 +39,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             })
         }
         if (!createdAfter || !createdBefore) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.VALIDATION,
                 params: {
                     message: 'createdAfter and createdBefore are required',

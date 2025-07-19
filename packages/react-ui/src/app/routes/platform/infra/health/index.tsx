@@ -9,7 +9,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@ensemble/shared';
 
 const STATUS = {
   SUCCESS: 'success',
@@ -43,7 +43,7 @@ export default function WorkersPage() {
         currentVersion || 'Unknown'
       }\n<b>Latest</b>: ${latestVersion || 'Unknown'}\n${
         !isVersionUpToDate
-          ? 'Upgrade now to enjoy the latest features and bug fixes.\nCheck the changelog <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://github.com/activepieces/activepieces/releases" target="_blank">releases</a>.'
+          ? 'Upgrade now to enjoy the latest features and bug fixes.\nCheck the changelog <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://github.com/ensemble/ensemble/releases" target="_blank">releases</a>.'
           : ''
       }`,
       faultIcon: <Frown size={16} />,
@@ -57,7 +57,7 @@ export default function WorkersPage() {
       },
       details: socket.connected
         ? t('No issues detected')
-        : 'Connection issues detected.<br>Visit the <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://www.activepieces.com/docs/install/configuration/troubleshooting" target="_blank">troubleshooting guide</a> for more details.',
+        : 'Connection issues detected.<br>Visit the <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://www.ensemble.com/docs/install/configuration/troubleshooting" target="_blank">troubleshooting guide</a> for more details.',
       faultIcon: <WifiOff size={16} />,
     },
   ];

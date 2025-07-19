@@ -1,4 +1,4 @@
-import { ApQueueJob, JobStatus, QueueName } from '@activepieces/server-shared'
+import { ApQueueJob, JobStatus, QueueName } from '@ensemble/server-shared'
 
 export type ConsumerManager = {
     init(): Promise<void>

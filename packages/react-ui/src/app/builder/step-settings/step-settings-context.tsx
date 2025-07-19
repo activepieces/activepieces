@@ -11,8 +11,8 @@ import {
 import {
   PieceMetadataModel,
   PiecePropertyMap,
-} from '@activepieces/pieces-framework';
-import { Action, setAtPath, Trigger } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { Action, setAtPath, Trigger } from '@ensemble/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 

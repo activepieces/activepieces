@@ -1,7 +1,7 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { HttpError } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, Property } from '@ensemble/pieces-framework';
+import { HttpError } from '@ensemble/pieces-common';
 import { dimoAuth } from '../../../index';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@ensemble/shared';
 import { DimoClient, getTirePressurePositionLabel } from '../../common/helpers';
 import {
 	CreateWebhookParams,

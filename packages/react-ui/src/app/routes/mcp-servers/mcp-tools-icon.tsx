@@ -7,8 +7,8 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpToolType, McpWithTools } from '@activepieces/shared';
+import { PieceMetadataModelSummary } from '@ensemble/pieces-framework';
+import { McpToolType, McpWithTools } from '@ensemble/shared';
 
 interface McpToolsIconProps {
   mcpTools: McpWithTools['tools'];

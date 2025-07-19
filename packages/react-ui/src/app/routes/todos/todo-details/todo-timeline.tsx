@@ -8,7 +8,7 @@ import {
   TodoActivityWithUser,
   TodoActivityChanged,
   PopulatedTodo,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { TodoComment, ActivityItem } from './todo-comment';
 import { TodoTimelineCommentSkeleton } from './todo-timeline-comment-skeleton';

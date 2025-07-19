@@ -3,7 +3,7 @@ import {
 	TriggerStrategy,
 	Property,
 	PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { crispAuth } from '../common/auth';
 import { websiteIdProp } from '../common/props';
 import {
@@ -12,7 +12,7 @@ import {
 	Polling,
 	pollingHelper,
 	QueryParams,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import dayjs from 'dayjs';
 import { crispApiCall } from '../common/client';
 

@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
@@ -88,10 +88,10 @@ async function migrateProjects(queryRunner: QueryRunner) {
             "federatedAuthProviders", "emailAuthEnabled", "auditLogEnabled",
             "showActivityLog")
             VALUES
-            ($1, current_timestamp, current_timestamp, $2, 'Activepieces',
-            '#6e41e2', 'https://cdn.activepieces.com/brand/logo.svg',
-            'https://cdn.activepieces.com/brand/full-logo.png',
-            'https://cdn.activepieces.com/brand/favicon.ico', '{}',
+            ($1, current_timestamp, current_timestamp, $2, 'Ensemble',
+            '#6e41e2', 'https://cdn.ensemble.com/brand/logo.svg',
+            'https://cdn.ensemble.com/brand/full-logo.png',
+            'https://cdn.ensemble.com/brand/favicon.ico', '{}',
             'BLOCKED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             'f', 't', 'en', 'f', 'f', '{}', 'f', 'f', '{}', 'f', 'f', 'f');`,
             [platformId, ownerId],

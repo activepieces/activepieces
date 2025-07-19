@@ -1,4 +1,4 @@
-import { WebhookSimulation } from '@activepieces/shared'
+import { WebhookSimulation } from '@ensemble/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

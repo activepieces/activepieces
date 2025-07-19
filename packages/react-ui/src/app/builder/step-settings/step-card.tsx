@@ -11,7 +11,7 @@ import {
   isNil,
   Trigger,
   TriggerType,
-} from '@activepieces/shared';
+} from '@ensemble/shared';
 
 import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
 

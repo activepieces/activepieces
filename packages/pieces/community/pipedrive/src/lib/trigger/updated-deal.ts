@@ -4,8 +4,8 @@ import {
 	DynamicPropsValue,
 	PiecePropValueSchema,
 	Property,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
+import { TriggerStrategy } from '@ensemble/pieces-framework';
 import {
 	pipedriveApiCall,
 	pipedriveCommon,
@@ -13,7 +13,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { pipedriveAuth } from '../..';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import {
 	FieldsResponse,
 	ListDealsResponse,
@@ -22,7 +22,7 @@ import {
 	RequestParams,
 	GetField,
 } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@ensemble/shared';
 
 export const updatedDeal = createTrigger({
 	auth: pipedriveAuth,

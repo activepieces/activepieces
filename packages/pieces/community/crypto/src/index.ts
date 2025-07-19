@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { PieceCategory } from '@ensemble/shared';
 import { generatePassword } from './lib/actions/generate-password';
 import { hashText } from './lib/actions/hash-text';
 import { hmacSignature } from './lib/actions/hmac-signature';
@@ -11,7 +11,7 @@ export const Crypto = createPiece({
   description: 'Generate random passwords and hash existing text',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/crypto.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/crypto.png',
   categories: [PieceCategory.CORE],
   authors: ['AbdullahBitar', 'kishanprmr', 'abuaboud', 'matthieu-lombard', 'antonyvigouret', 'danielpoonwj'],
   actions: [hashText, hmacSignature, generatePassword, base64Decode, base64Encode],

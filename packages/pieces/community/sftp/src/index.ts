@@ -2,8 +2,8 @@ import {
   PieceAuth,
   Property,
   createPiece,
-} from '@activepieces/pieces-framework';
-import { isNil, PieceCategory } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { isNil, PieceCategory } from '@ensemble/shared';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
 import { createFile } from './lib/actions/create-file';
@@ -138,7 +138,7 @@ export const ftpSftp = createPiece({
   displayName: 'FTP/SFTP',
   description: 'Connect to FTP, FTPS or SFTP servers',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: [
     'Abdallah-Alwarawreh',

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, Trigger } from '@ensemble/shared';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;

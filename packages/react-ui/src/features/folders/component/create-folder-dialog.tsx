@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FolderDto } from '@activepieces/shared';
+import { FolderDto } from '@ensemble/shared';
 
 import { foldersApi } from '../lib/folders-api';
 

@@ -1,4 +1,4 @@
-import { ActivepiecesError, CopilotProviderType, CopilotSettings, ErrorCode, isNil } from '@activepieces/shared'
+import { EnsembleError, CopilotProviderType, CopilotSettings, ErrorCode, isNil } from '@ensemble/shared'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenAI } from '@ai-sdk/openai'
 import { LanguageModel } from 'ai'
@@ -12,7 +12,7 @@ export const modelService = (log: FastifyBaseLogger) => ({
             const platform = await platformService.getOneOrThrow(platformId)
             const { copilotSettings } = platform
             if (isNil(copilotSettings)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.COPILOT_FAILED,
                     params: { message: 'No copilot settings found' },
                 })
@@ -36,7 +36,7 @@ export const modelService = (log: FastifyBaseLogger) => ({
         }
         catch (error) {
             log.error(error)
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.COPILOT_FAILED,
                 params: { message: 'Your Copilot is not configured. Please configure your Copilot settings.' },
             })
@@ -51,7 +51,7 @@ function getDefaultProvider(copilotSettings: CopilotSettings): CopilotProviderTy
     if (copilotSettings.providers[CopilotProviderType.AZURE_OPENAI]?.apiKey) {
         return CopilotProviderType.AZURE_OPENAI
     }
-    throw new ActivepiecesError({
+    throw new EnsembleError({
         code: ErrorCode.COPILOT_FAILED,
         params: { message: 'No default provider found' },
     })

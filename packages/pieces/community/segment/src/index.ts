@@ -1,5 +1,5 @@
 
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth } from "@ensemble/pieces-framework";
 import { identifyUser } from "./lib/actions/identify-user";
 
 export const segmentAuth = PieceAuth.SecretText({
@@ -13,7 +13,7 @@ export const segment = createPiece({
   displayName: "Segment",
   auth: segmentAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/segment.png",
+  logoUrl: "https://cdn.ensemble.com/pieces/segment.png",
   authors: ['abuaboud'],
   actions: [identifyUser],
   triggers: [],

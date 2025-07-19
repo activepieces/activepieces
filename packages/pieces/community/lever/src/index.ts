@@ -1,11 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { getOpportunity } from './lib/actions/get-opportunity';
 import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
 import { listOpportunityForms } from './lib/actions/list-opportunity-forms';
 import { listOpportunityFeedback } from './lib/actions/list-opportunity-feedback';
 import { addFeedbackToOpportunity } from './lib/actions/add-feedback-to-opportunity';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const LEVER_BASE_URL = 'https://api.lever.co/v1';
 
@@ -29,7 +29,7 @@ export const lever = createPiece({
     'Lever is a modern, collaborative recruiting platform that powers a more human approach to hiring.',
   categories: [PieceCategory.HUMAN_RESOURCES],
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/lever.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/lever.png',
   authors: ['AdamSelene'],
   actions: [
     getOpportunity,

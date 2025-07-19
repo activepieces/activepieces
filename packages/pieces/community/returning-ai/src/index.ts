@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { replyMessage } from './lib/actions/reply-message';
 import { sendMessage } from './lib/actions/send-message';
 import { reactMessage } from './lib/actions/react-message';
@@ -13,7 +13,7 @@ export const returningAi = createPiece({
   displayName: 'Returning AI',
   auth: returningAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: `https://cdn.activepieces.com/pieces/returning-ai.png`,
+  logoUrl: `https://cdn.ensemble.com/pieces/returning-ai.png`,
   authors: ['mg-wunna'],
   actions: [sendMessage, replyMessage, reactMessage],
   triggers: [],

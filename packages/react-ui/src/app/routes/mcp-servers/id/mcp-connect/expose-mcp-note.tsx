@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@ensemble/shared';
 
 import { mcpConnectUtils } from './mcp-connect-utils';
 
@@ -21,7 +21,7 @@ export const ExposeMcpNote = () => {
       <AlertDescription>
         <strong>{t('Note')}: </strong>
         {t(
-          'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your Activepieces instance.',
+          'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your Ensemble instance.',
         )}
       </AlertDescription>
     </Alert>

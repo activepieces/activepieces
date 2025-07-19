@@ -1,4 +1,4 @@
-import { AlertChannel } from '@activepieces/ee-shared'
+import { AlertChannel } from '@ensemble/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'

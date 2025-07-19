@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { mysqlConnect, mysqlGetTableNames } from '../common';
 import { mysqlAuth } from '../..';
 

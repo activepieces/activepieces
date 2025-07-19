@@ -1,9 +1,9 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@ensemble/pieces-framework';
 import {
   httpClient,
   HttpMessageBody,
   HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { DustAuthType } from '..';
 import { DustAPI } from '@dust-tt/client';
 

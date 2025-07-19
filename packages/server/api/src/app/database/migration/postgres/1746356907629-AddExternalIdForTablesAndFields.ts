@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/shared'
+import { apId } from '@ensemble/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddExternalIdForTablesAndFields1746356907629 implements MigrationInterface {

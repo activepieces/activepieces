@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApId } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApId } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'

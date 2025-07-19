@@ -1,10 +1,10 @@
 import {
     ApSubscriptionStatus,
     UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
+} from '@ensemble/ee-shared'
+import { AppSystemProp } from '@ensemble/server-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     ApEdition,
     ApEnvironment,
     assertNotNullOrUndefined,
@@ -19,7 +19,7 @@ import {
     SeekPage,
     spreadIfDefined,
     UserStatus,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -253,7 +253,7 @@ const assertAllProjectFlowsAreDisabled = async (
     })
 
     if (projectHasEnabledFlows) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.VALIDATION,
             params: {
                 message: 'PROJECT_HAS_ENABLED_FLOWS',
@@ -274,7 +274,7 @@ const softDeleteOrThrow = async ({
     })
 
     if (deleteResult.affected !== 1) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
                 entityId: id,

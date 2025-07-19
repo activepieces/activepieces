@@ -1,8 +1,8 @@
 import {
     ApiKeyResponseWithoutValue,
     ApiKeyResponseWithValue,
-    CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+    CreateApiKeyRequest } from '@ensemble/ee-shared'
+import { ApId, assertNotNullOrUndefined, SeekPage } from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

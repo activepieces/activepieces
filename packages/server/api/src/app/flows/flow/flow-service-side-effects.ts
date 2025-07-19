@@ -8,7 +8,7 @@ import {
     ScheduleOptions,
     ScheduleType,
     WebhookHandshakeConfiguration,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from '../step-run/sample-data.service'

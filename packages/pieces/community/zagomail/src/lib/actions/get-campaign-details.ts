@@ -1,5 +1,5 @@
 import { zagomailAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@ensemble/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { campaignUid } from '../common/props';
 

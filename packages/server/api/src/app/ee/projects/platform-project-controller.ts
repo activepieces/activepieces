@@ -1,9 +1,9 @@
 import {
     CreatePlatformProjectRequest,
     UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
+} from '@ensemble/ee-shared'
 import {
-    ActivepiecesError,
+    EnsembleError,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -15,7 +15,7 @@ import {
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
@@ -72,7 +72,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         const haveTokenForTheProject = request.principal.projectId === project.id
         const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
-            throw new ActivepiecesError({
+            throw new EnsembleError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {},
             })
@@ -126,7 +126,7 @@ async function isPlatformAdmin(principal: Principal, platformId: string): Promis
 
 const assertProjectToDeleteIsNotPrincipalProject = (principal: Principal, projectId: string): void => {
     if (principal.projectId === projectId) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.VALIDATION,
             params: {
                 message: 'ACTIVE_PROJECT',

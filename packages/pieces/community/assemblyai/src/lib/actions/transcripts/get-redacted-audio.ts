@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@ensemble/pieces-framework';
 import { assemblyaiAuth } from '../../auth';
 import { getAssemblyAIClient } from '../../client';
 import { transcriptIdProp } from './shared-props';
@@ -19,7 +19,7 @@ export const getRedactedAudio = createAction({
     download_file_name: Property.ShortText({
       displayName: 'Download File Name',
       description:
-        'The desired file name for storing in ActivePieces. Make sure the file extension is correct.',
+        'The desired file name for storing in Ensemble. Make sure the file extension is correct.',
       required: true,
       defaultValue: 'redacted-audio.mp3',
     }),

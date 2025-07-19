@@ -1,6 +1,6 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@ensemble/pieces-framework';
 import { firefliesAiAuth } from '../../index';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AuthenticationType, httpClient, HttpMethod } from '@ensemble/pieces-common';
 import { getTranscript } from '../common/queries';
 import { BASE_URL } from '../common';
 

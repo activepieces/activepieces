@@ -1,4 +1,4 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@ensemble/pieces-common';
 import { confluenceApiCall, confluencePaginatedApiCall } from '.';
 import { confluenceAuth } from '../../index';
 import {
@@ -6,7 +6,7 @@ import {
 	DynamicPropsValue,
 	PiecePropValueSchema,
 	Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { parseStringPromise } from 'xml2js';
 
 export const spaceIdProp = Property.Dropdown({

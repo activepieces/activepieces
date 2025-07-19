@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import {
 	webSearch,
 	searchNews,
@@ -7,13 +7,13 @@ import {
 	crawlWebsite,
 	extractDocument,
 } from './lib/actions';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 import {
 	AuthenticationType,
 	createCustomApiCallAction,
 	httpClient,
 	HttpMethod,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 
 export const dumplingAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
@@ -30,7 +30,7 @@ export const dumplingAuth = PieceAuth.SecretText({
 					token: auth,
 				},
 				body: {
-					query: 'Activepieces',
+					query: 'Ensemble',
 				},
 			});
 
@@ -48,7 +48,7 @@ export const dumplingAi = createPiece({
 	description:'Transform unstructured website content into clean, AI-ready data',
 	auth: dumplingAuth,
 	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/dumpling-ai.png',
+	logoUrl: 'https://cdn.ensemble.com/pieces/dumpling-ai.png',
 	authors: ['neo773'],
 	categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
 	actions: [

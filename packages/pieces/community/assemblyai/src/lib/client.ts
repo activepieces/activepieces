@@ -1,7 +1,7 @@
 import {
   ActionContext,
   SecretTextProperty,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 import { AssemblyAI } from 'assemblyai';
 import packageJson from '../../package.json';
 
@@ -17,7 +17,7 @@ export const getAssemblyAIClient = (
     apiKey: context.auth,
     userAgent: {
       integration: {
-        name: 'Activepieces',
+        name: 'Ensemble',
         version: packageJson.version,
       },
     },

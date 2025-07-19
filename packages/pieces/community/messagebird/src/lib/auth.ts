@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@ensemble/pieces-framework';
 
 export interface BirdAuthValue {
   apiKey: string;

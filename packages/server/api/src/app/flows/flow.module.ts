@@ -1,4 +1,4 @@
-import { TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../websockets/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'

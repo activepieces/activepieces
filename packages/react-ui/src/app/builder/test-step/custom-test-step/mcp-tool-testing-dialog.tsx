@@ -16,8 +16,8 @@ import {
   PropertyType,
   PiecePropertyMap,
   PieceProperty,
-} from '@activepieces/pieces-framework';
-import { Trigger, McpPropertyType, mcpToolNaming } from '@activepieces/shared';
+} from '@ensemble/pieces-framework';
+import { Trigger, McpPropertyType, mcpToolNaming } from '@ensemble/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 import { testStepHooks } from '../test-step-hooks';

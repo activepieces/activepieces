@@ -1,6 +1,6 @@
-import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
+import { createAction, Property, StoreScope } from '@ensemble/pieces-framework';
 import { groqAuth } from '../..';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, AuthenticationType } from '@ensemble/pieces-common';
 
 export const askGroq = createAction({
 	auth: groqAuth,

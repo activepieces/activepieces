@@ -3,7 +3,7 @@ import {
     isNil,
     Principal,
     PrincipalType,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
 

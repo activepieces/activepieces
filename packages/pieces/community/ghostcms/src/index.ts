@@ -2,10 +2,10 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
+} from '@ensemble/pieces-framework';
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
+import { PieceCategory } from '@ensemble/shared';
 import { createMember } from './lib/actions/create-member';
 import { createPost } from './lib/actions/create-post';
 import { findMember } from './lib/actions/find-member';
@@ -51,7 +51,7 @@ export const ghostcms = createPiece({
 
   auth: ghostAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/ghostcms.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [

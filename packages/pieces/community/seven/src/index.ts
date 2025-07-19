@@ -1,9 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@ensemble/pieces-framework';
 import { sendSmsAction } from './action/sms-send';
 import { sendVoiceCallAction } from './action/send-voice-call';
 import { lookup } from './action/lookup';
 import { smsInbound } from './trigger/sms-inbound';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@ensemble/shared';
 
 export const sevenAuth = PieceAuth.SecretText({
   description:
@@ -17,7 +17,7 @@ export const seven = createPiece({
   description: 'Business Messaging Gateway',
   auth: sevenAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/seven.jpg',
+  logoUrl: 'https://cdn.ensemble.com/pieces/seven.jpg',
   categories: [PieceCategory.MARKETING],
   authors: ['seven-io'],
   actions: [sendSmsAction, sendVoiceCallAction, lookup],

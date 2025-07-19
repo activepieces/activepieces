@@ -1,5 +1,5 @@
-import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, Permission, PrincipalType } from '@activepieces/shared'
+import { CreateAlertParams, ListAlertsParams } from '@ensemble/ee-shared'
+import { ApId, Permission, PrincipalType } from '@ensemble/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { alertsService } from './alerts-service'
 

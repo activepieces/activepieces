@@ -1,10 +1,10 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@ensemble/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   AuthenticationType,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@ensemble/pieces-common';
 import { calendlyCommon, CalendlyWebhookInformation } from '../common';
 import { calendlyAuth } from '../../';
 
@@ -24,7 +24,7 @@ export const calendlyInviteeCreated = createTrigger({
     payload: {
       cancel_url: 'https://calendly.com/cancellations/AAAAAAAAAAA',
       created_at: '2023-01-29T13:50:13.072950Z',
-      email: 'abdulyki@activepieces.com',
+      email: 'abdulyki@ensemble.com',
       event: 'https://api.calendly.com/scheduled_events/AAAAAAAAAAAA',
       first_name: null,
       last_name: null,

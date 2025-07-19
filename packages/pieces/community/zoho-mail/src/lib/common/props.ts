@@ -1,5 +1,5 @@
-import { HttpMethod } from '@activepieces/pieces-common';
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@ensemble/pieces-common';
+import { PiecePropValueSchema, Property } from '@ensemble/pieces-framework';
 import { zohoMailApiCall } from '.';
 import { zohoMailAuth } from './auth';
 

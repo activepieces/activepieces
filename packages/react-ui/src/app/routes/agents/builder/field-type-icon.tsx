@@ -4,7 +4,7 @@ import {
   CheckSquare as BooleanIcon,
 } from 'lucide-react';
 
-import { AgentOutputFieldType } from '@activepieces/shared';
+import { AgentOutputFieldType } from '@ensemble/shared';
 
 interface FieldTypeIconProps {
   type: AgentOutputFieldType;

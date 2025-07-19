@@ -2,8 +2,8 @@ import {
   createPiece,
   PieceAuth,
   Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+} from '@ensemble/pieces-framework';
+import { createCustomApiCallAction } from '@ensemble/pieces-common';
 import { createConversation } from './lib/actions/create-conversation';
 import { replyToConversation } from './lib/actions/reply-to-conversation';
 import { upsertDocument } from './lib/actions/upsert-document';
@@ -50,7 +50,7 @@ export const dust = createPiece({
   description: 'Secure messaging and collaboration',
   auth: dustAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',
+  logoUrl: 'https://cdn.ensemble.com/pieces/dust.png',
   authors: ['AdamSelene', 'abuaboud'],
   actions: [
     createConversation,

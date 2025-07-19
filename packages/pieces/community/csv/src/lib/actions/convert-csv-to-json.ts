@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { isString } from '@activepieces/shared';
+import { createAction, Property } from '@ensemble/pieces-framework';
+import { isString } from '@ensemble/shared';
 import {parse} from 'csv-parse/sync';
 
 export const csvToJsonAction = createAction({

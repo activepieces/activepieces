@@ -1,5 +1,5 @@
-import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
+import { SigningKey, SigningKeyId } from '@ensemble/ee-shared'
+import { EnsembleError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@ensemble/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
@@ -16,7 +16,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
             const signingKeyId = decoded?.header?.kid
 
             if (isNil(signingKeyId)) {
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,
                     params: {
                         message: 'signing key id is not found in the header',
@@ -57,7 +57,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
             catch (error) {
                 log.error({ name: 'ExternalTokenExtractor#extract', error })
 
-                throw new ActivepiecesError({
+                throw new EnsembleError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,
                     params: {
                         message:
@@ -77,7 +77,7 @@ const getSigningKey = async ({
     })
 
     if (isNil(signingKey)) {
-        throw new ActivepiecesError({
+        throw new EnsembleError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
             params: {
                 message: `signing key not found signingKeyId=${signingKeyId}`,

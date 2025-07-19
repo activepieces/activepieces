@@ -8,7 +8,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateUserRequestBody,
     UserWithMetaInformation,
-} from '@activepieces/shared'
+} from '@ensemble/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
