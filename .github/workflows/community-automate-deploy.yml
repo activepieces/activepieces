@@ -6,14 +6,14 @@ on:
     branches:
       - main
   pull_request:
-    types: [merged]
+    # types: [merged]
     branches:
       - main
-    merged: true
+    # merged: true
 
 jobs:
   Release:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)    runs-on: ubuntu-latest
+    # if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)    runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -64,4 +64,10 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose pull && IMAGE_TAG=${{ env.RELEASE }}.${{ github.sha }}.community docker compose up -d --force-recreate community-activepieces; exit"' 
-          
+
+  e2e-tests:
+    needs: Release
+    uses: ./.github/workflows/e2e-tests.yml
+    with:
+      environment: Community
+      instance_url_secret: E2E_COMMUNITY_INSTANCE_URL
