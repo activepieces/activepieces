@@ -163,6 +163,11 @@ async function validateAction(
     if (isNil(settings.input?.auth) && !isNil(piece.auth) && action.requireAuth !== false) {
         return { valid: false }
     }
+    if(!isNil(piece.auth) && action.requireAuth ) {
+        const auth = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
+        props.auth = auth
+    }
+
     return validateProps(props, settings.input)
 }
 
@@ -198,6 +203,10 @@ async function validateTrigger(
     if (isNil(settings.input?.auth) && !isNil(piece.auth) && trigger.requireAuth !== false) {
         return { valid: false }
     }   
+    if(!isNil(piece.auth) && trigger.requireAuth ) {
+        const auth = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
+        props.auth = auth
+    }
     return validateProps(props, settings.input)
 }
 

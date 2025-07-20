@@ -9,7 +9,7 @@ import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 
 
-export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>
+export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = PieceAuthProperty | PieceAuthProperty[]>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action> = {};

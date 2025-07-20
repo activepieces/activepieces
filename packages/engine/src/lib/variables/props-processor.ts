@@ -14,15 +14,16 @@ export const propsProcessor = {
     applyProcessorsAndValidators: async (
         resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
-        auth: PieceAuthProperty | undefined,
+        auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
         requireAuth: boolean,
         dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
 
-        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
-        if (isAuthenticationProperty) {
+        //TODO: handle array of auths validation
+        const authRequiresValidation = auth && !Array.isArray(auth) && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
+        if (authRequiresValidation) {
             const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
                 resolvedInput[AUTHENTICATION_PROPERTY_NAME],
                 auth.props,

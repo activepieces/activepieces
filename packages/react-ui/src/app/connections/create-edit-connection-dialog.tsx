@@ -203,28 +203,28 @@ const CreateOrEditConnectionDialogContent = React.memo(
               {selectedAuth?.type === PropertyType.SECRET_TEXT && (
                 <div className="mt-3.5">
                   <SecretTextConnectionSettings
-                    authProperty={piece.auth as SecretTextProperty<boolean>}
+                    authProperty={selectedAuth}
                   />
                 </div>
               )}
               {selectedAuth?.type === PropertyType.BASIC_AUTH && (
                 <div className="mt-3.5">
                   <BasicAuthConnectionSettings
-                    authProperty={piece.auth as BasicAuthProperty}
+                    authProperty={selectedAuth}
                   />
                 </div>
               )}
               {selectedAuth?.type === PropertyType.CUSTOM_AUTH && (
                 <div className="mt-3.5">
                   <CustomAuthConnectionSettings
-                    authProperty={piece.auth as CustomAuthProperty<any>}
+                    authProperty={selectedAuth}
                   />
                 </div>
               )}
               {selectedAuth?.type === PropertyType.OAUTH2 && (
                 <div className="mt-3.5">
                   <OAuth2ConnectionSettings
-                    authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+                    authProperty={selectedAuth}
                     piece={piece}
                     reconnectConnection={reconnectConnection}
                   />
