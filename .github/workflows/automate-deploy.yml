@@ -6,7 +6,7 @@ on:
       skip_dependent_e2e_tests:
         description: 'Skip Enterprise, Pre-Prod, and Community E2E tests'
         required: false
-        default: 'false'
+        default: false
         type: boolean
   pull_request:
     # types: [merged]
