@@ -23,11 +23,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const ref = github.event_name === 'pull_request' ? github.event.pull_request.head.ref : context.ref;
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'enterprise-automate-deploy.yml',
-              ref: context.ref
+              ref: ref
             })
 
   Test-Pre-Prod:
@@ -38,11 +39,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const ref = github.event_name === 'pull_request' ? github.event.pull_request.head.ref : context.ref;
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'pre-prod-automate-deploy.yml',
-              ref: context.ref
+              ref: ref
             })
 
   # Test-Community:
