@@ -1,12 +1,8 @@
-import { SupportedAIProvider } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,16 +25,12 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  SupportedAIProvider,
+  CreateAIProviderRequest,
+} from '@activepieces/shared';
 
-// TODO: use shared
-const UpsertAIProviderInput = Type.Object({
-  provider: Type.String(),
-  apiKey: Type.String(),
-  useAzureOpenAI: Type.Optional(Type.Boolean()),
-  resourceName: Type.Optional(Type.String()),
-});
-
-export type UpsertAIProviderInput = Static<typeof UpsertAIProviderInput>;
+import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 type UpsertAIProviderDialogProps = {
   provider: string;
@@ -58,8 +50,8 @@ export const UpsertAIProviderDialog = ({
   showAzureOpenAI = false,
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<UpsertAIProviderInput>({
-    resolver: typeboxResolver(UpsertAIProviderInput),
+  const form = useForm<CreateAIProviderRequest>({
+    resolver: typeboxResolver(CreateAIProviderRequest),
     defaultValues: {
       provider,
       apiKey: '',

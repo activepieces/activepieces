@@ -1,11 +1,11 @@
-import { SupportedAIProvider } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
-import { UpsertAIProviderDialog } from './upsert-provider-dialog';
-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SupportedAIProvider } from '@activepieces/shared';
+
+import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 
 type AIProviderCardProps = {
   providerMetadata: SupportedAIProvider;

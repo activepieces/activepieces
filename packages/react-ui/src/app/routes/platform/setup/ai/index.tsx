@@ -1,22 +1,22 @@
-import {
-  SUPPORTED_AI_PROVIDERS,
-  PlatformRole,
-  ApFlagId,
-  ApEdition,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-
-import LockedFeatureGuard from '../../../../components/locked-feature-guard';
-
-import { CopilotSetup } from './copilot';
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 import { TableTitle } from '@/components/custom/table-title';
 import { Skeleton } from '@/components/ui/skeleton';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import {
+  SUPPORTED_AI_PROVIDERS,
+  PlatformRole,
+  ApFlagId,
+  ApEdition,
+} from '@activepieces/shared';
+
+import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+
+import { CopilotSetup } from './copilot';
+import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
   const {
