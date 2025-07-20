@@ -25,14 +25,14 @@ export const delayAfterQueue = createAction({
         options: [
           { label: 'Seconds', value: 'seconds' },
           { label: 'Minutes', value: 'minutes' },
-          { label: 'Hours', value: 'hours' },
         ],
       },
       defaultValue: 'seconds',
     }),
     delayAmount: Property.Number({
       displayName: 'Delay Amount',
-      description: 'Enter the amount of time to delay',
+      description:
+        'Enter the amount of time to delay. Maximum allowed delay is 10 minutes (600 seconds).',
       required: true,
       defaultValue: 5,
     }),
@@ -45,7 +45,6 @@ export const delayAfterQueue = createAction({
     // Convert to milliseconds
     let delayMs = delayAmount * 1000;
     if (delayUnit === 'minutes') delayMs = delayAmount * 60 * 1000;
-    if (delayUnit === 'hours') delayMs = delayAmount * 60 * 60 * 1000;
 
     const key = `delay_queue::${queueName}`;
     const store = context.store;
@@ -89,24 +88,39 @@ export const delayAfterQueue = createAction({
       try {
         const afterQueue = (await store.get<string[]>(key, StoreScope.PROJECT)) || [];
         const newQueue = afterQueue.filter((id: string) => id !== currentFlowId);
-        
+
         if (newQueue.length === 0) {
           await store.delete(key, StoreScope.PROJECT);
         } else {
           await store.put(key, newQueue, StoreScope.PROJECT);
         }
-      } catch (cleanupError) {
+      } catch {
         // Ignore cleanup errors
       }
-      
+
       throw error;
     }
   },
   async test(context) {
-    // For testing, we'll simulate the delay without actually waiting
     const queueName = context.propsValue.queueName;
     const delayAmount = context.propsValue.delayAmount;
     const delayUnit = context.propsValue.delayUnit;
+
+    // Calculate delay in seconds for validation
+    let delayInSeconds = delayAmount;
+    if (delayUnit === 'minutes') {
+      delayInSeconds = delayAmount * 60;
+    }
+
+    if (delayInSeconds > 600) {
+      return {
+        status: 'failed',
+        queueName,
+        delayAmount,
+        delayUnit,
+        message: `Step will fail: delay exceeds the system limit of 10 minutes (600 seconds).`,
+      };
+    }
 
     return {
       status: 'test_simulation',
