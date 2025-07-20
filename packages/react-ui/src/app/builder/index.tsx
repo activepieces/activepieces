@@ -23,6 +23,7 @@ import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
@@ -45,7 +46,6 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
